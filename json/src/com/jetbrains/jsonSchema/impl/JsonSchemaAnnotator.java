@@ -100,17 +100,23 @@ public class JsonSchemaAnnotator implements Annotator {
       final List<JsonSchemaWalker.Step> position = myWalker.findPosition(firstProp.getDelegate(), false, true);
       if (position == null || position.isEmpty()) return;
 
-      // but this does not validate definitions section against general schema --> should be done separately
-      final JsonSchemaWalker.Step firstStep = position.get(0);
-      if (JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType()) &&
-          firstStep != null && firstStep.getTransition() instanceof JsonSchemaWalker.PropertyTransition &&
-          "definitions".equals(((JsonSchemaWalker.PropertyTransition)firstStep.getTransition()).getName())) return;
+      if (isInsideSchemaDefinitions(element, position)) return;
 
-      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position, true);
+      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position);
       final JsonSchemaTreeNode root = builder.buildTree();
       final MatchResult result = MatchResult.zipTree(root);
       final BySchemaChecker checker = checkByMatchResult(firstPropValue, result, myWalker, myRootSchema);
       if (checker != null) processCheckerResults(checker);
+    }
+
+    // does not validate definitions section against general schema --> should be done separately
+    private static boolean isInsideSchemaDefinitions(@NotNull PsiElement element, List<JsonSchemaWalker.Step> position) {
+      if (!JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) return false;
+      final JsonSchemaWalker.Step firstStep = position.get(0);
+      assert firstStep != null;
+      final JsonSchemaWalker.PropertyTransition transition =
+        ObjectUtils.tryCast(firstStep.getTransition(), JsonSchemaWalker.PropertyTransition.class);
+      return  transition != null && JsonSchemaObject.DEFINITIONS.equals(transition.getName());
     }
 
     private void checkRootObject(@NotNull JsonValueAdapter adapter, @NotNull JsonSchemaObject rootSchema) {
@@ -345,7 +351,7 @@ public class JsonSchemaAnnotator implements Annotator {
 
         final List<JsonSchemaWalker.Step> steps = skipProperties(JsonOriginalPsiWalker.INSTANCE.findPosition(object, false, true));
         // !! not root schema, because we validate the schema written in the file itself
-        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(schemaObject, false, steps, true);
+        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(schemaObject, false, steps);
         final JsonSchemaTreeNode root = builder.buildTree();
         final MatchResult result = MatchResult.zipTree(root);
         final List<JsonSchemaObject> schemas = new ArrayList<>(result.mySchemas);
@@ -387,7 +393,7 @@ public class JsonSchemaAnnotator implements Annotator {
       while (iterator.hasNext()) {
         final JsonSchemaWalker.Step step = iterator.next();
         if (canSkip && step.getTransition() instanceof JsonSchemaWalker.PropertyTransition &&
-            "properties".equals(((JsonSchemaWalker.PropertyTransition)step.getTransition()).getName())) {
+            JsonSchemaObject.PROPERTIES.equals(((JsonSchemaWalker.PropertyTransition)step.getTransition()).getName())) {
           iterator.remove();
           canSkip = false;
         } else canSkip = true;

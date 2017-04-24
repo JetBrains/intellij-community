@@ -120,8 +120,8 @@ public class ReadJsonSchemaFromPsi {
     myMap.put("$ref", (element, object) -> {if (element instanceof JsonStringLiteral) object.setRef(StringUtil.unquoteString(element.getText()));});
     myMap.put("default", createDefault());
     myMap.put("format", (element, object) -> {if (element instanceof JsonStringLiteral) object.setFormat(StringUtil.unquoteString(element.getText()));});
-    myMap.put("definitions", createDefinitionsConsumer());
-    myMap.put("properties", createPropertiesConsumer());
+    myMap.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
+    myMap.put(JsonSchemaObject.PROPERTIES, createPropertiesConsumer());
     myMap.put("multipleOf", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMultipleOf(((JsonNumberLiteral)element).getValue());});
     myMap.put("maximum", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMaximum(((JsonNumberLiteral)element).getValue());});
     myMap.put("minimum", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMinimum(((JsonNumberLiteral)element).getValue());});

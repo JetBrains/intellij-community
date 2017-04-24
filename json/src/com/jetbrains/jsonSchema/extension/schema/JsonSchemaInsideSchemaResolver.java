@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
+ * todo remove this class
  * @author Irina.Chernushina on 1/10/2017.
  */
 public class JsonSchemaInsideSchemaResolver {
@@ -54,7 +55,7 @@ public class JsonSchemaInsideSchemaResolver {
     if (mySteps.isEmpty()) {
       result = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
     } else {
-      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, mySteps, false);
+      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, mySteps);
       final JsonSchemaTreeNode root = builder.buildTree();
       result = MatchResult.zipTree(root);
     }

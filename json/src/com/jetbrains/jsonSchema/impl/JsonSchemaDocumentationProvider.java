@@ -65,7 +65,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (position == null || position.isEmpty()) {
       result = JsonSchemaVariantsTreeBuilder.simplify(rootSchema, rootSchema);
     } else {
-      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, position, false);
+      final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(rootSchema, true, position);
       final JsonSchemaTreeNode root = builder.buildTree();
       result = MatchResult.zipTree(root);
     }

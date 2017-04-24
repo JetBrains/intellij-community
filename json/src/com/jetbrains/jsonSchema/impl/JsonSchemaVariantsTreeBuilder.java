@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,31 +35,24 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
   @NotNull private final List<JsonSchemaWalker.Step> myPosition;
-  private final boolean myAcceptAdditionalPropertiesSchemas;
 
   public JsonSchemaVariantsTreeBuilder(@NotNull final JsonSchemaObject rootSchema,
                                        final boolean isName,
-                                       @NotNull final List<JsonSchemaWalker.Step> position,
-                                       final boolean acceptAdditionalPropertiesSchemas) {
+                                       @Nullable final List<JsonSchemaWalker.Step> position) {
     mySchema = rootSchema;
     myIsName = isName;
-    myPosition = position;
-    myAcceptAdditionalPropertiesSchemas = acceptAdditionalPropertiesSchemas;
+    myPosition = ContainerUtil.notNullize(position);
   }
 
   public JsonSchemaTreeNode buildTree() {
-    final MatchResult result = simplify(mySchema, mySchema);
-    // todo this is not an artificial node; work with it later
-    // todo and make one common code path here (no extra simplify)
-    final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
-    root.setSteps(myPosition);
-    // todo maybe skip with one child, make it the head
-    root.addChildren(result.mySchemas.stream().map(s ->  new JsonSchemaTreeNode(root, s)).collect(Collectors.toList()));
-    root.addExcludingChildren(result.myExcludingSchemas.stream().map(s ->  new JsonSchemaTreeNode(root, s)).collect(Collectors.toList()));
-    root.getChildren().forEach(node -> node.setSteps(myPosition));
-
     final Map<VirtualFile, JsonSchemaObject> rootSchemasMap = new HashMap<>();
     rootSchemasMap.put(mySchema.getSchemaFile(), mySchema);
+
+    final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
+    applyChildSchema(rootSchemasMap, root, mySchema);
+    // set root's position since this children are just variants of root
+    root.getChildren().forEach(node -> node.setSteps(myPosition));
+
     final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>();
     queue.addAll(root.getChildren());
 
@@ -73,33 +67,13 @@ public class JsonSchemaVariantsTreeBuilder {
       }
       // todo further get rid of consumer?
       final JsonSchemaWalker.TransitionResultConsumer consumer = new JsonSchemaWalker.TransitionResultConsumer();
-      step.getTransition().step(node.getSchema(), consumer, myAcceptAdditionalPropertiesSchemas);
-      // todo create next steps from parent
+      step.getTransition().step(node.getSchema(), consumer, !myIsName);
       if (consumer.isNothing()) node.setChild(JsonSchemaTreeNode.createNothing(node));
       else if (consumer.isAny()) node.setChild(JsonSchemaTreeNode.createAny(node));
       else {
         // process step results
         assert consumer.getSchema() != null;
-        JsonSchemaObject nextSchema = consumer.getSchema();
-        if (interestingSchema(nextSchema)) {
-          // todo consider standard tree walker
-          final ProcessDefinitionsOperation operation = new ProcessDefinitionsOperation(nextSchema, rootSchemasMap);
-          operation.doMap();
-          operation.doReduce();
-          if (StepState.brokenDefinition.equals(operation.myState) || StepState.cyclicDefinition.equals(operation.myState))
-            node.setChild(JsonSchemaTreeNode.createNoDefinition(node));
-          else if (StepState.conflict.equals(operation.myState)) node.setChild(JsonSchemaTreeNode.createConflicting(node));
-          else {
-            node.addChildren(operation.myReduceContext.myAnyGroup.stream()
-                               .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
-            node.addExcludingChildren(operation.myReduceContext.myExclusiveOrGroup.stream()
-                               .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
-          }
-        } else {
-          if (conflictingSchema(nextSchema)) {
-            node.setChild(JsonSchemaTreeNode.createConflicting(node));
-          } else node.setChild(new JsonSchemaTreeNode(node, nextSchema));
-        }
+        applyChildSchema(rootSchemasMap, node, consumer.getSchema());
       }
 
       queue.addAll(node.getChildren());
@@ -107,6 +81,30 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     return root;
+  }
+
+  private static void applyChildSchema(@NotNull Map<VirtualFile, JsonSchemaObject> rootSchemasMap,
+                                       @NotNull JsonSchemaTreeNode node,
+                                       @NotNull JsonSchemaObject childSchema) {
+    if (interestingSchema(childSchema)) {
+      // todo consider standard tree walker
+      final ProcessDefinitionsOperation operation = new ProcessDefinitionsOperation(childSchema, rootSchemasMap);
+      operation.doMap();
+      operation.doReduce();
+      if (StepState.brokenDefinition.equals(operation.myState) || StepState.cyclicDefinition.equals(operation.myState))
+        node.setChild(JsonSchemaTreeNode.createNoDefinition(node));
+      else if (StepState.conflict.equals(operation.myState)) node.setChild(JsonSchemaTreeNode.createConflicting(node));
+      else {
+        node.addChildren(operation.myReduceContext.myAnyGroup.stream()
+                           .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
+        node.addExcludingChildren(operation.myReduceContext.myExclusiveOrGroup.stream()
+                           .map(s -> new JsonSchemaTreeNode(node, s)).collect(Collectors.toList()));
+      }
+    } else {
+      if (conflictingSchema(childSchema)) {
+        node.setChild(JsonSchemaTreeNode.createConflicting(node));
+      } else node.setChild(new JsonSchemaTreeNode(node, childSchema));
+    }
   }
 
   public static MatchResult simplify(@NotNull JsonSchemaObject rootSchema, @NotNull JsonSchemaObject schema) {
@@ -129,9 +127,7 @@ public class JsonSchemaVariantsTreeBuilder {
     @NotNull protected final List<Operation> myChildOperations;
     @NotNull protected final JsonSchemaObject mySourceNode;
     protected StepState myState = StepState.inProgress;
-    // todo do not forget to put first root there
-    @NotNull
-    protected final Map<VirtualFile, JsonSchemaObject> myRootSchemasMap;
+    @NotNull protected final Map<VirtualFile, JsonSchemaObject> myRootSchemasMap;
 
     protected Operation(@NotNull JsonSchemaObject sourceNode,
                         @NotNull Map<VirtualFile, JsonSchemaObject> map) {

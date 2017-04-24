@@ -84,7 +84,7 @@ public class JsonSchemaReader {
     private final String myRelativePath;
 
     public SchemaUrlSplitter(@NotNull final String ref) {
-      if (isAbsoluteReference(ref)) {
+      if (!ref.startsWith("#/")) {
         int idx = ref.indexOf("#/");
         if (idx == -1) {
           mySchemaId = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
@@ -112,9 +112,5 @@ public class JsonSchemaReader {
     public String getRelativePath() {
       return myRelativePath;
     }
-  }
-
-  static boolean isAbsoluteReference(@NotNull String ref) {
-    return !ref.startsWith("#/");
   }
 }

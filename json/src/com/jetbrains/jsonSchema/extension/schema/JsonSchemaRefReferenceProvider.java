@@ -24,6 +24,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import com.jetbrains.jsonSchema.impl.JsonSchemaWalker;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,7 @@ import java.util.List;
  * @author Irina.Chernushina on 3/31/2016.
  */
 public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
+
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
@@ -75,7 +77,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       boolean canSkip = true;
       while (iterator.hasNext()) {
         final String step = iterator.next();
-        if (canSkip && "properties".equals(step)) {
+        if (canSkip && JsonSchemaObject.PROPERTIES.equals(step)) {
           iterator.remove();
           canSkip = false;
         } else canSkip = true;

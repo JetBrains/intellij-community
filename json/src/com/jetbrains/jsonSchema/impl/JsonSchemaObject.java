@@ -10,6 +10,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.SLRUMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,8 @@ import java.util.stream.Collectors;
  * @author Irina.Chernushina on 8/28/2015.
  */
 public class JsonSchemaObject {
+  @NonNls public static final String DEFINITIONS = "definitions";
+  @NonNls public static final String PROPERTIES = "properties";
   private SmartPsiElementPointer<JsonObject> myPeerPointer;
   private String myDefinitionAddress;
   private Map<String, JsonSchemaObject> myDefinitions;
@@ -646,11 +649,11 @@ public class JsonSchemaObject {
   }
 
   @Nullable
-  public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {//todo rewrite this
+  public JsonSchemaObject findRelativeDefinition(@NotNull String ref) {
     if ("#".equals(ref) || StringUtil.isEmpty(ref)) {
       return this;
     }
-    if (JsonSchemaReader.isAbsoluteReference(ref)) {
+    if (!ref.startsWith("#/")) {
       throw new RuntimeException("Non-relative or erroneous reference: " + ref);
     }
     ref = ref.substring(2);
@@ -659,13 +662,13 @@ public class JsonSchemaObject {
     for (int i = 0; i < parts.size(); i++) {
       if (current == null) return null;
       final String part = parts.get(i);
-      if ("definitions".equals(part)) {
+      if (DEFINITIONS.equals(part)) {
         if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
         //noinspection AssignmentToForLoopParameter
         current = current.getDefinitions().get(parts.get(++i));
         continue;
       }
-      if ("properties".equals(part)) {
+      if (PROPERTIES.equals(part)) {
         if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect properties reference: " + ref);
         //noinspection AssignmentToForLoopParameter
         current = current.getProperties().get(parts.get(++i));
@@ -674,7 +677,6 @@ public class JsonSchemaObject {
 
       current = current.getDefinitions().get(part);
     }
-    if (current == null) return null;
     return current;
   }
 

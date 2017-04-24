@@ -124,7 +124,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
         }
         else return;
       } else {
-        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position, true);
+        final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(myRootSchema, false, position);
         final JsonSchemaTreeNode root = builder.buildTree();
         result = MatchResult.zipTree(root);
       }

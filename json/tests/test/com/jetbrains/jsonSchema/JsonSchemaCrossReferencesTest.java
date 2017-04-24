@@ -29,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.junit.Assert;
 
@@ -582,7 +583,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     Assert.assertTrue(parent instanceof JsonProperty);
     Assert.assertEquals(name, ((JsonProperty) parent).getName());
     Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-    Assert.assertEquals("definitions", ((JsonProperty) parent.getParent().getParent()).getName());
+    Assert.assertEquals(JsonSchemaObject.DEFINITIONS, ((JsonProperty) parent.getParent().getParent()).getName());
   }
 
   public void testInsideCycledSchemaNavigation() throws Exception {

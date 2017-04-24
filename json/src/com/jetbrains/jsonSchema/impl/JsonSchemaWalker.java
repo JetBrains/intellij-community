@@ -95,7 +95,7 @@ public class JsonSchemaWalker {
     public void step(@NotNull JsonSchemaObject parent,
                      @NotNull TransitionResultConsumerI resultConsumer,
                      boolean acceptAdditionalPropertiesSchemas) {
-      if ("definitions".equals(myName)) {
+      if (JsonSchemaObject.DEFINITIONS.equals(myName)) {
         if (parent.getDefinitions() != null) {
           final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
           final JsonSchemaObject object = new JsonSchemaObject(pointer);
