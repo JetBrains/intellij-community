@@ -189,7 +189,9 @@ public class TreeState implements JDOMExternalizable {
     return result;
   }
 
-  private static String calcId(Object userObject) {
+  @NotNull
+  private static String calcId(@Nullable Object userObject) {
+    if (userObject == null) return "";
     Object value =
       userObject instanceof NodeDescriptorProvidingKey ? ((NodeDescriptorProvidingKey)userObject).getKey() :
       userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() :
@@ -205,7 +207,9 @@ public class TreeState implements JDOMExternalizable {
     return userObject.toString();
   }
 
-  private static String calcType(Object userObject) {
+  @NotNull
+  private static String calcType(@Nullable Object userObject) {
+    if (userObject == null) return "";
     String name = userObject.getClass().getName();
     return Integer.toHexString(StringHash.murmur(name, 31)) + ":" + StringUtil.getShortName(name);
   }
