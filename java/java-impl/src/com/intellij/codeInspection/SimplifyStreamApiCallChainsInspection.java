@@ -761,10 +761,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
         PsiCodeBlock block = tryCast(lambda.getBody(), PsiCodeBlock.class);
         if (block == null) return null;
         PsiStatement[] statements = block.getStatements();
-        if (statements.length != 2) return null;
-        PsiReturnStatement returnStatement = tryCast(statements[1], PsiReturnStatement.class);
-        if (returnStatement == null || !ExpressionUtils.isReferenceTo(returnStatement.getReturnValue(), parameters[0])) return null;
-        if (VariableAccessUtils.variableIsAssigned(parameters[0]) || !(statements[0] instanceof PsiExpressionStatement)) return null;
+        if (statements.length <= 1) return null;
+        PsiReturnStatement returnStatement = tryCast(ArrayUtil.getLastElement(statements), PsiReturnStatement.class);
+        PsiParameter parameter = parameters[0];
+        if (returnStatement == null || !ExpressionUtils.isReferenceTo(returnStatement.getReturnValue(), parameter)) return null;
+        if (VariableAccessUtils.variableIsAssigned(parameter)) return null;
+        if (Arrays.stream(statements, 0, statements.length - 1).anyMatch(ControlFlowUtils::containsReturn)) return null;
         return new ReplaceWithPeekFix();
       });
     }

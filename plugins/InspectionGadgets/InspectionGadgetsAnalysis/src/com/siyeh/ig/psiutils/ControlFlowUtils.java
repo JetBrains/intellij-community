@@ -969,11 +969,10 @@ public class ControlFlowUtils {
   }
 
   private static class ReturnFinder extends JavaRecursiveElementWalkingVisitor {
-
-    private boolean m_found;
+    private boolean myFound;
 
     private boolean returnFound() {
-      return m_found;
+      return myFound;
     }
 
     @Override
@@ -987,11 +986,8 @@ public class ControlFlowUtils {
 
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
-      if (m_found) {
-        return;
-      }
-      super.visitReturnStatement(returnStatement);
-      m_found = true;
+      myFound = true;
+      stopWalking();
     }
   }
 
