@@ -64,6 +64,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
+import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -982,5 +983,54 @@ public class PlatformTestUtil {
       each.run();
     }
     ourProjectCleanups.clear();
+  }
+
+  public static <T> void assertComparisonContractNotViolated(@NotNull List<T> values,
+                                                             @NotNull Comparator<T> comparator,
+                                                             @NotNull Equality<T> equality) {
+    for (int i1 = 0; i1 < values.size(); i1++) {
+      for (int i2 = i1; i2 < values.size(); i2++) {
+        T value1 = values.get(i1);
+        T value2 = values.get(i2);
+
+        int result12 = comparator.compare(value1, value2);
+        int result21 = comparator.compare(value2, value1);
+        if (equality.equals(value1, value2)) {
+          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value1, value2), 0, result12);
+          Assert.assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
+        }
+        else {
+          if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
+          if (result21 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
+          if (Integer.signum(result12) == Integer.signum(result21)) {
+            Assert.fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
+          }
+        }
+
+        for (int i3 = i2; i3 < values.size(); i3++) {
+          T value3 = values.get(i3);
+
+          int result23 = comparator.compare(value2, value3);
+          int result31 = comparator.compare(value3, value1);
+
+          if (!isTransitive(result12, result23, result31)) {
+            Assert.fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
+          }
+        }
+      }
+    }
+  }
+
+  private static boolean isTransitive(int result12, int result23, int result31) {
+    if (result12 == 0 && result23 == 0 && result31 == 0) return true;
+
+    if (result12 > 0 && result23 > 0 && result31 > 0) return false;
+    if (result12 < 0 && result23 < 0 && result31 < 0) return false;
+
+    if (result12 == 0 && Integer.signum(result23) * Integer.signum(result31) >= 0) return false;
+    if (result23 == 0 && Integer.signum(result12) * Integer.signum(result31) >= 0) return false;
+    if (result31 == 0 && Integer.signum(result23) * Integer.signum(result12) >= 0) return false;
+
+    return true;
   }
 }
