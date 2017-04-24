@@ -38,11 +38,9 @@ public class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     @NotNull
-    public PsiElement[] getElementsByKey(String key) {
-        Set<PsiElement> targets = this.collectedDeclarations.stream().filter(declaration -> {
+    public Set<PsiElement> getElementsByKey(String key) {
+        return this.collectedDeclarations.stream().filter(declaration -> {
             return declaration.getDeclaredName().getText().equals(key);
         }).collect(Collectors.toSet());
-
-        return targets.toArray(new PsiElement[0]);
     }
 }

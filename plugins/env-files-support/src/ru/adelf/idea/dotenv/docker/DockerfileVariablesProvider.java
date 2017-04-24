@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class DockerfileVariablesProvider implements EnvVariablesProvider {
     @Override
@@ -21,19 +22,17 @@ public class DockerfileVariablesProvider implements EnvVariablesProvider {
     @NotNull
     @Override
     public Collection<Pair<String, String>> getKeyValues(FileContent fileContent) {
-        return getVisitorForFile(fileContent).getKeyValues();
+        return getVisitorForFile(fileContent.getPsiFile()).getKeyValues();
     }
 
     @NotNull
     @Override
-    public PsiElement[] getTargetsByKey(String key, FileContent fileContent) {
-        return getVisitorForFile(fileContent).getElementsByKey(key);
+    public Set<PsiElement> getTargetsByKey(String key, PsiFile psiFile) {
+        return getVisitorForFile(psiFile).getElementsByKey(key);
     }
 
-    private DockerfilePsiElementsVisitor getVisitorForFile(FileContent fileContent) {
+    private DockerfilePsiElementsVisitor getVisitorForFile(PsiFile psiFile) {
         DockerfilePsiElementsVisitor visitor = new DockerfilePsiElementsVisitor();
-
-        PsiFile psiFile = fileContent.getPsiFile();
 
         if(psiFile instanceof DockerPsiFile) {
             psiFile.acceptChildren(visitor);

@@ -18,15 +18,13 @@ import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.DotEnvFileType;
+import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
 import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
-import ru.adelf.idea.dotenv.util.DotEnvPsiElementsVisitor;
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 import ru.adelf.idea.dotenv.util.PsiUtil;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
+import java.util.*;
 
 public class DotEnvCompletionContributor extends CompletionContributor implements GotoDeclarationHandler {
     public DotEnvCompletionContributor() {
@@ -88,8 +86,8 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
         }
 
         final Project project = psiElement.getProject();
-        final DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
         String key = stringLiteral.getContents();
+        List<PsiElement> targets = new ArrayList<>();
 
         FileBasedIndex.getInstance().getFilesWithKey(DotEnvKeysIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
             PsiFile psiFileTarget = PsiManager.getInstance(project).findFile(virtualFile);
@@ -97,12 +95,16 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
                 return true;
             }
 
-            psiFileTarget.acceptChildren(visitor);
+            for(EnvVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
+                if(provider.acceptFile(virtualFile)) {
+                    targets.addAll(provider.getTargetsByKey(key, psiFileTarget));
+                }
+            }
 
             return true;
-        }, GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(project), DotEnvFileType.INSTANCE));
+        }, GlobalSearchScope.allScope(project));
 
-        return visitor.getElementsByKey(key);
+        return targets.toArray(new PsiElement[0]);
     }
 
     @Nullable

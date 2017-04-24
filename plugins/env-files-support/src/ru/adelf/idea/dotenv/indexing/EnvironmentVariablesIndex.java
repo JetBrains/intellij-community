@@ -8,18 +8,13 @@ import com.intellij.util.io.VoidDataExternalizer;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
-import ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider;
-import ru.adelf.idea.dotenv.DotEnvVariablesProvider;
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<String, Void> {
     private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
-
-    private static final Set<EnvVariablesProvider> envVariablesProviders = getEnvVariablesProviders();
 
     @NotNull
     @Override
@@ -27,7 +22,7 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
         return fileContent -> {
             final Map<String, Void> map = new HashMap<>();
 
-            for(EnvVariablesProvider provider : envVariablesProviders) {
+            for(EnvVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 for(Pair<String, String> keyValue : provider.getKeyValues(fileContent)) {
                     map.put(getIndexKey(keyValue), null);
                 }
@@ -56,7 +51,7 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
         return file -> {
-            for(EnvVariablesProvider provider : envVariablesProviders) {
+            for(EnvVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 if(provider.acceptFile(file)) return true;
             }
 
@@ -72,14 +67,5 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
     @Override
     public int getVersion() {
         return 4;
-    }
-
-    private static Set<EnvVariablesProvider> getEnvVariablesProviders() {
-        Set<EnvVariablesProvider> providers = new HashSet<>();
-
-        providers.add(new DotEnvVariablesProvider());
-        providers.add(new DockerfileVariablesProvider());
-
-        return providers;
     }
 }

@@ -6,12 +6,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.indexing.FileContent;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ru.adelf.idea.dotenv.DotEnvFileType;
 import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 import ru.adelf.idea.dotenv.util.DotEnvPsiElementsVisitor;
 
 import java.util.Collection;
+import java.util.Set;
 
 public class DotEnvVariablesProvider implements EnvVariablesProvider {
     @Override
@@ -22,19 +22,17 @@ public class DotEnvVariablesProvider implements EnvVariablesProvider {
     @NotNull
     @Override
     public Collection<Pair<String, String>> getKeyValues(FileContent fileContent) {
-        return getVisitorForFile(fileContent).getKeyValues();
+        return getVisitorForFile(fileContent.getPsiFile()).getKeyValues();
     }
 
     @NotNull
     @Override
-    public PsiElement[] getTargetsByKey(String key, FileContent fileContent) {
-        return getVisitorForFile(fileContent).getElementsByKey(key);
+    public Set<PsiElement> getTargetsByKey(String key, PsiFile psiFile) {
+        return getVisitorForFile(psiFile).getElementsByKey(key);
     }
 
-    private DotEnvPsiElementsVisitor getVisitorForFile(FileContent fileContent) {
+    private DotEnvPsiElementsVisitor getVisitorForFile(PsiFile psiFile) {
         DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
-
-        PsiFile psiFile = fileContent.getPsiFile();
 
         if(psiFile instanceof DotEnvFile) {
             psiFile.acceptChildren(visitor);

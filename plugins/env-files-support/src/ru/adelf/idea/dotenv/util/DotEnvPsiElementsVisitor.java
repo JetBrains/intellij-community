@@ -42,13 +42,11 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
     }
 
     @NotNull
-    public PsiElement[] getElementsByKey(String key) {
-        Set<DotEnvProperty> targets = this.collectedProperties.stream().filter(property -> {
+    public Set<PsiElement> getElementsByKey(String key) {
+        return this.collectedProperties.stream().filter(property -> {
             String[] splitParts = property.getText().split("=", -1);
 
             return splitParts[0].trim().equals(key);
         }).collect(Collectors.toSet());
-
-        return targets.toArray(new PsiElement[0]);
     }
 }
