@@ -110,7 +110,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   @Nullable
-  public RunConfigurableBeforeRunTask createTask(RunConfiguration runConfiguration) {
+  public RunConfigurableBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     if (runConfiguration.getProject().isInitialized()) {
       Collection<RunnerAndConfigurationSettings> configurations =
         RunManagerImpl.getInstanceImpl(runConfiguration.getProject()).getAllSettings();

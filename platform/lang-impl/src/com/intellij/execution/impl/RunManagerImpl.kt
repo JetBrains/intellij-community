@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -748,14 +747,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = provider.createTask(settings.configuration)
-      if (beforeRunTask != null) {
-        beforeRunTask.readExternal(methodElement)
-        if (result == null) {
-          result = SmartList()
-        }
-        result.add(beforeRunTask)
+      val beforeRunTask = provider.createTask(settings.configuration) ?: continue
+      beforeRunTask.readExternal(methodElement)
+      if (result == null) {
+        result = SmartList()
       }
+      result.add(beforeRunTask)
     }
     return result ?: emptyList()
   }
