@@ -27,9 +27,9 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -40,16 +40,16 @@ public class ParameterHintsUpdater {
   private final ParameterHintsPresentationManager myHintsManager = ParameterHintsPresentationManager.getInstance();
   private final TIntObjectHashMap<Caret> myCaretMap;
   
-  private final Map<Integer, String> myNewHints;
-  private final Map<Integer, String> myHintsToPreserve;
+  private final TIntObjectHashMap<String> myNewHints;
+  private final TIntObjectHashMap<String> myHintsToPreserve;
 
   private final Editor myEditor;
   private final List<InlayUpdateInfo> myUpdateList;
 
   public ParameterHintsUpdater(@NotNull Editor editor,
                                @NotNull List<Inlay> inlays,
-                               @NotNull Map<Integer, String> newHints,
-                               @NotNull Map<Integer, String> hintsToPreserve) {
+                               @NotNull TIntObjectHashMap<String> newHints,
+                               @NotNull TIntObjectHashMap<String> hintsToPreserve) {
     myEditor = editor;
     myNewHints = newHints;
     myHintsToPreserve = hintsToPreserve;
@@ -71,9 +71,9 @@ public class ParameterHintsUpdater {
       if (delayRemoval(editorHint) || myHintsManager.isPinned(editorHint) || isPreserveHint(editorHint)) return;
       updates.add(new InlayUpdateInfo(offset, editorHint, newText));
     });
-    
-    myNewHints.keySet().forEach((offset) -> updates.add(new InlayUpdateInfo(offset, null, myNewHints.get(offset))));
-    
+
+    Arrays.stream(myNewHints.keys()).forEach((offset) -> updates.add(new InlayUpdateInfo(offset, null, myNewHints.get(offset))));
+
     updates.sort(Comparator.comparing((update) -> update.offset));
     return updates;
   }
