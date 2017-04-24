@@ -83,6 +83,9 @@ public class InheritanceUtil {
     final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
     if (aClass.isInterface() && FunctionalExpressionSearch.search(aClass, scope).findFirst() != null) return true;
     for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+      if (!provider.isApplicableTo(aClass)) {
+        continue;
+      }
       SubclassingInfo info = provider.getSubclassingInfo(aClass);
       if (info != null && !info.isAbstract()) {
         return true;
