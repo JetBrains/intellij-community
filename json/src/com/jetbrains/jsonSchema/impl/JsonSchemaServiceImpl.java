@@ -49,16 +49,18 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
-    myState = new MyState(Arrays.stream(getProviderFactories())
-                            .map(JsonSchemaProviderFactory::getProviders)
-                            .flatMap(List::stream)
-                            .collect(Collectors.toList()),
-                          () -> Arrays.stream(getProviderFactories())
-                            .map(factory -> factory.getProviders(myProject))
-                            .flatMap(List::stream)
-                            .collect(Collectors.toList()));
+    myState = new MyState(getProvidersFromFactories(JsonSchemaProviderFactory::getProviders),
+                          () -> getProvidersFromFactories(factory -> factory.getProviders(myProject)));
     myModificationTracker = () -> myModificationCount.get();
     JsonSchemaVfsListener.startListening(project, this);
+  }
+
+  private List<JsonSchemaFileProvider> getProvidersFromFactories(
+    @NotNull final Function<JsonSchemaProviderFactory, List<JsonSchemaFileProvider>> function) {
+    return Arrays.stream(getProviderFactories())
+      .map(function)
+      .flatMap(List::stream)
+      .collect(Collectors.toList());
   }
 
   @NotNull
