@@ -30,6 +30,10 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>Docker</depends>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvVariablesProvider"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
@@ -41,6 +45,11 @@
 
     <fileTypeFactory implementation="ru.adelf.idea.dotenv.DotEnvFileTypeFactory"/>
     <lang.parserDefinition language="DotEnv" implementationClass="ru.adelf.idea.dotenv.DotEnvParserDefinition"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider"/>
   </extensions>
 
   <actions>

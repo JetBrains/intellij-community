@@ -1,9 +1,10 @@
 package ru.adelf.idea.dotenv.util;
 
-import ru.adelf.idea.dotenv.DotEnvVariablesProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import ru.adelf.idea.dotenv.api.EnvVariablesProvider;
-import ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,8 +14,7 @@ public class EnvironmentVariablesProviderUtil {
     private static Set<EnvVariablesProvider> getEnvVariablesProviders() {
         Set<EnvVariablesProvider> providers = new HashSet<>();
 
-        providers.add(new DotEnvVariablesProvider());
-        providers.add(new DockerfileVariablesProvider());
+        Collections.addAll(providers, Extensions.getExtensions(ExtensionPointName.create("ru.adelf.idea.dotenv.environmentVariablesProvider")));
 
         return providers;
     }
