@@ -48,7 +48,9 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
 
   @Override
   protected PyInjectionUtil.InjectionResult registerInjection(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
+    // Handles only string literals containing quoted types
     final PyInjectionUtil.InjectionResult result = super.registerInjection(registrar, context);
+    
     if (result == PyInjectionUtil.InjectionResult.EMPTY && context.getContainingFile() instanceof PyFile && 
         context instanceof PsiComment && context instanceof PsiLanguageInjectionHost) {
       return registerCommentInjection(registrar, (PsiLanguageInjectionHost)context);
@@ -79,14 +81,14 @@ public class PyTypingAnnotationInjector extends PyInjectorBase {
         final int start = m.start(1);
         final int end = m.end(1);
         if (start < end && allowInjectionInComment(host)) {
-          Language language = null;
+          final Language language;
           if ("ignore".equals(annotationText)) {
             language = null;
           }
           else if (isFunctionTypeComment(host)) {
             language = PyFunctionTypeAnnotationDialect.INSTANCE;
           }
-          else if (isTypingAnnotation(annotationText)) {
+          else {
             language = PyDocstringLanguageDialect.getInstance();
           }
           if (language != null) {

@@ -692,6 +692,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
   
+  // PY-22620
+  public void testTupleTypeCommentsUseImportsFromTyping() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest();
+  }
+  
   // PY-19084
   public void testPercentStringPositionalListArgument() {
     doTest();

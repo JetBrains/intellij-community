@@ -386,6 +386,32 @@ public class PyTypingTest extends PyTestCase {
                          "        pass\n");
   }
 
+  // PY-22620
+  public void testVariableTypeCommentInjectionTuple() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionParenthesisedTuple() {
+    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
+                       "(int, int)");
+  }
+
+  // PY-22620
+  public void testForTypeCommentInjectionTuple() {
+    doTestInjectedText("for x, y in undefined():  # type: int,<caret> int\n" +
+                       "    pass", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testWithTypeCommentInjectionTuple() {
+    doTestInjectedText("with undefined() as (x, y):  # type: int,<caret> int\n" +
+                       "    pass",
+                       "int, int");
+  }
+
   // PY-16125
   public void testIterableForLoop() {
     doTest("int",
