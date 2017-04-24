@@ -123,6 +123,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
+  @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
 
   internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
@@ -853,20 +854,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
-    val uniqueID = settings.uniqueID
-    val selectedConfiguration = selectedConfiguration
-    val selectedId = if (selectedConfiguration != null) selectedConfiguration.uniqueID else ""
-    if (selectedId == uniqueID) {
-      iconCache.checkValidity(uniqueID)
+    val uniqueId = settings.uniqueID
+    if (selectedConfiguration?.uniqueID == uniqueId) {
+      iconCache.checkValidity(uniqueId)
     }
-    var icon = iconCache.get(uniqueID, settings, project)
+    var icon = iconCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === settings }
-      if (runningDescriptors.size == 1) {
-        icon = ExecutionUtil.getLiveIndicator(icon)
-      }
-      if (runningDescriptors.size > 1) {
-        icon = IconUtil.addText(icon, runningDescriptors.size.toString())
+      when {
+        runningDescriptors.size == 1 -> icon = ExecutionUtil.getLiveIndicator(icon)
+        runningDescriptors.size > 1 -> icon = IconUtil.addText(icon, runningDescriptors.size.toString())
       }
     }
     return icon
@@ -1108,6 +1105,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           settings.schemeManager?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
           recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
+          iconCache.remove(settings.uniqueID)
         }
         else {
           var isChanged = false
