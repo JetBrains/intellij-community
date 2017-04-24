@@ -70,7 +70,11 @@ public class Java9ReflectionClassVisibilityInspection extends BaseJavaBatchLocal
       final String className = computeConstantExpression(classNameArgument, String.class);
       if (className != null) {
         final Project project = holder.getProject();
-        final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project));
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
+        PsiClass psiClass = facade.findClass(className, holder.getFile().getResolveScope());
+        if (psiClass == null) {
+          psiClass = facade.findClass(className, GlobalSearchScope.allScope(project));
+        }
         if (psiClass != null) {
           final PsiJavaModule otherModule = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
           if (otherModule != null && otherModule != javaModule) {
