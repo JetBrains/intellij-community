@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class SwitchStatement extends Statement {
 
   private StatEdge default_edge;
 
-  private final List<Exprent> headexprent = new ArrayList<>();
+  private final List<Exprent> headexprent = new ArrayList<>(1);
 
   // *****************************************************************************
   // constructors
