@@ -18,7 +18,7 @@ package com.intellij.compiler.chainsSearch;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.chainsSearch.context.TargetType;
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
@@ -40,21 +40,21 @@ public class ChainsSearcher {
 
   @NotNull
   public static List<MethodsChain> search(int pathMaximalLength,
-                                          TargetType targetType,
+                                          ChainSearchTarget searchTarget,
                                           int maxResultSize,
                                           ChainCompletionContext context,
                                           CompilerReferenceServiceEx compilerReferenceServiceEx) {
-    SearchInitializer initializer = createInitializer(targetType, compilerReferenceServiceEx, context);
+    SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx,
                   initializer,
                   pathMaximalLength,
                   maxResultSize,
-                  targetType.getClassQName(),
+                  searchTarget.getClassQName(),
                   context);
   }
 
   @NotNull
-  private static SearchInitializer createInitializer(TargetType target,
+  private static SearchInitializer createInitializer(ChainSearchTarget target,
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
     SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = null;

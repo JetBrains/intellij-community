@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.backwardRefs
 
-import com.intellij.compiler.chainsSearch.context.TargetType
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
@@ -70,7 +70,7 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
             }
           }
           SignatureData.ITERATOR_ONE_DIM -> {
-            val iteratorKind = TargetType.getIteratorKind(PsiUtil.resolveClassInClassTypeOnly(returnType))
+            val iteratorKind = ChainSearchTarget.getIteratorKind(PsiUtil.resolveClassInClassTypeOnly(returnType))
             when {
               iteratorKind != null -> PsiUtil.resolveClassInClassTypeOnly(PsiUtil.substituteTypeParameter(returnType, iteratorKind, 0, false))?.qualifiedName == rawReturnType
               else -> false

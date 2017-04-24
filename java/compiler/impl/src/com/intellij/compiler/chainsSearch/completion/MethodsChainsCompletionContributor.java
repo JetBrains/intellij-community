@@ -25,7 +25,7 @@ import com.intellij.compiler.chainsSearch.ChainsSearcher;
 import com.intellij.compiler.chainsSearch.MethodsChain;
 import com.intellij.compiler.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.chainsSearch.context.TargetType;
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
@@ -94,7 +94,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
     CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
-    TargetType target = context.getTarget();
+    ChainSearchTarget target = context.getTarget();
     List<MethodsChain> searchResult =
       ChainsSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
                             target,
