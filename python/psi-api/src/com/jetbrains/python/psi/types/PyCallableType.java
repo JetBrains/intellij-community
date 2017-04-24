@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ public interface PyCallableType extends PyType {
   /**
    * Returns true if the type is callable.
    */
-  boolean isCallable();
+  default boolean isCallable() {
+    return true;
+  }
 
   /**
    * Returns the return type of a function independent of a call site.
@@ -54,5 +56,7 @@ public interface PyCallableType extends PyType {
    * @return list of parameter info null if not applicable.
    */
   @Nullable
-  List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context);
+  default List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    return null;
+  }
 }

@@ -494,12 +494,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
   }
 
-  @Nullable
-  @Override
-  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return null;
-  }
-
   @NotNull
   @Override
   public final List<PyClassLikeType> getAncestorTypes(@NotNull final TypeEvalContext context) {
