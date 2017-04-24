@@ -113,9 +113,7 @@ public class JsonSchemaAnnotator implements Annotator {
       if (!JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) return false;
       final JsonSchemaVariantsTreeBuilder.Step firstStep = position.get(0);
       assert firstStep != null;
-      final JsonSchemaVariantsTreeBuilder.PropertyTransition transition =
-        ObjectUtils.tryCast(firstStep.getTransition(), JsonSchemaVariantsTreeBuilder.PropertyTransition.class);
-      return  transition != null && JsonSchemaObject.DEFINITIONS.equals(transition.getName());
+      return firstStep.isFromObject() && JsonSchemaObject.DEFINITIONS.equals(firstStep.getName());
     }
 
     private void checkRootObject(@NotNull JsonValueAdapter adapter, @NotNull JsonSchemaObject rootSchema) {
@@ -436,8 +434,7 @@ public class JsonSchemaAnnotator implements Annotator {
       boolean canSkip = true;
       while (iterator.hasNext()) {
         final JsonSchemaVariantsTreeBuilder.Step step = iterator.next();
-        if (canSkip && step.getTransition() instanceof JsonSchemaVariantsTreeBuilder.PropertyTransition &&
-            JsonSchemaObject.PROPERTIES.equals(((JsonSchemaVariantsTreeBuilder.PropertyTransition)step.getTransition()).getName())) {
+        if (canSkip && step.isFromObject() && JsonSchemaObject.PROPERTIES.equals(step.getName())) {
           iterator.remove();
           canSkip = false;
         } else canSkip = true;
