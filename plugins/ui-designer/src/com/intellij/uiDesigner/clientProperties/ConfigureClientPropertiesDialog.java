@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private JTree myClassTree;
   private JTable myPropertiesTable;
   private Class mySelectedClass;
-  private ClientPropertiesManager.ClientProperty[] mySelectedProperties = new ClientPropertiesManager.ClientProperty[0];
+  private List<ClientPropertiesManager.ClientProperty> mySelectedProperties = Collections.emptyList();
   private final MyTableModel myTableModel = new MyTableModel();
   private final Project myProject;
   private final ClientPropertiesManager myManager;
@@ -68,11 +69,13 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     myTableModel.fireTableDataChanged();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     myClassTree = new Tree();
     myClassTree.setRootVisible(false);
     myClassTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath leadSelectionPath = e.getNewLeadSelectionPath();
         if (leadSelectionPath == null) return;
@@ -83,7 +86,8 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
     });
 
     myClassTree.setCellRenderer(new ColoredTreeCellRenderer() {
-      public void customizeCellRenderer(JTree tree,
+      @Override
+      public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
                                         boolean expanded,
@@ -172,11 +176,13 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
         @Override
         public void run(AnActionButton button) {
           int row = myPropertiesTable.getSelectedRow();
-          if (row >= 0 && row < mySelectedProperties.length) {
-            myManager.removeConfiguredProperty(mySelectedClass, mySelectedProperties[row].getName());
+          if (row >= 0 && row < mySelectedProperties.size()) {
+            myManager.removeConfiguredProperty(mySelectedClass, mySelectedProperties.get(row).getName());
             updateSelectedProperties();
-            if (mySelectedProperties.length > 0) {
-              if (row >= mySelectedProperties.length) row--;
+            if (!mySelectedProperties.isEmpty()) {
+              if (row >= mySelectedProperties.size()) {
+                row--;
+              }
               myPropertiesTable.getSelectionModel().setSelectionInterval(row, row);
             }
           }
@@ -189,6 +195,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private void fillClassTree() {
     List<Class> configuredClasses = myManager.getConfiguredClasses();
     Collections.sort(configuredClasses, new Comparator<Class>() {
+      @Override
       public int compare(final Class o1, final Class o2) {
         return getInheritanceLevel(o1) - getInheritanceLevel(o2);
       }
@@ -233,20 +240,23 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   private class MyTableModel extends AbstractTableModel {
+    @Override
     public int getRowCount() {
-      return mySelectedProperties.length;
+      return mySelectedProperties.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case 0:
-          return mySelectedProperties[rowIndex].getName();
+          return mySelectedProperties.get(rowIndex).getName();
         default:
-          return mySelectedProperties[rowIndex].getValueClass();
+          return mySelectedProperties.get(rowIndex).getValueClass();
       }
     }
 

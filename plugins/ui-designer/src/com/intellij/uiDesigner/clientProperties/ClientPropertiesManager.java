@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.openapi.components.AbstractProjectComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
-import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +33,8 @@ import java.util.*;
 /**
  * @author yole
  */
-public class ClientPropertiesManager extends AbstractProjectComponent implements JDOMExternalizable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.clientProperties.ClientPropertiesManager");
+public class ClientPropertiesManager implements JDOMExternalizable, ProjectComponent {
+  private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
   @NonNls private static final String ELEMENT_PROPERTIES = "properties";
   @NonNls private static final String ELEMENT_PROPERTY = "property";
@@ -43,7 +42,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String COMPONENT_NAME = "ClientPropertiesManager";
 
-  public static ClientPropertiesManager getInstance(final Project project) {
+  public static ClientPropertiesManager getInstance(@NotNull Project project) {
     return project.getComponent(ClientPropertiesManager.class);
   }
 
@@ -53,7 +52,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
   private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<>();
 
   public ClientPropertiesManager() {
-    super(null);
+    super();
   }
 
   private ClientPropertiesManager(final Map<String, List<ClientProperty>> propertyMap) {
@@ -61,6 +60,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     myPropertyMap.putAll(propertyMap);
   }
 
+  @Override
   public ClientPropertiesManager clone() {
     return new ClientPropertiesManager(myPropertyMap);
   }
@@ -70,8 +70,20 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     myPropertyMap.putAll(manager.myPropertyMap);
   }
 
+  @Override
   public void projectOpened() {
-    checkInitDefaultManager();
+    // in Upsource projectOpened can be executed concurrently for 2 projects
+    synchronized (DEFAULT_MANAGER_LOCK) {
+      if (ourDefaultManager == null) {
+        ourDefaultManager = new ClientPropertiesManager();
+        try {
+          ourDefaultManager.readExternal(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+      }
+    }
   }
 
   @Nullable
@@ -81,23 +93,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     }
   }
 
-  private static void checkInitDefaultManager() {
-    synchronized (DEFAULT_MANAGER_LOCK) { // in Upsource projectOpened can be executed concurrently for 2 projects
-      if (ourDefaultManager == null) {
-        ourDefaultManager = new ClientPropertiesManager();
-        try {
-          //noinspection HardCodedStringLiteral
-          final Document document = new SAXBuilder().build(ClientPropertiesManager.class.getResource("/" + COMPONENT_NAME + ".xml"));
-          final Element child = document.getRootElement();
-          ourDefaultManager.readExternal(child);
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
-
+  @Override
   @NotNull @NonNls
   public String getComponentName() {
     return COMPONENT_NAME;
@@ -120,6 +116,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
       return myClass;
     }
 
+    @Override
     public int compareTo(final Object o) {
       ClientProperty prop = (ClientProperty) o;
       return myName.compareTo(prop.getName());
@@ -145,6 +142,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     }
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myPropertyMap.clear();
     for(Object o: element.getChildren(ELEMENT_PROPERTIES)) {
@@ -161,6 +159,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (equals(getDefaultManager())) {
       throw new WriteExternalException();
@@ -222,14 +221,16 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
     myPropertyMap.remove(selectedClass.getName());
   }
 
-  public ClientProperty[] getConfiguredProperties(Class componentClass) {
-    final List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
-    if (list == null) return new ClientProperty[0];
-    return list.toArray(new ClientProperty[list.size()]);
+  public List<ClientProperty> getConfiguredProperties(Class componentClass) {
+    List<ClientProperty> list = myPropertyMap.get(componentClass.getName());
+    if (list == null) {
+      return Collections.emptyList();
+    }
+    return new ArrayList<>(list);
   }
 
   public ClientProperty[] getClientProperties(Class componentClass) {
-    ArrayList<ClientProperty> result = new ArrayList<>();
+    List<ClientProperty> result = new ArrayList<>();
     while(!componentClass.getName().equals(Object.class.getName())) {
       List<ClientProperty> props = myPropertyMap.get(componentClass.getName());
       if (props != null) {
@@ -237,7 +238,7 @@ public class ClientPropertiesManager extends AbstractProjectComponent implements
       }
       componentClass = componentClass.getSuperclass();
     }
-    Collections.sort(result);
+    result.sort(null);
     return result.toArray(new ClientProperty[result.size()]);
   }
 
