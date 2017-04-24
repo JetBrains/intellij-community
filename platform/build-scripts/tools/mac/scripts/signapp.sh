@@ -5,6 +5,7 @@ EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
 CODESIGN_STRING=$5
+HELP_DIR_NAME=$6
 
 cd $(dirname $0)
 
@@ -19,8 +20,8 @@ unzip -q $1.sit -d ${EXPLODED}/
 rm $1.sit
 BUILD_NAME=$(ls ${EXPLODED}/)
 
-if [ $# -eq 6 ] && [ -f $6 ]; then
-  archiveJDK="$6"
+if [ $# -eq 7 ] && [ -f $7 ]; then
+  archiveJDK="$7"
   echo "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   jdk=jdk-bundled
@@ -37,11 +38,12 @@ if [ $# -eq 6 ] && [ -f $6 ]; then
   rm -f $archiveJDK
 fi
 
-HELP_FILE=`ls ${EXPLODED}/"$BUILD_NAME"/Contents/Resources/ | grep -i help`
-HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_FILE"/Contents/Resources/English.lproj/
+if [ $HELP_DIR_NAME != "no-help" ]; then
+  HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
 
-echo "Building help indices for $HELP_DIR"
-hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
+  echo "Building help indices for $HELP_DIR"
+  hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
+fi
 
 #enable nullglob option to ensure that 'for' cycles don't iterate if nothing matches to the file pattern
 shopt -s nullglob
