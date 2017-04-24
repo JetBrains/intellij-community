@@ -107,45 +107,8 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     defaultProject.save()
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
-    LOG.catchAndLog {
-      removeWorkspaceComponentConfiguration(defaultProject, element)
-    }
-
-    if (isDirectoryBased) {
-      LOG.catchAndLog {
-        val iterator = element.getChildren("component").iterator()
-        for (component in iterator) {
-          when (component.getAttributeValue("name")) {
-            "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true)
-            "CopyrightManager" -> {
-              iterator.remove()
-              convertProfiles(component.getChildren("copyright").iterator(), false)
-              if (!component.isEmpty()) {
-                component.removeAttribute("name")
-                val wrapper = Element("component").attribute("name", "CopyrightManager")
-                component.name = "settings"
-                wrapper.addContent(component)
-                JDOMUtil.write(wrapper, Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), "copyright", "profiles_settings.xml").outputStream(), "\n")
-              }
-            }
-          }
-        }
-      }
-    }
+    normalizeDefaultProjectElement(defaultProject, element, if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null)
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
-  }
-
-  fun convertProfiles(profileIterator: MutableIterator<Element>, isInspection: Boolean) {
-    for (profile in profileIterator) {
-      val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
-
-      profileIterator.remove()
-      val wrapper = Element("component").attribute("name", if (isInspection) "InspectionProjectProfileManager" else "CopyrightManager")
-      wrapper.addContent(profile)
-      val path = Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), if (isInspection) "inspectionProfiles" else "copyright",
-          "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
-      JDOMUtil.write(wrapper, path.outputStream(), "\n")
-    }
   }
 
   override final fun getProjectBasePath(): String {
@@ -451,8 +414,7 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
   }
 }
 
-// public only to test
-fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element) {
+private fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
     return
@@ -482,6 +444,49 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
     }
   }
   return
+}
+
+// public only to test
+fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: String?) {
+  LOG.catchAndLog {
+    removeWorkspaceComponentConfiguration(defaultProject, element)
+  }
+
+  if (projectConfigDir == null) {
+    return
+  }
+
+  LOG.catchAndLog {
+    val iterator = element.getChildren("component").iterator()
+    for (component in iterator) {
+      when (component.getAttributeValue("name")) {
+        "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true, projectConfigDir)
+        "CopyrightManager" -> {
+          iterator.remove()
+          convertProfiles(component.getChildren("copyright").iterator(), false, projectConfigDir)
+          component.removeAttribute("name")
+          if (!component.isEmpty()) {
+            val wrapper = Element("component").attribute("name", "CopyrightManager")
+            component.name = "settings"
+            wrapper.addContent(component)
+            JDOMUtil.write(wrapper, Paths.get(projectConfigDir, "copyright", "profiles_settings.xml").outputStream(), "\n")
+          }
+        }
+      }
+    }
+  }
+}
+
+private fun convertProfiles(profileIterator: MutableIterator<Element>, isInspection: Boolean, projectConfigDir: String) {
+  for (profile in profileIterator) {
+    val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
+
+    profileIterator.remove()
+    val wrapper = Element("component").attribute("name", if (isInspection) "InspectionProjectProfileManager" else "CopyrightManager")
+    wrapper.addContent(profile)
+    val path = Paths.get(projectConfigDir, if (isInspection) "inspectionProfiles" else "copyright", "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
+    JDOMUtil.write(wrapper, path.outputStream(), "\n")
+  }
 }
 
 private fun getNameIfWorkspaceStorage(aClass: Class<*>): String? {

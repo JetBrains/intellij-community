@@ -11,11 +11,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
-import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
@@ -106,6 +106,12 @@ internal class DefaultProjectStoreTest {
   @Test fun `new project from default - remove workspace component configuration`() {
     val element = loadElement("""
     <state>
+      <component name="CopyrightManager">
+        <copyright>
+          <option name="myName" value="Foo" />
+          <option name="notice" value="where" />
+        </copyright>
+      </component>
       <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
       <component name="masterDetails">
         <states>
@@ -136,7 +142,21 @@ internal class DefaultProjectStoreTest {
         </states>
       </component>
     </state>""")
-    removeWorkspaceComponentConfiguration(ProjectManager.getInstance().defaultProject, element)
+
+    val tempDir = tempDirManager.newPath()
+    normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir.toString())
     assertThat(element.isEmpty()).isTrue()
+
+    val directoryTree = printDirectoryTree(tempDir)
+    assertThat(directoryTree.trim()).isEqualTo("""
+    ├──new project from default - remove workspace component configuration/
+      ├──copyright/
+        ├──Foo.xml
+    <component name="CopyrightManager">
+      <copyright>
+        <option name="myName" value="Foo" />
+        <option name="notice" value="where" />
+      </copyright>
+    </component>""".trimIndent())
   }
 }
