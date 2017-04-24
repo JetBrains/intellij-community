@@ -7,7 +7,7 @@ public class AccessNotObjectSubclass {
     Stream.of(1, 2, 3).peek(new Super() {
       @Override
       public void accept(Integer integer) {
-        System.out.println(new MyClass().toString());
+        final String str = new MyClass().toString();
       }
     }).count();
   }

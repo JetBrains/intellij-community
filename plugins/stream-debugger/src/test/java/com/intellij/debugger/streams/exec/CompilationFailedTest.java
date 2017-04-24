@@ -15,8 +15,22 @@
  */
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
+import com.intellij.execution.ExecutionException;
+
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * @author Vitaliy.Bibaev
  */
-public class CompilationFailedTest {
+public class CompilationFailedTest extends FailEvaluationTestCase {
+  public void testCompilationErrorDetected() throws InterruptedException, ExecutionException, InvocationTargetException {
+    doTest(true);
+  }
+
+  @Override
+  protected TraceExpressionBuilder getExpressionBuilder() {
+    final TraceExpressionBuilder builder = super.getExpressionBuilder();
+    return chain -> "float a = 0.;\n" + builder.createTraceExpression(chain);
+  }
 }

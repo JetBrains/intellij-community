@@ -19,7 +19,8 @@ java.lang.RuntimeException: error!
 	at java.util.stream.ReferencePipeline.count(ReferencePipeline.java:!LINE_NUMBER!)
 	at ExceptionWhenEvaluating$GeneratedEvaluationClass.invoke(ExceptionWhenEvaluating.java:!LINE_NUMBER!)
 	at ExceptionWhenEvaluating.main(ExceptionWhenEvaluating.java:!LINE_NUMBER!)
-Evaluation result type is unexpected
+Evaluation failed
+Evaluation failed: java.lang.RuntimeException exception thrown: error!
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 1
