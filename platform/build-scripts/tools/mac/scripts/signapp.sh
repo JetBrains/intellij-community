@@ -43,6 +43,9 @@ HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_FILE"/Contents/Reso
 echo "Building help indices for $HELP_DIR"
 hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 
+#enable nullglob option to ensure that 'for' cycles don't iterate if nothing matches to the file pattern
+shopt -s nullglob
+
 for f in ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.jnilib ; do
   if [ -f "$f" ]; then
     b="$(basename "$f" .jnilib)"
@@ -56,6 +59,7 @@ for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
     mv "$f" ${EXPLODED}/"$BUILD_NAME"/Contents/Resources
   fi
 done
+shopt -u nullglob
 
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
