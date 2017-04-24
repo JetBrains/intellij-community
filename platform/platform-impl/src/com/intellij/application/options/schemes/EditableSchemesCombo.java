@@ -32,6 +32,8 @@ import java.awt.event.*;
 import java.util.Collection;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+
 public class EditableSchemesCombo<T extends Scheme> {
   
   // region Message constants
@@ -210,7 +212,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   @Nullable
   private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
-    if (name.isEmpty()) {
+    if (isEmptyOrSpaces(name)) {
       return EMPTY_NAME_MESSAGE;
     }
     else if (mySchemesPanel.getModel().containsScheme(name, isProjectScheme)) {
