@@ -17,23 +17,19 @@ package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class FailEvaluationTest extends TraceExecutionTestCase {
-  public void testExceptionWhenEvaluating() throws InterruptedException, ExecutionException, InvocationTargetException {
-    doTest(false);
-  }
+public abstract class FailEvaluationTestCase extends TraceExecutionTestCase {
 
   @Override
   protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull TraceExecutionTestCase.FailureReason reason) {
+    println(StringUtil.capitalize(reason.toString().toLowerCase()) + " failed", ProcessOutputTypes.SYSTEM);
     println(error, ProcessOutputTypes.SYSTEM);
   }
 
