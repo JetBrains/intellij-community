@@ -56,9 +56,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   
   // region Colors (probably should be standard for platform UI)
   
-  protected final Color HINT_FOREGROUND = JBColor.GRAY;
+  protected static final Color HINT_FOREGROUND = JBColor.GRAY;
   @SuppressWarnings("UseJBColor")
-  protected final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+  protected static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
   
   // endregion
 
@@ -234,5 +234,16 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
         JBPopupFactory.getInstance().createActionGroupPopup(null, myActionGroup, e.getDataContext(), true, null, Integer.MAX_VALUE);
       actionGroupPopup.show(new RelativePoint(myParentComponent, new Point(JBUI.scale(2), myParentComponent.getHeight() - JBUI.scale(1))));
     }
+  }
+
+  protected static void showMessage(@Nullable String message,
+                                    @NotNull MessageType messageType,
+                                    @NotNull JLabel infoComponent) {
+    infoComponent.setText(message);
+    Color foreground =
+      messageType == MessageType.INFO ? HINT_FOREGROUND :
+      messageType == MessageType.ERROR ? ERROR_MESSAGE_FOREGROUND :
+      messageType.getTitleForeground();
+    infoComponent.setForeground(foreground);
   }
 }
