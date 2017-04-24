@@ -19,7 +19,6 @@ package com.intellij.openapi.roots.impl.libraries;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,10 +40,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class LibraryTableBase implements PersistentStateComponent<Element>, LibraryTable, Disposable {
+public abstract class LibraryTableBase implements LibraryTable, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.libraries.LibraryTableBase");
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
-  private LibraryModel myModel = new LibraryModel();
+  protected LibraryModel myModel = new LibraryModel();
   private boolean myFirstLoad = true;
 
   private volatile long myModificationCount;
@@ -55,7 +54,6 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return new LibraryModel(myModel);
   }
 
-  @Override
   public Element getState() {
     final Element element = new Element("state");
     try {
@@ -67,7 +65,6 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return element;
   }
 
-  @Override
   public void loadState(final Element element) {
     if (myFirstLoad) {
       myModel.readExternal(element);
@@ -330,6 +327,21 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
         }
         else {
           Disposer.dispose(library);
+        }
+      }
+      myLibraryByNameCache = null;
+    }
+
+    public void setLibraries(List<LibraryImpl> libraries) {
+      myLibraries.clear();
+
+      for (LibraryImpl library : libraries) {
+        if (library.getName() == null) {
+          Disposer.dispose(library);
+        }
+        else {
+          myLibraries.add(library);
+          fireLibraryAdded(library);
         }
       }
       myLibraryByNameCache = null;

@@ -16,15 +16,17 @@
 
 package com.intellij.openapi.roots.impl.libraries;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import org.jdom.Element;
 
 /**
  *  @author dsl
  */
-public class ApplicationLibraryTable extends LibraryTableBase {
+public class ApplicationLibraryTable extends LibraryTableBase implements PersistentStateComponent<Element> {
   private static final LibraryTablePresentation GLOBAL_LIBRARY_TABLE_PRESENTATION = new LibraryTablePresentation() {
     @Override
     public String getDisplayName(boolean plural) {

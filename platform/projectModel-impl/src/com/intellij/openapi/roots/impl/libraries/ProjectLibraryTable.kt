@@ -15,32 +15,53 @@
  */
 package com.intellij.openapi.roots.impl.libraries
 
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.StateSplitterEx
-import com.intellij.openapi.components.Storage
+import com.intellij.configurationStore.LazySchemeProcessor
+import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablePresentation
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.util.Pair
 import org.jdom.Element
+import java.util.function.Function
 
-@State(name = "libraryTable", storages = arrayOf(Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter::class)))
-class ProjectLibraryTable : LibraryTableBase() {
+class ProjectLibraryTable(project: Project) : LibraryTableBase() {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): LibraryTable = project.service<ProjectLibraryTable>()
   }
 
+  private val schemeManager = SchemeManagerFactory.getInstance(project).create("libraries", object : LazySchemeProcessor<LibraryImpl, LibraryImpl>() {
+    override fun createScheme(dataHolder: SchemeDataHolder<LibraryImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): LibraryImpl {
+      val child = dataHolder.read().getChild("library")
+      PathMacroManager.getInstance(project).expandPaths(child)
+      return LibraryImpl(this@ProjectLibraryTable, child, null)
+    }
+
+    override fun isExternalizable(scheme: LibraryImpl) = true
+
+    override fun onSchemeDeleted(scheme: LibraryImpl) {
+    }
+
+    override fun writeScheme(scheme: LibraryImpl): Element {
+      val element = Element("component").setAttribute("name", "libraryTable")
+      scheme.writeExternal(element)
+      PathMacroManager.getInstance(project).collapsePaths(element)
+      return element
+    }
+  }, isUseOldFileNameSanitize = true)
+
+  init {
+    schemeManager.loadSchemes()
+    myModel.setLibraries(schemeManager.allSchemes)
+  }
+
   override fun getTableLevel() = LibraryTablesRegistrar.PROJECT_LEVEL
 
   override fun getPresentation() = PROJECT_LIBRARY_TABLE_PRESENTATION
-
-  class LibraryStateSplitter : StateSplitterEx() {
-    override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
-  }
 }
 
 private val PROJECT_LIBRARY_TABLE_PRESENTATION = object : LibraryTablePresentation() {
