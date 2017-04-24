@@ -15,7 +15,7 @@ import java.util.Collection;
 public class DockerfileVariablesProvider implements EnvVariablesProvider {
     @Override
     public boolean acceptFile(VirtualFile file) {
-        return file.getFileType() instanceof DockerFileType;
+        return file.getFileType().equals(DockerFileType.DOCKER_FILE_TYPE);
     }
 
     @NotNull
