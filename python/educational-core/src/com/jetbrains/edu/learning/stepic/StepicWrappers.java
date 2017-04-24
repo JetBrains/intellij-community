@@ -69,21 +69,6 @@ public class StepicWrappers {
         ApplicationManager.getApplication().runWriteAction(() -> {
           final VirtualFile taskDir = task.getTaskDir(project);
           assert taskDir != null;
-          VirtualFile ideaDir = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
-          assert ideaDir != null;
-          String stepic = "stepic";
-          VirtualFile stepicDir = ideaDir.findChild(stepic);
-          if (stepicDir == null) {
-            try {
-              stepicDir = ideaDir.createChildDirectory(StepicWrappers.class, stepic);
-            }
-            catch (IOException e) {
-              LOG.info("Failed to create idea/stepic directory", e);
-            }
-          }
-          if (stepicDir == null) {
-            return;
-          }
           String name = entry.getKey();
           VirtualFile answerFile = taskDir.findFileByRelativePath(name);
           TaskFile studentTaskFile = EduUtils.createStudentFile(project, answerFile, null, 0);
