@@ -20,6 +20,8 @@ import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author Vitaliy.Bibaev
  */
@@ -57,12 +59,15 @@ public class TerminationCallTypeTest extends StreamChainBuilderPositiveTestBase 
   protected void doTest(@NotNull GenericType returnType) throws Exception {
     final PsiElement elementAtCaret = configureAndGetElementAtCaret();
     assertNotNull(elementAtCaret);
-    final StreamChain chain = getChainBuilder().build(elementAtCaret);
+    final List<StreamChain> chains = getChainBuilder().build(elementAtCaret);
+    assertEquals(1, chains.size());
+
+    final StreamChain chain = chains.get(0);
     assertNotNull(chain);
     assertEquals(returnType, chain.getTerminationCall().getResultType());
   }
 
   @Override
-  protected void checkResultChain(StreamChain chain) {
+  protected void checkResultChains(@NotNull List<StreamChain> chains) {
   }
 }
