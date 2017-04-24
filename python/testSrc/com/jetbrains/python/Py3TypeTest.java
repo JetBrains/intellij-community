@@ -561,6 +561,40 @@ public class Py3TypeTest extends PyTestCase {
            "expr = generic_kwargs(a=1, b='foo')\n");
   }
 
+  // PY-19323
+  public void testReturnedTypingCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> Any",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithUnknownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(...) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[..., int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
+  public void testReturnedTypingCallableWithKnownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("(int, str) -> int",
+                   "from typing import Callable\n" +
+                   "def f() -> Callable[[int, str], int]:\n" +
+                   "    pass\n" +
+                   "expr = f()")
+    );
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
