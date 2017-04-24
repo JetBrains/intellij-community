@@ -375,8 +375,12 @@ def jb_start_tests():
 
     # PyCharm helpers dir is first dir in sys.path because helper is launched.
     # But sys.path should be same as when launched with test runner directly
-    if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
-        sys.path.pop(0)
+    try:
+        if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
+            helpers_path = sys.path.pop(0)
+            sys.path.append(helpers_path)
+    except KeyError:
+        pass
     return namespace.path, namespace.target, additional_args
 
 
