@@ -1,4 +1,8 @@
 #!/bin/bash
+
+#print each command before executing and immediately exit script with an error if a command fails
+set -euxo pipefail
+
 FILENAME=$1
 USERNAME=$2
 PASSWORD=$3
