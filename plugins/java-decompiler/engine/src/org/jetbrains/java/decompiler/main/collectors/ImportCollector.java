@@ -15,10 +15,13 @@
  */
 package org.jetbrains.java.decompiler.main.collectors;
 
+import org.jetbrains.java.decompiler.main.ClassesProcessor;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.StructField;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +31,8 @@ public class ImportCollector {
 
   private final Map<String, String> mapSimpleNames = new HashMap<>();
   private final Set<String> setNotImportedNames = new HashSet<>();
+  // set of field names in this class and all its predecessors.
+  private final Set<String> setFieldNames = new HashSet<>();
   private final String currentPackageSlash;
   private final String currentPackagePoint;
 
@@ -42,6 +47,37 @@ public class ImportCollector {
     else {
       currentPackageSlash = "";
       currentPackagePoint = "";
+    }
+
+    Map<String, ClassNode> mapRootCases =  DecompilerContext.getClassProcessor().getMapRootClasses();
+    for(StructClass sClass = root.classStruct;
+        sClass!=null;
+        ){
+      // all field names for current class ..
+      for(StructField f: sClass.getFields()) {
+        setFieldNames.add(f.getName());
+      }
+
+      // .. and traverse through parent.
+      ClassNode classNode;
+      if(sClass.superClass==null || (classNode = (mapRootCases.get(sClass.superClass.getString())))==null)
+            break;
+      sClass = classNode.classStruct;
+    }
+  }
+
+  /**
+   * Check whether the package-less name ClassName is shaded by variable in a context of
+   * the decompiled class
+   * @param classToName - pkg.name.ClassName - class to find shortname for
+   * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
+   */
+  public String getShortNameInClassContext(String classToName) {
+    String shortName = getShortName(classToName);
+    if(setFieldNames.contains(shortName)) {
+      return classToName;
+    } else {
+      return shortName;
     }
   }
 
