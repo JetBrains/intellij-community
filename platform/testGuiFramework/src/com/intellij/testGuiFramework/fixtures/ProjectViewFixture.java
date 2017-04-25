@@ -26,17 +26,23 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ProjectViewTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
+import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,6 +107,57 @@ public class ProjectViewFixture extends ToolWindowFixture {
       }
     });
     return new PaneFixture(projectView.getProjectViewPaneById(id));
+  }
+
+  public void assertStructure(String expectedStructure) {
+    Queryable.PrintInfo printInfo = new Queryable.PrintInfo();
+    AbstractTreeStructure treeStructure = selectProjectPane().getTreeStructure();
+    GuiActionRunner.execute(new GuiTask() {
+      @Override
+      protected void executeInEDT() throws Throwable {
+        ProjectViewTestUtil.assertStructureEqual(treeStructure, expectedStructure, StringUtil.countNewLines(expectedStructure) + 1,
+                                                 PlatformTestUtil.createComparator(printInfo), treeStructure.getRootElement(), printInfo);
+      }
+    });
+  }
+
+  public void assertAsyncStructure(String expectedStructure) {
+    Ref<Throwable> lastThrowable = new Ref<>();
+    Timeout timeout = SHORT_TIMEOUT;
+    try {
+      pause(new Condition("Waiting for project view update") {
+        @Override
+        public boolean test() {
+          Queryable.PrintInfo printInfo = new Queryable.PrintInfo();
+          AbstractTreeStructure treeStructure = selectProjectPane().getTreeStructure();
+          return GuiActionRunner.execute(new GuiQuery<Boolean>() {
+            @Override
+            protected Boolean executeInEDT() throws Throwable {
+              try {
+                ProjectViewTestUtil.assertStructureEqual(treeStructure, expectedStructure, StringUtil.countNewLines(expectedStructure) + 1,
+                                                         PlatformTestUtil.createComparator(printInfo), treeStructure.getRootElement(),
+                                                         printInfo);
+              }
+              catch (AssertionError ae) {
+                lastThrowable.set(ae);
+                return false;
+              }
+              return true;
+            }
+          });
+        }
+      }, timeout);
+    }
+    catch (WaitTimedOutError error) {
+      Throwable throwable = lastThrowable.get();
+      if (throwable != null)
+        throw new AssertionError(
+          "Failed on waiting project structure update for " + timeout.toString() + ", expected and actual structures are still different: ",
+          throwable);
+      else {
+        throw error;
+      }
+    }
   }
 
   public class PaneFixture {
@@ -250,10 +307,6 @@ public class ProjectViewFixture extends ToolWindowFixture {
         }
       }, SHORT_TIMEOUT);
       return (new NodeFixture(node, treeStructure, myPane));
-    }
-
-    public void getSelectedNodeLocation() {
-
     }
   }
 

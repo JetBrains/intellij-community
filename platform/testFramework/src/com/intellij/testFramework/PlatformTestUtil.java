@@ -137,7 +137,7 @@ public class PlatformTestUtil {
   }
 
   @Nullable
-  private static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
+  public static String toString(@Nullable Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
         return ((AbstractTreeNode)node).toTestString(printInfo);
