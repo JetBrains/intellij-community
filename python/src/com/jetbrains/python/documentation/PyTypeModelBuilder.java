@@ -273,7 +273,7 @@ public class PyTypeModelBuilder {
       if (optionalType != null) {
         result = new OptionalType(build(optionalType.get(), true));
       }
-      else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false)) {
+      else if (type instanceof PyDynamicallyEvaluatedType || PyTypeChecker.isUnknown(type, false, myContext)) {
         result = new UnknownType(build(unionType.excludeNull(myContext), true));
       }
       else if (unionMembers.stream().allMatch(t -> t instanceof PyClassType && ((PyClassType)t).isDefinition())) {
