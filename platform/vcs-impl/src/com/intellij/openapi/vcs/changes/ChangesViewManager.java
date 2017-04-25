@@ -43,6 +43,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.actions.IgnoredSettingsAction;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -473,26 +474,12 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class ToggleDetailsAction extends ToggleAction implements DumbAware {
-    private ToggleDetailsAction() {
-      super("Preview Diff", null, AllIcons.Actions.DiffPreview);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return assertNotNull(mySplitterComponent).isDetailsOn();
-    }
-
+  private class ToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
+      super.setSelected(e, state);
       assertNotNull(mySplitterComponent).setDetailsOn(state);
       VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(mySplitterComponent != null);
     }
   }
 
