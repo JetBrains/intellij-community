@@ -44,7 +44,6 @@ import com.jetbrains.python.remote.PyProjectSynchronizer;
 import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -168,13 +167,6 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     }
 
     SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
-    final List<Sdk> sdks = PythonSdkType.getAllSdks();
-    for (Sdk s : sdks) {
-      final SdkAdditionalData additionalData = s.getSdkAdditionalData();
-      if (additionalData instanceof PythonSdkAdditionalData) {
-        ((PythonSdkAdditionalData)additionalData).reassociateWithCreatedProject(project);
-      }
-    }
   }
 
   public void setValidationResult(ValidationResult validationResult) {
