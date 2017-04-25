@@ -15,10 +15,15 @@
  */
 package com.intellij.codeInspection.inheritance
 
+import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.psi.*
+import com.intellij.util.IncorrectOperationException
 import com.intellij.util.SmartList
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
@@ -55,11 +60,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
         methodsToAttachToClassFix?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
 
-        val methodFixes = if (canApplyFix(method))
-          arrayOf<LocalQuickFix>(MakeExtendableFix(method, method.name))
-        else
-          emptyArray()
-
+        val methodFixes = arrayOf<LocalQuickFix>(MakeExtendableFix(method, method.name))
         problemTargets(method, methodHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
             it, description, isOnTheFly,
@@ -71,7 +72,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     if (classIsFinal) {
       val classReasonToBeSubclassed = subclassInfos.firstOrNull()?.description
-      if ((methodsToOverride.isNotEmpty() || classReasonToBeSubclassed != null) && canApplyFix(aClass)) {
+      if ((methodsToOverride.isNotEmpty() || classReasonToBeSubclassed != null)) {
         problemTargets(aClass, classHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
             it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name),
@@ -85,8 +86,6 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     return problems.toTypedArray()
   }
-
-  private fun canApplyFix(aClass: UDeclaration) = aClass.modifierList?.isWritable ?: false
 
   private fun problemTargets(declaration: UDeclaration, highlightableModifiersSet: Set<String>): List<PsiElement> {
     val modifiersElements = declaration.modifierList?.let {
@@ -110,14 +109,26 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                   val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 
+    companion object {
+      private val LOG = Logger.getInstance("#com.intellij.codeInspection.inheritance.MakeExtendableFix")
+    }
+
     override fun getFamilyName(): String = QuickFixBundle.message("fix.modifiers.family")
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-      makeExtendable(startElement as UDeclaration)
-      for (sibling in siblings) {
-        sibling.element?.let {
-          makeExtendable(it)
+      try {
+        makeExtendable(startElement as UDeclaration)
+        for (sibling in siblings) {
+          sibling.element?.let {
+            makeExtendable(it)
+          }
         }
+      }
+      catch (e: IncorrectOperationException) {
+        ApplicationManager.getApplication().invokeLater {
+          Messages.showErrorDialog(project, e.message, CommonBundle.getErrorTitle())
+        }
+        LOG.info(e)
       }
     }
 
