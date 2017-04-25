@@ -17,6 +17,8 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
@@ -32,22 +34,27 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
+import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.DnDTargetContentAdapter;
+import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vcs.changes.patch.RelativePathCalculator;
+import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDragBean;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean;
@@ -66,6 +73,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,6 +81,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -85,7 +95,11 @@ import java.util.*;
 import java.util.List;
 
 import static com.intellij.icons.AllIcons.Vcs.Patch_applied;
+import static com.intellij.openapi.actionSystem.Anchor.AFTER;
+import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction.createAppliedTextPatch;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
+import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
@@ -109,6 +123,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
   private static final Object ROOT_NODE_VALUE = new Object();
   private DefaultMutableTreeNode myRoot;
   private final Map<Couple<String>, String> myMoveRenameInfo;
+  private PreviewDiffSplitterComponent mySplitterComponent;
 
   public static ShelvedChangesViewManager getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ShelvedChangesViewManager.class);
@@ -170,6 +185,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       return null;
     }, true);
+    myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent e) {
+        mySplitterComponent.updatePreview();
+      }
+    });
   }
 
   @Override
@@ -224,11 +245,24 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
+    actionGroup.add(new ShowDiffPreviewAction() {
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        super.setSelected(e, state);
+        assertNotNull(mySplitterComponent).setDetailsOn(state);
+        VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN = state;
+      }
+    }, new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
+
+     ShelvedChangesViewManager.MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
+    mySplitterComponent =
+      new PreviewDiffSplitterComponent(pane, changeProcessor, "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION",
+                                       VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
     rootPanel.add(toolbar.getComponent(), BorderLayout.WEST);
-    rootPanel.add(pane, BorderLayout.CENTER);
+    rootPanel.add(mySplitterComponent, BorderLayout.CENTER);
     DataManager.registerDataProvider(rootPanel, myTree);
 
     return rootPanel;
@@ -702,5 +736,66 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     String imageText = "Unshelve changes";
     Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+  }
+
+  private class MyChangeProcessor extends CacheDiffRefreshableRequestProcessor<ShelvedChange> {
+
+    @NotNull private final DiffShelvedChangesAction.PatchesPreloader myPreloader;
+    @Nullable private ShelvedChange myCurrentChange;      // create common interface for text and binary
+
+    public MyChangeProcessor(@NotNull Project project) {
+      super(project);
+      myPreloader = new DiffShelvedChangesAction.PatchesPreloader(project);
+      Disposer.register(project, this);
+    }
+
+    @Nullable
+    @Override
+    protected String getRequestName(@NotNull ShelvedChange provider) {
+      return FileUtil.toSystemDependentName(chooseNotNull(provider.getAfterPath(), provider.getBeforePath()));
+    }
+
+    @Override
+    protected ShelvedChange getCurrentRequestProvider() {
+      return myCurrentChange;
+    }
+
+    @Override
+    public void clear() {
+      myCurrentChange = null;
+      updateRequest();
+    }
+
+    @CalledInAwt
+    public void refresh() {
+      DataContext dc = DataManager.getInstance().getDataContext(myTree);
+      List<ShelvedChange> selectedChanges = getShelveChanges(dc);
+
+      if (selectedChanges.isEmpty()) {
+        myCurrentChange = null;
+        updateRequest();
+        return;
+      }
+
+      ShelvedChange selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
+      if (selectedChange == null) {
+        myCurrentChange = selectedChanges.get(0);
+        updateRequest();
+        return;
+    }
+  }
+
+    @NotNull
+    @Override
+    protected DiffRequest loadRequest(@NotNull ShelvedChange provider, @NotNull ProgressIndicator indicator)
+      throws ProcessCanceledException, DiffRequestProducerException {
+      try {
+        TextFilePatch patch = myPreloader.getPatch(provider, new CommitContext());
+        return new PatchDiffRequest(createAppliedTextPatch(patch), getRequestName(provider));
+      }
+      catch (VcsException e) {
+        throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
+      }
+    }
   }
 }

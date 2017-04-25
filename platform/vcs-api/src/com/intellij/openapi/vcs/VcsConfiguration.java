@@ -78,6 +78,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
+  public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
 
   @AbstractCollection(surroundWithTag = false, elementTag = "path")
   @Tag("ignored-roots")
