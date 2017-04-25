@@ -120,6 +120,7 @@ public class MethodsChainLookupRangingHelper {
             context.getEditor().getCaretModel().moveToOffset(tail + 1);
           } else {
             PsiClass returnClass = ObjectUtils.notNull(PsiUtil.resolveClassInClassTypeOnly(tailReturnType));
+            PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
             if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_LIST)) {
               document.insertString(tail, ".get(0)");
               context.getEditor().getCaretModel().moveToOffset(tail + 5);
