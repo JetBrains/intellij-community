@@ -57,10 +57,18 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer) {
-    return new ListWithFilter<>(list, scrollPane, namer);
+    return wrap(list, scrollPane, namer, false);
   }
 
-  private ListWithFilter(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer) {
+  public static <T> JComponent wrap(@NotNull JList<T> list, @NotNull JScrollPane scrollPane, @Nullable Function<T, String> namer, 
+                                    boolean highlightAllOccurrences) {
+    return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences);
+  }
+
+  private ListWithFilter(@NotNull JList<T> list,
+                         @NotNull JScrollPane scrollPane,
+                         @Nullable Function<T, String> namer,
+                         boolean highlightAllOccurrences) {
     super(new BorderLayout());
 
     if (list instanceof ComponentWithEmptyText) {
@@ -76,7 +84,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     add(mySearchField, BorderLayout.NORTH);
     add(myScrollPane, BorderLayout.CENTER);
 
-    mySpeedSearch = new MySpeedSearch();
+    mySpeedSearch = new MySpeedSearch(highlightAllOccurrences);
     mySpeedSearch.setEnabled(namer != null);
 
     myList.addKeyListener(new KeyAdapter() {
@@ -124,7 +132,8 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     boolean searchFieldShown;
     boolean myInUpdate;
 
-    private MySpeedSearch() {
+    private MySpeedSearch(boolean highlightAllOccurrences) {
+      super(highlightAllOccurrences);
       // native mac "clear button" is not captured by SearchTextField.onFieldCleared
       mySearchField.addDocumentListener(new DocumentAdapter() {
         @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,11 @@ public class FixingLayoutMatcher extends MinusculeMatcher {
   @Nullable
   private final MinusculeMatcher myFixedMatcher;
 
-  FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators) {
-    super(pattern, options, hardSeparators);
+  FixingLayoutMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, String hardSeparators, 
+                      boolean matchAllOccurrences) {
+    super(pattern, options, hardSeparators, matchAllOccurrences);
     String s = fixPattern(pattern);
-    myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options, hardSeparators);
+    myFixedMatcher = s == null ? null : new MinusculeMatcher(s, options, hardSeparators, matchAllOccurrences);
   }
 
   @Nullable
