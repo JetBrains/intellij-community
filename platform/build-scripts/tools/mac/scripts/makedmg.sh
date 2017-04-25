@@ -25,7 +25,6 @@ BG_PIC="$2.png"
 chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/MacOS/*
 chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.sh
 chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/fs*
-chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/relaunch
 
 mkdir ${EXPLODED}/.background
 mv ${BG_PIC} ${EXPLODED}/.background
