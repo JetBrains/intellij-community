@@ -286,17 +286,17 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
    * Simple way to reuse patch parser from GPA ->  apply onto empty text
    */
   @NotNull
-  private static AppliedTextPatch createAppliedTextPatch(@NotNull TextFilePatch patch) {
+  static AppliedTextPatch createAppliedTextPatch(@NotNull TextFilePatch patch) {
     final GenericPatchApplier applier = new GenericPatchApplier("", patch.getHunks());
     applier.execute();
     return AppliedTextPatch.create(applier.getAppliedInfo());
   }
 
-  private static class PatchesPreloader {
+  static class PatchesPreloader {
     private final Map<String, List<TextFilePatch>> myFilePatchesMap;
     private final Project myProject;
 
-    private PatchesPreloader(final Project project) {
+    PatchesPreloader(final Project project) {
       myProject = project;
       myFilePatchesMap = new HashMap<>();
     }
