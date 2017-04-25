@@ -27,48 +27,45 @@ import com.intellij.debugger.streams.wrapper.impl.ProducerStreamCallImpl;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.debugger.streams.wrapper.impl.TerminatorStreamCallImpl;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class StreamChainTransformerImpl implements StreamChainTransformer {
-  @Nullable
+  @NotNull
   @Override
   public StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions, @NotNull PsiElement context) {
     // TODO: support variable.sum() where variable has a stream type
-    if (streamExpressions.size() < 2) return null;
+    if (streamExpressions.size() < 2) {
+      throw new RuntimeException("Wrong length of the stream chain");
+    }
 
     final ProducerStreamCall producer = createProducer(streamExpressions.get(0));
-    if (producer == null) return null;
 
     final List<IntermediateStreamCall> intermediateCalls =
       createIntermediateCalls(producer.getTypeAfter(), streamExpressions.subList(1, streamExpressions.size() - 1));
-    if (intermediateCalls == null) return null;
 
     final GenericType typeBefore =
       intermediateCalls.isEmpty() ? producer.getTypeAfter() : intermediateCalls.get(intermediateCalls.size() - 1).getTypeAfter();
     final TerminatorStreamCall terminationCall = createTerminationCall(typeBefore, streamExpressions.get(streamExpressions.size() - 1));
-    if (terminationCall == null) return null;
 
     return new StreamChainImpl(producer, intermediateCalls, terminationCall, context);
   }
 
-  @Nullable
+  @NotNull
   private ProducerStreamCall createProducer(@NotNull PsiMethodCallExpression expression) {
     GenericType prevCallType = resolveType(expression);
-    if (prevCallType == null) return null;
     return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType);
   }
 
-  @Nullable
+  @NotNull
   private List<IntermediateStreamCall> createIntermediateCalls(@NotNull GenericType producerAfterType,
                                                                @NotNull List<PsiMethodCallExpression> expressions) {
     final List<IntermediateStreamCall> result = new ArrayList<>();
@@ -78,7 +75,6 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
       final String name = resolveMethodName(callExpression);
       final String args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      if (name == null || type == null) return null;
       result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type));
       typeBefore = type;
     }
@@ -86,12 +82,11 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     return result;
   }
 
-  @Nullable
+  @NotNull
   private TerminatorStreamCall createTerminationCall(@NotNull GenericType typeBefore, @NotNull PsiMethodCallExpression expression) {
     final String name = resolveMethodName(expression);
     final String args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    if (name == null || resultType == null) return null;
     return new TerminatorStreamCallImpl(name, args, typeBefore, resultType);
   }
 
@@ -105,26 +100,27 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     return methodCall.getArgumentList().getText();
   }
 
-  @Nullable
+  @NotNull
   private static String resolveMethodName(@NotNull PsiMethodCallExpression methodCall) {
-    final PsiMethod method = methodCall.resolveMethod();
-    return method == null ? null : method.getName();
+    final String name = methodCall.getMethodExpression().getReferenceName();
+    Objects.requireNonNull(name, "Method reference must be not null" + methodCall.getText());
+    return name;
   }
 
-  @Nullable
+  @NotNull
+  private static PsiType extractType(@NotNull PsiMethodCallExpression expression) {
+    final PsiType returnType = expression.getType();
+    Objects.requireNonNull(returnType, "Method return type must be not null" + expression.getText());
+    return returnType;
+  }
+
+  @NotNull
   private static GenericType resolveType(@NotNull PsiMethodCallExpression call) {
-    final PsiMethod method = call.resolveMethod();
-    if (method == null) return null;
-    final PsiType returnType = method.getReturnType();
-    if (returnType == null) return null;
-    return GenericTypeUtil.fromStreamPsiType(returnType);
+    return GenericTypeUtil.fromStreamPsiType(extractType(call));
   }
 
+  @NotNull
   private static GenericType resolveTerminationCallType(@NotNull PsiMethodCallExpression call) {
-    final PsiMethod method = call.resolveMethod();
-    if (method == null) return null;
-    final PsiType returnType = method.getReturnType();
-    if (returnType == null) return null;
-    return GenericTypeUtil.fromPsiType(returnType);
+    return GenericTypeUtil.fromPsiType(extractType(call));
   }
 }

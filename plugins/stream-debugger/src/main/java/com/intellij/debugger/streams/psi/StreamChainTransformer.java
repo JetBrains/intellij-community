@@ -27,6 +27,6 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface StreamChainTransformer {
-  @Nullable
+  @NotNull
   StreamChain transform(@NotNull List<PsiMethodCallExpression> streamExpressions, @NotNull PsiElement context);
 }
