@@ -613,6 +613,43 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(offset).check("p: str=\"\\n\", t: str=\"\\t\", r: str=\"\\r\"", new String[]{"p: str=\"\\n\", "});
   }
 
+  public void testJustTypingCallable() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadTest(1).get("<arg1>").getTextOffset();
+
+        feignCtrlP(offset).check(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      }
+    );
+  }
+
+  public void testTypingCallableWithUnknownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final int offset = loadTest(1).get("<arg1>").getTextOffset();
+
+        feignCtrlP(offset).check(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      }
+    );
+  }
+
+  public void testTypingCallableWithKnownParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+
+        final int offset = loadTest(1).get("<arg1>").getTextOffset();
+
+        final List<String> texts = Collections.singletonList("...: int, ...: str");
+        final List<String[]> highlighted = Collections.singletonList(new String[]{"...: int, "});
+
+        feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+      }
+    );
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.

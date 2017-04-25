@@ -28,7 +28,6 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,9 +41,11 @@ import static com.jetbrains.python.psi.PyUtil.as;
  */
 public class PyFunctionTypeImpl implements PyFunctionType {
   @NotNull private final PyCallable myCallable;
+  @NotNull private final List<PyCallableParameter> myCallableParameters;
 
   public PyFunctionTypeImpl(@NotNull PyCallable callable) {
     myCallable = callable;
+    myCallableParameters = ContainerUtil.map(callable.getParameterList().getParameters(), PyCallableParameterImpl::new);
   }
 
   @Nullable
@@ -62,11 +63,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> result = new ArrayList<>();
-    for (PyParameter parameter : myCallable.getParameterList().getParameters()) {
-      result.add(new PyCallableParameterImpl(parameter));
-    }
-    return result;
+    return myCallableParameters;
   }
 
   @Override

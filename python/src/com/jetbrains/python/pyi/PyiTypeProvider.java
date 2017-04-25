@@ -17,7 +17,6 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.*;
@@ -115,15 +114,17 @@ public class PyiTypeProvider extends PyTypeProviderBase {
         final PyType returnType = context.getReturnType(overload);
         allReturnTypes.add(PyTypeChecker.substitute(returnType, new HashMap<>(), context));
 
-        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
-        final PyCallExpressionHelper.ArgumentMappingResults mapping = mapArguments(callSite, overload, context);
-        if (mapping == null) {
+        final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
+        if (!mapping.getUnmappedArguments().isEmpty() || !mapping.getUnmappedParameters().isEmpty()) {
           continue;
         }
+
+        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping.getMappedParameters(), context);
         if (substitutions == null) {
           continue;
         }
+
         final PyType unifiedType = PyTypeChecker.substitute(returnType, substitutions, context);
         matchedReturnTypes.add(unifiedType);
       }
@@ -159,22 +160,5 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       return PyUnionType.union(overloadTypes);
     }
     return null;
-  }
-
-  @Nullable
-  private static PyCallExpressionHelper.ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                            @NotNull PyFunction function,
-                                                                            @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> parameters =
-      ContainerUtil.map(function.getParameterList().getParameters(), PyCallableParameterImpl::new);
-
-    final PyCallExpressionHelper.ArgumentMappingResults mapping =
-      PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
-
-    if (!mapping.getUnmappedArguments().isEmpty() || !mapping.getUnmappedParameters().isEmpty()) {
-      return null;
-    }
-
-    return mapping;
   }
 }

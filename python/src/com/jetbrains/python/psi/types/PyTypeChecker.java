@@ -621,6 +621,7 @@ public class PyTypeChecker {
   public static List<AnalyzeCallResults> analyzeCallSite(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final List<AnalyzeCallResults> results = new ArrayList<>();
     for (PyCallable callable : multiResolveCallee(callSite, context)) {
+      if (callable == null) continue;
       final PyExpression receiver = getReceiver(callSite, callable);
       final ArgumentMappingResults mapping = mapArguments(callSite, callable, context);
       results.add(new AnalyzeCallResults(callable, receiver, mapping));

@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
@@ -107,7 +108,8 @@ public class PyCallableParameterImpl implements PyCallableParameter {
       if (isPositionalContainer()) sb.append("*");
       else if (isKeywordContainer()) sb.append("**");
 
-      sb.append(getName());
+      final String name = getName();
+      sb.append(name != null ? name : "...");
 
       final PyType argumentType = context == null ? null : getArgumentType(context);
       if (argumentType != null) {
@@ -142,8 +144,20 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable
   @Override
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
-    final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
-    return namedParameter == null ? null : namedParameter.getArgumentType(context);
+    final PyType parameterType = getType(context);
+
+    if (parameterType instanceof PyCollectionType) {
+      final PyCollectionType collectionType = (PyCollectionType)parameterType;
+
+      if (isPositionalContainer()) {
+        return collectionType.getIteratedItemType();
+      }
+      else if (isKeywordContainer()) {
+        return ContainerUtil.getOrElse(collectionType.getElementTypes(context), 1, null);
+      }
+    }
+
+    return parameterType;
   }
 
   @Override

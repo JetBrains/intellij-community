@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -184,20 +183,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Override
   @Nullable
   public PyType getArgumentType(@NotNull TypeEvalContext context) {
-    final PyType parameterType = context.getType(this);
-
-    if (parameterType instanceof PyCollectionType) {
-      final PyCollectionType paramCollectionType = (PyCollectionType)parameterType;
-
-      if (isPositionalContainer()) {
-        return paramCollectionType.getIteratedItemType();
-      }
-      else if (isKeywordContainer()) {
-        return ContainerUtil.getOrElse(paramCollectionType.getElementTypes(context), 1, null);
-      }
-    }
-
-    return parameterType;
+    return new PyCallableParameterImpl(this).getArgumentType(context);
   }
 
   @Override
