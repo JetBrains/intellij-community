@@ -92,6 +92,11 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   }
 
   @Override
+  public boolean validate() {
+    return getValue() != null;
+  }
+
+  @Override
   public void update(PresentationData presentation) {
     final String[] groupPath = getValue().getGroupPath();
     presentation.setPresentableText(groupPath[groupPath.length-1]);
