@@ -618,6 +618,9 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
     return super.findOrCreateConfigurationFromContext(context)
   }
 
+  // test configuration is always prefered over regular one
+  override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext)= self.isProducedBy(javaClass)
+
   override fun setupConfigurationFromContext(configuration: PyUniversalTestConfiguration?,
                                              context: ConfigurationContext?,
                                              sourceElement: Ref<PsiElement>?): Boolean {
