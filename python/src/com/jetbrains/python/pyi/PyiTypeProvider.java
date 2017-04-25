@@ -70,17 +70,11 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   public PyType getCallableType(@NotNull PyCallable callable, @NotNull final TypeEvalContext context) {
     final PsiElement pythonStub = PyiUtil.getPythonStub(callable);
     if (pythonStub instanceof PyFunction) {
-      final PyFunction functionStub = (PyFunction)pythonStub;
-      if (PyiUtil.isOverload(functionStub, context)) {
-        return getOverloadType(functionStub, context);
-      }
-      return new PyFunctionTypeImpl(functionStub);
+      return new PyFunctionTypeImpl((PyFunction)pythonStub);
     }
     else if (callable.getContainingFile() instanceof PyiFile && callable instanceof PyFunction) {
       final PyFunction functionStub = (PyFunction)callable;
-      if (PyiUtil.isOverload(functionStub, context)) {
-        return getOverloadType(functionStub, context);
-      }
+      return new PyFunctionTypeImpl(functionStub);
     }
     return null;
   }
@@ -145,19 +139,6 @@ public class PyiTypeProvider extends PyTypeProviderBase {
                                                  context : TypeEvalContext.deepCodeInsight(target.getProject());
         return effectiveContext.getType((PyTypedElement)pythonStub);
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PyType getOverloadType(@NotNull PyFunction function, @NotNull final TypeEvalContext context) {
-    final List<PyFunction> overloads = PyiUtil.getOverloads(function, context);
-    if (!overloads.isEmpty()) {
-      final List<PyType> overloadTypes = new ArrayList<>();
-      for (PyFunction overload : overloads) {
-        overloadTypes.add(new PyFunctionTypeImpl(overload));
-      }
-      return PyUnionType.union(overloadTypes);
     }
     return null;
   }
