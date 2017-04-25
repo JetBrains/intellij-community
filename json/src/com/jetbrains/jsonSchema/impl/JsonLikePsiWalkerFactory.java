@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface JsonLikePsiWalkerFactory {
   ExtensionPointName<JsonLikePsiWalkerFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("Json.Like.Psi.Walker.Factory");
+
+  boolean handles(@NotNull PsiElement element);
 
   JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject);
 }

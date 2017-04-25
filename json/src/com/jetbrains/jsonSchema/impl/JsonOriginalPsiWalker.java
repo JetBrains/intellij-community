@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   public static final JsonOriginalPsiWalker INSTANCE = new JsonOriginalPsiWalker();
 
-  @Override
   public boolean handles(@NotNull PsiElement element) {
     return element instanceof JsonElement || element instanceof LeafPsiElement && element.getParent() instanceof JsonElement;
   }

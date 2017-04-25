@@ -30,7 +30,6 @@ import java.util.Set;
 public interface JsonLikePsiWalker {
   JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
 
-  boolean handles(@NotNull PsiElement element);
   boolean isName(PsiElement checkable);
   boolean isPropertyWithValue(@NotNull PsiElement element);
   PsiElement goUpToCheckable(@NotNull final PsiElement element);
@@ -47,9 +46,9 @@ public interface JsonLikePsiWalker {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;
 
     return Arrays.stream(Extensions.getExtensions(JsonLikePsiWalkerFactory.EXTENSION_POINT_NAME))
-      .map(extension -> extension.create(schemaObject))
-      .filter(walker -> walker.handles(element))
+      .filter(extension -> extension.handles(element))
       .findFirst()
+      .map(extension -> extension.create(schemaObject))
       .orElse(null);
   }
 }
