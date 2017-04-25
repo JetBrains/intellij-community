@@ -20,8 +20,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 /**
  * @author Vitaliy.Bibaev
  */
@@ -37,11 +35,11 @@ public class StreamApiUtil {
     return checkStreamCall(expression, true, false);
   }
 
-  public static boolean isProducerStreamCall(@NotNull PsiMethodCallExpression expression) {
+  private static boolean isProducerStreamCall(@NotNull PsiMethodCallExpression expression) {
     return checkStreamCall(expression, false, true);
   }
 
-  public static boolean isIntermediateStreamCall(@NotNull PsiMethodCallExpression expression) {
+  private static boolean isIntermediateStreamCall(@NotNull PsiMethodCallExpression expression) {
     return checkStreamCall(expression, true, true);
   }
 
@@ -52,7 +50,7 @@ public class StreamApiUtil {
     if (method != null && mustResultBeStream == isStreamType(method.getReturnType())) {
       final PsiElement methodClass = method.getParent();
       if (methodClass instanceof PsiClass) {
-        return isStreamType((PsiClass)methodClass);
+        return mustParentBeStream == isStreamType((PsiClass)methodClass);
       }
     }
 
@@ -65,11 +63,5 @@ public class StreamApiUtil {
 
   private static boolean isStreamType(@Nullable PsiClass psiClass) {
     return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
-  }
-
-  @Nullable
-  public static PsiType resolveReturnType(@NotNull PsiMethodCallExpression expression) {
-    final PsiMethod method = expression.resolveMethod();
-    return method == null ? null : method.getReturnType();
   }
 }
