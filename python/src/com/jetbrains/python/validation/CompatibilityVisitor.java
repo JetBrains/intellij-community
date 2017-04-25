@@ -499,9 +499,10 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       if (sliceItem != null) {
         return;
       }
-      registerOnFirstMatchingVersion(level -> level.isOlderThan(LanguageLevel.PYTHON30),
-                                     "Python versions < 3.0 do not support '...' outside of sequence slicings.",
-                                     node);
+      registerOnFirstMatchingVersion(
+        level -> !PyCustomLanguageSupportProvider.customLanguageSupport(node.getProject(), level).supportsEllipsisLiteral,
+        "Python versions < 3.0 do not support '...' outside of sequence slicings.",
+        node);
     }
   }
 

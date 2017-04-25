@@ -20,6 +20,7 @@ import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnot
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotationFile;
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor;
+import com.jetbrains.python.psi.PyCustomLanguageSupportProvider;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyNoneLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class PyFunctionTypeAnnotationParsingTest extends ParsingTestCase {
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PyDocstringTokenSetContributor());
+    registerExtensionPoint(PyCustomLanguageSupportProvider.EP_NAME, PyCustomLanguageSupportProvider.class);
   }
 
   protected void doCodeTest(@NotNull String typeAnnotation) {

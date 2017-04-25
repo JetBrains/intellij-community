@@ -214,7 +214,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
           builder.error(EXPRESSION_EXPECTED);
         }
       }
-      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && myContext.getLanguageLevel().isPy3K())) {
+      else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && myContext.getCustomLanguageSupport().supportsFunctionAnnotations)) {
         exprStatement.rollbackTo();
         exprStatement = builder.mark();
         getExpressionParser().parseExpression(false, true);

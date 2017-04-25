@@ -82,7 +82,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   }
 
   public static void annotateTypes(Editor editor, PyCallable callable) {
-    if (isPy3k(callable.getContainingFile())) {
+    if (PyCustomLanguageSupportProvider.customLanguageSupport(callable).supportsFunctionAnnotations) {
       generatePy3kTypeAnnotations(callable.getProject(), editor, callable);
     }
     else {
@@ -176,10 +176,6 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
       targetEditor.getCaretModel().moveToOffset(offset);
       TemplateManager.getInstance(project).startTemplate(targetEditor, template);
     }
-  }
-
-  private static boolean isPy3k(PsiFile file) {
-    return LanguageLevel.forElement(file).isPy3K();
   }
 
   private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, PyCallable callable) {

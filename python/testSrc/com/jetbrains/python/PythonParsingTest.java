@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCustomLanguageSupportProvider;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +43,7 @@ public class PythonParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    registerExtensionPoint(PyCustomLanguageSupportProvider.EP_NAME, PyCustomLanguageSupportProvider.class);
   }
 
   @Override
@@ -204,6 +207,16 @@ public class PythonParsingTest extends ParsingTestCase {
 
   public void testAnnotations() {
     doTest(LanguageLevel.PYTHON30);
+  }
+
+  public void testAnnotationsCustomPython2() {
+    registerExtension(PyCustomLanguageSupportProvider.EP_NAME, new PyCustomLanguageSupportProvider() {
+      @Override
+      public CustomLanguageSupport customFeaturesForLanguageLevel(Project project, LanguageLevel languageLevel) {
+        return new CustomLanguageSupport(true, true);
+      }
+    });
+    doTest(LanguageLevel.PYTHON27);
   }
 
   public void testNonlocal() {
@@ -393,6 +406,16 @@ public class PythonParsingTest extends ParsingTestCase {
   // PY-8752
   public void testEllipsisPython3() {
     doTest(LanguageLevel.PYTHON33);
+  }
+
+  public void testEllipsisCustomPython2() {
+    registerExtension(PyCustomLanguageSupportProvider.EP_NAME, new PyCustomLanguageSupportProvider() {
+      @Override
+      public CustomLanguageSupport customFeaturesForLanguageLevel(Project project, LanguageLevel languageLevel) {
+        return new CustomLanguageSupport(true, true);
+      }
+    });
+    doTest(LanguageLevel.PYTHON27);
   }
 
   // PY-8948

@@ -17,6 +17,7 @@ package com.jetbrains.python.parsing;
 
 import com.intellij.lang.PsiBuilder;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyCustomLanguageSupportProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -28,11 +29,13 @@ public class ParsingContext {
   private final FunctionParsing functionParser;
   private final PsiBuilder myBuilder;
   private final LanguageLevel myLanguageLevel;
+  private final PyCustomLanguageSupportProvider.CustomLanguageSupport myCustomLanguageSupport;
   private final Deque<ParsingScope> myScopes;
 
   public ParsingContext(final PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {
     myBuilder = builder;
     myLanguageLevel = languageLevel;
+    myCustomLanguageSupport = PyCustomLanguageSupportProvider.customLanguageSupport(builder.getProject(), languageLevel);
     stmtParser = new StatementParsing(this, futureFlag);
     expressionParser = new ExpressionParsing(this);
     functionParser = new FunctionParsing(this);
@@ -72,6 +75,10 @@ public class ParsingContext {
 
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
+  }
+
+  public PyCustomLanguageSupportProvider.CustomLanguageSupport getCustomLanguageSupport() {
+    return myCustomLanguageSupport;
   }
 
   public ParsingScope emptyParsingScope() {
