@@ -48,7 +48,6 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import jdk.nashorn.internal.scripts.JO;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
