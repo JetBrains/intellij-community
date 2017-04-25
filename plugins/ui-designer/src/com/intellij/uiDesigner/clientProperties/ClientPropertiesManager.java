@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author yole
  */
-public class ClientPropertiesManager implements JDOMExternalizable, ProjectComponent {
+public class ClientPropertiesManager implements JDOMExternalizable, NamedComponent {
   private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
   @NonNls private static final String ELEMENT_PROPERTIES = "properties";
@@ -46,13 +41,24 @@ public class ClientPropertiesManager implements JDOMExternalizable, ProjectCompo
     return project.getComponent(ClientPropertiesManager.class);
   }
 
-  private static final Object DEFAULT_MANAGER_LOCK = new Object();
-  private static ClientPropertiesManager ourDefaultManager;
+  private static NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = new AtomicNotNullLazyValue<ClientPropertiesManager>() {
+    @NotNull
+    @Override
+    protected ClientPropertiesManager compute() {
+      ClientPropertiesManager result = new ClientPropertiesManager();
+      try {
+        result.readExternal(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+      return result;
+    }
+  };
 
   private final Map<String, List<ClientProperty>> myPropertyMap = new TreeMap<>();
 
   public ClientPropertiesManager() {
-    super();
   }
 
   private ClientPropertiesManager(final Map<String, List<ClientProperty>> propertyMap) {
@@ -68,29 +74,6 @@ public class ClientPropertiesManager implements JDOMExternalizable, ProjectCompo
   public void saveFrom(final ClientPropertiesManager manager) {
     myPropertyMap.clear();
     myPropertyMap.putAll(manager.myPropertyMap);
-  }
-
-  @Override
-  public void projectOpened() {
-    // in Upsource projectOpened can be executed concurrently for 2 projects
-    synchronized (DEFAULT_MANAGER_LOCK) {
-      if (ourDefaultManager == null) {
-        ourDefaultManager = new ClientPropertiesManager();
-        try {
-          ourDefaultManager.readExternal(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
-
-  @Nullable
-  private static ClientPropertiesManager getDefaultManager() {
-    synchronized (DEFAULT_MANAGER_LOCK) {
-      return ourDefaultManager;
-    }
   }
 
   @Override
@@ -145,12 +128,10 @@ public class ClientPropertiesManager implements JDOMExternalizable, ProjectCompo
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myPropertyMap.clear();
-    for(Object o: element.getChildren(ELEMENT_PROPERTIES)) {
-      Element propertiesElement = (Element) o;
+    for (Element propertiesElement : element.getChildren(ELEMENT_PROPERTIES)) {
       String aClass = propertiesElement.getAttributeValue(ATTRIBUTE_CLASS);
       List<ClientProperty> classProps = new ArrayList<>();
-      for(Object p: propertiesElement.getChildren(ELEMENT_PROPERTY)) {
-        Element propertyElement = (Element) p;
+      for (Element propertyElement : propertiesElement.getChildren(ELEMENT_PROPERTY)) {
         String propName = propertyElement.getAttributeValue(ATTRIBUTE_NAME);
         String propClass = propertyElement.getAttributeValue(ATTRIBUTE_CLASS);
         classProps.add(new ClientProperty(propName, propClass));
@@ -161,9 +142,10 @@ public class ClientPropertiesManager implements JDOMExternalizable, ProjectCompo
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    if (equals(getDefaultManager())) {
+    if (equals(ourDefaultManager.getValue())) {
       throw new WriteExternalException();
     }
+
     for(Map.Entry<String, List<ClientProperty>> entry: myPropertyMap.entrySet()) {
       Element propertiesElement = new Element(ELEMENT_PROPERTIES);
       propertiesElement.setAttribute(ATTRIBUTE_CLASS, entry.getKey());
