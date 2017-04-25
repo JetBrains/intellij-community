@@ -19,9 +19,11 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -48,11 +50,18 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
+    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> doModify((ProjectViewNode)parent, children));
+  }
+
+  @NotNull
+  private Collection<AbstractTreeNode> doModify(@NotNull ProjectViewNode parent, @NotNull Collection<AbstractTreeNode> children) {
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (final AbstractTreeNode child : children) {
+      ProgressManager.checkCanceled();
+
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
-        final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
+        final ViewSettings settings1 = parent.getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         final VirtualFile file = classOwner.getVirtualFile();
 
