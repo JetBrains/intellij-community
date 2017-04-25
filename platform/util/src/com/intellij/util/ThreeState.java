@@ -26,6 +26,10 @@ public enum ThreeState {
     return value ? YES : NO;
   }
 
+  public ThreeState merge(ThreeState other) {
+    return this == other ? this : UNSURE;
+  }
+
   public boolean toBoolean() {
     if (this == UNSURE) {
       throw new IllegalStateException("Must be or YES, or NO");

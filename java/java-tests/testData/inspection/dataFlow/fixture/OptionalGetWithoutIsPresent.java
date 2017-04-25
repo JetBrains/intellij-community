@@ -84,9 +84,9 @@ class OptionalWithoutIsPresent {
       maybe = Optional.empty();
       System.out.println(maybe.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>());
     }
-    boolean b = <warning descr="Condition '((maybe.isPresent()))' is always 'false'">((maybe.isPresent()))</warning> && maybe.get() == 1;
-    boolean c = <warning descr="Condition '(!maybe.isPresent())' is always 'true'">(!maybe.isPresent())</warning> || maybe.get() == 1;
-    Integer value = <warning descr="Condition '!maybe.isPresent()' is always 'true'">!maybe.isPresent()</warning> ? 0 : maybe.get();
+    boolean b = <warning descr="Condition '((maybe.isPresent()))' is always 'false'">((<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning>))</warning> && maybe.get() == 1;
+    boolean c = <warning descr="Condition '(!maybe.isPresent())' is always 'true'">(!<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning>)</warning> || maybe.get() == 1;
+    Integer value = <warning descr="Condition '!maybe.isPresent()' is always 'true'">!<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning></warning> ? 0 : maybe.get();
   }
 
   Optional<Integer> getIntegerOptional() {
@@ -95,7 +95,7 @@ class OptionalWithoutIsPresent {
 
   private static void a() {
     Optional<String> optional = Optional.empty();
-    final boolean present = optional.isPresent();
+    final boolean present = <warning descr="Condition 'optional.isPresent()' is always 'false'">optional.isPresent()</warning>;
     // optional = Optional.empty();
     if (<warning descr="Condition 'present' is always 'false'">present</warning>) {
       final String string = optional.get();
@@ -105,7 +105,7 @@ class OptionalWithoutIsPresent {
 
   private static void b() {
     Optional<String> optional = Optional.empty();
-    final boolean present = optional.isPresent();
+    final boolean present = <warning descr="Condition 'optional.isPresent()' is always 'false'">optional.isPresent()</warning>;
     optional = Optional.empty();
     if (<warning descr="Condition 'present' is always 'false'">present</warning>) {
       final String string = optional.get();
@@ -156,7 +156,7 @@ class OptionalWithoutIsPresent {
 
   private void checkAsserts2() {
     Optional<String> o3 = Optional.empty();
-    org.testng.Assert.<warning descr="The call to 'assertTrue' always fails, according to its method contracts">assertTrue</warning>(o3.isPresent());
+    org.testng.Assert.<warning descr="The call to 'assertTrue' always fails, according to its method contracts">assertTrue</warning>(<warning descr="Condition 'o3.isPresent()' is always 'false'">o3.isPresent()</warning>);
     System.out.println(o3.get());
   }
 
@@ -193,9 +193,9 @@ class OptionalWithoutIsPresent {
   public static String demo() {
     Optional<String> holder = Optional.empty();
 
-    if (<warning descr="Condition '! holder.isPresent()' is always 'true'">! holder.isPresent()</warning>) {
+    if (<warning descr="Condition '! holder.isPresent()' is always 'true'">! <warning descr="Condition 'holder.isPresent()' is always 'false'">holder.isPresent()</warning></warning>) {
       holder = Optional.of("hello world");
-      if (<warning descr="Condition '!holder.isPresent()' is always 'false'">!holder.isPresent()</warning>) {
+      if (<warning descr="Condition '!holder.isPresent()' is always 'false'">!<warning descr="Condition 'holder.isPresent()' is always 'true'">holder.isPresent()</warning></warning>) {
         return null;
       }
     }
