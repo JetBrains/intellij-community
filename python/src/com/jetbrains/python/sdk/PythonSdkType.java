@@ -925,5 +925,10 @@ public final class PythonSdkType extends SdkType {
   public static Sdk findSdkByKey(@NotNull String key) {
     return ProjectJdkTable.getInstance().findJdk(key);
   }
+
+  @Override
+  public boolean isLocalSdk(@NotNull Sdk sdk) {
+    return !isRemote(sdk);
+  }
 }
 
