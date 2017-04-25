@@ -27,7 +27,7 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
   private final GenericType myTypeBefore;
   private final GenericType myReturnType;
 
-  TerminatorStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeBefore, GenericType resultType) {
+  public TerminatorStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeBefore, GenericType resultType) {
     super(name, args, StreamCallType.TERMINATOR);
     myTypeBefore = typeBefore;
     myReturnType = resultType;

@@ -28,10 +28,10 @@ public class IntermediateStreamCallImpl extends StreamCallImpl implements Interm
   private final GenericType myTypeBefore;
   private final GenericType myTypeAfter;
 
-  IntermediateStreamCallImpl(@NotNull String name,
-                             @NotNull String args,
-                             @NotNull GenericType typeBefore,
-                             @NotNull GenericType typeAfter) {
+  public IntermediateStreamCallImpl(@NotNull String name,
+                                    @NotNull String args,
+                                    @NotNull GenericType typeBefore,
+                                    @NotNull GenericType typeAfter) {
     super(name, args, StreamCallType.INTERMEDIATE);
     myTypeBefore = typeBefore;
     myTypeAfter = typeAfter;
