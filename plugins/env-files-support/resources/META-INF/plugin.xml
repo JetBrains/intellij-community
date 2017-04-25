@@ -26,13 +26,13 @@
 
   <idea-version since-build="145.0"/>
 
-  <depends>com.jetbrains.php</depends>
-  <depends>com.intellij.modules.platform</depends>
-  <depends>Docker</depends>
-
   <extensionPoints>
     <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
   </extensionPoints>
+
+  <depends>com.jetbrains.php</depends>
+  <depends>com.intellij.modules.platform</depends>
+  <depends optional="true" config-file="docker.xml">Docker</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
@@ -49,7 +49,6 @@
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
     <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
-    <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerfileVariablesProvider"/>
   </extensions>
 
   <actions>
