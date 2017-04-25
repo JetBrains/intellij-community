@@ -91,10 +91,10 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
     init(that.myJdk, that.getJdkName(), that.getJdkType());
   }
 
-  public ModuleJdkOrderEntryImpl(final String jdkName,
-                                 final String jdkType,
-                                 @NotNull final RootModelImpl rootModel,
-                                 @NotNull final ProjectRootManagerImpl projectRootManager) {
+  ModuleJdkOrderEntryImpl(final String jdkName,
+                          final String jdkType,
+                          @NotNull final RootModelImpl rootModel,
+                          @NotNull final ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     init(null, jdkName, jdkType);
   }
@@ -164,7 +164,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
 
   @Override
   public void jdkAdded(@NotNull Sdk jdk) {
-    if (myJdk == null && getJdkName().equals(jdk.getName())) {
+    if (myJdk == null && jdk.getName().equals(getJdkName())) {
       myJdk = jdk;
       setJdkName(null);
       setJdkType(null);
@@ -173,8 +173,8 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   @Override
-  public void jdkNameChanged(@NotNull Sdk jdk, String previousName) {
-    if (myJdk == null && getJdkName().equals(jdk.getName())) {
+  public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
+    if (myJdk == null && jdk.getName().equals(getJdkName())) {
       myJdk = jdk;
       setJdkName(null);
       setJdkType(null);
@@ -183,7 +183,7 @@ public class ModuleJdkOrderEntryImpl extends LibraryOrderEntryBaseImpl implement
   }
 
   @Override
-  public void jdkRemoved(Sdk jdk) {
+  public void jdkRemoved(@NotNull Sdk jdk) {
     if (jdk == myJdk) {
       setJdkName(myJdk.getName());
       setJdkType(myJdk.getSdkType().getName());

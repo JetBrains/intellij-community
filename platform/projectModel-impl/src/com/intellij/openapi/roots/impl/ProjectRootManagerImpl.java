@@ -588,7 +588,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void jdkAdded(final Sdk jdk) {
+    public void jdkAdded(@NotNull final Sdk jdk) {
       mergeRootsChangesDuring(() -> {
         for (ProjectJdkTable.Listener listener : getListeners()) {
           listener.jdkAdded(jdk);
@@ -597,7 +597,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void jdkRemoved(final Sdk jdk) {
+    public void jdkRemoved(@NotNull final Sdk jdk) {
       mergeRootsChangesDuring(() -> {
         for (ProjectJdkTable.Listener listener : getListeners()) {
           listener.jdkRemoved(jdk);
@@ -606,7 +606,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
 
     @Override
-    public void jdkNameChanged(final Sdk jdk, final String previousName) {
+    public void jdkNameChanged(@NotNull final Sdk jdk, @NotNull final String previousName) {
       mergeRootsChangesDuring(() -> {
         for (ProjectJdkTable.Listener listener : getListeners()) {
           listener.jdkNameChanged(jdk, previousName);
