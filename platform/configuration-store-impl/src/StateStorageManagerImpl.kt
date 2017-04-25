@@ -55,13 +55,20 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private val storageLock = ReentrantReadWriteLock()
   private val storages = THashMap<String, StateStorage>()
 
-  private val streamProviderWrapper = StreamProviderWrapper()
+  val compoundStreamProvider = StreamProviderWrapper()
 
-  var streamProvider: StreamProvider?
-    get() = streamProviderWrapper
-    set (value) {
-      streamProviderWrapper.streamProvider = value
+  override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
+    if (first) {
+      compoundStreamProvider.providers.add(0, provider)
     }
+    else {
+      compoundStreamProvider.providers.add(provider)
+    }
+  }
+
+  override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
+    compoundStreamProvider.providers.removeAll { clazz.isInstance(it) }
+  }
 
   // access under storageLock
   private var isUseVfsListener = if (componentManager == null) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state
@@ -223,7 +230,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
     val effectiveRoamingType = getEffectiveRoamingType(roamingType, collapsedPath)
     if (isUseVfsListener == ThreeState.UNSURE) {
-      isUseVfsListener = ThreeState.fromBoolean(streamProvider == null || !streamProvider!!.isApplicable(collapsedPath, effectiveRoamingType))
+      isUseVfsListener = ThreeState.fromBoolean(!compoundStreamProvider.isApplicable(collapsedPath, effectiveRoamingType))
     }
 
     val filePath = expandMacros(collapsedPath)
@@ -248,7 +255,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   protected open fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
-      = MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else streamProvider)
+      = MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
 
   protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage
       = MyDirectoryStorage(this, Paths.get(path), splitter)

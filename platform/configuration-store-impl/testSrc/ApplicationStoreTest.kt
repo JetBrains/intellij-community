@@ -72,7 +72,8 @@ internal class ApplicationStoreTest {
     val component = SeveralStoragesConfigured()
 
     val streamProvider = MyStreamProvider()
-    componentStore.storageManager.streamProvider = streamProvider
+    componentStore.storageManager.removeStreamProvider(MyStreamProvider::class.java)
+    componentStore.storageManager.addStreamProvider(streamProvider)
 
     componentStore.initComponent(component, false)
     component.foo = "newValue"
@@ -90,11 +91,13 @@ internal class ApplicationStoreTest {
     map.put(fileSpec, "<application>\n  <component name=\"A\" foo=\"newValue\" />\n</application>")
     streamProvider.data.put(RoamingType.DEFAULT, map)
 
-    componentStore.storageManager.streamProvider = streamProvider
+    val storageManager = componentStore.storageManager
+    storageManager.removeStreamProvider(MyStreamProvider::class.java)
+    storageManager.addStreamProvider(streamProvider)
     componentStore.initComponent(component, false)
     assertThat(component.foo).isEqualTo("newValue")
 
-    assertThat(Paths.get(componentStore.storageManager.expandMacros(fileSpec))).doesNotExist()
+    assertThat(Paths.get(storageManager.expandMacros(fileSpec))).doesNotExist()
   }
 
   @Test fun `remove deprecated storage on write`() {

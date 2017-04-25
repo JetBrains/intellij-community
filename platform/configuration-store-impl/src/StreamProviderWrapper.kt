@@ -1,31 +1,30 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
+import com.intellij.util.containers.ContainerUtil
 
 import java.io.InputStream
 
 class StreamProviderWrapper : StreamProvider {
-  var streamProvider: StreamProvider? = null
+  val providers = ContainerUtil.createConcurrentList<StreamProvider>()
 
   override val enabled: Boolean
-    get() = streamProvider.let { it != null && it.enabled }
+    get() = providers.any { it.enabled }
 
-  override fun isApplicable(fileSpec: String, roamingType: RoamingType) = streamProvider?.isApplicable(fileSpec, roamingType) ?: false
+  override fun isApplicable(fileSpec: String, roamingType: RoamingType) = providers.any { it.isApplicable(fileSpec, roamingType) }
 
-  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit) = streamProvider?.read(fileSpec, roamingType, consumer) ?: false
+  override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit) = providers.any { it.read(fileSpec, roamingType, consumer) }
 
   override fun processChildren(path: String,
                                roamingType: RoamingType,
                                filter: Function1<String, Boolean>,
                                processor: Function3<String, InputStream, Boolean, Boolean>): Boolean {
-    return streamProvider?.processChildren(path, roamingType, filter, processor) ?: false
+    return providers.any { it.processChildren(path, roamingType, filter, processor) }
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    streamProvider!!.write(fileSpec, content, size, roamingType)
+    providers.forEach { it.write(fileSpec, content, size, roamingType) }
   }
 
-  override fun delete(fileSpec: String, roamingType: RoamingType) = streamProvider?.delete(fileSpec, roamingType) ?: false
+  override fun delete(fileSpec: String, roamingType: RoamingType) = providers.any { it.delete(fileSpec, roamingType) }
 }
-
-fun StreamProvider?.getOriginalProvider() = if (this is StreamProviderWrapper) streamProvider else null

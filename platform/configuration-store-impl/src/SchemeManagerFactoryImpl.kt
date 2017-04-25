@@ -51,7 +51,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
     val path = checkPath(directoryName)
     val manager = SchemeManagerImpl(path,
                                     processor,
-                                    streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.streamProvider,
+                                    streamProvider ?: (componentManager?.stateStore?.stateStorageManager as? StateStorageManagerImpl)?.compoundStreamProvider,
                                     directoryPath ?: pathToFile(path),
                                     roamingType,
                                     presentableName,

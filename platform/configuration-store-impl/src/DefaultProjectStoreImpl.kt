@@ -58,6 +58,12 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
   }
 
   override val storageManager = object : StateStorageManager {
+    override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
+    }
+
+    override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
+    }
+
     override fun rename(path: String, newName: String) {
     }
 
