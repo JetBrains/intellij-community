@@ -9,6 +9,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -165,14 +167,29 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
 
   public void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
-    // Create Server process
-    try {
-      final T process = createProcess(directory);
+    ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
 
-      createAndStartSession(terminalWidget, createTtyConnector(process));
-    }
-    catch (Exception e) {
-      Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
-    }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        // Create Server process
+        final T process = createProcess(directory);
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+          try {
+            createAndStartSession(terminalWidget, createTtyConnector(process));
+          }
+          catch (RuntimeException e) {
+            showCannotOpenTerminalDialog(e);
+          }
+        }, modalityState);
+      }
+      catch (Exception e) {
+        ApplicationManager.getApplication().invokeLater(() -> showCannotOpenTerminalDialog(e), modalityState);
+      }
+    });
+  }
+
+  private void showCannotOpenTerminalDialog(@NotNull Throwable e) {
+    Messages.showErrorDialog(e.getMessage(), "Can't Open " + runningTargetName());
   }
 }
