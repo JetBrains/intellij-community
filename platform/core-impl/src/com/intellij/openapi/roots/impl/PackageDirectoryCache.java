@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
@@ -70,6 +71,7 @@ public class PackageDirectoryCache {
           }
           if (i < 0) break;
           i = packageName.lastIndexOf('.', i - 1);
+          ProgressManager.checkCanceled();
         }
       }
 

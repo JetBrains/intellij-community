@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
   public PackageViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
@@ -39,12 +40,14 @@ public class PackageViewModuleNode extends AbstractModuleNode{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots()), myProject, getSettings(), getValue(), false);
-    if (getSettings().isShowLibraryContents()) {
-      result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
-    }
-    return result;
-
+    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> {
+      List<VirtualFile> roots = Arrays.asList(ModuleRootManager.getInstance(getValue()).getSourceRoots());
+      final Collection<AbstractTreeNode> result = PackageUtil.createPackageViewChildrenOnFiles(roots, myProject, getSettings(), getValue(), false);
+      if (getSettings().isShowLibraryContents()) {
+        result.add(new PackageViewLibrariesNode(getProject(), getValue(),getSettings()));
+      }
+      return result;
+    });
   }
 
   @Override
