@@ -1,4 +1,4 @@
-package com.jetbrains.edu.learning;
+package com.jetbrains.python.edu;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
