@@ -86,7 +86,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private static final Logger LOG = Logger.getInstance(PythonConsoleView.class);
   private final ConsolePromptDecorator myPromptView;
 
-  private PydevConsoleExecuteActionHandler myExecuteActionHandler;
+  private PythonConsoleExecuteActionHandler myExecuteActionHandler;
   private PyConsoleSourceHighlighter mySourceHighlighter;
   private boolean myIsIPythonOutput;
   private final PyHighlighter myPyHighlighter;
@@ -142,11 +142,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void setExecutionHandler(@NotNull PydevConsoleExecuteActionHandler consoleExecuteActionHandler) {
+  public void setExecutionHandler(@NotNull PythonConsoleExecuteActionHandler consoleExecuteActionHandler) {
     myExecuteActionHandler = consoleExecuteActionHandler;
   }
 
-  public PydevConsoleExecuteActionHandler getExecuteActionHandler() {
+  public PythonConsoleExecuteActionHandler getExecuteActionHandler() {
     return myExecuteActionHandler;
   }
 
@@ -171,7 +171,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   public void inputReceived() {
     // If user's input was entered while debug console was turned off, we shouldn't wait for it anymore
     if (myExecuteActionHandler != null) {
-      myExecuteActionHandler.inputReceived();
+      myExecuteActionHandler.getConsoleCommunication().notifyInputReceived();
     }
   }
 
