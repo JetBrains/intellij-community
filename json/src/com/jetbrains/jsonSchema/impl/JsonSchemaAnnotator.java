@@ -21,6 +21,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +84,7 @@ public class JsonSchemaAnnotator implements Annotator {
       }
 
       final JsonValueAdapter firstPropValue = firstProp.getValue();
-      if (firstPropValue != null) checkFirstPropValue(element, firstProp, firstPropValue);
+      if (firstPropValue != null) checkFirstPropValue(firstProp, firstPropValue);
 
       final JsonObjectValueAdapter parentObject = firstProp.getParentObject();
       if (parentObject != null && myWalker.isTopJsonElement(parentObject.getDelegate().getParent())) {
@@ -94,26 +96,16 @@ public class JsonSchemaAnnotator implements Annotator {
       }
     }
 
-    private void checkFirstPropValue(@NotNull PsiElement element,
-                                     @NotNull JsonPropertyAdapter firstProp,
+    private void checkFirstPropValue(@NotNull JsonPropertyAdapter firstProp,
                                      @NotNull JsonValueAdapter firstPropValue) {
       // todo move it somewhere
       final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(firstProp.getDelegate(), false, true);
       if (position == null || position.isEmpty()) return;
 
-      if (isInsideSchemaDefinitions(element, position)) return;
-
-      final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
+      final JsonSchemaResolver resolver = new JsonSchemaResolver(myRootSchema, false, position);
+      final MatchResult result = resolver.detailedResolve();
       final BySchemaChecker checker = checkByMatchResult(firstPropValue, result, myWalker, myRootSchema);
       if (checker != null) processCheckerResults(checker);
-    }
-
-    // does not validate definitions section against general schema --> should be done separately
-    private static boolean isInsideSchemaDefinitions(@NotNull PsiElement element, List<JsonSchemaVariantsTreeBuilder.Step> position) {
-      if (!JsonSchemaFileType.INSTANCE.equals(element.getContainingFile().getFileType())) return false;
-      final JsonSchemaVariantsTreeBuilder.Step firstStep = position.get(0);
-      assert firstStep != null;
-      return firstStep.isFromObject() && JsonSchemaObject.DEFINITIONS.equals(firstStep.getName());
     }
 
     private void checkRootObject(@NotNull JsonValueAdapter adapter, @NotNull JsonSchemaObject rootSchema) {
@@ -137,25 +129,33 @@ public class JsonSchemaAnnotator implements Annotator {
                                             @NotNull final MatchResult result,
                                             @NotNull JsonLikePsiWalker walker, JsonSchemaObject rootSchema) {
     final List<BySchemaChecker> checkers = new ArrayList<>();
-    final Set<String> validatedProperties = new HashSet<>();// todo validated properties seem to should not be there
     if (result.myExcludingSchemas.isEmpty() && result.mySchemas.size() == 1) {
       final BySchemaChecker checker = new BySchemaChecker(rootSchema, walker);
-      checker.checkBySchemeBare(elementToCheck, result.mySchemas.iterator().next(), validatedProperties);
+      checker.checkBySchemeBare(elementToCheck, result.mySchemas.iterator().next());
       checkers.add(checker);
-    } else {
+    }
+    else {
       // todo simplify more
       if (!result.mySchemas.isEmpty()) {
         final BySchemaChecker checker = new BySchemaChecker(rootSchema, walker);
         final List<JsonSchemaObject> filtered = filterSchemaListByType(result.mySchemas, elementToCheck);
-        if (filtered.isEmpty()) checker.typeError(elementToCheck.getDelegate());
-        else checker.processAnyOf(elementToCheck, filtered, validatedProperties);
+        if (filtered.isEmpty()) {
+          checker.typeError(elementToCheck.getDelegate());
+        }
+        else {
+          checker.processAnyOf(elementToCheck, filtered);
+        }
         checkers.add(checker);
       }
       if (!result.myExcludingSchemas.isEmpty()) {
         final BySchemaChecker checker = new BySchemaChecker(rootSchema, walker);
         final List<JsonSchemaObject> filtered = filterSchemaListByType(result.myExcludingSchemas, elementToCheck);
-        if (filtered.isEmpty()) checker.typeError(elementToCheck.getDelegate());
-        else checker.processOneOf(elementToCheck, filtered, validatedProperties);
+        if (filtered.isEmpty()) {
+          checker.typeError(elementToCheck.getDelegate());
+        }
+        else {
+          checker.processOneOf(elementToCheck, filtered);
+        }
         checkers.add(checker);
       }
     }
@@ -236,10 +236,12 @@ public class JsonSchemaAnnotator implements Annotator {
     private final JsonLikePsiWalker myWalker;
     private final Map<PsiElement, String> myErrors;
     private boolean myHadTypeError;
+    private final boolean myIsMainSchema;
 
     public BySchemaChecker(@NotNull JsonSchemaObject rootSchema, @NotNull JsonLikePsiWalker walker) {
       myRootSchema = rootSchema;
       myWalker = walker;
+      myIsMainSchema = JsonSchemaVariantsTreeBuilder.isMainSchema(myRootSchema);
       myErrors = new HashMap<>();
     }
 
@@ -261,7 +263,7 @@ public class JsonSchemaAnnotator implements Annotator {
       myHadTypeError = true;
     }
 
-    private void checkBySchemeBare(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema, Set<String> validatedProperties) {
+    private void checkBySchemeBare(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
       final JsonSchemaType type = JsonSchemaType.getType(value);
       if (type == null) {
         //typeError(value.getDelegate());
@@ -286,7 +288,7 @@ public class JsonSchemaAnnotator implements Annotator {
           checkForEnum(value.getDelegate(), schema);
         }
         else if (JsonSchemaType._object.equals(type)) {
-          checkObject(value, schema, validatedProperties);
+          checkObject(value, schema);
           checkForEnum(value.getDelegate(), schema);
         }
       }
@@ -303,6 +305,7 @@ public class JsonSchemaAnnotator implements Annotator {
       return checkByMatchResult(object, matchResult, myWalker, myRootSchema);
     }
 
+//todo refactor these methods here
     private void checkByInnerSchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object) {
       final BySchemaChecker checker = checkByInnerSchema(schema, object);
       if (checker != null) {
@@ -311,33 +314,26 @@ public class JsonSchemaAnnotator implements Annotator {
       }
     }
 
-    private void checkObject(JsonValueAdapter value, JsonSchemaObject schema, Set<String> validatedProperties) {
-      final Map<String, JsonSchemaObject> properties = schema.getProperties();
+    private void checkObject(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
       final JsonObjectValueAdapter object = value.getAsObject();
       if (object == null) return;
+
       //noinspection ConstantConditions
       final List<JsonPropertyAdapter> propertyList = object.getPropertyList();
       final Set<String> set = new HashSet<>();
       for (JsonPropertyAdapter property : propertyList) {
-        set.add(property.getName());
-        final JsonValueAdapter adapter = property.getValue();
-        if (adapter == null) continue;
-        final JsonSchemaObject propertySchema = properties.get(property.getName());
-        if (propertySchema != null) {
-          checkByInnerSchemaRecordErrors(propertySchema, adapter);
+        final String name = StringUtil.notNullize(property.getName());
+
+        final JsonSchemaVariantsTreeBuilder.Step step = JsonSchemaVariantsTreeBuilder.Step.createPropertyStep(name);
+        if (myIsMainSchema) step.inMainSchema();
+        final Pair<ThreeState, JsonSchemaObject> pair = step.step(schema, true);
+        if (ThreeState.NO.equals(pair.getFirst()) && !set.contains(name)) {
+          error("Property '" + name + "' is not allowed", property.getDelegate());
         }
-        else {
-          final JsonSchemaObject patternSchema = schema.getMatchingPatternPropertySchema(StringUtil.notNullize(property.getName()));
-          if (patternSchema != null) {
-            checkByInnerSchemaRecordErrors(patternSchema, adapter);
-          } else if (schema.getAdditionalPropertiesSchema() != null) {
-            checkByInnerSchemaRecordErrors(schema.getAdditionalPropertiesSchema(), adapter);
-          }
-          else if (!Boolean.TRUE.equals(schema.getAdditionalPropertiesAllowed()) && !validatedProperties.contains(property.getName())) {
-            error("Property '" + property.getName() + "' is not allowed", property.getDelegate());
-          }
+        else if (ThreeState.UNSURE.equals(pair.getFirst()) && property.getValue() != null) {
+          checkByInnerSchemaRecordErrors(pair.getSecond(), property.getValue());
         }
-        validatedProperties.add(property.getName());
+        set.add(name);
       }
 
       if (object.shouldCheckIntegralRequirements()) {
@@ -647,23 +643,17 @@ public class JsonSchemaAnnotator implements Annotator {
       }
     }
 
-    private void processOneOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> oneOf, Set<String> validatedProperties) {
+    private void processOneOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> oneOf) {
       final Map<PsiElement, String> errors = new HashMap<>();
       int cntCorrect = 0;
-      boolean validatedPropertiesAdded = false;
       for (JsonSchemaObject object : oneOf) {
-        // skip it if smthg JS awaited, we do not process it currently todo: revisit
+        // skip it if something JS awaited, we do not process it currently todo: revisit
         if (object.isShouldValidateAgainstJSType()) continue;
 
         final BySchemaChecker checker = new BySchemaChecker(myRootSchema, myWalker);
-        final HashSet<String> local = new HashSet<>();
-        checker.checkBySchemeBare(value, object, local);
+        checker.checkBySchemeBare(value, object);
         if (checker.isCorrect()) {
           errors.clear();
-          if (!validatedPropertiesAdded) {
-            validatedPropertiesAdded = true;
-            validatedProperties.addAll(local);
-          }
           ++ cntCorrect;
         } else {
           if (errors.isEmpty() || notTypeError(value.getDelegate(), checker)) {
@@ -690,16 +680,15 @@ public class JsonSchemaAnnotator implements Annotator {
       return !checker.getErrors().containsKey(value);
     }
 
-    private void processAnyOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> anyOf, Set<String> validatedProperties) {
+    private void processAnyOf(@NotNull JsonValueAdapter value, List<JsonSchemaObject> anyOf) {
       final Map<PsiElement, String> errors = new HashMap<>();
       for (JsonSchemaObject object : anyOf) {
         final BySchemaChecker checker = new BySchemaChecker(myRootSchema, myWalker);
-        final HashSet<String> local = new HashSet<>();
-        checker.checkBySchemeBare(value, object, local);
+        checker.checkBySchemeBare(value, object);
         if (checker.isCorrect()) {
-          validatedProperties.addAll(local);
           return;
         }
+        // maybe we still find the correct schema - continue to iterate
         if (errors.isEmpty() && notTypeError(value.getDelegate(), checker)) {
           errors.clear();
           errors.putAll(checker.getErrors());

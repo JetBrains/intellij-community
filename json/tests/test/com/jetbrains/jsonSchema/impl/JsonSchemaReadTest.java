@@ -9,6 +9,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -73,7 +74,10 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     configureByExistingFile(mainSchema);
     final List<HighlightInfo> infos = doHighlighting();
     for (HighlightInfo info : infos) {
-      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) assertFalse(info.getDescription(), true);
+      if (!HighlightSeverity.INFORMATION.equals(info.getSeverity())) {
+        assertFalse(String.format("%s in: %s", info.getDescription(),
+                                  myEditor.getDocument().getText(new TextRange(info.getStartOffset(), info.getEndOffset()))), true);
+      }
     }
   }
 

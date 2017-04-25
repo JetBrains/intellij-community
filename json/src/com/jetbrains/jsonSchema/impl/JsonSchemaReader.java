@@ -84,6 +84,11 @@ public class JsonSchemaReader {
     private final String myRelativePath;
 
     public SchemaUrlSplitter(@NotNull final String ref) {
+      if ("#".equals(ref)) {
+        mySchemaId = null;
+        myRelativePath = "";
+        return;
+      }
       if (!ref.startsWith("#/")) {
         int idx = ref.indexOf("#/");
         if (idx == -1) {

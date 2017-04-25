@@ -56,33 +56,40 @@ public class JsonSchemaVariantsTreeBuilder {
     rootSchemasMap.put(myRootSchema.getSchemaFile(), myRootSchema);
 
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
-    applyChildSchema(rootSchemasMap, root, mySchema);
+    expandChildSchema(rootSchemasMap, root, mySchema);
     // set root's position since this children are just variants of root
     root.getChildren().forEach(node -> node.setSteps(myPosition));
 
     final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>();
     queue.addAll(root.getChildren());
 
+    boolean isMainSchema = isMainSchema(myRootSchema);
     while (!queue.isEmpty()) {
       final JsonSchemaTreeNode node = queue.removeFirst();
       if (node.isAny() || node.isNothing() || node.getSteps().isEmpty() || node.getSchema() == null) continue;
       final Step step = node.getSteps().get(0);
       if (!typeMatches(step.isFromObject(), node.getSchema())) {
+        node.nothingChild();
         continue;
       }
+      if (isMainSchema) step.inMainSchema();
       final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), !myIsName);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
         // process step results
         assert pair.getSecond() != null;
-        applyChildSchema(rootSchemasMap, node, pair.getSecond());
+        expandChildSchema(rootSchemasMap, node, pair.getSecond());
       }
 
       queue.addAll(node.getChildren());
     }
 
     return root;
+  }
+
+  public static boolean isMainSchema(@NotNull final JsonSchemaObject rootSchema) {
+    return "http://json-schema.org/draft-04/schema#".equals(rootSchema.getId());
   }
 
   private static boolean typeMatches(final boolean isObject, @NotNull final JsonSchemaObject schema) {
@@ -99,9 +106,9 @@ public class JsonSchemaVariantsTreeBuilder {
     return true;
   }
 
-  private static void applyChildSchema(@NotNull Map<VirtualFile, JsonSchemaObject> rootSchemasMap,
-                                       @NotNull JsonSchemaTreeNode node,
-                                       @NotNull JsonSchemaObject childSchema) {
+  private static void expandChildSchema(@NotNull Map<VirtualFile, JsonSchemaObject> rootSchemasMap,
+                                        @NotNull JsonSchemaTreeNode node,
+                                        @NotNull JsonSchemaObject childSchema) {
     if (interestingSchema(childSchema)) {
       final ProcessDefinitionsOperation operation = new ProcessDefinitionsOperation(childSchema, rootSchemasMap);
       operation.doMap();
@@ -265,11 +272,12 @@ public class JsonSchemaVariantsTreeBuilder {
                                  .map(s -> new ProcessDefinitionsOperation(s, myRootSchemasMap)).collect(Collectors.toList()));
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
-        // here it is not a mistake - all children of this node come to
+        // here it is not a mistake - all children of this node come to oneOf group
         myOneOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
         myOneOfGroup.addAll(andGroup(mySourceNode, op.myOneOfGroup));
       });
@@ -289,6 +297,7 @@ public class JsonSchemaVariantsTreeBuilder {
                                  .map(s -> new ProcessDefinitionsOperation(s, myRootSchemasMap)).collect(Collectors.toList()));
     }
 
+    @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
       myChildOperations.forEach(op -> {
@@ -300,7 +309,6 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  // todo maybe it is also a separate class
   @Nullable
   private static JsonSchemaObject getSchemaFromDefinition(@NotNull final JsonSchemaObject schema,
                                                      @NotNull Map<VirtualFile, JsonSchemaObject> rootSchemasMap) {
@@ -376,10 +384,15 @@ public class JsonSchemaVariantsTreeBuilder {
   public static class Step {
     @Nullable private final String myName;
     private final int myIdx;
+    private boolean myInMainSchema;
 
     private Step(@Nullable String name, int idx) {
       myName = name;
       myIdx = idx;
+    }
+
+    public void inMainSchema() {
+      myInMainSchema = true;
     }
 
     public static Step createPropertyStep(@NotNull final String name) {
@@ -426,7 +439,7 @@ public class JsonSchemaVariantsTreeBuilder {
     private Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull JsonSchemaObject parent,
                      boolean acceptAdditionalPropertiesSchemas) {
       assert myName != null;
-      if (JsonSchemaObject.DEFINITIONS.equals(myName) && parent.getDefinitions() != null) {
+      if (!myInMainSchema && JsonSchemaObject.DEFINITIONS.equals(myName) && parent.getDefinitions() != null) {
         final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
         final JsonSchemaObject object = new JsonSchemaObject(pointer);
         object.setProperties(parent.getDefinitions());
