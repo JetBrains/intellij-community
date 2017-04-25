@@ -230,7 +230,7 @@ public interface PydevConsoleRunner {
 
   void addConsoleListener(PydevConsoleRunnerImpl.ConsoleListener consoleListener);
 
-  PydevConsoleExecuteActionHandler getConsoleExecuteActionHandler();
+  PythonConsoleExecuteActionHandler getConsoleExecuteActionHandler();
 
   PyConsoleProcessHandler getProcessHandler();
 
