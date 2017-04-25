@@ -293,6 +293,10 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
   }
 
+  public void testTypingCallableCall() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 

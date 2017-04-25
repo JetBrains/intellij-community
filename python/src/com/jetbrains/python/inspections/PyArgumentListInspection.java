@@ -253,16 +253,19 @@ public class PyArgumentListInspection extends PyInspection {
       .map(ASTNode::getPsi)
       .ifPresent(
         psi -> {
-          if (mappings.size() == 1) {
+          if (mappings.size() != 1 ||
+              ContainerUtil.exists(mappings.get(0).getUnmappedParameters(), parameter -> parameter.getName() == null)) {
+            holder.registerProblem(
+              psi,
+              addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.parameter(s).unfilled"), mappings, context)
+            );
+          }
+          else {
             StreamEx
               .of(mappings.get(0).getUnmappedParameters())
               .map(PyCallableParameter::getName)
               .filter(Objects::nonNull)
               .forEach(name -> holder.registerProblem(psi, PyBundle.message("INSP.parameter.$0.unfilled", name)));
-          }
-          else {
-            holder.registerProblem(psi,
-                                   addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.parameter(s).unfilled"), mappings, context));
           }
         }
       );
