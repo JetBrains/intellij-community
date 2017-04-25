@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -62,7 +63,13 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
     if (current == null) return Collections.emptyList();
 
     current.accept(visitor);
-    return visitor.buildChains(myChainTransformer, current);
+    final List<List<PsiMethodCallExpression>> chains = visitor.getPsiChains();
+    return buildChains(chains, current);
+  }
+
+  @NotNull
+  private List<StreamChain> buildChains(@NotNull List<List<PsiMethodCallExpression>> chains, @NotNull PsiElement context) {
+    return chains.stream().map(x -> myChainTransformer.transform(x, context)).collect(Collectors.toList());
   }
 
   private static class MyStreamChainExistenceChecker extends MyVisitorBase {
@@ -98,25 +105,6 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
       }
     }
 
-    @NotNull
-    List<StreamChain> buildChains(@NotNull StreamChainTransformer transformer, @NotNull PsiElement context) {
-      final List<StreamChain> chains = new ArrayList<>();
-      for (final PsiMethodCallExpression terminationCall : myTerminationCalls) {
-        final List<PsiMethodCallExpression> chain = new ArrayList<>();
-        PsiMethodCallExpression current = terminationCall;
-        while (current != null) {
-          chain.add(current);
-          current = myPreviousCalls.get(current);
-        }
-
-        Collections.reverse(chain);
-
-        chains.add(transformer.transform(chain, context));
-      }
-
-      return chains;
-    }
-
     private void updateCallTree(@NotNull PsiMethodCallExpression expression) {
       if (StreamApiUtil.isTerminationStreamCall(expression)) {
         myTerminationCalls.add(expression);
@@ -130,6 +118,23 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
         myPreviousCalls.put(parentCallExpression, expression);
         updateCallTree(parentCallExpression);
       }
+    }
+
+    List<List<PsiMethodCallExpression>> getPsiChains() {
+      final List<List<PsiMethodCallExpression>> chains = new ArrayList<>();
+      for (final PsiMethodCallExpression terminationCall : myTerminationCalls) {
+        final List<PsiMethodCallExpression> chain = new ArrayList<>();
+        PsiMethodCallExpression current = terminationCall;
+        while (current != null) {
+          chain.add(current);
+          current = myPreviousCalls.get(current);
+        }
+
+        Collections.reverse(chain);
+        chains.add(chain);
+      }
+
+      return chains;
     }
   }
 
