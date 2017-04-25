@@ -51,20 +51,21 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    final ArrayList<VirtualFile> roots = new ArrayList<>();
-    Module myModule = getValue().getModule();
-    if (myModule == null) {
-      final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
-      for (Module module : modules) {
-        addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
+    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> {
+      final ArrayList<VirtualFile> roots = new ArrayList<>();
+      Module myModule = getValue().getModule();
+      if (myModule == null) {
+        final Module[] modules = ModuleManager.getInstance(getProject()).getModules();
+        for (Module module : modules) {
+          addModuleLibraryRoots(ModuleRootManager.getInstance(module), roots);
+        }
       }
-    }
-    else {
-      addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
-    }
-    return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
+      else {
+        addModuleLibraryRoots(ModuleRootManager.getInstance(myModule), roots);
+      }
+      return PackageUtil.createPackageViewChildrenOnFiles(roots, getProject(), getSettings(), null, true);
+    });
   }
-
 
   @Override
   public boolean someChildContainsFile(VirtualFile file) {
