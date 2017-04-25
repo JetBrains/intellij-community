@@ -20,6 +20,7 @@
 package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,6 +74,12 @@ public class PythonDocTestConfigurationProducer extends PythonTestLegacyConfigur
       return visitor.hasTests;
     }
     else return true;
+  }
+
+  // test configuration is always prefered over regular one
+  @Override
+  public boolean shouldReplace(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
+    return self.isProducedBy(getClass());
   }
 
   private static class PyDocTestVisitor extends PsiRecursiveElementVisitor {

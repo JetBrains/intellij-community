@@ -665,7 +665,6 @@
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
-    <runnableScriptFilter implementation="com.jetbrains.python.testing.PythonUnitTestRunnableScriptFilter"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
