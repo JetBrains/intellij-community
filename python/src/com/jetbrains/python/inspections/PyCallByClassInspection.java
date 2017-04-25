@@ -93,7 +93,7 @@ public class PyCallByClassInspection extends PyInspection {
               final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
               if (markedCallee != null && markedCallee.getModifier() != STATICMETHOD) {
                 final PyCallableParameter firstParameter =
-                  ContainerUtil.getFirstItem(PyUtil.getParameters(markedCallee.getCallable(), myTypeEvalContext));
+                  ContainerUtil.getFirstItem(markedCallee.getCallableType().getParameters(myTypeEvalContext));
                 if (firstParameter != null) {
                   for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.getMappedParameters().entrySet()) {
                     // we ignore *arg and **arg which we cannot analyze

@@ -74,17 +74,15 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
 
-        final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
-          PyUtil.filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext));
-
-        final Object[] items = new Object[ratedMarkedCallees.size()];
-        int currentPosition = 0;
-        for (PyCallExpression.PyRatedMarkedCallee ratedMarkedCallee : ratedMarkedCallees) {
-          items[currentPosition] = Pair.createNonNull(call, ratedMarkedCallee.getMarkedCallee());
-          currentPosition++;
-        }
-
-        context.setItemsToShow(items);
+        context.setItemsToShow(
+          PyUtil
+            .filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext))
+            .stream()
+            .map(PyCallExpression.PyRatedMarkedCallee::getMarkedCallee)
+            .filter(markedCallee -> markedCallee.getCallableType().getParameters(typeEvalContext) != null)
+            .map(markedCallee -> Pair.createNonNull(call, markedCallee))
+            .toArray()
+        );
 
         return argumentList;
       }
@@ -177,13 +175,14 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     PyPsiUtils.assertValid(callExpression);
 
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(callExpression.getProject(), callExpression.getContainingFile());
+    final PyMarkedCallee markedCallee = callAndCallee.getSecond();
 
-    final PyCallExpression.PyArgumentsMapping mapping =
-      PyCallExpressionHelper.mapArguments(callExpression, callAndCallee.getSecond(), typeEvalContext);
-    final PyMarkedCallee markedCallee = mapping.getMarkedCallee();
-    if (markedCallee == null) return;
+    final List<PyCallableParameter> parameters = markedCallee.getCallableType().getParameters(typeEvalContext);
+    if (parameters == null) return;
 
-    final List<PyCallableParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), typeEvalContext);
+    final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callExpression, markedCallee, typeEvalContext);
+    if (mapping.getMarkedCallee() == null) return;
+
     final Map<Integer, PyCallableParameter> indexToNamedParameter = new HashMap<>(parameters.size());
 
     // param -> hint index. indexes are not contiguous, because some hints are parentheses.
