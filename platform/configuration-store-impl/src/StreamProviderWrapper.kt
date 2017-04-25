@@ -23,7 +23,11 @@ class StreamProviderWrapper : StreamProvider {
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    providers.forEach { it.write(fileSpec, content, size, roamingType) }
+    providers.forEach {
+      if (it.isApplicable(fileSpec, roamingType)) {
+        it.write(fileSpec, content, size, roamingType)
+      }
+    }
   }
 
   override fun delete(fileSpec: String, roamingType: RoamingType) = providers.any { it.delete(fileSpec, roamingType) }
