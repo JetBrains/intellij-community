@@ -250,7 +250,7 @@ final class KeymapSelector extends SimpleSchemesPanel<Keymap> implements Schemes
 
   @Override
   protected boolean highlightNonDefaultSchemes() {
-    return true;
+    return false;
   }
 
   @Override

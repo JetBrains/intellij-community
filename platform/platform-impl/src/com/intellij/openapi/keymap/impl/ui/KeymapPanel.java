@@ -66,7 +66,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private JCheckBox preferKeyPositionOverCharOption;
 
   private final KeymapSelector myKeymapSelector = new KeymapSelector(this::currentKeymapChanged);
-  private final ActionsTree myActionsTree = new ActionsTree(myKeymapSelector);
+  private final ActionsTree myActionsTree = new ActionsTree();
   private FilterComponent myFilterComponent;
   private TreeExpansionMonitor myTreeExpansionMonitor;
   private final ShortcutFilteringPanel myFilteringPanel = new ShortcutFilteringPanel();
