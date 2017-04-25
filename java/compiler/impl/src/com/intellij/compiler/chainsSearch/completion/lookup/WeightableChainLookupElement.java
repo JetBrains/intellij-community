@@ -39,7 +39,7 @@ public final class WeightableChainLookupElement extends LookupElementDecorator<L
 
   @Override
   public void renderElement(LookupElementPresentation presentation) {
-    presentation.setItemTextForeground(JBColor.GREEN);
+    presentation.setItemTextForeground(JBColor.GREEN.darker());
     super.renderElement(presentation);
   }
 }
