@@ -105,7 +105,8 @@ public class SingleClassesTest {
   @Test public void testClashName() { doTest("pkg/TestClashName", "pkg/SharedName1",
           "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
           "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
-  @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum","pkg/TestSwitchOnEnum$1");}
+  @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
+  //@Test public void TestSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
 
   private void doTest(String testFile, String... companionFiles) {

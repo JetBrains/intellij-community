@@ -12,6 +12,8 @@ public class TestSwitchOnEnum {
   public int testSOE(TimeUnit t) {
     // This creates anonymous SwitchMap inner class.
     switch (t) {
+      case MICROSECONDS:
+        return 2;
       case SECONDS:
         return 1;
     }

@@ -300,6 +300,13 @@ public class ConstExprent extends Exprent {
            InterpreterUtil.equalObjects(value, cn.getValue());
   }
 
+  @Override
+  public int hashCode() {
+    int result = constType != null ? constType.hashCode() : 0;
+    result = 31 * result + (value != null ? value.hashCode() : 0);
+    return result;
+  }
+
   public boolean hasBooleanValue() {
     switch (constType.type) {
       case CodeConstants.TYPE_BOOLEAN:
