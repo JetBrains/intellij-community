@@ -19,7 +19,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +68,57 @@ public class ParamHelper {
       }
       i++;
     }
+  }
+
+  @NotNull
+  public static String getPresentableText(@NotNull PyParameter[] parameters,
+                                          boolean includeDefaultValue,
+                                          @Nullable TypeEvalContext context) {
+    return getPresentableText(ContainerUtil.map(parameters, PyCallableParameterImpl::new), includeDefaultValue, context);
+  }
+
+  @NotNull
+  public static String getPresentableText(@NotNull List<PyCallableParameter> parameters,
+                                          boolean includeDefaultValue,
+                                          @Nullable TypeEvalContext context) {
+    final StringBuilder result = new StringBuilder();
+    result.append("(");
+
+    walkDownParameters(
+      parameters,
+      new ParamHelper.ParamWalker() {
+        @Override
+        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
+          result.append("(");
+        }
+
+        @Override
+        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
+          result.append(")");
+          if (!last) result.append(", ");
+        }
+
+        @Override
+        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
+          visitNonPsiParameter(new PyCallableParameterImpl(param), first, last);
+        }
+
+        @Override
+        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+          result.append('*');
+          if (!last) result.append(", ");
+        }
+
+        @Override
+        public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
+          result.append(parameter.getPresentableText(includeDefaultValue, context));
+          if (!last) result.append(", ");
+        }
+      }
+    );
+
+    result.append(")");
+    return result.toString();
   }
 
   public interface ParamWalker {

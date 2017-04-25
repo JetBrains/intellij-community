@@ -59,11 +59,13 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     return qname != null ? qname.getLastComponent() : null;
   }
 
+  @Override
   @Nullable
   public PyFunction getTarget() {
     return PsiTreeUtil.getParentOfType(this, PyFunction.class);
   }
 
+  @Override
   public boolean isBuiltin() {
     ASTNode node = getNode().findChildByType(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens());
     if (node != null) {
@@ -74,11 +76,14 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     return false;
   }
 
+  @Override
   public boolean hasArgumentList() {
     final ASTNode arglistNode = getNode().findChildByType(PyElementTypes.ARGUMENT_LIST);
     return (arglistNode != null) && (arglistNode.findChildByType(PyTokenTypes.LPAR) != null);
   }
 
+  @Override
+  @Nullable
   public QualifiedName getQualifiedName() {
     final PyDecoratorStub stub = getStub();
     if (stub != null) {
@@ -93,6 +98,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
+  @Override
+  @Nullable
   public PyExpression getCallee() {
     try {
       return (PyExpression)getFirstChild().getNextSibling(); // skip the @ before call
@@ -112,7 +119,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
       if (!hasArgumentList()) {
         // NOTE: that +1 thing looks fishy
         final PyMarkedCallee oldMarkedCallee = ratedMarkedCallee.getMarkedCallee();
-        final PyMarkedCallee newMarkedCallee = new PyMarkedCallee(oldMarkedCallee.getCallable(),
+        final PyMarkedCallee newMarkedCallee = new PyMarkedCallee(oldMarkedCallee.getCallableType(),
+                                                                  oldMarkedCallee.getCallable(),
                                                                   oldMarkedCallee.getModifier(),
                                                                   oldMarkedCallee.getImplicitOffset() + 1,
                                                                   oldMarkedCallee.isImplicitlyResolved());
@@ -150,6 +158,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     }
   }
 
+  @Override
+  @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return PyCallExpressionHelper.getCallType(this, context);
   }

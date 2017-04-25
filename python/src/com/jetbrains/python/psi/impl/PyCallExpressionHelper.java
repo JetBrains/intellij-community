@@ -132,8 +132,8 @@ public class PyCallExpressionHelper {
     }
 
     return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement, context)
-      // while clarifying resolve results we could get duplicate callables so we have to group them and select result with highest rate
-      .collect(Collectors.groupingBy(markedCallee -> markedCallee.getElement(), LinkedHashMap::new, Collectors.toList()))
+      // while clarifying resolve results we could get duplicate callable types so we have to group them and select result with highest rate
+      .collect(Collectors.groupingBy(markedCallee -> markedCallee.getMarkedCallee().getCallableType(), LinkedHashMap::new, Collectors.toList()))
       .entrySet()
       .stream()
       .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate)).orElse(null))
@@ -198,8 +198,14 @@ public class PyCallExpressionHelper {
   private static PyCallExpression.PyRatedMarkedCallee markResolveResult(@NotNull ClarifiedResolveResult resolveResult,
                                                                         @NotNull TypeEvalContext context,
                                                                         int implicitOffset) {
-    if (resolveResult.myClarifiedResolved instanceof PyCallable) {
-      final PyCallable callable = (PyCallable)resolveResult.myClarifiedResolved;
+    final PsiElement clarifiedResolved = resolveResult.myClarifiedResolved;
+    if (!(clarifiedResolved instanceof PyTypedElement)) return null;
+
+    final PyCallableType callableType = PyUtil.as(context.getType((PyTypedElement)clarifiedResolved), PyCallableType.class);
+    if (callableType == null) return null;
+
+    if (clarifiedResolved instanceof PyCallable) {
+      final PyCallable callable = (PyCallable)clarifiedResolved;
 
       final PyFunction.Modifier originalModifier = callable instanceof PyFunction ? ((PyFunction)callable).getModifier() : null;
       final PyFunction.Modifier resolvedModifier = ObjectUtils.chooseNotNull(originalModifier, resolveResult.myWrappedModifier);
@@ -218,6 +224,7 @@ public class PyCallExpressionHelper {
         implicitOffset + getImplicitArgumentCount(callable, resolvedModifier, isConstructorCall, isByInstance, isByClass);
 
       final PyCallExpression.PyMarkedCallee markedCallee = new PyCallExpression.PyMarkedCallee(
+        callableType,
         callable,
         resolvedModifier,
         Math.max(0, resolvedImplicitOffset), // wrong source can trigger strange behaviour
@@ -227,7 +234,10 @@ public class PyCallExpressionHelper {
       return new PyCallExpression.PyRatedMarkedCallee(markedCallee, resolveResult.myOriginalResolveResult.getRate());
     }
 
-    return null;
+    return new PyCallExpression.PyRatedMarkedCallee(
+      new PyCallExpression.PyMarkedCallee(callableType, null, null, implicitOffset, resolveResult.myOriginalResolveResult.isImplicit()),
+      resolveResult.myOriginalResolveResult.getRate()
+    );
   }
 
   /**
@@ -647,7 +657,9 @@ public class PyCallExpressionHelper {
                                                                   @NotNull PyArgumentList argumentList,
                                                                   @NotNull PyCallExpression.PyMarkedCallee markedCallee,
                                                                   @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
+    final List<PyCallableParameter> parameters = markedCallee.getCallableType().getParameters(context);
+    if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callExpression);
+
     final List<PyCallableParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
     final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
@@ -679,8 +691,7 @@ public class PyCallExpressionHelper {
   public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
                                                     @NotNull PyCallable callable,
                                                     @NotNull TypeEvalContext context) {
-    final List<PyCallableParameter> parameters = PyUtil.getParameters(callable, context);
-    return mapArguments(callSite, callable, parameters, context);
+    return mapArguments(callSite, callable, callable.getParameters(context), context);
   }
 
   @NotNull
@@ -879,7 +890,10 @@ public class PyCallExpressionHelper {
     boolean containsImplementations = false;
 
     for (E element : elements) {
-      final boolean overload = PyiUtil.isOverload(mapper.apply(element), context);
+      final PsiElement mapped = mapper.apply(element);
+      if (mapped == null) continue;
+
+      final boolean overload = PyiUtil.isOverload(mapped, context);
       containsOverloads |= overload;
       containsImplementations |= !overload;
 

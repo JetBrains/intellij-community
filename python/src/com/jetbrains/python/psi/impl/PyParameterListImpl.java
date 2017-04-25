@@ -123,38 +123,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   @Override
   @NotNull
   public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
-    final StringBuilder target = new StringBuilder();
-    final String COMMA = ", ";
-    target.append("(");
-    ParamHelper.walkDownParamArray(
-      getParameters(),
-      new ParamHelper.ParamVisitor() {
-        @Override
-        public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          target.append("(");
-        }
-
-        @Override
-        public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
-          target.append(")");
-          if (!last) target.append(COMMA);
-        }
-
-        @Override
-        public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          target.append(param.getRepr(includeDefaultValue, context));
-          if (!last) target.append(COMMA);
-        }
-
-        @Override
-        public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
-          target.append('*');
-          if (!last) target.append(COMMA);
-        }
-      }
-    );
-    target.append(")");
-    return target.toString();
+    return ParamHelper.getPresentableText(getParameters(), includeDefaultValue, context);
   }
 
   @Nullable
