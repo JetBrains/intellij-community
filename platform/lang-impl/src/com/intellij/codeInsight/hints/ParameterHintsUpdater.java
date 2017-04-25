@@ -68,7 +68,7 @@ public class ParameterHintsUpdater {
     editorHints.forEach(editorHint -> {
       int offset = editorHint.getOffset();
       String newText = myNewHints.remove(offset);
-      if (delayRemoval(editorHint) || myHintsManager.isPinned(editorHint) || isPreserveHint(editorHint)) return;
+      if (delayRemoval(editorHint) || myHintsManager.isPinned(editorHint) || isPreserveHint(editorHint, newText)) return;
       updates.add(new InlayUpdateInfo(offset, editorHint, newText));
     });
 
@@ -79,13 +79,10 @@ public class ParameterHintsUpdater {
   }
 
   
-  private boolean isPreserveHint(Inlay inlay) {
-    int offset = inlay.getOffset();
-    String newText = myNewHints.get(offset);
+  private boolean isPreserveHint(@NotNull Inlay inlay, @Nullable String newText) {
     if (newText == null) {
-      newText = myHintsToPreserve.get(offset);
+      newText = myHintsToPreserve.get(inlay.getOffset());
     }
-    
     String oldText = myHintsManager.getHintText(inlay);
     return Objects.equals(newText, oldText);
   }
