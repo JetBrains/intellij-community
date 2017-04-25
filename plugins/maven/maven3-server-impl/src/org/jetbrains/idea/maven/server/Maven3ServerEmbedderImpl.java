@@ -1206,7 +1206,9 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
       }
 
-      List<RemoteRepository> repositories = RepositoryUtils.toRepos(request.getRemoteRepositories());
+      // do not use request.getRemoteRepositories() here,
+      // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
+      List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
       repositories = repositorySystem.newResolutionRepositories(repositorySystemSession, repositories);
 
       final ArtifactResult artifactResult = repositorySystem.resolveArtifact(
