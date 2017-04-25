@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -68,18 +69,14 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
 
     if (SystemInfo.IS_AT_LEAST_JAVA9) {
-      // since we can't access rt.jar under jdk9, we need a parent class loader to load standard jdk classes
-      ClassLoader appLoader = BootstrapClassLoaderUtil.class.getClassLoader();
-      ClassLoader parent;
+      // on Java 8, 'tools.jar' is on a classpath; on Java 9, its classes are available via the platform loader
       try {
-        appLoader.loadClass("org.picocontainer.PicoInitializationException");
-        // the minor WTF is that we use different class loaders when starting IDEA from IDEA
-        parent = appLoader;
+        ClassLoader platformCl = (ClassLoader)ClassLoader.class.getMethod("getPlatformClassLoader").invoke(null);
+        builder.parent(platformCl);
       }
-      catch (ClassNotFoundException e) {
-        parent = appLoader.getParent(); // use platform class loader for main IDEA start to load only JDK classes with it
+      catch (Exception e) {
+        getLogger().warn(e);
       }
-      builder.parent(parent);
     }
 
     UrlClassLoader newClassLoader = builder.get();
@@ -99,37 +96,41 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
-    String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
-    if (ext && extDirs.length == 0) return;
+    if (!SystemInfo.IS_AT_LEAST_JAVA9) {
+      String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
+      if (ext && extDirs.length == 0) return;
 
-    List<URLClassLoader> loaders = new ArrayList<URLClassLoader>(2);
-    for (ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader(); loader != null; loader = loader.getParent()) {
-      if (loader instanceof URLClassLoader) {
-        loaders.add(0, (URLClassLoader)loader);
+      List<URLClassLoader> loaders = new ArrayList<URLClassLoader>(2);
+      for (ClassLoader loader = BootstrapClassLoaderUtil.class.getClassLoader(); loader != null; loader = loader.getParent()) {
+        if (loader instanceof URLClassLoader) {
+          loaders.add(0, (URLClassLoader)loader);
+        }
+        else {
+          getLogger().warn("Unknown class loader: " + loader.getClass().getName());
+        }
       }
-      else {
-        getLogger().warn("Unknown class loader: " + loader.getClass().getName());
-      }
-    }
 
-    // todo[r.sh] drop after migration to Java 9
-    for (URLClassLoader loader : loaders) {
-      URL[] urls = loader.getURLs();
-      for (URL url : urls) {
-        String path = urlToPath(url);
+      for (URLClassLoader loader : loaders) {
+        URL[] urls = loader.getURLs();
+        for (URL url : urls) {
+          String path = urlToPath(url);
 
-        boolean isExt = false;
-        for (String extDir : extDirs) {
-          if (path.startsWith(extDir) && path.length() > extDir.length() && path.charAt(extDir.length()) == File.separatorChar) {
-            isExt = true;
-            break;
+          boolean isExt = false;
+          for (String extDir : extDirs) {
+            if (path.startsWith(extDir) && path.length() > extDir.length() && path.charAt(extDir.length()) == File.separatorChar) {
+              isExt = true;
+              break;
+            }
+          }
+
+          if (isExt == ext) {
+            classpath.add(url);
           }
         }
-
-        if (isExt == ext) {
-          classpath.add(url);
-        }
       }
+    }
+    else if (!ext) {
+      parseClassPathString(ManagementFactory.getRuntimeMXBean().getClassPath(), classpath);
     }
   }
 
@@ -170,15 +171,21 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   private static void addAdditionalClassPath(Collection<URL> classpath) {
-    try {
-      StringTokenizer tokenizer = new StringTokenizer(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH, ""), File.pathSeparator + ",", false);
-      while (tokenizer.hasMoreTokens()) {
-        String pathItem = tokenizer.nextToken();
-        classpath.add(new File(pathItem).toURI().toURL());
+    parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
+  }
+
+  private static void parseClassPathString(String pathString, Collection<URL> classpath) {
+    if (pathString != null && !pathString.isEmpty()) {
+      try {
+        StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator, false);
+        while (tokenizer.hasMoreTokens()) {
+          String pathItem = tokenizer.nextToken();
+          classpath.add(new File(pathItem).toURI().toURL());
+        }
       }
-    }
-    catch (MalformedURLException e) {
-      getLogger().error(e);
+      catch (MalformedURLException e) {
+        getLogger().error(e);
+      }
     }
   }
 
