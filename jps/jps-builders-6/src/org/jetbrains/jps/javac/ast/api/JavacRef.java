@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
 import java.util.Set;
 
 public interface JavacRef {
@@ -149,6 +151,12 @@ public interface JavacRef {
 
     @Nullable
     public static JavacElementRefBase fromElement(Element element, Element qualifier, JavacNameTable nameTableCache) {
+      if (qualifier != null) {
+        TypeMirror type = qualifier.asType();
+        if (type == null || type.getKind() == TypeKind.NONE) {
+          return null;
+        }
+      }
       if (element instanceof TypeElement) {
         return new JavacElementClassImpl(element, qualifier, nameTableCache);
       }
