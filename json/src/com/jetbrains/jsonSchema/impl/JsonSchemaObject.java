@@ -3,12 +3,10 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.SLRUMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,8 +23,8 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
+  @NotNull
   private SmartPsiElementPointer<JsonObject> myPeerPointer;
-  private String myDefinitionAddress;
   private Map<String, JsonSchemaObject> myDefinitions;
   private SmartPsiElementPointer<JsonObject> myDefinitionsPointer;
   private Map<String, JsonSchemaObject> myProperties;
@@ -165,15 +163,12 @@ public class JsonSchemaObject {
 
   @Nullable
   public VirtualFile getSchemaFile() {
-    return myPeerPointer == null ? null : myPeerPointer.getVirtualFile();
+    return myPeerPointer.getVirtualFile();
   }
 
+  @NotNull
   public SmartPsiElementPointer<JsonObject> getPeerPointer() {
     return myPeerPointer;
-  }
-
-  public void setPeerPointer(SmartPsiElementPointer<JsonObject> peerPointer) {
-    myPeerPointer = peerPointer;
   }
 
   public SmartPsiElementPointer<JsonObject> getDefinitionsPointer() {
@@ -198,10 +193,6 @@ public class JsonSchemaObject {
 
   public void setProperties(Map<String, JsonSchemaObject> properties) {
     myProperties = properties;
-  }
-
-  public Map<String, JsonSchemaObject> getPatternProperties() {
-    return myPatternProperties;
   }
 
   public void setPatternProperties(@NotNull final Map<String, JsonSchemaObject> patternProperties) {
@@ -504,14 +495,6 @@ public class JsonSchemaObject {
     return myType != null || (myTypeVariants != null && !myTypeVariants.isEmpty());
   }
 
-  public String getDefinitionAddress() {
-    return myDefinitionAddress;
-  }
-
-  public void setDefinitionAddress(String definitionAddress) {
-    myDefinitionAddress = definitionAddress;
-  }
-
   @Nullable
   public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
     if (myPatternProperties == null) return null;
@@ -547,55 +530,10 @@ public class JsonSchemaObject {
         final JsonSchemaObject object = myPatternProperties.get(entry.getKey());
         assert object != null;
         final SmartPsiElementPointer<JsonObject> pointer = object.getPeerPointer();
-        if (pointer != null) return Pair.create(pointer, entry.getValue());
-        return null;
+        return Pair.create(pointer, entry.getValue());
       }).filter(o -> o != null).collect(Collectors.toMap(o -> o.getFirst(), o -> o.getSecond()));
     }
     return null;
-  }
-
-  // tod remove?
-  public static void iterateAllInnerSchemas(@NotNull final JsonSchemaObject object, @NotNull final SchemaConsumer schemaConsumer) {
-    int control = 100000;
-    final ArrayDeque<Pair<JsonSchemaObject, Map<String, String>>> queue = new ArrayDeque<>();
-    queue.add(Pair.create(object, new HashMap<>()));
-    while(!queue.isEmpty()) {
-      if (--control == 0) {
-        throw new RuntimeException("cyclic json schema search");
-      }
-      final Pair<JsonSchemaObject, Map<String, String>> pair = queue.removeFirst();
-      final JsonSchemaObject current = pair.getFirst();
-      final Map<String, String> context = pair.getSecond();
-
-      final Ref<JsonSchemaObject> previous = new Ref<>();
-      final Ref<Map<String, String>> childContextRef = new Ref<>(context);
-      schemaConsumer.process(current, item -> previous.set(item), context, childContext -> childContextRef.set(childContext));
-
-      if (!previous.isNull()) {
-        queue.addFirst(Pair.create(current, context));
-        queue.addFirst(Pair.create(previous.get(), context));
-        continue;
-      }
-
-      final List<JsonSchemaObject> list = new ArrayList<>();
-      if (current.getDefinitions() != null) list.addAll(current.getDefinitions().values());
-      if (current.getProperties() != null) list.addAll(current.getProperties().values());
-      if (current.getPatternProperties() != null) list.addAll(current.getPatternProperties().values());
-      if (current.getAdditionalPropertiesSchema() != null) list.add(current.getAdditionalPropertiesSchema());
-      if (current.getAdditionalItemsSchema() != null) list.add(current.getAdditionalItemsSchema());
-      if (current.getItemsSchema() != null) list.add(current.getItemsSchema());
-      if (current.getItemsSchemaList() != null) list.addAll(current.getItemsSchemaList());
-      if (current.getSchemaDependencies() != null) list.addAll(current.getSchemaDependencies().values());
-
-      if (current.getAllOf() != null) list.addAll(current.getAllOf());
-      if (current.getAnyOf() != null) list.addAll(current.getAnyOf());
-      if (current.getOneOf() != null) list.addAll(current.getOneOf());
-      if (current.getNot() != null) list.add(current.getNot());
-
-      for (JsonSchemaObject schemaObject : list) {
-        queue.addLast(Pair.create(schemaObject, childContextRef.get()));
-      }
-    }
   }
 
   @Nullable
@@ -628,12 +566,6 @@ public class JsonSchemaObject {
       current = current.getDefinitions().get(part);
     }
     return current;
-  }
-
-  public interface SchemaConsumer {
-    void process(@NotNull JsonSchemaObject object, Consumer<JsonSchemaObject> queueInserter,
-                       @NotNull Map<String, String> context,
-                       @NotNull Consumer<Map<String, String>> contextChanger);
   }
 
   private static class PatternCalculator {

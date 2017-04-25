@@ -23,7 +23,6 @@ import java.util.*;
  * @author Irina.Chernushina on 4/24/2017.
  */
 public class JsonSchemaResolver {
-  @NotNull private final JsonSchemaObject myRootSchema;
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
   @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> myPosition;
@@ -31,21 +30,19 @@ public class JsonSchemaResolver {
   public JsonSchemaResolver(@NotNull JsonSchemaObject schema,
                             boolean isName,
                             @NotNull List<JsonSchemaVariantsTreeBuilder.Step> position) {
-    myRootSchema = schema;
     mySchema = schema;
     myIsName = isName;
     myPosition = position;
   }
 
-  public JsonSchemaResolver(@NotNull JsonSchemaObject rootSchema, @NotNull JsonSchemaObject schema) {
-    myRootSchema = rootSchema;
+  public JsonSchemaResolver(@NotNull JsonSchemaObject schema) {
     mySchema = schema;
     myIsName = true;
     myPosition = Collections.emptyList();
   }
 
   public MatchResult detailedResolve() {
-    final JsonSchemaTreeNode node = new JsonSchemaVariantsTreeBuilder(myRootSchema, mySchema, myIsName, myPosition).buildTree();
+    final JsonSchemaTreeNode node = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition).buildTree();
     return MatchResult.zipTree(node);
   }
 
