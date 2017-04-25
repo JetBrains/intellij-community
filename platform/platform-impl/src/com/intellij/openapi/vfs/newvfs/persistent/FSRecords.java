@@ -515,20 +515,32 @@ public class FSRecords {
       return integer == null ? enumeratedId:  integer.intValue();
     }
 
+    private static final Object CORRUPTION_LOCK = new Object();
+
     private static void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-      if (!ourIsDisposed) {
-        // No need to forcibly mark VFS corrupted if it is already shut down
-        if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
-          w.unlock();
-          createBrokenMarkerFile(e);
-          myCorrupted = true;
-          force();
+      if (!ourIsDisposed) { // No need to forcibly mark VFS corrupted if it is already shut down
+        synchronized (CORRUPTION_LOCK) {  
+          if (!myCorrupted) {
+            createBrokenMarkerFile(e);
+            myCorrupted = true;
+            // avoid deadlock if r lock is occupied by current thread
+            if (canWriteWithoutDeadlock()) force();
+            else flush();
+          }
         }
       }
 
       if (e instanceof Error) throw (Error)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
       throw new RuntimeException(e);
+    }
+
+    private static boolean canWriteWithoutDeadlock() {
+      if (w.tryLock()) {
+        w.unlock();
+        return true;
+      }
+      return false;
     }
 
     private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
