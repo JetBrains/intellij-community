@@ -50,17 +50,21 @@ public class StreamApiUtil {
                                          boolean mustResultBeStream) {
     final PsiMethod method = expression.resolveMethod();
     if (method != null && mustResultBeStream == isStreamType(method.getReturnType())) {
-      final PsiElement methodParent = method.getParent();
-      if (methodParent instanceof PsiClass) {
-        return Arrays.stream(((PsiClass)methodParent).getSuperTypes()).anyMatch(x -> mustParentBeStream == isStreamType(x));
+      final PsiElement methodClass = method.getParent();
+      if (methodClass instanceof PsiClass) {
+        return isStreamType((PsiClass)methodClass);
       }
     }
 
     return false;
   }
 
-  private static boolean isStreamType(@Nullable PsiType type) {
-    return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
+  private static boolean isStreamType(@Nullable PsiType psiType) {
+    return InheritanceUtil.isInheritor(psiType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
+  }
+
+  private static boolean isStreamType(@Nullable PsiClass psiClass) {
+    return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
   @Nullable
