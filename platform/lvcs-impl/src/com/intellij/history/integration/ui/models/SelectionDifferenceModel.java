@@ -23,6 +23,7 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 
@@ -90,10 +91,8 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {
-    return createSimpleDiffContent(getContentOf(r, p), r.findEntry());
-  }
-
-  private String getContentOf(Revision r, RevisionProcessingProgress p) {
-    return myCalculator.getSelectionFor(r, p).getBlockContent();
+    String content = myCalculator.getSelectionFor(r, p).getBlockContent();
+    FileType fileType = myGateway.getFileType(r.findEntry().getName());
+    return DiffContentFactory.getInstance().create(content, fileType);
   }
 }
