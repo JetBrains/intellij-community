@@ -17,12 +17,16 @@ package com.intellij.debugger.streams.chain;
 
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.JdkManager;
+import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
+import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightCodeInsightTestCase;
@@ -36,6 +40,7 @@ import java.util.List;
  */
 public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
   private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
+  private final StreamChainBuilder myNewBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
 
   @NotNull
   @Override
@@ -67,13 +72,15 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
 
   @NotNull
   protected StreamChainBuilder getChainBuilder() {
-    return myChainBuilder;
+    return myNewBuilder;
   }
 
   protected List<StreamChain> buildChains() {
-    final PsiElement elementAtCaret = configureAndGetElementAtCaret();
-    assertNotNull(elementAtCaret);
-    return getChainBuilder().build(elementAtCaret);
+    return ApplicationManager.getApplication().runReadAction((Computable<List<StreamChain>>)() -> {
+      final PsiElement elementAtCaret = configureAndGetElementAtCaret();
+      assertNotNull(elementAtCaret);
+      return getChainBuilder().build(elementAtCaret);
+    });
   }
 
   @NotNull
