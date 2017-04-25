@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.delete
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -41,6 +42,10 @@ internal class DefaultProjectStoreTest {
       }
     }
   }
+
+  @JvmField
+  @Rule
+  val fsRule = InMemoryFsRule()
 
   private val tempDirManager = TemporaryDirectory()
 
@@ -143,13 +148,13 @@ internal class DefaultProjectStoreTest {
       </component>
     </state>""")
 
-    val tempDir = tempDirManager.newPath()
-    normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir.toString())
+    val tempDir = fsRule.fs.getPath("")
+    normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir)
     assertThat(element.isEmpty()).isTrue()
 
     val directoryTree = printDirectoryTree(tempDir)
     assertThat(directoryTree.trim()).isEqualTo("""
-    ├──new project from default - remove workspace component configuration/
+    ├──/
       ├──copyright/
         ├──Foo.xml
     <component name="CopyrightManager">
