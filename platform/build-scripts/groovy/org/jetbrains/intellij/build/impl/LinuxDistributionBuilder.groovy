@@ -91,6 +91,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
+        filter(token: "main_class_name", value: buildContext.mainClassName)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: name)

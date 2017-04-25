@@ -95,6 +95,9 @@ class BuildContextImpl extends BuildContext {
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdk8Home)
     bundledJreManager = new BundledJreManager(this, communityHome)
 
+    // Android Studio: supports build_studio.sh --enable-uitests
+    mainClassName = "1".equals(System.getProperty("studio.ui.tests")) ? "com.intellij.ide.BootstrapUITestRunner" : "com.intellij.idea.Main"
+
     // Android Studio: buildNumber is either SNAPSHOT or the one passed from build_studio.sh. fullBuildNumber includes the branch.
     buildNumber = options.buildNumber ?: "SNAPSHOT"
     fullBuildNumber = "$productProperties.productCode-" + readSnapshotBuildNumber().replace("SNAPSHOT", buildNumber)

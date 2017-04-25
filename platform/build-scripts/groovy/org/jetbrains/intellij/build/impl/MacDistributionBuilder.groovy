@@ -205,6 +205,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@min_year@@", value: "2000")
       replacefilter(token: "@@max_year@@", value: "$todayYear")
       replacefilter(token: "@@version@@", value: version)
+      replacefilter(token: "@@main_class_name@@", value: buildContext.mainClassName)
       replacefilter(token: "@@vmoptions@@", value: vmOptions)
       replacefilter(token: "@@idea_properties@@", value: coreProperties)
       replacefilter(token: "@@class_path@@", value: classPath)

@@ -42,6 +42,8 @@ abstract class BuildContext {
   BuildOptions options
   BundledJreManager bundledJreManager
 
+  String mainClassName  // Android Studio: supports build_studio.sh --enable-uitests
+
   /**
    * Build number without product code (e.g. '162.500.10')
    */
