@@ -90,23 +90,23 @@ public class ParameterHintsUpdater {
 
   public void update() {
     boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
-    boolean isBulkModeNeeded = myUpdateList.size() > 1000 && myEditor.getSoftWrapModel().isSoftWrappingEnabled();
-    DocumentUtil.executeInBulk(myEditor.getDocument(), isBulkModeNeeded, () -> performHintsUpdate(firstTime));
+    boolean isUpdateInBulkMode = myUpdateList.size() > 1000 && myEditor.getSoftWrapModel().isSoftWrappingEnabled();
+    DocumentUtil.executeInBulk(myEditor.getDocument(), isUpdateInBulkMode, () -> performHintsUpdate(firstTime, isUpdateInBulkMode));
     myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
   }
 
-  private void performHintsUpdate(boolean firstTime) {
+  private void performHintsUpdate(boolean firstTime, boolean isInBulkMode) {
     for (int infoIndex = 0; infoIndex < myUpdateList.size(); infoIndex++) {
       InlayUpdateInfo info = myUpdateList.get(infoIndex);
       String oldText = info.oldText;
       String newText = info.newText;
 
       if (oldText == null) {
-        boolean useAnimation = !firstTime && !isSameHintRemovedNear(newText, infoIndex);
+        boolean useAnimation = !firstTime && !isSameHintRemovedNear(newText, infoIndex) && !isInBulkMode;
         myHintsManager.addHint(myEditor, info.offset, newText, useAnimation, false);
       }
       else if (newText == null) {
-        boolean useAnimation = !isSameHintAddedNear(oldText, infoIndex);
+        boolean useAnimation = !isSameHintAddedNear(oldText, infoIndex) && !isInBulkMode;
         myHintsManager.deleteHint(myEditor, info.inlay, useAnimation);
       }
       else {
