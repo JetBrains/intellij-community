@@ -1937,7 +1937,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
-    for (int i = start; i <= sequence.length() - infix.length(); i++) {
+    return indexOf(sequence, infix, start, sequence.length());
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start, int end) {
+    for (int i = start; i <= end - infix.length(); i++) {
       if (startsWith(sequence, i, infix)) {
         return i;
       }

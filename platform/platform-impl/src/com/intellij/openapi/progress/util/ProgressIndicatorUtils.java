@@ -202,13 +202,13 @@ public class ProgressIndicatorUtils {
             if (continuation == null) {
               future.complete(null);
             }
-            else {
+            else if (!future.isCancelled()) {
               application.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                   application.removeApplicationListener(listener); // remove listener early to prevent firing it during continuation execution
                   try {
-                    if (!progressIndicator.isCanceled()) {
+                    if (!progressIndicator.isCanceled() && !future.isCancelled()) {
                       continuation.getAction().run();
                     }
                   }

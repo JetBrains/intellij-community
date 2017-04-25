@@ -1205,8 +1205,8 @@ public class FileUtil extends FileUtilRt {
       boolean appendReplacement = true;
       if (c > 0 && c < 255) {
         if (strict
-            ? (Character.isLetterOrDigit(c) || (c == '_'))
-            : (Character.isJavaIdentifierPart(c) || (c == ' ') || (c == '@') || (c == '-'))) {
+            ? Character.isLetterOrDigit(c) || c == '_'
+            : Character.isJavaIdentifierPart(c) || c == ' ' || c == '@' || c == '-') {
           continue;
         }
       }
@@ -1463,7 +1463,7 @@ public class FileUtil extends FileUtilRt {
     return files == null ? defaultFiles : files;
   }
 
-  public static boolean isHashBangLine(CharSequence firstCharsIfText, String marker) {
+  public static boolean isHashBangLine(@Nullable CharSequence firstCharsIfText, @NotNull String marker) {
     if (firstCharsIfText == null) {
       return false;
     }
@@ -1471,12 +1471,8 @@ public class FileUtil extends FileUtilRt {
       return false;
     }
 
-    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n');
-    if (lineBreak < 0) {
-      return false;
-    }
-    String firstLine = firstCharsIfText.subSequence(0, lineBreak).toString();
-    return firstLine.contains(marker);
+    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n', 2);
+    return lineBreak >= 0 && StringUtil.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
   }
 
   @NotNull

@@ -618,11 +618,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                    StartMarker parent,
                    int start,
                    int end) {
-      this.myParentNode = parent;
-      this.myBuilder = builder;
-      this.myTokenType = type;
-      this.myTokenStart = start;
-      this.myTokenEnd = end;
+      myParentNode = parent;
+      myBuilder = builder;
+      myTokenType = type;
+      myTokenStart = start;
+      myTokenEnd = end;
     }
   }
 
@@ -681,11 +681,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private StartMarker myStart;
     private boolean myCollapse;
 
-    public DoneMarker() {
+    DoneMarker() {
       myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
-    public DoneMarker(final StartMarker marker, final int currentLexeme) {
+    DoneMarker(final StartMarker marker, final int currentLexeme) {
       this();
       myLexemeIndex = currentLexeme;
       myStart = marker;
@@ -739,7 +739,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private final PsiBuilderImpl myBuilder;
     private String myMessage;
 
-    public ErrorItem(final PsiBuilderImpl builder, final String message, final int idx) {
+    ErrorItem(final PsiBuilderImpl builder, final String message, final int idx) {
       myBuilder = builder;
       myMessage = message;
       myLexemeIndex = idx;
@@ -1921,7 +1921,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final int[] myLexStarts;
     final IElementType[] myLexTypes;
 
-    public LazyParseableTokensCache(int[] lexStarts, IElementType[] lexTypes) {
+    LazyParseableTokensCache(int[] lexStarts, IElementType[] lexTypes) {
       myLexStarts = lexStarts;
       myLexTypes = lexTypes;
     }

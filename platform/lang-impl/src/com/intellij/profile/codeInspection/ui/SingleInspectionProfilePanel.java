@@ -83,6 +83,8 @@ import java.io.StringReader;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.util.containers.ContainerUtil.exists;
+
 import com.intellij.util.containers.Queue;
 
 public class SingleInspectionProfilePanel extends JPanel {
@@ -1166,38 +1168,40 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private boolean descriptorsAreChanged() {
-    for (ToolDescriptors toolDescriptors : myInitialToolDescriptors.values()) {
-      Descriptor desc = toolDescriptors.getDefaultDescriptor();
-      Project project = myProjectProfileManager.getProject();
-      if (myProfile.isToolEnabled(desc.getKey(), null, project) != desc.isEnabled()){
-        return true;
-      }
-      if (myProfile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
-        return true;
-      }
-      final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
-      for (Descriptor descriptor : descriptors) {
-        if (myProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), project) != descriptor.isEnabled()) {
-          return true;
-        }
-        if (myProfile.getErrorLevel(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getLevel()) {
-          return true;
-        }
-      }
+    return exists(myInitialToolDescriptors.values(),
+                  toolDescriptors -> areToolDescriptorsChanged(myProjectProfileManager.getProject(), myProfile, toolDescriptors));
+  }
 
-      final List<ScopeToolState> tools = myProfile.getNonDefaultTools(desc.getKey().toString(), project);
-      if (tools.size() != descriptors.size()) {
+  public static boolean areToolDescriptorsChanged(@NotNull Project project,
+                                                  @NotNull InspectionProfileModifiableModel profile,
+                                                  @NotNull ToolDescriptors toolDescriptors) {
+    Descriptor desc = toolDescriptors.getDefaultDescriptor();
+    if (profile.isToolEnabled(desc.getKey(), null, project) != desc.isEnabled()) {
+      return true;
+    }
+    if (profile.getErrorLevel(desc.getKey(), desc.getScope(), project) != desc.getLevel()) {
+      return true;
+    }
+    final List<Descriptor> descriptors = toolDescriptors.getNonDefaultDescriptors();
+    for (Descriptor descriptor : descriptors) {
+      if (profile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), project) != descriptor.isEnabled()) {
         return true;
       }
-      for (int i = 0; i < tools.size(); i++) {
-        final ScopeToolState pair = tools.get(i);
-        if (!Comparing.equal(pair.getScope(project), descriptors.get(i).getScope())) {
-          return true;
-        }
+      if (profile.getErrorLevel(descriptor.getKey(), descriptor.getScope(), project) != descriptor.getLevel()) {
+        return true;
       }
     }
 
-
+    final List<ScopeToolState> tools = profile.getNonDefaultTools(desc.getKey().toString(), project);
+    if (tools.size() != descriptors.size()) {
+      return true;
+    }
+    for (int i = 0; i < tools.size(); i++) {
+      final ScopeToolState pair = tools.get(i);
+      if (!Comparing.equal(pair.getScope(project), descriptors.get(i).getScope())) {
+        return true;
+      }
+    }
     return false;
   }
 

@@ -17,8 +17,8 @@ package com.intellij.psi.impl.source.resolve.reference.impl;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.util.IncorrectOperationException;
@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
@@ -126,6 +127,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .filter(method -> isRegularMethod(method))
               .sorted(Comparator.comparing(PsiMethod::getName))
               .map(method -> lookupMethod(method))
+              .filter(Objects::nonNull)
               .toArray();
 
           case GET_METHOD: {
@@ -135,6 +137,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
               .map(method -> withPriority(lookupMethod(method), -getMethodSortOrder(method)))
+              .filter(Objects::nonNull)
               .toArray();
           }
         }
@@ -152,19 +155,24 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
     return member != null && (member.getContainingClass() == psiClass || isPublic(member));
   }
 
-  @NotNull
-  private LookupElement lookupMethod(PsiMethod method) {
-    return JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY).withInsertHandler(this);
+  @Nullable
+  private LookupElement lookupMethod(@NotNull PsiMethod method) {
+    final ReflectiveSignature signature = getMethodSignature(method);
+    return signature != null
+           ? LookupElementBuilder.create(signature, method.getName())
+             .withIcon(signature.getIcon())
+             .withTailText(signature.getShortArgumentTypes())
+             .withInsertHandler(this)
+           : null;
   }
 
   @Override
   public void handleInsert(InsertionContext context, LookupElement item) {
     final Object object = item.getObject();
-    if (object instanceof PsiMethod) {
-      final String text = getParameterTypesText((PsiMethod)object);
-      if (text != null) {
-        replaceText(context, text.isEmpty() ? "" : ", " + text);
-      }
+    if (object instanceof ReflectiveSignature) {
+      final ReflectiveSignature signature = (ReflectiveSignature)object;
+      final String text = signature.getText(false, false, type -> type + ".class");
+      replaceText(context, text.isEmpty() ? "" : ", " + text);
     }
   }
 }

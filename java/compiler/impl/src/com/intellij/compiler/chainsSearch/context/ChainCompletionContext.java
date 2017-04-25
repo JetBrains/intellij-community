@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 public class ChainCompletionContext {
   @NotNull
-  private final TargetType myTarget;
+  private final ChainSearchTarget myTarget;
   @NotNull
   private final List<PsiNamedElement> myContextElements;
   @NotNull
@@ -56,7 +56,7 @@ public class ChainCompletionContext {
   @NotNull
   private final FactoryMap<MethodIncompleteSignature, PsiMethod[]> myResolver;
 
-  public ChainCompletionContext(@NotNull TargetType target,
+  public ChainCompletionContext(@NotNull ChainSearchTarget target,
                                 @NotNull List<PsiNamedElement> contextElements,
                                 @NotNull List<PsiNamedElement> contextStrings,
                                 @NotNull PsiElement context) {
@@ -84,7 +84,7 @@ public class ChainCompletionContext {
   }
 
   @NotNull
-  public TargetType getTarget() {
+  public ChainSearchTarget getTarget() {
     return myTarget;
   }
 
@@ -163,7 +163,7 @@ public class ChainCompletionContext {
   public static ChainCompletionContext createContext(@Nullable PsiType targetType,
                                                      @Nullable PsiElement containingElement, boolean suggestIterators) {
     if (containingElement == null) return null;
-    TargetType target = TargetType.create(targetType);
+    ChainSearchTarget target = ChainSearchTarget.create(targetType);
     if (target == null) return null;
     if (suggestIterators) {
       target = target.toIterators();

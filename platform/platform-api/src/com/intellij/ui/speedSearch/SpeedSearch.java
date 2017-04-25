@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,10 +30,19 @@ public class SpeedSearch extends SpeedSearchSupply {
   private static final String ALLOWED_SPECIAL_SYMBOLS = " *_-\"'/.$>:";
 
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
+  private final boolean myMatchAllOccurrences;
 
   private String myString = "";
   private boolean myEnabled;
   private Matcher myMatcher;
+
+  public SpeedSearch() {
+    this(false);
+  }
+
+  public SpeedSearch(boolean matchAllOccurrences) {
+    myMatchAllOccurrences = matchAllOccurrences;
+  }
 
   public void type(String letter) {
     updatePattern(myString + letter);
@@ -111,7 +120,7 @@ public class SpeedSearch extends SpeedSearchSupply {
     String prevString = myString;
     myString = string;
     try {
-      myMatcher = NameUtil.buildMatcher("*" + string, 0, true, false);
+      myMatcher = NameUtil.buildMatcher("*" + string, myMatchAllOccurrences, 0, true, false);
     }
     catch (Exception e) {
       myMatcher = null;

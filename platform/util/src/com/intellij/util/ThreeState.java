@@ -19,6 +19,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.NotNull;
+
 public enum ThreeState {
   YES, NO, UNSURE;
 
@@ -26,6 +28,14 @@ public enum ThreeState {
     return value ? YES : NO;
   }
 
+  /**
+   * Combine two different ThreeState values yielding UNSURE if values are different
+   * and itself if values are the same.
+   *
+   * @param other other value to combine with this value
+   * @return a result of combination of two ThreeState values
+   */
+  @NotNull
   public ThreeState merge(ThreeState other) {
     return this == other ? this : UNSURE;
   }

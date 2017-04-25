@@ -48,7 +48,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -94,6 +93,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author Konstantin Bulenkov
@@ -870,7 +871,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   static Shortcut[] extractShortcutFor(@NotNull TreeAction action) {
     if (action instanceof ActionShortcutProvider) {
       String actionId = ((ActionShortcutProvider)action).getActionIdForShortcut();
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+      return getActiveKeymapShortcuts(actionId).getShortcuts();
     }
     return action instanceof FileStructureFilter ?
                            ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();

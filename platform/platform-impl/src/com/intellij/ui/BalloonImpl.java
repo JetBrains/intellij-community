@@ -1059,9 +1059,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (myDefaultPrefSize == null) {
       final EmptyBorder border = myShadowBorderProvider == null ? getPointlessBorder() : null;
       final MyComponent c = new MyComponent(myContent, this, border);
-      if (myShadowBorderProvider != null) {
-        c.setBorder(new EmptyBorder(getShadowBorderInsets()));
-      }
+
+      c.setBorder(new EmptyBorder(getShadowBorderInsets()));
       myDefaultPrefSize = c.getPreferredSize();
     }
     return myDefaultPrefSize;

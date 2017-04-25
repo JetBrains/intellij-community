@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CompilerMessageImpl implements CompilerMessage {
@@ -30,7 +31,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
   private final CompilerMessageCategory myCategory;
   @Nullable private Navigatable myNavigatable;
   private final String myMessage;
-  private VirtualFile myFile;
+  private final VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
 
@@ -39,7 +40,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
   }
 
   public CompilerMessageImpl(Project project,
-                             CompilerMessageCategory category,
+                             @NotNull CompilerMessageCategory category,
                              String message,
                              @Nullable final VirtualFile file,
                              int row,
@@ -54,14 +55,18 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myFile = file;
   }
 
+  @NotNull
+  @Override
   public CompilerMessageCategory getCategory() {
     return myCategory;
   }
 
+  @Override
   public String getMessage() {
     return myMessage;
   }
 
+  @Override
   public Navigatable getNavigatable() {
     if (myNavigatable != null) {
       return myNavigatable;
@@ -76,10 +81,12 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return null;
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     return myFile;
   }
 
+  @Override
   public String getExportTextPrefix() {
     if (getLine() >= 0) {
       return CompilerBundle.message("compiler.results.export.text.prefix", getLine());
@@ -87,6 +94,7 @@ public final class CompilerMessageImpl implements CompilerMessage {
     return "";
   }
 
+  @Override
   public String getRenderTextPrefix() {
     if (getLine() >= 0) {
       return "(" + getLine() + ", " + getColumn() + ")";

@@ -55,34 +55,30 @@ abstract class ImplicitSubclassProvider {
    */
   abstract fun getSubclassingInfo(psiClass: PsiClass): SubclassingInfo?
 
+  /**
+   * Information about implicitly overridden methods.
+   * @property description an explanation why this method was overridden.
+   * @property isAbstract is overridden method abstract.
+   */
+  class OverridingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
+                                                 val description: String,
+                                                 val isAbstract: Boolean = false)
+
+  /**
+   * Information about implicitly created subclass.
+   * @property description an explanation why this class was subclassed.
+   * @property isAbstract is created subclass abstract.
+   * @property methodsInfo map of methods overridden in class and corresponding [OverridingInfo]s,
+   * or `null` if no method-level info is provided
+   */
+  class SubclassingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
+                                                  val description: String,
+                                                  val methodsInfo: Map<PsiMethod, OverridingInfo>? = null,
+                                                  val isAbstract: Boolean = false)
+
 
   companion object {
     val EP_NAME = ExtensionPointName.create<ImplicitSubclassProvider>("com.intellij.codeInsight.implicitSubclassProvider")
   }
-
-}
-
-/**
- * Information about implicitly overridden methods.
- * @property description an explanation why this method was overridden.
- * @property isAbstract is overridden method abstract.
- */
-class OverridingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
-                                               val description: String,
-                                               val isAbstract: Boolean = false)
-
-/**
- * Information about implicitly created subclass.
- * @property description an explanation why this class was subclassed.
- * @property isAbstract is created subclass abstract.
- */
-open class SubclassingInfo @JvmOverloads constructor(@Nls(capitalization = Sentence)
-                                                     val description: String,
-                                                     val isAbstract: Boolean = false) {
-  /**
-   * @param method a method of class for which the info was created.
-   * @return an info about reason for method overriding, or `null` if this method will not be overridden.
-   */
-  open fun getOverridingInfo(method: PsiMethod): OverridingInfo? = null
 
 }

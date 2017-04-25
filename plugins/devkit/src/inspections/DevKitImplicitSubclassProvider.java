@@ -16,10 +16,8 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
-import com.intellij.codeInspection.inheritance.SubclassingInfo;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;

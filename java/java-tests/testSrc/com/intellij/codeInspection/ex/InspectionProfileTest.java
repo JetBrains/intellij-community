@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -492,15 +493,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     final List<InspectionToolWrapper> list = new ArrayList<>();
     list.add(createTool("foo", true));
 
-    InspectionToolRegistrar registrar = new InspectionToolRegistrar() {
-      @NotNull
-      @Override
-      public List<InspectionToolWrapper> createTools() {
-        return list;
-      }
-    };
-
-    InspectionProfileImpl profile = createProfile(registrar);
+    Supplier<List<InspectionToolWrapper>> toolSupplier = () -> list;
+    InspectionProfileImpl profile = createProfile(toolSupplier);
 
     List<ScopeToolState> tools = profile.getAllTools();
     assertEquals(1, tools.size());
@@ -523,7 +517,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     list.add(createTool("bar", true));
     list.add(createTool("disabled", false));
 
-    profile = createProfile(registrar);
+    profile = createProfile(toolSupplier);
     profile.readExternal(element);
 
     tools = profile.getAllTools();
@@ -548,9 +542,9 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return JDOMUtil.writeElement(profile.writeScheme());
   }
 
-  private static InspectionProfileImpl createProfile(@NotNull InspectionToolRegistrar registrar) {
-    InspectionProfileImpl base = new InspectionProfileImpl("Base", registrar, (InspectionProfileImpl)null);
-    return new InspectionProfileImpl("Foo", registrar, base);
+  private static InspectionProfileImpl createProfile(@NotNull Supplier<List<InspectionToolWrapper>> toolSupplier) {
+    InspectionProfileImpl base = new InspectionProfileImpl("Base", toolSupplier, (InspectionProfileImpl)null);
+    return new InspectionProfileImpl("Foo", toolSupplier, base);
   }
 
   public void testGlobalInspectionContext() throws Exception {

@@ -107,7 +107,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     defaultProject.save()
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
-    normalizeDefaultProjectElement(defaultProject, element, if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null)
+    LOG.catchAndLog {
+      normalizeDefaultProjectElement(defaultProject, element, if (isDirectoryBased) Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)) else null)
+    }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
   }
 
@@ -447,7 +449,7 @@ private fun removeWorkspaceComponentConfiguration(defaultProject: Project, eleme
 }
 
 // public only to test
-fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: String?) {
+fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path?) {
   LOG.catchAndLog {
     removeWorkspaceComponentConfiguration(defaultProject, element)
   }
@@ -460,16 +462,17 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
     val iterator = element.getChildren("component").iterator()
     for (component in iterator) {
       when (component.getAttributeValue("name")) {
-        "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true, projectConfigDir)
+        "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), "InspectionProjectProfileManager", projectConfigDir.resolve("inspectionProfiles"))
         "CopyrightManager" -> {
           iterator.remove()
-          convertProfiles(component.getChildren("copyright").iterator(), false, projectConfigDir)
+          val schemeDir = projectConfigDir.resolve("copyright")
+          convertProfiles(component.getChildren("copyright").iterator(), "CopyrightManager", schemeDir)
           component.removeAttribute("name")
           if (!component.isEmpty()) {
             val wrapper = Element("component").attribute("name", "CopyrightManager")
             component.name = "settings"
             wrapper.addContent(component)
-            JDOMUtil.write(wrapper, Paths.get(projectConfigDir, "copyright", "profiles_settings.xml").outputStream(), "\n")
+            JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
           }
         }
       }
@@ -477,14 +480,14 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
   }
 }
 
-private fun convertProfiles(profileIterator: MutableIterator<Element>, isInspection: Boolean, projectConfigDir: String) {
+private fun convertProfiles(profileIterator: MutableIterator<Element>, componentName: String, schemeDir: Path) {
   for (profile in profileIterator) {
     val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
 
     profileIterator.remove()
-    val wrapper = Element("component").attribute("name", if (isInspection) "InspectionProjectProfileManager" else "CopyrightManager")
+    val wrapper = Element("component").attribute("name", componentName)
     wrapper.addContent(profile)
-    val path = Paths.get(projectConfigDir, if (isInspection) "inspectionProfiles" else "copyright", "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
+    val path = schemeDir.resolve("${FileUtil.sanitizeFileName(schemeName, true)}.xml")
     JDOMUtil.write(wrapper, path.outputStream(), "\n")
   }
 }

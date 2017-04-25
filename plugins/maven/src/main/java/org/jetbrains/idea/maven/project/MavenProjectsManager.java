@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -585,7 +586,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private static String getMavenizedModuleOptionName() {
-    return "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
+    return ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY;
   }
 
   @TestOnly

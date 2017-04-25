@@ -818,7 +818,7 @@
     <localInspection language="UAST" shortName="ImplicitSubclassInspection"
                      bundle="messages.InspectionsBundle" key="inspection.implicit.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
-                     groupPath="Uast"
+                     groupPath="Java"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.inheritance.ImplicitSubclassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BlockMarkerComments"

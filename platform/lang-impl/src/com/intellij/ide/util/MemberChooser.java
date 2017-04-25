@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -55,6 +54,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class MemberChooser<T extends ClassMember> extends DialogWrapper implements TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.MemberChooser");
@@ -348,15 +349,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     group.addSeparator();
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
-    expandAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
-      myTree);
+    expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), myTree);
     group.add(expandAllAction);
 
     CollapseAllAction collapseAllAction = new CollapseAllAction();
-    collapseAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
-      myTree);
+    collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), myTree);
     group.add(collapseAllAction);
 
     panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent(),

@@ -28,7 +28,7 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   private final int myLastMethodOccurrences;
   private final int myUnreachableParametersCount;
   private final int myNotMatchedStringVars;
-  private final boolean myHasCallingVariableInContext;
+  private final boolean myHasQualifierInContext;
   private final boolean myFirstMethodStatic;
   private final int myParametersInContext;
 
@@ -36,14 +36,14 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
                         final int lastMethodOccurrences,
                         final int unreachableParametersCount,
                         final int notMatchedStringVars,
-                        final boolean hasCallingVariableInContext,
+                        final boolean hasQualifierInContext,
                         final boolean firstMethodStatic,
                         final int parametersInContext) {
     myChainSize = chainSize;
     myLastMethodOccurrences = lastMethodOccurrences;
     myUnreachableParametersCount = unreachableParametersCount;
     myNotMatchedStringVars = notMatchedStringVars;
-    myHasCallingVariableInContext = hasCallingVariableInContext;
+    myHasQualifierInContext = hasQualifierInContext;
     myFirstMethodStatic = firstMethodStatic;
     myParametersInContext = parametersInContext;
   }
@@ -70,10 +70,10 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
 
   @Override
   public int compareTo(@NotNull final ChainRelevance that) {
-    if (myHasCallingVariableInContext && !that.myHasCallingVariableInContext) {
+    if (myHasQualifierInContext && !that.myHasQualifierInContext) {
       return 1;
     }
-    if (that.myHasCallingVariableInContext && !myHasCallingVariableInContext) {
+    if (that.myHasQualifierInContext && !myHasQualifierInContext) {
       return -1;
     }
     if (myFirstMethodStatic && !that.myFirstMethodStatic) {
@@ -97,9 +97,9 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
 
   @Override
   public String toString() {
-    return (myFirstMethodStatic ? "1" : "0") + 
-           (myHasCallingVariableInContext ? "1" : "0") + "_" + 
-           myLastMethodOccurrences + "_" + 
+    return (myFirstMethodStatic ? "1" : "0") +
+           (myHasQualifierInContext ? "1" : "0") + "_" +
+           myLastMethodOccurrences + "_" +
            myUnreachableParametersCount;
   }
 }

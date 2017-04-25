@@ -53,7 +53,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
       val rootPath = FileUtil.toSystemIndependentName(PathManager.getJarPathForClass(FileUtilRt::class.java)!!)
       modificator.addRoot(LocalFileSystem.getInstance().refreshAndFindFileByPath(rootPath), OrderRootType.CLASSES)
       modificator.commitChanges()
-      table.addJdk(pluginSdk)
+      table.addJdk(pluginSdk!!)
     }
   }
 
@@ -62,7 +62,7 @@ class PluginModuleCompilationTest : BaseCompilerTestCase() {
   override fun tearDown() {
     try {
       if (pluginSdk != null) {
-        runWriteAction { ProjectJdkTable.getInstance().removeJdk(pluginSdk) }
+        runWriteAction { ProjectJdkTable.getInstance().removeJdk(pluginSdk!!) }
       }
     }
     finally {

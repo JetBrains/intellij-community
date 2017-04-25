@@ -5,27 +5,32 @@ import java.util.concurrent.TimeUnit;
 public class TestSwitchOnEnum {
    int myInt;
 
-   public void testSOE(TimeUnit var1) {
-      switch(null.$SwitchMap$java$util$concurrent$TimeUnit[var1.ordinal()]) {// 12
-      case 1:
-         return;// 14
+   public int testSOE(TimeUnit t) {
+      switch(t) {// 14
+      case MICROSECONDS:
+         return 2;// 16
+      case SECONDS:
+         return 1;// 18
       default:
+         return 0;// 20
       }
-   }// 16
+   }
 }
 
 class 'pkg/TestSwitchOnEnum' {
-   method 'testSOE (Ljava/util/concurrent/TimeUnit;)V' {
-      0      8
-      4      8
-      7      8
+   method 'testSOE (Ljava/util/concurrent/TimeUnit;)I' {
       8      8
-      1c      10
-      1d      13
+      24      10
+      25      10
+      26      12
+      27      12
+      28      14
+      29      14
    }
 }
 
 Lines mapping:
-12 <-> 9
-14 <-> 11
-16 <-> 14
+14 <-> 9
+16 <-> 11
+18 <-> 13
+20 <-> 15

@@ -36,12 +36,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -75,8 +74,8 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
   }
 
   private static class ParameterHintsPass extends EditorBoundHighlightingPass {
-    private final Map<Integer, String> myHints = new HashMap<>();
-    private final Map<Integer, String> myShowOnlyIfExistedBeforeHints = new HashMap<>();
+    private final TIntObjectHashMap<String> myHints = new TIntObjectHashMap<>();
+    private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
 
     private ParameterHintsPass(@NotNull PsiFile file, @NotNull Editor editor) {
       super(editor, file, true);

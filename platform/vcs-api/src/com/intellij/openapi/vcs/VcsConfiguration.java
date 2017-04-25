@@ -62,7 +62,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public VcsShowConfirmationOption.Value REMOVE_EMPTY_INACTIVE_CHANGELISTS = VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   public int CHANGED_ON_SERVER_INTERVAL = 60;
   public boolean SHOW_ONLY_CHANGED_IN_SELECTION_DIFF = true;
-  public boolean CHECK_COMMIT_MESSAGE_SPELLING = true;
   public String DEFAULT_PATCH_EXTENSION = PATCH;
   public boolean USE_CUSTOM_SHELF_PATH = false;
   public String CUSTOM_SHELF_PATH = null;
@@ -76,7 +75,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public int MAXIMUM_HISTORY_ROWS = 1000;
   public String UPDATE_FILTER_SCOPE_NAME = null;
   public boolean USE_COMMIT_MESSAGE_MARGIN = true;
-  public int COMMIT_MESSAGE_MARGIN_SIZE = 72;
   public boolean WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = false;
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;

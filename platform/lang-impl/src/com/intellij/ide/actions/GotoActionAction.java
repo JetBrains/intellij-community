@@ -61,6 +61,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @Override
@@ -235,7 +237,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     });
 
-    CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    ShortcutSet shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
 
     new DumbAwareAction() {
       @Override

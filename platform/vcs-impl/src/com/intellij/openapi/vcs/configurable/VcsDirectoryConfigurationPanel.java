@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings;
 import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.Function;
@@ -85,9 +84,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JCheckBox myShowChangedRecursively;
   private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
-  private VcsCommitMessageMarginConfigurable myCommitMessageMarginConfigurable;
-  private JCheckBox myShowUnversionedFiles;
-  private JCheckBox myCheckCommitMessageSpelling;
 
   private static class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
@@ -387,9 +383,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myLimitHistory.reset();
     myScopeFilterConfig.reset();
     myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
-    myCommitMessageMarginConfigurable.reset();
-    myShowUnversionedFiles.setSelected(myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
-    myCheckCommitMessageSpelling.setSelected(myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING);
   }
 
   @NotNull
@@ -527,9 +520,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
     panel.add(createShowChangedOption(), gb.nextLine().next());
     panel.add(myScopeFilterConfig.createComponent(), gb.nextLine().next());
-    panel.add(createUseCommitMessageRightMargin(), gb.nextLine().next().fillCellHorizontally());
-    panel.add(createShowUnversionedFilesOption(), gb.nextLine().next());
-    panel.add(createCheckCommitMessageSpelling(), gb.nextLine().next());
     return panel;
   }
 
@@ -630,27 +620,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     return component;
   }
 
-  private JComponent createUseCommitMessageRightMargin() {
-    myCommitMessageMarginConfigurable = new VcsCommitMessageMarginConfigurable(myProject, myVcsConfiguration);
-    return myCommitMessageMarginConfigurable.createComponent();
-  }
-
   private JComponent createShowRecursivelyDirtyOption() {
     myShowChangedRecursively = new JCheckBox("Show directories with changed descendants", myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
     return myShowChangedRecursively;
-  }
-
-  @NotNull
-  private JComponent createShowUnversionedFilesOption() {
-    myShowUnversionedFiles =
-      new JCheckBox("Show unversioned files in Commit dialog", myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT);
-    return myShowUnversionedFiles;
-  }
-
-  @NotNull
-  private JComponent createCheckCommitMessageSpelling() {
-    myCheckCommitMessageSpelling = new JBCheckBox("Check commit message spelling", myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING);
-    return myCheckCommitMessageSpelling;
   }
 
   @Override
@@ -666,9 +638,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     myLimitHistory.apply();
     myScopeFilterConfig.apply();
     myVcsConfiguration.SHOW_DIRTY_RECURSIVELY = myShowChangedRecursively.isSelected();
-    myCommitMessageMarginConfigurable.apply();
-    myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT = myShowUnversionedFiles.isSelected();
-    myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING = myCheckCommitMessageSpelling.isSelected();
     initializeModel();
   }
 
@@ -688,15 +657,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     if (myLimitHistory.isModified()) return true;
     if (myScopeFilterConfig.isModified()) return true;
     if (myVcsConfiguration.SHOW_DIRTY_RECURSIVELY != myShowChangedRecursively.isSelected()) {
-      return true;
-    }
-    if (myCommitMessageMarginConfigurable.isModified()) {
-      return true;
-    }
-    if (myVcsConfiguration.SHOW_UNVERSIONED_FILES_WHILE_COMMIT != myShowUnversionedFiles.isSelected()) {
-      return true;
-    }
-    if (myVcsConfiguration.CHECK_COMMIT_MESSAGE_SPELLING != myCheckCommitMessageSpelling.isSelected()) {
       return true;
     }
     return !getModelMappings().equals(myVcsManager.getDirectoryMappings());

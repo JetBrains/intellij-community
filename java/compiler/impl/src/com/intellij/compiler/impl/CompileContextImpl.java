@@ -108,18 +108,19 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myProject;
   }
 
+  @NotNull
   @Override
-  public CompilerMessage[] getMessages(CompilerMessageCategory category) {
+  public CompilerMessage[] getMessages(@NotNull CompilerMessageCategory category) {
     return myMessages.getMessages(category).toArray(CompilerMessage.EMPTY_ARRAY);
   }
 
   @Override
-  public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum) {
     addMessage(category, message, url, lineNum, columnNum, null);
   }
 
   @Override
-  public void addMessage(CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
+  public void addMessage(@NotNull CompilerMessageCategory category, String message, String url, int lineNum, int columnNum, Navigatable navigatable) {
     final CompilerMessage msg = myMessages.addMessage(category, message, url, lineNum, columnNum, navigatable);
     if (msg != null) {
       addToProblemsView(msg);
@@ -184,7 +185,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public Module getModuleByFile(VirtualFile file) {
+  public Module getModuleByFile(@NotNull VirtualFile file) {
     final Module module = myProjectFileIndex.getModuleForFile(file);
     if (module != null) {
       LOG.assertTrue(!module.isDisposed());
@@ -194,7 +195,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public VirtualFile getModuleOutputDirectory(Module module) {
+  public VirtualFile getModuleOutputDirectory(@NotNull Module module) {
     return CompilerPaths.getModuleOutputDirectory(module, false);
   }
 

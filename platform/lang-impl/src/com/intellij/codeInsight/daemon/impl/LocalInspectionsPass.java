@@ -49,7 +49,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -71,6 +70,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
+
+import static com.intellij.openapi.util.text.StringUtil.isEmpty;
 
 /**
  * @author max
@@ -381,7 +382,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<>();
   private final TransferToEDTQueue<Trinity<ProblemDescriptor, LocalInspectionToolWrapper,ProgressIndicator>> myTransferToEDTQueue
     = new TransferToEDTQueue<>("Apply inspection results", new Processor<Trinity<ProblemDescriptor, LocalInspectionToolWrapper, ProgressIndicator>>() {
-    private final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     private final InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     private final List<HighlightInfo> infos = new ArrayList<>(2);
     private final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
@@ -400,7 +400,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       PsiFile file = psiElement.getContainingFile();
       Document thisDocument = documentManager.getDocument(file);
 
-      HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+      HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
 
       infos.clear();
       createHighlightsForDescriptor(infos, emptyActionRegistered, ilManager, file, thisDocument, tool, severity, descriptor, psiElement);
@@ -455,7 +455,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private void addHighlightsFromResults(@NotNull List<HighlightInfo> outInfos, @NotNull ProgressIndicator indicator) {
-    InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     Set<Pair<TextRange, String>> emptyActionRegistered = new THashSet<>();
@@ -470,7 +469,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         for (InspectionResult inspectionResult : resultList) {
           indicator.checkCanceled();
           LocalInspectionToolWrapper tool = inspectionResult.tool;
-          HighlightSeverity severity = inspectionProfile.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
+          HighlightSeverity severity = myProfileWrapper.getErrorLevel(HighlightDisplayKey.find(tool.getShortName()), file).getSeverity();
           for (ProblemDescriptor descriptor : inspectionResult.foundProblems) {
             indicator.checkCanceled();
             PsiElement element = descriptor.getPsiElement();
@@ -557,11 +556,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
     final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
-    @NonNls final String link = " <a "
-                                +"href=\"#inspection/" + tool.getShortName() + "\""
-                                + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
-                                +">" + DaemonBundle.message("inspection.extended.description")
-                                +"</a> " + myShortcutText;
+    @NonNls String link = "";
+    if (!isEmpty(tool.loadDescription())) {
+      link = " <a "
+             + "href=\"#inspection/" + tool.getShortName() + "\""
+             + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
+             + ">" + DaemonBundle.message("inspection.extended.description")
+             + "</a> " + myShortcutText;
+    }
 
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {

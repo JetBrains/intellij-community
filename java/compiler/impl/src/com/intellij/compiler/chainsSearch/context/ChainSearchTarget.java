@@ -24,17 +24,26 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 /**
  * @author Dmitry Batkovich
  */
-public class TargetType {
+public class ChainSearchTarget {
   private final String myClassQName;
   private final byte[] myAcceptedArrayKinds;
   private final PsiType myPsiType;
+  private final boolean myIteratorAccess;
 
-  public TargetType(String classQName,
-                    byte[] arrayKinds,
-                    PsiType targetType) {
+  public ChainSearchTarget(String classQName,
+                           byte[] arrayKinds,
+                           PsiType targetType) {
+    this(classQName, arrayKinds, targetType, false);
+  }
+
+  private ChainSearchTarget(String classQName,
+                           byte[] arrayKinds,
+                           PsiType targetType,
+                           boolean iteratorAccess) {
     myClassQName = classQName;
     myAcceptedArrayKinds = arrayKinds;
     myPsiType = targetType;
+    myIteratorAccess = iteratorAccess;
   }
 
   public String getClassQName() {
@@ -50,14 +59,18 @@ public class TargetType {
     return PsiUtil.resolveClassInType(myPsiType);
   }
 
-  public TargetType toIterators() {
+  public boolean isIteratorAccess() {
+    return myIteratorAccess;
+  }
+
+  public ChainSearchTarget toIterators() {
     return myAcceptedArrayKinds.length == 1 && myAcceptedArrayKinds[0] == SignatureData.ZERO_DIM ?
-           new TargetType(myClassQName, new byte[]{SignatureData.ARRAY_ONE_DIM, SignatureData.ITERATOR_ONE_DIM}, myPsiType) :
+           new ChainSearchTarget(myClassQName, new byte[]{SignatureData.ARRAY_ONE_DIM, SignatureData.ITERATOR_ONE_DIM}, myPsiType, true) :
            this;
   }
 
   @Nullable
-  public static TargetType create(PsiType type) {
+  public static ChainSearchTarget create(PsiType type) {
     if (type instanceof PsiArrayType) {
       return create((PsiArrayType)type);
     }
@@ -68,18 +81,18 @@ public class TargetType {
   }
 
   @Nullable
-  private static TargetType create(PsiArrayType arrayType) {
+  private static ChainSearchTarget create(PsiArrayType arrayType) {
     // only 1-dim arrays accepted
     PsiType componentType = arrayType.getComponentType();
     PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(componentType);
     if (aClass == null) return null;
     String targetQName = aClass.getQualifiedName();
     if (targetQName == null) return null;
-    return new TargetType(targetQName, new byte[] {SignatureData.ARRAY_ONE_DIM}, arrayType);
+    return new ChainSearchTarget(targetQName, new byte[] {SignatureData.ARRAY_ONE_DIM}, arrayType);
   }
 
   @Nullable
-  private static TargetType create(PsiClassType classType) {
+  private static ChainSearchTarget create(PsiClassType classType) {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
     byte iteratorKind = SignatureData.ZERO_DIM;
     if (resolvedClass == null) return null;
@@ -96,7 +109,7 @@ public class TargetType {
     if (classQName == null) {
       return null;
     }
-    return new TargetType(classQName, new byte[] {iteratorKind}, classType);
+    return new ChainSearchTarget(classQName, new byte[] {iteratorKind}, classType);
   }
 
   public static String getIteratorKind(PsiClass resolvedClass) {

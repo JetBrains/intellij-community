@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -389,9 +389,17 @@ public class NameUtil {
   }
 
   @NotNull
-  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
+  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, 
+                                                            boolean allowToUpper, boolean allowToLower) {
+    return buildMatcher(pattern, false, exactPrefixLen, allowToUpper, allowToLower);
+  }
+
+  @NotNull
+  public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, boolean matchAllOccurrences, int exactPrefixLen, 
+                                                            boolean allowToUpper, boolean allowToLower) {
+    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : 
+                                      exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
+    return buildMatcher(pattern, options, matchAllOccurrences);
   }
 
   @SuppressWarnings("UnusedParameters")
@@ -403,6 +411,7 @@ public class NameUtil {
   }
 
   public static class MatcherBuilder {
+    private boolean matchAllOccurrences;
     private String pattern;
     private String separators = "";
     private MatchingCaseSensitivity caseSensitivity = MatchingCaseSensitivity.NONE;
@@ -421,8 +430,13 @@ public class NameUtil {
       return this;
     }
 
+    public MatcherBuilder matchAllOccurrences(boolean value) {
+      matchAllOccurrences = value;
+      return this;
+    }
+
     public MinusculeMatcher build() {
-      return new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      return new FixingLayoutMatcher(pattern, caseSensitivity, separators, matchAllOccurrences);
     }
   }
 
@@ -433,7 +447,13 @@ public class NameUtil {
 
   @NotNull
   public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options) {
-    return buildMatcher(pattern).withCaseSensitivity(options).build();
+    return buildMatcher(pattern, options, false);
+  }
+
+  @NotNull
+  public static MinusculeMatcher buildMatcher(@NotNull String pattern, @NotNull MatchingCaseSensitivity options, 
+                                              boolean matchAllOccurrences) {
+    return buildMatcher(pattern).matchAllOccurrences(matchAllOccurrences).withCaseSensitivity(options).build();
   }
 
   @NotNull

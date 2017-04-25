@@ -29,7 +29,9 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
@@ -48,12 +50,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   private final VirtualFile myVirtualFile;
 
-  public ChooseFileEncodingAction(@Nullable VirtualFile virtualFile) {
+  protected ChooseFileEncodingAction(@Nullable VirtualFile virtualFile) {
     myVirtualFile = virtualFile;
   }
 
@@ -75,33 +76,35 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
         public void update(AnActionEvent e) {
           super.update(e);
           String description = charsetFilter.fun(charset);
-          AtomicReference<CharSequence> myText = new AtomicReference<>();
-          AtomicReference<byte[]> myBytes = new AtomicReference<>();
-          Icon defer = virtualFile == null || virtualFile.isDirectory() ? null : IconDeferrer.getInstance().defer(null, Pair.create(virtualFile, charset), pair -> {
-            VirtualFile myFile = pair.getFirst();
-            Charset charset = pair.getSecond();
-            CharSequence text = myText.get();
-            if (text == null) {
-              myText.set(text = LoadTextUtil.loadText(myFile));
-            }
-            byte[] bytes = myBytes.get();
-            if (bytes == null) {
+          Icon defer;
+          if (virtualFile == null || virtualFile.isDirectory()) {
+            defer = null;
+          }
+          else {
+            NotNullLazyValue<CharSequence> myText = VolatileNotNullLazyValue.createValue(()->LoadTextUtil.loadText(virtualFile));
+            NotNullLazyValue<byte[]> myBytes = VolatileNotNullLazyValue.createValue(() -> {
               try {
-                myBytes.set(bytes = myFile.contentsToByteArray());
+                return virtualFile.contentsToByteArray();
               }
-              catch (IOException io) {
-                bytes = ArrayUtil.EMPTY_BYTE_ARRAY;
+              catch (IOException e1) {
+                return ArrayUtil.EMPTY_BYTE_ARRAY;
               }
-            }
-            EncodingUtil.Magic8 safeToReload = EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
-            EncodingUtil.Magic8 safeToConvert = EncodingUtil.Magic8.ABSOLUTELY;
-            if (safeToReload != EncodingUtil.Magic8.ABSOLUTELY) {
-              safeToConvert = EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
-            }
-            return safeToReload == EncodingUtil.Magic8.ABSOLUTELY || safeToConvert == EncodingUtil.Magic8.ABSOLUTELY ? null :
-                   safeToReload == EncodingUtil.Magic8.WELL_IF_YOU_INSIST || safeToConvert == EncodingUtil.Magic8.WELL_IF_YOU_INSIST ?
-                   AllIcons.General.Warning : AllIcons.General.Error;
-          });
+            });
+            defer = IconDeferrer.getInstance().defer(null, Pair.create(virtualFile, charset), pair -> {
+              VirtualFile myFile = pair.getFirst();
+              Charset charset = pair.getSecond();
+              CharSequence text = myText.getValue();
+              byte[] bytes = myBytes.getValue();
+              EncodingUtil.Magic8 safeToReload = EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
+              EncodingUtil.Magic8 safeToConvert = EncodingUtil.Magic8.ABSOLUTELY;
+              if (safeToReload != EncodingUtil.Magic8.ABSOLUTELY) {
+                safeToConvert = EncodingUtil.isSafeToConvertTo(myFile, text, bytes, charset);
+              }
+              return safeToReload == EncodingUtil.Magic8.ABSOLUTELY || safeToConvert == EncodingUtil.Magic8.ABSOLUTELY ? null :
+                     safeToReload == EncodingUtil.Magic8.WELL_IF_YOU_INSIST || safeToConvert == EncodingUtil.Magic8.WELL_IF_YOU_INSIST ?
+                     AllIcons.General.Warning : AllIcons.General.Error;
+            });
+          }
           e.getPresentation().setIcon(defer);
           e.getPresentation().setDescription(description);
         }
@@ -110,7 +113,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
   }
 
-  public static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
+  protected static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
     @Override
     public boolean contains(final Charset cs) {
       return false;

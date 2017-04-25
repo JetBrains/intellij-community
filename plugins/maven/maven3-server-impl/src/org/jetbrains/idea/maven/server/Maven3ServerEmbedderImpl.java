@@ -638,7 +638,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                            @NotNull final List<String> inactiveProfiles,
                                                            final List<ResolutionListener> listeners) throws RemoteException {
     final File file = files.size() == 1 ? files.iterator().next() : null;
-    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
+    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -856,9 +856,9 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   public MavenExecutionRequest createRequest(@Nullable File file,
-                                             List<String> activeProfiles,
-                                             List<String> inactiveProfiles,
-                                             List<String> goals)
+                                             @Nullable List<String> activeProfiles,
+                                             @Nullable List<String> inactiveProfiles,
+                                             @Nullable List<String> goals)
     throws RemoteException {
     //Properties executionProperties = myMavenSettings.getProperties();
     //if (executionProperties == null) {
@@ -870,7 +870,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     try {
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
 
-      result.setGoals(goals);
+      result.setGoals(goals == null ? Collections.<String>emptyList() : goals);
 
       result.setPom(file);
 
@@ -878,8 +878,12 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       result.setSystemProperties(mySystemProperties);
 
-      result.setActiveProfiles(activeProfiles);
-      result.setInactiveProfiles(inactiveProfiles);
+      if (activeProfiles != null) {
+        result.setActiveProfiles(activeProfiles);
+      }
+      if (inactiveProfiles != null) {
+        result.setInactiveProfiles(inactiveProfiles);
+      }
       result.setCacheNotFound(true);
       result.setCacheTransferError(true);
 
@@ -1077,7 +1081,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
 
       final MavenExecutionRequest request =
-        createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+        createRequest(null, null, null, null);
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);
@@ -1194,7 +1198,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     }
     else {
       final MavenExecutionRequest request =
-        createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+        createRequest(null, null, null, null);
       for (ArtifactRepository artifactRepository : repos) {
         request.addRemoteRepository(artifactRepository);
       }
@@ -1213,7 +1217,9 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         ((DefaultRepositorySystem)repositorySystem).setLoggerFactory(loggerFactory);
       }
 
-      List<RemoteRepository> repositories = RepositoryUtils.toRepos(request.getRemoteRepositories());
+      // do not use request.getRemoteRepositories() here,
+      // it can be broken after DefaultMaven#newRepositorySession => MavenRepositorySystem.injectMirror invocation
+      List<RemoteRepository> repositories = RepositoryUtils.toRepos(repos);
       repositories = repositorySystem.newResolutionRepositories(repositorySystemSession, repositories);
 
       final ArtifactResult artifactResult = repositorySystem.resolveArtifact(

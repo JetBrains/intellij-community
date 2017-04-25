@@ -39,7 +39,7 @@ public class JavaReflectionCompletionTest extends LightFixtureCompletionTestCase
   }
 
   public void testDeclaredMethod() throws Exception {
-    doTest(2, "method", "method1", "method2", "method0");
+    doTest(3, "method", "method0", "method1", "method2");
   }
 
   public void testDeclaredMethod2() throws Exception {

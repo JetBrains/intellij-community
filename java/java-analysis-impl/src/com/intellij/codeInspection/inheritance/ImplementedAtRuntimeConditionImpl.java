@@ -23,7 +23,7 @@ public class ImplementedAtRuntimeConditionImpl extends ImplementedAtRuntimeCondi
   @Override
   public boolean isImplementedAtRuntime(@NotNull PsiClass psiClass) {
     for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
-      SubclassingInfo info = provider.getSubclassingInfo(psiClass);
+      ImplicitSubclassProvider.SubclassingInfo info = provider.getSubclassingInfo(psiClass);
       if (info != null && !info.isAbstract()) {
         return true;
       }

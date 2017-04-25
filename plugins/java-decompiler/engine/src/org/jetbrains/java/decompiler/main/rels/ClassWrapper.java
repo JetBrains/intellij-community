@@ -27,7 +27,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.struct.StructClass;
-import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
@@ -55,12 +54,6 @@ public class ClassWrapper {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
-
-    // collect field names
-    Set<String> setFieldNames = new HashSet<>();
-    for (StructField fd : classStruct.getFields()) {
-      setFieldNames.add(fd.getName());
-    }
 
     int maxSec = Integer.parseInt(DecompilerContext.getProperty(IFernflowerPreferences.MAX_PROCESSING_METHOD).toString());
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
@@ -160,7 +153,9 @@ public class ClassWrapper {
 
       if (!isError) {
         // rename vars so that no one has the same name as a field
-        varProc.refreshVarNames(new VarNamesCollector(setFieldNames));
+        VarNamesCollector namesCollector = new VarNamesCollector();
+        classStruct.getFields().forEach(f -> namesCollector.addName(f.getName()));
+        varProc.refreshVarNames(namesCollector);
 
         // if debug information present and should be used
         if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
@@ -221,5 +216,10 @@ public class ClassWrapper {
 
   public VBStyleCollection<Exprent, String> getDynamicFieldInitializers() {
     return dynamicFieldInitializers;
+  }
+
+  @Override
+  public String toString() {
+    return classStruct.qualifiedName;
   }
 }

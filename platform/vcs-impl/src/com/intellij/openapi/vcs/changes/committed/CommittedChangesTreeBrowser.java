@@ -67,8 +67,9 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 /**
@@ -407,12 +408,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     toolbarGroup.add(new SelectGroupingAction(project, this));
     final ExpandAllAction expandAllAction = new ExpandAllAction(myChangesTree);
     final CollapseAllAction collapseAllAction = new CollapseAllAction(myChangesTree);
-    expandAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
-      myChangesTree);
-    collapseAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
-      myChangesTree);
+    expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), myChangesTree);
+    collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), myChangesTree);
     toolbarGroup.add(expandAllAction);
     toolbarGroup.add(collapseAllAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER));

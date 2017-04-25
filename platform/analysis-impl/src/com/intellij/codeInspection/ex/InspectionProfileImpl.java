@@ -50,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -63,7 +64,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls private static final String USED_LEVELS = "used_levels";
   @TestOnly
   public static boolean INIT_INSPECTIONS = false;
-  protected final InspectionToolRegistrar myRegistrar;
+  @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
   protected final Map<String, Element> myUninitializedSettings = new TreeMap<>();
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
   protected volatile Set<String> myChangedToolNames;
@@ -77,9 +78,9 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager) {
-    this(profileName, registrar, profileManager, InspectionProfileKt.getBASE_PROFILE(), null);
+    this(profileName, toolSupplier, profileManager, InspectionProfileKt.getBASE_PROFILE(), null);
   }
 
   public InspectionProfileImpl(@NotNull String profileName) {
@@ -87,19 +88,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
                                @Nullable InspectionProfileImpl baseProfile) {
-    this(profileName, registrar, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
+    this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable InspectionProfileImpl baseProfile,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName, profileManager);
 
-    myRegistrar = registrar;
+    myToolSupplier = toolSupplier;
     myBaseProfile = baseProfile;
     myDataHolder = dataHolder;
     if (dataHolder != null) {
@@ -108,10 +109,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull InspectionToolRegistrar registrar,
+                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
                                @NotNull BaseInspectionProfileManager profileManager,
                                @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
-    this(profileName, registrar, profileManager, InspectionProfileKt.getBASE_PROFILE(), dataHolder);
+    this(profileName, toolSupplier, profileManager, InspectionProfileKt.getBASE_PROFILE(), dataHolder);
   }
 
   private static boolean toolSettingsAreEqual(@NotNull String toolName, @NotNull InspectionProfileImpl profile1, @NotNull InspectionProfileImpl profile2) {
@@ -224,7 +225,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   public void writeExternal(@NotNull Element element) {
     // must be first - compatibility
-    element.setAttribute(VERSION_TAG, VALID_VERSION);
+    writeVersion(element);
 
     mySerializer.writeExternal(this, element);
 
@@ -274,6 +275,10 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       }
     }
     getPathMacroManager().collapsePaths(element);
+  }
+
+  protected static void writeVersion(@NotNull Element element) {
+    element.setAttribute(VERSION_TAG, VALID_VERSION);
   }
 
   private void markSettingsMerged(@NotNull String toolName, @NotNull Element element) {
@@ -467,7 +472,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   @NotNull
   protected List<InspectionToolWrapper> createTools(@Nullable Project project) {
-    return myRegistrar.createTools();
+    return myToolSupplier.get();
   }
 
   @Override
