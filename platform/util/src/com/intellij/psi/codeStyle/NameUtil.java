@@ -436,7 +436,8 @@ public class NameUtil {
     }
 
     public MinusculeMatcher build() {
-      return new FixingLayoutMatcher(pattern, caseSensitivity, separators, matchAllOccurrences);
+      return matchAllOccurrences ? new AllOccurrencesMatcher(pattern, caseSensitivity, separators) 
+                                 : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
   }
 
