@@ -163,6 +163,8 @@ PARSE_FUNC = None
 
 
 class NewTeamcityServiceMessages(_old_service_messages):
+    _latest_subtest_result = None
+    
     def message(self, messageName, **properties):
         # Intellij may fail to process message if it has char just before it.
         # New line has no visible affect, but saves from such cases
