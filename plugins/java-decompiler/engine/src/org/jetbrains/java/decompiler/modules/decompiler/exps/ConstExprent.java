@@ -36,14 +36,14 @@ public class ConstExprent extends Exprent {
   private static final Map<Integer, String> CHAR_ESCAPES;
   static {
     CHAR_ESCAPES = new HashMap<>();
-    CHAR_ESCAPES.put(new Integer(0x8), "\\b");   /* \u0008: backspace BS */
-    CHAR_ESCAPES.put(new Integer(0x9), "\\t");   /* \u0009: horizontal tab HT */
-    CHAR_ESCAPES.put(new Integer(0xA), "\\n");   /* \u000a: linefeed LF */
-    CHAR_ESCAPES.put(new Integer(0xC), "\\f");   /* \u000c: form feed FF */
-    CHAR_ESCAPES.put(new Integer(0xD), "\\r");   /* \u000d: carriage return CR */
-    //CHAR_ESCAPES.put(new Integer(0x22), "\\\""); /* \u0022: double quote " */
-    CHAR_ESCAPES.put(new Integer(0x27), "\\\'"); /* \u0027: single quote ' */
-    CHAR_ESCAPES.put(new Integer(0x5C), "\\\\"); /* \u005c: backslash \ */
+    CHAR_ESCAPES.put(0x8, "\\b");   /* \u0008: backspace BS */
+    CHAR_ESCAPES.put(0x9, "\\t");   /* \u0009: horizontal tab HT */
+    CHAR_ESCAPES.put(0xA, "\\n");   /* \u000a: linefeed LF */
+    CHAR_ESCAPES.put(0xC, "\\f");   /* \u000c: form feed FF */
+    CHAR_ESCAPES.put(0xD, "\\r");   /* \u000d: carriage return CR */
+    //CHAR_ESCAPES.put(0x22, "\\\""); /* \u0022: double quote " */
+    CHAR_ESCAPES.put(0x27, "\\\'"); /* \u0027: single quote ' */
+    CHAR_ESCAPES.put(0x5C, "\\\\"); /* \u005c: backslash \ */
   }
 
   private VarType constType;
@@ -51,7 +51,7 @@ public class ConstExprent extends Exprent {
   private final boolean boolPermitted;
 
   public ConstExprent(int val, boolean boolPermitted, Set<Integer> bytecodeOffsets) {
-    this(guessType(val, boolPermitted), new Integer(val), boolPermitted, bytecodeOffsets);
+    this(guessType(val, boolPermitted), Integer.valueOf(val), boolPermitted, bytecodeOffsets);
   }
 
   public ConstExprent(VarType constType, Object value, Set<Integer> bytecodeOffsets) {
@@ -347,13 +347,13 @@ public class ConstExprent extends Exprent {
   public static ConstExprent getZeroConstant(int type) {
     switch (type) {
       case CodeConstants.TYPE_INT:
-        return new ConstExprent(VarType.VARTYPE_INT, new Integer(0), null);
+        return new ConstExprent(VarType.VARTYPE_INT, Integer.valueOf(0), null);
       case CodeConstants.TYPE_LONG:
-        return new ConstExprent(VarType.VARTYPE_LONG, new Long(0), null);
+        return new ConstExprent(VarType.VARTYPE_LONG, Long.valueOf(0), null);
       case CodeConstants.TYPE_DOUBLE:
-        return new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0), null);
+        return new ConstExprent(VarType.VARTYPE_DOUBLE, Double.valueOf(0), null);
       case CodeConstants.TYPE_FLOAT:
-        return new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
+        return new ConstExprent(VarType.VARTYPE_FLOAT, Float.valueOf(0), null);
     }
 
     throw new RuntimeException("Invalid argument: " + type);

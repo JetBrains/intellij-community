@@ -74,7 +74,7 @@ public class VarProcessor {
       }
 
       Integer counter = mapNames.get(name);
-      mapNames.put(name, counter == null ? counter = new Integer(0) : ++counter);
+      mapNames.put(name, counter == null ? counter = 0 : ++counter);
 
       if (counter > 0) {
         name += String.valueOf(counter);
