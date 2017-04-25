@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="external-system-impl" />
     <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="library" name="jsr305" level="project" />
+    <orderEntry type="module" module-name="testFramework" />
   </component>
 </module>
