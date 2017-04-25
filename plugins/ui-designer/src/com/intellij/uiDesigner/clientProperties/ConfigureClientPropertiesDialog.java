@@ -159,8 +159,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
             AddClientPropertyDialog dlg = new AddClientPropertyDialog(myProject);
             dlg.show();
             if (dlg.getExitCode() == OK_EXIT_CODE) {
-              ClientPropertiesManager.ClientProperty[] props = myManager.getClientProperties(mySelectedClass);
-              for (ClientPropertiesManager.ClientProperty prop : props) {
+              for (ClientPropertiesManager.ClientProperty prop : myManager.getClientProperties(mySelectedClass)) {
                 if (prop.getName().equalsIgnoreCase(dlg.getEnteredProperty().getName())) {
                   Messages.showErrorDialog(mySplitter,
                                            UIDesignerBundle.message("client.properties.already.defined", prop.getName()),

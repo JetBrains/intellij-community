@@ -15,20 +15,22 @@
  */
 package com.intellij.uiDesigner.clientProperties;
 
-import com.intellij.openapi.components.NamedComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author yole
- */
-public class ClientPropertiesManager implements JDOMExternalizable, NamedComponent {
+@State(name = "ClientPropertiesManager")
+public class ClientPropertiesManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
   @NonNls private static final String ELEMENT_PROPERTIES = "properties";
@@ -47,7 +49,7 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
     protected ClientPropertiesManager compute() {
       ClientPropertiesManager result = new ClientPropertiesManager();
       try {
-        result.readExternal(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
+        result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
       }
       catch (Exception e) {
         LOG.error(e);
@@ -74,12 +76,6 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
   public void saveFrom(final ClientPropertiesManager manager) {
     myPropertyMap.clear();
     myPropertyMap.putAll(manager.myPropertyMap);
-  }
-
-  @Override
-  @NotNull @NonNls
-  public String getComponentName() {
-    return COMPONENT_NAME;
   }
 
   public static class ClientProperty implements Comparable {
@@ -126,9 +122,9 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void loadState(Element state) {
     myPropertyMap.clear();
-    for (Element propertiesElement : element.getChildren(ELEMENT_PROPERTIES)) {
+    for (Element propertiesElement : state.getChildren(ELEMENT_PROPERTIES)) {
       String aClass = propertiesElement.getAttributeValue(ATTRIBUTE_CLASS);
       List<ClientProperty> classProps = new ArrayList<>();
       for (Element propertyElement : propertiesElement.getChildren(ELEMENT_PROPERTY)) {
@@ -140,16 +136,18 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
     }
   }
 
+  @Nullable
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public Element getState() {
+    Element element = new Element("state");
     if (equals(ourDefaultManager.getValue())) {
-      throw new WriteExternalException();
+      return element;
     }
 
-    for(Map.Entry<String, List<ClientProperty>> entry: myPropertyMap.entrySet()) {
+    for (Map.Entry<String, List<ClientProperty>> entry : myPropertyMap.entrySet()) {
       Element propertiesElement = new Element(ELEMENT_PROPERTIES);
       propertiesElement.setAttribute(ATTRIBUTE_CLASS, entry.getKey());
-      for(ClientProperty prop: entry.getValue()) {
+      for (ClientProperty prop : entry.getValue()) {
         Element propertyElement = new Element(ELEMENT_PROPERTY);
         propertyElement.setAttribute(ATTRIBUTE_NAME, prop.getName());
         propertyElement.setAttribute(ATTRIBUTE_CLASS, prop.getValueClass());
@@ -157,6 +155,8 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
       }
       element.addContent(propertiesElement);
     }
+
+    return element;
   }
 
   public void addConfiguredProperty(final Class selectedClass, final ClientProperty enteredProperty) {
@@ -211,7 +211,8 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
     return new ArrayList<>(list);
   }
 
-  public ClientProperty[] getClientProperties(Class componentClass) {
+  @NotNull
+  public List<ClientProperty> getClientProperties(Class componentClass) {
     List<ClientProperty> result = new ArrayList<>();
     while(!componentClass.getName().equals(Object.class.getName())) {
       List<ClientProperty> props = myPropertyMap.get(componentClass.getName());
@@ -221,7 +222,7 @@ public class ClientPropertiesManager implements JDOMExternalizable, NamedCompone
       componentClass = componentClass.getSuperclass();
     }
     result.sort(null);
-    return result.toArray(new ClientProperty[result.size()]);
+    return result;
   }
 
   @Override
