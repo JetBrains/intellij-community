@@ -223,7 +223,7 @@ open class GuiTestCase : GuiTestBase() {
     FileUtil.ensureExists(fileWithTestFolder)
     var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
     if (screenshotFilePath.isFile) {
-      val format = SimpleDateFormat("MM-dd-yyyy.HH:mm:ss")
+      val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
       val now = format.format(GregorianCalendar().time)
       screenshotFilePath = File(fileWithTestFolder, screenshotName + "." + now + extension)
     }
@@ -399,8 +399,7 @@ open class GuiTestCase : GuiTestBase() {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(
       "true"))
     if (!scaleEnabled) return ""
-    val uiScaleVal = GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale") ?: throw Exception(
-      "Error: Java property\"sun.java2d.uiScale.enabled\" is enabled but \"sun.java2d.uiScale\" is not defined. Please check your jdk properties and environment variables")
+    val uiScaleVal = GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale") ?: return ""
     return "@${uiScaleVal}x"
   }
 

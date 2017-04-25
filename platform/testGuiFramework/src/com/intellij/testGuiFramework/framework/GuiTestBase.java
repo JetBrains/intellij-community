@@ -99,16 +99,13 @@ public abstract class GuiTestBase {
     }
   };
 
-  @SuppressWarnings("UnusedDeclaration") // This field is set via reflection.
-  private String myTestName;
-
   protected IdeFrameFixture myProjectFrame;
 
   /**
    * @return the name of the test method being executed.
    */
   protected String getTestName() {
-    return myTestName;
+    return this.getClass().getSimpleName();
   }
 
 
