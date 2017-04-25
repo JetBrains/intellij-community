@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GenericTypeUtil {
 
+  @NotNull
   public static GenericType fromStreamPsiType(@NotNull PsiType streamPsiType) {
     if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM)) return GenericType.INT;
     if (InheritanceUtil.isInheritor(streamPsiType, CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM)) return GenericType.LONG;
@@ -34,6 +35,7 @@ public class GenericTypeUtil {
     return GenericType.OBJECT;
   }
 
+  @NotNull
   public static GenericType fromPsiType(@NotNull PsiType type) {
     if (PsiType.VOID.equals(type)) return GenericType.VOID;
     if (PsiType.INT.equals(type)) return GenericType.INT;
