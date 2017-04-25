@@ -358,7 +358,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         Set<String> names = ContainerUtil.newHashSet();
         final HashSet<String> duplicates = ContainerUtil.newHashSet();
-        for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+        for (String path : ContainerUtil.newArrayList(ContainerUtil.concat(openedPaths, recentPaths))) {
           if (!names.add(getProjectName(path))) {
             duplicates.add(path);
           }
