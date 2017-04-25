@@ -16,18 +16,14 @@
 package com.intellij.execution.filters;
 
 import com.intellij.mock.MockDumbService;
-import com.intellij.testFramework.ProjectRule;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
 
 public class CompositeFilterTest {
-  @Rule
-  public final ProjectRule appRule = new ProjectRule();
 
   protected CompositeFilter myCompositeFilter;
 
