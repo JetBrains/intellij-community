@@ -374,7 +374,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
       action.run();
     };
-    GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.NON_MODAL);
+    GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState());
   }
 
   @TestOnly
