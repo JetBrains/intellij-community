@@ -77,8 +77,14 @@ public class ActionsTree {
 
   private boolean myPaintInternalInfo;
   private final Map<String, String> myPluginNames = ActionsTreeUtil.createPluginActionsMap();
+  private final KeymapSelector myKeymapSelector;
 
   public ActionsTree() {
+    this(null);
+  }
+
+  ActionsTree(KeymapSelector selector) {
+    myKeymapSelector = selector;
     myRoot = new DefaultMutableTreeNode(ROOT);
 
     myTree = new Tree(new MyModel(myRoot)) {
@@ -244,6 +250,7 @@ public class ActionsTree {
     model.nodeStructureChanged(myRoot);
 
     pathsKeeper.restorePaths();
+    getComponent().repaint();
   }
 
   public void filterTree(Shortcut shortcut, QuickList[] currentQuickListIds) {
@@ -519,7 +526,8 @@ public class ActionsTree {
       myHaveLink = false;
       myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
-      Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
+      Keymap parentKeymap = myKeymap == null ? null : myKeymap.getParent();
+      Keymap originalKeymap = myKeymapSelector == null ? parentKeymap : myKeymapSelector.getOriginalKeymap(myKeymap);
       Icon icon = null;
       String text;
       String actionId = null;

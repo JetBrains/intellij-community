@@ -143,13 +143,14 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun deriveKeymap(newName: String): KeymapImpl {
     if (canModify()) {
-      return copy()
+      val newKeymap = copy()
+      newKeymap.name = newName
+      return newKeymap
     }
     else {
       val newKeymap = KeymapImpl()
       newKeymap.parent = this
       newKeymap.name = newName
-      newKeymap.canModify = canModify()
       return newKeymap
     }
   }
