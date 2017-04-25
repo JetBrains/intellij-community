@@ -55,11 +55,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private val storageLock = ReentrantReadWriteLock()
   private val storages = THashMap<String, StateStorage>()
 
-  private val streamWrapper = StreamProviderWrapper()
+  private val streamProviderWrapper = StreamProviderWrapper()
+
   var streamProvider: StreamProvider?
-    get() = streamWrapper
+    get() = streamProviderWrapper
     set (value) {
-      streamWrapper.streamProvider = value
+      streamProviderWrapper.streamProvider = value
     }
 
   // access under storageLock
@@ -247,7 +248,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   protected open fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
-      = MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), streamProvider)
+      = MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else streamProvider)
 
   protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage
       = MyDirectoryStorage(this, Paths.get(path), splitter)
