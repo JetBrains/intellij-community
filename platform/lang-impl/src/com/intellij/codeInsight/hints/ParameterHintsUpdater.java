@@ -90,7 +90,7 @@ public class ParameterHintsUpdater {
 
   public void update() {
     boolean firstTime = myEditor.getUserData(REPEATED_PASS) == null;
-    boolean isUpdateInBulkMode = myUpdateList.size() > 1000 && myEditor.getSoftWrapModel().isSoftWrappingEnabled();
+    boolean isUpdateInBulkMode = myUpdateList.size() > 1000;
     DocumentUtil.executeInBulk(myEditor.getDocument(), isUpdateInBulkMode, () -> performHintsUpdate(firstTime, isUpdateInBulkMode));
     myEditor.putUserData(REPEATED_PASS, Boolean.TRUE);
   }
