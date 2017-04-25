@@ -259,9 +259,9 @@ public class JavaReflectionReferenceUtil {
     return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
   }
 
-  @NotNull
-  static LookupElement withPriority(@NotNull LookupElement lookupElement, int priority) {
-    return priority == 0 ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
+  @Nullable
+  static LookupElement withPriority(@Nullable LookupElement lookupElement, int priority) {
+    return priority == 0 || lookupElement == null ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
   }
 
   static int getMethodSortOrder(@NotNull PsiMethod method) {
@@ -460,7 +460,11 @@ public class JavaReflectionReferenceUtil {
     }
 
     public String getText(boolean withReturnType, @NotNull Function<String, String> transformation) {
-      final StringJoiner joiner = new StringJoiner(", ", "(", ")");
+      return getText(withReturnType, true, transformation);
+    }
+
+    public String getText(boolean withReturnType, boolean withParentheses, @NotNull Function<String, String> transformation) {
+      final StringJoiner joiner = new StringJoiner(", ", withParentheses ? "(" : "", withParentheses ? ")" : "");
       if (withReturnType) {
         joiner.add(transformation.apply(myReturnType));
       }

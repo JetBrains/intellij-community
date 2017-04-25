@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -144,6 +145,7 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       .map(method -> withPriority(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY)
                                     .withInsertHandler(this),
                                   -getMethodSortOrder(method)))
+      .filter(Objects::nonNull)
       .toArray();
   }
 
