@@ -293,7 +293,7 @@ public class UrlClassLoader extends ClassLoader {
   private Resource _getResource(final String name) {
     String n = FileUtil.toCanonicalUriPath(name);
     Resource resource = getClassPath().getResource(n, true);
-    if (resource == null && n.startsWith("/")) { // compatibility with existing code, nonstd classloader behavior
+    if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
       resource = getClassPath().getResource(n.substring(1), true);
     }
     return resource;
@@ -348,13 +348,6 @@ public class UrlClassLoader extends ClassLoader {
       fileName = fileName.replace(".jnilib", ".dylib");
     }
     return fileName;
-  }
-
-  private static String getPlatformName() {
-    if (SystemInfo.isWindows) return "win/";
-    else if (SystemInfo.isMac) return "mac/";
-    else if (SystemInfo.isLinux) return "linux/";
-    else return "";
   }
 
   // called by a parent class on Java 7+
