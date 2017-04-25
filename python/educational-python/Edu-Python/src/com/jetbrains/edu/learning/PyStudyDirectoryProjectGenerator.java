@@ -46,7 +46,7 @@ import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import icons.InteractiveLearningPythonIcons;
+import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   @Nullable
   @Override
   public Icon getLogo() {
-    return InteractiveLearningPythonIcons.EducationalProjectType;
+    return PythonIcons.Python.Python_logo;
   }
 
 
