@@ -42,7 +42,7 @@ import java.util.Map;
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   @Override
   @NotNull
-  public PydevConsoleRunnerImpl createConsoleRunner(@NotNull Project project,
+  public PydevConsoleRunner createConsoleRunner(@NotNull Project project,
                                                     @Nullable Module contextModule) {
     Pair<Sdk, Module> sdkAndModule = PydevConsoleRunner.findPythonSdkAndModule(project, contextModule);
 
@@ -112,8 +112,9 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     putIPythonEnvFlag(project, envs);
 
     Consumer<String> rerunAction = title -> {
-      PydevConsoleRunnerImpl runner = createConsoleRunner(project, module);
-      runner.setConsoleTitle(title);
+      PydevConsoleRunner runner = createConsoleRunner(project, module);
+      if(runner instanceof PydevConsoleRunnerImpl)
+        ((PydevConsoleRunnerImpl)runner).setConsoleTitle(title);
       runner.run();
     };
 
@@ -126,7 +127,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
   }
 
   @NotNull
-  protected PydevConsoleRunnerImpl createConsoleRunner(Project project,
+  protected PydevConsoleRunner createConsoleRunner(Project project,
                                                        Sdk sdk,
                                                        String workingDir,
                                                        Map<String, String> envs,
