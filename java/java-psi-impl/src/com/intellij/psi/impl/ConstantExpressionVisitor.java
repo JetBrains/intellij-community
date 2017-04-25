@@ -23,7 +23,9 @@ import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -127,7 +129,7 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
     }
   }
 
-  private Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiElement expression) {
+  private Object compute(Object lOperandValue, Object rOperandValue, IElementType tokenType, PsiPolyadicExpression expression) {
     Object value = null;
     if (tokenType == JavaTokenType.PLUS) {
       if (lOperandValue instanceof String || rOperandValue instanceof String) {
@@ -236,30 +238,11 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     else if (tokenType == JavaTokenType.EQEQ) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() == ((Number)rOperandValue).doubleValue());
-      }
-      else if (lOperandValue instanceof String && rOperandValue instanceof String) {
-        value = Boolean.valueOf(lOperandValue.equals(rOperandValue));
-      }
-      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() == ((Boolean)rOperandValue).booleanValue());
-      }
+      value = areValuesEqual(lOperandValue, rOperandValue, expression);
     }
     else if (tokenType == JavaTokenType.NE) {
-      if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
-      if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
-      if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
-        value = Boolean.valueOf(((Number)lOperandValue).doubleValue() != ((Number)rOperandValue).doubleValue());
-      }
-      else if (lOperandValue instanceof String && rOperandValue instanceof String) {
-        value = Boolean.valueOf(!lOperandValue.equals(rOperandValue));
-      }
-      else if (lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
-        value = Boolean.valueOf(((Boolean)lOperandValue).booleanValue() != ((Boolean)rOperandValue).booleanValue());
-      }
+      Boolean eq = areValuesEqual(lOperandValue, rOperandValue, expression);
+      if (eq != null) value = !eq;
     }
     else if (tokenType == JavaTokenType.ASTERISK) {
       if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
@@ -429,6 +412,25 @@ class ConstantExpressionVisitor extends JavaElementVisitor implements PsiConstan
       }
     }
     return value;
+  }
+
+  @Nullable
+  private static Boolean areValuesEqual(Object lOperandValue, Object rOperandValue, PsiPolyadicExpression expression) {
+    if (lOperandValue instanceof Character) lOperandValue = Integer.valueOf(((Character)lOperandValue).charValue());
+    if (rOperandValue instanceof Character) rOperandValue = Integer.valueOf(((Character)rOperandValue).charValue());
+    if (lOperandValue instanceof Number && rOperandValue instanceof Number) {
+      return isBoxedComparison(expression) ? lOperandValue == rOperandValue
+                                           : ((Number)lOperandValue).doubleValue() == ((Number)rOperandValue).doubleValue();
+    }
+    if (lOperandValue instanceof String && rOperandValue instanceof String ||
+        lOperandValue instanceof Boolean && rOperandValue instanceof Boolean) {
+      return lOperandValue.equals(rOperandValue);
+    }
+    return null;
+  }
+
+  private static boolean isBoxedComparison(PsiPolyadicExpression expression) {
+    return Arrays.stream(expression.getOperands()).anyMatch(op -> op.getType() instanceof PsiClassType);
   }
 
   @Override public void visitPrefixExpression(PsiPrefixExpression expression) {
