@@ -116,7 +116,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, isName, !isName);
       if (position.isEmpty() && !isName) return;
 
-      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
+      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve(false);
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName) {

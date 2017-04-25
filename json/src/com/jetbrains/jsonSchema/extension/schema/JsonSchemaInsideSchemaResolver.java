@@ -52,7 +52,7 @@ public class JsonSchemaInsideSchemaResolver {
     final JsonSchemaObject rootSchema = JsonSchemaService.Impl.get(myProject).getSchemaObjectForSchemaFile(mySchemaFile);
     if (rootSchema == null) return null;
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, mySteps).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, mySteps).resolve(true);
 
     return schemas.stream().filter(schema -> schema.getPeerPointer().getElement() != null && schema.getPeerPointer().getElement().isValid())
       .findFirst()

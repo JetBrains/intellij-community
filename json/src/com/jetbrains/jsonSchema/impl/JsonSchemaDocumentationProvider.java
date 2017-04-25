@@ -60,7 +60,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (checkable == null) return null;
     final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true, true);
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve(false);
 
     return schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDescription()))
       .findFirst().map(JsonSchemaObject::getDescription).orElse(null);

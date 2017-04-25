@@ -45,14 +45,23 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   private final Project myProject;
   private final MyState myState;
   private final AtomicLong myModificationCount = new AtomicLong(0);
+  private final AtomicLong myAnyChangeCount = new AtomicLong(0);
   private final ModificationTracker myModificationTracker;
+  private final ModificationTracker myAnySchemaChangeTracker;
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
     myState = new MyState(getProvidersFromFactories(JsonSchemaProviderFactory::getProviders),
                           () -> getProvidersFromFactories(factory -> factory.getProviders(myProject)));
     myModificationTracker = () -> myModificationCount.get();
+    myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
+    project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
     JsonSchemaVfsListener.startListening(project, this);
+  }
+
+  @Override
+  public ModificationTracker getAnySchemaChangeTracker() {
+    return myAnySchemaChangeTracker;
   }
 
   private List<JsonSchemaFileProvider> getProvidersFromFactories(

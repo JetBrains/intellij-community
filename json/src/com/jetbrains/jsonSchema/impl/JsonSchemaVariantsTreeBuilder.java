@@ -17,10 +17,13 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonObject;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -49,7 +52,7 @@ public class JsonSchemaVariantsTreeBuilder {
     myPosition = ContainerUtil.notNullize(position);
   }
 
-  public JsonSchemaTreeNode buildTree() {
+  public JsonSchemaTreeNode buildTree(boolean skipLastExpand) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
     expandChildSchema(root, mySchema);
     // set root's position since this children are just variants of root
@@ -72,7 +75,8 @@ public class JsonSchemaVariantsTreeBuilder {
       else {
         // process step results
         assert pair.getSecond() != null;
-        expandChildSchema(node, pair.getSecond());
+        if (node.getSteps().size() > 1 || !skipLastExpand) expandChildSchema(node, pair.getSecond());
+        else node.setChild(pair.getSecond());
       }
 
       queue.addAll(node.getChildren());
@@ -97,10 +101,17 @@ public class JsonSchemaVariantsTreeBuilder {
 
   private static void expandChildSchema(@NotNull JsonSchemaTreeNode node,
                                         @NotNull JsonSchemaObject childSchema) {
-    if (interestingSchema(childSchema)) {
-      final ProcessDefinitionsOperation operation = new ProcessDefinitionsOperation(childSchema);
-      operation.doMap();
-      operation.doReduce();
+    final JsonObject element = childSchema.getPeerPointer().getElement();
+    if (element == null) LOG.info("Psi element for schema was null");
+    if (interestingSchema(childSchema) && element != null) {
+      final Project project = childSchema.getPeerPointer().getProject();
+      final Operation operation = CachedValuesManager
+        .getCachedValue(element, () -> {
+          final Operation expand = new ProcessDefinitionsOperation(childSchema);
+          expand.doMap();
+          expand.doReduce();
+          return CachedValueProvider.Result.create(expand, element, JsonSchemaService.Impl.get(project).getAnySchemaChangeTracker());
+        });
       node.createChildrenFromOperation(operation);
     } else {
       node.setChild(childSchema);
@@ -141,8 +152,20 @@ public class JsonSchemaVariantsTreeBuilder {
         myOneOfGroup.clear();
         return;
       }
+
+      // lets do that to make the returned object smaller
+      myAnyOfGroup.forEach(Operation::clearVariants);
+      myOneOfGroup.forEach(Operation::clearVariants);
+
       myChildOperations.forEach(Operation::doReduce);
       reduce();
+      myChildOperations.clear();
+    }
+
+    private static void clearVariants(@NotNull JsonSchemaObject object) {
+      object.setAllOf(null);
+      object.setAnyOf(null);
+      object.setOneOf(null);
     }
 
     @Nullable
@@ -336,7 +359,6 @@ public class JsonSchemaVariantsTreeBuilder {
     return definition;
   }
 
-  // todo do not forget to create caches for calculated merges etc etc
   public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
                                        @NotNull JsonSchemaObject other,
                                        @NotNull JsonSchemaObject pointTo) {

@@ -611,16 +611,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiElement element = myFile.findElementAt(offset);
-        Assert.assertNotNull(element);
-
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        // todo in debug it is seen, that during resolve we come to the state "cyclic definition" => write a more specific test about that
-        // todo this current test checks that it works in reasonable time without timeout
-        final PsiElement resolve = referenceAt.resolve();
-        Assert.assertNull(resolve);
+        checkNavigationIntoDefinition("all");
       }
     });
   }
@@ -651,8 +642,12 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        // no actual resolve; see comment to the upper test about cyclic definitions
-        Assert.assertEquals(myFile, resolve.getContainingFile());
+        Assert.assertEquals("\"bbb\"", resolve.getText());
+        final PsiElement parent = resolve.getParent();
+        Assert.assertTrue(parent instanceof JsonProperty);
+        Assert.assertEquals("bbb", ((JsonProperty) parent).getName());
+        Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
+        Assert.assertEquals("properties", ((JsonProperty) parent.getParent().getParent()).getName());
       }
     });
   }

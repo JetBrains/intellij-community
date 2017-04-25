@@ -42,12 +42,16 @@ public class JsonSchemaResolver {
   }
 
   public MatchResult detailedResolve() {
-    final JsonSchemaTreeNode node = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition).buildTree();
+    return detailedResolve(false);
+  }
+
+  private MatchResult detailedResolve(boolean skipLastExpand) {
+    final JsonSchemaTreeNode node = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition).buildTree(skipLastExpand);
     return MatchResult.zipTree(node);
   }
 
-  public Collection<JsonSchemaObject> resolve() {
-    final MatchResult result = detailedResolve();
+  public Collection<JsonSchemaObject> resolve(boolean skipLastExpand) {
+    final MatchResult result = detailedResolve(skipLastExpand);
     final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
     set.addAll(result.myExcludingSchemas);
     return set;
