@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ExternalSystemConstants {
 
-  @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = "external.system.id";
+  @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY;
   @NonNls @NotNull public static final String LINKED_PROJECT_PATH_KEY = "external.linked.project.path";
   @NonNls @NotNull public static final String ROOT_PROJECT_PATH_KEY = "external.root.project.path";
   @NonNls @NotNull public static final String LINKED_PROJECT_ID_KEY = "external.linked.project.id";

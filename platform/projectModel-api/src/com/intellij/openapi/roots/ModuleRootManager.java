@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author dsl
  */
-public abstract class ModuleRootManager implements ModuleRootModel {
+public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**
    * Returns the module root manager instance for the specified module.
    *
