@@ -636,7 +636,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     }
     AntSupport.markFileAsAntFile(file, xmlFile.getProject(), true);
     if (!AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
-      throw new AntNoFileException("the file is not recognized as an ANT file", file);
+      throw new AntNoFileException("the file is not recognized as an Ant file", file);
     }
     final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
     myBuildFiles.add(buildFile);
