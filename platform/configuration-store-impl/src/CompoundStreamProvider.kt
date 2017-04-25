@@ -5,7 +5,7 @@ import com.intellij.util.containers.ContainerUtil
 
 import java.io.InputStream
 
-class StreamProviderWrapper : StreamProvider {
+class CompoundStreamProvider : StreamProvider {
   val providers = ContainerUtil.createConcurrentList<StreamProvider>()
 
   override val enabled: Boolean

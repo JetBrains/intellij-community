@@ -55,7 +55,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private val storageLock = ReentrantReadWriteLock()
   private val storages = THashMap<String, StateStorage>()
 
-  val compoundStreamProvider = StreamProviderWrapper()
+  val compoundStreamProvider = CompoundStreamProvider()
 
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     if (first) {
