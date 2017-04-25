@@ -2,8 +2,16 @@
 # Should give warning only here if cython is not available but supported.
 
 import os
-use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
 import sys
+from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
+
+
+use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
+dirname = os.path.dirname(os.path.dirname(__file__))
+# Do not show incorrect warning for .egg files for Remote debugger
+if not CYTHON_SUPPORTED or dirname.endswith('.egg'):
+    # Do not try to import cython extensions if cython isn't supported
+    use_cython = 'NO'
 
 
 def delete_old_compiled_extensions():
@@ -55,17 +63,10 @@ elif use_cython is None:
     except ImportError:
         from _pydevd_bundle.pydevd_additional_thread_info_regular import PyDBAdditionalThreadInfo  # @UnusedImport
         from _pydevd_bundle.pydevd_trace_dispatch_regular import trace_dispatch, global_cache_skips, global_cache_frame_skips  # @UnusedImport
-        from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED
+        from _pydev_bundle.pydev_monkey import log_error_once
 
-        dirname = os.path.dirname(os.path.dirname(__file__))
-        if dirname.endswith('.egg'):
-            # Do not show incorrect warning for .egg files for Remote debugger
-            CYTHON_SUPPORTED = False
-
-        if CYTHON_SUPPORTED:
-            from _pydev_bundle.pydev_monkey import log_error_once
-            log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
-                sys.executable, os.path.join(dirname, 'setup_cython.py')))
+        log_error_once("warning: Debugger speedups using cython not found. Run '\"%s\" \"%s\" build_ext --inplace' to build." % (
+            sys.executable, os.path.join(dirname, 'setup_cython.py')))
 
 else:
     raise RuntimeError('Unexpected value for PYDEVD_USE_CYTHON: %s (accepted: YES, NO)' % (use_cython,))

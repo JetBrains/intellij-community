@@ -149,18 +149,23 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         if (((PyStringLiteralExpression)key).getStringValue().equals(((PyStringLiteralExpression)defaultValue).getStringValue()))
           return true;
       }
+      else if (key instanceof PyReferenceExpression && PyUtil.isPy2ReservedWord((PyReferenceExpression)key) &&
+               key.getText().equals(defaultValue.getText())) {
+        return true;
+      }
       else {
-        PsiReference keyRef = key instanceof PyReferenceExpression 
-                              ? ((PyReferenceExpression) key).getReference(getResolveContext())
+        PsiReference keyRef = key instanceof PyReferenceExpression
+                              ? ((PyReferenceExpression)key).getReference(getResolveContext())
                               : key.getReference();
         PsiReference defRef = defaultValue instanceof PyReferenceExpression
-                              ? ((PyReferenceExpression) defaultValue).getReference(getResolveContext())
+                              ? ((PyReferenceExpression)defaultValue).getReference(getResolveContext())
                               : defaultValue.getReference();
         if (keyRef != null && defRef != null) {
           PsiElement keyResolve = keyRef.resolve();
           PsiElement defResolve = defRef.resolve();
-          if (keyResolve != null && keyResolve.equals(defResolve))
+          if (keyResolve != null && keyResolve.equals(defResolve)) {
             return true;
+          }
         }
       }
       return false;

@@ -36,6 +36,7 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
@@ -127,6 +128,13 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
     manager.addManagedFilesWithProfiles(MavenUtil.collectFiles(getParameters().mySelectedProjects), selectedProfiles);
     manager.waitForReadingCompletion();
+
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() &&
+        !ApplicationManager.getApplication().isUnitTestMode()) {
+      Promise<List<Module>> promise = manager.scheduleImportAndResolve();
+      manager.waitForResolvingCompletion();
+      return promise.blockingGet(0);
+    }
 
     boolean isFromUI = model != null;
     return manager.importProjects(isFromUI

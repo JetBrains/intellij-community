@@ -892,6 +892,23 @@ public class PyTypingTest extends PyTestCase {
            "expr = xs.pop()");
   }
 
+  public void testGenericUserFunctionWithManyParamsAndNestedCall() {
+    doTest("Tuple[bool, int, str]",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "U = TypeVar('U')\n" +
+           "V = TypeVar('V')\n" +
+           "\n" +
+           "def myid(x: T) -> T:\n" +
+           "    pass\n" +
+           "\n" +
+           "def f(x: T, y: U, z: V):\n" +
+           "    return myid(x), myid(y), myid(z)\n" +
+           "\n" +
+           "expr = f(True, 1, 'foo')\n");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

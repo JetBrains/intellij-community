@@ -23,10 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -285,7 +282,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return null;
     }
     final PyFunctionTypeAnnotationFile file = CachedValuesManager.getCachedValue(function, () ->
-      CachedValueProvider.Result.create(new PyFunctionTypeAnnotationFile(comment, function), function));
+      CachedValueProvider.Result.create(new PyFunctionTypeAnnotationFile(function.getTypeCommentAnnotation(), function), function));
     return file.getAnnotation();
   }
 

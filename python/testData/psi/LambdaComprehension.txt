@@ -19,8 +19,8 @@ PyFile:LambdaComprehension.py
             <empty list>
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
-          PyBoolLiteralExpression
-            PsiElement(Py:TRUE_KEYWORD)('True')
+          PyReferenceExpression: True
+            PsiElement(Py:IDENTIFIER)('True')
         PsiElement(Py:COMMA)(',')
         PsiWhiteSpace(' ')
         PyLambdaExpression
@@ -29,8 +29,8 @@ PyFile:LambdaComprehension.py
             <empty list>
           PsiElement(Py:COLON)(':')
           PsiWhiteSpace(' ')
-          PyBoolLiteralExpression
-            PsiElement(Py:FALSE_KEYWORD)('False')
+          PyReferenceExpression: False
+            PsiElement(Py:IDENTIFIER)('False')
       PsiWhiteSpace(' ')
       PsiElement(Py:IF_KEYWORD)('if')
       PsiWhiteSpace(' ')

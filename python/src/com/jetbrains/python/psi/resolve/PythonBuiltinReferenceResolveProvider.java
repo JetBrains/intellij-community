@@ -59,7 +59,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
 
     // ...as a builtin symbol
     final PyFile builtinsFile = builtinCache.getBuiltinsFile();
-    if (builtinsFile != null && !PyUtil.isClassPrivateName(referencedName)) {
+    if (builtinsFile != null && !PyUtil.isClassPrivateName(referencedName) && PyUtil.getInitialUnderscores(referencedName) != 1) {
       for (RatedResolveResult resolveResult : builtinsFile.multiResolveName(referencedName)) {
         result.add(new ImportedResolveResult(resolveResult.getElement(), resolveResult.getRate(), null));
       }

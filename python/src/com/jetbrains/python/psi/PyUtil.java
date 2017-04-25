@@ -910,6 +910,18 @@ public class PyUtil {
     return as(PyPsiUtils.getPrevNonWhitespaceSibling(statementList), PsiComment.class);
   }
 
+  public static boolean isPy2ReservedWord(@NotNull PyReferenceExpression node) {
+    if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON30)) {
+      if (!node.isQualified()) {
+        final String name = node.getName();
+        if (PyNames.NONE.equals(name) || PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   /**
    * Retrieve the document from {@link PsiDocumentManager} using the anchor PSI element and pass it to the consumer function
    * first releasing it from pending PSI modifications it with {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}

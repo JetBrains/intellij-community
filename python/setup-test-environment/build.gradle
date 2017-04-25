@@ -18,6 +18,9 @@ envs {
   conda "django110", "3.4", ["django==1.10"], false
   textfile "django110/tags.txt", "django\nskeletons"
 
+  conda "django111", "3.4", ["django==1.11"], true
+  textfile "django111/tags.txt", "python3.4\ndjango"
+
   conda "python34", "3.4", ["ipython==2.1", "django==1.8", "behave", "jinja2", "tox>=2.0", "pandas"], true
   textfile "python34/tags.txt", "python3\nipython\nipython200\nskeletons\ndjango\nbehave\ntox\njinja2\npython34\npackaging\npandas"
 

@@ -84,6 +84,9 @@ final class CommandLinePsiImplUtils {
   @NotNull
   static String getValueNoQuotes(@NotNull final CommandLineArgument argument) {
     final char[] chars = argument.getText().toCharArray();
+    if (chars.length == 0) {
+      return "";
+    }
     final char firstChar = chars[0];
     if (firstChar == chars[chars.length - 1] && firstChar == '"' || firstChar == '\'') {
       return argument.getText().substring(1, argument.getTextLength() - 1);

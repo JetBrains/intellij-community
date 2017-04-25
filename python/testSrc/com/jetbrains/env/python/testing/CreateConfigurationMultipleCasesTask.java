@@ -16,7 +16,6 @@
 package com.jetbrains.env.python.testing;
 
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.jetbrains.python.psi.PyClass;
@@ -43,7 +42,6 @@ final class CreateConfigurationMultipleCasesTask<T extends PyUniversalTestConfig
   }
 
 
-
   @NotNull
   @Override
   protected List<PsiElement> getPsiElementsToRightClickOn() {
@@ -67,7 +65,6 @@ final class CreateConfigurationMultipleCasesTask<T extends PyUniversalTestConfig
     // When namespace packages are supported we can run tests in for of foo.spam.Bar even if foo is plain dir
     // otherwise we need to set "foo" as working dir and run spam.Bar.
 
-    final boolean namespacePackagesSupported = ! configuration.packageOnlyIfInitPy(element);
 
     final LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     final ConfigurationTarget target = configuration.getTarget();
@@ -81,57 +78,34 @@ final class CreateConfigurationMultipleCasesTask<T extends PyUniversalTestConfig
     assert elementName != null;
 
     if (element instanceof PsiDirectory && elementName.endsWith("package_test")) {
-
-      if (!namespacePackagesSupported) {
-        Assert.assertEquals("Bad configuration for folder", "tests_package/package_test",
-                            VfsUtilCore.getRelativeLocation(target.asVirtualFile(fileSystem), workingDirectory));
-      }
-
+      Assert.assertEquals("Working directory for folder should be same as folder", target.asVirtualFile(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("package_test"));
-
     }
-    else if (element instanceof PyFile &&elementName.endsWith("test_in_package.py")) {
-      if (!namespacePackagesSupported) {
-        Assert.assertEquals("Bad configuration for file", "tests_package/package_test/test_in_package.py",
-                            VfsUtilCore.getRelativeLocation(target.asVirtualFile(fileSystem), workingDirectory));
-      }
-
+    else if (element instanceof PyFile && elementName.endsWith("test_in_package.py")) {
+      final VirtualFile targetFile = target.asVirtualFile();
+      assert targetFile != null : "Failed to create virtual file for " + target;
+      Assert.assertEquals("Working directory for file should be same as file's parent", targetFile.getParent(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test_in_package.py"));
-
     }
     else if (element instanceof PyClass && elementName.endsWith("TestLogic")) {
-
-      if (!namespacePackagesSupported) {
-        Assert.assertEquals("Bad working dir for class", projectRoot, workingDirectory);
-      }
-
-      Assert.assertEquals("Bad configuration for class", "tests_package.package_test.test_in_package.TestLogic", target.getTarget());
+      final PsiFile targetFile = element.getContainingFile();
+      Assert.assertEquals("Bad working dir for class", targetFile.getVirtualFile().getParent(), workingDirectory);
+      Assert.assertEquals("Bad configuration for class", "test_in_package.TestLogic", target.getTarget());
     }
     else if (element instanceof PsiDirectory && elementName.endsWith("tests_folder")) {
-      if (!namespacePackagesSupported) {
-        Assert.assertEquals("Bad configuration for no package folder", workingDirectory, target.asVirtualFile(fileSystem));
-      }
-
+      Assert.assertEquals("Bad configuration for no package folder", workingDirectory, target.asVirtualFile());
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("tests_folder"));
     }
     else if (element instanceof PyFile && elementName.endsWith("test_lonely.py")) {
-      if (!namespacePackagesSupported) {
-        Assert.assertEquals("Bad configuration for no package file", "test_lonely.py",
-                            VfsUtilCore.getRelativeLocation(target.asVirtualFile(fileSystem), workingDirectory));
-      }
-
+      final VirtualFile targetFile = target.asVirtualFile();
+      assert targetFile != null : "Failed to create virtual file for " + target;
+      Assert.assertEquals("Bad configuration for no package file", targetFile.getParent(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test_lonely.py"));
     }
     else if (element instanceof PyClass && elementName.endsWith("TestLonely")) {
-
-      if (!namespacePackagesSupported) {
-        Assert.assertEquals("Bad configuration for no package class", workingDirectory, projectRoot.findChild("tests_folder"));
-        Assert.assertEquals("Bad configuration for class no package", "test_lonely.TestLonely", target.getTarget());
-      } else {
-        Assert.assertEquals("Bad configuration for class no package", "tests_folder.test_lonely.TestLonely", target.getTarget());
-      }
-
-
+      Assert.assertEquals("Bad working directory for no package class", element.getContainingFile().getVirtualFile().getParent(),
+                          workingDirectory);
+      Assert.assertEquals("Bad configuration for class no package", "test_lonely.TestLonely", target.getTarget());
     }
     else {
       throw new AssertionError("Unexpected configuration " + configuration);

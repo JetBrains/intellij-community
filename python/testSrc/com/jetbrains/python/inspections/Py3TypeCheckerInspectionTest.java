@@ -228,4 +228,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testUnboundTypeVarsMatchClassObjectTypes() {
     doTest();
   }
+
+  // PY-22513
+  public void testGenericKwargs() {
+    doTest();
+  }
 }

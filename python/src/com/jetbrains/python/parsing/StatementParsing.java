@@ -927,16 +927,16 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
              isWordAtPosition(text, start, end, TOK_PRINT)) {
       return PyTokenTypes.PRINT_KEYWORD;
     }
-    else if (source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_NONE)) {
-      return PyTokenTypes.NONE_KEYWORD;
-    }
-    else if (source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_TRUE)) {
-      return PyTokenTypes.TRUE_KEYWORD;
-    }
-    else if (source == PyTokenTypes.IDENTIFIER && isWordAtPosition(text, start, end, TOK_FALSE)) {
-      return PyTokenTypes.FALSE_KEYWORD;
-    }
     else if (myContext.getLanguageLevel().isPy3K() && source == PyTokenTypes.IDENTIFIER) {
+      if (isWordAtPosition(text, start, end, TOK_NONE)) {
+        return PyTokenTypes.NONE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_TRUE)) {
+        return PyTokenTypes.TRUE_KEYWORD;
+      }
+      if (isWordAtPosition(text, start, end, TOK_FALSE)) {
+        return PyTokenTypes.FALSE_KEYWORD;
+      }
       if (isWordAtPosition(text, start, end, TOK_DEBUG)) {
         return PyTokenTypes.DEBUG_KEYWORD;
       }

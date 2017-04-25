@@ -22,7 +22,8 @@ class TeamcityTestResult(TestResult):
         self.subtest_failures = {}
         self.messages = TeamcityServiceMessages(_real_stdout)
 
-    def get_test_id(self, test):
+    @staticmethod
+    def get_test_id(test):
         if is_string(test):
             return test
 
@@ -46,17 +47,40 @@ class TeamcityTestResult(TestResult):
 
         self.messages.testIgnored(test_id, message="Expected failure: " + err, flowId=test_id)
 
+    def get_subtest_block_id(self, test, subtest):
+        test_id = self.get_test_id(test)
+        subtest_id = self.get_test_id(subtest)
+
+        if subtest_id.startswith(test_id):
+            block_id = subtest_id[len(test_id):].strip()
+        else:
+            block_id = subtest_id
+        if len(block_id) == 0:
+            block_id = test_id
+        return block_id
+
     def addSkip(self, test, reason=""):
         if sys.version_info >= (2, 7):
             super(TeamcityTestResult, self).addSkip(test, reason)
-
-        test_id = self.get_test_id(test)
 
         if reason:
             reason_str = ": " + str(reason)
         else:
             reason_str = ""
-        self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
+
+        if get_class_fullname(test) == "unittest.case._SubTest":
+            parent_test = test.test_case
+            parent_test_id = self.get_test_id(parent_test)
+            subtest = test
+
+            block_id = self.get_subtest_block_id(parent_test, subtest)
+
+            self.messages.subTestBlockOpened(block_id, subTestResult="Skip", flowId=parent_test_id)
+            self.messages.testStdOut(parent_test_id, out="SubTest skipped" + reason_str + "\n", flowId=parent_test_id)
+            self.messages.blockClosed(block_id, flowId=parent_test_id)
+        else:
+            test_id = self.get_test_id(test)
+            self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
 
     def addUnexpectedSuccess(self, test):
         super(TeamcityTestResult, self).addUnexpectedSuccess(test)

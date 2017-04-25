@@ -83,6 +83,21 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  @Override
+  public PyType getReferenceExpressionType(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    if (!referenceExpression.isQualified()) {
+      final String name = referenceExpression.getReferencedName();
+      if (PyNames.NONE.equals(name)) {
+        return PyNoneType.INSTANCE;
+      }
+      else if (PyNames.FALSE.equals(name) || PyNames.TRUE.equals(name)) {
+        return PyBuiltinCache.getInstance(referenceExpression).getBoolType();
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private static PyType getBaseStringType(@NotNull PsiElement referenceTarget) {
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(referenceTarget);
     if (referenceTarget instanceof PyElement && builtinCache.isBuiltin(referenceTarget) &&

@@ -40,6 +40,8 @@ import com.jetbrains.python.formatter.PyBlock;
 import com.jetbrains.python.formatter.PyCodeStyleSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.pyi.PyiFile;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,7 +275,7 @@ public class AddImportHelper {
       return UNRESOLVED_SYMBOL_PRIORITY;
     }
 
-    final PsiFileSystemItem resolvedFileOrDir;
+    PsiFileSystemItem resolvedFileOrDir;
     if (resolved instanceof PsiDirectory) {
       resolvedFileOrDir = (PsiFileSystemItem)resolved;
     }
@@ -283,6 +285,10 @@ public class AddImportHelper {
     }
     else {
       resolvedFileOrDir = resolved.getContainingFile();
+    }
+
+    if (resolvedFileOrDir instanceof PyiFile) {
+      resolvedFileOrDir = as(PyiUtil.getOriginalElement((PyiFile)resolvedFileOrDir), PsiFileSystemItem.class); 
     }
     
     if (resolvedFileOrDir == null) {

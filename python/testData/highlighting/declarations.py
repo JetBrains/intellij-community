@@ -14,4 +14,4 @@ class <info descr="null" type="INFORMATION" foreground="0x0000ff" background="0x
     pass
 
   def <info descr="null" type="INFORMATION" foreground="0xff0000" background="0x000000" effectcolor="0xffffff" effecttype="BOXED" fonttype="1">__made_up__</info>(<info descr="null">self</info>):
-    return None
+    return <info type="INFORMATION">None</info>

@@ -23,6 +23,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -111,6 +112,9 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
       }
       else if (assignedType instanceof PyNamedTupleType) {
         return ((PyNamedTupleType)assignedType).getElementCount();
+      }
+      else if (assignedType instanceof PyNoneType) {
+        return 1;
       }
 
       return -1;

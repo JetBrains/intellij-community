@@ -50,7 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.lang.reflect.Field;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
@@ -1902,14 +1901,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return ASTFactory.leaf(type, text);
   }
 
-  /**
-   * just to make removeRange method available.
-   */
   private static class MyList extends ArrayList<ProductionMarker> {
-    private static final Field ourElementDataField = ReflectionUtil.getDeclaredField(ArrayList.class, "elementData");
-
-    private Object[] cachedElementData;
-
+    // make removeRange method available.
     @Override
     protected void removeRange(final int fromIndex, final int toIndex) {
       super.removeRange(fromIndex, toIndex);
@@ -1917,36 +1910,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     private MyList() {
       super(256);
-    }
-
-    @Override
-    public int lastIndexOf(final Object o) {
-      Object[] data = cachedElementData;
-      if (data == null) {
-        return super.lastIndexOf(o);
-      }
-      for (int i = size() - 1; i >= 0; i--) {
-        if (data[i] == o) return i;
-      }
-      return -1;
-    }
-
-    @Override
-    public void ensureCapacity(final int minCapacity) {
-      if (cachedElementData == null || minCapacity >= cachedElementData.length) {
-        super.ensureCapacity(minCapacity);
-        initCachedField();
-      }
-    }
-
-    private void initCachedField() {
-      if (ourElementDataField == null) return;
-      try {
-        cachedElementData = (Object[])ourElementDataField.get(this);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
     }
   }
 

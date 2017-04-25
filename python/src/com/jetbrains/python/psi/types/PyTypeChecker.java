@@ -23,7 +23,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -32,8 +31,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
+import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
 
 /**
  * @author vlan
@@ -519,41 +520,30 @@ public class PyTypeChecker {
                                                             @NotNull Map<PyExpression, PyNamedParameter> arguments,
                                                             @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
-
-    PyNamedParameter positionalParameter = null;
-    final List<PyType> positionalTypes = new ArrayList<>();
-
-    PyNamedParameter keywordParameter = null;
-    final List<PyType> keywordTypes = new ArrayList<>();
-
-    for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
+    for (Map.Entry<PyExpression, PyNamedParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
+      final PyType argumentType = context.getType(entry.getKey());
       final PyNamedParameter parameter = entry.getValue();
-      final PyType actualArgType = context.getType(entry.getKey());
-
-      if (parameter.isPositionalContainer()) {
-        if (positionalParameter == null) positionalParameter = parameter;
-        positionalTypes.add(actualArgType);
-      }
-      else if (parameter.isKeywordContainer()) {
-        if (keywordParameter == null) keywordParameter = parameter;
-        keywordTypes.add(actualArgType);
-      }
-      else if (!match(parameter.getArgumentType(context), actualArgType, context, substitutions)) {
+      if (!match(parameter.getArgumentType(context), argumentType, context, substitutions)) {
         return null;
       }
     }
-
-    if (positionalParameter != null &&
-        !match(positionalParameter.getArgumentType(context), PyUnionType.union(positionalTypes), context, substitutions)) {
+    if (!matchContainer(getMappedPositionalContainer(arguments), getArgumentsMappedToPositionalContainer(arguments), substitutions,
+                        context)) {
       return null;
     }
-
-    if (keywordParameter != null &&
-        !match(keywordParameter.getArgumentType(context), PyUnionType.union(keywordTypes), context, substitutions)) {
+    if (!matchContainer(getMappedKeywordContainer(arguments), getArgumentsMappedToKeywordContainer(arguments), substitutions, context)) {
       return null;
     }
-
     return substitutions;
+  }
+
+  private static boolean matchContainer(@Nullable PyNamedParameter container, @NotNull List<PyExpression> arguments,
+                                        @NotNull Map<PyGenericType, PyType> substitutions, @NotNull TypeEvalContext context) {
+    if (container == null) {
+      return true;
+    }
+    final List<PyType> types = arguments.stream().map(e -> context.getType(e)).collect(Collectors.toList());
+    return match(container.getArgumentType(context), PyUnionType.union(types), context, substitutions);
   }
 
   @NotNull
@@ -624,7 +614,7 @@ public class PyTypeChecker {
     final List<AnalyzeCallResults> results = new ArrayList<>();
     for (PyCallable callable : multiResolveCallee(callSite, context)) {
       final PyExpression receiver = getReceiver(callSite, callable);
-      final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, callable, context);
+      final ArgumentMappingResults mapping = mapArguments(callSite, callable, context);
       results.add(new AnalyzeCallResults(callable, receiver, mapping));
     }
     return results;
@@ -760,8 +750,8 @@ public class PyTypeChecker {
       final PyCallExpression callExpr = (PyCallExpression)callSite;
       final PyExpression callee = callExpr.getCallee();
       if (callee instanceof PyReferenceExpression && callable instanceof PyFunction) {
-        implicitOffset = PyCallExpressionHelper.getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable,
-                                                                         resolveContext);
+        implicitOffset = getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable,
+                                                  resolveContext);
       }
       else {
         implicitOffset = 0;
@@ -822,10 +812,10 @@ public class PyTypeChecker {
   public static class AnalyzeCallResults {
     @NotNull private final PyCallable myCallable;
     @Nullable private final PyExpression myReceiver;
-    @NotNull private final PyCallExpressionHelper.ArgumentMappingResults myMapping;
+    @NotNull private final ArgumentMappingResults myMapping;
 
     public AnalyzeCallResults(@NotNull PyCallable callable, @Nullable PyExpression receiver,
-                              @NotNull PyCallExpressionHelper.ArgumentMappingResults mapping) {
+                              @NotNull ArgumentMappingResults mapping) {
       myCallable = callable;
       myReceiver = receiver;
       myMapping = mapping;
@@ -842,7 +832,7 @@ public class PyTypeChecker {
     }
 
     @NotNull
-    public PyCallExpressionHelper.ArgumentMappingResults getMapping() {
+    public ArgumentMappingResults getMapping() {
       return myMapping;
     }
   }

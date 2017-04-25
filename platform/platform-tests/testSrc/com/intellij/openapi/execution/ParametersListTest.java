@@ -19,8 +19,10 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -204,5 +206,31 @@ public class ParametersListTest {
 
     List<String> lines = ParametersListUtil.parse(paramString, true);
     assertEquals(paramString, StringUtil.join(lines, " "));
+  }
+
+  @Test
+  public void testParameterListUtil() throws Exception {
+    final List<String> expected = Arrays.asList(
+      "cmd",
+      "-a",
+      "-b",
+      "arg0",
+      "-c",
+      "--long-option",
+      "--long-opt2=arg1",
+      "arg2",
+      "arg3",
+      "-a",
+      "a \"r g",
+      "--foo=d e f"
+    );
+    final String doubleQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo=\"d e f\"\"\"";
+    Assert.assertEquals("Double quotes broken", expected, ParametersListUtil.parse(doubleQuotes, false, true));
+
+    final String singleQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a 'a \"r g' --foo='d e f'";
+    Assert.assertEquals("Single quotes broken", expected, ParametersListUtil.parse(singleQuotes, false, true));
+
+    final String mixedQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo='d e f'";
+    Assert.assertEquals("Mixed quotes broken", expected, ParametersListUtil.parse(mixedQuotes, false, true));
   }
 }

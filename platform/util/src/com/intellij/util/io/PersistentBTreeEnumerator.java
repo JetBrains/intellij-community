@@ -236,6 +236,10 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
             if (!p.process(value)) return false;
           }
           else {
+            if (myInlineKeysNoMapping) {
+              if (!p.process(value)) return false;
+              return true;
+            }
             int rec = -value;
             while (rec != 0) {
               int id = myStorage.getInt(rec);
@@ -335,11 +339,23 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     assert myInlineKeysNoMapping;
     try {
       lockStorage();
-      markDirty(true);
+
       int intKey = ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(key);
+
+      markDirty(true);
+
       if (value < Integer.MAX_VALUE) {
         myBTree.put(intKey, (int) value);
       } else {
+        // reuse long record if it was allocated
+        boolean hasMapping = myBTree.get(intKey, myResultBuf);
+        if (hasMapping) {
+          if (myResultBuf[0] < 0) {
+            myStorage.putLong(-myResultBuf[0], value);
+            return;
+          }
+        }
+
         int pos = nextLongValueRecord();
         myStorage.putLong(pos, value);
         myBTree.put(intKey, -pos);
