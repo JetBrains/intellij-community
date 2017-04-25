@@ -39,7 +39,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     val methodsToOverride = aClass.methods.mapNotNull {
       method ->
       subclassInfos
-        .mapNotNull { it.getOverridingInfo(method)?.description }
+        .mapNotNull { it.methodsInfo?.get(method)?.description }
         .firstOrNull()?.let { description ->
         method to description
       }
@@ -55,8 +55,8 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
         methodsToAttachToClassFix?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
 
-        val methodFixes = if (method.modifierList.isWritable)
-          arrayOf<LocalQuickFix>(FixSubclassing(method, method.name))
+        val methodFixes = if (canApplyFix(method))
+          arrayOf<LocalQuickFix>(MakeExtendableFix(method, method.name))
         else
           emptyArray()
 
@@ -76,7 +76,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
           problems.add(manager.createProblemDescriptor(
             it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name),
             isOnTheFly,
-            arrayOf<LocalQuickFix>(FixSubclassing(aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList())),
+            arrayOf<LocalQuickFix>(MakeExtendableFix(aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList())),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           )
         }
@@ -86,7 +86,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  private fun canApplyFix(aClass: UClass) = aClass.modifierList?.isWritable ?: false
+  private fun canApplyFix(aClass: UDeclaration) = aClass.modifierList?.isWritable ?: false
 
   private fun problemTargets(declaration: UDeclaration, highlightableModifiersSet: Set<String>): List<PsiElement> {
     val modifiersElements = declaration.modifierList?.let {
@@ -105,9 +105,9 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private val classHighlightableModifiersSet = setOf(PsiModifier.FINAL, PsiModifier.PRIVATE)
 
-  private class FixSubclassing(uDeclaration: UDeclaration,
-                               hintTargetName: String,
-                               val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
+  private class MakeExtendableFix(uDeclaration: UDeclaration,
+                                  hintTargetName: String,
+                                  val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 
     override fun getFamilyName(): String = QuickFixBundle.message("fix.modifiers.family")

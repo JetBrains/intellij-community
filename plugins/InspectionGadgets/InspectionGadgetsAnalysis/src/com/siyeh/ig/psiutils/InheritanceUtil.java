@@ -16,7 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
-import com.intellij.codeInspection.inheritance.SubclassingInfo;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -86,7 +85,7 @@ public class InheritanceUtil {
       if (!provider.isApplicableTo(aClass)) {
         continue;
       }
-      SubclassingInfo info = provider.getSubclassingInfo(aClass);
+      ImplicitSubclassProvider.SubclassingInfo info = provider.getSubclassingInfo(aClass);
       if (info != null && !info.isAbstract()) {
         return true;
       }
