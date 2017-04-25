@@ -123,7 +123,7 @@ public class PyTypeChecker {
     if (expected == null || actual == null) {
       return true;
     }
-    if (isUnknown(actual)) {
+    if (isUnknown(actual, context)) {
       return true;
     }
     if (actual instanceof PyUnionType) {
@@ -364,18 +364,24 @@ public class PyTypeChecker {
     return false;
   }
 
-  public static boolean isUnknown(@Nullable PyType type) {
-    return isUnknown(type, true);
+  public static boolean isUnknown(@Nullable PyType type, @NotNull TypeEvalContext context) {
+    return isUnknown(type, true, context);
   }
 
-  public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown) {
+  public static boolean isUnknown(@Nullable PyType type, boolean genericsAreUnknown, @NotNull TypeEvalContext context) {
     if (type == null || (genericsAreUnknown && type instanceof PyGenericType)) {
       return true;
+    }
+    if (type instanceof PyFunctionType) {
+      final PyCallable callable = ((PyFunctionType)type).getCallable();
+      if (callable instanceof PyDecoratable && PyKnownDecoratorUtil.hasUnknownDecorator((PyDecoratable)callable, context)){
+        return true;
+      }
     }
     if (type instanceof PyUnionType) {
       final PyUnionType union = (PyUnionType)type;
       for (PyType t : union.getMembers()) {
-        if (isUnknown(t, genericsAreUnknown)) {
+        if (isUnknown(t, genericsAreUnknown, context)) {
           return true;
         }
       }
