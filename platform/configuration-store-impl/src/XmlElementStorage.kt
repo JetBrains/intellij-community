@@ -25,6 +25,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.isEmpty
 import com.intellij.util.loadElement
+import com.intellij.util.toBufferExposingByteArray
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
