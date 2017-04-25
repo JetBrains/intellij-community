@@ -16,6 +16,7 @@
 package com.intellij.uiDesigner.clientProperties;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -40,10 +41,10 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
   @NonNls private static final String COMPONENT_NAME = "ClientPropertiesManager";
 
   public static ClientPropertiesManager getInstance(@NotNull Project project) {
-    return project.getComponent(ClientPropertiesManager.class);
+    return ServiceManager.getService(project, ClientPropertiesManager.class);
   }
 
-  private static NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = new AtomicNotNullLazyValue<ClientPropertiesManager>() {
+  private static final NotNullLazyValue<ClientPropertiesManager> ourDefaultManager = new AtomicNotNullLazyValue<ClientPropertiesManager>() {
     @NotNull
     @Override
     protected ClientPropertiesManager compute() {
@@ -68,6 +69,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     myPropertyMap.putAll(propertyMap);
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public ClientPropertiesManager clone() {
     return new ClientPropertiesManager(myPropertyMap);
