@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -233,7 +232,7 @@ class TypeCorrector extends PsiTypeMapper {
 
     @Override
     public boolean isValid() {
-      return myDelegate.isValid() && resolve().isValid();
+      return myDelegate.isValid() && myResolveResult.myMappedClass.isValid() && myResolveResult.mySubstitutor.isValid();
     }
 
     @Override
