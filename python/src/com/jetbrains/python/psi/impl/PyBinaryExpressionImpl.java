@@ -169,7 +169,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
           }
         }
         final PyType type = result.getCallable().getCallType(context, this);
-        if (!PyTypeChecker.isUnknown(type) && !(type instanceof PyNoneType)) {
+        if (!PyTypeChecker.isUnknown(type, context) && !(type instanceof PyNoneType)) {
           types.add(type);
           if (matched) {
             matchedTypes.add(type);

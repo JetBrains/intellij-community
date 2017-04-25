@@ -147,7 +147,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyType transformedType = transformTypeFromAssertion(suggested);
     if (positive) {
       if (!(initial instanceof PyUnionType) &&
-          !PyTypeChecker.isUnknown(initial) &&
+          !PyTypeChecker.isUnknown(initial, context) &&
           PyTypeChecker.match(transformedType, initial, context)) {
         return initial;
       }

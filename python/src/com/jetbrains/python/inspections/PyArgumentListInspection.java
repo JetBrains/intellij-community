@@ -167,7 +167,7 @@ public class PyArgumentListInspection extends PyInspection {
         PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
         if (content != null) {
           PyType inside_type = context.getType(content);
-          if (inside_type != null && !PyTypeChecker.isUnknown(inside_type)) {
+          if (inside_type != null && !PyTypeChecker.isUnknown(inside_type, context)) {
             if (((PyStarArgument)arg).isKeyword()) {
               if (!PyABCUtil.isSubtype(inside_type, PyNames.MAPPING, context)) {
                 holder.registerProblem(arg, PyBundle.message("INSP.expected.dict.got.$0", inside_type.getName()));

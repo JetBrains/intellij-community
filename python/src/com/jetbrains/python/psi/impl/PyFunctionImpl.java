@@ -474,11 +474,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         return type;
       }
     }
-    final PyFunctionTypeImpl type = new PyFunctionTypeImpl(this);
-    if (PyKnownDecoratorUtil.hasUnknownDecorator(this, context) && getProperty() == null) {
-      return PyUnionType.createWeakType(type);
-    }
-    return type;
+    return new PyFunctionTypeImpl(this);
   }
 
   @Nullable

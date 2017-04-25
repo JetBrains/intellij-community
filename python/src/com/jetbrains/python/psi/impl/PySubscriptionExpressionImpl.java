@@ -89,7 +89,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       if (resolved instanceof PyCallable) {
         res = ((PyCallable)resolved).getCallType(context, this);
       }
-      if (PyTypeChecker.isUnknown(res) || res instanceof PyNoneType) {
+      if (PyTypeChecker.isUnknown(res, context) || res instanceof PyNoneType) {
         final PyClass cls = (type instanceof PyClassType) ? ((PyClassType)type).getPyClass() : null;
         if (cls != null && PyABCUtil.isSubclass(cls, PyNames.MAPPING, context)) {
           return res;

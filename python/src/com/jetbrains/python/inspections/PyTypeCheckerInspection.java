@@ -197,7 +197,9 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyType type = myTypeEvalContext.getType(iteratedValue);
         final String iterableClassName = isAsync ? PyNames.ASYNC_ITERABLE : PyNames.ITERABLE;
 
-        if (type != null && !PyTypeChecker.isUnknown(type) && !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
+        if (type != null &&
+            !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
+            !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
           final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
 
           registerProblem(iteratedValue, String.format("Expected 'collections.%s', got '%s' instead", iterableClassName, typeName));
