@@ -37,6 +37,9 @@ public class BlockUtils {
       oldStatement = parent;
       parent = oldStatement.getParent();
     }
+    if (newStatements.length == 1 && oldStatement instanceof PsiEmptyStatement) {
+      return (PsiStatement)oldStatement.replace(newStatements[0]);
+    }
     PsiElement result = null;
     if (parent instanceof PsiCodeBlock) {
       for (PsiStatement statement : newStatements) {

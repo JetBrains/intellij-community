@@ -29,6 +29,10 @@ interface StateStorageManager {
 
   fun getStateStorage(storageSpec: Storage): StateStorage
 
+  fun addStreamProvider(provider: StreamProvider, first: Boolean = false)
+
+  fun removeStreamProvider(clazz: Class<out StreamProvider>)
+
   /**
    * Rename file
    * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)

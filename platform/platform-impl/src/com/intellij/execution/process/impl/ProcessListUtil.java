@@ -305,20 +305,7 @@ public class ProcessListUtil {
   }
 
   private static File findNativeHelper() throws FileNotFoundException {
-    String prefix = "win";
-    String[] dirs = {
-      PathManager.getBinPath(),
-      PathManager.getHomePath() + "/ultimate/community/bin/" + prefix,
-      PathManager.getHomePath() + "/community/bin/" + prefix,
-      PathManager.getBinPath() + '/' + prefix
-    };
-    for (String dir : dirs) {
-      File file = new File(dir, WIN_PROCESS_LIST_HELPER_FILENAME);
-      if (file.isFile()) {
-        return file;
-      }
-    }
-    throw new FileNotFoundException(String.format("%s was not found at: %s", WIN_PROCESS_LIST_HELPER_FILENAME, StringUtil.join(dirs, ",")));
+    return PathManager.findBinFileWithException(WIN_PROCESS_LIST_HELPER_FILENAME);
   }
 
   @Nullable

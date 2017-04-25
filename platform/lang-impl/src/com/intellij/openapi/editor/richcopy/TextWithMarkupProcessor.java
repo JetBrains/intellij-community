@@ -66,7 +66,7 @@ import java.util.List;
  *   MS Office 2010 (Word, PowerPoint, Outlook), OpenOffice (Writer, Impress), Gmail, Mac TextEdit, Mac Mail.
  */
 public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithMarkup> {
-  private static final Logger LOG = Logger.getInstance("#" + TextWithMarkupProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TextWithMarkupProcessor.class);
 
   private List<RawTextWithMarkup> myResult;
 

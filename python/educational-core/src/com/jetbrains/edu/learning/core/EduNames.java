@@ -50,6 +50,8 @@ public class EduNames {
   public static final String SUBTASK_MARKER = "_subtask";
   public static final String SUBTASK = "subtask";
 
+  public static final String STUDY_PROJECT_XML_PATH = "/.idea/study_project.xml";
+
   private EduNames() {
   }
 

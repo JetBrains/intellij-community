@@ -15,7 +15,7 @@
  */
 package com.intellij.jarRepository;
 
-import com.intellij.jarRepository.propertiesEditor.RepositoryLibraryPropertiesDialog;
+import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesDialog;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;

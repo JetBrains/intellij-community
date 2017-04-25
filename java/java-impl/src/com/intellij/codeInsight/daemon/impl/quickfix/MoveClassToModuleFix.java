@@ -59,7 +59,7 @@ public class MoveClassToModuleFix implements IntentionAction {
   private final String myReferenceName;
   private final Module myCurrentModule;
   private final PsiDirectory mySourceRoot;
-  private static final Logger LOG = Logger.getInstance("#" + MoveClassToModuleFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveClassToModuleFix.class);
 
   public MoveClassToModuleFix(String referenceName, Module currentModule, PsiDirectory root, PsiElement psiElement) {
     myReferenceName = referenceName;

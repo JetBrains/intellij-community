@@ -143,6 +143,12 @@ public final class OutputFileObject extends SimpleJavaFileObject {
     return FileUtilRt.loadFile(myFile, encoding, false);
   }
 
+  @Override
+  public Writer openWriter() throws IOException {
+    final String encoding = myEncodingName;
+    return encoding != null? new OutputStreamWriter(openOutputStream(), encoding) : super.openWriter();
+  }
+
   @Nullable
   public BinaryContent getContent() {
     return myContent;

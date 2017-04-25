@@ -65,7 +65,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_LOOKUP_FEATURE = "codeassists.quickdefinition.lookup";
   @NonNls public static final String CODEASSISTS_QUICKDEFINITION_FEATURE = "codeassists.quickdefinition";
 
-  private static final Logger LOG = Logger.getInstance("#" + ShowImplementationsAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(ShowImplementationsAction.class);
 
   private Reference<JBPopup> myPopupRef;
   private Reference<ImplementationsUpdaterTask> myTaskRef;

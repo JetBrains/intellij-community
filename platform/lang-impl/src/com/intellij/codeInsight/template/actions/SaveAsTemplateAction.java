@@ -52,7 +52,7 @@ import java.util.*;
 
 public class SaveAsTemplateAction extends AnAction {
 
-  private static final Logger LOG = Logger.getInstance("#" + SaveAsTemplateAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(SaveAsTemplateAction.class);
 
   @Override
   public void actionPerformed(AnActionEvent e) {

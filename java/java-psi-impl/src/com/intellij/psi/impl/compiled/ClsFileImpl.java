@@ -370,9 +370,9 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     }
 
     return CachedValuesManager.getCachedValue(this, () -> {
-      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(ClsFileImpl.this);
+      PsiElement target = JavaPsiImplementationHelper.getInstance(getProject()).getClsFileNavigationElement(this);
       ModificationTracker tracker = FileIndexFacade.getInstance(getProject()).getRootModificationTracker();
-      return CachedValueProvider.Result.create(target, ClsFileImpl.this, target.getContainingFile(), tracker);
+      return CachedValueProvider.Result.create(target, this, target.getContainingFile(), tracker);
     });
   }
 

@@ -97,7 +97,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
 
 
 class OptimizeImportsTask implements SequentialTask {
-  private static final Logger LOG = Logger.getInstance("#" + OptimizeImportsTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(OptimizeImportsTask.class);
 
   private final Iterator<SmartPsiElementPointer<PsiImportStatementBase>> myPointers;
   private final SequentialModalProgressTask myTask;

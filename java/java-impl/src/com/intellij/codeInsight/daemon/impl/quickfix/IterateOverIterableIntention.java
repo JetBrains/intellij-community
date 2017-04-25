@@ -38,7 +38,7 @@ import java.util.HashSet;
  * User: anna
  */
 public class IterateOverIterableIntention implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#" + IterateOverIterableIntention.class.getName());
+  private static final Logger LOG = Logger.getInstance(IterateOverIterableIntention.class);
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {

@@ -41,6 +41,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>
+ * Suitable for XML/HTML templates. Creates a model which provides correct indentation for a hierarchy of nested markup/template language
+ * blocks. For example:
+ * <pre>
+ *    &lt;div&gt;
+ *       &lt;?if (condition):?&gt;
+ *         &lt;div&gt;content&lt;/div&gt;
+ *       &lt;?endif?&gt;
+ *     &lt;/div&gt;
+ * </pre>
+ * where template conditional block is indented inside HTML &lt;div&gt; tag and in turn &lt;div&gt;content&lt;div&gt; tag is indented
+ * inside its surrounding 'if' block.
+ */
 public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTemplateLanguageFormattingModelBuilder {
   @NotNull
   @Override
@@ -96,10 +110,30 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return new DocumentBasedFormattingModel(topBlock, file.getProject(), settings, file.getFileType(), file);
   }
 
+  /**
+   * Checks if the file is a template file (typically a template view provider contains two roots: one for template language and one for
+   * HTML). When creating a model for an element, the builder needs to know to which of the roots the element belongs. In most cases
+   * a simple 'instanceof' check should be sufficient.
+   *
+   * @param file The file to check
+   * @return True if the file is a template file.
+   */
   protected abstract boolean isTemplateFile(PsiFile file);
 
+  /**
+   * Checks if the element is an outer language element inside XML/HTML. Such elements are created as placeholders for template language
+   * fragments.
+   *
+   * @param element The element to check.
+   * @return True if the element is an outer (template) language fragment in XML/HTML.
+   */
   public abstract boolean isOuterLanguageElement(PsiElement element);
 
+  /**
+   * Checks if the element is a placeholder for XML/HTML fragment inside a template language PSI tree.
+   * @param element The element to check.
+   * @return True if the element covers a fragment of XML/HTML inside a template language.
+   */
   public abstract boolean isMarkupLanguageElement(PsiElement element);
 
   private FormattingModel createDataLanguageFormattingModel(PsiElement dataElement,
@@ -142,6 +176,21 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
     return block;
   }
 
+  /**
+   * Creates a template language block. Although it is not strictly required, for the builder to merge blocks with XML/HTML sub-blocks,
+   * it is necessary to inherit the template language block from {@link TemplateLanguageBlock}. Actually the merge happens inside
+   * {@link TemplateLanguageBlock#buildChildren()} method.
+   *
+   * @param node                  The AST node to create the block for.
+   * @param settings              The current code style settings (note: you need to use {@link CodeStyleSettings#getCommonSettings(Language)}
+   *                              and {@link CodeStyleSettings#getCustomSettings(Class)} for template language settings.
+   * @param xmlFormattingPolicy   The current XML formatting policy.
+   * @param indent                The default indent to be used with the template block. It can be modified when XML/HTML and template
+   *                              blocks are merged.
+   * @param alignment             The template block alignment.
+   * @param wrap                  The template block wrap.
+   * @return The newly created template block.
+   */
   protected abstract Block createTemplateLanguageBlock(ASTNode node,
                                                        CodeStyleSettings settings,
                                                        XmlFormattingPolicy xmlFormattingPolicy,

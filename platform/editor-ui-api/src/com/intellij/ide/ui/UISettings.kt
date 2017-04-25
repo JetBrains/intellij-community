@@ -19,12 +19,14 @@ import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.isValidFont
@@ -34,7 +36,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Transient
-import sun.swing.SwingUtilities2
 import java.awt.Font
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -53,7 +54,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
-  var fontSize by storedProperty(12)
+  var fontSize by storedProperty((UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.normalizingScale).toInt())
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
@@ -264,6 +265,8 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   }
 
   companion object {
+    private val LOG = Logger.getInstance(UISettings::class.java)
+
     const val ANIMATION_DURATION = 300 // Milliseconds
 
     /** Not tabbed pane.  */
@@ -355,12 +358,12 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
      */
     @JvmStatic
     fun setupComponentAntialiasing(component: JComponent) {
-      component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, AntialiasingType.getAAHintForSwingComponent())
+      com.intellij.util.ui.GraphicsUtil.setAntialiasingType(component, AntialiasingType.getAAHintForSwingComponent())
     }
 
     @JvmStatic
     fun setupEditorAntialiasing(component: JComponent) {
-      instance.editorAAType?.let { component.putClientProperty(SwingUtilities2.AA_TEXT_PROPERTY_KEY, it.textInfo) }
+      instance.editorAAType?.let { GraphicsUtil.setAntialiasingType(component, it.textInfo) }
     }
 
     @JvmStatic
@@ -369,14 +372,16 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
     @JvmStatic
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
+      var size = readSize
       if (readScale == null || readScale <= 0) {
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) return UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
       }
       else {
-        return ((readSize.toFloat() / readScale) * normalizingScale).toInt()
+        size = ((readSize.toFloat() / readScale) * normalizingScale).toInt()
       }
-      return readSize
+      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$normalizingScale")
+      return size
     }
   }
 

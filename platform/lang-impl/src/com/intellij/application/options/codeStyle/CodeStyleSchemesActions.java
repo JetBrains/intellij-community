@@ -18,7 +18,6 @@ package com.intellij.application.options.codeStyle;
 import com.intellij.application.options.SchemesToImportPopup;
 import com.intellij.application.options.schemes.AbstractSchemeActions;
 import com.intellij.application.options.schemes.AbstractSchemesPanel;
-import com.intellij.application.options.schemes.SchemeNameGenerator;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.project.Project;
@@ -68,12 +67,15 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
 
   @Override
   protected void copyToIDE(@NotNull CodeStyleScheme scheme) {
-    String name =
-      SchemeNameGenerator.getUniqueName(getProjectName(), schemeName -> getModel().containsScheme(schemeName, false));
-    CodeStyleScheme newScheme = getModel().exportProjectScheme(name);
-    getModel().setUsePerProjectSettings(false);
-    getModel().selectScheme(newScheme, null);
-    getSchemesPanel().startEdit();
+    getSchemesPanel().editNewSchemeName(
+      getProjectName(),
+      false,
+      newName -> {
+        CodeStyleScheme newScheme = getModel().exportProjectScheme(newName);
+        getModel().setUsePerProjectSettings(false);
+        getModel().selectScheme(newScheme, null);
+      }
+    );
   }
 
   @NotNull

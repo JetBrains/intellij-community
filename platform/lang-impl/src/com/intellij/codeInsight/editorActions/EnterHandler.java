@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -48,6 +51,7 @@ import com.intellij.psi.impl.source.codeStyle.lineIndent.FormatterBasedIndentAdj
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -154,6 +158,7 @@ public class EnterHandler extends BaseEnterHandler {
     if (settings.SMART_INDENT_ON_ENTER || forceIndent) {
       caretOffset += 1;
       caretOffset = CharArrayUtil.shiftForward(editor.getDocument().getCharsSequence(), caretOffset, " \t");
+      if (DocumentUtil.isAtLineEnd(caretOffset, document)) caretOffset = editor.getCaretModel().getOffset();
     }
     else {
       caretOffset = editor.getCaretModel().getOffset();
@@ -489,7 +494,7 @@ public class EnterHandler extends BaseEnterHandler {
       int delta = newIndent.length() - (indentEnd - indentStart);
       myDocument.replaceString(indentStart, indentEnd, newIndent);
       myIsIndentAdjustmentNeeded = false;
-      return myOffset + delta;
+      return myOffset <= indentEnd ? indentStart + newIndent.length() : myOffset + delta;
     }
 
     private void generateJavadoc(CodeDocumentationAwareCommenter commenter) throws IncorrectOperationException {

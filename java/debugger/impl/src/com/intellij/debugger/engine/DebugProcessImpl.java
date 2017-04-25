@@ -373,6 +373,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                    ? EventRequest.SUSPEND_EVENT_THREAD
                                    : EventRequest.SUSPEND_ALL);
 
+      stepRequest.addCountFilter(1);
+
       if (hint != null) {
         //noinspection HardCodedStringLiteral
         stepRequest.putProperty("hint", hint);

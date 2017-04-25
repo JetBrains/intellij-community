@@ -18,22 +18,25 @@ package com.intellij.vcs.log.ui.actions.history;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffContext;
-import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
-import com.intellij.openapi.vcs.history.StandardDiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.util.ObjectUtils;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.data.LoadingDetails;
+import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcs.log.history.FileHistoryUi;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
@@ -43,12 +46,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class CompareRevisionsFromHistoryAction extends AnAction implements DumbAware {
   private static final String COMPARE_TEXT = "Compare";
   private static final String COMPARE_DESCRIPTION = "Compare selected versions";
   private static final String DIFF_TEXT = "Show Diff";
   private static final String DIFF_DESCRIPTION = "Show diff with previous version";
-  @NotNull private final DiffFromHistoryHandler myDiffHandler = new StandardDiffFromHistoryHandler();
 
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -61,31 +65,20 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
 
     e.getPresentation().setVisible(true);
 
-    List<VcsFullCommitDetails> details = ui.getVcsLog().getSelectedDetails();
-
+    List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
     if (e.getInputEvent() instanceof KeyEvent) {
       e.getPresentation().setEnabled(true);
     }
     else {
-      if (details.size() == 2) {
-        VcsFullCommitDetails detail0 = details.get(0);
-        VcsFullCommitDetails detail1 = details.get(1);
-        if (detail0 != null && !(detail0 instanceof LoadingDetails) &&
-            detail1 != null && !(detail1 instanceof LoadingDetails)) {
-          VcsFileRevision newestRevision = ui.createRevision(detail0);
-          VcsFileRevision olderRevision = ui.createRevision(detail1);
-          e.getPresentation().setEnabled(newestRevision != null && olderRevision != null && !filePath.isDirectory());
-        }
-        else {
-          e.getPresentation().setEnabled(!filePath.isDirectory());
-        }
+      if (commits.size() == 2) {
+        e.getPresentation().setEnabled(e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER) != null);
       }
       else {
-        e.getPresentation().setEnabled(details.size() == 1);
+        e.getPresentation().setEnabled(commits.size() == 1);
       }
     }
 
-    if (details.size() == 2) {
+    if (commits.size() == 2) {
       e.getPresentation().setText(COMPARE_TEXT);
       e.getPresentation().setDescription(COMPARE_DESCRIPTION);
     }
@@ -109,24 +102,25 @@ public class CompareRevisionsFromHistoryAction extends AnAction implements DumbA
     VcsLogUtil.triggerUsage(e);
 
     List<CommitId> commits = ui.getVcsLog().getSelectedCommits();
-    if (filePath.isDirectory()) {
-      if (commits.size() != 1) return;
-    }
-    else {
-      if (commits.size() != 1 && commits.size() != 2) return;
-    }
+    if (commits.size() != 1 && commits.size() != 2) return;
+
+    VcsLogDiffHandler handler = e.getData(VcsLogInternalDataKeys.LOG_DIFF_HANDLER);
+    // this check is needed here since we may come on key event without performing proper checks
+    if (commits.size() == 2 && handler == null) return;
 
     List<Integer> commitIds = ContainerUtil.map(commits, c -> ui.getLogData().getCommitIndex(c.getHash(), c.getRoot()));
     ui.getLogData().getCommitDetailsGetter().loadCommitsData(commitIds, details -> {
       if (details.size() == 2) {
-        VcsFileRevision newestRevision = ui.createRevision(details.get(0));
-        VcsFileRevision olderRevision = ui.createRevision(details.get(1));
-        if (olderRevision != null && newestRevision != null) {
-          myDiffHandler.showDiffForTwo(project, filePath, olderRevision, newestRevision);
-        }
+        // we only need details here to get file names for each revision
+        // in order to fix this FileNamesData should be refactored
+        // so that it could return a single file path for each revision
+        VcsFullCommitDetails newestDetail = details.get(0);
+        VcsFullCommitDetails olderDetail = details.get(1);
+        notNull(handler).showDiff(olderDetail.getRoot(), ui.getPath(olderDetail), olderDetail.getId(),
+                                  ui.getPath(newestDetail), newestDetail.getId());
       }
       else if (details.size() == 1) {
-        VcsFullCommitDetails detail = ObjectUtils.notNull(ContainerUtil.getFirstItem(details));
+        VcsFullCommitDetails detail = notNull(ContainerUtil.getFirstItem(details));
         List<Change> changes = ui.collectRelevantChanges(detail);
         if (filePath.isDirectory()) {
           VcsDiffUtil.showChangesDialog(project, "Changes in " + detail.getId().toShortString() + " for " + filePath.getName(),

@@ -47,7 +47,7 @@ import java.util.List;
  */
 public class CloudGitDeploymentRuntime extends CloudDeploymentRuntime {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudGitDeploymentRuntime.class.getName());
+  private static final Logger LOG = Logger.getInstance(CloudGitDeploymentRuntime.class);
 
   private static final String COMMIT_MESSAGE = "Deploy";
 

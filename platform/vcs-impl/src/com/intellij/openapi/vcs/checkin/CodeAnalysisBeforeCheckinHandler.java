@@ -52,7 +52,7 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
 
   private final Project myProject;
   private final CheckinProjectPanel myCheckinPanel;
-  private static final Logger LOG = Logger.getInstance("#" + CodeAnalysisBeforeCheckinHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(CodeAnalysisBeforeCheckinHandler.class);
 
   public CodeAnalysisBeforeCheckinHandler(final Project project, CheckinProjectPanel panel) {
     myProject = project;

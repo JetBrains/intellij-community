@@ -21,6 +21,9 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
@@ -39,8 +42,6 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
   public static final String PROPERTIES_FILE = "idea.properties.file";
@@ -68,6 +69,7 @@ public class PathManager {
   private static final Pattern PROPERTY_REF = Pattern.compile("\\$\\{(.+?)}");
 
   private static String ourHomePath;
+  private static String[] ourBinDirectories;
   private static String ourConfigPath;
   private static String ourSystemPath;
   private static String ourScratchPath;
@@ -103,6 +105,8 @@ public class PathManager {
       catch (IOException ignored) { }
     }
 
+    ourBinDirectories = getBinDirectories(new File(ourHomePath));
+
     return ourHomePath;
   }
 
@@ -121,21 +125,72 @@ public class PathManager {
     return root.getAbsolutePath();
   }
 
-  private static boolean isIdeaHome(final File root) {
-    return new File(root, FileUtil.toSystemDependentName("bin/" + PROPERTIES_FILE_NAME)).exists() ||
-           new File(root, FileUtil.toSystemDependentName("bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME)).exists() ||
-           new File(root, FileUtil.toSystemDependentName("community/bin/" + PROPERTIES_FILE_NAME)).exists();
+  private static boolean isIdeaHome(File root) {
+    for (String binDir : getBinDirectories(root)) {
+      if (new File(binDir, PROPERTIES_FILE_NAME).isFile()) {
+        return true;
+      }
+    }
+    return false;
   }
 
+  private static String[] getBinDirectories(File root) {
+    List<String> binDirs = ContainerUtil.newSmartList();
+
+    String[] subDirs = {BIN_FOLDER, "community/bin", "ultimate/community/bin"};
+    String osSuffix = SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux";
+
+    for (String subDir : subDirs) {
+      File dir = new File(root, subDir);
+      if (dir.isDirectory()) {
+        binDirs.add(dir.getPath());
+        dir = new File(dir, osSuffix);
+        if (dir.isDirectory()) {
+          binDirs.add(dir.getPath());
+        }
+      }
+    }
+
+    return ArrayUtil.toStringArray(binDirs);
+  }
+
+  /**
+   * Bin path may be not what you want when developing an IDE. Consider using {@link #findBinFile(String)} if applicable.
+   */
   @NotNull
   public static String getBinPath() {
     return getHomePath() + File.separator + BIN_FOLDER;
   }
 
-  private static String getOSSpecificBinSubdir() {
-    if (SystemInfo.isWindows) return "win";
-    if (SystemInfo.isMac) return "mac";
-    return "linux";
+  /**
+   * Looks for a file in all possible bin directories.
+   *
+   * @return first that exists, or {@code null} if nothing found.
+   * @see #findBinFileWithException(String)
+   */
+  @Nullable
+  public static File findBinFile(@NotNull String fileName) {
+    getHomePath();
+    for (String binDir : ourBinDirectories) {
+      File file = new File(binDir, fileName);
+      if (file.isFile()) return file;
+    }
+    return null;
+  }
+
+  /**
+   * Looks for a file in all possible bin directories.
+   *
+   * @return first that exists.
+   * @throws FileNotFoundException if nothing found.
+   * @see #findBinFile(String)
+   */
+  @NotNull
+  public static File findBinFileWithException(@NotNull String fileName) throws FileNotFoundException {
+    File file = findBinFile(fileName);
+    if (file != null) return file;
+    String paths = StringUtil.join(ourBinDirectories, "\n");
+    throw new FileNotFoundException(String.format("'%s' not found in directories:\n%s", fileName, paths));
   }
 
   @NotNull
@@ -214,7 +269,7 @@ public class PathManager {
       ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourPluginsPath = getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
+      ourPluginsPath = SystemProperties.getUserHome() + File.separator + "Library/Application Support" + File.separator + PATHS_SELECTOR;
     }
     else {
       ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_FOLDER;
@@ -274,7 +329,7 @@ public class PathManager {
       ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
     }
     else if (SystemInfo.isMac && PATHS_SELECTOR != null) {
-      ourLogPath = getUserHome() + File.separator + "Library/Logs" + File.separator + PATHS_SELECTOR;
+      ourLogPath = SystemProperties.getUserHome() + File.separator + "Library/Logs" + File.separator + PATHS_SELECTOR;
     }
     else {
       ourLogPath = getSystemPath() + File.separatorChar + LOG_DIRECTORY;
@@ -338,45 +393,52 @@ public class PathManager {
   }
 
   public static void loadProperties() {
-    String[] propFiles = {
-      System.getProperty(PROPERTIES_FILE),
-      getCustomPropertiesFile(),
-      getUserHome() + "/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/bin/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/bin/" + getOSSpecificBinSubdir() + "/" + PROPERTIES_FILE_NAME,
-      getHomePath() + "/community/bin/" + PROPERTIES_FILE_NAME};
+    getHomePath();
+    Set<String> propFiles = new LinkedHashSet<String>();
+    propFiles.add(System.getProperty(PROPERTIES_FILE));
+    propFiles.add(getCustomPropertiesFile());
+    propFiles.add(SystemProperties.getUserHome() + '/' + PROPERTIES_FILE_NAME);
+    for (String binDir : ourBinDirectories) {
+      propFiles.add(binDir + '/' + PROPERTIES_FILE_NAME);
+    }
 
     for (String path : propFiles) {
-      if (path != null) {
-        File propFile = new File(path);
-        if (propFile.exists()) {
-          try {
-            Reader fis = new BufferedReader(new FileReader(propFile));
-            try {
-              Map<String, String> properties = FileUtil.loadProperties(fis);
+      if (path == null) {
+        continue;
+      }
+      File propFile = new File(path);
+      if (!propFile.exists()) {
+        continue;
+      }
+      try {
+        Reader fis = new BufferedReader(new FileReader(propFile));
+        try {
+          Map<String, String> properties = FileUtil.loadProperties(fis);
+          Properties sysProperties = System.getProperties();
 
-              Properties sysProperties = System.getProperties();
-              for (String key : properties.keySet()) {
-                if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
-                  log(propFile.getPath() + ": '" + PROPERTY_HOME_PATH + "' and '" + PROPERTY_HOME + "' properties cannot be redefined");
-                }
-                else if (sysProperties.getProperty(key, null) != null) {
-                  log(propFile.getPath() + ": '" + key + "' already defined");
-                }
-                else {
-                  String value = substituteVars(properties.get(key));
-                  sysProperties.setProperty(key, value);
-                }
+          for (Map.Entry<String, String> entry : properties.entrySet()) {
+            String key = entry.getKey();
+            if (PROPERTY_HOME_PATH.equals(key) || PROPERTY_HOME.equals(key)) {
+              log(propFile.getPath() + ": '" + PROPERTY_HOME_PATH + "' and '" + PROPERTY_HOME + "' properties cannot be redefined");
+            }
+            else {
+              String value = entry.getValue();
+              if (sysProperties.get(key) != null) {
+                log(propFile.getPath() + ": '" + key + " = " + value + "' already defined in system properties: " + sysProperties.get(key));
+              }
+              else {
+                value = substituteVars(value);
+                sysProperties.setProperty(key, value);
               }
             }
-            finally {
-              fis.close();
-            }
-          }
-          catch (IOException e) {
-            log("Problem reading from property file: " + propFile.getPath());
           }
         }
+        finally {
+          fis.close();
+        }
+      }
+      catch (IOException e) {
+        log("Problem reading from property file: " + propFile);
       }
     }
   }
@@ -515,7 +577,7 @@ public class PathManager {
                                      @Nullable String xdgDir,
                                      @NotNull String fallback) {
     if (macPart != null && SystemInfo.isMac) {
-      return getUserHome() + File.separator + macPart + File.separator + selector;
+      return SystemProperties.getUserHome() + File.separator + macPart + File.separator + selector;
     }
 
     if (winVar != null && SystemInfo.isWindows) {
@@ -527,11 +589,11 @@ public class PathManager {
 
     if (xdgVar != null && xdgDir != null && SystemInfo.hasXdgOpen()) {
       String dir = System.getenv(xdgVar);
-      if (dir == null) dir = getUserHome() + File.separator + xdgDir;
+      if (dir == null) dir = SystemProperties.getUserHome() + File.separator + xdgDir;
       return dir + File.separator + selector;
     }
 
-    return getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
+    return SystemProperties.getUserHome() + File.separator + "." + selector + (!fallback.isEmpty() ? File.separator + fallback : "");
   }
 
   //<editor-fold desc="Deprecated stuff.">

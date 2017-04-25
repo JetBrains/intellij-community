@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,20 +258,11 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     return true;
   }
 
-  private void checkIndexProperty(@NotNull CallInfo<? extends GrIndexProperty> info) {
-    if (hasErrorElements(info.getArgumentList())) return;
-
+  private void checkIndexProperty(@NotNull CallInfo<GrIndexProperty> info) {
     if (!checkCannotInferArgumentTypes(info)) return;
 
-    final PsiType type = info.getQualifierInstanceType();
-
-    if (ResolveUtil.getClassReferenceFromExpression(info.getCall()) != null) {
-      return;
-    }
-
     final PsiType[] types = info.getArgumentTypes();
-
-    if (checkSimpleArrayAccess(info, type, types)) return;
+    if (types == null) return;
 
     final GroovyResolveResult[] results = info.multiResolve();
     final GroovyResolveResult resolveResult = info.advancedResolve();
@@ -813,7 +804,6 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     super.visitAssignmentExpression(assignment);
 
     final GrExpression lValue = assignment.getLValue();
-    if (lValue instanceof GrIndexProperty) return;
     if (!PsiUtil.mightBeLValue(lValue)) return;
 
     final IElementType opToken = assignment.getOperationTokenType();
@@ -878,7 +868,17 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   public void visitIndexProperty(@NotNull GrIndexProperty expression) {
     super.visitIndexProperty(expression);
-    checkIndexProperty(new GrIndexPropertyInfo(expression));
+    if (hasErrorElements(expression)) return;
+
+    if (GroovyIndexPropertyUtil.isClassLiteral(expression)) return;
+    if (GroovyIndexPropertyUtil.isSimpleArrayAccess(expression)) return;
+
+    if (expression.getRValueReference() != null) {
+      checkIndexProperty(new GrIndexPropertyInfo(expression, true));
+    }
+    if (expression.getLValueReference() != null) {
+      checkIndexProperty(new GrIndexPropertyInfo(expression, false));
+    }
   }
 
   /**

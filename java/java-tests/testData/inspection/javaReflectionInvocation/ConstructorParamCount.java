@@ -66,7 +66,11 @@ class ConstructorParamCount {
 
     Constructor m = cls.getConstructor(new Class[0]);
     m.newInstance(new Object[0]);
+    m.newInstance(new Object[]{});
     m.newInstance(<warning descr="Empty array is expected">new Object[] {"abc"}</warning>);
+
+    m = cls.getConstructor(new Class[]{});
+    m.newInstance(new Object[]{});
   }
 
   class Test {

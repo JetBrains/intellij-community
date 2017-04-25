@@ -385,7 +385,7 @@ internal class GitTest : GitTestCase() {
     }
 
     store.setPath(localConfigPath.toString())
-    store.storageManager.streamProvider = provider
+    store.storageManager.addStreamProvider(provider)
 
     icsManager.sync(syncType, GitTestCase.projectRule.project, { copyLocalConfig(store.storageManager) })
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakList;
+import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +37,7 @@ class UndoRedoStacksHolder {
   private final LinkedList<UndoableGroup> myGlobalStack = new LinkedList<>();
   // strongly reference local files for which we can undo file removal
   // document without files and nonlocal files are stored without strong reference
-  private final Map<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new HashMap<>();
+  private final THashMap<DocumentReference, LinkedList<UndoableGroup>> myDocumentStacks = new THashMap<>();
   private final List<Document> myDocumentsWithStacks = new WeakList<>();
   private final List<VirtualFile> myNonlocalVirtualFilesWithStacks = new WeakList<>();
 
@@ -170,14 +170,8 @@ class UndoRedoStacksHolder {
       }
     }
 
-    Set<DocumentReference> stacksToDrop = new THashSet<>();
-    for (Map.Entry<DocumentReference, LinkedList<UndoableGroup>> each : myDocumentStacks.entrySet()) {
-      if (each.getValue().isEmpty()) stacksToDrop.add(each.getKey());
-    }
-    for (DocumentReference each : stacksToDrop) {
-      myDocumentStacks.remove(each);
-    }
-
+    myDocumentStacks.entrySet().removeIf(each -> each.getValue().isEmpty());
+    myDocumentStacks.compact(); // make sure the following entrySet iteration will not go over empty buckets.
 
     cleanWeaklyTrackedEmptyStacks(myDocumentsWithStacks);
     cleanWeaklyTrackedEmptyStacks(myNonlocalVirtualFilesWithStacks);

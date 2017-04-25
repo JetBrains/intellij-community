@@ -19,7 +19,7 @@ class EduCustomCourseProjectTemplate implements EduIntelliJProjectTemplate {
   @Nullable
   @Override
   public String getDescription() {
-    return "Custom Course Addition";
+    return "Select and add local course from *.zip";
   }
 
   @Override

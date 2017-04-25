@@ -41,7 +41,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ScopeToolState {
-  private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
+  private static final Logger LOG = Logger.getInstance(ScopeToolState.class);
   @NotNull
   private final String myScopeName;
   private NamedScope myScope;

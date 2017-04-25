@@ -54,6 +54,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopeUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
@@ -788,7 +790,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       return;
     }
 
-    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false));
+    GlobalSearchScope scope = GlobalSearchScopeUtil.toGlobalSearchScope(
+      FindInProjectUtil.getScopeFromModel(myProject, myHelper.myPreviousModel), myProject);
+    myResultsPreviewTable.getColumnModel().getColumn(0).setCellRenderer(
+      new FindDialog.UsageTableCellRenderer(myCbFileFilter.isSelected(), false, scope));
     myResultsPreviewTable.getEmptyText().setText("Searching...");
 
     final AtomicInteger resultsCount = new AtomicInteger();
@@ -828,37 +833,31 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
+
+            int occurrences = resultsCount.get();
+            int filesWithOccurrences = resultsFilesCount.get();
+            if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+            myCodePreviewComponent.setVisible(occurrences > 0);
+            StringBuilder stringBuilder = new StringBuilder();
+            if (occurrences > 0) {
+              stringBuilder.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
+              boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
+              if (!foundAllUsages) {
+                stringBuilder.append("+");
+              }
+              stringBuilder.append(UIBundle.message("message.matches", occurrences));
+              stringBuilder.append(" in ");
+              stringBuilder.append(filesWithOccurrences);
+              if (!foundAllUsages) {
+                stringBuilder.append("+");
+              }
+              stringBuilder.append(UIBundle.message("message.files", filesWithOccurrences));
+            }
+            mySearchTextArea.setInfoText(stringBuilder.toString());
           }, state);
+
           return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
         }, processPresentation, filesToScanInitially);
-
-        boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
-        if (succeeded) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!isCancelled()) {
-              int occurrences = resultsCount.get();
-              int filesWithOccurrences = resultsFilesCount.get();
-              if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
-              myCodePreviewComponent.setVisible(occurrences > 0);
-              StringBuilder info = new StringBuilder();
-              if (occurrences > 0) {
-                info.append(Math.min(ShowUsagesAction.USAGES_PAGE_SIZE, occurrences));
-                boolean foundAllUsages = occurrences < ShowUsagesAction.USAGES_PAGE_SIZE;
-                if (!foundAllUsages) {
-                  info.append("+");
-                }
-                info.append(UIBundle.message("message.matches", occurrences));
-                info.append(" in ");
-                info.append(filesWithOccurrences);
-                if (!foundAllUsages) {
-                  info.append("+");
-                }
-                info.append(UIBundle.message("message.files", filesWithOccurrences));
-              }
-              mySearchTextArea.setInfoText(info.toString());
-            }
-          }, state);
-        }
       }
 
       boolean isCancelled() {
@@ -891,7 +890,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     }
 
     if (!myHelper.canSearchThisString()) {
-      return new ValidationInfo("String to find is empty", mySearchComponent);
+      return new ValidationInfo(FindBundle.message("find.empty.search.text.error"), mySearchComponent);
     }
 
     if (myCbRegularExpressions != null && myCbRegularExpressions.isSelected() && myCbRegularExpressions.isEnabled()) {

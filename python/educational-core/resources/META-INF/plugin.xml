@@ -52,9 +52,7 @@
   </extensionPoints>
 
   <actions>
-    <action id="Edu.NewScratchFile" class="com.intellij.ide.scratch.ScratchFileActions$NewFileAction" text="New Scratch File...">
-      <add-to-group group-id="FileOpenGroup" relative-to-action="OpenFile" anchor="before"/>
-    </action>
+    <action id="Edu.Check" class="com.jetbrains.edu.learning.actions.StudyCheckAction"/>
     <action id="PrevWindowAction" class="com.jetbrains.edu.learning.actions.StudyPrevWindowAction" text="Previous Answer Placeholder"
             description="Navigate to the previous answer placeholder">
     </action>
@@ -172,6 +170,7 @@
     <applicationService serviceImplementation="com.jetbrains.edu.learning.StudySettings"/>
     <editorTabTitleProvider implementation="com.jetbrains.edu.learning.StudyTabTitleProvider"/>
     <typedHandler implementation="com.jetbrains.edu.learning.StudyTypeHandlerDelegate" order="first, before completionAutoPopup"/>
+    <httpRequestHandler implementation="com.jetbrains.edu.learning.builtInServer.EduStepikRestService"/>
 
     <!--course creator-->
     <projectService serviceImplementation="com.jetbrains.edu.coursecreator.CCProjectService"/>
@@ -191,8 +190,14 @@
   <extensions defaultExtensionNs="Edu">
     <optionsProvider instance="com.jetbrains.edu.learning.stepic.StepicStudyOptions"/>
     <checkListener implementation="com.jetbrains.edu.learning.twitter.StudyTwitterAction"/>
-
+    <checkListener implementation="com.jetbrains.edu.learning.stepic.EduNextRecommendationCheckListener"/>
     <!--course creator-->
     <optionsProvider instance="com.jetbrains.edu.coursecreator.settings.CCOptions"/>
   </extensions>
+
+  <application-components>
+    <component>
+      <implementation-class>com.jetbrains.edu.learning.stepic.EduCourseUpdater</implementation-class>
+    </component>
+  </application-components>
 </idea-plugin>

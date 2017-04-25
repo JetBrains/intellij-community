@@ -75,7 +75,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
   & CommonJavaRunConfigurationParameters
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
-  private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;
@@ -280,7 +280,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
       final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
       try {
-        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject())) {
+        if (JdkUtil.useDynamicClasspath(getConfiguration().getProject()) && forkPerModule()) {
           writer.println("use classpath jar");
         }
         else {

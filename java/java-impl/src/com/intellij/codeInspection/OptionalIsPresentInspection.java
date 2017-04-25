@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Tagir Valeev
  */
 public class OptionalIsPresentInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + OptionalIsPresentInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(OptionalIsPresentInspection.class);
 
   private static final OptionalIsPresentCase[] CASES = {
     new ReturnCase(),

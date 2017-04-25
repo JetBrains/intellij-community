@@ -31,8 +31,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.rules.UsageGroupingRule;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ import java.io.File;
 /**
  * @author yole
  */
-public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
+public class DirectoryGroupingRule extends SingleParentUsageGroupingRule implements DumbAware {
   public static DirectoryGroupingRule getInstance(Project project) {
     return ServiceManager.getService(project, DirectoryGroupingRule.class);
   }
@@ -55,9 +56,9 @@ public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
     myProject = project;
   }
 
-  @Override
   @Nullable
-  public UsageGroup groupUsage(@NotNull Usage usage) {
+  @Override
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof UsageInFile) {
       UsageInFile usageInFile = (UsageInFile)usage;
       VirtualFile file = usageInFile.getFile();
@@ -166,6 +167,11 @@ public class DirectoryGroupingRule implements UsageGroupingRule, DumbAware {
       if (CommonDataKeys.PSI_ELEMENT == key) {
         sink.put(CommonDataKeys.PSI_ELEMENT, getDirectory());
       }
+    }
+
+    @Override
+    public String toString() {
+      return "Directory:" + myDir.getName();
     }
   }
 }

@@ -63,12 +63,7 @@ public class RefImplicitConstructorImpl extends RefMethodImpl implements RefImpl
 
   @Override
   public boolean isValid() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return getOwnerClass().isValid();
-      }
-    }).booleanValue();
+    return ApplicationManager.getApplication().runReadAction((Computable<Boolean>)getOwnerClass()::isValid).booleanValue();
   }
 
   @Override

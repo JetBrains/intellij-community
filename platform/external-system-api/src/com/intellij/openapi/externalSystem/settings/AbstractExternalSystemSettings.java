@@ -16,6 +16,11 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.messages.Topic;
@@ -138,13 +143,17 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   public void setLinkedProjectsSettings(@NotNull Collection<PS> settings) {
+    setLinkedProjectsSettings(settings, null);
+  }
+
+  private void setLinkedProjectsSettings(@NotNull Collection<PS> settings, @Nullable ExternalSystemSettingsListener listener) {
     List<PS> added = ContainerUtilRt.newArrayList();
     Map<String, PS> removed = ContainerUtilRt.newHashMap(myLinkedProjectsSettings);
     myLinkedProjectsSettings.clear();
     for (PS current : settings) {
       myLinkedProjectsSettings.put(current.getExternalProjectPath(), current);
     }
-    
+
     for (PS current : settings) {
       PS old = removed.remove(current.getExternalProjectPath());
       if (old == null) {
@@ -152,15 +161,24 @@ public abstract class AbstractExternalSystemSettings<
       }
       else {
         if (current.isUseAutoImport() != old.isUseAutoImport()) {
+          if (listener != null) {
+            listener.onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
+          }
           getPublisher().onUseAutoImportChange(current.isUseAutoImport(), current.getExternalProjectPath());
         }
         checkSettings(old, current);
       }
     }
     if (!added.isEmpty()) {
+      if (listener != null) {
+        listener.onProjectsLinked(added);
+      }
       getPublisher().onProjectsLinked(added);
     }
     if (!removed.isEmpty()) {
+      if (listener != null) {
+        listener.onProjectsUnlinked(removed.keySet());
+      }
       getPublisher().onProjectsUnlinked(removed.keySet());
     }
   }
@@ -192,10 +210,27 @@ public abstract class AbstractExternalSystemSettings<
   protected void loadState(@NotNull State<PS> state) {
     Set<PS> settings = state.getLinkedExternalProjectsSettings();
     if (settings != null) {
-      myLinkedProjectsSettings.clear();
-      for (PS projectSettings : settings) {
-        myLinkedProjectsSettings.put(projectSettings.getExternalProjectPath(), projectSettings);
-      }
+      setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
+        @Override
+        public void onProjectsLinked(@NotNull Collection linked) {
+          for (Object o : linked) {
+            final ExternalProjectSettings settings = (ExternalProjectSettings)o;
+            for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+              AbstractExternalSystemSettings se = (AbstractExternalSystemSettings)manager.getSettingsProvider().fun(myProject);
+              ProjectSystemId externalSystemId = manager.getSystemId();
+              if (settings == se.getLinkedProjectSettings(settings.getExternalProjectPath())) {
+                ExternalProjectsManager.getInstance(myProject).refreshProject(
+                  settings.getExternalProjectPath(),
+                  new ImportSpecBuilder(myProject, externalSystemId)
+                    .useDefaultCallback()
+                    .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+                    .build()
+                );
+              }
+            }
+          }
+        }
+      });
     }
   }
 

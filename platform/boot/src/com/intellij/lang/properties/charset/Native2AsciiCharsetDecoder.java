@@ -105,7 +105,7 @@ class Native2AsciiCharsetDecoder extends CharsetDecoder {
     if (end <= start) return;
     ByteBuffer byteBuffer = ByteBuffer.wrap(buf, start, end-start);
     CharBuffer charBuffer = myBaseCharset.decode(byteBuffer);
-    myOutBuffer.append(charBuffer.toString());
+    myOutBuffer.append(charBuffer);
   }
 
   private static char unicode(byte[] ord) {

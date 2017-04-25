@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Set;
 
 public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
-  private static final Logger LOG = Logger.getInstance("#" + LambdaCanBeReplacedWithAnonymousInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(LambdaCanBeReplacedWithAnonymousInspection.class);
 
   @Nls
   @NotNull

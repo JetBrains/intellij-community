@@ -27,6 +27,8 @@ import com.intellij.ide.ui.laf.darcula.DarculaInstaller;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.*;
@@ -40,6 +42,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.*;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -71,11 +74,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Function;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
-  
+  public static final String FONT_CONFIGURABLE_NAME = "Font";
+
   private Map<String, MyColorScheme> mySchemes;
   private MyColorScheme mySelectedScheme;
 
@@ -508,8 +513,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(options, true);
-      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, "Font", null, null){
+      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
+      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, FONT_CONFIGURABLE_NAME, null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -528,7 +533,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
-      FontEditorPreview previewPanel = new FontEditorPreview(options, false) {
+      FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), false) {
         @Override
         protected EditorColorsScheme updateOptionsScheme(EditorColorsScheme selectedScheme) {
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
@@ -1078,8 +1083,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private MyColorScheme(@NotNull EditorColorsScheme parentScheme) {
       super(parentScheme);
 
-      parentScheme.getFontPreferences().copyTo(getFontPreferences());
-
       if (parentScheme.isUseEditorFontPreferencesInConsole()) {
         setUseEditorFontPreferencesInConsole();
       }
@@ -1087,6 +1090,13 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
         setConsoleFontPreferences(parentScheme.getConsoleFontPreferences());
       }
       setConsoleLineSpacing(parentScheme.getConsoleLineSpacing());
+
+      if (parentScheme.isUseAppFontPreferencesInEditor()) {
+        setUseAppFontPreferencesInEditor();
+      }
+      else {
+        setFontPreferences(parentScheme.getFontPreferences());
+      }
 
       setQuickDocFontSize(parentScheme.getQuickDocFontSize());
       myName = parentScheme.getName();
@@ -1145,11 +1155,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     private boolean isFontModified() {
-      return !getFontPreferences().equals(myParentScheme.getFontPreferences());
+      return !areDelegatingOrEqual(getFontPreferences(), myParentScheme.getFontPreferences());
     }
 
     private boolean isConsoleFontModified() {
-      return !getConsoleFontPreferences().equals(myParentScheme.getConsoleFontPreferences());
+      return !areDelegatingOrEqual(getConsoleFontPreferences(), myParentScheme.getConsoleFontPreferences());
     }
 
     private boolean apply() {
@@ -1162,7 +1172,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     private boolean apply(@NotNull EditorColorsScheme scheme) {
       boolean isModified = isFontModified() || isConsoleFontModified();
 
-      scheme.setFontPreferences(getFontPreferences());
+      if (isUseAppFontPreferencesInEditor()) {
+        scheme.setUseAppFontPreferencesInEditor();
+      }
+      else {
+        scheme.setFontPreferences(getFontPreferences());
+      }
 
       if (isUseEditorFontPreferencesInConsole()) {
         scheme.setUseEditorFontPreferencesInConsole();
@@ -1400,5 +1415,25 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public String toString() {
       return "Color And Fonts for "+getDisplayName();
     }
+  }
+
+  public static Runnable getColorSelector(DataProvider provider, String search, String name) {
+    return getSelector(Settings.KEY.getData(provider), search, options -> options.findSubConfigurable(name));
+  }
+
+  public static Runnable getColorSelector(DataContext context, String search, Class<?> type) {
+    return getSelector(Settings.KEY.getData(context), search, options -> options.findSubConfigurable(type));
+  }
+
+  private static Runnable getSelector(Settings settings, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+    if (settings == null) return null;
+
+    ColorAndFontOptions options = settings.find(ColorAndFontOptions.class);
+    if (options == null) return null;
+
+    SearchableConfigurable page = function.apply(options);
+    if (page == null) return null;
+
+    return () -> settings.select(page, search);
   }
 }

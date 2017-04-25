@@ -17,6 +17,8 @@ package org.fest.swing.core
 
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
+import org.fest.swing.edt.GuiActionRunner
+import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
 import org.fest.swing.timing.Pause
 import org.fest.util.Preconditions
@@ -30,11 +32,20 @@ import javax.swing.SwingUtilities
  */
 class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
+  init {
+    settings().delayBetweenEvents(10)
+  }
+
   val waitConst = 30L
+  var myAwareClick: Boolean = false
 
   override fun waitForIdle() {
-    Pause.pause(waitConst)
-    if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+    if (myAwareClick) {
+      Thread.sleep(50)
+    } else {
+      Pause.pause(waitConst)
+      if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+    }
   }
 
   //smooth mouse move
@@ -70,12 +81,49 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
     moveMouse(c, where.x, where.y)
-    super.click(c, where, button, times)
+    myEdtAwareClick(button, times)
   }
 
+
+  //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouse(where.x, where.y)
-    super.click(where, button, times)
+    myEdtAwareClick(button, times)
+  }
+
+  private fun myInnerClick(button: MouseButton, times: Int) {
+    val robot = java.awt.Robot()
+    robot.autoDelay = 50
+    for (i in 1..times) {
+      robot.mousePress(button.mask)
+      robot.mouseRelease(button.mask)
+    }
+  }
+
+  private fun myEdtAwareClick(button: MouseButton, times: Int) {
+    awareClick {
+      performOnEdt {
+        myInnerClick(button, times)
+      }
+    }
+    waitForIdle()
+  }
+
+  private fun performOnEdt(body: () -> Unit) {
+    if (!EdtInvocationManager.getInstance().isEventDispatchThread)
+      GuiActionRunner.execute(object : GuiTask() {
+        override fun executeInEDT() {
+          body.invoke()
+        }
+      })
+    else
+      body.invoke()
+  }
+
+  private fun awareClick(body: () -> Unit) {
+    myAwareClick = true
+    body.invoke()
+    myAwareClick = false
   }
 
 }

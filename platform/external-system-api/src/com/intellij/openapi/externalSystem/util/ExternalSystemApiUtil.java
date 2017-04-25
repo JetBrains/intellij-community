@@ -75,7 +75,7 @@ import java.util.regex.Pattern;
  */
 public class ExternalSystemApiUtil {
 
-  private static final Logger LOG                           = Logger.getInstance("#" + ExternalSystemApiUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalSystemApiUtil.class);
   private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";

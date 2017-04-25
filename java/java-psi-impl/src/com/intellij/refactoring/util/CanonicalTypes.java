@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -338,14 +338,14 @@ public class CanonicalTypes {
 
     @Override
     public Type visitDisjunctionType(PsiDisjunctionType type) {
-      List<Type> types = ContainerUtil.map(type.getDisjunctions(), type1 -> type1.accept(Creator.this));
+      List<Type> types = ContainerUtil.map(type.getDisjunctions(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, true);
     }
 
     @Nullable
     @Override
     public Type visitIntersectionType(PsiIntersectionType type) {
-      List<Type> types = ContainerUtil.map(type.getConjuncts(), type1 -> type1.accept(Creator.this));
+      List<Type> types = ContainerUtil.map(type.getConjuncts(), type1 -> type1.accept(this));
       return new LogicalOperationType(types, false);
     }
   }

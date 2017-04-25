@@ -59,7 +59,7 @@ import java.util.*;
  * @since Oct 12, 2001
  */
 public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + UnusedDeclarationInspectionBase.class.getName());
+  private static final Logger LOG = Logger.getInstance(UnusedDeclarationInspectionBase.class);
 
   public boolean ADD_MAINS_TO_ENTRIES = true;
   public boolean ADD_APPLET_TO_ENTRIES = true;

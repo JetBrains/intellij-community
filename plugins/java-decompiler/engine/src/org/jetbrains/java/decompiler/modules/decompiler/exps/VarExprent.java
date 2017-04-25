@@ -155,8 +155,8 @@ public class VarExprent extends Exprent {
         if (originalIndex != null) {
           // first try from signature
           if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-            StructLocalVariableTypeTableAttribute attr = (StructLocalVariableTypeTableAttribute)method.methodStruct.getAttributes()
-              .getWithKey(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
+            StructLocalVariableTypeTableAttribute attr = (StructLocalVariableTypeTableAttribute)method.methodStruct
+              .getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TYPE_TABLE);
             if (attr != null) {
               String signature = attr.getSignature(originalIndex, visibleOffset);
               if (signature != null) {

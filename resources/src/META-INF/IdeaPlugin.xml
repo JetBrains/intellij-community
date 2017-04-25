@@ -82,6 +82,8 @@
   <extensionPoints>
     <extensionPoint name="codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
+    <extensionPoint name="codeInsight.implicitSubclassProvider"
+                    interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
     <extensionPoint name="codeInsight.implementedAtRuntime"
                     interface="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition"/>
     <extensionPoint name="conversion.rule"
@@ -430,6 +432,8 @@
     <lang.elementManipulator forClass="com.intellij.psi.javadoc.PsiDocTag"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
 
+    <codeInsight.implementedAtRuntime implementation="com.intellij.codeInspection.inheritance.ImplementedAtRuntimeConditionImpl"/>
+
     <classTypePointerFactory implementation="com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"
@@ -649,6 +653,10 @@
                      key="inspection.suspicious.collections.method.calls.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousArrayMethodCall" bundle="messages.InspectionsBundle"
+                     key="inspection.suspicious.array.method.call.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SuspiciousArrayMethodCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RawTypeCanBeGeneric" bundle="messages.InspectionsBundle"
                      key="inspection.raw.variable.type.can.be.generic.name" groupKey="group.names.code.style.issues"
                      enabledByDefault="true" level="INFORMATION"
@@ -756,6 +764,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnknownGuard" displayName="Unknown @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.concurrencyAnnotations.UnknownGuardInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="BoxForComparison" displayName="Unnecessary boxing to compare primitives"
+                     groupKey="group.names.performance.issues" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.BoxForComparisonInspection" />
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
@@ -804,6 +815,12 @@
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
                      displayName="Class may extend a commonly used base class instead of implementing interface"/>
+    <localInspection language="UAST" shortName="ImplicitSubclassInspection"
+                     bundle="messages.InspectionsBundle" key="inspection.implicit.subclass.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
+                     groupPath="Uast"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.codeInspection.inheritance.ImplicitSubclassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BlockMarkerComments"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
@@ -920,10 +937,18 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
                      bundle="messages.InspectionsBundle" key="inspection.handle.signature.name"
                      implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection"/>
+    <localInspection language="JAVA" shortName="Java9ReflectionClassVisibility" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.reflection.visibility.name"
+                     implementationClass="com.intellij.codeInspection.reflectiveAccess.Java9ReflectionClassVisibilityInspection"/>
     <localInspection language="JAVA" shortName="JavaReflectionInvocation" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
                      bundle="messages.InspectionsBundle" key="inspection.reflection.invocation.name"
                      implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection"/>
+    <localInspection language="JAVA" shortName="JavaReflectionMemberAccess" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.reflection.member.access.name"
+                     implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Move field assignment to initializer"
@@ -1757,6 +1782,14 @@
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
 
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$CharacterRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ShortRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$IntegerRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$LongRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$FloatRenderer"/>
+    <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$DoubleRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ColorObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.ImageObjectRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.IconObjectRenderer"/>

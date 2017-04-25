@@ -43,7 +43,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class TestNGTestPattern extends TestNGTestObject {
-  private static final Logger LOG = Logger.getInstance("#" + TestNGTestPattern.class.getName());
+  private static final Logger LOG = Logger.getInstance(TestNGTestPattern.class);
 
   public TestNGTestPattern(TestNGConfiguration config) {
     super(config);

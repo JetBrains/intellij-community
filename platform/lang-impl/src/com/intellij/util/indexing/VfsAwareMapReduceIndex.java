@@ -63,7 +63,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
                                 @NotNull IndexStorage<Key, Value> storage) throws IOException {
     super(extension, storage, getForwardIndex(extension));
-    SharedIndicesData.registerIndex(myIndexId, extension);
+    if (!(myIndexId instanceof ID<?, ?>)) {
+      throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
+    }
+    SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     mySnapshotInputMappings = myForwardIndex == null ?
                               new SnapshotInputMappings<>(extension) :
                               null;
@@ -75,7 +78,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
                                 @NotNull IndexStorage<Key, Value> storage,
                                 @NotNull ForwardIndex<Key, Value> forwardIndex) throws IOException {
     super(extension, storage, forwardIndex);
-    SharedIndicesData.registerIndex(myIndexId, extension);
+    SharedIndicesData.registerIndex((ID<Key, Value>)myIndexId, extension);
     mySnapshotInputMappings = myForwardIndex == null ?
                               new SnapshotInputMappings<>(extension) :
                               null;
@@ -133,17 +136,17 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   @Override
   public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
-    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
+    IndexingStamp.setFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
   }
 
   @Override
   public void resetIndexedStateForFile(int fileId) {
-    IndexingStamp.setFileIndexedStateOutdated(fileId, myIndexId);
+    IndexingStamp.setFileIndexedStateOutdated(fileId, (ID<?, ?>)myIndexId);
   }
 
   @Override
   public boolean isIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
-    return IndexingStamp.isFileIndexedStateCurrent(fileId, myIndexId);
+    return IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
   }
 
   @Override
@@ -165,7 +168,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   @Override
   protected void requestRebuild(@NotNull Exception ex) {
-    Runnable action = () -> FileBasedIndex.getInstance().requestRebuild(myIndexId, ex);
+    Runnable action = () -> FileBasedIndex.getInstance().requestRebuild((ID<?, ?>)myIndexId, ex);
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
@@ -229,7 +232,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
     @NotNull
     private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension<K, ?, ?> extension) throws IOException {
-      final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.getName());
+      final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)extension.getName());
       return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension));
     }
   }

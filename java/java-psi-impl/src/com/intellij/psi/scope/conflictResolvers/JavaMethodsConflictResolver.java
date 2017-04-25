@@ -679,12 +679,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
     if (class1 != class2) {
       if (class2.isInheritor(class1, true)) {
-        if (isSubSignature(method1, method2, classSubstitutor1, classSubstitutor2, boxingHappened)) {
+        if (MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2))) {
           return Specifics.SECOND;
         }
       }
       else if (class1.isInheritor(class2, true)) {
-        if (isSubSignature(method2, method1, classSubstitutor2, classSubstitutor1, boxingHappened)) {
+        if (MethodSignatureUtil.isSubsignature(method2.getSignature(classSubstitutor2), method1.getSignature(classSubstitutor1))) {
           return Specifics.FIRST;
         }
       }
@@ -704,16 +704,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     final boolean isExpressionTypePrimitive = argType != null ? argType instanceof PsiPrimitiveType 
                                                               : PsiPolyExpressionUtil.isExpressionOfPrimitiveType(arg);
     return parameterType instanceof PsiPrimitiveType ^ isExpressionTypePrimitive;
-  }
-
-  private static boolean isSubSignature(PsiMethod method1,
-                                        PsiMethod method2,
-                                        PsiSubstitutor classSubstitutor1,
-                                        PsiSubstitutor classSubstitutor2,
-                                        boolean[] boxingHappened) {
-    return MethodSignatureUtil.areErasedParametersEqual(method1.getSignature(PsiSubstitutor.EMPTY), method2.getSignature(PsiSubstitutor.EMPTY)) &&
-           MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2)) ||
-           method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && !boxingHappened[0];
   }
 
   private boolean isApplicableTo(@NotNull PsiType[] types2AtSite,

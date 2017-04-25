@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,12 +136,7 @@ public class DocPreviewUtil {
     StringBuilder buffer = new StringBuilder(header);
     replace(buffer, "\n", "<br/>", modifiedRanges);
     for (String replaceFrom : sortedReplacements) {
-      String visibleName = replaceFrom;
-      int i = visibleName.lastIndexOf('.');
-      if (i > 0 && i < visibleName.length() - 1) {
-        visibleName = visibleName.substring(i + 1);
-      }
-      replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), visibleName), modifiedRanges);
+      replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), replaceFrom), modifiedRanges);
     }
     return buffer.toString();
   }

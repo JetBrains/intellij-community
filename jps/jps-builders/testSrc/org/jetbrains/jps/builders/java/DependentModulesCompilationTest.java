@@ -16,12 +16,26 @@
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.util.PathUtil;
+import org.jetbrains.jps.builders.BuildTargetIndex;
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.logging.BuildLoggingManager;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.CompileContextImpl;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.util.JpsPathUtil;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * @author nik
@@ -58,7 +72,45 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     addExportedDependency(dummy, dummy2);
     addExportedDependency(dummy2, dep);
     dummy2.getDependenciesList().addModuleDependency(dummy);
+
+    //if dummy targets are completely ignored, compilation of 'main' module will fail because 'dep' module won't be compiled
     rebuildAllModules();
+  }
+
+  //https://youtrack.jetbrains.com/issue/IDEA-129728
+  public void testIgnoreDependenciesFromDummyTargets() {
+    String mSrcRoot = PathUtil.getParentPath(createFile("m/src/A.java", "class A{}"));
+    String mTestRoot = PathUtil.getParentPath(createFile("m/test/Test.java", "class Test{}"));
+    String tSrcRoot = PathUtil.getParentPath(createFile("t/T.java", "class T{}"));
+    JpsModule m = addModule("m", mSrcRoot);
+    m.addSourceRoot(JpsPathUtil.pathToUrl(mTestRoot), JavaSourceRootType.TEST_SOURCE);
+    JpsModule t = addModule("t", tSrcRoot);
+    JpsModuleRootModificationUtil.addDependency(t, m);
+    JpsModuleRootModificationUtil.addDependency(m, t, JpsJavaDependencyScope.TEST, false);
+
+    CompileScope scope = CompileScopeTestBuilder.rebuild().allModules().build();
+    ProjectDescriptor descriptor = createProjectDescriptor(BuildLoggingManager.DEFAULT);
+    try {
+      BuildTargetIndex targetIndex = descriptor.getBuildTargetIndex();
+      CompileContext context = CompileContextImpl.createContextForTests(scope, descriptor);
+      List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(context);
+      for (BuildTargetChunk chunk : chunks) {
+        assertTrue("Circular dependency between build targets " + chunk.getTargets(), chunk.getTargets().size() == 1);
+      }
+      assertEmpty(targetIndex.getDependencies(new ModuleBuildTarget(t, JavaModuleBuildTargetType.TEST), context));
+    }
+    finally {
+      descriptor.release();
+    }
+  }
+
+  public void testCleanOutputForDeletedModuleTarget() {
+    String srcRoot = PathUtil.getParentPath(createFile("main/A.java", "class A{}"));
+    JpsModule main = addModule("main", srcRoot);
+    rebuildAllModules();
+    main.removeSourceRoot(JpsPathUtil.pathToUrl(srcRoot), JavaSourceRootType.SOURCE);
+    doBuild(CompileScopeTestBuilder.make().module(main)).assertSuccessful();
+    assertDoesntExist(new File(getOrCreateProjectDir(), getModuleOutputRelativePath(main) + "/A.class"));
   }
 
   private static void addExportedDependency(JpsModule main, JpsModule dep) {

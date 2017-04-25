@@ -120,19 +120,6 @@ public class XValueHint extends AbstractValueHint {
   @Override
   protected boolean showHint(final JComponent component) {
     boolean result = super.showHint(component);
-    if (result && getType() == ValueHintType.MOUSE_OVER_HINT) {
-      myDisposable = Disposer.newDisposable();
-      ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
-      new DumbAwareAction() {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          hideHint();
-          final Point point = new Point(myPoint.x, myPoint.y + getEditor().getLineHeight());
-          new XValueHint(getProject(), getEditor(), point, ValueHintType.MOUSE_CLICK_HINT, myExpressionInfo, myEvaluator, myDebugSession,
-                         true).invokeHint();
-        }
-      }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
-    }
     if (result) {
       XValueHint prev = getEditor().getUserData(HINT_KEY);
       if (prev != null) {
@@ -150,18 +137,13 @@ public class XValueHint extends AbstractValueHint {
     if (prev == this) {
       getEditor().putUserData(HINT_KEY, null);
     }
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
-    }
+    disposeVisibleHint();
   }
 
   @Override
   public void hideHint() {
     super.hideHint();
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-    }
+    disposeVisibleHint();
   }
 
   @Override
@@ -211,13 +193,25 @@ public class XValueHint extends AbstractValueHint {
               }
             }
             else {
-              if (getType() == ValueHintType.MOUSE_OVER_HINT && myFromKeyboard) {
-                text.insert(0, "(" + KeymapUtil.getFirstKeyboardShortcutText("ShowErrorDescription") + ") ",
-                            SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              if (getType() == ValueHintType.MOUSE_OVER_HINT) {
+                if (myFromKeyboard) {
+                  text.insert(0, "(" + KeymapUtil.getFirstKeyboardShortcutText("ShowErrorDescription") + ") ",
+                              SimpleTextAttributes.GRAYED_ATTRIBUTES);
+                }
+
+                // first remove a shortcut created for any previous presentation (like "Collecting data...")
+                disposeVisibleHint();
+                myDisposable = Disposer.newDisposable();
+                ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
+                new DumbAwareAction() {
+                  @Override
+                  public void actionPerformed(@NotNull AnActionEvent e) {
+                    showTree(result);
+                  }
+                }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
-              JComponent component = createExpandableHintComponent(text, () -> showTree(result));
-              showHint(component);
+              showHint(createExpandableHintComponent(text, () -> showTree(result)));
             }
             myShown = true;
           }
@@ -248,6 +242,13 @@ public class XValueHint extends AbstractValueHint {
     }, myExpressionPosition);
   }
 
+  private void disposeVisibleHint() {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
+  }
+
   private void showTree(@NotNull XValue value) {
     if (myCurrentHint != null) {
       myCurrentHint.hide();
@@ -256,5 +257,10 @@ public class XValueHint extends AbstractValueHint {
     XDebuggerTreeCreator creator = new XDebuggerTreeCreator(myDebugSession.getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
                                                             myDebugSession.getCurrentPosition(), valueMarkers);
     showTreePopup(creator, Pair.create(value, myValueName));
+  }
+
+  @Override
+  public String toString() {
+    return myExpression;
   }
 }

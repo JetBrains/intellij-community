@@ -88,7 +88,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   public List<RefEntity> getChildren() {
     List<RefEntity> superChildren = super.getChildren();
     if (myParameters == null) return superChildren;
-    if (superChildren.isEmpty()) return Arrays.<RefEntity>asList(myParameters);
+    if (superChildren.isEmpty()) return Arrays.asList(myParameters);
     
     List<RefEntity> allChildren = new ArrayList<>(superChildren.size() + myParameters.length);
     allChildren.addAll(superChildren);
@@ -426,17 +426,13 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
         if (psiMethod instanceof SyntheticElement) {
           return psiMethod.getName();
         }
-        else {
-          return PsiFormatUtil.formatMethod(psiMethod,
-                                                 PsiSubstitutor.EMPTY,
-                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                                 PsiFormatUtilBase.SHOW_TYPE
-          );
-        }
+        return PsiFormatUtil.formatMethod(psiMethod,
+                                          PsiSubstitutor.EMPTY,
+                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                          PsiFormatUtilBase.SHOW_TYPE);
       });
-    } else {
-      return super.getName();
     }
+    return super.getName();
   }
 
   @Override
@@ -449,7 +445,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   }
 
   @Nullable
-  public static RefMethod methodFromExternalName(RefManager manager, String externalName) {
+  static RefMethod methodFromExternalName(RefManager manager, String externalName) {
     return (RefMethod) manager.getReference(findPsiMethod(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
@@ -498,7 +494,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return super.isSuspicious();
   }
 
-  public void setReturnValueUsed(boolean value) {
+  void setReturnValueUsed(boolean value) {
     if (checkFlag(IS_RETURN_VALUE_USED_MASK) == value) return;
     setFlag(value, IS_RETURN_VALUE_USED_MASK);
     for (RefMethod refSuper : getSuperMethods()) {
@@ -511,7 +507,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return checkFlag(IS_RETURN_VALUE_USED_MASK);
   }
 
-  public void updateReturnValueTemplate(PsiExpression expression) {
+  void updateReturnValueTemplate(PsiExpression expression) {
     if (myReturnValueTemplate == null) return;
 
     if (!getSuperMethods().isEmpty()) {
@@ -549,7 +545,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
-  public void updateParameterValues(PsiExpression[] args) {
+  void updateParameterValues(PsiExpression[] args) {
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {
@@ -560,12 +556,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       final RefParameter[] params = getParameters();
       if (params.length <= args.length && params.length > 0) {
         for (int i = 0; i < args.length; i++) {
-          RefParameter refParameter;
-          if (params.length <= i){
-            refParameter = params[params.length - 1];
-          } else {
-            refParameter = params[i];
-          }
+          RefParameter refParameter = params.length <= i ? params[params.length - 1] : params[i];
           ((RefParameterImpl)refParameter).updateTemplateValue(args[i]);
         }
       }
@@ -667,12 +658,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return checkFlag(IS_CALLED_ON_SUBCLASS_MASK);
   }
 
-  public void setCalledOnSubClass(boolean isCalledOnSubClass){
+  void setCalledOnSubClass(boolean isCalledOnSubClass){
     setFlag(isCalledOnSubClass, IS_CALLED_ON_SUBCLASS_MASK);
-  }
-
-  private static String extractMethodName(String methodSignature) {
-    final String returnTypeAndName = methodSignature.substring(0, methodSignature.indexOf('('));
-    return returnTypeAndName.substring(returnTypeAndName.indexOf(' ') + 1);
   }
 }

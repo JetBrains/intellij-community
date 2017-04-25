@@ -66,7 +66,7 @@ public class IndexInfrastructure {
 
   @NotNull
   public static File getStorageFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexRootDir(indexName), indexName.toString());
+    return new File(getIndexRootDir(indexName), indexName.getName());
   }
 
   @NotNull
@@ -97,7 +97,7 @@ public class IndexInfrastructure {
 
   @NotNull
   private static File getIndexDirectory(@NotNull ID<?, ?> indexName, boolean forVersion, String relativePath) {
-    final String dirName = indexName.toString().toLowerCase(Locale.US);
+    final String dirName = indexName.getName().toLowerCase(Locale.US);
     File indexDir;
 
     if (indexName instanceof StubIndexKey) {

@@ -1,10 +1,18 @@
 package com.siyeh.ig.numeric;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class CastThatLosesPrecisionInspectionTest extends IGInspectionTestCase {
+public class CastThatLosesPrecisionInspectionTest extends LightInspectionTestCase {
 
-  public void test() throws Exception {
-    doTest("com/siyeh/igtest/numeric/cast_that_loses_precision", new CastThatLosesPrecisionInspection());
+  public void testCastThatLosesPrecision()  {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new CastThatLosesPrecisionInspection();
   }
 }

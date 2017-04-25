@@ -52,7 +52,7 @@ import java.net.ServerSocket;
 import java.util.*;
 
 public class SearchingForTestsTask extends SearchForTestsTask {
-  private static final Logger LOG = Logger.getInstance("#" + SearchingForTestsTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(SearchingForTestsTask.class);
   protected final Map<PsiClass, Map<PsiMethod, List<String>>> myClasses;
   private final TestData myData;
   private final Project myProject;

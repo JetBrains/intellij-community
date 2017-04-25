@@ -35,7 +35,7 @@ import java.util.Set;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToThreadLocalIntention.class.getName());
+  private static final Logger LOG = Logger.getInstance(ConvertFieldToThreadLocalIntention.class);
 
   @NotNull
   @Override

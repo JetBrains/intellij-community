@@ -23,9 +23,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -60,22 +62,32 @@ public class RefreshWorker {
   private final Queue<Pair<NewVirtualFile, FileAttributes>> myRefreshQueue = new Queue<>(100);
   private final List<VFileEvent> myEvents = new ArrayList<>();
   private volatile boolean myCancelled;
+  private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
 
   public RefreshWorker(@NotNull NewVirtualFile refreshRoot, boolean isRecursive) {
+    boolean canUseNioRefresher = refreshRoot.isInLocalFileSystem() && !(refreshRoot.getFileSystem() instanceof TempFileSystem);
+    myLocalFileSystemRefreshWorker = canUseNioRefresher && Registry.is("vfs.use.nio-based.local.refresh.worker") ?
+                                     new LocalFileSystemRefreshWorker(refreshRoot, isRecursive) : null;
     myIsRecursive = isRecursive;
     myRefreshQueue.addLast(pair(refreshRoot, null));
   }
 
   @NotNull
   public List<VFileEvent> getEvents() {
+    if (myLocalFileSystemRefreshWorker != null) return myLocalFileSystemRefreshWorker.getEvents();
     return myEvents;
   }
 
   public void cancel() {
+    if (myLocalFileSystemRefreshWorker != null) myLocalFileSystemRefreshWorker.cancel();
     myCancelled = true;
   }
 
   public void scan() {
+    if (myLocalFileSystemRefreshWorker != null) {
+      myLocalFileSystemRefreshWorker.scan();
+      return;
+    }
     NewVirtualFile root = myRefreshQueue.peekFirst().first;
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
@@ -413,6 +425,7 @@ public class RefreshWorker {
   @TestOnly
   public static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
+    LocalFileSystemRefreshWorker.setCancellingCondition(condition);
     ourCancellingCondition = condition;
   }
 }

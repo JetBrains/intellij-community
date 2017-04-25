@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.JavaCodeContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.dupLocator.iterators.NodeIterator;
+import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -39,8 +40,6 @@ import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.JavaCompilingVisitor;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
-import com.intellij.structuralsearch.impl.matcher.filters.JavaLexicalNodesFilter;
-import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
@@ -51,6 +50,7 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,9 +60,16 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
-  private JavaLexicalNodesFilter myJavaLexicalNodesFilter;
 
-  public String getText(PsiElement match, int start,int end) {
+  private static final Set<String> PRIMITIVE_TYPES = new THashSet<>(Arrays.asList(
+    PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
+    PsiKeyword.DOUBLE, PsiKeyword.LONG,
+    PsiKeyword.INT, PsiKeyword.FLOAT,
+    PsiKeyword.CHAR, PsiKeyword.BYTE
+  ));
+
+  @Override
+  public String getText(PsiElement match, int start, int end) {
     if (match instanceof PsiIdentifier) {
       PsiElement parent = match.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
@@ -74,6 +81,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return matchText.substring(start,end == -1? matchText.length():end);
   }
 
+  @Override
   public Class getElementContextByPsi(PsiElement element) {
     if (element instanceof PsiIdentifier) {
       element = element.getParent();
@@ -86,6 +94,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     }
   }
 
+  @Override
   @NotNull
   public String getTypedVarString(final PsiElement element) {
     String text;
@@ -187,10 +196,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return element;
   }
 
+  @Override
   public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     elements[0].getParent().accept(new JavaCompilingVisitor(globalVisitor));
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor createMatchingVisitor(@NotNull GlobalMatchingVisitor globalVisitor) {
     return new JavaMatchingVisitor(globalVisitor);
@@ -198,18 +209,30 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElementVisitor getLexicalNodesFilter(@NotNull LexicalNodesFilter filter) {
-    if (myJavaLexicalNodesFilter == null) {
-      myJavaLexicalNodesFilter = new JavaLexicalNodesFilter(filter);
-    }
-    return myJavaLexicalNodesFilter;
+  public NodeFilter getLexicalNodesFilter() {
+    return element -> isLexicalNode(element);
   }
 
+  private static boolean isLexicalNode(PsiElement element) {
+    if (element instanceof PsiWhiteSpace) {
+      return true;
+    }
+    else if (element instanceof PsiJavaToken) {
+      // do not filter out type keyword of new primitive arrays (e.g. int in new int[10])
+      return !(element instanceof PsiKeyword &&
+               PRIMITIVE_TYPES.contains(element.getText()) &&
+               element.getParent() instanceof PsiNewExpression);
+    }
+    return false;
+  }
+
+  @Override
   @NotNull
   public CompiledPattern createCompiledPattern() {
     return new JavaCompiledPattern();
   }
 
+  @Override
   public boolean isMyLanguage(@NotNull Language language) {
     return language == JavaLanguage.INSTANCE;
   }
@@ -385,6 +408,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return JavaCodeContextType.class;
   }
 
+  @Override
   public PsiCodeFragment createCodeFragment(Project project, String text, PsiElement context) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     return factory.createCodeBlockCodeFragment(text, context, true);

@@ -25,37 +25,40 @@ class JavaReflectionCompletionOverloadTest : LightFixtureCompletionTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionOverload/"
 
   fun testOverloadMethods() = doTest(2,
-                                     "method()", "method(C c)", "method(A a,B b)",
-                                     "equals(java.lang.Object obj)")
+                                     "method()", "method(C)", "method(A, B)",
+                                     "equals(Object)")
 
-  fun testJavaLangObjectMethods() = doTest(6,
+  fun testJavaLangObjectMethods() = doTest(5,
                                            "method()",
-                                           "equals(java.lang.Object obj)", "hashCode()", "toString()",
-                                           "getClass()", "notify()", "notifyAll()",
-                                           "wait()", "wait(long timeout)", "wait(long timeout,int nanos)"
+                                           "equals(Object)", "getClass()", "hashCode()",
+                                           "notify()", "notifyAll()", "toString()",
+                                           "wait()", "wait(long)", "wait(long, int)"
   )
 
-  fun testJavaLangObjectOwnMethods() = doTest(9,
-                                              "clone()", "equals(java.lang.Object obj)", "hashCode()",
-                                              "toString()", "finalize()", "getClass()",
-                                              "notify()", "notifyAll()",
-                                              "wait()", "wait(long timeout)", "wait(long timeout,int nanos)")
+  fun testJavaLangObjectOwnMethods() = doTest(10,
+                                              "clone()", "equals(Object)",
+                                              "finalize()", "getClass()", "hashCode()",
+                                              "notify()", "notifyAll()", "registerNatives()", "toString()",
+                                              "wait()", "wait(long)", "wait(long, int)")
 
   fun testOverriddenMethod() = doTest(2,
-                                      "gpMethod(A a,B b)", "method()", "pMethod(C c)",
-                                      "equals(java.lang.Object obj)")
+                                      "gpMethod(A, B)", "method()", "pMethod(C)",
+                                      "equals(Object)")
 
   fun testShadowedMethod() = doTest(0,
                                     "shadowed()",
-                                    "equals(java.lang.Object obj)")
+                                    "equals(Object)")
 
   fun testOverloadedMethod() = doTest(1,
-                                      "overloaded()", "overloaded(int n)",
-                                      "equals(java.lang.Object obj)")
+                                      "overloaded()", "overloaded(int)",
+                                      "equals(Object)")
+
+  fun testOverloadedMethodPrefix() = doTest(2,
+                                            "foo()", "foo(int)", "foo(String)")
 
   fun testOverloadedInheritedMethod() = doTest(1,
-                                               "overloaded(int n)", "overloaded(java.lang.String s)",
-                                               "equals(java.lang.Object obj)")
+                                               "overloaded(int)", "overloaded(String)",
+                                               "equals(Object)")
 
 
   private fun doTest(index: Int, vararg expected: String) {

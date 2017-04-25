@@ -36,7 +36,7 @@ public class JavaModuleBuildTargetType extends ModuleBasedBuildTargetType<Module
   private boolean myTests;
 
   private JavaModuleBuildTargetType(String typeId, boolean tests) {
-    super(typeId);
+    super(typeId, true);
     myTests = tests;
   }
 

@@ -50,7 +50,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + UndeclaredTestInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
 
   @Nls
   @NotNull

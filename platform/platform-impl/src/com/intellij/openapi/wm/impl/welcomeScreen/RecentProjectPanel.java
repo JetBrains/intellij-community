@@ -66,7 +66,7 @@ public class RecentProjectPanel extends JPanel {
   private int myHoverIndex = -1;
   private final int closeButtonInset = JBUI.scale(7);
   private Icon currentIcon = AllIcons.Welcome.Project.Remove;
-  private static final Logger LOG = Logger.getInstance("#" + RecentProjectPanel.class.getName());
+  private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
   Set<ReopenProjectAction> projectsWithLongPathes = new HashSet<>(0);
 
   private final JPanel myCloseButtonForEditor = new JPanel() {

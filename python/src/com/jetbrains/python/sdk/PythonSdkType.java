@@ -99,7 +99,7 @@ import java.util.stream.Collectors;
  */
 public final class PythonSdkType extends SdkType {
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
-  private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
+  private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts

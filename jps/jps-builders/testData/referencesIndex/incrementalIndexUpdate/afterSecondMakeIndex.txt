@@ -18,3 +18,7 @@ Class Definitions:
 Bar in Bar
 Foo in Foo
 FooImpl in FooImpl
+
+Members Signatures:
+java.lang.String <- Foo.getSomeText(0) FooImpl.getSomeText(0)
+static java.lang.String <- FooImpl.TITLE

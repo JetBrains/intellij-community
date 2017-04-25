@@ -54,7 +54,7 @@ public class PySkeletonGenerator {
     ENV_PATH_PARAM.put(IronPythonSdkFlavor.class, "IRONPYTHONPATH"); // TODO: Make strategy and move to PythonSdkFlavor?
   }
 
-  protected static final Logger LOG = Logger.getInstance("#" + PySkeletonGenerator.class.getName());
+  protected static final Logger LOG = Logger.getInstance(PySkeletonGenerator.class);
   protected static final int MINUTE = 60 * 1000;
   protected static final String GENERATOR3 = "generator3.py";
 

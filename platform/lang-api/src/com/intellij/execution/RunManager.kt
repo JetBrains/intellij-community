@@ -115,13 +115,6 @@ abstract class RunManager {
   abstract val tempConfigurationsList: List<RunnerAndConfigurationSettings>
 
   /**
-   * Saves the specified temporary run configuration and makes it a permanent one.
-   * @param configuration the temporary run configuration to save.
-   */
-  @Deprecated("")
-  abstract fun makeStable(configuration: RunConfiguration)
-
-  /**
    * Saves the specified temporary run settings and makes it a permanent one.
    * @param settings the temporary settings to save.
    */
@@ -176,7 +169,7 @@ abstract class RunManager {
    */
   abstract fun refreshUsagesList(profile: RunProfile)
 
-  fun hasSettings(settings: RunnerAndConfigurationSettings) = allSettings.contains(settings)
+  abstract fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean
 
   fun suggestUniqueName(name: String?, type: ConfigurationType?): String {
     val settingsList = if (type == null) allSettings else getConfigurationSettingsList(type)

@@ -32,7 +32,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
  * Date: 3/4/13
  */
 public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypeProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxGetterSetterPrototypeProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxGetterSetterPrototypeProvider.class);
 
   @Override
   public boolean canGeneratePrototypeFor(PsiField field) {

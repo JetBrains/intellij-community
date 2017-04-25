@@ -47,7 +47,7 @@ import java.util.*;
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {
 
-  private static final Logger LOG = Logger.getInstance("#" + LibraryDependencyDataService.class.getName());
+  private static final Logger LOG = Logger.getInstance(LibraryDependencyDataService.class);
 
   @NotNull private final LibraryDataService myLibraryManager;
 

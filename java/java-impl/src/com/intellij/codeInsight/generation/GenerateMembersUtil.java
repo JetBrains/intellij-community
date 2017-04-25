@@ -451,7 +451,11 @@ public class GenerateMembersUtil {
         paramName = generator.generateUniqueName(paramName);
       }
       generator.addExistingName(paramName);
-      result[i] = factory.createParameter(paramName, GenericsUtil.getVariableTypeByExpressionType(substituted), target);
+      PsiType expressionType = GenericsUtil.getVariableTypeByExpressionType(substituted);
+      if (expressionType instanceof PsiArrayType && substituted instanceof PsiEllipsisType) {
+        expressionType = new PsiEllipsisType(((PsiArrayType)expressionType).getComponentType());
+      }
+      result[i] = factory.createParameter(paramName, expressionType, target);
     }
     return result;
   }

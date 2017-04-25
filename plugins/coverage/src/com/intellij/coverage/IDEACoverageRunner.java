@@ -38,7 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class IDEACoverageRunner extends JavaCoverageRunner {
-  private static final Logger LOG = Logger.getInstance("#" + IDEACoverageRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(IDEACoverageRunner.class);
 
   public ProjectData loadCoverageData(@NotNull final File sessionDataFile, @Nullable final CoverageSuite coverageSuite) {
     ProjectData projectData = ProjectDataLoader.load(sessionDataFile);

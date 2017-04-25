@@ -87,7 +87,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   private static final String DO_NOT_APPLY_COLLECTED_COVERAGE = "Do not apply &collected coverage";
 
   private final List<CoverageSuiteListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private static final Logger LOG = Logger.getInstance("#" + CoverageDataManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoverageDataManagerImpl.class);
   @NonNls
   private static final String SUITE = "SUITE";
 

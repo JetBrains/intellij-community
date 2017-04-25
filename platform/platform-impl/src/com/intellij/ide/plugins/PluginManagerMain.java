@@ -139,7 +139,7 @@ public abstract class PluginManagerMain implements Disposable {
 
   protected void init() {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(main, true);
-    HTMLEditorKit kit = new HTMLEditorKit();
+    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
     myDescriptionTextArea.setEditorKit(kit);

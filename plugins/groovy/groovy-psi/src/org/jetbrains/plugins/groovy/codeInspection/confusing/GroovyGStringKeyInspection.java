@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,8 +65,6 @@ public class GroovyGStringKeyInspection extends BaseInspection {
 
     @Override
     public void visitExpression(@NotNull GrExpression grExpression) {
-      if (!isGStringType(grExpression)) return;
-
       final PsiElement gstringParent = grExpression.getParent();
       if (gstringParent == null || !(gstringParent instanceof GrArgumentList)) return;
 
@@ -78,6 +76,7 @@ public class GroovyGStringKeyInspection extends BaseInspection {
         return;
       }
 
+      if (!isGStringType(grExpression)) return;
       if (!isMapPutMethod((GrMethodCall)grandparent)) return;
 
       registerError(grExpression);

@@ -428,7 +428,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     catch (IOException ignored) {
     }
     for (ID<?, ?> key : ids) {
-      indicesToDrop.remove(key.toString());
+      indicesToDrop.remove(key.getName());
     }
     if (!indicesToDrop.isEmpty()) {
       LOG.info("Dropping indices:" + StringUtil.join(indicesToDrop, ","));
@@ -441,7 +441,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     try (DataOutputStream os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(registeredIndicesFile)))) {
       os.writeInt(ids.size());
       for (ID<?, ?> id : ids) {
-        IOUtil.writeString(id.toString(), os);
+        IOUtil.writeString(id.getName(), os);
       }
     }
     catch (IOException ignored) {

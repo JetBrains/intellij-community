@@ -40,3 +40,19 @@ enum SomeEnum {
 
     private java.   util.   List spaces;
 }
+class U {
+
+    static void m() {
+        String List;
+        java.util.List v;
+    }
+}
+class ArrayList {
+    class One {
+        class Two {
+            class Three {
+                java.util.ArrayList list;
+            }
+        }
+    }
+}

@@ -33,6 +33,10 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
   public static final int DEFAULT_CACHE_SIZE = 1024;
 
   @NotNull
+  @Override
+  public abstract ID<K, V> getName();
+
+  @NotNull
   public abstract FileBasedIndex.InputFilter getInputFilter();
   
   public abstract boolean dependsOnFileContent();

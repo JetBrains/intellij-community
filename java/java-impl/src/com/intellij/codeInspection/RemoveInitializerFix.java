@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveInitializerFix implements LocalQuickFix {
-  private static final Logger LOG = Logger.getInstance("#" + RemoveInitializerFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(RemoveInitializerFix.class);
 
   @Override
   @NotNull

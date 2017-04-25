@@ -58,7 +58,8 @@ public class LowMemoryWatcherManager implements Disposable {
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
         if (bean.getType() == MemoryType.HEAP && bean.isUsageThresholdSupported()) {
-          long threshold = bean.getUsage().getMax() - MEM_THRESHOLD;
+          long max = bean.getUsage().getMax();
+          long threshold = Math.min((long) (max * 0.95), max - MEM_THRESHOLD);
           if (threshold > 0) {
             bean.setUsageThreshold(threshold);
             bean.setCollectionUsageThreshold(threshold);

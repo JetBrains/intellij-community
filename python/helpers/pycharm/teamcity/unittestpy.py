@@ -17,12 +17,16 @@ class TeamcityTestResult(TestResult):
     def __init__(self, stream=_real_stdout, descriptions=None, verbosity=None):
         super(TeamcityTestResult, self).__init__()
 
+        # Some code may ask for self.failfast, see unittest2.case.TestCase.subTest
+        self.failfast = getattr(self, "failfast", False)
+
         self.test_started_datetime_map = {}
         self.failed_tests = set()
         self.subtest_failures = {}
         self.messages = TeamcityServiceMessages(_real_stdout)
 
-    def get_test_id(self, test):
+    @staticmethod
+    def get_test_id(test):
         if is_string(test):
             return test
 
@@ -39,27 +43,55 @@ class TeamcityTestResult(TestResult):
         super(TeamcityTestResult, self).addSuccess(test)
 
     def addExpectedFailure(self, test, err):
-        super(TeamcityTestResult, self).addExpectedFailure(test, err)
+        _super = super(TeamcityTestResult, self)
+        if hasattr(_super, "addExpectedFailure"):
+            _super.addExpectedFailure(test, err)
 
         err = convert_error_to_string(err)
         test_id = self.get_test_id(test)
 
         self.messages.testIgnored(test_id, message="Expected failure: " + err, flowId=test_id)
 
+    def get_subtest_block_id(self, test, subtest):
+        test_id = self.get_test_id(test)
+        subtest_id = self.get_test_id(subtest)
+
+        if subtest_id.startswith(test_id):
+            block_id = subtest_id[len(test_id):].strip()
+        else:
+            block_id = subtest_id
+        if len(block_id) == 0:
+            block_id = test_id
+        return block_id
+
     def addSkip(self, test, reason=""):
         if sys.version_info >= (2, 7):
             super(TeamcityTestResult, self).addSkip(test, reason)
-
-        test_id = self.get_test_id(test)
 
         if reason:
             reason_str = ": " + str(reason)
         else:
             reason_str = ""
-        self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
+
+        test_class_name = get_class_fullname(test)
+        if test_class_name == "unittest.case._SubTest" or test_class_name == "unittest2.case._SubTest":
+            parent_test = test.test_case
+            parent_test_id = self.get_test_id(parent_test)
+            subtest = test
+
+            block_id = self.get_subtest_block_id(parent_test, subtest)
+
+            self.messages.subTestBlockOpened(block_id, subTestResult="Skip", flowId=parent_test_id)
+            self.messages.testStdOut(parent_test_id, out="SubTest skipped" + reason_str + "\n", flowId=parent_test_id)
+            self.messages.blockClosed(block_id, flowId=parent_test_id)
+        else:
+            test_id = self.get_test_id(test)
+            self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
 
     def addUnexpectedSuccess(self, test):
-        super(TeamcityTestResult, self).addUnexpectedSuccess(test)
+        _super = super(TeamcityTestResult, self)
+        if hasattr(_super, "addUnexpectedSuccess"):
+            _super.addUnexpectedSuccess(test)
 
         test_id = self.get_test_id(test)
         self.messages.testFailed(test_id, message='Failure',
@@ -69,7 +101,8 @@ class TeamcityTestResult(TestResult):
     def addError(self, test, err, *k):
         super(TeamcityTestResult, self).addError(test, err)
 
-        if get_class_fullname(test) == "unittest.suite._ErrorHolder":
+        test_class = get_class_fullname(test)
+        if test_class == "unittest.suite._ErrorHolder" or test_class == "unittest2.suite._ErrorHolder":
             # This is a standalone error
 
             test_name = test.id()
@@ -96,13 +129,17 @@ class TeamcityTestResult(TestResult):
         self.report_fail(test, 'Failure', err)
 
     def addSubTest(self, test, subtest, err):
-        super(TeamcityTestResult, self).addSubTest(test, subtest, err)
+        _super = super(TeamcityTestResult, self)
+        if hasattr(_super, "addSubTest"):
+            _super.addSubTest(test, subtest, err)
 
         test_id = self.get_test_id(test)
         subtest_id = self.get_test_id(subtest)
 
         if subtest_id.startswith(test_id):
-            block_id = subtest_id[len(test_id):].strip()
+            # Replace "." -> "_" since '.' is a test hierarchy separator
+            # See i.e. https://github.com/JetBrains/teamcity-messages/issues/134 (https://youtrack.jetbrains.com/issue/PY-23846)
+            block_id = subtest_id[len(test_id):].strip().replace(".", "_")
         else:
             block_id = subtest_id
         if len(block_id) == 0:

@@ -29,17 +29,17 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @State(name = "ModuleRunConfigurationManager")
 public final class ModuleRunConfigurationManager implements PersistentStateComponent<Element> {
-  private static final Object LOCK = new Object();
+  private static final String SHARED = "shared";
+  private static final String LOCAL = "local";
   private static final Logger LOG = Logger.getInstance(ModuleRunConfigurationManager.class);
   @NotNull
   private final Module myModule;
@@ -58,11 +58,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
-          synchronized (LOCK) {
-            for (final RunnerAndConfigurationSettings settings : getModuleRunConfigurationSettings()) {
-              myManager.removeConfiguration(settings);
-            }
-          }
+          myManager.removeConfigurations(getModuleRunConfigurationSettings());
         }
       }
     });
@@ -72,9 +68,10 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   @Override
   public Element getState() {
     try {
-      final Element e = new Element("state");
-      writeExternal(e);
-      return e;
+      return new Element("state")
+        .addContent(writeExternal(new Element(SHARED), true))
+        .addContent(writeExternal(new Element(LOCAL), false))
+        ;
     }
     catch (WriteExternalException e1) {
       LOG.error(e1);
@@ -102,31 +99,35 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
            && myModule.equals(((ModuleBasedConfiguration)config).getConfigurationModule().getModule());
   }
 
-  public void writeExternal(@NotNull final Element element) throws WriteExternalException {
-    LOG.debug("writeExternal(" + myModule + ")");
-    myManager.writeConfigurations(element, getModuleRunConfigurationSettings());
+  public Element writeExternal(@NotNull final Element element, boolean isShared) throws WriteExternalException {
+    LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
+    myManager.writeConfigurations(
+      element,
+      getModuleRunConfigurationSettings().stream()
+        .filter(settings -> settings.isShared() == isShared)
+        .collect(Collectors.toList())
+    );
+    return element;
   }
 
   public void readExternal(@NotNull final Element element) {
-    synchronized (LOCK) {
-      doReadExternal(element);
+    Element sharedElement = element.getChild(SHARED);
+    if (sharedElement != null) {
+      doReadExternal(sharedElement, true);
+    }
+    Element localElement = element.getChild(LOCAL);
+    if (localElement != null) {
+      doReadExternal(localElement, false);
     }
   }
 
-  private void doReadExternal(@NotNull Element element) {
-    LOG.debug("readExternal(" + myModule + ")");
-    final Set<String> existing = new SmartHashSet<>();
+  private void doReadExternal(@NotNull Element element, boolean isShared) {
+    LOG.debug("readExternal(" + myModule + ");  shared: " + isShared);
 
     for (final Element child : element.getChildren(RunManagerImpl.CONFIGURATION)) {
-      existing.add(myManager.loadConfiguration(child, true).getUniqueID());
+      myManager.loadConfiguration(child, isShared);
     }
 
-    for (RunnerAndConfigurationSettings settings : myManager.getAllSettings()) {
-      if (!usesMyModule(settings.getConfiguration())) {
-        existing.add(settings.getUniqueID());
-      }
-    }
-
-    myManager.removeNotExistingSharedConfigurations(existing);
+    myManager.requestSort();
   }
 }

@@ -36,7 +36,7 @@ import java.util.List;
  * User: anna
  */
 public class PsiDiamondTypeUtil {
-  private static final Logger LOG = Logger.getInstance("#" + PsiDiamondTypeUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
 
   private PsiDiamondTypeUtil() {
   }

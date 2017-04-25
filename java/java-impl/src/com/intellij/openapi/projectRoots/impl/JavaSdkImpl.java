@@ -340,13 +340,13 @@ public class JavaSdkImpl extends JavaSdk {
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
     String version = sdk.getVersionString();
     if (version == null) return null;
-    return JdkVersionUtil.getVersion(version);
+    return JavaSdkVersion.fromVersionString(version);
   }
 
   @Override
   @Nullable
   public JavaSdkVersion getVersion(@NotNull String versionString) {
-    return JdkVersionUtil.getVersion(versionString);
+    return JavaSdkVersion.fromVersionString(versionString);
   }
 
   @Override

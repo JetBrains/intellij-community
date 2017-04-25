@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInspection.inheritance.ImplementedAtRuntimeCondition;
+import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
@@ -81,8 +81,12 @@ public class InheritanceUtil {
   public static boolean hasImplementation(@NotNull PsiClass aClass) {
     final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
     if (aClass.isInterface() && FunctionalExpressionSearch.search(aClass, scope).findFirst() != null) return true;
-    for (ImplementedAtRuntimeCondition condition : ImplementedAtRuntimeCondition.EP_NAME.getExtensions()) {
-      if (condition.isImplementedAtRuntime(aClass)) {
+    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+      if (!provider.isApplicableTo(aClass)) {
+        continue;
+      }
+      ImplicitSubclassProvider.SubclassingInfo info = provider.getSubclassingInfo(aClass);
+      if (info != null && !info.isAbstract()) {
         return true;
       }
     }

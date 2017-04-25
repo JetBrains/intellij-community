@@ -319,12 +319,25 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                                                   (ThrowableComputable<VirtualFile, IOException>)() -> subdirectory.getVirtualFile());
 
       PsiFile firstFile = null;
-      SmartPointerManager manager = SmartPointerManager.getInstance(directory.getProject());
+      Project project = directory.getProject();
+      SmartPointerManager manager = SmartPointerManager.getInstance(project);
       SmartPsiElementPointer[] children = Arrays.stream(directory.getChildren())
         .map(element -> manager.createSmartPsiElementPointer(element))
         .toArray(SmartPsiElementPointer[]::new);
       for (SmartPsiElementPointer child : children) {
         PsiFileSystemItem item = (PsiFileSystemItem)child.getElement();
+        if (item == null) {
+          VirtualFile file = child.getVirtualFile();
+          if (file != null && !file.isDirectory()) {
+            item = PsiManager.getInstance(project).findFile(file);
+          }
+        }
+
+        if (item == null) {
+          VirtualFile file = child.getVirtualFile();
+          LOG.info("Invalidated item: " + file.getExtension());
+          continue;
+        }
         PsiFile f = copyToDirectory(item, item.getName(), subdirectory, choice, title);
         if (firstFile == null) {
           firstFile = f;

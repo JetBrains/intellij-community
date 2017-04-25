@@ -326,6 +326,14 @@
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.AbbreviationManagerImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable"/>
+    <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
+    <applicationConfigurable
+        parentId="preferences.editor"
+        displayName="Default Font"
+        instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
+
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.keymap.KeyboardSettingsExternalizable"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider"/>
@@ -338,6 +346,11 @@
 
     <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.http.HttpFileEditorProvider"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
+
+    <editorActionHandler action="EditorDelete" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+                         id="delete.for.selection"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.openapi.editor.actions.DeleteSelectionHandler" 
+                         id="backspace.for.selection" order="after backspace.lookup"/>
 
     <projectConfigurable groupId="language" groupWeight="110" instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">
@@ -390,6 +403,8 @@
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
+
+    <postStartupActivity implementation="com.intellij.execution.impl.ProjectRunConfigurationStartupActivity"/>
 
     <postStartupActivity implementation="com.intellij.ide.TipOfTheDayManager"/>
     <postStartupActivity implementation="com.intellij.ide.actions.PowerSaveModeNotifier"/>

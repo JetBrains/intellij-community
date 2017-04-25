@@ -36,7 +36,7 @@ import java.util.Map;
  * @author Pavel.Dolgov
  */
 public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxRedundantPropertyValueInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxRedundantPropertyValueInspection.class);
 
   private static Reference<Map<String, Map<String, String>>> ourDefaultPropertyValues;
 

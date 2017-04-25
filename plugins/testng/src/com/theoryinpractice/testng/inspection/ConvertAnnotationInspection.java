@@ -68,7 +68,7 @@ public class ConvertAnnotationInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static class ConvertAnnotationQuickFix implements LocalQuickFix {
-    private static final Logger LOG = Logger.getInstance("#" + ConvertAnnotationQuickFix.class.getName());
+    private static final Logger LOG = Logger.getInstance(ConvertAnnotationQuickFix.class);
 
     @NotNull
     public String getFamilyName() {

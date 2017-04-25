@@ -49,13 +49,14 @@ class PyUniversalPyTestConfiguration(project: Project, factory: PyUniversalPyTes
   override fun createConfigurationEditor(): SettingsEditor<PyUniversalTestConfiguration> =
     PyUniversalPyTestSettingsEditor(this)
 
-  override fun getCustomRawArgumentsString(): String =
+  override fun getCustomRawArgumentsString(forRerun: Boolean): String =
     when {
       keywords.isEmpty() -> ""
       else -> "-k $keywords"
     }
 
   override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isPyTestInstalled(sdk)
+
 }
 
 object PyUniversalPyTestFactory : PyUniversalTestFactory<PyUniversalPyTestConfiguration>() {

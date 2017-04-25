@@ -69,23 +69,18 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
   @Override
   public void loadState(final Element element) {
-    try {
-      if (myFirstLoad) {
-        myModel.readExternal(element);
-      }
-      else {
-        LibraryModel model = new LibraryModel(myModel);
-        WriteAction.run(() -> {
-          model.readExternal(element);
-          commit(model);
-        });
-      }
+    if (myFirstLoad) {
+      myModel.readExternal(element);
+    }
+    else {
+      LibraryModel model = new LibraryModel(myModel);
+      WriteAction.run(() -> {
+        model.readExternal(element);
+        commit(model);
+      });
+    }
 
-      myFirstLoad = false;
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    myFirstLoad = false;
   }
 
   public long getStateModificationCount() {
@@ -124,14 +119,14 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     myDispatcher.removeListener(listener);
   }
 
-  private void fireLibraryAdded(Library library) {
+  private void fireLibraryAdded(@NotNull Library library) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("fireLibraryAdded: " + library);
     }
     myDispatcher.getMulticaster().afterLibraryAdded(library);
   }
 
-  private void fireBeforeLibraryRemoved (Library library) {
+  private void fireBeforeLibraryRemoved(@NotNull Library library) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("fireBeforeLibraryRemoved: " + library);
     }
@@ -151,7 +146,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     return createLibrary(null);
   }
 
-  public void fireLibraryRenamed(@NotNull LibraryImpl library) {
+  void fireLibraryRenamed(@NotNull LibraryImpl library) {
     incrementModificationCount();
     myDispatcher.getMulticaster().afterLibraryRenamed(library);
   }
@@ -341,7 +336,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
     }
 
     @Override
-    public void afterLibraryRenamed(Library library) {
+    public void afterLibraryRenamed(@NotNull Library library) {
       myLibraryByNameCache = null;
     }
 

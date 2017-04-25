@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 
 import java.awt.*;
@@ -50,7 +51,8 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
                Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
-    assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
+    String expectedName = SystemInfo.isLinux ? FontPreferences.LINUX_DEFAULT_FONT_FAMILY : FontPreferences.DEFAULT_FONT_NAME;
+    assertEquals(expectedName, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
                Collections.emptyList(),
@@ -64,6 +66,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   public void testSetFontPreferences() throws Exception {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
+    myScheme.setEditorFontName(fontName1);
     FontPreferences fontPreferences = myScheme.getFontPreferences();
     assertInstanceOf(fontPreferences, ModifiableFontPreferences.class);
     ((ModifiableFontPreferences)fontPreferences).register(fontName1, 25);

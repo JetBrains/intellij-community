@@ -16,13 +16,13 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.vcs.VcsException;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
-public interface BinaryContentRevision extends ContentRevision {
+public interface BinaryContentRevision extends ByteBackedContentRevision {
   /**
    * Content of the revision. Implementers are encouraged to lazy implement this especially when it requires connection to the
    * version control server or something.
@@ -33,4 +33,10 @@ public interface BinaryContentRevision extends ContentRevision {
    */
   @Nullable
   byte[] getBinaryContent() throws VcsException;
+
+  @Nullable
+  @Override
+  default byte[] getContentAsBytes() throws VcsException {
+    return getBinaryContent();
+  }
 }

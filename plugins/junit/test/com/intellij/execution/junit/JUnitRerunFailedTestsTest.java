@@ -174,6 +174,18 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     assertEquals(aClass, element);
   }
 
+  public void testPresentationForJunit5MethodsWithParameters() throws Exception {
+    myFixture.addClass("class A {}" +
+                       "public class TestClass {\n" +
+                       "    @org.junit.platform.commons.annotation.Testable" +
+                       "    public void testFoo(A a) throws Exception {}\n" +
+                       "}");
+    final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass.testFoo");
+    testProxy.setLocator(JavaTestLocator.INSTANCE);
+    final String presentation = TestMethods.getTestPresentation(testProxy, myFixture.getProject(), GlobalSearchScope.projectScope(myFixture.getProject()));
+    assertEquals("TestClass,testFoo(A)", presentation);
+  }
+
   public void testMultipleClassesInOneFile() throws Exception {
     myFixture.configureByText("a.java", "public class Test1 {<caret>} public class Test2 {}");
 

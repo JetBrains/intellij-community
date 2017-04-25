@@ -906,6 +906,9 @@
     <extensionPoint name="longLineInspectionPolicy" interface="com.intellij.codeInspection.longLine.LongLineInspectionPolicy"/>
     <extensionPoint qualifiedName="org.jetbrains.uast.uastLanguagePlugin"
                     interface="org.jetbrains.uast.UastLanguagePlugin"/>
+
+    <extensionPoint name="breadcrumbsInfoProvider" interface="com.intellij.ui.breadcrumbs.BreadcrumbsProvider"/>
+
   </extensionPoints>
 </idea-plugin>
 

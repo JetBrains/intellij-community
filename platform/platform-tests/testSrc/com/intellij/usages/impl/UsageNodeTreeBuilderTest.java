@@ -34,11 +34,13 @@ import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.rules.FileGroupingRule;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -136,9 +138,10 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
   }
 
-  private static class LogGroupingRule implements UsageGroupingRule {
+  private static class LogGroupingRule extends SingleParentUsageGroupingRule {
+    @Nullable
     @Override
-    public UsageGroup groupUsage(@NotNull Usage usage) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
       return new LogUsageGroup(usage.toString().length());
     }
   }
@@ -197,7 +200,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
   }
 
-  private static class OddEvenGroupingRule implements UsageGroupingRule {
+  private static class OddEvenGroupingRule extends SingleParentUsageGroupingRule {
     private static final UsageGroup EVEN = new UsageGroup() {
       @Override
       public Icon getIcon(boolean isOpen) { return null; }
@@ -271,8 +274,9 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       public String toString() { return getText(null); }
     };
 
+    @Nullable
     @Override
-    public UsageGroup groupUsage(@NotNull Usage usage) {
+    protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
       MockUsage mockUsage = (MockUsage)usage;
 
       if (mockUsage.getId() > 1000) return null;
@@ -372,8 +376,8 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       PsiElement class1 = ArrayUtil.getLastElement(f1.getChildren());
       PsiElement class2 = ArrayUtil.getLastElement(f2.getChildren());
       FileGroupingRule fileGroupingRule = new FileGroupingRule(getProject());
-      UsageGroup group1 = fileGroupingRule.groupUsage(new UsageInfo2UsageAdapter(new UsageInfo(class1)));
-      UsageGroup group2 = fileGroupingRule.groupUsage(new UsageInfo2UsageAdapter(new UsageInfo(class2)));
+      UsageGroup group1 = fileGroupingRule.getParentGroupFor(new UsageInfo2UsageAdapter(new UsageInfo(class1)), UsageTarget.EMPTY_ARRAY);
+      UsageGroup group2 = fileGroupingRule.getParentGroupFor(new UsageInfo2UsageAdapter(new UsageInfo(class2)), UsageTarget.EMPTY_ARRAY);
       int compareTo = group1.compareTo(group2);
       assertTrue(String.valueOf(compareTo), compareTo < 0);
     }

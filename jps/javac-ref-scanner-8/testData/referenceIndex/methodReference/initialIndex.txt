@@ -16,3 +16,5 @@ java.util.Collections.emptyList(0) in MethodReference occurrences = 1
 Class Definitions:
 MethodReference in MethodReference
 fun_expr(id=0) in MethodReference
+
+Members Signatures:

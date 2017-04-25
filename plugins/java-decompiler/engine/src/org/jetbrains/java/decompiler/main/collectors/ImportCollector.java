@@ -18,7 +18,9 @@ package org.jetbrains.java.decompiler.main.collectors;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.TextBuffer;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructContext;
+import org.jetbrains.java.decompiler.struct.StructField;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +30,8 @@ public class ImportCollector {
 
   private final Map<String, String> mapSimpleNames = new HashMap<>();
   private final Set<String> setNotImportedNames = new HashSet<>();
+  // set of field names in this class and all its predecessors.
+  private final Set<String> setFieldNames = new HashSet<>();
   private final String currentPackageSlash;
   private final String currentPackagePoint;
 
@@ -42,6 +46,34 @@ public class ImportCollector {
     else {
       currentPackageSlash = "";
       currentPackagePoint = "";
+    }
+
+    Map<String, StructClass> classes = DecompilerContext.getStructContext().getClasses();
+    StructClass currentClass = root.classStruct;
+    while (currentClass != null) {
+      // all field names for the current class ..
+      for (StructField f : currentClass.getFields()) {
+        setFieldNames.add(f.getName());
+      }
+
+      // .. and traverse through parent.
+      currentClass = currentClass.superClass != null ? classes.get(currentClass.superClass.getString()) : null;
+    }
+  }
+
+  /**
+   * Check whether the package-less name ClassName is shaded by variable in a context of
+   * the decompiled class
+   * @param classToName - pkg.name.ClassName - class to find shortname for
+   * @return ClassName if the name is not shaded by local field, pkg.name.ClassName otherwise
+   */
+  public String getShortNameInClassContext(String classToName) {
+    String shortName = getShortName(classToName);
+    if (setFieldNames.contains(shortName)) {
+      return classToName;
+    }
+    else {
+      return shortName;
     }
   }
 

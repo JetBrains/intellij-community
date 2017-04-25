@@ -400,6 +400,11 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
 
     @Override
+    public void mouseClicked(MouseEvent e) {
+      if (myScrollBar != null && myScrollBar.isEnabled()) redispatchIfTrackNotClickable(e);
+    }
+
+    @Override
     public void mousePressed(MouseEvent event) {
       if (myScrollBar == null || !myScrollBar.isEnabled()) return;
       if (redispatchIfTrackNotClickable(event)) return;

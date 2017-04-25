@@ -32,7 +32,7 @@ import java.io.IOException;
  * @author Roman.Chernyatchik
  */
 public abstract class JavaCoverageRunner extends CoverageRunner {
-  private static final Logger LOG = Logger.getInstance("#" + JavaCoverageRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaCoverageRunner.class);
   private static final String COVERAGE_AGENT_PATH = "coverage.lib.path";
 
   public boolean isJdk7Compatible() {

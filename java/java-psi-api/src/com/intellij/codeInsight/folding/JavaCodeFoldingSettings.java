@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.folding;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.util.BooleanTrackableProperty;
 
 public abstract class JavaCodeFoldingSettings {
 
@@ -27,57 +26,43 @@ public abstract class JavaCodeFoldingSettings {
 
   public abstract boolean isCollapseImports();
   public abstract void setCollapseImports(boolean value);
-  public abstract BooleanTrackableProperty getCollapseImportsProperty();
 
   public abstract boolean isCollapseLambdas();
   public abstract void setCollapseLambdas(boolean value);
-  public abstract BooleanTrackableProperty getCollapseLambdasProperty();
 
   public abstract boolean isCollapseMethods();
   public abstract void setCollapseMethods(boolean value);
-  public abstract BooleanTrackableProperty getCollapseMethodsProperty();
 
   public abstract boolean isCollapseConstructorGenericParameters();
   public abstract void setCollapseConstructorGenericParameters(boolean value);
-  public abstract BooleanTrackableProperty getCollapseConstructorGenericParametersProperty();
 
   public abstract boolean isCollapseAccessors();
   public abstract void setCollapseAccessors(boolean value);
-  public abstract BooleanTrackableProperty getCollapseAccessorsProperty();
 
   public abstract boolean isCollapseOneLineMethods();
   public abstract void setCollapseOneLineMethods(boolean value);
-  public abstract BooleanTrackableProperty getCollapseOneLineMethodsProperty();
 
   public abstract boolean isCollapseInnerClasses();
   public abstract void setCollapseInnerClasses(boolean value);
-  public abstract BooleanTrackableProperty getCollapseInnerClassesProperty();
 
   public abstract boolean isCollapseJavadocs();
   public abstract void setCollapseJavadocs(boolean value);
-  public abstract BooleanTrackableProperty getCollapseJavadocsProperty();
 
   public abstract boolean isCollapseFileHeader();
   public abstract void setCollapseFileHeader(boolean value);
-  public abstract BooleanTrackableProperty getCollapseFileHeaderProperty();
 
   public abstract boolean isCollapseAnonymousClasses();
   public abstract void setCollapseAnonymousClasses(boolean value);
-  public abstract BooleanTrackableProperty getCollapseAnonymousClassesProperty();
 
   public abstract boolean isCollapseAnnotations();
   public abstract void setCollapseAnnotations(boolean value);
-  public abstract BooleanTrackableProperty getCollapseAnnotationsProperty();
 
   public abstract boolean isCollapseI18nMessages();
   public abstract void setCollapseI18nMessages(boolean value);
-  public abstract BooleanTrackableProperty getCollapseI18nMessagesProperty();
 
   public abstract boolean isCollapseSuppressWarnings();
   public abstract void setCollapseSuppressWarnings(boolean value);
-  public abstract BooleanTrackableProperty getCollapseSuppressWarningsProperty();
 
   public abstract boolean isCollapseEndOfLineComments();
   public abstract void setCollapseEndOfLineComments(boolean value);
-  public abstract BooleanTrackableProperty getCollapseEndOfLineCommentsProperty();
 }

@@ -41,7 +41,7 @@ public class StudyGenerator {
     }
     else {
       String lessonDirName = EduNames.LESSON + Integer.toString(lesson.getIndex());
-      VirtualFile lessonDir = courseDir.createChildDirectory(courseDir, lessonDirName);
+      VirtualFile lessonDir = VfsUtil.createDirectoryIfMissing(courseDir, lessonDirName);
       final List<Task> taskList = lesson.getTaskList();
       for (int i = 1; i <= taskList.size(); i++) {
         Task task = taskList.get(i - 1);
@@ -52,11 +52,12 @@ public class StudyGenerator {
   }
 
   public static void createTask(@NotNull final Task task, @NotNull final VirtualFile lessonDir) throws IOException {
-    VirtualFile taskDir = lessonDir.createChildDirectory(lessonDir, EduNames.TASK + Integer.toString(task.getIndex()));
+    String name = EduNames.TASK + Integer.toString(task.getIndex());
+    VirtualFile taskDir = VfsUtil.createDirectoryIfMissing(lessonDir, name);
     createTaskContent(task, taskDir);
   }
 
-  public static void createTaskContent(@NotNull Task task, VirtualFile taskDir) throws IOException {
+  public static void createTaskContent(@NotNull Task task, @NotNull VirtualFile taskDir) throws IOException {
     int i = 0;
     for (Map.Entry<String, TaskFile> taskFile : task.getTaskFiles().entrySet()) {
       TaskFile taskFileContent = taskFile.getValue();
@@ -73,25 +74,28 @@ public class StudyGenerator {
     createChildFile(taskDir, name, taskFile.text);
   }
 
-  private static void createDescriptions(VirtualFile taskDir, Task task) throws IOException {
+  private static void createDescriptions(@NotNull VirtualFile taskDir, @NotNull Task task) throws IOException {
     final Map<String, String> texts = task.getTaskTexts();
+    createFiles(taskDir, texts);
+  }
+
+  private static void createTestFiles(@NotNull VirtualFile taskDir, @NotNull Task task) throws IOException {
+    final Map<String, String> tests = task.getTestsText();
+    createFiles(taskDir, tests);
+  }
+
+  private static void createFiles(@NotNull VirtualFile taskDir, @NotNull Map<String, String> texts) throws IOException {
     for (Map.Entry<String, String> entry : texts.entrySet()) {
       final String name = entry.getKey();
-      final VirtualFile virtualTaskFile = taskDir.createChildData(taskDir, name);
+      VirtualFile virtualTaskFile = taskDir.findChild(name);
+      if (virtualTaskFile == null) {
+        virtualTaskFile = taskDir.createChildData(taskDir, name);
+      }
       VfsUtil.saveText(virtualTaskFile, entry.getValue());
     }
   }
 
-  private static void createTestFiles(VirtualFile taskDir, Task task) throws IOException {
-    final Map<String, String> tests = task.getTestsText();
-    for (Map.Entry<String, String> entry : tests.entrySet()) {
-      final String name = entry.getKey();
-      final VirtualFile virtualTaskFile = taskDir.createChildData(taskDir, name);
-      VfsUtil.saveText(virtualTaskFile, entry.getValue());
-    }
-  }
-
-  private static void createAdditionalFiles(Lesson lesson, VirtualFile courseDir) throws IOException {
+  private static void createAdditionalFiles(@NotNull Lesson lesson, @NotNull VirtualFile courseDir) throws IOException {
     final List<Task> taskList = lesson.getTaskList();
     if (taskList.size() != 1) return;
     final Task task = taskList.get(0);
@@ -100,8 +104,7 @@ public class StudyGenerator {
     }
   }
 
-
-  public static void createChildFile(@NotNull VirtualFile taskDir, String name, String text) throws IOException {
+  public static void createChildFile(@NotNull VirtualFile taskDir, @NotNull String name, @NotNull String text) throws IOException {
     String newDirectories = null;
     String fileName = name;
     VirtualFile dir = taskDir;
@@ -114,7 +117,10 @@ public class StudyGenerator {
       dir = VfsUtil.createDirectoryIfMissing(taskDir, newDirectories);
     }
     if (dir != null) {
-      final VirtualFile virtualTaskFile = dir.createChildData(taskDir, fileName);
+      VirtualFile virtualTaskFile = dir.findChild(fileName);
+      if (virtualTaskFile == null) {
+        virtualTaskFile = dir.createChildData(taskDir, fileName);
+      }
       if (EduUtils.isImage(name)) {
         virtualTaskFile.setBinaryContent(Base64.decodeBase64(text));
       }

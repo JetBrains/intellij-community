@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
@@ -151,11 +152,7 @@ public class EditorFragmentComponent extends JPanel {
     setLayout(new BorderLayout());
     add(component);
 
-    final Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
-
-    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
-    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
-    setBorder(BorderFactory.createCompoundBorder(outsideBorder, insideBorder));
+    setBorder(createEditorFragmentBorder(editor));
   }
 
   private static int getWidthLimit(@NotNull Editor editor) {
@@ -299,6 +296,14 @@ public class EditorFragmentComponent extends JPanel {
       color = colorsScheme.getDefaultBackground();
     }
     return color;
+  }
+
+  @NotNull
+  public static CompoundBorder createEditorFragmentBorder(@NotNull Editor editor) {
+    Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
+    Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
+    Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
+    return BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
   }
 
   private static class MyComponentHint extends LightweightHint {

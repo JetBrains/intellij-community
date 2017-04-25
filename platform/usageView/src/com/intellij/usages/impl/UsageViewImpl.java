@@ -56,7 +56,10 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
+import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -71,6 +74,7 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -149,6 +153,7 @@ public class UsageViewImpl implements UsageView {
   private UsageContextPanel.Provider myCurrentUsageContextProvider;
 
   private JPanel myCentralPanel;
+
   private final GroupNode myRoot;
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
@@ -248,6 +253,7 @@ public class UsageViewImpl implements UsageView {
           toolWindowPanel.setContent(myCentralPanel);
 
           myTree.setCellRenderer(myUsageViewTreeCellRenderer);
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             if (isDisposed || myProject.isDisposed()) return;
             collapseAll();
@@ -267,6 +273,7 @@ public class UsageViewImpl implements UsageView {
           myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
             @Override
             public void valueChanged(final TreeSelectionEvent e) {
+              //noinspection SSBasedInspection
               SwingUtilities.invokeLater(() -> {
                 if (isDisposed || myProject.isDisposed()) return;
                 updateOnSelectionChanged();
@@ -579,21 +586,7 @@ public class UsageViewImpl implements UsageView {
       ContainerUtil.addAll(list, provider.getActiveRules(project));
     }
 
-    Collections.sort(list, new Comparator<UsageGroupingRule>() {
-      @Override
-      public int compare(final UsageGroupingRule o1, final UsageGroupingRule o2) {
-        return getRank(o1) - getRank(o2);
-      }
-
-      private int getRank(final UsageGroupingRule rule) {
-        if (rule instanceof OrderableUsageGroupingRule) {
-          return ((OrderableUsageGroupingRule)rule).getRank();
-        }
-
-        return Integer.MAX_VALUE;
-      }
-    });
-
+    Collections.sort(list, Comparator.comparingInt(UsageGroupingRule::getRank));
     return list.toArray(new UsageGroupingRule[list.size()]);
   }
 
@@ -695,6 +688,7 @@ public class UsageViewImpl implements UsageView {
     return actionToolbar.getComponent();
   }
 
+  @SuppressWarnings("WeakerAccess") // used in rider
   protected boolean isPreviewUsageActionEnabled() {
     return true;
   }
@@ -900,6 +894,7 @@ public class UsageViewImpl implements UsageView {
     if (myCentralPanel != null) {
       setupCentralPanel();
     }
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> {
       if (isDisposed) return;
       if (myTree != null) {
@@ -1042,6 +1037,7 @@ public class UsageViewImpl implements UsageView {
     doReRun();
   }
 
+  @SuppressWarnings("WeakerAccess") // used in rider
   protected void doReRun() {
     myChangesDetected = false;
     com.intellij.usages.UsageViewManager.getInstance(getProject()).
@@ -1053,6 +1049,7 @@ public class UsageViewImpl implements UsageView {
     myUsageNodes.clear();
     myModel.reset();
     if (!myPresentation.isDetachedMode()) {
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (isDisposed) return;
         fireEvents();
@@ -1082,10 +1079,8 @@ public class UsageViewImpl implements UsageView {
     UsageNode child = myBuilder.appendUsage(usage, edtNodeInsertedUnderQueue, isFilterDuplicateLines());
     myUsageNodes.put(usage, child == null ? NULL_NODE : child);
 
-    if (child != null) {
-      for (Node node = child; node != myRoot; node = (Node)node.getParent()) {
-        node.update(this, edtNodeChangedQueue);
-      }
+    for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
+      node.update(this, edtNodeChangedQueue);
     }
 
     return child;
@@ -1291,7 +1286,7 @@ public class UsageViewImpl implements UsageView {
     return mySearchInProgress;
   }
 
-  public void setSearchInProgress(boolean searchInProgress) {
+  void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {
@@ -1876,6 +1871,11 @@ public class UsageViewImpl implements UsageView {
 
   public GroupNode getRoot() {
     return myRoot;
+  }
+
+  @TestOnly
+  public String getNodeText(TreeNode node) {
+    return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }
 
   public boolean isVisible(@NotNull Usage usage) {

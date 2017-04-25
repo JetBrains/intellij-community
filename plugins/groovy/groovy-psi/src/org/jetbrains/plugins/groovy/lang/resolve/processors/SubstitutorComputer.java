@@ -101,7 +101,7 @@ public class SubstitutorComputer {
     else if (parent instanceof GrAssignmentExpression && myPlaceToInferContext.equals(((GrAssignmentExpression)parent).getRValue())) {
       PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)parent).getLValue(), false);
       if ((lValue instanceof GrExpression) && !(lValue instanceof GrIndexProperty)) {
-        return ((GrExpression)lValue).getType();
+        return ((GrExpression)lValue).getNominalType();
       }
       else {
         return null;

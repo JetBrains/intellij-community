@@ -263,7 +263,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       inspectionElement.setAttribute(CLASS_TAG, toolName);
       try {
         toolList.writeExternal(inspectionElement);
-        getPathMacroManager().collapsePaths(inspectionElement);
       }
       catch (WriteExternalException e) {
         LOG.error(e);
@@ -274,6 +273,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         element.addContent(inspectionElement);
       }
     }
+    getPathMacroManager().collapsePaths(element);
   }
 
   private void markSettingsMerged(@NotNull String toolName, @NotNull Element element) {

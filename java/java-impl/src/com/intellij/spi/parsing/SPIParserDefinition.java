@@ -41,7 +41,7 @@ public class SPIParserDefinition implements ParserDefinition {
   public static final IFileElementType SPI_FILE_ELEMENT_TYPE = new IFileElementType(SPILanguage.INSTANCE);
 
   private static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
-  private static final Logger LOG = Logger.getInstance("#" + SPIParserDefinition.class.getName());
+  private static final Logger LOG = Logger.getInstance(SPIParserDefinition.class);
 
   @NotNull
   @Override

@@ -122,7 +122,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     }
     if (other.getAction() instanceof Comparable) {
       //noinspection unchecked
-      return ((Comparable)other.getAction()).compareTo(myAction);
+      return -((Comparable)other.getAction()).compareTo(myAction);
     }
     return Comparing.compare(getText(), other.getText());
   }
@@ -213,7 +213,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       }
       if (other.getDelegate() instanceof Comparable) {
         //noinspection unchecked
-        return ((Comparable)other.getDelegate()).compareTo(myAction);
+        return -((Comparable)other.getDelegate()).compareTo(myAction);
       }
       return Comparing.compare(getText(), other.getText());
     }

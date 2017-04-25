@@ -74,7 +74,7 @@ public class PluginManagerCore {
   public static final float LOADERS_PROGRESS_PART = 0.35f;
 
   private static final TObjectIntHashMap<PluginId> ourId2Index = new TObjectIntHashMap<>();
-  static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
+  private static final String MODULE_DEPENDENCY_PREFIX = "com.intellij.module";
   private static final Map<String, IdeaPluginDescriptorImpl> ourModulesToContainingPlugins = new THashMap<>();
   private static final PluginClassCache ourPluginClasses = new PluginClassCache();
   private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
@@ -131,8 +131,7 @@ public class PluginManagerCore {
     List<String> requiredPlugins = StringUtil.split(System.getProperty("idea.required.plugins.id", ""), ",");
     if (file.isFile()) {
       try {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        try {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
           String id;
           while ((id = reader.readLine()) != null) {
             id = id.trim();
@@ -142,7 +141,6 @@ public class PluginManagerCore {
           }
         }
         finally {
-          reader.close();
           if (!requiredPlugins.isEmpty()) {
             savePluginsList(disabledPlugins, false, new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME));
             fireEditDisablePlugins();
@@ -446,13 +444,7 @@ public class PluginManagerCore {
 
         return loader;
       }
-      catch (IOException e) {
-        getLogger().warn(e);
-      }
-      catch (IllegalAccessException e) {
-        getLogger().warn(e);
-      }
-      catch (InvocationTargetException e) {
+      catch (IOException | IllegalAccessException | InvocationTargetException e) {
         getLogger().warn(e);
       }
     }
@@ -469,9 +461,6 @@ public class PluginManagerCore {
         urls.add(file.toURI().toURL());
       }
       return new PluginClassLoader(urls, parentLoaders, pluginId, pluginDescriptor.getVersion(), pluginRoot);
-    }
-    catch (MalformedURLException e) {
-      getLogger().warn(e);
     }
     catch (IOException e) {
       getLogger().warn(e);
@@ -668,8 +657,7 @@ public class PluginManagerCore {
     try {
       URL jarURL = URLUtil.getJarEntryURL(file, META_INF + '/' + fileName);
 
-      ZipFile zipFile = new ZipFile(file);
-      try {
+      try (ZipFile zipFile = new ZipFile(file)) {
         ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
         if (entry != null) {
           Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
@@ -677,9 +665,6 @@ public class PluginManagerCore {
           descriptor.readExternal(document, jarURL, pathResolver);
           return descriptor;
         }
-      }
-      finally {
-        zipFile.close();
       }
     }
     catch (XmlSerializationException e) {
@@ -842,7 +827,7 @@ public class PluginManagerCore {
     final LinkedHashSet<String> faultyDescriptors = new LinkedHashSet<>();
     for (final Iterator<? extends IdeaPluginDescriptor> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptor pluginDescriptor = it.next();
-      checkDependants(pluginDescriptor, pluginId -> idToDescriptorMap.get(pluginId), pluginId -> {
+      checkDependants(pluginDescriptor, idToDescriptorMap::get, pluginId -> {
         if (!idToDescriptorMap.containsKey(pluginId)) {
           pluginDescriptor.setEnabled(false);
           if (!pluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX)) {
@@ -1055,7 +1040,6 @@ public class PluginManagerCore {
   /**
    * Checks if plugin should be loaded and return the reason why it should not
    * @param descriptor plugin to check
-   * @param loaded
    * @return null if plugin should be loaded, string with the reason why plugin should not be loaded
    */
   @Nullable

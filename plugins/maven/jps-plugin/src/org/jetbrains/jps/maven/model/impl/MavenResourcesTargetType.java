@@ -39,7 +39,7 @@ public class MavenResourcesTargetType extends ModuleBasedBuildTargetType<MavenRe
   private final boolean myIsTests;
 
   private MavenResourcesTargetType(final String typeId, boolean isTests) {
-    super(typeId);
+    super(typeId, true);
     myIsTests = isTests;
   }
 

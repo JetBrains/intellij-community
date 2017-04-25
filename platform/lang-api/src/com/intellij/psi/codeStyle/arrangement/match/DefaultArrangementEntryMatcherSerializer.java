@@ -59,7 +59,7 @@ public class DefaultArrangementEntryMatcherSerializer {
     return cmp;
   };
 
-  @NotNull private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementEntryMatcherSerializer.class.getName());
+  @NotNull private static final Logger LOG = Logger.getInstance(DefaultArrangementEntryMatcherSerializer.class);
 
   @NotNull private static final String COMPOSITE_CONDITION_NAME = "AND";
 

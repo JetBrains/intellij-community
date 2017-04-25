@@ -1,7 +1,7 @@
 <component name="StudySettings">
   <StudyTaskManager>
     <option name="course">
-      <Course>
+      <RemoteCourse>
         <option name="adaptive" value="true" />
         <option name="authors">
           <list>
@@ -138,7 +138,7 @@
         </option>
         <option name="name" value="test_adaptive_PyCharm_course_2" />
         <option name="updateDate" />
-      </Course>
+      </RemoteCourse>
     </option>
     <option name="toolWindowMode" value="TEXT" />
     <option name="turnEditingMode" value="false" />

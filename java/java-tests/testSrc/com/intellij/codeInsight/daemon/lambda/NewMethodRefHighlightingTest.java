@@ -156,6 +156,8 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testGetClassReturnTypeInMethodReference() { doTest(); }
   public void testCaptureTypeOfNewArrayExpression() { doTest(); }
   public void testIDEA152659() { doTest(); }
+  //removing one unsound capture conversion is not enough to leave the system consistent
+  public void _testRegistryOptionToSkipUnsoundCaptureConversionInMethodReferenceReturnType() { doTest(); }
   public void testFreshVariableLowerBoundsDuringSuperTypeChecks() { doTest(); }
   public void testTypeParameterInstantiation() { doTest(); }
   public void testIgnoreForeignVariables() { doTest(); }
@@ -167,6 +169,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testReturnTypeCompatibilityConstraintForSecondSearchCase() { doTest(); }
   public void testMethodInInheritorFoundBySecondSearch() { doTest(); }
   public void testNonExactMethodReferenceOnRawClassType() { doTest(); }
+  public void testIncludeOnlyTypeParametersUsedInParameterTypesExcludeThoseUsedInReturnOnly() { doTest(); }
   public void testMethodREfToContainingMethodWithGenericParam() { doTest(); }
   public void testDistinguishCapturedWildcardsByDifferentParameters() throws Exception { doTest(); }
 

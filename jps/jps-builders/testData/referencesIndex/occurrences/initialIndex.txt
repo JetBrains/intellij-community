@@ -20,3 +20,5 @@ java.util.ArrayList.size(0) in Bar Foo occurrences = 6
 Class Definitions:
 Bar in Bar
 Foo in Foo
+
+Members Signatures:

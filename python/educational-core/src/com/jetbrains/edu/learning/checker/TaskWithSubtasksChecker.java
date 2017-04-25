@@ -7,19 +7,43 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
 public class TaskWithSubtasksChecker extends StudyTaskChecker<TaskWithSubtasks> {
+  private StudyTaskChecker<PyCharmTask> myPyCharmTaskChecker;
   public TaskWithSubtasksChecker(@NotNull TaskWithSubtasks task,
                                  @NotNull Project project) {
     super(task, project);
+    EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(myTask.getLesson().getCourse().getLanguageById());
+    if (configurator != null) {
+      myPyCharmTaskChecker  = configurator.getPyCharmTaskChecker(task, project);
+    }
+  }
+
+  @Override
+  public StudyCheckResult check() {
+    if (myPyCharmTaskChecker != null) {
+      return myPyCharmTaskChecker.check();
+    }
+    return super.check();
+  }
+
+  @Override
+  public StudyCheckResult checkOnRemote(@NotNull StepicUser user) {
+    if (myPyCharmTaskChecker != null) {
+      return myPyCharmTaskChecker.checkOnRemote(user);
+    }
+    return super.checkOnRemote(user);
   }
 
   @Override

@@ -41,7 +41,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   private final Project myProject;
   private final CheckboxTree mySuitesTree;
   private final CoverageDataManager myCoverageManager;
-  private static final Logger LOG = Logger.getInstance("#" + CoverageSuiteChooserDialog.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoverageSuiteChooserDialog.class);
   private final CheckedTreeNode myRootNode;
   private CoverageEngine myEngine;
 

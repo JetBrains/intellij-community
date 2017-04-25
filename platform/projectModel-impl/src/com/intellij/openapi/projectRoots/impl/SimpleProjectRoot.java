@@ -33,10 +33,11 @@ import java.io.File;
  * @author mike
  */
 public class SimpleProjectRoot implements ProjectRoot {
-  private String myUrl;
+  @NotNull
+  private final String myUrl;
   private VirtualFile myFile;
   private final VirtualFile[] myFileArray = new VirtualFile[1];
-  private boolean myInitialized = false;
+  private boolean myInitialized;
   @NonNls private static final String ATTRIBUTE_URL = "url";
 
   public SimpleProjectRoot(@NotNull VirtualFile file) {
@@ -48,7 +49,8 @@ public class SimpleProjectRoot implements ProjectRoot {
     myUrl = url;
   }
 
-  SimpleProjectRoot() {
+  SimpleProjectRoot(@NotNull Element element) {
+    myUrl = readUrl(element);
   }
 
   public VirtualFile getFile() {
@@ -111,17 +113,20 @@ public class SimpleProjectRoot implements ProjectRoot {
     return myFile.getFileSystem().getProtocol().equals(URLUtil.HTTP_PROTOCOL) || myFile.isDirectory();
   }
 
+  @NotNull
   public String getUrl() {
     return myUrl;
   }
 
-  public void readExternal(Element element) {
+  @NotNull
+  private static String readUrl(Element element) {
     String url = element.getAttributeValue(ATTRIBUTE_URL);
-    myUrl = migrateJdkAnnotationsToCommunityForDevIdea(url);
+    return migrateJdkAnnotationsToCommunityForDevIdea(url);
   }
 
   // hack to migrate internal IDEA jdk annos dir from IDEA_PROJECT_HOME/jdkAnnotations to IDEA_PROJECT_HOME/community/java/jdkAnnotations
-  private static String migrateJdkAnnotationsToCommunityForDevIdea(String url) {
+  @NotNull 
+  private static String migrateJdkAnnotationsToCommunityForDevIdea(@NotNull String url) {
     File root = new File(VfsUtilCore.urlToPath(url) + "/..");
     boolean isOldJdkAnnotations = new File(root, "community/java/jdkAnnotations").exists()
                 && new File(root, "idea.iml").exists()

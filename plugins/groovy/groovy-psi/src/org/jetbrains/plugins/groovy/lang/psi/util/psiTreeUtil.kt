@@ -64,3 +64,14 @@ fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = Re
   }
   return true
 }
+
+fun PsiElement.skipParentsOfType(vararg types: Class<*>): Pair<PsiElement, PsiElement?>? = skipParentsOfType(true, *types)
+
+fun PsiElement.skipParentsOfType(strict: Boolean, vararg types: Class<*>): Pair<PsiElement, PsiElement?>? {
+  val seq = if (strict) getParents().drop(1) else getParents()
+  for (parents in seq) {
+    if (parents.first.javaClass in types) continue
+    return parents
+  }
+  return null
+}

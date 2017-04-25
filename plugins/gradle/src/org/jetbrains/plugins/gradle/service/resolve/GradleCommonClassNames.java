@@ -56,6 +56,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_TASK = "org.gradle.api.Task";
   @NonNls public static final String GRADLE_API_DEFAULT_TASK = "org.gradle.api.DefaultTask";
   @NonNls public static final String GRADLE_API_TASKS_DELETE = "org.gradle.api.tasks.Delete";
+  @NonNls public static final String GRADLE_JVM_TASKS_JAR = "org.gradle.jvm.tasks.Jar";
   @NonNls public static final String GRADLE_API_TASKS_BUNDLING_JAR = "org.gradle.api.tasks.bundling.Jar";
   @NonNls public static final String GRADLE_API_TASKS_BUNDLING_WAR = "org.gradle.api.tasks.bundling.War";
   @NonNls public static final String GRADLE_API_TASKS_COMPILE_JAVA_COMPILE = "org.gradle.api.tasks.compile.JavaCompile";
@@ -83,6 +84,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_PLUGINS_MAVEN_REPOSITORY_HANDLER_CONVENTION = "org.gradle.api.plugins.MavenRepositoryHandlerConvention";
   @NonNls public static final String GRADLE_API_INITIALIZATION_SETTINGS = "org.gradle.api.initialization.Settings";
   @NonNls public static final String GRADLE_API_EXTRA_PROPERTIES_EXTENSION = "org.gradle.api.plugins.ExtraPropertiesExtension";
+  @NonNls public static final String GRADLE_PROCESS_EXEC_SPEC = "org.gradle.process.ExecSpec";
 
   private GradleCommonClassNames() {
   }

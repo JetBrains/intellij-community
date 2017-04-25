@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -142,7 +143,7 @@ public class JavaReflectionReferenceUtil {
         if (typeArgument instanceof PsiCapturedWildcardType) {
           typeArgument = ((PsiCapturedWildcardType)typeArgument).getUpperBound();
         }
-        final PsiClass argumentClass = PsiTypesUtil.getPsiClass(typeArgument);
+        final PsiClass argumentClass = unwrapTypeParameter(PsiTypesUtil.getPsiClass(typeArgument));
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass);
         }
@@ -160,6 +161,18 @@ public class JavaReflectionReferenceUtil {
     return null;
   }
 
+  @Contract("null -> null")
+  @Nullable
+  private static PsiClass unwrapTypeParameter(@Nullable PsiClass psiClass) {
+    int preventEndlessLoop = 5;
+    while (psiClass instanceof PsiTypeParameter && --preventEndlessLoop > 0) {
+      final PsiClassType[] extendsList = psiClass.getExtendsListTypes();
+      psiClass = extendsList.length != 0 ? extendsList[0].resolve() : null;
+    }
+    return psiClass;
+  }
+
+  @Contract("null,_->null")
   @Nullable
   public static <T> T computeConstantExpression(@Nullable PsiExpression expression, @NotNull Class<T> expectedType) {
     expression = ParenthesesUtils.stripParentheses(expression);
@@ -246,9 +259,9 @@ public class JavaReflectionReferenceUtil {
     return hasPriority ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, -1);
   }
 
-  @NotNull
-  static LookupElement withPriority(@NotNull LookupElement lookupElement, int priority) {
-    return priority == 0 ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
+  @Nullable
+  static LookupElement withPriority(@Nullable LookupElement lookupElement, int priority) {
+    return priority == 0 || lookupElement == null ? lookupElement : PrioritizedLookupElement.withPriority(lookupElement, priority);
   }
 
   static int getMethodSortOrder(@NotNull PsiMethod method) {
@@ -310,6 +323,10 @@ public class JavaReflectionReferenceUtil {
   public static String getMethodTypeExpressionText(@NotNull ReflectiveSignature signature) {
     final String types = signature.getText(true, type -> type + ".class");
     return JAVA_LANG_INVOKE_METHOD_TYPE + "." + METHOD_TYPE + types;
+  }
+
+  public static boolean isCallToMethod(@NotNull PsiMethodCallExpression methodCall, @NotNull String className, @NotNull String methodName) {
+    return MethodCallUtils.isCallToMethod(methodCall, className, null, methodName, (PsiType[])null);
   }
 
 
@@ -443,7 +460,11 @@ public class JavaReflectionReferenceUtil {
     }
 
     public String getText(boolean withReturnType, @NotNull Function<String, String> transformation) {
-      final StringJoiner joiner = new StringJoiner(", ", "(", ")");
+      return getText(withReturnType, true, transformation);
+    }
+
+    public String getText(boolean withReturnType, boolean withParentheses, @NotNull Function<String, String> transformation) {
+      final StringJoiner joiner = new StringJoiner(", ", withParentheses ? "(" : "", withParentheses ? ")" : "");
       if (withReturnType) {
         joiner.add(transformation.apply(myReturnType));
       }

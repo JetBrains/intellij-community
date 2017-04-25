@@ -16,16 +16,17 @@
 
 package com.intellij.application.options.editor;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,8 +80,9 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
 
   public static void applyCodeFoldingSettingsChanges() {
     EditorOptionsPanel.reinitAllEditors();
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      DaemonCodeAnalyzer.getInstance(project).restart();
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      Project project = editor.getProject();
+      if (project != null) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor);
     }
   }
 

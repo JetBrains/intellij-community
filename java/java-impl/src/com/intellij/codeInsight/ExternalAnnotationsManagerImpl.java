@@ -92,7 +92,7 @@ import java.util.Set;
  * @since 26-Jun-2007
  */
 public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsManager {
-  private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalAnnotationsManagerImpl.class);
 
   private final MessageBus myBus;
 

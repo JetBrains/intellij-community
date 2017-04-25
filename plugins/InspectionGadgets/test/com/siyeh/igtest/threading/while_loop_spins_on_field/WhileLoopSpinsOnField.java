@@ -22,6 +22,7 @@ public class WhileLoopSpinsOnField
         }
         while(testVolatileInt!=3);
 
+        while(testInt++ < 10);
     }
 }
 class WhileLoopSpinsOnFieldFalsePositive {

@@ -44,7 +44,7 @@ import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 public class VcsLogFullDetailsIndex<T> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
-  @NotNull private final ID<Integer, T> myID;
+  @NotNull private final IndexId<Integer, T> myID;
   @NotNull private final String myLogId;
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
@@ -59,7 +59,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
-    myID = ID.create(name);
+    myID = IndexId.create(name);
     myName = name;
     myLogId = logId;
     myIndexer = indexer;
@@ -181,7 +181,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
 
     @NotNull
     @Override
-    public ID<Integer, T> getName() {
+    public IndexId<Integer, T> getName() {
       return myID;
     }
 

@@ -349,6 +349,8 @@
     <projectService serviceInterface="com.intellij.slicer.SliceManager"
                     serviceImplementation="com.intellij.slicer.SliceManager"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
+                        serviceImplementation="com.intellij.openapi.roots.impl.ExternalProjectSystemRegistryImpl"/>
     <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                    serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"
                    testServiceImplementation="com.intellij.configurationStore.ModuleStoreImpl$TestModuleStore"/>
@@ -716,7 +718,7 @@
                          implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$PageDownHandler"/>
     <editorActionHandler action="EditorLeft" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$LeftHandler"/>
     <editorActionHandler action="EditorRight" implementationClass="com.intellij.codeInsight.lookup.impl.LookupActionHandler$RightHandler"/>
-    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.lookup.impl.BackspaceHandler" id="backspace.lookup"/>
 
     <!-- CodeInsightSettings -->
     <editorActionHandler action="EditorEnter" implementationClass="com.intellij.codeInsight.editorActions.EnterHandler" id="editorEnter"/>
@@ -728,7 +730,7 @@
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.editorActions.CopyHandler"/>
     <editorActionHandler action="EditorCut" implementationClass="com.intellij.codeInsight.editorActions.CutHandler"/>
     <editorActionHandler action="EditorJoinLines" implementationClass="com.intellij.codeInsight.editorActions.JoinLinesHandler"/>
-    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler"/>
+    <editorActionHandler action="EditorBackSpace" implementationClass="com.intellij.codeInsight.editorActions.BackspaceHandler" id="backspace.lang"/>
     <editorActionHandler action="EditorDeleteToWordStart"
                          implementationClass="com.intellij.codeInsight.editorActions.BackspaceToWordStartHandler"/>
     <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.TypedHandler" order="first"/>

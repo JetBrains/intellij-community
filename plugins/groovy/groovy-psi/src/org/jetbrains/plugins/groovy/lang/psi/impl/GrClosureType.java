@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,12 @@ public class GrClosureType extends GrLiteralClassType {
   @NotNull
   public String getClassName() {
     return "Closure";
+  }
+
+  @Override
+  public int getParameterCount() {
+    PsiClass resolved = resolve();
+    return resolved != null && resolved.getTypeParameters().length == 1 ? 1 : 0;
   }
 
   @Override
@@ -187,5 +193,10 @@ public class GrClosureType extends GrLiteralClassType {
   @NotNull
   public GrSignature getSignature() {
     return mySignature;
+  }
+
+  @Override
+  public String toString() {
+    return "PsiType: Closure<*>";
   }
 }

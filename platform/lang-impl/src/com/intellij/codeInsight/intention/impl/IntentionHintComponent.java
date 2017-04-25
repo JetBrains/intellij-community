@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Collections;
 import java.util.List;
 
@@ -124,7 +125,12 @@ public class IntentionHintComponent implements Disposable, ScrollAwareHint {
   private boolean myDisposed;
   private volatile ListPopup myPopup;
   private final PsiFile myFile;
-  private final JPanel myPanel = new JPanel();
+  private final JPanel myPanel = new JPanel() {
+    @Override
+    public synchronized void addMouseListener(MouseListener l) {
+      // avoid this (transparent) panel consuming mouse click events
+    }
+  };
 
   private PopupMenuListener myOuterComboboxPopupListener;
 

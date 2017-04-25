@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,5 +45,9 @@ public abstract class DebuggerStateManager {
 
   protected void fireStateChanged(@NotNull DebuggerContextImpl newContext, DebuggerSession.Event event) {
     myEventDispatcher.getMulticaster().changeEvent(newContext, event);
+  }
+
+  void dispose() {
+    myEventDispatcher.getListeners().clear();
   }
 }

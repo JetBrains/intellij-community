@@ -23,7 +23,7 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.List;
 
 public class JavaMethodParameterUnwrapper extends JavaUnwrapper {
-  private static final Logger LOG = Logger.getInstance("#" + JavaMethodParameterUnwrapper.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaMethodParameterUnwrapper.class);
 
   public JavaMethodParameterUnwrapper() {
     super("");

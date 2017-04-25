@@ -346,6 +346,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
 
+    Map<PsiMethodCallExpression, ThreeState> calls = visitor.getBooleanCalls();
+    calls.forEach((call, state) -> {
+      if (state != ThreeState.UNSURE && reportedAnchors.add(call)) {
+        reportConstantCondition(holder, visitor, call, state.toBoolean());
+      }
+    });
+
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
@@ -462,7 +469,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           holder.registerProblem(expr, "Passing a non-null argument to <code>Optional</code>",
                                  DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix());
         }
-        
+
       }
     }
   }
@@ -700,12 +707,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
     if (block instanceof PsiExpression && block.getParent() instanceof PsiLambdaExpression && PsiType.VOID.equals(returnType)) return;
-    
+
     // no warnings for Void methods, where only null can be possibly returned
     if (returnType == null || returnType.equalsToText(CommonClassNames.JAVA_LANG_VOID)) return;
 
     for (PsiElement statement : visitor.getProblems(NullabilityProblem.nullableReturn)) {
-      assert statement instanceof PsiExpression; 
+      assert statement instanceof PsiExpression;
       final PsiExpression expr = (PsiExpression)statement;
       if (!reportedAnchors.add(expr)) continue;
 
@@ -962,6 +969,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
+    private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
     private boolean myAlwaysReturnsNotNull = true;
 
@@ -969,7 +977,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
       myCCEInstructions.add(instruction);
     }
-    
+
     Collection<PsiElement> getProblems(final NullabilityProblem kind) {
       return ContainerUtil.filter(myProblems.get(kind), psiElement -> {
         StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
@@ -982,6 +990,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     Map<PsiMethodCallExpression, ThreeState> getOptionalCalls() {
       return myOptionalCalls;
+    }
+
+    Map<PsiMethodCallExpression, ThreeState> getBooleanCalls() {
+      return myBooleanCalls;
     }
 
     List<PsiExpression> getOptionalQualifiers() {
@@ -1010,25 +1022,57 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
           }
           else if (DfaOptionalSupport.isOptionalGetMethodName(methodName)) {
             ThreeState state = memState.checkOptional(memState.peek());
-            myOptionalCalls.merge(call, state, (s1, s2) -> s1 == s2 ? s1 : ThreeState.UNSURE);
+            myOptionalCalls.merge(call, state, ThreeState::merge);
           }
         }
       }
       DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
       if (hasNonTrivialFailingContracts(instruction)) {
-        boolean allFail = Arrays.stream(states).allMatch(s -> s.getMemoryState().peek() == runner.getFactory().getConstFactory().getContractFail());
+        DfaConstValue fail = runner.getFactory().getConstFactory().getContractFail();
+        boolean allFail = Arrays.stream(states).allMatch(s -> s.getMemoryState().peek() == fail);
         myFailingCalls.merge(instruction, allFail, Boolean::logicalAnd);
       }
+      handleBooleanCalls(instruction, states);
       return states;
+    }
+
+    void handleBooleanCalls(MethodCallInstruction instruction, DfaInstructionState[] states) {
+      if (!hasNonTrivialBooleanContracts(instruction)) return;
+      PsiMethod method = instruction.getTargetMethod();
+      if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
+      PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
+      if (call == null || myBooleanCalls.get(call) == ThreeState.UNSURE) return;
+      PsiElement parent = call.getParent();
+      if (parent instanceof PsiExpressionStatement) return;
+      if (parent instanceof PsiLambdaExpression &&
+          PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent))) {
+        return;
+      }
+      for (DfaInstructionState s : states) {
+        DfaValue val = s.getMemoryState().peek();
+        ThreeState state = ThreeState.UNSURE;
+        if (val instanceof DfaConstValue) {
+          Object value = ((DfaConstValue)val).getValue();
+          if (value instanceof Boolean) {
+            state = ThreeState.fromBoolean((Boolean)value);
+          }
+        }
+        myBooleanCalls.merge(call, state, ThreeState::merge);
+      }
     }
 
     private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {
       List<MethodContract> contracts = instruction.getContracts();
-      return !contracts.isEmpty() && contracts.stream().anyMatch(DataFlowInstructionVisitor::isNonTrivialFailingContract);
+      return !contracts.isEmpty() && contracts.stream().anyMatch(
+        contract -> contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial());
     }
 
-    private static boolean isNonTrivialFailingContract(MethodContract contract) {
-      return contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial();
+    private static boolean hasNonTrivialBooleanContracts(MethodCallInstruction instruction) {
+      List<MethodContract> contracts = instruction.getContracts();
+      return !contracts.isEmpty() && contracts.stream().anyMatch(
+        contract -> (contract.getReturnValue() == MethodContract.ValueConstraint.FALSE_VALUE ||
+                     contract.getReturnValue() == MethodContract.ValueConstraint.TRUE_VALUE)
+                    && !contract.isTrivial());
     }
 
     @Override

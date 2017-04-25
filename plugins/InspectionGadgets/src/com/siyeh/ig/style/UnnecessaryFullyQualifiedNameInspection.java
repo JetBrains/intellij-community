@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
@@ -31,6 +30,7 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -114,6 +114,10 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         return;
       }
       final PsiClass aClass = (PsiClass)target;
+      final String qualifiedName = aClass.getQualifiedName();
+      if (qualifiedName == null || !ImportUtils.nameCanBeImported(qualifiedName, referenceElement)) {
+        return;
+      }
       ImportUtils.addImportIfNeeded(aClass, referenceElement);
       final String fullyQualifiedText = referenceElement.getText();
       final QualificationRemover qualificationRemover = new QualificationRemover(fullyQualifiedText);
@@ -176,15 +180,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (qualifier == null) {
         return;
       }
-      try {
-        qualifier.delete();
-      }
-      catch (IncorrectOperationException e) {
-        final Class<? extends QualificationRemover> aClass = getClass();
-        final String className = aClass.getName();
-        final Logger logger = Logger.getInstance(className);
-        logger.error(e);
-      }
+      qualifier.delete();
       shortenedElements.add(reference);
     }
   }
@@ -241,10 +237,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(qualifierTarget instanceof PsiPackage)) {
         return;
       }
-      if (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null) {
-        return;
-      }
-      final List<PsiJavaCodeReferenceElement> references = new ArrayList<>(2);
+      final List<PsiJavaCodeReferenceElement> references = new SmartList<>();
       references.add(reference);
       if (styleSettings.INSERT_INNER_CLASS_IMPORTS) {
         collectInnerClassNames(reference, references);
@@ -265,9 +258,14 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         }
         final PsiElement qualifier1 = aReference.getQualifier();
         if (qualifier1 != null) {
+          final ProblemHighlightType highlightType =
+            (ignoreInModuleStatements && PsiTreeUtil.getParentOfType(reference, PsiUsesStatement.class, PsiProvidesStatement.class) != null)
+            ? ProblemHighlightType.INFORMATION
+            : ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+
           final boolean inSameFile = aClass.getContainingFile() == containingFile ||
                                      ImportHelper.isAlreadyImported((PsiJavaFile)containingFile, qualifiedName);
-          registerError(qualifier1, ProblemHighlightType.LIKE_UNUSED_SYMBOL, inSameFile);
+          registerError(qualifier1, highlightType, inSameFile);
         }
         break;
       }

@@ -18,8 +18,8 @@ package org.jetbrains.idea.maven.utils.library;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
+import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
@@ -43,7 +43,7 @@ public class RepositoryLibraryDescription {
   @NotNull
   public static final String SnapshotVersionSuffix = "-SNAPSHOT";
 
-  public static final Icon DEFAULT_ICON = IconLoader.getIcon("/icons/repositoryLibraryLogo.png");
+  public static final Icon DEFAULT_ICON = OpenapiIcons.RepositoryLibraryLogo;
   
   private static volatile Map<String, RepositoryLibraryDescription> ourStaticallyDefinedLibraries;
   

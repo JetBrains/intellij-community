@@ -96,7 +96,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     setCheckboxColumnName("");
     myDescriptionPanel.setPreferredSize(new Dimension(400, -1));
     myDescriptionPanel.setEditable(false);
-    myDescriptionPanel.setContentType(UIUtil.HTML_MIME);
+    myDescriptionPanel.setEditorKit(UIUtil.getHTMLEditorKit());
     myDescriptionPanel.addHyperlinkListener(new PluginManagerMain.MyHyperlinkListener());
     removeAll();
 

@@ -193,7 +193,7 @@ public class GradleResourceCompilerConfigurationGenerator {
 
       final ExternalProject externalRootProject = lazyExternalProjectMap.get(gradleProjectPath);
       if (externalRootProject == null) {
-        context.addMessage(CompilerMessageCategory.ERROR,
+        context.addMessage(CompilerMessageCategory.WARNING,
                            String.format("Unable to make the module: %s, related gradle configuration was not found. " +
                                          "Please, re-import the Gradle project and try again.",
                                          module.getName()), VfsUtilCore.pathToUrl(gradleProjectPath), -1, -1);

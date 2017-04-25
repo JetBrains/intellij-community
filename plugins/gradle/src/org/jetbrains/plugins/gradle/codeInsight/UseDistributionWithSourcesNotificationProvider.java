@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 public class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements
                                                                                                                           DumbAware {
   public static final Pattern GRADLE_SRC_DISTRIBUTION_PATTERN;
-  private static final Logger LOG = Logger.getInstance("#" + UseDistributionWithSourcesNotificationProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(UseDistributionWithSourcesNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("gradle.notifications.use.distribution.with.sources");
   private static final String ALL_ZIP_DISTRIBUTION_URI_SUFFIX = "-all.zip";
   private final Project myProject;

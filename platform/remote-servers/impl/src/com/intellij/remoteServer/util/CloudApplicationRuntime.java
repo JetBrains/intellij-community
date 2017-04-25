@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CloudApplicationRuntime extends DeploymentRuntime {
 
-  private static final Logger LOG = Logger.getInstance("#" + CloudApplicationRuntime.class.getName());
+  private static final Logger LOG = Logger.getInstance(CloudApplicationRuntime.class);
 
 
   private final String myApplicationName;

@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.ScrollingModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -358,7 +359,8 @@ public final class EditorUtil {
   }
 
   public static int nextTabStop(int x, @NotNull Editor editor, int tabSize) {
-    return nextTabStop(x, getSpaceWidth(Font.PLAIN, editor), tabSize);
+    int leftInset = editor.getContentComponent().getInsets().left;
+    return nextTabStop(x - leftInset, getSpaceWidth(Font.PLAIN, editor), tabSize) + leftInset;
   }
 
   public static int nextTabStop(int x, int plainSpaceWidth, int tabSize) {
@@ -746,6 +748,23 @@ public final class EditorUtil {
     }
     else {
       editor.getFoldingModel().runBatchFoldingOperation(operation);
+    }
+  }
+
+  public static void runWithAnimationDisabled(@NotNull Editor editor, @NotNull Runnable taskWithScrolling) {
+    ScrollingModel scrollingModel = editor.getScrollingModel();
+    if (!(scrollingModel instanceof ScrollingModelImpl)) {
+      taskWithScrolling.run();
+    }
+    else {
+      boolean animationWasEnabled = ((ScrollingModelImpl)scrollingModel).isAnimationEnabled();
+      scrollingModel.disableAnimation();
+      try {
+        taskWithScrolling.run();
+      }
+      finally {
+        if (animationWasEnabled) scrollingModel.enableAnimation();
+      }
     }
   }
 }

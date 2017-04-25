@@ -62,6 +62,17 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
     customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
     layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
+
+    def helpZip = customizer.getPathToHelpZip(buildContext)
+    if (helpZip != null) {
+      if (!new File(helpZip).exists() && buildContext.options.isInDevelopmentMode) {
+        buildContext.messages.warning("Help won't be bundled with Mac OS X distribution: $helpZip doesn't exist")
+      }
+      else {
+        buildContext.ant.unzip(src: helpZip, dest: "$macDistPath/Resources")
+      }
+    }
+
     customizer.copyAdditionalFiles(buildContext, macDistPath)
 
     if (!customizer.binariesToSign.empty) {

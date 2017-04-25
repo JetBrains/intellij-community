@@ -341,6 +341,28 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-16585
+  public void testCommentAfterComprehensionInAssignment() {
+    doTest("int",
+           "from typing import List\n" +
+           "\n" +
+           "xs = [expr for expr in range(10)]  # type: List[int]");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInForLoop() {
+    doTest("int",
+           "for _ in [str(expr) for expr in range(10)]:  # type: str\n" +
+           "    pass");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInWithStatement() {
+    doTest("int",
+           "with f([expr for expr in range(10)]) as _: # type: str\n" +
+           "    pass");
+  }
+
   public void testStringLiteralInjection() {
     doTestInjectedText("class C:\n" +
                        "    def foo(self, expr: '<caret>C'):\n" +
@@ -890,6 +912,23 @@ public class PyTypingTest extends PyTestCase {
     doTest("Type[str]", 
            "xs = [str]\n" +
            "expr = xs.pop()");
+  }
+
+  public void testGenericUserFunctionWithManyParamsAndNestedCall() {
+    doTest("Tuple[bool, int, str]",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "U = TypeVar('U')\n" +
+           "V = TypeVar('V')\n" +
+           "\n" +
+           "def myid(x: T) -> T:\n" +
+           "    pass\n" +
+           "\n" +
+           "def f(x: T, y: U, z: V):\n" +
+           "    return myid(x), myid(y), myid(z)\n" +
+           "\n" +
+           "expr = f(True, 1, 'foo')\n");
   }
 
   private void doTestNoInjectedText(@NotNull String text) {

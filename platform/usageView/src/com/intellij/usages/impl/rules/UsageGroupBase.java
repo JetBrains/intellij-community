@@ -56,6 +56,10 @@ public abstract class UsageGroupBase implements UsageGroup {
     if (!(o instanceof UsageGroupBase)) {
       return -1;
     }
-    return Comparing.compare(myOrder, ((UsageGroupBase)o).myOrder);
+    int order = Comparing.compare(myOrder, ((UsageGroupBase)o).myOrder);
+    if (order != 0) {
+      return order;
+    }
+    return getText(null).compareToIgnoreCase(o.getText(null));
   }
 }

@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * Date: 1/8/13
  */
 public class JavaFxTagNameReference extends TagNameReference{
-  private static final Logger LOGGER = Logger.getInstance("#" + JavaFxTagNameReference.class.getName());
+  private static final Logger LOGGER = Logger.getInstance(JavaFxTagNameReference.class);
 
   public JavaFxTagNameReference(ASTNode element, boolean startTagFlag) {
     super(element, startTagFlag);

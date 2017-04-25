@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -90,12 +89,7 @@ public class RestoreUpdateTree implements ProjectComponent, PersistentStateCompo
   @Override
   public void loadState(Element state) {
     UpdateInfo updateInfo = new UpdateInfo();
-    try {
-      updateInfo.readExternal(state);
-    }
-    catch (InvalidDataException e) {
-      throw new RuntimeException(e);
-    }
+    updateInfo.readExternal(state);
     myUpdateInfo = updateInfo.isEmpty() ? null : updateInfo;
   }
 

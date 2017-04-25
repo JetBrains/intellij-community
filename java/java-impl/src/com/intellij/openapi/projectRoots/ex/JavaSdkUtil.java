@@ -71,7 +71,7 @@ public class JavaSdkUtil {
   private static boolean isJdkSupportsLevel(@Nullable final Sdk jdk, @NotNull LanguageLevel level) {
     if (jdk == null) return true;
     String versionString = jdk.getVersionString();
-    JavaSdkVersion version = versionString == null ? null : JdkVersionUtil.getVersion(versionString);
+    JavaSdkVersion version = versionString == null ? null : JavaSdkVersion.fromVersionString(versionString);
     return version != null && version.getMaxLanguageLevel().isAtLeast(level);
   }
 

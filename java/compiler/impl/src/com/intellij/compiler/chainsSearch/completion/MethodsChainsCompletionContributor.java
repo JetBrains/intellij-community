@@ -25,7 +25,7 @@ import com.intellij.compiler.chainsSearch.ChainsSearcher;
 import com.intellij.compiler.chainsSearch.MethodsChain;
 import com.intellij.compiler.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.chainsSearch.context.TargetType;
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
@@ -94,7 +94,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
     CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
-    TargetType target = context.getTarget();
+    ChainSearchTarget target = context.getTarget();
     List<MethodsChain> searchResult =
       ChainsSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
                             target,
@@ -116,10 +116,10 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     LOG.assertTrue(parent != null, "A completion position should match to a pattern");
 
     if (parent instanceof PsiAssignmentExpression) {
-      return extractContextFromAssignment((PsiAssignmentExpression)parent);
+      return extractContextFromAssignment((PsiAssignmentExpression)parent, parameters);
     }
     if (parent instanceof PsiLocalVariable) {
-      return extractContextFromVariable((PsiLocalVariable)parent);
+      return extractContextFromVariable((PsiLocalVariable)parent, parameters);
     }
     PsiMethod method = ((PsiMethodCallExpression)parent).resolveMethod();
     if (method == null) return null;
@@ -130,23 +130,25 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
     PsiParameter[] methodParameters = method.getParameterList().getParameters();
     if (exprPosition < methodParameters.length) {
       PsiParameter methodParameter = methodParameters[exprPosition];
-      return ChainCompletionContext.createContext(methodParameter.getType(), PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class));
+      return ChainCompletionContext.createContext(methodParameter.getType(), PsiTreeUtil.getParentOfType(expression, PsiDeclarationStatement.class), suggestIterators(parameters));
     }
     return null;
   }
 
   @Nullable
-  private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable) {
+  private static ChainCompletionContext extractContextFromVariable(PsiLocalVariable localVariable,
+                                                                   CompletionParameters parameters) {
     PsiDeclarationStatement declaration = PsiTreeUtil.getParentOfType(localVariable, PsiDeclarationStatement.class);
-    return ChainCompletionContext.createContext(localVariable.getType(), declaration);
+    return ChainCompletionContext.createContext(localVariable.getType(), declaration, suggestIterators(parameters));
   }
 
   @Nullable
-  private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression) {
+  private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression,
+                                                                     CompletionParameters parameters) {
     if (!(assignmentExpression instanceof PsiReferenceExpression)) return null;
     PsiElement resolved = ((PsiReferenceExpression)assignmentExpression).resolve();
     return resolved instanceof PsiVariable
-           ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression)
+           ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression, suggestIterators(parameters))
            : null;
   }
 
@@ -164,5 +166,9 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   @NotNull
   private static ElementPattern<PsiElement> patternForMethodCallParameter() {
     return psiElement().withSuperParent(3, PsiMethodCallExpressionImpl.class);
+  }
+
+  private static boolean suggestIterators(@NotNull CompletionParameters parameters) {
+    return parameters.getInvocationCount() > 1;
   }
 }

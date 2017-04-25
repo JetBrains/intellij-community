@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,8 +126,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneMarker.clean();
     }
   });
-  private static final ArrayFactory<IElementType> myElementTypeArrayFactory =
-    count -> count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
 
   public static void registerWhitespaceToken(@NotNull IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
@@ -266,9 +264,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     int i = 0;
     int offset = 0;
     while (true) {
-      ProgressIndicatorProvider.checkCanceled();
       IElementType type = myLexer.getTokenType();
       if (type == null) break;
+      
+      if (i % 20 == 0) ProgressIndicatorProvider.checkCanceled();
 
       if (i >= myLexTypes.length - 1) {
         resizeLexemes(i * 3 / 2);
@@ -918,7 +917,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private void resizeLexemes(final int newSize) {
     myLexStarts = ArrayUtil.realloc(myLexStarts, newSize+1);
-    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, myElementTypeArrayFactory);
+    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, IElementType.ARRAY_FACTORY);
     clearCachedTokenType();
   }
 

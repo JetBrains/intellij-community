@@ -84,7 +84,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   @NonNls private static final String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   public static final Color DARK_YELLOW = JBColor.YELLOW.darker();
-  private static final Logger LOG = Logger.getInstance("#" + SMTestRunnerResultsForm.class.getName());
+  private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
 
   private SMTRunnerTestTreeView myTreeView;
 

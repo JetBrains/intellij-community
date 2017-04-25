@@ -30,22 +30,29 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    AbstractButton b = (AbstractButton)c;
+    b.setRolloverEnabled(true);
     return new WinIntelliJCheckBoxUI();
   }
 
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
-    final Color color = enabled ? b.getForeground() : getBorderColor1(false, false);
-    g.setColor(color);
-    final Icon icon = MacIntelliJIconCache.getIcon("checkBox", selected, false, enabled);
-    Rectangle r = new Rectangle(iconRect.x + JBUI.scale(2), iconRect.y + JBUI.scale(2), iconRect.width - JBUI.scale(4), iconRect.height - JBUI.scale(4));
-    icon.paintIcon(c, g, r.x, r.y);
+    ButtonModel bm = b.getModel();
+    boolean focused = c.hasFocus() || bm.isRollover();
+
+    String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
+    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, bm.isPressed());
+
+    Rectangle viewRect = new Rectangle(c.getSize());
+    int x = (iconRect.width - icon.getIconWidth()) / 2;
+    int y = (viewRect.height - icon.getIconHeight()) / 2;
+    icon.paintIcon(c, g, x, y);
   }
 
   @Override
   protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
     super.drawText(c, g, b, fm, textRect, text);
-    if (b.hasFocus()) {
+    if (b.hasFocus() && !textRect.isEmpty()) {
       g.setColor(b.getForeground());
       UIUtil.drawDottedRectangle(g, textRect.x - 2, textRect.y - 1, textRect.width + textRect.x + 1, textRect.height + 3);
     }
@@ -54,5 +61,9 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   @Override
   public Icon getDefaultIcon() {
     return JBUI.scale(EmptyIcon.create(18)).asUIResource();
+  }
+
+  private static boolean isIndeterminate(JCheckBox checkBox) {
+    return "indeterminate".equals(checkBox.getClientProperty("JButton.selectedState"));
   }
 }

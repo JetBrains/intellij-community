@@ -35,8 +35,8 @@ import java.util.BitSet;
 public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailingSpacesFilter {
   @NotNull private final BitSet myDisabledLinesBitSet;
   @NotNull private final Document myDocument;
-  
-  private static Logger LOG = Logger.getInstance("#" + PsiBasedStripTrailingSpacesFilter.class.getName());
+
+  private static Logger LOG = Logger.getInstance(PsiBasedStripTrailingSpacesFilter.class);
   
   public abstract static class Factory extends StripTrailingSpacesFilterFactory {
     @NotNull

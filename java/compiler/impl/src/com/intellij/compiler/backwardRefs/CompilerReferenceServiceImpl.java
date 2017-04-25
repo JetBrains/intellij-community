@@ -16,6 +16,7 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
@@ -38,6 +39,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -156,12 +158,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           });
         });
       }
-    }
-  }
 
-  @Override
-  public void projectClosed() {
-    closeReaderIfNeed(false);
+      Disposer.register(myProject, () -> closeReaderIfNeed(false));
+    }
   }
 
   @Nullable
@@ -222,17 +221,23 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType) {
+  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                               @SignatureData.IteratorKind byte iteratorKind) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
       try {
         final int type = myReader.getNameEnumerator().tryEnumerate(rawReturnType);
         if (type == 0) return Collections.emptySortedSet();
-        return Stream.of(new SignatureData(type, true), new SignatureData(type, false))
+        return Stream.of(new SignatureData(type, iteratorKind, true), new SignatureData(type, iteratorKind, false))
           .flatMap(sd -> myReader.getMembersFor(sd)
           .stream()
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
+          .map(r -> (LightRef.JavaLightMethodRef) r)
+          .flatMap(r -> {
+            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false);
+            return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
+          })
           .map(r -> new OccurrencesAware<>(
             new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
             myReader.getOccurrenceCount(r))))
@@ -493,7 +498,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     myOpenCloseLock.lock();
     try {
       if (myProject.isOpen()) {
+        LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " + ReadAction.compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
         myReader = CompilerReferenceReader.create(myProject);
+        LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
     } finally {
       myOpenCloseLock.unlock();
@@ -664,11 +671,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       throw (ProcessCanceledException)e;
     }
 
+    LOG.error("an exception during " + actionName + " calculation", e);
     Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
-    if (unwrapped instanceof PersistentEnumeratorBase.CorruptedException || unwrapped instanceof StorageException) {
+    if (requireIndexRebuild(unwrapped)) {
       closeReaderIfNeed(true);
     }
-    LOG.error("an exception during " + actionName + " calculation", e);
     return null;
   }
 
@@ -677,5 +684,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     TIntHashSet result = (TIntHashSet)set1.clone();
     result.retainAll(set2.toArray());
     return result;
+  }
+
+  private static boolean requireIndexRebuild(@Nullable Throwable exception) {
+    return exception instanceof PersistentEnumeratorBase.CorruptedException ||
+           exception instanceof StorageException ||
+           exception instanceof IOException;
   }
 }

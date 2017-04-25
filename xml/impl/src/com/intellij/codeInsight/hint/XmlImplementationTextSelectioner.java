@@ -28,7 +28,7 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlImplementationTextSelectioner implements ImplementationTextSelectioner {
-  private static final Logger LOG = Logger.getInstance("#" + XmlImplementationTextSelectioner.class.getName());
+  private static final Logger LOG = Logger.getInstance(XmlImplementationTextSelectioner.class);
 
   @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {

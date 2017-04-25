@@ -16,6 +16,7 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 
 /**
@@ -25,8 +26,8 @@ final class PsiCrumb extends Crumb.Impl {
   final PsiElement element;
   CrumbPresentation presentation;
 
-  PsiCrumb(PsiElement element, BreadcrumbsInfoProvider provider) {
-    super(null, provider.getElementInfo(element), provider.getElementTooltip(element));
+  PsiCrumb(PsiElement element, BreadcrumbsProvider provider) {
+    super(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element));
     this.element = element;
   }
 

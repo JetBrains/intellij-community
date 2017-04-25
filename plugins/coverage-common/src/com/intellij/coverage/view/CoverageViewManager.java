@@ -44,7 +44,7 @@ import java.util.Map;
     storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
-  private static final Logger LOG = Logger.getInstance("#" + CoverageViewManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
   private Project myProject;
   private final CoverageDataManager myDataManager;

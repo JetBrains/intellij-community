@@ -3,13 +3,17 @@ package com.jetbrains.env.python.testing;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter;
+import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.PathUtil;
 import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalPyTestConfiguration;
@@ -21,8 +25,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
+import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -30,6 +36,97 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "pytest")
 public final class PythonPyTestingTest extends PyEnvTestCase {
+
+
+  // Ensures setup/teardown does not break anything
+  @Test
+  public void testSetupTearDown() throws Exception {
+    runPythonTest(new SetupTearDownTestTask<PyTestTestProcessRunner>() {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner("test_test.py", 1);
+      }
+    });
+  }
+
+  /**
+   * Ensures that python target pointing to module works correctly
+   */
+  @Test
+  public void testRunModuleAsFile() throws Exception {
+    runPythonTest(new RunModuleAsFileTask<PyTestTestProcessRunner>() {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(TARGET, 0);
+      }
+    });
+  }
+
+
+  @Test
+  public void testRerunSubfolder() throws Exception {
+    runPythonTest(new RerunSubfolderTask<PyTestTestProcessRunner>(2) {
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+        return new PyTestTestProcessRunner(".", 1);
+      }
+    });
+  }
+
+
+  @Test
+  public void testParametrized() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/parametrized", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_pytest_parametrized.py", 1);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          Assert.assertEquals("Parametrized test produced bad tree",
+                              "Test tree:\n" +
+                              "[root]\n" +
+                              ".test_pytest_parametrized\n" +
+                              "..test_eval\n" +
+                              "...(three plus file-8)(-)\n" +
+                              "...((2)+(4)-6)(+)\n" +
+                              "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+
+  // Ensure test survives patched strftime
+  @Test
+  public void testMonkeyPatch() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/monkeyPatch", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_test.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                        @NotNull String stdout,
+                                        @NotNull String stderr,
+                                        @NotNull String all) {
+          assertEquals("Monkeypatch broke the test: " + stderr, 1, runner.getPassedTestsCount());
+        }
+      });
+  }
 
   // Ensure slow test is not run when -m "not slow" is provided
   @Test
@@ -56,12 +153,86 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                         @NotNull String stderr,
                                         @NotNull String all) {
           Assert.assertEquals("Marker support broken", "Test tree:\n" +
-                                  "[root]\n" +
-                                  ".test_with_markers\n" +
-                                  "..test_fast(+)\n",
+                                                       "[root]\n" +
+                                                       ".test_with_markers\n" +
+                                                       "..test_fast(+)\n",
                               runner.getFormattedTestTree());
         }
       });
+  }
+
+
+  /**
+   * New configuration should have closest src set as its working dir
+   */
+  @Test
+  public void testClosestSrcIsWorkDirOnNewConfig() throws Exception {
+    runPythonTest(
+      new CreateConfigurationTestTask<PyUniversalPyTestConfiguration>(PythonTestConfigurationsModel.PY_TEST_NAME,
+                                                                      PyUniversalPyTestConfiguration.class) {
+        @NotNull
+        @Override
+        protected List<PsiElement> getPsiElementsToRightClickOn() {
+          configureSrcFolder(myFixture);
+
+          myFixture.configureByFile("test_with_src/foo/src/test_test.py");
+          final PyFunction test = myFixture.findElementByText("test_test", PyFunction.class);
+          assert test != null;
+          return Collections.singletonList(test);
+        }
+
+        @Override
+        protected void checkConfiguration(@NotNull PyUniversalPyTestConfiguration configuration,
+                                          @NotNull PsiElement elementToRightClickOn) {
+          super.checkConfiguration(configuration, elementToRightClickOn);
+          Assert
+            .assertThat("Wrong configuration directory set on new config", configuration.getWorkingDirectory(), Matchers.endsWith("src"));
+        }
+      });
+  }
+
+  /**
+   * In case when workdir is not set we should use closest src
+   */
+  @Test
+  public void testClosestSrcIsWorkDirDynamically() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/createConfigurationTest/", SdkCreationType.EMPTY_SDK) {
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner(TEST_TARGET_PREFIX + "test_test.test_test", 0) {
+            @Override
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalPyTestConfiguration configuration) throws IOException {
+              super.configurationCreatedAndWillLaunch(configuration);
+              // Reset dir to check it is calculated correctly
+              configuration.setWorkingDirectory(null);
+              configureSrcFolder(myFixture);
+              Assert
+                .assertThat("Wrong configuration directory calculated", configuration.getWorkingDirectorySafe(), Matchers.endsWith("src"));
+            }
+          };
+        }
+
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          Assert.assertEquals("Failed to run test" + stderr, 1, runner.getPassedTestsCount());
+        }
+      });
+  }
+
+  //TODO: DOC
+  private static void configureSrcFolder(@NotNull final CodeInsightTestFixture fixture) {
+    final ModuleRootManager manager = ModuleRootManager.getInstance(fixture.getModule());
+    final ModifiableRootModel model = manager.getModifiableModel();
+    final VirtualFile srcToMark = fixture.getTempDirFixture().getFile("test_with_src/foo/src");
+    assert srcToMark != null;
+    model.addContentEntry(srcToMark);
+    model.commit();
   }
 
   @Test
@@ -209,7 +380,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   /**
-   * Ensure project dir is used as curdir even if not set explicitly
+   * Ensure element dir is used as curdir even if not set explicitly
    */
   @Test
   public void testCurrentDir() throws Exception {
@@ -235,7 +406,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
-        final String projectDir = myFixture.getProject().getBaseDir().getPath();
+        final String projectDir = myFixture.getTempDirFixture().getTempDirPath();
         Assert.assertThat("No directory found in output", runner.getConsole().getText(),
                           Matchers.containsString(String.format("Directory %s", PathUtil.toSystemDependentName(projectDir))));
       }

@@ -52,6 +52,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
+import javax.swing.plaf.TextUI;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
@@ -130,7 +131,10 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
       @Override
       public Dimension getPreferredSize() {
         Dimension d = super.getPreferredSize();
-        d.height = Math.min(d.height, myTextArea.getUI().getPreferredSize(myTextArea).height);
+        TextUI ui = myTextArea.getUI();
+        if (ui != null) {
+          d.height = Math.min(d.height, ui.getPreferredSize(myTextArea).height);
+        }
         return d;
       }
     };

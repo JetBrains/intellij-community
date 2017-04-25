@@ -41,7 +41,7 @@ public class MethodsChain {
                              int weight,
                              @NotNull ChainCompletionContext context) {
     PsiClass qualifier = context.resolveQualifierClass(signature);
-    if (qualifier == null || (!signature.isStatic() && isInheritorOrSelf(context.getTarget().getPsiType(), qualifier))) {
+    if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
       return null;
     }
     PsiMethod[] methods = context.resolve(signature);
@@ -165,10 +165,5 @@ public class MethodsChain {
 
     Set<PsiMethod> deepestSupers1 = methodSet1.stream().flatMap(m -> Arrays.stream(m.findDeepestSuperMethods())).collect(Collectors.toSet());
     return methodSet2.stream().flatMap(m -> Arrays.stream(m.findDeepestSuperMethods())).anyMatch(deepestSupers1::contains);
-  }
-
-  private static boolean isInheritorOrSelf(@NotNull PsiType type, @NotNull PsiClass superCandidate) {
-    PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
-    return aClass != null && InheritanceUtil.isInheritorOrSelf(aClass, superCandidate, true);
   }
 }

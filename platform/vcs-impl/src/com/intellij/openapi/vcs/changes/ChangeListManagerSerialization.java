@@ -85,12 +85,7 @@ class ChangeListManagerSerialization {
     //noinspection unchecked
     final List<Element> changeNodes = listNode.getChildren(NODE_CHANGE);
     for (Element changeNode : changeNodes) {
-      try {
-        myWorker.addChangeToList(changeListName, readChange(changeNode), null);
-      }
-      catch (OutdatedFakeRevisionException e) {
-        // Do nothing. Just skip adding outdated revisions to the list.
-      }
+      myWorker.addChangeToList(changeListName, readChange(changeNode), null);
     }
 
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
@@ -176,11 +171,9 @@ class ChangeListManagerSerialization {
     changeNode.setAttribute(ATT_CHANGE_AFTER_PATH, aRev != null ? aRev.getFile().getPath() : "");
   }
 
-  private static Change readChange(Element changeNode) throws OutdatedFakeRevisionException {
+  private static Change readChange(Element changeNode) {
     String bRev = changeNode.getAttributeValue(ATT_CHANGE_BEFORE_PATH);
     String aRev = changeNode.getAttributeValue(ATT_CHANGE_AFTER_PATH);
     return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev), StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));
   }
-
-  static final class OutdatedFakeRevisionException extends Exception {}
 }

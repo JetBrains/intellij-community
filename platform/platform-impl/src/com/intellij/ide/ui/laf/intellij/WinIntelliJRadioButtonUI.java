@@ -28,17 +28,21 @@ import java.awt.*;
 public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    AbstractButton b = (AbstractButton)c;
+    b.setRolloverEnabled(true);
     return new WinIntelliJRadioButtonUI();
   }
 
   @Override
   protected void paintIcon(JComponent c, Graphics2D g, Rectangle viewRect, Rectangle iconRect) {
-    final boolean selected = ((AbstractButton)c).isSelected();
-    final boolean enabled = c.isEnabled();
-    final Icon icon = MacIntelliJIconCache.getIcon("radio", selected, false, enabled);
+    AbstractButton b = (AbstractButton)c;
+    ButtonModel bm = b.getModel();
+    boolean focused = c.hasFocus() || bm.isRollover();
+    Icon icon = MacIntelliJIconCache.getIcon("radio", false, bm.isSelected(), focused, bm.isEnabled(), bm.isPressed());
+
     // Paint the radio button
-    final int x = (iconRect.width - icon.getIconWidth()) / 2;
-    final int y = (viewRect.height - icon.getIconHeight()) / 2;
+    int x = (iconRect.width - icon.getIconWidth()) / 2;
+    int y = (viewRect.height - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
   }
 

@@ -375,6 +375,11 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
     myModificationCount++;
   }
 
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return ExternalProjectSystemRegistry.getInstance().getExternalSource(myModule);
+  }
+
   public static class ModuleRootManagerState implements JDOMExternalizable {
     private RootModelImpl myRootModel;
     private Element myRootModelElement;

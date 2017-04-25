@@ -759,7 +759,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    optionButton.setOkToProcessDefaultMnemonics(false);
+    optionButton.setOkToProcessDefaultMnemonics(true);
     optionButton.setOptionTooltipText(
       "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
 
@@ -775,7 +775,7 @@ public abstract class DialogWrapper {
               final JBOptionButton buttonToActivate = eachInfo.getButton();
               buttonToActivate.showPopup(eachInfo.getAction(), true);
             }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), optionButton, myDisposable);
         }
       }
     }
@@ -1981,7 +1981,7 @@ public abstract class DialogWrapper {
         if (fc != null) {
           for (FocusListener fl : fc.getFocusListeners()) {
             if (fl instanceof ErrorFocusListener) {
-              vi.component.removeFocusListener(fl);
+              fc.removeFocusListener(fl);
             }
           }
         }
@@ -2023,7 +2023,7 @@ public abstract class DialogWrapper {
 
             ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
             if (fc.hasFocus()) {
-              SwingUtilities.invokeLater(() -> showErrorTip(balloonBuilder, vi.component, label, vi.message));
+              SwingUtilities.invokeLater(() -> fl.showErrorTip());
             }
 
             fc.addFocusListener(fl);
@@ -2040,45 +2040,6 @@ public abstract class DialogWrapper {
         }
       }, 300, null);
     }
-  }
-
-  private void showErrorTip(BalloonBuilder balloonBuilder, JComponent component, JLabel label, String text) {
-    if (balloonBuilder == null) return;
-
-    Balloon balloon = balloonBuilder.createBalloon();
-
-    ComponentListener rl = new ComponentAdapter() {
-      @Override public void componentResized(ComponentEvent e) {
-        if (!balloon.isDisposed()) {
-          setErrorTipText(component, label, text);
-          balloon.revalidate();
-        }
-      }
-    };
-
-    balloon.addListener(new JBPopupListener.Adapter() {
-      @Override public void onClosed(LightweightWindowEvent event) {
-        JRootPane rootPane = getRootPane();
-        if (rootPane != null) {
-          rootPane.removeComponentListener(rl);
-        }
-        component.putClientProperty("JComponent.error.balloon", null);
-      }
-    });
-
-    getRootPane().addComponentListener(rl);
-
-    Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane());
-    Dimension bSize = balloon.getPreferredSize();
-
-    Insets cInsets = component.getInsets();
-    int top =  cInsets != null ? cInsets.top : 0;
-    if (componentPos.y >= bSize.height + Registry.intValue("ide.balloon.shadow.size") + top) {
-      balloon.show(new ErrorTipTracker(component, 0), Balloon.Position.above);
-    } else {
-      balloon.show(new ErrorTipTracker(component, component.getHeight()), Balloon.Position.below);
-    }
-    component.putClientProperty("JComponent.error.balloon", balloon);
   }
 
   private void setErrorTipText(JComponent component, JLabel label, String text) {
@@ -2389,26 +2350,66 @@ public abstract class DialogWrapper {
   private class ErrorFocusListener implements FocusListener {
     private final JLabel     label;
     private final String     text;
-    private final JComponent propertyRoot;
+    private final JComponent component;
 
-    private ErrorFocusListener(JLabel label, String text, JComponent propertyRoot) {
+    private ErrorFocusListener(JLabel label, String text, JComponent component) {
       this.label = label;
       this.text = text;
-      this.propertyRoot = propertyRoot;
+      this.component = component;
     }
 
     @Override public void focusGained(FocusEvent e) {
-      Balloon b = (Balloon)propertyRoot.getClientProperty("JComponent.error.balloon");
+      Balloon b = (Balloon)component.getClientProperty("JComponent.error.balloon");
       if (b == null || b.isDisposed()) {
-        showErrorTip((BalloonBuilder)propertyRoot.getClientProperty("JComponent.error.balloon.builder"), propertyRoot, label, text);
+        showErrorTip();
       }
     }
 
     @Override public void focusLost(FocusEvent e) {
-      Balloon b = (Balloon)propertyRoot.getClientProperty("JComponent.error.balloon");
+      Balloon b = (Balloon)component.getClientProperty("JComponent.error.balloon");
       if (b != null && !b.isDisposed()) {
         b.hide();
       }
+    }
+
+    private void showErrorTip() {
+      BalloonBuilder balloonBuilder = (BalloonBuilder)component.getClientProperty("JComponent.error.balloon.builder");
+      if (balloonBuilder == null) return;
+
+      Balloon balloon = balloonBuilder.createBalloon();
+
+      ComponentListener rl = new ComponentAdapter() {
+        @Override public void componentResized(ComponentEvent e) {
+          if (!balloon.isDisposed()) {
+            setErrorTipText(component, label, text);
+            balloon.revalidate();
+          }
+        }
+      };
+
+      balloon.addListener(new JBPopupListener.Adapter() {
+        @Override public void onClosed(LightweightWindowEvent event) {
+          JRootPane rootPane = getRootPane();
+          if (rootPane != null) {
+            rootPane.removeComponentListener(rl);
+          }
+          component.putClientProperty("JComponent.error.balloon", null);
+        }
+      });
+
+      getRootPane().addComponentListener(rl);
+
+      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane());
+      Dimension bSize = balloon.getPreferredSize();
+
+      Insets cInsets = component.getInsets();
+      int top =  cInsets != null ? cInsets.top : 0;
+      if (componentPos.y >= bSize.height + Registry.intValue("ide.balloon.shadow.size") + top) {
+        balloon.show(new ErrorTipTracker(component, 0), Balloon.Position.above);
+      } else {
+        balloon.show(new ErrorTipTracker(component, component.getHeight()), Balloon.Position.below);
+      }
+      component.putClientProperty("JComponent.error.balloon", balloon);
     }
   }
 

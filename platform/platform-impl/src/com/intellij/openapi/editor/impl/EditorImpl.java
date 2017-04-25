@@ -507,7 +507,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    EditorHighlighter highlighter = new EmptyEditorHighlighter(myScheme.getAttributes(HighlighterColors.TEXT));
+    EditorHighlighter highlighter = new NullEditorHighlighter();
     setHighlighter(highlighter);
 
     myEditorComponent = new EditorComponentImpl(this);
@@ -928,7 +928,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (e.getKeyCode() >= KeyEvent.VK_A && e.getKeyCode() <= KeyEvent.VK_Z) {
           myCharKeyPressed = true;
         }
-        KeyboardInternationalizationNotificationManager.showNotification();
       }
 
       @Override
@@ -4601,5 +4600,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     {
       myView.drawChars(g, data, start, end, x, y, color, fontInfo);
     }
+  }
+
+  private static class NullEditorHighlighter extends EmptyEditorHighlighter {
+    private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
+  
+    public NullEditorHighlighter() {
+      super(NULL_ATTRIBUTES);
+    }
+  
+    @Override
+    public void setAttributes(TextAttributes attributes) {}
+  
+    @Override
+    public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
   }
 }

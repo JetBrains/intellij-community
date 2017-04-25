@@ -46,7 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 public class LambdaRefactoringUtil {
-  private static final Logger LOG = Logger.getInstance("#" + LambdaRefactoringUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
 
   @Nullable
   public static PsiExpression convertToMethodCallInLambdaBody(PsiMethodReferenceExpression element) {

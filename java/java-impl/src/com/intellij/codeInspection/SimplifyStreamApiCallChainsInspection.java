@@ -61,6 +61,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "filter").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE);
   private static final CallMatcher STREAM_MAP =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "map").parameterTypes(CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
+  private static final CallMatcher BASE_STREAM_MAP =
+    instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "map").parameterCount(1);
   private static final CallMatcher STREAM_ANY_MATCH =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch").parameterCount(1);
   private static final CallMatcher STREAM_NONE_MATCH =
@@ -81,10 +83,11 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     ReplaceWithBoxedFix.handler(),
     ReplaceWithElementIterationFix.handler(),
     ReplaceForEachMethodFix.handler(),
-    RemoveBooleanIdentityFix.handler()
+    RemoveBooleanIdentityFix.handler(),
+    ReplaceWithPeekFix.handler()
   ).registerAll(SimplifyMatchNegationFix.handlers());
 
-  private static final Logger LOG = Logger.getInstance("#" + SimplifyStreamApiCallChainsInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
 
   private static final String FOR_EACH_METHOD = "forEach";
   private static final String STREAM_METHOD = "stream";
@@ -717,6 +720,55 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiType type = typeElement.getType();
       PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
       return aClass != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(aClass.getQualifiedName());
+    }
+  }
+
+  private static class ReplaceWithPeekFix implements CallChainSimplification {
+
+    @Override
+    public String getName() {
+      return "Replace with 'peek'";
+    }
+
+    @Override
+    public String getMessage() {
+      return "Can be replaced with 'peek'";
+    }
+
+    @Override
+    public PsiElement simplify(PsiMethodCallExpression call) {
+      PsiLambdaExpression lambda =
+        tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+      if (lambda == null) return null;
+      PsiCodeBlock block = tryCast(lambda.getBody(), PsiCodeBlock.class);
+      if (block == null) return null;
+      PsiReturnStatement statement = tryCast(ArrayUtil.getLastElement(block.getStatements()), PsiReturnStatement.class);
+      if (statement == null) return null;
+      ExpressionUtils.bindCallTo(call, "peek");
+      new CommentTracker().deleteAndRestoreComments(statement);
+      LambdaRefactoringUtil.simplifyToExpressionLambda(lambda);
+      LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference(lambda);
+      return call;
+    }
+
+    static CallHandler<CallChainSimplification> handler() {
+      return CallHandler.of(BASE_STREAM_MAP, call -> {
+        PsiLambdaExpression lambda =
+          tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+        if (lambda == null) return null;
+        PsiParameter[] parameters = lambda.getParameterList().getParameters();
+        if (parameters.length != 1) return null;
+        PsiCodeBlock block = tryCast(lambda.getBody(), PsiCodeBlock.class);
+        if (block == null) return null;
+        PsiStatement[] statements = block.getStatements();
+        if (statements.length <= 1) return null;
+        PsiReturnStatement returnStatement = tryCast(ArrayUtil.getLastElement(statements), PsiReturnStatement.class);
+        PsiParameter parameter = parameters[0];
+        if (returnStatement == null || !ExpressionUtils.isReferenceTo(returnStatement.getReturnValue(), parameter)) return null;
+        if (VariableAccessUtils.variableIsAssigned(parameter)) return null;
+        if (Arrays.stream(statements, 0, statements.length - 1).anyMatch(ControlFlowUtils::containsReturn)) return null;
+        return new ReplaceWithPeekFix();
+      });
     }
   }
 

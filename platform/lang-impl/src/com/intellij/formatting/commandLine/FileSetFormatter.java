@@ -45,7 +45,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 class FileSetFormatter extends FileSetProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + FileSetFormatter.class.getName());
+  private static final Logger LOG = Logger.getInstance(FileSetFormatter.class);
 
   private final static String PROJECT_DIR_PREFIX = PlatformUtils.getPlatformPrefix() + ".format.";
   private final static String PROJECT_DIR_SUFFIX = ".tmp";

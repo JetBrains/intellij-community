@@ -48,7 +48,7 @@ import java.util.List;
  * User: anna
  */
 public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxRelatedItemLineMarkerProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxRelatedItemLineMarkerProvider.class);
 
   @Override
   protected void collectNavigationMarkers(@NotNull PsiElement element, final Collection<? super RelatedItemLineMarkerInfo> result) {

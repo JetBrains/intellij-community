@@ -86,7 +86,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     PsiClass psiClass = getContainingClass(element);
 
-    if (psiClass == null) return false;
+    if (psiClass == null || element.getContainingFile().getContainingDirectory() == null) return false;
 
     Module srcModule = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (srcModule == null) return false;

@@ -17,227 +17,155 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
-import com.intellij.util.BooleanTrackableProperty;
 
 public class JavaCodeFoldingSettingsBase extends JavaCodeFoldingSettings {
-  private BooleanTrackableProperty COLLAPSE_ACCESSORS = new BooleanTrackableProperty();
-  private BooleanTrackableProperty COLLAPSE_ONE_LINE_METHODS  = new BooleanTrackableProperty(true);
-  private BooleanTrackableProperty COLLAPSE_INNER_CLASSES = new BooleanTrackableProperty();
-  private BooleanTrackableProperty COLLAPSE_ANONYMOUS_CLASSES = new BooleanTrackableProperty();
-  private BooleanTrackableProperty COLLAPSE_ANNOTATIONS = new BooleanTrackableProperty();
-  private BooleanTrackableProperty COLLAPSE_CLOSURES  = new BooleanTrackableProperty(true);
-  private BooleanTrackableProperty COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS  = new BooleanTrackableProperty(true);
-  private BooleanTrackableProperty COLLAPSE_I18N_MESSAGES  = new BooleanTrackableProperty(true);
-  private BooleanTrackableProperty COLLAPSE_SUPPRESS_WARNINGS  = new BooleanTrackableProperty(true);
-  private BooleanTrackableProperty COLLAPSE_END_OF_LINE_COMMENTS = new BooleanTrackableProperty();
+  private boolean COLLAPSE_ACCESSORS;
+  private boolean COLLAPSE_ONE_LINE_METHODS = true;
+  private boolean COLLAPSE_INNER_CLASSES;
+  private boolean COLLAPSE_ANONYMOUS_CLASSES;
+  private boolean COLLAPSE_ANNOTATIONS;
+  private boolean COLLAPSE_CLOSURES = true;
+  private boolean COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = true;
+  private boolean COLLAPSE_I18N_MESSAGES = true;
+  private boolean COLLAPSE_SUPPRESS_WARNINGS = true;
+  private boolean COLLAPSE_END_OF_LINE_COMMENTS;
 
   @Override
   public boolean isCollapseImports() {
-    return CodeFoldingSettings.getInstance().isCollapseImports();
+    return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
   }
 
   @Override
   public void setCollapseImports(boolean value) {
-    CodeFoldingSettings.getInstance().setCollapseImports(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseImportsProperty() {
-    return CodeFoldingSettings.getInstance().getCollapseImportsProperty();
+    CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS = value;
   }
 
   @Override
   public boolean isCollapseLambdas() {
-    return COLLAPSE_CLOSURES.getValue();
-  }
-
-  @Override
-  public void setCollapseLambdas(boolean value) {
-    COLLAPSE_CLOSURES.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseLambdasProperty() {
     return COLLAPSE_CLOSURES;
   }
 
   @Override
+  public void setCollapseLambdas(boolean value) {
+    COLLAPSE_CLOSURES = value;
+  }
+
+  @Override
   public boolean isCollapseConstructorGenericParameters() {
-    return COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS.getValue();
-  }
-
-  @Override
-  public void setCollapseConstructorGenericParameters(boolean value) {
-    COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseConstructorGenericParametersProperty() {
     return COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS;
   }
 
   @Override
+  public void setCollapseConstructorGenericParameters(boolean value) {
+    COLLAPSE_CONSTRUCTOR_GENERIC_PARAMETERS = value;
+  }
+
+  @Override
   public boolean isCollapseMethods() {
-    return CodeFoldingSettings.getInstance().isCollapseMethods();
+    return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
   }
 
   @Override
   public void setCollapseMethods(boolean value) {
-    CodeFoldingSettings.getInstance().setCollapseMethods(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseMethodsProperty() {
-    return CodeFoldingSettings.getInstance().getCollapseMethodsProperty();
+    CodeFoldingSettings.getInstance().COLLAPSE_METHODS = value;
   }
 
   @Override
   public boolean isCollapseAccessors() {
-    return COLLAPSE_ACCESSORS.getValue();
-  }
-
-  @Override
-  public void setCollapseAccessors(boolean value) {
-    COLLAPSE_ACCESSORS.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseAccessorsProperty() {
     return COLLAPSE_ACCESSORS;
   }
 
   @Override
+  public void setCollapseAccessors(boolean value) {
+    COLLAPSE_ACCESSORS = value;
+  }
+  @Override
   public boolean isCollapseOneLineMethods() {
-    return COLLAPSE_ONE_LINE_METHODS.getValue();
-  }
-
-  @Override
-  public void setCollapseOneLineMethods(boolean value) {
-    COLLAPSE_ONE_LINE_METHODS.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseOneLineMethodsProperty() {
     return COLLAPSE_ONE_LINE_METHODS;
   }
 
   @Override
+  public void setCollapseOneLineMethods(boolean value) {
+    COLLAPSE_ONE_LINE_METHODS = value;
+  }
+
+  @Override
   public boolean isCollapseInnerClasses() {
-    return COLLAPSE_INNER_CLASSES.getValue();
-  }
-
-  @Override
-  public void setCollapseInnerClasses(boolean value) {
-    COLLAPSE_INNER_CLASSES.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseInnerClassesProperty() {
     return COLLAPSE_INNER_CLASSES;
   }
 
   @Override
+  public void setCollapseInnerClasses(boolean value) {
+    COLLAPSE_INNER_CLASSES = value;
+  }
+
+  @Override
   public boolean isCollapseJavadocs() {
-    return CodeFoldingSettings.getInstance().isCollapseDocComments();
+    return CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS;
   }
 
   @Override
   public void setCollapseJavadocs(boolean value) {
-    CodeFoldingSettings.getInstance().setCollapseDocComments(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseJavadocsProperty() {
-    return CodeFoldingSettings.getInstance().getCollapseDocCommentsProperty();
+    CodeFoldingSettings.getInstance().COLLAPSE_DOC_COMMENTS = value;
   }
 
   @Override
   public boolean isCollapseFileHeader() {
-    return CodeFoldingSettings.getInstance().isCollapseFileHeader();
+    return CodeFoldingSettings.getInstance().COLLAPSE_FILE_HEADER;
   }
 
   @Override
   public void setCollapseFileHeader(boolean value) {
-    CodeFoldingSettings.getInstance().setCollapseFileHeader(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseFileHeaderProperty() {
-    return CodeFoldingSettings.getInstance().getCollapseFileHeaderProperty();
+    CodeFoldingSettings.getInstance().COLLAPSE_FILE_HEADER = value;
   }
 
   @Override
   public boolean isCollapseAnonymousClasses() {
-    return COLLAPSE_ANONYMOUS_CLASSES.getValue();
-  }
-
-  @Override
-  public void setCollapseAnonymousClasses(boolean value) {
-    COLLAPSE_ANONYMOUS_CLASSES.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseAnonymousClassesProperty() {
     return COLLAPSE_ANONYMOUS_CLASSES;
   }
 
   @Override
+  public void setCollapseAnonymousClasses(boolean value) {
+    COLLAPSE_ANONYMOUS_CLASSES = value;
+  }
+
+  @Override
   public boolean isCollapseAnnotations() {
-    return COLLAPSE_ANNOTATIONS.getValue();
-  }
-
-  @Override
-  public void setCollapseAnnotations(boolean value) {
-    COLLAPSE_ANNOTATIONS.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseAnnotationsProperty() {
     return COLLAPSE_ANNOTATIONS;
   }
 
   @Override
+  public void setCollapseAnnotations(boolean value) {
+    COLLAPSE_ANNOTATIONS = value;
+  }
+
+  @Override
   public boolean isCollapseI18nMessages() {
-    return COLLAPSE_I18N_MESSAGES.getValue();
-  }
-
-  @Override
-  public void setCollapseI18nMessages(boolean value) {
-    COLLAPSE_I18N_MESSAGES.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseI18nMessagesProperty() {
     return COLLAPSE_I18N_MESSAGES;
   }
 
   @Override
+  public void setCollapseI18nMessages(boolean value) {
+    COLLAPSE_I18N_MESSAGES = value;
+  }
+
+  @Override
   public boolean isCollapseSuppressWarnings() {
-    return COLLAPSE_SUPPRESS_WARNINGS.getValue();
-  }
-
-  @Override
-  public void setCollapseSuppressWarnings(boolean value) {
-    COLLAPSE_SUPPRESS_WARNINGS.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseSuppressWarningsProperty() {
     return COLLAPSE_SUPPRESS_WARNINGS;
   }
 
   @Override
+  public void setCollapseSuppressWarnings(boolean value) {
+    COLLAPSE_SUPPRESS_WARNINGS = value;
+  }
+
+  @Override
   public boolean isCollapseEndOfLineComments() {
-    return COLLAPSE_END_OF_LINE_COMMENTS.getValue();
+    return COLLAPSE_END_OF_LINE_COMMENTS;
   }
 
   @Override
   public void setCollapseEndOfLineComments(boolean value) {
-    COLLAPSE_END_OF_LINE_COMMENTS.setValue(value);
-  }
-
-  @Override
-  public BooleanTrackableProperty getCollapseEndOfLineCommentsProperty() {
-    return COLLAPSE_END_OF_LINE_COMMENTS;
+    COLLAPSE_END_OF_LINE_COMMENTS = value;
   }
 }

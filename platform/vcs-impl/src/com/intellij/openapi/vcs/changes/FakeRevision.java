@@ -26,10 +26,8 @@ import java.io.File;
 public class FakeRevision implements ContentRevision {
   private final FilePath myFile;
 
-  public FakeRevision(String path) throws ChangeListManagerSerialization.OutdatedFakeRevisionException {
-    final FilePath file = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
-    if (file == null) throw new ChangeListManagerSerialization.OutdatedFakeRevisionException();
-    myFile = file;
+  public FakeRevision(String path) {
+    myFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path));
   }
 
   @Nullable

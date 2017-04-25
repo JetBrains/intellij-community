@@ -1,6 +1,9 @@
 #!/bin/bash
 # make sure only one dmg is built at a given moment
 
+#immediately exit script with an error if a command fails
+set -euo pipefail
+
 cd $(dirname $0)
 
 EXPLODED=$2.exploded
@@ -22,7 +25,6 @@ BG_PIC="$2.png"
 chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/MacOS/*
 chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/*.sh
 chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/fs*
-chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/relaunch
 
 mkdir ${EXPLODED}/.background
 mv ${BG_PIC} ${EXPLODED}/.background

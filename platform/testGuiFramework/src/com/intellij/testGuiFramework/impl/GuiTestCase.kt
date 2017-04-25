@@ -205,7 +205,7 @@ open class GuiTestCase : GuiTestBase() {
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
   //*********FIXTURES METHODS FOR IDEFRAME WITHOUT ROBOT and TARGET; KOTLIN ONLY
-  fun IdeFrameFixture.editor(func: EditorFixture.() -> Unit, /*timeout in seconds*/ timeout: Long = defaultTimeout) {
+  fun IdeFrameFixture.editor(/*timeout in seconds*/ timeout: Long = defaultTimeout, func: EditorFixture.() -> Unit) {
     func.invoke(this.editor)
   }
 
@@ -223,7 +223,7 @@ open class GuiTestCase : GuiTestBase() {
     FileUtil.ensureExists(fileWithTestFolder)
     var screenshotFilePath = File(fileWithTestFolder, screenshotName + extension)
     if (screenshotFilePath.isFile) {
-      val format = SimpleDateFormat("MM-dd-yyyy.HH:mm:ss")
+      val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
       val now = format.format(GregorianCalendar().time)
       screenshotFilePath = File(fileWithTestFolder, screenshotName + "." + now + extension)
     }
@@ -392,7 +392,6 @@ open class GuiTestCase : GuiTestBase() {
     return true
   }
 
-
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 
   //necessary only for Windows
@@ -400,8 +399,7 @@ open class GuiTestCase : GuiTestBase() {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(
       "true"))
     if (!scaleEnabled) return ""
-    val uiScaleVal = GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale") ?: throw Exception(
-      "Error: Java property\"sun.java2d.uiScale.enabled\" is enabled but \"sun.java2d.uiScale\" is not defined. Please check your jdk properties and environment variables")
+    val uiScaleVal = GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale") ?: return ""
     return "@${uiScaleVal}x"
   }
 

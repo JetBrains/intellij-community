@@ -16,6 +16,7 @@
 package com.intellij.codeEditor.printing;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -112,7 +113,11 @@ class TextPainter extends BasePainter {
     myDocument = editorDocument;
     myPrintSettings = PrintSettings.getInstance();
     String fontName = myPrintSettings.FONT_NAME;
-    int fontSize = myPrintSettings.FONT_SIZE;
+    /*
+      Printing Graphics is constructed with scale corresponding to the printer DPI settings (~600dpi),
+      the font size is expected to be in 96 dpi, so we should normalize it.
+     */
+    int fontSize = Math.round(myPrintSettings.FONT_SIZE / UISettings.getNormalizingScale());
     myPlainFont = new Font(fontName, Font.PLAIN, fontSize);
     myBoldFont = new Font(fontName, Font.BOLD, fontSize);
     myItalicFont = new Font(fontName, Font.ITALIC, fontSize);

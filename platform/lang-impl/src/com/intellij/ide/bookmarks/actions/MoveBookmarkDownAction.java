@@ -33,6 +33,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
 
   MoveBookmarkDownAction(Project project, JList list) {
     super("Down", "Move current bookmark down", AllIcons.Actions.NextOccurence);
+    setEnabledInModalContext(true);
     myProject = project;
     myList = list;
     registerCustomShortcutSet(CommonShortcuts.MOVE_DOWN, list);

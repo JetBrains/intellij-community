@@ -15,12 +15,11 @@
  */
 package com.intellij.compiler.backwardRefs
 
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget
 import com.intellij.openapi.project.Project
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.jps.backwardRefs.LightRef
 import org.jetbrains.jps.backwardRefs.SignatureData
 
@@ -60,7 +59,26 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
       .filter { it.hasModifierProperty(PsiModifier.STATIC) == isStatic }
       .filter {
         val returnType = it.returnType
-        returnType is PsiClassType && returnType.resolve()?.qualifiedName == rawReturnType
+        when (signatureData.iteratorKind) {
+          SignatureData.ARRAY_ONE_DIM -> {
+            when (returnType) {
+              is PsiArrayType -> {
+                val componentType = returnType.componentType
+                componentType is PsiClassType && componentType.resolve()?.qualifiedName == rawReturnType
+              }
+              else -> false
+            }
+          }
+          SignatureData.ITERATOR_ONE_DIM -> {
+            val iteratorKind = ChainSearchTarget.getIteratorKind(PsiUtil.resolveClassInClassTypeOnly(returnType))
+            when {
+              iteratorKind != null -> PsiUtil.resolveClassInClassTypeOnly(PsiUtil.substituteTypeParameter(returnType, iteratorKind, 0, false))?.qualifiedName == rawReturnType
+              else -> false
+            }
+          }
+          SignatureData.ZERO_DIM -> returnType is PsiClassType && returnType.resolve()?.qualifiedName == rawReturnType
+          else -> throw IllegalStateException("kind is unsupported ${signatureData.iteratorKind}")
+        }
       }
       .sortedBy({ it.parameterList.parametersCount })
       .toTypedArray()

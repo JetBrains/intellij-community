@@ -162,15 +162,7 @@ public class EnvironmentUtil {
   public static class ShellEnvReader {
 
     public Map<String, String> readShellEnv() throws Exception {
-      String os = SystemInfo.isLinux ? "linux" : "mac";
-      File reader = FileUtil.findFirstThatExist(
-        PathManager.getBinPath() + "/printenv.py",
-        PathManager.getHomePath() + "/ultimate/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/community/bin/" + os + "/printenv.py",
-        PathManager.getHomePath() + "/bin/" + os + "/printenv.py");
-      if (reader == null) {
-        throw new Exception("bin:" + PathManager.getBinPath());
-      }
+      File reader = PathManager.findBinFileWithException("printenv.py");
 
       File envFile = FileUtil.createTempFile("intellij-shell-env.", ".tmp", false);
       try {

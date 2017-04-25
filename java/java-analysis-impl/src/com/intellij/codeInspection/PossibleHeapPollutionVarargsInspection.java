@@ -37,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 1/28/11
  */
 public class PossibleHeapPollutionVarargsInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + PossibleHeapPollutionVarargsInspection.class.getName());
+  public static final Logger LOG = Logger.getInstance(PossibleHeapPollutionVarargsInspection.class);
   @Nls
   @NotNull
   @Override

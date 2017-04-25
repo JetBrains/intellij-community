@@ -76,7 +76,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
-      generator.setSelectedCourse(introCourse);
+      generator.setCourse(introCourse);
 
       callback.consume(step);
     }

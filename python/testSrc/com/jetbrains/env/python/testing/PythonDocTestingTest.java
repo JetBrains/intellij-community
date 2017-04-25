@@ -18,6 +18,7 @@ import static org.junit.Assert.assertEquals;
 public final class PythonDocTestingTest extends PyEnvTestCase {
 
 
+
   @Test
   public void testConfigurationProducer() throws Exception {
     runPythonTest(

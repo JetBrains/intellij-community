@@ -71,7 +71,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class JavaDocumentationProvider extends DocumentationProviderEx implements CodeDocumentationProvider, ExternalDocumentationProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaDocumentationProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaDocumentationProvider.class);
 
   private static final String LINE_SEPARATOR = "\n";
   private static final String PARAM_TAG = "@param";
@@ -236,7 +236,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   private static void writeTypeRefs(PsiClass aClass, StringBuilder buffer, PsiClassType[] refs) {
     for (int i = 0; i < refs.length; i++) {
-      JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false);
+      JavaDocInfoGenerator.generateType(buffer, refs[i], aClass, false, true);
 
       if (i < refs.length - 1) {
         buffer.append(", ");
@@ -260,7 +260,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
           buffer.append(" extends ");
 
           for (int j = 0; j < refs.length; j++) {
-            JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false);
+            JavaDocInfoGenerator.generateType(buffer, refs[j], typeParameterOwner, false, true);
 
             if (j < refs.length - 1) {
               buffer.append(" & ");
@@ -297,7 +297,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     generateTypeParameters(method, buffer);
 
     if (method.getReturnType() != null) {
-      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(method.getReturnType()), method, false);
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(method.getReturnType()), method, false, true);
       buffer.append(" ");
     }
 
@@ -307,7 +307,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     PsiParameter[] params = method.getParameterList().getParameters();
     for (int i = 0; i < params.length; i++) {
       PsiParameter param = params[i];
-      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false);
+      JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(param.getType()), method, false, true);
       buffer.append(" ");
       if (param.getName() != null) {
         buffer.append(param.getName());
@@ -353,7 +353,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     generateModifiers(buffer, field);
 
-    JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false);
+    JavaDocInfoGenerator.generateType(buffer, substitutor.substitute(field.getType()), field, false, true);
     buffer.append(" ");
     buffer.append(field.getName());
 
@@ -368,7 +368,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
     generateModifiers(buffer, variable);
 
-    JavaDocInfoGenerator.generateType(buffer, variable.getType(), variable, false);
+    JavaDocInfoGenerator.generateType(buffer, variable.getType(), variable, false, true);
 
     buffer.append(" ");
 

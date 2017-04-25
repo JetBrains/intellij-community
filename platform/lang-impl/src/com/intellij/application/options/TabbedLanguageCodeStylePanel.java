@@ -54,7 +54,7 @@ import java.util.List;
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
-  private static final Logger LOG = Logger.getInstance("#" + TabbedLanguageCodeStylePanel.class.getName());
+  private static final Logger LOG = Logger.getInstance(TabbedLanguageCodeStylePanel.class);
 
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;

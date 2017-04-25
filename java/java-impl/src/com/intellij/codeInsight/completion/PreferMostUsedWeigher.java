@@ -56,16 +56,17 @@ class PreferMostUsedWeigher extends LookupElementWeigher {
     if (!(psi instanceof PsiMember)) {
       return null;
     }
-    else {
-      if (OBJECT_METHOD_PATTERN.accepts(psi)) {
-        return null;
-      }
-      if (looksLikeHelperMethodOrConst(psi)) {
-        return null;
-      }
-      final Integer occurrenceCount = myCompilerReferenceService.getCompileTimeOccurrenceCount(psi, myConstructorSuggestion);
-      return occurrenceCount == null ? null : - occurrenceCount;
+    if (element.getUserData(JavaGenerateMemberCompletionContributor.GENERATE_ELEMENT) != null) {
+      return null;
     }
+    if (OBJECT_METHOD_PATTERN.accepts(psi)) {
+      return null;
+    }
+    if (looksLikeHelperMethodOrConst(psi)) {
+      return null;
+    }
+    final Integer occurrenceCount = myCompilerReferenceService.getCompileTimeOccurrenceCount(psi, myConstructorSuggestion);
+    return occurrenceCount == null ? null : -occurrenceCount;
   }
 
   //Objects.requireNonNull is an example

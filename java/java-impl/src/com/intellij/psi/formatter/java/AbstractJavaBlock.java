@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -737,17 +737,10 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       }
       return false;
     }
-    else if (nodeType == JavaElementType.EXTENDS_LIST || nodeType == JavaElementType.IMPLEMENTS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST || role == ChildRole.IMPLEMENTS_KEYWORD) {
-        return true;
-      }
-      return false;
-    }
-    else if (nodeType == JavaElementType.THROWS_LIST) {
-      if (role == ChildRole.REFERENCE_IN_LIST) {
-        return true;
-      }
-      return false;
+    else if (nodeType == JavaElementType.EXTENDS_LIST ||
+             nodeType == JavaElementType.IMPLEMENTS_LIST ||
+             nodeType == JavaElementType.THROWS_LIST) {
+      return role == ChildRole.REFERENCE_IN_LIST;
     }
     else if (nodeType == JavaElementType.CLASS) {
       if (role == ChildRole.CLASS_OR_INTERFACE_KEYWORD) return true;
@@ -1043,34 +1036,27 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     return mySettings.BRACE_STYLE;
   }
 
-  protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent) {
-    return getCodeBlockInternalIndent(baseChildrenIndent, false);
-  }
-
-  protected Indent getCodeBlockInternalIndent(final int baseChildrenIndent, boolean enforceParentIndent) {
+  protected Indent getCodeBlockInternalIndent(int baseChildrenIndent) {
     if (isTopLevelClass() && mySettings.DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS) {
       return Indent.getNoneIndent();
     }
 
     final int braceStyle = getBraceStyle();
     final int shift = braceStyle == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? 1 : 0;
-    return createNormalIndent(baseChildrenIndent - shift, enforceParentIndent);
+    return createNormalIndent(baseChildrenIndent - shift);
   }
 
-  protected static Indent createNormalIndent(final int baseChildrenIndent) {
-    return createNormalIndent(baseChildrenIndent, false);
+  protected static Indent createNormalIndent() {
+    return createNormalIndent(1);
   }
 
-  protected static Indent createNormalIndent(final int baseChildrenIndent, boolean enforceIndentToChildren) {
-    if (baseChildrenIndent == 1) {
-      return Indent.getIndent(Indent.Type.NORMAL, false, enforceIndentToChildren);
-    }
-    else if (baseChildrenIndent <= 0) {
+  protected static Indent createNormalIndent(int baseChildrenIndent) {
+    assert baseChildrenIndent <= 1 : baseChildrenIndent;
+    if (baseChildrenIndent <= 0) {
       return Indent.getNoneIndent();
     }
     else {
-      LOG.assertTrue(false);
-      return Indent.getIndent(Indent.Type.NORMAL, false, enforceIndentToChildren);
+      return Indent.getIndent(Indent.Type.NORMAL, false, false);
     }
   }
 
@@ -1261,7 +1247,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return Indent.getNormalIndent();
     }
 
-    return isRBrace(child) ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent, false);
+    return isRBrace(child) ? Indent.getNoneIndent() : getCodeBlockInternalIndent(childrenIndent);
   }
 
   public AbstractJavaBlock getParentBlock() {

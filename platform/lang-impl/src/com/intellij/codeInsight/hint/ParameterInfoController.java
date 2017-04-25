@@ -589,6 +589,11 @@ public class ParameterInfoController implements Disposable {
     }
 
     @Override
+    public Object getHighlightedParameter() {
+      return myComponent.getHighlighted();
+    }
+
+    @Override
     public void setCurrentParameter(final int index) {
       myComponent.setCurrentParameterIndex(index);
     }

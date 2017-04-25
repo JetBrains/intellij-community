@@ -31,8 +31,8 @@ public class IndexAccessValidator {
     final ID<?, ?> alreadyProcessingIndex = ourAlreadyProcessingIndices.get();
     if (alreadyProcessingIndex != null && alreadyProcessingIndex != indexKey) {
       final String message = MessageFormat.format("Accessing ''{0}'' during processing ''{1}''. Nested different indices processing may cause deadlock",
-                indexKey.toString(),
-                alreadyProcessingIndex.toString());
+                indexKey.getName(),
+                alreadyProcessingIndex.getUniqueId());
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       Logger.getInstance(FileBasedIndexImpl.class).error(message); // RuntimeException to skip rebuild
     }

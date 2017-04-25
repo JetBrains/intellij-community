@@ -95,6 +95,22 @@ public class ParameterInfoTest extends LightCodeInsightFixtureTestCase {
     doTest2CandidatesWithPreselection();
   }
 
+  public void testSuperConstructorCalls() throws Exception {
+    myFixture.configureByText("x.java",
+                              "class A {\n" +
+                              "       public A(String s, int... p) {}\n" +
+                              "   }\n" +
+                              "   class B extends A {\n" +
+                              "       public B() {\n" +
+                              "           super(<caret>\"a\", 1);\n" +
+                              "       }\n" +
+                              "   }");
+    PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    assertNotNull(callExpression);
+    assertNotNull(new MethodParameterInfoHandler().findElementForUpdatingParameterInfo(
+      new MockUpdateParameterInfoContext(getEditor(), getFile(), new Object[] {callExpression.resolveMethodGenerics()})));
+  }
+
   private void doTest2CandidatesWithPreselection() {
     myFixture.configureByFile(getTestName(false) + ".java");
 

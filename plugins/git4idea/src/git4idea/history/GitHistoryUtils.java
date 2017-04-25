@@ -525,45 +525,23 @@ public class GitHistoryUtils {
     handler.endOptions();
 
     MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
-      List<TimedVcsCommit> commits = parseCommit(parser, output, userConsumer, refConsumer, factory, root);
-      for (TimedVcsCommit commit : commits) {
-        commitConsumer.consume(commit);
+      List<GitLogRecord> records = parser.parse(output);
+      for (GitLogRecord record : records) {
+        if (record == null) continue;
+
+        Hash hash = HashImpl.build(record.getHash());
+        List<Hash> parents = getParentHashes(factory, record);
+        commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
+
+        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+          refConsumer.consume(ref);
+        }
+
+        userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
       }
-    }, 1000);
+    });
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
-  }
-
-  @NotNull
-  private static List<TimedVcsCommit> parseCommit(@NotNull GitLogParser parser,
-                                                  @NotNull StringBuilder record,
-                                                  @NotNull Consumer<VcsUser> userRegistry,
-                                                  @NotNull Consumer<VcsRef> refConsumer,
-                                                  @NotNull VcsLogObjectsFactory factory,
-                                                  @NotNull VirtualFile root) {
-    List<GitLogRecord> gitLogRecords = parser.parse(record);
-    return ContainerUtil.mapNotNull(gitLogRecords, gitLogRecord -> {
-      if (gitLogRecord == null) {
-        return null;
-      }
-      Pair<TimedVcsCommit, Collection<VcsRef>> pair = convert(gitLogRecord, factory, root);
-      TimedVcsCommit commit = pair.first;
-      for (VcsRef ref : pair.second) {
-        refConsumer.consume(ref);
-      }
-      userRegistry.consume(factory.createUser(gitLogRecord.getAuthorName(), gitLogRecord.getAuthorEmail()));
-      return commit;
-    });
-  }
-
-  @NotNull
-  private static Pair<TimedVcsCommit, Collection<VcsRef>> convert(@NotNull GitLogRecord rec,
-                                                                  @NotNull VcsLogObjectsFactory factory,
-                                                                  @NotNull VirtualFile root) {
-    Hash hash = HashImpl.build(rec.getHash());
-    List<Hash> parents = getParentHashes(factory, rec);
-    TimedVcsCommit commit = factory.createTimedCommit(hash, parents, rec.getCommitTime());
-    return Pair.create(commit, parseRefs(rec.getRefs(), hash, factory, root));
   }
 
   @NotNull
@@ -863,11 +841,11 @@ public class GitHistoryUtils {
       catch (Throwable t) {
         if (parseError.isNull()) {
           parseError.set(t);
-          LOG.error("Could not parse \" " + StringUtil.escapeStringCharacters(output.toString()) + "\"\n" +
+          LOG.error("Could not parse \" " + GitLogParser.getTruncatedEscapedOutput(output) + "\"\n" +
                     "Command " + handler.printableCommandLine(), t);
         }
       }
-    }, 0);
+    });
     handler.runInCurrentThread(null);
     handlerListener.reportErrors();
 
@@ -947,21 +925,17 @@ public class GitHistoryUtils {
   private static class MyGitLineHandlerListener implements GitLineHandlerListener {
     @NotNull private final GitLineHandler myHandler;
     @NotNull private final Consumer<StringBuilder> myRecordConsumer;
-    private final int myBufferSize;
 
     @NotNull private final StringBuilder myOutput = new StringBuilder();
     @NotNull private final StringBuilder myErrors = new StringBuilder();
     @Nullable private VcsException myException = null;
 
-    private int myRecords = 0;
     private boolean myIsInsideBody = true;
 
     public MyGitLineHandlerListener(@NotNull GitLineHandler handler,
-                                    @NotNull Consumer<StringBuilder> recordConsumer,
-                                    int bufferSize) {
+                                    @NotNull Consumer<StringBuilder> recordConsumer) {
       myHandler = handler;
       myRecordConsumer = recordConsumer;
-      myBufferSize = bufferSize;
 
       myHandler.addLineListener(this);
     }
@@ -1006,10 +980,8 @@ public class GitHistoryUtils {
         int nextRecordStart = line.indexOf(GitLogParser.RECORD_START);
         if (nextRecordStart >= 0) {
           myOutput.append(line.substring(0, nextRecordStart));
-          if (++myRecords > myBufferSize) {
-            myRecordConsumer.consume(myOutput);
-            myOutput.setLength(0);
-          }
+          myRecordConsumer.consume(myOutput);
+          myOutput.setLength(0);
           myIsInsideBody = true;
           processOutputLine(line.substring(nextRecordStart));
         }

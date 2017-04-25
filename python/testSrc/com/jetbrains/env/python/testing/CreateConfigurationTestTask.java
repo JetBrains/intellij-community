@@ -20,12 +20,16 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
 import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
@@ -46,7 +50,7 @@ import java.util.Optional;
  *
  * @author Ilya.Kazakevich
  */
-public abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
+public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRunConfiguration<?>> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
@@ -85,11 +89,25 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
   }
 
   /**
+   * @return default (template) configuration
+   */
+  @NotNull
+  protected T getTemplateConfiguration(@NotNull final PythonConfigurationFactoryBase factory) {
+    final RunnerAndConfigurationSettingsImpl settings =
+      RunManagerImpl.getInstanceImpl(myFixture.getProject()).getConfigurationTemplate(factory);
+    final RunConfiguration configuration = settings.getConfiguration();
+    assert myExpectedConfigurationType.isAssignableFrom(configuration.getClass()): "Wrong configuration created. Wrong factory?";
+    @SuppressWarnings("unchecked") //Checked one line above
+    final T typedConfig = (T)configuration;
+    return typedConfig;
+  }
+
+  /**
    * Emulates right click and create configurwation
    */
   @NotNull
   public static <T extends RunConfiguration> T createConfigurationByElement(@NotNull final PsiElement elementToRightClickOn,
-                                                   @NotNull Class<T> expectedConfigurationType) {
+                                                                            @NotNull Class<T> expectedConfigurationType) {
     final List<ConfigurationFromContext> configurationsFromContext =
       new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
     Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
@@ -98,7 +116,7 @@ public abstract class CreateConfigurationTestTask<T extends RunConfiguration> ex
     final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
       .filter(o -> expectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
       .findFirst();
-    Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
+    Assert.assertTrue("No configuration of expected type created for element " + elementToRightClickOn, maybeConfig.isPresent());
     RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
 
 

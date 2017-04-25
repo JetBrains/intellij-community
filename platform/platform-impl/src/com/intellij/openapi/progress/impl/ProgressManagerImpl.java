@@ -19,10 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.PotemkinProgress;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
+import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
@@ -40,7 +37,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
-  private final Set<PotemkinProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
+  private final Set<PingProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
 
   @Override
   public void setCancelButtonText(String cancelButtonText) {
@@ -59,8 +56,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
-    boolean edtProgress = progress instanceof PotemkinProgress && ApplicationManager.getApplication().isDispatchThread();
-    if (edtProgress) myEdtProgresses.add((PotemkinProgress)progress);
+    boolean edtProgress = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread();
+    if (edtProgress) myEdtProgresses.add((PingProgress)progress);
 
     try {
       super.executeProcessUnderProgress(process, progress);
@@ -195,7 +192,7 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     if (!ApplicationManager.getApplication().isDispatchThread()) return false;
 
     boolean hasProgresses = false;
-    for (PotemkinProgress progress : myEdtProgresses) {
+    for (PingProgress progress : myEdtProgresses) {
       hasProgresses = true;
       progress.interact();
     }

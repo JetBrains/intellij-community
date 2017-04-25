@@ -18,6 +18,7 @@ package com.intellij.vcs.log.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -102,14 +103,19 @@ public class VcsLogFileRevision extends VcsFileRevisionEx {
 
   @Override
   public byte[] loadContent() throws IOException, VcsException {
-    if (myContent != null) return myContent;
-
-    String content = myRevision.getContent();
-    if (content != null) {
-      myContent = content.getBytes(myPath.getCharset().name());
-      return myContent;
+    if (myContent == null) {
+      if (myRevision instanceof ByteBackedContentRevision) {
+        myContent = ((ByteBackedContentRevision)myRevision).getContentAsBytes();
+      }
+      else {
+        String content = myRevision.getContent();
+        if (content != null) {
+          myContent = content.getBytes(myPath.getCharset().name());
+        }
+      }
     }
-    return null;
+
+    return myContent;
   }
 
   @Nullable

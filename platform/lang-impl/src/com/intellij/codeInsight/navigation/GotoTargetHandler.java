@@ -59,7 +59,7 @@ import java.util.*;
 import java.util.List;
 
 public abstract class GotoTargetHandler implements CodeInsightActionHandler {
-  private static final Logger LOG = Logger.getInstance("#" + GotoTargetHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(GotoTargetHandler.class);
   private final PsiElementListCellRenderer myDefaultTargetElementRenderer = new DefaultPsiElementListCellRenderer();
   private final DefaultListCellRenderer myActionElementRenderer = new ActionCellRenderer();
 

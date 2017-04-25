@@ -219,6 +219,16 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON36);
   }
 
+  // PY-22302
+  public void testNoWarningAboutEllipsisInFunctionTypeComments() {
+    doTest();
+  }
+
+  // PY-23355
+  public void testNoWarningAboutStarredExpressionsInFunctionTypeComments() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

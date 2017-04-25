@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,6 +55,9 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor");
+
+  private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(
+    JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD, JavaTokenType.THROWS_KEYWORD, JavaTokenType.WITH_KEYWORD);
 
   private PsiElement myParent;
   private int myRole1;
@@ -1333,7 +1337,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitModuleStatement(PsiElement statement) {
+  public void visitModuleStatement(PsiStatement statement) {
     if (myType1 == JavaElementType.MODULE_REFERENCE) {
       createSpaceInCode(myType2 != JavaTokenType.SEMICOLON && myType2 != JavaTokenType.COMMA);
     }
@@ -1507,11 +1511,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.AMPERSAND_IN_BOUNDS_LIST || myRole2 == ChildRole.AMPERSAND_IN_BOUNDS_LIST) {
       createSpaceInCode(myJavaSettings.SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS);
     }
-    else if (myRole1 == ChildRole.EXTENDS_KEYWORD
-             || myRole2 == ChildRole.EXTENDS_KEYWORD
-             || myRole1 == ChildRole.IMPLEMENTS_KEYWORD
-             || myRole2 == ChildRole.IMPLEMENTS_KEYWORD
-             || myRole1 == ChildRole.THROWS_KEYWORD) {
+    else if (REF_LIST_KEYWORDS.contains(myType1) || REF_LIST_KEYWORDS.contains(myType2)) {
       createSpaceInCode(true);
     }
   }

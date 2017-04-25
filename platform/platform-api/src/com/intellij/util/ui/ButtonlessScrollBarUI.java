@@ -55,7 +55,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   @Deprecated
   public static final Key<RegionPainter<Integer>> MAXI_THUMB = Key.create("BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB");
 
-  private static final Logger LOG = Logger.getInstance("#" + ButtonlessScrollBarUI.class.getName());
+  private static final Logger LOG = Logger.getInstance(ButtonlessScrollBarUI.class);
 
   protected JBColor getGradientLightColor() {
     return jbColor(Gray._251, Gray._95);

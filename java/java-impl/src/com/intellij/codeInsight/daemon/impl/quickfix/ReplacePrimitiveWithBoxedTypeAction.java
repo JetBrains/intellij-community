@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class ReplacePrimitiveWithBoxedTypeAction extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myPrimitiveName;
   private final String myBoxedTypeName;
-  private static final Logger LOG = Logger.getInstance("#" + ReplacePrimitiveWithBoxedTypeAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(ReplacePrimitiveWithBoxedTypeAction.class);
 
   public ReplacePrimitiveWithBoxedTypeAction(@NotNull PsiTypeElement element, @NotNull String typeName, @NotNull String boxedTypeName) {
     super(element);

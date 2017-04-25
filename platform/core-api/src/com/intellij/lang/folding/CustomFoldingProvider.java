@@ -44,6 +44,6 @@ public abstract class CustomFoldingProvider {
   public abstract String getEndString();
   
   public boolean isCollapsedByDefault(String text) {
-    return CodeFoldingSettings.getInstance().isCollapseCustomFoldingRegions();
+    return CodeFoldingSettings.getInstance().COLLAPSE_CUSTOM_FOLDING_REGIONS;
   }
 }

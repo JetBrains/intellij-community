@@ -87,7 +87,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @NonNls public static final String JAVADOC_LOCATION_AND_SIZE = "javadoc.popup";
   public static final DataKey<String> SELECTED_QUICK_DOC_TEXT = DataKey.create("QUICK_DOC.SELECTED_TEXT");
 
-  private static final Logger LOG = Logger.getInstance("#" + DocumentationManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(DocumentationManager.class);
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
   

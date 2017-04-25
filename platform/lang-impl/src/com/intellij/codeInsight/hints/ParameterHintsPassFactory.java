@@ -36,12 +36,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,9 +58,24 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
     return new ParameterHintsPass(file, editor);
   }
 
+  public static List<Matcher> getBlackListMatchers(Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    Set<String> blackList = ParameterHintsPass.getBlackList(language);
+    Language dependentLanguage = provider.getBlackListDependencyLanguage();
+    if (dependentLanguage != null) {
+      blackList.addAll(ParameterHintsPass.getBlackList(dependentLanguage));
+    }
+
+    return blackList
+      .stream()
+      .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
+      .filter((e) -> e != null)
+      .collect(Collectors.toList());
+  }
+
   private static class ParameterHintsPass extends EditorBoundHighlightingPass {
-    private final Map<Integer, String> myHints = new HashMap<>();
-    private final Map<Integer, String> myShowOnlyIfExistedBeforeHints = new HashMap<>();
+    private final TIntObjectHashMap<String> myHints = new TIntObjectHashMap<>();
+    private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
 
     private ParameterHintsPass(@NotNull PsiFile file, @NotNull Editor editor) {
       super(editor, file, true);
@@ -77,17 +91,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
       if (provider == null) return;
 
-      Set<String> blackList = getBlackList(language);
-      Language dependentLanguage = provider.getBlackListDependencyLanguage();
-      if (dependentLanguage != null) {
-        blackList.addAll(getBlackList(dependentLanguage));
-      }
-
-      List<Matcher> matchers = blackList
-        .stream()
-        .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
-        .filter((e) -> e != null)
-        .collect(Collectors.toList());
+      List<Matcher> matchers = getBlackListMatchers(language);
 
       SyntaxTraverser.psiTraverser(myFile).forEach(element -> process(element, provider, matchers));
     }
@@ -139,7 +143,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       List<Inlay> hints = getParameterHints(manager);
       ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints);
       updater.update();
-      keeper.restoreOriginalLocation();
+      keeper.restoreOriginalLocation(false);
     }
 
     @NotNull

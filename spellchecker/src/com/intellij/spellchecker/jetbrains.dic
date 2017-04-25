@@ -115,6 +115,7 @@ controlfile
 couchbase
 coursecreator
 covariant
+cplusplus
 cron
 ctrl
 customizer
@@ -172,6 +173,7 @@ eval
 evex
 exif
 expr
+extendable
 externalizer
 facebook
 facelet
@@ -512,6 +514,7 @@ progressbar
 proto
 proven
 proxool
+ptrdiff
 pycharm
 queryable
 radiobutton

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.NonNls;
@@ -699,4 +698,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     }).cpuBound().useLegacyScaling().assertTiming();
   }
 
+  public void testMatchingAllOccurrences() {
+    String text = "some text";
+    MinusculeMatcher matcher = NameUtil.buildMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, true);
+    assertOrderedEquals(matcher.matchingFragments(text),
+                        new TextRange(3, 4), new TextRange(6, 7));
+  }
 }

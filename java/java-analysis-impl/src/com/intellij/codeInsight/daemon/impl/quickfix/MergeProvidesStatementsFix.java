@@ -17,30 +17,23 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.psi.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author Pavel.Dolgov
  */
 public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProvidesStatement> {
   private final String myInterfaceName;
-  private final List<String> myImplementationNames;
 
-  MergeProvidesStatementsFix(@NotNull PsiProvidesStatement thisStatement,
-                             @NotNull String interfaceName,
-                             @NotNull List<String> implementationNames,
-                             @NotNull PsiProvidesStatement otherStatement) {
-    super(thisStatement, otherStatement);
+  MergeProvidesStatementsFix(@NotNull PsiJavaModule javaModule, @NotNull String interfaceName) {
+    super(javaModule);
     myInterfaceName = interfaceName;
-    myImplementationNames = implementationNames;
   }
 
   @NotNull
@@ -58,29 +51,33 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
 
   @NotNull
   @Override
-  protected String getReplacementText(@NotNull PsiProvidesStatement otherStatement) {
-    return PsiKeyword.PROVIDES + " " + myInterfaceName + " " + PsiKeyword.WITH + " " +
-           joinNames(getImplementationNames(otherStatement), myImplementationNames) + ";";
+  protected String getReplacementText(@NotNull List<PsiProvidesStatement> statementsToMerge) {
+    final List<String> implementationNames = getImplementationNames(statementsToMerge);
+    LOG.assertTrue(!implementationNames.isEmpty());
+    return PsiKeyword.PROVIDES + " " + myInterfaceName + " " + PsiKeyword.WITH + " " + joinUniqueNames(implementationNames) + ";";
+  }
+
+  @NotNull
+  private static List<String> getImplementationNames(@NotNull List<PsiProvidesStatement> statements) {
+    return StreamEx.of(statements)
+      .map(PsiProvidesStatement::getImplementationList)
+      .nonNull()
+      .flatMap(implementationList -> Arrays.stream(implementationList.getReferenceElements()))
+      .nonNull()
+      .map(PsiJavaCodeReferenceElement::getQualifiedName)
+      .nonNull()
+      .toList();
   }
 
   @NotNull
   @Override
-  protected Iterable<PsiProvidesStatement> getStatements(@NotNull PsiJavaModule javaModule) {
-    return javaModule.getProvides();
-  }
-
-  @NotNull
-  private static List<String> getImplementationNames(@Nullable PsiProvidesStatement statement) {
-    if (statement != null) {
-      final PsiReferenceList implementationList = statement.getImplementationList();
-      if (implementationList != null) {
-        return Arrays.stream(implementationList.getReferenceElements())
-          .map(PsiJavaCodeReferenceElement::getQualifiedName)
-          .filter(Objects::nonNull)
-          .collect(Collectors.toList());
-      }
-    }
-    return Collections.emptyList();
+  protected List<PsiProvidesStatement> getStatementsToMerge(@NotNull PsiJavaModule javaModule) {
+    return StreamEx.of(javaModule.getProvides().iterator())
+      .filter(statement -> {
+        final PsiJavaCodeReferenceElement reference = statement.getInterfaceReference();
+        return reference != null && myInterfaceName.equals(reference.getQualifiedName());
+      })
+      .toList();
   }
 
   @Nullable
@@ -88,21 +85,11 @@ public class MergeProvidesStatementsFix extends MergeModuleStatementsFix<PsiProv
     if (statement != null) {
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiJavaModule) {
-        final PsiJavaModule javaModule = (PsiJavaModule)parent;
-
         final PsiJavaCodeReferenceElement interfaceReference = statement.getInterfaceReference();
         if (interfaceReference != null) {
           final String interfaceName = interfaceReference.getQualifiedName();
           if (interfaceName != null) {
-            final List<String> implementationNames = getImplementationNames(statement);
-            if (!implementationNames.isEmpty()) {
-              for (PsiProvidesStatement candidate : javaModule.getProvides()) {
-                final PsiJavaCodeReferenceElement candidateInterfaceReference = candidate.getInterfaceReference();
-                if (candidateInterfaceReference != null && interfaceName.equals(candidateInterfaceReference.getQualifiedName())) {
-                  return new MergeProvidesStatementsFix(statement, interfaceName, implementationNames, candidate);
-                }
-              }
-            }
+            return new MergeProvidesStatementsFix((PsiJavaModule)parent, interfaceName);
           }
         }
       }

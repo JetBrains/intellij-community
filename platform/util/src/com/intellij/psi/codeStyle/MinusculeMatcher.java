@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.Matcher;
@@ -24,8 +25,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
@@ -56,6 +59,7 @@ public class MinusculeMatcher implements Matcher {
   private final char[] toLowerCase;
   private final char[] myMeaningfulCharacters;
   private final int myMinNameLength;
+  private final boolean myMatchAllOccurrences;
 
   /**
    * Constructs a matcher by a given pattern.
@@ -63,8 +67,11 @@ public class MinusculeMatcher implements Matcher {
    * @param options case sensitivity settings
    * @param hardSeparators A string of characters (empty by default). Lowercase humps don't work for parts separated by any of these characters.
    * Need either an explicit uppercase letter or the same separator character in prefix
+   * @param matchAllOccurrences if <code>true</code>, all pattern matches will be reported by {@link #matchingFragments(String)} method,
+   *                           otherwise, only first match will be reported
   */
-  MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators) {
+  MinusculeMatcher(@NotNull String pattern, @NotNull NameUtil.MatchingCaseSensitivity options, @NotNull String hardSeparators,
+                   boolean matchAllOccurrences) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
     myHardSeparators = hardSeparators;
@@ -93,6 +100,7 @@ public class MinusculeMatcher implements Matcher {
     myHasDots = hasDots(i);
     myMeaningfulCharacters = meaningful.toString().toCharArray();
     myMinNameLength = myMeaningfulCharacters.length / 2;
+    myMatchAllOccurrences = matchAllOccurrences;
   }
 
   private static boolean isWordSeparator(char c) {
@@ -256,7 +264,24 @@ public class MinusculeMatcher implements Matcher {
     MatchingState state = myMatchingState.get();
     state.initializeState(isAscii, length);
     try {
-      return matchWildcards(name, 0, 0, state);
+      FList<TextRange> match = matchWildcards(name, 0, 0, state);
+      
+      if (myMatchAllOccurrences && !ContainerUtil.isEmpty(match)) {
+        List<FList<TextRange>> allMatchesReversed = new ArrayList<FList<TextRange>>();
+        while (!ContainerUtil.isEmpty(match)) {
+          match = FList.createFromReversed(match);
+          allMatchesReversed.add(match);
+          int lastOffset = match.get(0).getEndOffset();
+          match = matchWildcards(name, 0, lastOffset, state);
+        }
+        match = FList.emptyList();
+        for (int i = allMatchesReversed.size() - 1; i >= 0; i--) {
+          for (TextRange range : allMatchesReversed.get(i)) {
+            match = match.prepend(range);
+          }
+        }
+      }
+      return match;
     }
     finally {
       state.releaseState();

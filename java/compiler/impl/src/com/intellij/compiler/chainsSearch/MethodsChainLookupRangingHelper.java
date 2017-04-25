@@ -16,8 +16,10 @@
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
@@ -25,7 +27,11 @@ import com.intellij.compiler.chainsSearch.completion.lookup.sub.GetterLookupSubL
 import com.intellij.compiler.chainsSearch.completion.lookup.sub.SubLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.sub.VariableSubLookupElement;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
+import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +54,7 @@ public class MethodsChainLookupRangingHelper {
     int notMatchedStringVars = 0;
     int matchedParametersInContext = 0;
     Boolean isFirstMethodStatic = null;
-    Boolean hasCallingVariableInContext = null;
+    Boolean hasQualifierInContext = null;
     LookupElement chainLookupElement = null;
     PsiClass newVariableClass = null;
     NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(context.getProject());
@@ -71,12 +77,12 @@ public class MethodsChainLookupRangingHelper {
         qualifierClass = null;
       }
 
-      MethodProcResult procResult = processMethod(method, qualifierClass, isHead, lastMethodWeight, context, nullableNotNullManager);
+      MethodProcResult procResult = processMethod(method, qualifierClass, isHead, context, nullableNotNullManager);
       if (procResult == null) {
         return null;
       }
-      if (hasCallingVariableInContext == null) {
-        hasCallingVariableInContext = procResult.hasCallingVariableInContext();
+      if (hasQualifierInContext == null) {
+        hasQualifierInContext = procResult.hasCallingVariableInContext();
       }
       if (isHead && procResult.isIntroduceNewVariable()) {
         newVariableClass = qualifierClass;
@@ -89,12 +95,45 @@ public class MethodsChainLookupRangingHelper {
     }
 
     if (newVariableClass != null) {
-      chainLookupElement = ChainCompletionNewVariableLookupElement.create(newVariableClass, chainLookupElement);
+      chainLookupElement = new ChainCompletionNewVariableLookupElement(newVariableClass, chainLookupElement);
     }
 
     ChainRelevance relevance =
-      new ChainRelevance(chainSize, lastMethodWeight, unreachableParametersCount, notMatchedStringVars, hasCallingVariableInContext,
-                         isFirstMethodStatic, matchedParametersInContext);
+      new ChainRelevance(chainSize,
+                         lastMethodWeight,
+                         unreachableParametersCount,
+                         notMatchedStringVars,
+                         hasQualifierInContext,
+                         isFirstMethodStatic,
+                         matchedParametersInContext);
+
+    if (context.getTarget().isIteratorAccess()) {
+      chainLookupElement = new LookupElementDecorator<LookupElement>(chainLookupElement) {
+        @Override
+        public void handleInsert(InsertionContext context) {
+          super.handleInsert(context);
+          Document document = context.getDocument();
+          int tail = context.getTailOffset();
+          PsiType tailReturnType = chain.getFirst()[0].getReturnType();
+          if (tailReturnType instanceof PsiArrayType) {
+            document.insertString(tail, "[0]");
+            context.getEditor().getCaretModel().moveToOffset(tail + 1);
+          } else {
+            PsiClass returnClass = ObjectUtils.notNull(PsiUtil.resolveClassInClassTypeOnly(tailReturnType));
+            if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_LIST)) {
+              document.insertString(tail, ".get(0)");
+              context.getEditor().getCaretModel().moveToOffset(tail + 5);
+            } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+              document.insertString(tail, ".iterator().next()");
+            } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+              document.insertString(tail, ".next()");
+            } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
+              document.insertString(tail, ".findFirst().get()");
+            }
+          }
+        }
+      };
+    }
 
     return new WeightableChainLookupElement(chainLookupElement, relevance);
   }
@@ -104,7 +143,6 @@ public class MethodsChainLookupRangingHelper {
   private static MethodProcResult processMethod(@NotNull PsiMethod method,
                                                 @Nullable PsiClass qualifierClass,
                                                 boolean isHeadMethod,
-                                                int weight,
                                                 ChainCompletionContext context,
                                                 NullableNotNullManager nullableNotNullManager) {
     int unreachableParametersCount = 0;

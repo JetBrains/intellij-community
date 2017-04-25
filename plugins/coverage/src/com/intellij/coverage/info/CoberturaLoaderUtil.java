@@ -16,7 +16,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 public class CoberturaLoaderUtil {
-  private static final Logger LOG = Logger.getInstance("#" + CoberturaLoaderUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(CoberturaLoaderUtil.class);
 
   private CoberturaLoaderUtil() {
   }
