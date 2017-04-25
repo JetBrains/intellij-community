@@ -112,7 +112,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
         g2.translate(x, y);
-        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, hasFocus, true);
+        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, hasFocus);
       } else if (hasFocus) {
         g2.setColor(UIManager.getColor("ComboBox.activeBorderColor"));
         g2.setStroke(new BasicStroke(JBUI.scale(2f)));
