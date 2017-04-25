@@ -15,7 +15,7 @@
  */
 package git4idea.repo;
 
-  import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -82,7 +83,14 @@ public class GitConfig {
   @NotNull
   Collection<GitRemote> parseRemotes() {
     // populate GitRemotes with substituting urls when needed
-    return ContainerUtil.map(myRemotes, remote -> convertRemoteToGitRemote(myUrls, remote));
+    Collection<GitRemote> gitRemotes = ContainerUtil.map(myRemotes, remote -> convertRemoteToGitRemote(myUrls, remote));
+    // remove remotes with no urls
+    Collection<GitRemote> gitRemotesFilter = new ArrayList<>();
+    gitRemotes.forEach(remote -> {
+      if (remote.getUrls().isEmpty() && remote.getPushUrls().isEmpty()) gitRemotesFilter.add(remote);
+    });
+    gitRemotes.removeAll(gitRemotesFilter);
+    return gitRemotes;
   }
 
   @NotNull
