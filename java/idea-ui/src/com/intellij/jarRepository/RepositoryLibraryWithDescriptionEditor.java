@@ -16,8 +16,10 @@
 package com.intellij.jarRepository;
 
 import com.intellij.jarRepository.settings.RepositoryLibraryPropertiesDialog;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryPropertiesEditorBase;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +27,8 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils;
 import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibraryPropertiesModel;
+
+import java.util.Collection;
 
 public class RepositoryLibraryWithDescriptionEditor
   extends LibraryPropertiesEditorBase<RepositoryLibraryProperties, RepositoryLibraryType> {
@@ -47,8 +51,12 @@ public class RepositoryLibraryWithDescriptionEditor
       properties.getVersion(),
       RepositoryUtils.libraryHasSources(myEditorComponent.getLibraryEditor()),
       RepositoryUtils.libraryHasJavaDocs(myEditorComponent.getLibraryEditor()));
+
+    final Project project = myEditorComponent.getProject();
+    assert project != null : "EditorComponent's project must not be null in order to be used with RepositoryLibraryWithDescriptionEditor";
+
     RepositoryLibraryPropertiesDialog dialog = new RepositoryLibraryPropertiesDialog(
-      myEditorComponent.getProject(),
+      project,
       model,
       RepositoryLibraryDescription.findDescription(properties),
       true);
@@ -60,15 +68,15 @@ public class RepositoryLibraryWithDescriptionEditor
       myEditorComponent.renameLibrary(RepositoryLibraryType.getInstance().getDescription(properties));
     }
     final LibraryEditor libraryEditor = myEditorComponent.getLibraryEditor();
-    final String copyTo = RepositoryUtils.getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), myEditorComponent.getProject());
-    JarRepositoryManager.loadDependenciesAsync(
-      myEditorComponent.getProject(), properties, model.isDownloadSources(), model.isDownloadJavaDocs(), null, copyTo,
-      roots -> {
-        libraryEditor.removeAllRoots();
-        if (roots != null) {
-          libraryEditor.addRoots(roots);
-        }
-      }
+    final String copyTo = RepositoryUtils.getStorageRoot(myEditorComponent.getLibraryEditor().getUrls(OrderRootType.CLASSES), project);
+    final Collection<OrderRoot> roots = JarRepositoryManager.loadDependenciesModal(
+      project, properties, model.isDownloadSources(), model.isDownloadJavaDocs(), copyTo, null
     );
+    libraryEditor.removeAllRoots();
+    if (roots != null) {
+      libraryEditor.addRoots(roots);
+    }
+    myEditorComponent.updateRootsTree();
+    updateDescription();
   }
 }
