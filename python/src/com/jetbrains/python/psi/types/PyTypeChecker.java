@@ -711,30 +711,4 @@ public class PyTypeChecker {
     }
     return null;
   }
-
-  @NotNull
-  public static List<PyCallableParameter> filterExplicitParameters(@NotNull List<PyCallableParameter> parameters,
-                                                                   @NotNull PyCallable callable,
-                                                                   @NotNull PyCallSiteExpression callSite,
-                                                                   @NotNull PyResolveContext resolveContext) {
-    final int implicitOffset;
-    if (callSite instanceof PyCallExpression) {
-      final PyCallExpression callExpr = (PyCallExpression)callSite;
-      final PyExpression callee = callExpr.getCallee();
-      if (callee instanceof PyReferenceExpression && callable instanceof PyFunction) {
-        implicitOffset = getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable,
-                                                  resolveContext);
-      }
-      else {
-        implicitOffset = 0;
-      }
-    }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      implicitOffset = 1;
-    }
-    else {
-      implicitOffset = 0;
-    }
-    return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
-  }
 }
