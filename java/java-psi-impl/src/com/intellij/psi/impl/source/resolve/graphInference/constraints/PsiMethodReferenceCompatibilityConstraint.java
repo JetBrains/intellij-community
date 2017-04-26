@@ -252,6 +252,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           LOG.assertTrue(paramTypes.length == signature.getParameterTypes().length, "expr: " + methodReferenceExpression + "; " +
                                                                                     paramTypes.length + "; " +
                                                                                     Arrays.toString(signature.getParameterTypes()));
+          if (Arrays.deepEquals(signature.getParameterTypes(), paramTypes)) {
+            return PsiSubstitutor.EMPTY;
+          }
+
           psiSubstitutor = helper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(qContainingClass.getTypeParameters(), paramTypes),
                                                      paramTypes,
                                                      signature.getParameterTypes(),
