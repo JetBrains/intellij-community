@@ -79,7 +79,9 @@ public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCas
     return ApplicationManager.getApplication().runReadAction((Computable<List<StreamChain>>)() -> {
       final PsiElement elementAtCaret = configureAndGetElementAtCaret();
       assertNotNull(elementAtCaret);
-      return getChainBuilder().build(elementAtCaret);
+      final StreamChainBuilder builder = getChainBuilder();
+      assertTrue(builder.isChainExists(elementAtCaret));
+      return builder.build(elementAtCaret);
     });
   }
 
