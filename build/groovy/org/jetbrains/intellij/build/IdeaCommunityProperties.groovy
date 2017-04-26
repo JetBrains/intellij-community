@@ -101,7 +101,6 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new MacDistributionCustomizer() {
       {
         icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
-        helpId = "IJ"
         urlSchemes = ["idea"]
         associateIpr = true
         enableYourkitAgentInEAP = false
