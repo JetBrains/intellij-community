@@ -25,7 +25,6 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
 import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +61,7 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
       final String text = getCanonicalText();
 
       final JsonSchemaService service = JsonSchemaService.Impl.get(getElement().getProject());
-      final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(text);
+      final JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter splitter = new JsonSchemaVariantsTreeBuilder.SchemaUrlSplitter(text);
       VirtualFile schemaFile = getElement().getContainingFile().getVirtualFile();
       if (splitter.isAbsolute()) {
         assert splitter.getSchemaId() != null;

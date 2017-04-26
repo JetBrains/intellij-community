@@ -96,7 +96,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Nullable
   public VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent) {
     final Optional<VirtualFile> optional = myState.getFiles().stream()
-      .filter(file -> reference.equals(ReadJsonSchemaFromPsi.readSchemaId(myProject, file)))
+      .filter(file -> reference.equals(JsonSchemaReader.readSchemaId(myProject, file)))
       .findFirst();
     return optional.orElseGet(() -> getSchemaFileByRefAsLocalFile(reference, referent));
   }
@@ -148,7 +148,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
       if (topLevelValue == null) return null;
 
-      final JsonSchemaObject object = new JsonSchemaReader(topLevelValue).read();
+      final JsonSchemaObject object = new JsonSchemaReader().read(topLevelValue);
       return CachedValueProvider.Result.create(object, psiFile, myModificationTracker);
     };
     return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));

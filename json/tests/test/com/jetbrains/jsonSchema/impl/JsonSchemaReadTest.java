@@ -85,8 +85,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     Assert.assertTrue(file.exists());
     final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     Assert.assertNotNull(virtualFile);
-    final JsonSchemaReader reader = JsonSchemaReader.create(myProject, virtualFile);
-    return reader.read();
+    return JsonSchemaReader.readFromFile(myProject, virtualFile);
   }
 
   public void testReadSchemaWithCustomTags() throws Exception {

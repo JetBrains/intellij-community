@@ -325,7 +325,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     final JsonSchemaService service = JsonSchemaService.Impl.get(schema.getPeerPointer().getProject());
-    final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(ref);
+    final SchemaUrlSplitter splitter = new SchemaUrlSplitter(ref);
     if (splitter.getSchemaId() != null) {
       final VirtualFile refFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
       if (refFile == null) {
@@ -348,7 +348,7 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
-                                                         @NotNull final JsonSchemaReader.SchemaUrlSplitter splitter) {
+                                                         @NotNull final SchemaUrlSplitter splitter) {
     final String path = splitter.getRelativePath();
     if (StringUtil.isEmptyOrSpaces(path)) return schema;
     final JsonSchemaObject definition = schema.findRelativeDefinition(path);
@@ -488,6 +488,48 @@ public class JsonSchemaVariantsTreeBuilder {
         return Pair.create(ThreeState.NO, null);
       }
       return Pair.create(ThreeState.YES, null);
+    }
+  }
+
+  public static class SchemaUrlSplitter {
+    @Nullable
+    private final String mySchemaId;
+    @NotNull
+    private final String myRelativePath;
+
+    public SchemaUrlSplitter(@NotNull final String ref) {
+      if ("#".equals(ref)) {
+        mySchemaId = null;
+        myRelativePath = "";
+        return;
+      }
+      if (!ref.startsWith("#/")) {
+        int idx = ref.indexOf("#/");
+        if (idx == -1) {
+          mySchemaId = ref.endsWith("#") ? ref.substring(0, ref.length() - 1) : ref;
+          myRelativePath = "";
+        } else {
+          mySchemaId = ref.substring(0, idx);
+          myRelativePath = ref.substring(idx);
+        }
+      } else {
+        mySchemaId = null;
+        myRelativePath = ref;
+      }
+    }
+
+    public boolean isAbsolute() {
+      return mySchemaId != null;
+    }
+
+    @Nullable
+    public String getSchemaId() {
+      return mySchemaId;
+    }
+
+    @NotNull
+    public String getRelativePath() {
+      return myRelativePath;
     }
   }
 }
