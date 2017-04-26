@@ -17,13 +17,13 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +46,10 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   @NotNull
   @Override
   protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
+    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> calcChildren(descriptor));
+  }
+
+  private Object[] calcChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
 
@@ -81,7 +85,8 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
 
     final Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<>();
     for (final PsiMethod methodToFind : methodsToFind) {
-      final JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+      final JavaCallHierarchyData
+        data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
 
       MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(reference -> {
         for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
