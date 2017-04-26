@@ -31,7 +31,7 @@ public abstract class ContractValue {
 
   }
 
-  public abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments);
+  abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
 
   public static ContractValue qualifier() {
     return Qualifier.INSTANCE;
@@ -73,8 +73,8 @@ public abstract class ContractValue {
     static final Qualifier INSTANCE = new Qualifier();
 
     @Override
-    public DfaValue makeDfaValue(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return qualifier;
+    DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
+      return arguments.myQualifier;
     }
 
     @Override
@@ -91,8 +91,8 @@ public abstract class ContractValue {
     }
 
     @Override
-    public DfaValue makeDfaValue(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return arguments.length <= myIndex ? DfaUnknownValue.getInstance() : arguments[myIndex];
+    DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
+      return arguments.myArguments.length <= myIndex ? DfaUnknownValue.getInstance() : arguments.myArguments[myIndex];
     }
 
     @Override
@@ -121,7 +121,7 @@ public abstract class ContractValue {
     }
 
     @Override
-    public DfaValue makeDfaValue(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
+    DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
       return mySupplier.fun(factory);
     }
 
@@ -141,8 +141,8 @@ public abstract class ContractValue {
     }
 
     @Override
-    public DfaValue makeDfaValue(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return myField.createValue(factory, myQualifier.makeDfaValue(factory, qualifier, arguments));
+    DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
+      return myField.createValue(factory, myQualifier.makeDfaValue(factory, arguments));
     }
 
     @Override
@@ -162,9 +162,8 @@ public abstract class ContractValue {
     }
 
     @Override
-    public DfaValue makeDfaValue(DfaValueFactory factory, DfaValue qualifier, DfaValue[] arguments) {
-      return factory.createCondition(myLeft.makeDfaValue(factory, qualifier, arguments), myRelationType,
-                                     myRight.makeDfaValue(factory, qualifier, arguments));
+    DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
+      return factory.createCondition(myLeft.makeDfaValue(factory, arguments), myRelationType, myRight.makeDfaValue(factory, arguments));
     }
 
     @Override

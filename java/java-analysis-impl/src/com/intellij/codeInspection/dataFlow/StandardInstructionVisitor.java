@@ -461,13 +461,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return qualifier;
   }
 
-  private static LinkedHashSet<DfaMemoryState> addContractResults(DfaCallArguments callParameters,
+  private static LinkedHashSet<DfaMemoryState> addContractResults(DfaCallArguments callArguments,
                                                                   MethodContract contract,
                                                                   LinkedHashSet<DfaMemoryState> states,
                                                                   DfaValueFactory factory,
                                                                   Set<DfaMemoryState> finalStates,
                                                                   DfaValue returnValue) {
-    List<DfaValue> conditions = ContainerUtil.map(contract.getConditions(), cv -> cv.makeDfaValue(factory, callParameters.myQualifier, callParameters.myArguments));
+    List<DfaValue> conditions = ContainerUtil.map(contract.getConditions(), cv -> cv.makeDfaValue(factory, callArguments));
     if (StreamEx.of(conditions).allMatch(factory.getConstFactory().getTrue()::equals)) {
       for (DfaMemoryState state : states) {
         state.push(returnValue);
