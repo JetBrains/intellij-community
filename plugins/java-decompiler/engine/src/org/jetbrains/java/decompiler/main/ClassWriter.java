@@ -624,7 +624,7 @@ public class ClassWriter {
 
       appendModifiers(buffer, flags, METHOD_ALLOWED, isInterface, METHOD_EXCLUDED);
 
-      if (isInterface && mt.containsCode()) {
+      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && mt.containsCode()) {
         // 'default' modifier (Java 8)
         buffer.append("default ");
       }

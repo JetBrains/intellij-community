@@ -111,6 +111,7 @@ public class SingleClassesTest {
   //@Test public void TestSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
+  @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
