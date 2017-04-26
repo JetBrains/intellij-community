@@ -642,7 +642,8 @@ public class JsonSchemaObject {
     private final Map<String, String> myInvalidPatterns;
 
     public PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
-      mySchemasMap = schemasMap;
+      mySchemasMap = new HashMap<>();
+      schemasMap.keySet().forEach(key -> mySchemasMap.put(StringUtil.unescapeBackSlashes(key), schemasMap.get(key)));
       myCachedPatterns = new HashMap<>();
       myCachedPatternProperties = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
       myInvalidPatterns = new HashMap<>();
