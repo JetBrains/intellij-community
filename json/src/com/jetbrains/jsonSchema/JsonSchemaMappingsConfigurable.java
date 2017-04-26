@@ -68,7 +68,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
 
   @NotNull
   private final Project myProject;
-  private Runnable myTreeUpdater = () -> {
+  private final Runnable myTreeUpdater = () -> {
     TREE_UPDATER.run();
     updateWarningText();
   };
@@ -178,7 +178,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       }
     }
 
-    JsonSchemaMappingsProjectConfiguration.getInstance(myProject).setState(myProject, projectMap);
+    JsonSchemaMappingsProjectConfiguration.getInstance(myProject).setState(projectMap);
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       final JsonSchemaService service = JsonSchemaService.Impl.get(project);

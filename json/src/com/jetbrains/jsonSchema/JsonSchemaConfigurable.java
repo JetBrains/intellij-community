@@ -101,7 +101,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
 
   private void doValidation() throws ConfigurationException {
     final File file = new File(myProject.getBasePath(), myView.getSchemaSubPath());
-    VirtualFile vFile = null;
+    VirtualFile vFile;
     if (!file.exists() || (vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)) == null) {
       throw new ConfigurationException((!StringUtil.isEmptyOrSpaces(myDisplayName) ? (myDisplayName + ": ") : "") + "Schema file does not exist");
     }

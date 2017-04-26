@@ -35,7 +35,7 @@ public class JsonSchemaTreeNode {
   @Nullable private final JsonSchemaObject mySchema;
   @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> mySteps = new SmartList<>();
 
-  @NotNull private List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
+  @NotNull private final List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {

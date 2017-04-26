@@ -111,7 +111,7 @@ public class UserDefinedJsonSchemaConfiguration {
     for (final Item pattern : myPatterns) {
       if (pattern.isPattern()) {
         myCalculatedPatterns.add(new Processor<VirtualFile>() {
-          private Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
+          private final Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
 
           @Override
           public boolean process(VirtualFile file) {

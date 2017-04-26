@@ -1,6 +1,7 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
@@ -83,7 +84,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
       MyProvider provider = (MyProvider)o;
 
       if (!myName.equals(provider.myName)) return false;
-      if (!myFile.equals(provider.myFile)) return false;
+      if (!FileUtil.filesEqual(myFile, provider.myFile)) return false;
 
       return true;
     }
@@ -91,7 +92,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     @Override
     public int hashCode() {
       int result = myName.hashCode();
-      result = 31 * result + myFile.hashCode();
+      result = 31 * result + FileUtil.fileHashCode(myFile);
       return result;
     }
   }

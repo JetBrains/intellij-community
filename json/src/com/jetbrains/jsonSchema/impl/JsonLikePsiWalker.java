@@ -30,7 +30,7 @@ import java.util.Set;
 public interface JsonLikePsiWalker {
   JsonOriginalPsiWalker JSON_ORIGINAL_PSI_WALKER = new JsonOriginalPsiWalker();
 
-  boolean isName(PsiElement checkable);
+  boolean isName(PsiElement element);
   boolean isPropertyWithValue(@NotNull PsiElement element);
   PsiElement goUpToCheckable(@NotNull final PsiElement element);
   List<JsonSchemaVariantsTreeBuilder.Step> findPosition(@NotNull final PsiElement element, boolean isName, boolean forceLastTransition);

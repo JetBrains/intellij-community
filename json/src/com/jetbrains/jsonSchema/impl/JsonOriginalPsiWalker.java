@@ -42,12 +42,12 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   }
 
   @Override
-  public boolean isName(PsiElement checkable) {
-    final PsiElement parent = checkable.getParent();
+  public boolean isName(PsiElement element) {
+    final PsiElement parent = element.getParent();
     if (parent instanceof JsonObject) {
       return true;
     } else if (parent instanceof JsonProperty) {
-      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), checkable, false);
+      return PsiTreeUtil.isAncestor(((JsonProperty)parent).getNameElement(), element, false);
     }
     return false;
   }

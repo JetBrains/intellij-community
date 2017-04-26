@@ -174,7 +174,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   private static class MyState {
     private final Object myLock = new Object();
-    private Map<VirtualFile, JsonSchemaFileProvider> mySchemaProviderMap = ContainerUtil.newHashMap();
+    private final Map<VirtualFile, JsonSchemaFileProvider> mySchemaProviderMap = ContainerUtil.newHashMap();
     private Collection<JsonSchemaFileProvider> myUnmodifiableProviders = Collections.emptyList();
     private Set<VirtualFile> myUnmodifiableFiles = Collections.emptySet();
     private boolean initialized;

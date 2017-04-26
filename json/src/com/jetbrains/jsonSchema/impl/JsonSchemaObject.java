@@ -27,7 +27,7 @@ public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
   @NotNull
-  private SmartPsiElementPointer<JsonObject> myPeerPointer;
+  private final SmartPsiElementPointer<JsonObject> myPeerPointer;
   private Map<String, JsonSchemaObject> myDefinitions;
   private SmartPsiElementPointer<JsonObject> myDefinitionsPointer;
   private Map<String, JsonSchemaObject> myProperties;

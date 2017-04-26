@@ -51,10 +51,10 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
       final Optional<UserDefinedJsonSchemaConfiguration> old = myState.values().stream()
         .filter(schema -> FileUtil.pathsEqual(schema.getRelativePathToSchema(), oldRelativePath))
         .findFirst();
-      if (old.isPresent()) {
-        old.get().setRelativePathToSchema(newRelativePath);
+      old.ifPresent(configuration -> {
+        configuration.setRelativePathToSchema(newRelativePath);
         JsonSchemaService.Impl.get(project).reset();
-      }
+      });
     }
   }
 
@@ -71,7 +71,7 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
     }
   }
 
-  public void setState(@NotNull final Project project, @NotNull Map<String, UserDefinedJsonSchemaConfiguration> state) {
+  public void setState(@NotNull Map<String, UserDefinedJsonSchemaConfiguration> state) {
     synchronized (myLock) {
       myState.clear();
       myState.putAll(state);

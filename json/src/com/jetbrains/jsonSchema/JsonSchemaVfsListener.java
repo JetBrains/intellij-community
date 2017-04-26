@@ -43,7 +43,7 @@ import java.util.*;
  * @author Irina.Chernushina on 3/30/2016.
  */
 public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
-  public static Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
+  public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
 
   public static void startListening(@NotNull Project project, @NotNull final JsonSchemaService service) {
     final MyUpdater updater = new MyUpdater(project, service);

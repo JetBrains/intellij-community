@@ -93,7 +93,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private final boolean myWrapInQuotes;
     private final boolean myInsideStringLiteral;
     private final Set<LookupElement> myVariants;
-    private JsonLikePsiWalker myWalker;
+    private final JsonLikePsiWalker myWalker;
 
     public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull final VirtualFile schemaFile, @NotNull PsiElement position,
                   @NotNull PsiElement originalPosition, @NotNull final Consumer<LookupElement> resultConsumer) {
