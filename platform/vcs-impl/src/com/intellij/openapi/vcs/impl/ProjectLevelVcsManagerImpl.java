@@ -483,6 +483,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
   }
 
+  @CalledInAwt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
     UpdateInfoTree tree = showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);

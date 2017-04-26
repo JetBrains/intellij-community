@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -188,7 +189,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
                                                                @NotNull AbstractVcs vcs);
 
-
+  @CalledInAwt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName);
 
   /**
