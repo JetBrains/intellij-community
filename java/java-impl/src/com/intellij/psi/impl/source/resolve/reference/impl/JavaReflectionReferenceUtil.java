@@ -144,11 +144,9 @@ public class JavaReflectionReferenceUtil {
       if (!isJavaLangClass(resolvedElement)) return null;
       final PsiTypeParameter[] parameters = resolvedElement.getTypeParameters();
       if (parameters.length == 1) {
-        PsiType typeArgument = resolveResult.getSubstitutor().substitute(parameters[0]);
-        if (typeArgument instanceof PsiCapturedWildcardType) {
-          typeArgument = ((PsiCapturedWildcardType)typeArgument).getUpperBound();
-        }
-        final PsiClass argumentClass = unwrapTypeParameter(PsiTypesUtil.getPsiClass(typeArgument));
+        final PsiType typeArgument = resolveResult.getSubstitutor().substitute(parameters[0]);
+        final PsiType erasure = TypeConversionUtil.erasure(typeArgument);
+        final PsiClass argumentClass = PsiTypesUtil.getPsiClass(erasure);
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass);
         }
@@ -198,17 +196,6 @@ public class JavaReflectionReferenceUtil {
       }
     }
     return ReflectiveType.create(expression.getType(), expression);
-  }
-
-  @Contract("null -> null")
-  @Nullable
-  private static PsiClass unwrapTypeParameter(@Nullable PsiClass psiClass) {
-    int preventEndlessLoop = 5;
-    while (psiClass instanceof PsiTypeParameter && --preventEndlessLoop > 0) {
-      final PsiClassType[] extendsList = psiClass.getExtendsListTypes();
-      psiClass = extendsList.length != 0 ? extendsList[0].resolve() : null;
-    }
-    return psiClass;
   }
 
   @Contract("null,_->null")
