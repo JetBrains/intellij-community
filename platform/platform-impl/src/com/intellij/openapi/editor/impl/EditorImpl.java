@@ -327,13 +327,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myBackgroundImageSet;
 
-  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project) {
+  private final EditorKind myKind;
+
+  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind) {
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
     myIsViewer = viewer;
+    myKind = kind;
     mySettings = new SettingsImpl(this, project);
     if (!mySettings.isUseSoftWraps() && shouldSoftWrapsBeForced()) {
       mySettings.setUseSoftWrapsQuiet();
@@ -554,6 +557,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetbrainsJvm && Registry.is("ide.mac.forceTouch")) {
       new MacGestureSupportForEditor(getComponent());
     }
+    backwardCompatibilityWithSoftWrapAppliancePlaces(mySettings, kind);
+  }
+
+  // todo drop it
+  private static void backwardCompatibilityWithSoftWrapAppliancePlaces(SettingsImpl settings, EditorKind kind) {
+    if (kind.equals(EditorKind.CONSOLE))
+      settings.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
+    if (kind.equals(EditorKind.MAIN_EDITOR))
+      settings.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.MAIN_EDITOR);
+    if (kind.equals(EditorKind.PREVIEW))
+      settings.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
   }
 
   /**
@@ -748,6 +762,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public InlayModelImpl getInlayModel() {
     return myInlayModel;
+  }
+
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return myKind;
   }
 
   @Override
