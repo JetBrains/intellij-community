@@ -121,7 +121,15 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     final String originModuleFilePath = getModuleFilePath();
     LOG.assertTrue(originModuleFilePath != null);
 
-    String moduleName = myProjectId == null ? getName() : myProjectId.getArtifactId();
+    String moduleName;
+    if (myProjectId == null) {
+      moduleName = getName();
+    }
+    else {
+      moduleName = ModuleGrouperKt.isQualifiedModuleNamesEnabled() && StringUtil.isNotEmpty(myProjectId.getGroupId())
+                   ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
+                   : myProjectId.getArtifactId();
+    }
     String moduleFilePath = myWizardContext.getProjectFileDirectory() + "/.idea/modules/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
     deleteModuleFile(moduleFilePath);
     final ModuleType moduleType = getModuleType();
