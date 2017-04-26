@@ -27,7 +27,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.util.ui.EdtInvocationManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -166,13 +165,10 @@ public class ProgressIndicatorUtils {
     // which get cancelled too soon when a next write action arrives in the same EDT batch
     // (can happen when processing multiple VFS events or writing multiple files on save)
 
-    // use SwingUtilities instead of application.invokeLater
-    // to tolerate any immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
-
     CompletableFuture<?> future = new CompletableFuture<>();
-    EdtInvocationManager.getInstance().invokeLater(() -> {
-      final Application application = ApplicationManager.getApplication();
-      if (application.isDisposed() || progressIndicator.isCanceled()) {
+    Application application = ApplicationManager.getApplication();
+    application.invokeLater(() -> {
+      if (application.isDisposed() || progressIndicator.isCanceled() || future.isCancelled()) {
         future.complete(null);
         return;
       }
@@ -235,7 +231,7 @@ public class ProgressIndicatorUtils {
         future.completeExceptionally(e);
         throw e;
       }
-    });
+    }, ModalityState.any()); // 'any' to tolerate immediate modality changes (e.g. https://youtrack.jetbrains.com/issue/IDEA-135180)
     return future;
   }
 

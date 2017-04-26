@@ -54,15 +54,18 @@ public class TransferToEDTQueue<T> {
         return;
       }
       long start = System.currentTimeMillis();
-      int processed = 0;
       while (processNext()) {
-        processed++;
         long finish = System.currentTimeMillis();
         if (myMaxUnitOfWorkThresholdMs != -1 && finish - start > myMaxUnitOfWorkThresholdMs) break;
       }
       if (!isEmpty()) {
         scheduleUpdate();
       }
+    }
+
+    @Override
+    public String toString() {
+      return TransferToEDTQueue.this.getClass().getSimpleName() + "[" + myName + "]";
     }
   };
 
