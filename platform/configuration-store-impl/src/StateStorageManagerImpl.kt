@@ -223,7 +223,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                         @Suppress("DEPRECATION") stateSplitter: Class<out StateSplitter>,
                                         exclusive: Boolean = false): StateStorage {
     if (storageClass != StateStorage::class.java) {
-      val constructor = storageClass.constructors.get(0)!!
+      val constructor = storageClass.constructors.first()
       constructor.isAccessible = true
       return constructor.newInstance(componentManager!!, this) as StateStorage
     }
