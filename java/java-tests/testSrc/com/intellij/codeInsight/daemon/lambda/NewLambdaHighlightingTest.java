@@ -154,6 +154,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInferTypeParametersFromFunctionalInterfaceInputs() { doTest(); }
   public void testGroundTargetTypeWhenAbstractMethodInSuperclass() { doTest(); }
   public void testNestedLambdasWithInferenceOfReturnTypeInTheLatestLambda() { doTest(); }
+  public void testCapturedWildcardNotOpenedDuringInference() { doTest(); }
 
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
