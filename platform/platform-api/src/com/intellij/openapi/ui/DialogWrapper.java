@@ -759,7 +759,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JButton createJOptionsButton(@NotNull OptionAction action) {
     JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    optionButton.setOkToProcessDefaultMnemonics(true);
+    optionButton.setOkToProcessDefaultMnemonics(false);
     optionButton.setOptionTooltipText(
       "Press " + KeymapUtil.getKeystrokeText(SHOW_OPTION_KEYSTROKE) + " to expand or use a mnemonic of a contained action");
 
@@ -775,7 +775,7 @@ public abstract class DialogWrapper {
               final JBOptionButton buttonToActivate = eachInfo.getButton();
               buttonToActivate.showPopup(eachInfo.getAction(), true);
             }
-          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), optionButton, myDisposable);
+          }.registerCustomShortcutSet(MnemonicHelper.createShortcut(mnemonic), rootPane, myDisposable);
         }
       }
     }
