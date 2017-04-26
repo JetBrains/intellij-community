@@ -367,14 +367,19 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     if (offset <= range.getStartOffset()) {
       offset++;
     }
-    PsiElement elt = myFile.getViewProvider().findElementAt(offset);
-    if (elt == null) return null;
-    PsiElement comment = PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
+    PsiElement comment = getCommentAtOffset(offset);
     if (comment == null || myCaret.hasSelection() && !range.contains(comment.getTextRange())) {
       return null;
     }
 
     return comment;
+  }
+
+  @Nullable
+  private PsiComment getCommentAtOffset(int offset) {
+    PsiElement elt = myFile.getViewProvider().findElementAt(offset);
+    if (elt == null) return null;
+    return PsiTreeUtil.getParentOfType(elt, PsiComment.class, false);
   }
 
   public void commentRange(int startOffset, int endOffset, String commentPrefix, String commentSuffix, Commenter commenter) {
@@ -435,7 +440,8 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     HighlighterIterator it = ((EditorEx)myEditor).getHighlighter().createIterator(offset - 1);
     IElementType tokenType = it.getTokenType();
     return  (tokenType != null && (it.getEnd() > offset && (tokenType == commenter.getLineCommentTokenType() || 
-                                                            tokenType == commenter.getBlockCommentTokenType()) || 
+                                                            tokenType == commenter.getBlockCommentTokenType() ||
+                                                            tokenType == commenter.getDocumentationCommentTokenType()) || 
                                    includingAfterLineComment && it.getEnd() == offset && tokenType == commenter.getLineCommentTokenType() && 
                                    !(commenter instanceof CommenterWithLineSuffix)));
   }
@@ -449,7 +455,23 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
   private TextRange getBlockCommentAt(int offset) {
     CodeDocumentationAwareCommenter commenter = (CodeDocumentationAwareCommenter)myCommenter;
     HighlighterIterator it = ((EditorEx)myEditor).getHighlighter().createIterator(offset);
-    return it.getTokenType() == commenter.getBlockCommentTokenType() ? new TextRange(it.getStart(), it.getEnd()) : null;
+    if (it.getTokenType() == commenter.getBlockCommentTokenType()) {
+      return new TextRange(it.getStart(), it.getEnd());
+    }
+    if (docCommentIsBlockComment(commenter)) {
+      PsiComment comment = getCommentAtOffset(offset);
+      if (comment != null && commenter.isDocumentationComment(comment)) {
+        return comment.getTextRange();
+      }
+    }
+    return null;
+  }
+
+  private static boolean docCommentIsBlockComment(CodeDocumentationAwareCommenter commenter) {
+    return commenter.getBlockCommentPrefix() != null && commenter.getDocumentationCommentPrefix() != null &&
+           commenter.getDocumentationCommentPrefix().startsWith(commenter.getBlockCommentPrefix()) &&
+           commenter.getBlockCommentSuffix() != null && commenter.getDocumentationCommentSuffix() != null &&
+           commenter.getDocumentationCommentSuffix().endsWith(commenter.getBlockCommentSuffix());
   }
 
   private void showWarning(String message, int offset) {
