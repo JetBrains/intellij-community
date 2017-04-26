@@ -85,6 +85,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final Lock myReadDataLock = myLock.readLock();
   private final Lock myOpenCloseLock = myLock.writeLock();
+  // index build start/finish callbacks are not ordered, so "build1 started" -> "build2 started" -> "build1 finished" -> "build2 finished" is expected sequence
+  private int myActiveBuilds = 0;
 
   private volatile CompilerReferenceReader myReader;
 
@@ -103,8 +105,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
           if (project == myProject) {
-            myDirtyScopeHolder.compilerActivityStarted();
-            closeReaderIfNeed(false);
+            closeReaderIfNeed(IndexCloseReason.COMPILATION_STARTED);
           }
         }
       });
@@ -129,9 +130,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
                 return context.getCompileScope().getAffectedModules();
               });
               if (compilationModules == null) return;
-              myDirtyScopeHolder.compilerActivityFinished();
-              myCompilationCount.increment();
-              openReaderIfNeed();
+              openReaderIfNeed(IndexOpenReason.COMPILATION_FINISHED);
             };
             executeOnBuildThread(compilationFinished);
           }
@@ -150,16 +149,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             isUpToDate = false;
           }
           executeOnBuildThread(() -> {
-            myDirtyScopeHolder.upToDateChecked(isUpToDate);
             if (isUpToDate) {
-              myCompilationCount.increment();
-              openReaderIfNeed();
+              openReaderIfNeed(IndexOpenReason.UP_TO_DATE_CACHE);
+            } else {
+              markAsOutdated();
             }
           });
         });
       }
 
-      Disposer.register(myProject, () -> closeReaderIfNeed(false));
+      Disposer.register(myProject, () -> closeReaderIfNeed(IndexCloseReason.PROJECT_CLOSED));
     }
   }
 
@@ -482,11 +481,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  private void closeReaderIfNeed(boolean removeIndex) {
+  private void closeReaderIfNeed(IndexCloseReason reason) {
     myOpenCloseLock.lock();
     try {
+      if (reason == IndexCloseReason.COMPILATION_STARTED) {
+        myActiveBuilds++;
+        myDirtyScopeHolder.compilerActivityStarted();
+      }
       if (myReader != null) {
-        myReader.close(removeIndex);
+        myReader.close(reason == IndexCloseReason.AN_EXCEPTION);
         myReader = null;
       }
     } finally {
@@ -494,14 +497,41 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  private void openReaderIfNeed() {
+  private void openReaderIfNeed(IndexOpenReason reason) {
+    myCompilationCount.increment();
     myOpenCloseLock.lock();
     try {
-      if (myProject.isOpen()) {
-        LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " + ReadAction.compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
+      try {
+        switch (reason) {
+          case UP_TO_DATE_CACHE:
+            myDirtyScopeHolder.upToDateChecked(true);
+            break;
+          case COMPILATION_FINISHED:
+            myDirtyScopeHolder.compilerActivityFinished();
+        }
+      }
+      catch (RuntimeException e) {
+        --myActiveBuilds;
+        throw e;
+      }
+      if ((--myActiveBuilds == 0) && myProject.isOpen()) {
+        LOG.assertTrue(myReader == null, "isAutoMakeEnabled = " +
+                                         ReadAction
+                                           .compute(() -> CompilerWorkspaceConfiguration.getInstance(myProject).MAKE_PROJECT_ON_SAVE));
         myReader = CompilerReferenceReader.create(myProject);
         LOG.info("backward reference index reader " + (myReader == null ? "doesn't exist" : "is opened"));
       }
+    }
+    finally {
+      myOpenCloseLock.unlock();
+    }
+  }
+
+  private void markAsOutdated() {
+    myOpenCloseLock.lock();
+    try {
+      --myActiveBuilds;
+      myDirtyScopeHolder.upToDateChecked(false);
     } finally {
       myOpenCloseLock.unlock();
     }
@@ -674,7 +704,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     LOG.error("an exception during " + actionName + " calculation", e);
     Throwable unwrapped = e instanceof RuntimeException ? e.getCause() : e;
     if (requireIndexRebuild(unwrapped)) {
-      closeReaderIfNeed(true);
+      closeReaderIfNeed(IndexCloseReason.AN_EXCEPTION);
     }
     return null;
   }
@@ -690,5 +720,16 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     return exception instanceof PersistentEnumeratorBase.CorruptedException ||
            exception instanceof StorageException ||
            exception instanceof IOException;
+  }
+
+  private enum IndexCloseReason {
+    AN_EXCEPTION,
+    COMPILATION_STARTED,
+    PROJECT_CLOSED
+  }
+
+  private enum IndexOpenReason {
+    COMPILATION_FINISHED,
+    UP_TO_DATE_CACHE
   }
 }
