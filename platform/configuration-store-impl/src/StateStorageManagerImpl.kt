@@ -254,9 +254,11 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     return storage
   }
 
+  // open for upsource
   protected open fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
       = MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
 
+  // open for upsource
   protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage
       = MyDirectoryStorage(this, Paths.get(path), splitter)
 
