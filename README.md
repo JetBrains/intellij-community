@@ -6,9 +6,9 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * Open the project.
 * If an error notification about a missing required plugin (e.g. Kotlin) is shown enable or install that plugin.
 * Configure a JSDK named "**IDEA jdk**" (case sensitive), pointing to an installation of JDK 1.6.
-* Unless you're running on a Mac with an Apple JDK, add <JDK_HOME>/lib/tools.jar to the set of "**IDEA jdk**" jars.
+* Add <JDK_16_HOME>/lib/tools.jar and <JDK_16_HOME>/lib/sa-jdi.jar to the set of "**IDEA jdk**" jars.
 * Configure a JSDK named "**1.8**", pointing to an installation of JDK 1.8.
-* Add <JDK_18_HOME>/lib/tools.jar to the set of "**1.8**" jars.
+* Add <JDK_18_HOME>/lib/tools.jar and <JDK_18_HOME>/lib/sa-jdi.jar to the set of "**1.8**" jars.
 * Use Build | Build Project to build the code.
 
 To run the IDE from the built code
