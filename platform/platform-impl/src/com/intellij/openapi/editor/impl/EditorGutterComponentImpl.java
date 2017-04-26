@@ -1810,11 +1810,6 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myStartIconAreaWidth = width;
   }
 
-  @Override
-  public void resetInitialIconAreaWidth() {
-    myStartIconAreaWidth = START_ICON_AREA_WIDTH;
-  }
-
   private void invokePopup(MouseEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {

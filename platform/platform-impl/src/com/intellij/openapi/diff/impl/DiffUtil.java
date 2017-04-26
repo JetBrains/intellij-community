@@ -93,7 +93,6 @@ public class DiffUtil {
     EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
     editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
     editor.getGutterComponentEx().revalidateMarkup();
-    editor.getGutterComponentEx().resetInitialIconAreaWidth();
 
     if (fileType != null && project != null && !project.isDisposed()) {
       CodeStyleFacade codeStyleFacade = CodeStyleFacade.getInstance(project);

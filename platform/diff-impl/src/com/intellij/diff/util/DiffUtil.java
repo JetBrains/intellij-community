@@ -214,7 +214,6 @@ public class DiffUtil {
     editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
     editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
-    editor.getGutterComponentEx().resetInitialIconAreaWidth();
 
     if (enableFolding) {
       setFoldingModelSupport(editor);
