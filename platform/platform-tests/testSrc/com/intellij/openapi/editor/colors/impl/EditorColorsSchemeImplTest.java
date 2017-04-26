@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -43,6 +43,30 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   protected void tearDown() throws Exception {
     myScheme = null;
     super.tearDown();
+  }
+
+  public void testAppLevelEditorFontDefaults() {
+    ModifiableFontPreferences appFontPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    FontPreferences stored = new FontPreferencesImpl();
+    appFontPrefs.copyTo(stored);
+    try {
+      String appFontName = appFontPrefs.getFontFamily();
+      int appFontSize = appFontPrefs.getSize(appFontName);
+      assertEquals(FontPreferences.DEFAULT_FONT_NAME, appFontName);
+      assertEditorFontsEqual(appFontName, appFontSize);
+      appFontPrefs.setFontSize(FontPreferences.DEFAULT_FONT_NAME, 8);
+      assertEditorFontsEqual(appFontName, 8);
+    }
+    finally {
+      stored.copyTo(appFontPrefs);
+    }
+  }
+
+  private void assertEditorFontsEqual(@NotNull String fontName, int fontSize) {
+    assertEquals(fontName, myScheme.getEditorFontName());
+    assertEquals(fontSize, myScheme.getEditorFontSize());
+    assertEquals(fontName, myScheme.getConsoleFontName());
+    assertEquals(fontSize, myScheme.getConsoleFontSize());
   }
 
   public void testDefaults() {
