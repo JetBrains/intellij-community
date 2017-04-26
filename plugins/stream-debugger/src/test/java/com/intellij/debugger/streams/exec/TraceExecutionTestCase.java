@@ -19,14 +19,15 @@ import com.intellij.debugger.DebuggerTestCase;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.OutputChecker;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
+import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
+import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,7 +55,7 @@ import java.util.function.Function;
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
-  private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
+  private final StreamChainBuilder myChainBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
 
   @Override
   protected OutputChecker initOutputChecker() {
@@ -90,7 +91,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         printContext(getDebugProcess().getDebuggerContext());
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
           final PsiElement elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session);
-          final List<StreamChain> chains = elementAtBreakpoint == null ? null : myChainBuilder.build(elementAtBreakpoint);
+          final List<StreamChain> chains = elementAtBreakpoint == null ? null : chainBuilder.build(elementAtBreakpoint);
           return chains == null || chains.isEmpty() ? null : chains.get(0);
         });
 
