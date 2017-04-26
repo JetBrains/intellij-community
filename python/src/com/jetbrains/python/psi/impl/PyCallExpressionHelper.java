@@ -732,7 +732,7 @@ public class PyCallExpressionHelper {
     final List<PyCallableParameter> parameters = callableType.getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
-    final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
+    final List<PyExpression> arguments = callSite.getArguments(callable);
     final List<PyCallableParameter> explicitParameters =
       PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
 
