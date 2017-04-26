@@ -382,8 +382,7 @@ def jb_start_tests():
     # But sys.path should be same as when launched with test runner directly
     try:
         if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
-            helpers_path = sys.path.pop(0)
-            sys.path.append(helpers_path)
+            sys.path.pop(0)
     except KeyError:
         pass
     return namespace.path, namespace.target, additional_args
