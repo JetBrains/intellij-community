@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -737,48 +736,5 @@ public class PyTypeChecker {
       implicitOffset = 0;
     }
     return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
-  }
-
-  @NotNull
-  public static List<PyExpression> getArguments(@NotNull PyCallSiteExpression expr, @NotNull PsiElement resolved) {
-    if (expr instanceof PyCallExpression) {
-      return Arrays.asList(((PyCallExpression)expr).getArguments());
-    }
-    else if (expr instanceof PySubscriptionExpression) {
-      return Collections.singletonList(((PySubscriptionExpression)expr).getIndexExpression());
-    }
-    else if (expr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
-      final boolean isRight = resolved instanceof PsiNamedElement && PyNames.isRightOperatorName(((PsiNamedElement)resolved).getName());
-      return Collections.singletonList(isRight ? binaryExpr.getLeftExpression() : binaryExpr.getRightExpression());
-    }
-    else {
-      return Collections.emptyList();
-    }
-  }
-
-  @Nullable
-  public static PyExpression getReceiver(@NotNull PyCallSiteExpression expr, @NotNull PsiElement resolved) {
-    if (expr instanceof PyCallExpression) {
-      if (resolved instanceof PyFunction) {
-        final PyFunction function = (PyFunction)resolved;
-        if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
-          return null;
-        }
-      }
-      final PyExpression callee = ((PyCallExpression)expr).getCallee();
-      return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
-    }
-    else if (expr instanceof PySubscriptionExpression) {
-      return ((PySubscriptionExpression)expr).getOperand();
-    }
-    else if (expr instanceof PyBinaryExpression) {
-      final PyBinaryExpression binaryExpr = (PyBinaryExpression)expr;
-      final boolean isRight = resolved instanceof PsiNamedElement && PyNames.isRightOperatorName(((PsiNamedElement)resolved).getName());
-      return isRight ? binaryExpr.getRightExpression() : binaryExpr.getLeftExpression();
-    }
-    else {
-      return null;
-    }
   }
 }

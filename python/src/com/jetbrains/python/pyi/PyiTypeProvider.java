@@ -113,7 +113,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
           continue;
         }
 
-        final PyExpression receiver = PyTypeChecker.getReceiver(callSite, overload);
+        final PyExpression receiver = callSite.getReceiver(overload);
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(receiver, mapping.getMappedParameters(), context);
         if (substitutions == null) {
           continue;
