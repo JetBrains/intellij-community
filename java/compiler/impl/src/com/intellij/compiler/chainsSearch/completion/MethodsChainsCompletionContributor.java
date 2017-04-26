@@ -34,11 +34,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PsiJavaPatterns.or;
@@ -65,21 +68,27 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
           if (!Registry.is(REGISTRY_KEY)) return;
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
-          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
+          final Set<PsiMethod> alreadySuggested = new THashSet<>();
           if (!IS_UNIT_TEST_MODE) {
             result.runRemainingContributors(parameters, completionResult -> {
               LookupElement lookupElement = completionResult.getLookupElement();
-              PsiElement lookupElementPsi = lookupElement.getPsiElement();
-              if (lookupElementPsi != null) {
-                for (LookupElement element : elementsFoundByMethodsChainsSearch) {
-                  if (lookupElementPsi.isEquivalentTo(element.getPsiElement())) {
-                    elementsFoundByMethodsChainsSearch.remove(element);
-                    break;
-                  }
-                }
+              PsiElement psi = lookupElement.getPsiElement();
+              if (psi instanceof PsiMethod) {
+                alreadySuggested.add((PsiMethod)psi);
               }
               result.passResult(completionResult);
             });
+          }
+          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
+          if (!IS_UNIT_TEST_MODE) {
+            Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
+            while (it.hasNext()) {
+              LookupElement lookupElement = it.next();
+              PsiElement psi = lookupElement.getPsiElement();
+              if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
+                it.remove();
+              }
+            }
           } else {
             result.stopHere();
           }
