@@ -155,7 +155,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     if (currentFile == null) return true;
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
-    return manager.getTopLevelFile(containingFile) != manager.getTopLevelFile(currentFile);
+    PsiFile containingTopLevelFile = manager.getTopLevelFile(containingFile);
+    PsiFile currentTopLevelFile = manager.getTopLevelFile(currentFile);
+    return containingTopLevelFile == null || currentTopLevelFile == null || containingTopLevelFile.getViewProvider() != currentTopLevelFile.getViewProvider();
   }
 
   @Override
