@@ -60,6 +60,54 @@ public class LocationBuilderPositiveTest extends StreamChainBuilderPositiveTestB
     doTest();
   }
 
+  public void testBeforeStatement() throws Exception {
+    doTest();
+  }
+
+  public void testAfterStatement() throws Exception {
+    doTest();
+  }
+
+  public void testBetweenChainCallsBeforeDot() throws Exception {
+    doTest();
+  }
+
+  public void testBetweenChainCallsAfterDot() throws Exception {
+    doTest();
+  }
+
+  public void testInEmptyParameterList() throws Exception {
+    doTest();
+  }
+
+  public void testBetweenParametersBeforeComma() throws Exception {
+    doTest();
+  }
+
+  public void testBetweenParametersAfterComma() throws Exception {
+    doTest();
+  }
+
+  public void testInAnyLambda() throws Exception {
+    doTest();
+  }
+
+  public void testInAnyAnonymous() throws Exception {
+    doTest();
+  }
+
+  public void testInString() throws Exception {
+    doTest();
+  }
+
+  public void testInVariableName() throws Exception {
+    doTest();
+  }
+
+  public void testInMethodReference() throws Exception {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected String getDirectoryName() {
