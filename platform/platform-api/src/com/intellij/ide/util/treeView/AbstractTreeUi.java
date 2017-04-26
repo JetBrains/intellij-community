@@ -915,20 +915,30 @@ public class AbstractTreeUi {
   }
 
   private boolean update(@NotNull final NodeDescriptor nodeDescriptor) {
-    try (LockToken ignored = acquireLock()) {
-      final AtomicBoolean update = new AtomicBoolean();
-      execute(new TreeRunnable("AbstractTreeUi.update") {
-        @Override
-        public void perform() {
-          nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
-          update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
+    while(true) {
+      try (LockToken ignored = attemptLock()) {
+        if (ignored == null) {  // async children calculation is in progress under lock
+          if (!myProgress.isCanceled()) myProgress.cancel();
+          continue;
         }
-      });
-      return update.get();
-    }
-    catch (IndexNotReadyException e) {
-      warnOnIndexNotReady(e);
-      return false;
+        final AtomicBoolean update = new AtomicBoolean();
+        execute(new TreeRunnable("AbstractTreeUi.update") {
+          @Override
+          public void perform() {
+            nodeDescriptor.setUpdateCount(nodeDescriptor.getUpdateCount() + 1);
+            update.set(getBuilder().updateNodeDescriptor(nodeDescriptor));
+          }
+        });
+        return update.get();
+      }
+      catch (IndexNotReadyException e) {
+        warnOnIndexNotReady(e);
+        return false;
+      }
+      catch (InterruptedException e) {
+        LOG.info(e);
+        return false;
+      }
     }
   }
 
