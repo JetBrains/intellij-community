@@ -98,8 +98,8 @@ public class ClassWriter {
           buffer.append(ExprProcessor.getCastTypeName(new VarType(node.lambdaInformation.content_class_name, true)));
         }
 
-        buffer.append("::");
-        buffer.append(node.lambdaInformation.content_method_name);
+        buffer.append("::")
+          .append(CodeConstants.INIT_NAME.equals(node.lambdaInformation.content_method_name) ? "new" : node.lambdaInformation.content_method_name);
       }
       else {
         // lambda method
