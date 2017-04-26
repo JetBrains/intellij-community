@@ -678,31 +678,30 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyArgumentsMapping> mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                        @NotNull PyResolveContext resolveContext) {
     final List<PyCallExpression.PyArgumentsMapping> results = new ArrayList<>();
-    for (PyCallable callable : multiResolveCallee(callSite, resolveContext)) {
-      if (callable == null) continue;
-      results.add(mapArguments(callSite, callable, resolveContext));
+    for (PyCallExpression.PyRatedCallee ratedCallee : multiResolveCallee(callSite, resolveContext)) {
+      results.add(mapArguments(callSite, ratedCallee.getCallableType(), ratedCallee.getElement(), resolveContext));
     }
     return results;
   }
 
   @NotNull
-  private static List<PyCallable> multiResolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull PyResolveContext resolveContext) {
+  private static List<PyCallExpression.PyRatedCallee> multiResolveCallee(@NotNull PyCallSiteExpression callSite,
+                                                                         @NotNull PyResolveContext resolveContext) {
     if (callSite instanceof PyCallExpression) {
-      final List<PyCallExpression.PyRatedCallee> ratedCallees = ((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext);
-      return ContainerUtil.map(PyUtil.filterTopPriorityResults(ratedCallees), PyCallExpression.PyRatedCallee::getElement);
+      return PyUtil.filterTopPriorityResults(((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext));
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      final List<PyCallable> results = new ArrayList<>();
+      final List<PyCallExpression.PyRatedCallee> results = new ArrayList<>();
       boolean resolvedToUnknownResult = false;
       for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
-        if (result instanceof PyCallable) {
-          results.add((PyCallable)result);
-          continue;
-        }
         if (result instanceof PyTypedElement) {
           final PyType resultType = resolveContext.getTypeEvalContext().getType((PyTypedElement)result);
-          if (resultType instanceof PyFunctionType) {
-            results.add(((PyFunctionType)resultType).getCallable());
+          if (resultType instanceof PyCallableType) {
+            final PyCallExpression.PyRatedCallee ratedCallee =
+              new PyCallExpression.PyRatedCallee((PyCallableType)resultType,
+                                                 PyUtil.as(result, PyCallable.class),
+                                                 RatedResolveResult.RATE_NORMAL);
+            results.add(ratedCallee);
             continue;
           }
         }
@@ -719,22 +718,23 @@ public class PyCallExpressionHelper {
   public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                  @NotNull PyCallable callable,
                                                                  @NotNull TypeEvalContext context) {
-    return mapArguments(callSite, callable, PyResolveContext.noImplicits().withTypeEvalContext(context));
+    final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
+    if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
+
+    return mapArguments(callSite, callableType, callable, PyResolveContext.noImplicits().withTypeEvalContext(context));
   }
 
   @NotNull
   private static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                                  @NotNull PyCallable callable,
+                                                                  @NotNull PyCallableType callableType,
+                                                                  @Nullable PyCallable callable,
                                                                   @NotNull PyResolveContext resolveContext) {
-    final TypeEvalContext context = resolveContext.getTypeEvalContext();
-    final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
-    if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
-    final List<PyCallableParameter> parameters = callableType.getParameters(context);
+    final List<PyCallableParameter> parameters = callableType.getParameters(resolveContext.getTypeEvalContext());
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
     final List<PyExpression> arguments = callSite.getArguments(callable);
     final List<PyCallableParameter> explicitParameters =
-      PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
+      filterExplicitParameters(parameters, callable, callSite, resolveContext);
 
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
@@ -1213,6 +1213,32 @@ public class PyCallExpressionHelper {
       results.remove(0);
     }
     return results;
+  }
+
+  @NotNull
+  private static List<PyCallableParameter> filterExplicitParameters(@NotNull List<PyCallableParameter> parameters,
+                                                                    @Nullable PyCallable callable,
+                                                                    @NotNull PyCallSiteExpression callSite,
+                                                                    @NotNull PyResolveContext resolveContext) {
+    final int implicitOffset;
+    if (callSite instanceof PyCallExpression) {
+      final PyCallExpression callExpr = (PyCallExpression)callSite;
+      final PyExpression callee = callExpr.getCallee();
+      if (callee instanceof PyReferenceExpression && callable instanceof PyFunction) {
+        implicitOffset = getImplicitArgumentCount((PyReferenceExpression)callee, (PyFunction)callable,
+                                                  resolveContext);
+      }
+      else {
+        implicitOffset = 0;
+      }
+    }
+    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+      implicitOffset = 1;
+    }
+    else {
+      implicitOffset = 0;
+    }
+    return parameters.subList(Math.min(implicitOffset, parameters.size()), parameters.size());
   }
 
   private static class ClarifiedResolveResult {
