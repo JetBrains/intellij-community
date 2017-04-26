@@ -35,7 +35,8 @@ public class StreamChainOption implements ChooserOption {
   @NotNull
   @Override
   public Stream<TextRange> rangeStream() {
-    return Stream.empty();
+    return Stream.of(
+      new TextRange(myChain.getProducerCall().getTextRange().getStartOffset(), myChain.getTerminationCall().getTextRange().getEndOffset()));
   }
 
   @NotNull
