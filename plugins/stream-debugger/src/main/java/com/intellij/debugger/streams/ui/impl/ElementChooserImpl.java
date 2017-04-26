@@ -21,10 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -41,14 +38,18 @@ import java.util.Set;
  * @author Vitaliy.Bibaev
  */
 public class ElementChooserImpl<T extends ChooserOption> implements ElementChooser<T> {
-  private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION - 1;
+  private static final int HIGHLIGHT_LAYER = HighlighterLayer.SELECTION + 1;
   private final Set<RangeHighlighter> myRangeHighlighters = new HashSet<>();
   private final Editor myEditor;
-  private final TextAttributes myAttributes =
-    EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+  private final TextAttributes myAttributes;
 
   public ElementChooserImpl(@NotNull Editor editor) {
     myEditor = editor;
+    final TextAttributes searchResultAttributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    final Color foreground = editor.getColorsScheme().getDefaultForeground();
+    myAttributes = new TextAttributes(foreground, searchResultAttributes.getBackgroundColor(), null,
+                                      searchResultAttributes.getEffectType(), searchResultAttributes.getFontType());
   }
 
   @Override
