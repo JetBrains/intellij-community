@@ -1,1 +1,1 @@
-print(<warning descr="Key 'foo' has no following argument">"{foo}"</warning>.format(**{}))
+print(<warning descr="Key 'foo' has no corresponding argument">"{foo}"</warning>.format(**{}))
