@@ -34,15 +34,20 @@ abstract class MacDistributionCustomizer {
   String icnsPathForEAP = null
 
   /**
+   * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A–Z, a–z), the dot (“.”), and the hyphen (“-”)
+   * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
+   */
+  String bundleIdentifier
+
+  /**
+   * Path to an image which will be injected into .dmg file
+   */
+  String dmgImagePath
+  
+  /**
    * The minimum version of Mac OS where the product is allowed to be installed
    */
   String minOSXVersion = "10.8"
-
-  /**
-   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
-   * If there's no help bundled, leave {@code null} value.
-   */
-  String helpId = null
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
@@ -96,17 +101,6 @@ abstract class MacDistributionCustomizer {
   List<String> binariesToSign = []
 
   /**
-   * An unique identifier string that specifies the app type of the bundle. The string should be in reverse DNS format using only the Roman alphabet in upper and lower case (A–Z, a–z), the dot (“.”), and the hyphen (“-”)
-   * See <a href="https://developer.apple.com/library/ios/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070">CFBundleIdentifier</a> for details
-   */
-  String bundleIdentifier
-
-  /**
-   * Path to an image which will be injected into .dmg file
-   */
-  String dmgImagePath
-
-  /**
    * Path to a image which will be injected into .dmg file for EAP builds (if {@code null} dmgImagePath will be used)
    */
   String dmgImagePathForEAP = null
@@ -130,8 +124,14 @@ abstract class MacDistributionCustomizer {
   Map<String, String> getCustomIdeaProperties(ApplicationInfoProperties applicationInfo) { [:] }
 
   /**
+   * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
+   * If this field has non-null value, {@link #getPathToHelpZip} must be overriden to specify path to archive with help files.
+   */
+  String helpId = null
+
+  /**
    * Override this method if you need to bundle help with Mac OS distribution of the product.
-   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside or {@code null} if help files shouldn't be bundled.
+   * @return path to zip archive containing directory "{@link #helpId}.help" with bundled help files inside.
    */
   String getPathToHelpZip(BuildContext context) {
     null
