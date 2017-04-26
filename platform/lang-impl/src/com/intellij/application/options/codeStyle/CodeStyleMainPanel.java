@@ -143,7 +143,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       top.add(linkPanel);
     }
 
-    top.setBorder(JBUI.Borders.empty(10, 10, 0, 10));
+    top.setBorder(JBUI.Borders.empty(5, 10, 0, 10));
     add(top, BorderLayout.NORTH);
     add(mySettingsPanel, BorderLayout.CENTER);
 
