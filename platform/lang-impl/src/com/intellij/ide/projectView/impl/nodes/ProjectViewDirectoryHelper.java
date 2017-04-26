@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
@@ -378,12 +379,13 @@ public class ProjectViewDirectoryHelper {
       return producer.produce();
     }
     Ref<T> result = new Ref<>();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     boolean succeeded = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
       () -> result.set(producer.produce()),
-      ProgressManager.getInstance().getProgressIndicator()
+      indicator
     );
 
-    if (!succeeded) {
+    if (!succeeded || indicator != null && indicator.isCanceled()) {
       throw new ProcessCanceledException();
     }
     return result.get();
