@@ -54,7 +54,7 @@ public abstract class ContractValue {
   }
 
   public static ContractValue optionalValue(boolean present) {
-    return present ? IndependentValue.PRESENT : IndependentValue.ABSENT;
+    return present ? IndependentValue.OPTIONAL_PRESENT : IndependentValue.OPTIONAL_ABSENT;
   }
 
   public static ContractValue nullValue() {
@@ -69,7 +69,7 @@ public abstract class ContractValue {
     return new Condition(left, relation, right);
   }
 
-  static class Qualifier extends ContractValue {
+  private static class Qualifier extends ContractValue {
     static final Qualifier INSTANCE = new Qualifier();
 
     @Override
@@ -83,7 +83,7 @@ public abstract class ContractValue {
     }
   }
 
-  static class Argument extends ContractValue {
+  private static class Argument extends ContractValue {
     private final int myIndex;
 
     Argument(int index) {
@@ -101,12 +101,14 @@ public abstract class ContractValue {
     }
   }
 
-  static class IndependentValue extends ContractValue {
+  private static class IndependentValue extends ContractValue {
     static final IndependentValue NULL = new IndependentValue(factory -> factory.getConstFactory().getNull(), "null");
     static final IndependentValue TRUE = new IndependentValue(factory -> factory.getConstFactory().getTrue(), "true");
     static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false");
-    static final IndependentValue PRESENT = new IndependentValue(factory -> factory.getOptionalFactory().getOptional(true), "present");
-    static final IndependentValue ABSENT = new IndependentValue(factory -> factory.getOptionalFactory().getOptional(false), "empty");
+    static final IndependentValue OPTIONAL_PRESENT =
+      new IndependentValue(factory -> factory.getOptionalFactory().getOptional(true), "present");
+    static final IndependentValue OPTIONAL_ABSENT =
+      new IndependentValue(factory -> factory.getOptionalFactory().getOptional(false), "empty");
     static final IndependentValue ZERO =
       new IndependentValue(factory -> factory.getConstFactory().createFromValue(0, PsiType.INT, null), "0");
 
@@ -129,7 +131,7 @@ public abstract class ContractValue {
     }
   }
 
-  static class Spec extends ContractValue {
+  private static class Spec extends ContractValue {
     private final ContractValue myQualifier;
     private final SpecialField myField;
 
@@ -149,7 +151,7 @@ public abstract class ContractValue {
     }
   }
 
-  static class Condition extends ContractValue {
+  private static class Condition extends ContractValue {
     private final ContractValue myLeft, myRight;
     private final DfaRelationValue.RelationType myRelationType;
 
