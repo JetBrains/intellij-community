@@ -120,8 +120,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       DataNode<ProjectData> projectDataNode = new DataNode<>(ProjectKeys.PROJECT, projectData, null);
 
       final String ideProjectPath = settings == null ? null : settings.getIdeProjectPath();
-      final String mainModuleFileDirectoryPath =
-        ideProjectPath == null ? projectPath : ideProjectPath + "/.idea/modules/";
+      final String mainModuleFileDirectoryPath = ideProjectPath == null ? projectPath : ideProjectPath;
 
       projectDataNode
         .createChild(ProjectKeys.MODULE, new ModuleData(projectName, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(),
