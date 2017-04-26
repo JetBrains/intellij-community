@@ -348,10 +348,13 @@ idea.fatal.error.notification=disabled
     checkPaths([buildContext.linuxDistributionCustomizer?.iconPngPath], "productProperties.linuxCustomizer.iconPngPath")
 
     def macCustomizer = buildContext.macDistributionCustomizer
-    checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
-    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
-    checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
-    checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+    if (macCustomizer != null) {
+      checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+      checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
+      checkPaths([macCustomizer.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
+      checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
+      checkPaths([macCustomizer.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+    }
   }
 
   private void checkProductLayout() {
@@ -413,6 +416,16 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  private void checkMandatoryField(String value, String fieldName) {
+    if (value == null) {
+      buildContext.messages.error("Mandatory property '$fieldName' is not specified")
+    }
+  }
+
+  private void checkMandatoryPath(String path, String fieldName) {
+    checkMandatoryField(path, fieldName)
+    checkPaths([path], fieldName)
+  }
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {

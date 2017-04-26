@@ -29,13 +29,13 @@ import java.time.LocalDate
 class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final MacDistributionCustomizer customizer
   private final File ideaProperties
-  private final String customIcnsPath
+  private final String icnsPath
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_MAC, "Mac OS", buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
-    customIcnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
+    icnsPath = (buildContext.applicationInfo.isEAP ? customizer.icnsPathForEAP : null) ?: customizer.icnsPath
   }
 
   @Override
@@ -49,7 +49,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>${PathUtilRt.getFileName(customIcnsPath ?: "idea.icns")}</string>
+        <string>${PathUtilRt.getFileName(icnsPath)}</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
@@ -123,18 +123,10 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     String executable = buildContext.productProperties.baseFileName
-    String icns = "idea.icns" //todo[nik] rename to more generic name?
     String helpId = macCustomizer.helpId
     String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
-    if (customIcnsPath != null) {
-      buildContext.ant.delete(file: "$target/Resources/idea.icns")
-      buildContext.ant.copy(file: customIcnsPath, todir: "$target/Resources")
-      buildContext.ant.copy(file: customIcnsPath, tofile: helpIcns)
-      icns = new File(customIcnsPath).name
-    }
-    else {
-      buildContext.ant.copy(file: "$target/Resources/idea.icns", tofile: helpIcns)
-    }
+    buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
+    buildContext.ant.copy(file: icnsPath, tofile: helpIcns)
 
     String fullName = buildContext.applicationInfo.productName
 
@@ -207,7 +199,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@build@@", value: buildContext.fullBuildNumber)
       replacefilter(token: "@@doc_types@@", value: docTypes ?: "")
       replacefilter(token: "@@executable@@", value: executable)
-      replacefilter(token: "@@icns@@", value: icns)
+      replacefilter(token: "@@icns@@", value: PathUtilRt.getFileName(icnsPath))
       replacefilter(token: "@@bundle_name@@", value: fullName)
       replacefilter(token: "@@product_state@@", value: EAP)
       replacefilter(token: "@@bundle_identifier@@", value: macCustomizer.bundleIdentifier)
