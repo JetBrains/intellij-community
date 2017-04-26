@@ -200,10 +200,10 @@ public class KeymapUtil {
   }
 
   @NotNull
-  public static ShortcutSet getActiveKeymapShortcuts(@NotNull String actionId) {
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
     Application application = ApplicationManager.getApplication();
     KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
-    if (keymapManager == null) {
+    if (keymapManager == null || actionId == null) {
       return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
     }
     return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
