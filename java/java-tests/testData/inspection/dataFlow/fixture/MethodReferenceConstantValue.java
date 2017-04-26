@@ -9,11 +9,17 @@ public class MethodReferenceConstantValue {
     return s == null ? new Random().nextBoolean() : false;
   }
 
+  @Contract(value = "_ -> true", pure = true)
+  private static boolean alwaysTrue(Object x) {
+    return true;
+  }
+
   public void test(Optional<String> opt) {
     X x = <warning descr="Method reference result is always 'false'">MethodReferenceConstantValue::strangeMethod</warning>;
     Boolean aBoolean = opt.map(<warning descr="Method reference result is always 'false'">this::strangeMethod</warning>)
       .map(<warning descr="Method reference result is always 'true'">Objects::nonNull</warning>)
       .map(<warning descr="Method reference result is always 'false'">Objects::isNull</warning>)
+      .map(MethodReferenceConstantValue::alwaysTrue)
       .orElse(false);
     if (opt.isPresent()) {
       Stream.generate(<warning descr="Method reference result is always 'true'">opt::isPresent</warning>)

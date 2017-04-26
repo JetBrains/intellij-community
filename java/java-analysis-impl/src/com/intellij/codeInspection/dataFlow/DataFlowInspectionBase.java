@@ -357,6 +357,18 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       }
     });
 
+    reportMethodReferenceProblems(holder, visitor);
+
+    if (REPORT_CONSTANT_REFERENCE_VALUES) {
+      reportConstantReferenceValues(holder, visitor, reportedAnchors);
+    }
+
+    if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull()) {
+      reportAlwaysReturnsNotNull(holder, scope);
+    }
+  }
+
+  private void reportMethodReferenceProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
     visitor.getMethodReferenceResults().forEach((methodRef, dfaValue) -> {
       if (dfaValue instanceof DfaConstValue) {
         Object value = ((DfaConstValue)dfaValue).getValue();
@@ -366,14 +378,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
     });
-
-    if (REPORT_CONSTANT_REFERENCE_VALUES) {
-      reportConstantReferenceValues(holder, visitor, reportedAnchors);
-    }
-
-    if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull()) {
-      reportAlwaysReturnsNotNull(holder, scope);
-    }
   }
 
   private void reportUncheckedOptionalGet(ProblemsHolder holder,
@@ -1081,9 +1085,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     }
 
     @Override
-    protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef, DfaValue res) {
-      // Do not track if method reference may have different results
-      myMethodReferenceResults.merge(methodRef, res, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
+    protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef,
+                                                List<? extends MethodContract> contracts,
+                                                DfaValue res) {
+      if(contracts.stream().anyMatch(c -> !c.isTrivial())) {
+        // Do not track if method reference may have different results
+        myMethodReferenceResults.merge(methodRef, res, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
+      }
     }
 
     private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {

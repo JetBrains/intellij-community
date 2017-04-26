@@ -155,7 +155,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = runner.getFactory().createTypeValue(returnType, DfaPsiUtil.getElementNullability(returnType, method));
     Stream<DfaValue> returnValues = possibleReturnValues(callArguments, state, contracts, runner.getFactory(), defaultResult);
-    returnValues.forEach(res -> processMethodReferenceResult(methodRef, res));
+    returnValues.forEach(res -> processMethodReferenceResult(methodRef, contracts, res));
   }
 
   @NotNull
@@ -202,7 +202,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       .append(currentStates.isEmpty() ? StreamEx.empty() : StreamEx.of(defaultResult)).distinct();
   }
 
-  protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef, DfaValue res) {
+  protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef,
+                                              List<? extends MethodContract> contracts,
+                                              DfaValue res) {
   }
 
   @Override
