@@ -187,7 +187,7 @@ class MacDmgBuilder {
       }
     }
 
-    String helpFileName = customizer.getPathToHelpZip(buildContext) != null ? "${customizer.helpId}.help" : "no-help"
+    String helpFileName = customizer.helpId != null ? "${customizer.helpId}.help" : "no-help"
     String jreFileNameArgument = jreArchivePath != null ? " \"${PathUtilRt.getFileName(jreArchivePath)}\"" : ""
     sshExec("$remoteDir/signapp.sh ${targetFileName} ${buildContext.fullBuildNumber} ${this.macHostProperties.userName}"
               + " ${this.macHostProperties.password} \"${this.macHostProperties.codesignString}\" $helpFileName$jreFileNameArgument", "signapp.log")
