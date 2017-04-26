@@ -7,12 +7,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.containers.SLRUMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -28,9 +31,9 @@ public class JsonSchemaObject {
   private Map<String, JsonSchemaObject> myDefinitions;
   private SmartPsiElementPointer<JsonObject> myDefinitionsPointer;
   private Map<String, JsonSchemaObject> myProperties;
-  private Map<String, JsonSchemaObject> myPatternProperties;
-  private final PatternCalculator myPatternCalculator = new PatternCalculator();
-  private final PatternCalculator myValuesPatternCalculator = new PatternCalculator();
+
+  private PatternProperties myPatternProperties;
+  private PropertyNamePattern myPattern;
 
   private String myId;
   private String mySchema;
@@ -50,7 +53,6 @@ public class JsonSchemaObject {
   private boolean myExclusiveMinimum;
   private Integer myMaxLength;
   private Integer myMinLength;
-  private String myPattern;
 
   private Boolean myAdditionalPropertiesAllowed;
   private JsonSchemaObject myAdditionalPropertiesSchema;
@@ -97,9 +99,10 @@ public class JsonSchemaObject {
 
     myProperties.putAll(other.myProperties);
     myDefinitions = copyMap(myDefinitions, other.myDefinitions);
-    myPatternProperties = copyMap(myPatternProperties, other.myPatternProperties);
-    myPatternCalculator.clear();
-    myValuesPatternCalculator.clear();
+    final Map<String, JsonSchemaObject> map = copyMap(myPatternProperties == null ? null : myPatternProperties.mySchemasMap,
+                                                      other.myPatternProperties == null ? null : other.myPatternProperties.mySchemasMap);
+    myPatternProperties = map == null ? null : new PatternProperties(map);
+
     if (!StringUtil.isEmptyOrSpaces(other.myDescription)) {
       myDescription = other.myDescription;
     }
@@ -195,10 +198,10 @@ public class JsonSchemaObject {
     myProperties = properties;
   }
 
-  public void setPatternProperties(@NotNull final Map<String, JsonSchemaObject> patternProperties) {
-    myPatternProperties = new HashMap<>();
-    patternProperties.keySet().forEach(key -> myPatternProperties.put(StringUtil.unescapeBackSlashes(key), patternProperties.get(key)));
-    myPatternCalculator.clear();
+  public void setPatternProperties(Map<String, JsonSchemaObject> patternProperties) {
+    //todo correct
+    patternProperties.keySet().forEach(key -> patternProperties.put(StringUtil.unescapeBackSlashes(key), patternProperties.get(key)));
+    myPatternProperties = new PatternProperties(patternProperties);
   }
 
   public JsonSchemaType getType() {
@@ -266,12 +269,11 @@ public class JsonSchemaObject {
   }
 
   public String getPattern() {
-    return myPattern;
+    return myPattern == null ? null : myPattern.getPattern();
   }
 
   public void setPattern(String pattern) {
-    myPattern = StringUtil.unescapeBackSlashes(pattern);
-    myValuesPatternCalculator.clear();
+    myPattern = pattern == null ? null : new PropertyNamePattern(StringUtil.unescapeBackSlashes(pattern));
   }
 
   public Boolean getAdditionalPropertiesAllowed() {
@@ -498,36 +500,24 @@ public class JsonSchemaObject {
   @Nullable
   public JsonSchemaObject getMatchingPatternPropertySchema(@NotNull String name) {
     if (myPatternProperties == null) return null;
-    final String pattern = myPatternCalculator.selectMatchingPattern(myPatternProperties.keySet(), name);
-    return pattern == null ? null : myPatternProperties.get(pattern);
+    return myPatternProperties.getPatternPropertySchema(name);
   }
 
   public boolean checkByPattern(@NotNull String value) {
-    if (getPattern() == null) return true;
-    return getPattern().equals(myValuesPatternCalculator.selectMatchingPattern(Collections.singletonList(getPattern()), value));
+    return myPattern != null && myPattern.checkByPattern(value);
   }
 
   public String getPatternError() {
-    if (getPattern() != null) {
-      myValuesPatternCalculator.ensureInit(Collections.singletonList(getPattern()));
-      final Map<String, String> patterns = myValuesPatternCalculator.getInvalidPatterns();
-      if (patterns != null) {
-        final String error = patterns.get(getPattern());
-        assert error != null;
-        return error;
-      }
-    }
-    return null;
+    return myPattern == null ? null : myPattern.getPatternError();
   }
 
   public Map<SmartPsiElementPointer<JsonObject>, String> getInvalidPatternProperties() {
     if (myPatternProperties != null) {
-      myPatternCalculator.ensureInit(myPatternProperties.keySet());
-      final Map<String, String> patterns = myPatternCalculator.getInvalidPatterns();
+      final Map<String, String> patterns = myPatternProperties.getInvalidPatterns();
       if (patterns == null) return null;
 
       return patterns.entrySet().stream().map(entry -> {
-        final JsonSchemaObject object = myPatternProperties.get(entry.getKey());
+        final JsonSchemaObject object = myPatternProperties.getSchemaForPattern(entry.getKey());
         assert object != null;
         final SmartPsiElementPointer<JsonObject> pointer = object.getPeerPointer();
         return Pair.create(pointer, entry.getValue());
@@ -568,103 +558,6 @@ public class JsonSchemaObject {
     return current;
   }
 
-  private static class PatternCalculator {
-    private final Object myLock = new Object();
-    private Map<String, Pattern> myCachedPatterns;
-    private SLRUMap<String, String> myCachedPatternProperties;
-    private Map<String, String> myInvalidPatterns;
-
-    @Nullable
-    public String selectMatchingPattern(@Nullable final Collection<String> patterns, @NotNull final String name) {
-      if (patterns == null || patterns.isEmpty()) return null;
-      final Map<String, Pattern> cachedPatterns;
-      final Map<String, String> invalidPatterns;
-      synchronized (myLock) {
-        initPatternCache(patterns);
-        final String s = myCachedPatternProperties.get(name);
-        if (s != null) return s;
-        cachedPatterns = new HashMap<>(myCachedPatterns);
-        invalidPatterns = myInvalidPatterns == null ? Collections.emptyMap() : new HashMap<>(myInvalidPatterns);
-      }
-
-      return matchPatternsToString(name, patterns, cachedPatterns, invalidPatterns);
-    }
-
-    public void ensureInit(@Nullable final Collection<String> patterns) {
-      if (patterns == null || patterns.isEmpty()) return;
-      synchronized (myLock) {
-        initPatternCache(patterns);
-      }
-    }
-
-    @Nullable
-    public Map<String, String> getInvalidPatterns() {
-      return myInvalidPatterns;
-    }
-
-    public void clear() {
-      synchronized (myLock){
-        myCachedPatterns = null;
-        myCachedPatternProperties = null;
-      }
-    }
-
-    private String matchPatternsToString(@NotNull final String name,
-                                         @NotNull final Collection<String> patterns,
-                                         @NotNull Map<String, Pattern> cachedPatterns,
-                                         @Nullable Map<String, String> invalidPatterns) {
-      final List<String> strings = new ArrayList<>(patterns);
-      Collections.sort(strings);
-
-      for (final String pattern : strings) {
-        if (invalidPatterns != null && invalidPatterns.containsKey(pattern)) continue;
-        final Pattern compiledPattern = cachedPatterns.get(pattern);
-        assert compiledPattern != null;
-        try {
-          final boolean matches = compiledPattern.matcher(StringUtil.newBombedCharSequence(name, 300)).matches();
-          if (matches) {
-            synchronized (myLock) {
-              if (myCachedPatterns.containsKey(pattern)) myCachedPatternProperties.put(name, pattern);
-            }
-            return pattern;
-          }
-        } catch (ProcessCanceledException e) {
-          //ignored
-        }
-      }
-      synchronized (myLock) {
-        if (myCachedPatterns.equals(cachedPatterns)) myCachedPatternProperties.put(name, "");
-      }
-      return null;
-    }
-
-    private void initPatternCache(@NotNull final Collection<String> patterns) {
-      if (myCachedPatterns == null) {
-        myCachedPatterns = new HashMap<>(patterns.size());
-        myCachedPatternProperties = new SLRUMap<>(100, 100);
-      }
-      for (String pattern : patterns) {
-        if (!myCachedPatterns.containsKey(pattern)) {
-          try {
-            final Pattern compiled = Pattern.compile(adaptSchemaPattern(pattern));
-            myCachedPatterns.put(pattern, compiled);
-          } catch (PatternSyntaxException e) {
-            if (myInvalidPatterns == null) myInvalidPatterns = new HashMap<>();
-            myInvalidPatterns.put(pattern, e.getMessage());
-          }
-        }
-      }
-    }
-
-    @NotNull
-    private static String adaptSchemaPattern(String pattern) {
-      pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
-      pattern = pattern.endsWith("+") || pattern.endsWith("*") || pattern.endsWith("$") ? pattern : (pattern + ".*");
-      pattern = pattern.replace("\\\\", "\\");
-      return pattern;
-    }
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -680,5 +573,116 @@ public class JsonSchemaObject {
   @Override
   public int hashCode() {
     return myPeerPointer.hashCode();
+  }
+
+  @NotNull
+  private static String adaptSchemaPattern(String pattern) {
+    pattern = pattern.startsWith("^") || pattern.startsWith("*") || pattern.startsWith(".") ? pattern : (".*" + pattern);
+    pattern = pattern.endsWith("+") || pattern.endsWith("*") || pattern.endsWith("$") ? pattern : (pattern + ".*");
+    pattern = pattern.replace("\\\\", "\\");
+    return pattern;
+  }
+
+
+  private static Pair<Pattern, String> compilePattern(@NotNull final String pattern) {
+    try {
+      return Pair.create(Pattern.compile(adaptSchemaPattern(pattern)), null);
+    } catch (PatternSyntaxException e) {
+      return Pair.create(null, e.getMessage());
+    }
+  }
+
+  private static boolean matchPattern(@NotNull final Pattern pattern, @NotNull final String s) {
+    try {
+      return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).matches();
+    } catch (ProcessCanceledException e) {
+      // something wrong with the pattern
+      return false;
+    }
+  }
+
+  private static class PropertyNamePattern {
+    @NotNull private final String myPattern;
+    @Nullable private final Pattern myCompiledPattern;
+    @Nullable private final String myPatternError;
+    @NotNull private final Map<String, Boolean> myValuePatternCache;
+
+    public PropertyNamePattern(@NotNull String pattern) {
+      myPattern = pattern;
+      final Pair<Pattern, String> pair = compilePattern(pattern);
+      myPatternError = pair.getSecond();
+      myCompiledPattern = pair.getFirst();
+      myValuePatternCache = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+    }
+
+    @Nullable
+    public String getPatternError() {
+      return myPatternError;
+    }
+
+    boolean checkByPattern(@NotNull final String name) {
+      if (myPatternError != null) return true;
+      if (Boolean.TRUE.equals(myValuePatternCache.get(name))) return true;
+      assert myCompiledPattern != null;
+      boolean matches = matchPattern(myCompiledPattern, name);
+      myValuePatternCache.put(name, matches);
+      return matches;
+    }
+
+    @NotNull
+    public String getPattern() {
+      return myPattern;
+    }
+  }
+
+  private static class PatternProperties {
+    private final Map<String, JsonSchemaObject> mySchemasMap;
+    private final Map<String, Pattern> myCachedPatterns;
+    private final Map<String, String> myCachedPatternProperties;
+    private final Map<String, String> myInvalidPatterns;
+
+    public PatternProperties(@NotNull final Map<String, JsonSchemaObject> schemasMap) {
+      mySchemasMap = schemasMap;
+      myCachedPatterns = new HashMap<>();
+      myCachedPatternProperties = ContainerUtil.createConcurrentWeakKeyWeakValueMap();
+      myInvalidPatterns = new HashMap<>();
+      mySchemasMap.keySet().forEach(key -> {
+        final Pair<Pattern, String> pair = compilePattern(key);
+        if (pair.getSecond() != null) {
+          myInvalidPatterns.put(key, pair.getSecond());
+        } else {
+          assert pair.getFirst() != null;
+          myCachedPatterns.put(key, pair.getFirst());
+        }
+      });
+    }
+
+    @Nullable
+    public JsonSchemaObject getPatternPropertySchema(@NotNull final String name) {
+      String value = myCachedPatternProperties.get(name);
+      if (value != null) {
+        assert mySchemasMap.containsKey(value);
+        return mySchemasMap.get(value);
+      }
+
+      value = myCachedPatterns.keySet().stream()
+        .filter(key -> matchPattern(myCachedPatterns.get(key), name))
+        .findFirst()
+        .orElse(null);
+      if (value != null) {
+        myCachedPatternProperties.put(name, value);
+        assert mySchemasMap.containsKey(value);
+        return mySchemasMap.get(value);
+      }
+      return null;
+    }
+
+    public Map<String, String> getInvalidPatterns() {
+      return myInvalidPatterns;
+    }
+
+    public JsonSchemaObject getSchemaForPattern(@NotNull String key) {
+      return mySchemasMap.get(key);
+    }
   }
 }
