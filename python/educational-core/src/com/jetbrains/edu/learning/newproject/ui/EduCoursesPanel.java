@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.List;
 
 public class EduCoursesPanel extends JPanel {
+  private static final JBColor LIST_COLOR = new JBColor(Gray.xFF, Gray.x39);
   private JPanel myMainPanel;
   private JEditorPane myDescriptionTextArea;
   private JPanel myCourseListPanel;
@@ -65,7 +66,6 @@ public class EduCoursesPanel extends JPanel {
       }
     });
     myLocationField = createLocationComponent();
-    UIUtil.setBackgroundRecursively(myLocationField, UIUtil.getTextFieldBackground());
     myCoursesList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
@@ -73,20 +73,34 @@ public class EduCoursesPanel extends JPanel {
         myDescriptionTextArea.setText(selectedCourse.getDescription());
         myAdvancedSettingsPlaceholder.setVisible(true);
         myLocationField.getComponent().setText(nameToLocation(selectedCourse.getName()));
+        EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(selectedCourse.getLanguageById());
+        if (configurator == null) {
+          return;
+        }
+        EduCourseProjectGenerator generator = configurator.getEduCourseProjectGenerator();
+        if (generator == null) {
+          return;
+        }
+        LabeledComponent<JComponent> component = generator.getLanguageSettingsComponent();
+        if (component == null) {
+          return;
+        }
+        myAdvancedSettings.removeAll();
+        myAdvancedSettings.add(myLocationField, BorderLayout.NORTH);
+        myAdvancedSettings.add(component, BorderLayout.SOUTH);
+        UIUtil.mergeComponentsWithAnchor(myLocationField, component);
       }
     });
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(myCoursesList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     myCourseListPanel.add(installedScrollPane, BorderLayout.CENTER);
-    myDescriptionScrollPane.setBackground(UIUtil.getTextFieldBackground());
     Border border = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 1, 1);
     myInfoPanel.setBorder(border);
     HideableDecorator decorator = new HideableDecorator(myAdvancedSettingsPlaceholder, "Advanced Settings", false);
     decorator.setContentComponent(myAdvancedSettings);
     myAdvancedSettings.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
-    UIUtil.setBackgroundRecursively(myAdvancedSettingsPlaceholder, UIUtil.getTextFieldBackground());
-    myAdvancedSettings.setLayout(new BorderLayout());
-    myAdvancedSettings.add(myLocationField, BorderLayout.CENTER);
+    UIUtil.setBackgroundRecursively(myCoursesList, LIST_COLOR);
+    UIUtil.setBackgroundRecursively(myDescriptionScrollPane, UIUtil.getPanelBackground());
     myAdvancedSettingsPlaceholder.setVisible(false);
   }
 

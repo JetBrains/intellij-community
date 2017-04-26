@@ -17,10 +17,13 @@ package com.jetbrains.edu.learning.newproject;
 
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public interface EduCourseProjectGenerator {
   @NotNull
@@ -36,4 +39,9 @@ public interface EduCourseProjectGenerator {
   boolean beforeProjectGenerated();
 
   void afterProjectGenerated(@NotNull Project project);
+
+  @Nullable
+  default LabeledComponent<JComponent> getLanguageSettingsComponent() {
+    return null;
+  }
 }

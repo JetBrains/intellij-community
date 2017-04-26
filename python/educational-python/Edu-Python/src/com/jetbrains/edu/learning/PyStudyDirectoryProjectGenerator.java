@@ -21,11 +21,14 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
@@ -36,8 +39,10 @@ import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
+import com.jetbrains.python.configuration.VirtualEnvProjectFilter;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.newProject.steps.PythonSdkChooserCombo;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
@@ -167,6 +172,21 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     }
 
     SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
+  }
+
+  @Nullable
+  @Override
+  public LabeledComponent<JComponent> getLanguageSettingsComponent() {
+    final Project project = ProjectManager.getInstance().getDefaultProject();
+    final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
+    VirtualEnvProjectFilter.removeAllAssociated(sdks);
+
+    PythonSdkChooserCombo combo = new PythonSdkChooserCombo(project, sdks, sdk -> true);
+    if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
+      combo.putClientProperty("JButton.buttonType", null);
+    }
+    combo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+    return LabeledComponent.create(combo, "Interpreter", BorderLayout.WEST);
   }
 
   public void setValidationResult(ValidationResult validationResult) {
