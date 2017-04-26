@@ -123,10 +123,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     }
 
     String executable = buildContext.productProperties.baseFileName
-    String helpId = macCustomizer.helpId
-    String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
     buildContext.ant.copy(file: icnsPath, todir: "$target/Resources")
-    buildContext.ant.copy(file: icnsPath, tofile: helpIcns)
+    String helpId = macCustomizer.helpId
+    if (helpId != null) {
+      String helpIcns = "$target/Resources/${helpId}.help/Contents/Resources/Shared/product.icns"
+      buildContext.ant.copy(file: icnsPath, tofile: helpIcns)
+    }
 
     String fullName = buildContext.applicationInfo.productName
 
@@ -193,6 +195,18 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </array>
 """
     }
+    String bundledHelpAttributes;
+    if (helpId != null) {
+      bundledHelpAttributes = """
+        <key>CFBundleHelpBookName</key>
+        <string>JetBrains.${helpId}.help</string>
+        <key>CFBundleHelpBookFolder</key>
+        <string>${helpId}.help</string>
+"""
+    }
+    else {
+      bundledHelpAttributes = ""
+    }
 
     String todayYear = LocalDate.now().year
     buildContext.ant.replace(file: "$target/Info.plist") {
@@ -215,6 +229,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
+      replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
+      replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
 
     if (executable != "idea") {

@@ -40,9 +40,9 @@ abstract class MacDistributionCustomizer {
 
   /**
    * Help bundle identifier for bundle in <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/ProvidingUserAssitAppleHelp/authoring_help/authoring_help_book.html">Apple Help Bundle</a> format.
-   * If there's no help bundled, leave empty.
+   * If there's no help bundled, leave {@code null} value.
    */
-  String helpId = ""
+  String helpId = null
 
   /**
    * String with declarations of additional file types that should be automatically opened by the application.
