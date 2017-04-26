@@ -53,10 +53,7 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.projectlevelman.*;
 import com.intellij.openapi.vcs.roots.VcsRootScanner;
-import com.intellij.openapi.vcs.update.ActionInfo;
-import com.intellij.openapi.vcs.update.UpdateInfoTree;
-import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.openapi.vcs.update.UpdatedFilesListener;
+import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -494,8 +491,11 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return null;  // content manager is made null during dispose; flag is set later
     }
     final UpdateInfoTree updateInfoTree = new UpdateInfoTree(contentManager, myProject, updatedFiles, displayActionName, actionInfo);
-    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), true, updateInfoTree);
-    ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+    boolean selectAndFocus = ActionInfoEx.activeToolWindowOnUpdate(actionInfo);
+    ContentUtilEx.addTabbedContent(contentManager, updateInfoTree, "Update Info", DateFormatUtil.formatDateTime(System.currentTimeMillis()), selectAndFocus, updateInfoTree);
+    if (selectAndFocus) {
+      ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.VCS).activate(null);
+    }
     updateInfoTree.expandRootChildren();
     return updateInfoTree;
   }
