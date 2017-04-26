@@ -15,16 +15,22 @@
  */
 package com.intellij.compiler.chainsSearch.context;
 
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.SignatureData;
+
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich
  */
 public class ChainSearchTarget {
+  private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
+
   private final String myClassQName;
   private final byte[] myAcceptedArrayKinds;
   private final PsiType myPsiType;
@@ -94,8 +100,10 @@ public class ChainSearchTarget {
   @Nullable
   private static ChainSearchTarget create(PsiClassType classType) {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
+    if (resolvedClass == null || resolvedClass instanceof PsiTypeParameter || LambdaUtil.isFunctionalClass(resolvedClass)) return null;
+    String packageName = JavaHierarchyUtil.getPackageName(resolvedClass);
+    if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) return null;
     byte iteratorKind = SignatureData.ZERO_DIM;
-    if (resolvedClass == null) return null;
     String iteratorClass = getIteratorKind(resolvedClass);
     if (iteratorClass != null) {
       resolvedClass = PsiUtil.resolveClassInClassTypeOnly(PsiUtil.substituteTypeParameter(classType, iteratorClass, 0, false));

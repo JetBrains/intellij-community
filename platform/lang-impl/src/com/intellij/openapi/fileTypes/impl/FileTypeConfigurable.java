@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.ui.JBDimension;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,7 +175,7 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(0, 20);
+      return new JBDimension(0, 20);
     }
   }
 

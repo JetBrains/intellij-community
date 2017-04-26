@@ -306,29 +306,14 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     if (loadPolicy == StateLoadPolicy.LOAD) {
-      val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
       val storageChooser = component as? StateStorageChooserEx
-      for (storageSpec in storageSpecs) {
+      for (storageSpec in getStorageSpecs(component, stateSpec, StateStorageOperation.READ)) {
         if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
           continue
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
-        // todo fix FacetManager
-        // use.loaded.state.as.existing used in upsource
-        val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
-          name != "AntConfiguration" &&
-          name != "ProjectModuleManager" &&
-          name != "FacetManager" &&
-          name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
-          name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
-          SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
-          (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
-        }
-        else {
-          null
-        }
+        val stateGetter = if (isUseLoadedStateAsExisting(storage, name)) (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass) else null
         var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && changedStorages.contains(storage)) {
@@ -359,6 +344,19 @@ abstract class ComponentStoreImpl : IComponentStore {
       component.loadState(defaultState)
     }
     return true
+  }
+
+  // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
+  // todo fix FacetManager
+  // use.loaded.state.as.existing used in upsource
+  private fun isUseLoadedStateAsExisting(storage: StateStorage, name: String): Boolean {
+    return isUseLoadedStateAsExisting(storage) &&
+           name != "AntConfiguration" &&
+           name != "ProjectModuleManager" &&
+           name != "FacetManager" &&
+           name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
+           name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
+           SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)
   }
 
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
