@@ -21,26 +21,31 @@ import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
+import com.intellij.debugger.streams.psi.impl.StreamChainRangeProvider;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
+import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -63,48 +68,69 @@ public class TraceStreamAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final XDebugSession session = getCurrentSession(e);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-    final List<StreamChain> chains = element == null ? null : myChainBuilder.build(element);
-    final StreamChain chain = chains == null || chains.isEmpty() ? null : chains.get(0);
+    if (element != null) {
+      final List<StreamChain> chains = myChainBuilder.build(element);
+      if (chains.isEmpty()) {
+        LOG.warn("stream chain is not built");
+        return;
+      }
 
-    if (chain != null) {
-      final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
-      ApplicationManager.getApplication().invokeLater(window::show);
-      final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(session.getProject());
-      final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, myResultInterpreter);
-      tracer.trace(chain, new TracingCallback() {
-        @Override
-        public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
-          final ResolvedTracingResult resolvedTrace = result.resolve();
-          final List<ResolvedTrace> calls = resolvedTrace.getResolvedTraces();
-          ApplicationManager.getApplication()
-            .invokeLater(() -> window.setTrace(calls, result.getResult(), context));
+      if (chains.size() == 1) {
+        runTrace(chains.get(0), session);
+      }
+      else {
+        final Editor editor = PsiEditorUtil.Service.getInstance().findEditorByPsiElement(element);
+        if (editor == null) {
+          throw new RuntimeException("editor not found");
         }
 
-        @Override
-        public void evaluationFailed(@NotNull String traceExpression, @NotNull String message) {
-          notifyUI(message);
-          throw new TraceEvaluationException(message, traceExpression);
-        }
-
-        @Override
-        public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
-          notifyUI(message);
-          throw new TraceCompilationException(message, traceExpression);
-        }
-
-        private void notifyUI(@NotNull String message) {
-          ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
-        }
-      });
+        new MyStreamChainChooser().show(chains.stream().map(StreamChainRangeProvider::new).collect(Collectors.toList()),
+                                        provider -> runTrace(provider.getChain(), session));
+      }
     }
     else {
-      LOG.warn("stream chain is not built");
+      LOG.info("element at cursor not found");
     }
+  }
+
+  private void runTrace(@NotNull StreamChain chain, @NotNull XDebugSession session) {
+    final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
+    ApplicationManager.getApplication().invokeLater(window::show);
+    final TraceExpressionBuilderImpl expressionBuilder = new TraceExpressionBuilderImpl(session.getProject());
+    final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, myResultInterpreter);
+    tracer.trace(chain, new TracingCallback() {
+      @Override
+      public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+        final ResolvedTracingResult resolvedTrace = result.resolve();
+        final List<ResolvedTrace> calls = resolvedTrace.getResolvedTraces();
+        ApplicationManager.getApplication()
+          .invokeLater(() -> window.setTrace(calls, result.getResult(), context));
+      }
+
+      @Override
+      public void evaluationFailed(@NotNull String traceExpression, @NotNull String message) {
+        notifyUI(message);
+        throw new TraceEvaluationException(message, traceExpression);
+      }
+
+      @Override
+      public void compilationFailed(@NotNull String traceExpression, @NotNull String message) {
+        notifyUI(message);
+        throw new TraceCompilationException(message, traceExpression);
+      }
+
+      private void notifyUI(@NotNull String message) {
+        ApplicationManager.getApplication().invokeLater(() -> window.setFailMessage(message));
+      }
+    });
   }
 
   @Nullable
   private XDebugSession getCurrentSession(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     return project == null ? null : XDebuggerManager.getInstance(project).getCurrentSession();
+  }
+
+  private static class MyStreamChainChooser extends ElementChooserImpl<StreamChainRangeProvider> {
   }
 }
