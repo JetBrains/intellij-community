@@ -70,11 +70,17 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
     return buildChains(chains, startElement);
   }
 
-  @Nullable
-  @Contract("null -> null")
-  private static PsiElement ignoreWhiteSpaces(@Nullable PsiElement element) {
-    final PsiElement result = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
-    return result == null ? PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class) : result;
+  @NotNull
+  private static PsiElement ignoreWhiteSpaces(@NotNull PsiElement element) {
+    PsiElement result = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+    if (result == null) {
+      result = PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class);
+      if (result == null) {
+        result = element;
+      }
+    }
+
+    return result;
   }
 
   @Nullable
