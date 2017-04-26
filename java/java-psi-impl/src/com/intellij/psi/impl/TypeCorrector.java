@@ -46,8 +46,14 @@ class TypeCorrector extends PsiTypeMapper {
     return super.visitType(type);
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <T extends PsiType> T correctType(@NotNull T type) {
+    if (type instanceof PsiCorrectedClassType) {
+      return myResolveScope.equals(type.getResolveScope()) ? type 
+                                                           : correctType((T)((PsiCorrectedClassType)type).myDelegate);
+    }
+    
     if (type instanceof PsiClassType) {
       PsiClassType classType = (PsiClassType)type;
       if (classType.getParameterCount() == 0) {
@@ -133,7 +139,7 @@ class TypeCorrector extends PsiTypeMapper {
     return mappedSubstitutor;
   }
 
-  public class PsiCorrectedClassType extends PsiClassType.Stub {
+  private class PsiCorrectedClassType extends PsiClassType.Stub {
     private final PsiClassType myDelegate;
     private final CorrectedResolveResult myResolveResult;
 
