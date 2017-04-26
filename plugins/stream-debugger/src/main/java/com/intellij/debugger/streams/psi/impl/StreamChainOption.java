@@ -42,7 +42,7 @@ public class StreamChainOption implements ChooserOption {
   @NotNull
   @Override
   public String getText() {
-    return myChain.getText();
+    return myChain.getCompactText();
   }
 
   @NotNull

@@ -39,6 +39,9 @@ public interface StreamChain {
   @NotNull
   String getText();
 
+  @NotNull
+  String getCompactText();
+
   int length();
 
   @NotNull
