@@ -355,10 +355,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
     if (!isDuplicatesCacheUpdating) {
       isDuplicatesCacheUpdating = true; //assuming that this check happens only on EDT. So, no synchronised block or double-checked locking needed
+      Set<String> names = ContainerUtil.newHashSet();
+      final HashSet<String> duplicates = ContainerUtil.newHashSet();
+      ArrayList<String> list = ContainerUtil.newArrayList(ContainerUtil.concat(openedPaths, recentPaths));
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        Set<String> names = ContainerUtil.newHashSet();
-        final HashSet<String> duplicates = ContainerUtil.newHashSet();
-        for (String path : ContainerUtil.concat(openedPaths, recentPaths)) {
+        for (String path : list) {
           if (!names.add(getProjectName(path))) {
             duplicates.add(path);
           }
