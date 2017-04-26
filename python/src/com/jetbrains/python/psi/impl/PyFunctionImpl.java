@@ -244,7 +244,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
-    final PyExpression receiver = PyTypeChecker.getReceiver(callSite, this);
+    final PyExpression receiver = callSite.getReceiver(this);
     final Map<PyExpression, PyCallableParameter> mapping =
       PyCallExpressionHelper.mapArguments(callSite, this, context).getMappedParameters();
 

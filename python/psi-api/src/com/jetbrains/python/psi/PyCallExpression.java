@@ -37,6 +37,26 @@ import java.util.stream.Collectors;
  */
 public interface PyCallExpression extends PyCallSiteExpression {
 
+  @Nullable
+  @Override
+  default PyExpression getReceiver(@Nullable PyCallable resolvedCallee) {
+    if (resolvedCallee instanceof PyFunction) {
+      final PyFunction function = (PyFunction)resolvedCallee;
+      if (function.getModifier() == PyFunction.Modifier.STATICMETHOD) {
+        return null;
+      }
+    }
+
+    final PyExpression callee = getCallee();
+    return callee instanceof PyQualifiedExpression ? ((PyQualifiedExpression)callee).getQualifier() : null;
+  }
+
+  @NotNull
+  @Override
+  default List<PyExpression> getArguments(@Nullable PyCallable resolvedCallee) {
+    return Arrays.asList(getArguments());
+  }
+
   /**
    * @return the expression representing the object being called (reference to a function).
    */

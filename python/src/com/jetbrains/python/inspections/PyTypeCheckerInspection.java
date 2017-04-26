@@ -215,7 +215,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
 
-      final PyExpression receiver = markedCallee.getCallable() == null ? null : PyTypeChecker.getReceiver(callSite, markedCallee.getCallable());
+      final PyExpression receiver = callSite.getReceiver(markedCallee.getCallable());
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
       final Map<PyExpression, PyCallableParameter> mappedParameters = mapping.getMappedParameters();
 
