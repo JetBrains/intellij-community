@@ -81,8 +81,6 @@ import java.util.zip.ZipFile;
  * @since Nov 22, 2004
  */
 public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
-  private static final Icon ADD_SDK = DevkitIcons.Add_sdk;
-  private static final Icon SDK_CLOSED = DevkitIcons.Sdk_closed;
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.projectRoots.IdeaJdk");
   @NonNls private static final String LIB_DIR_NAME = "lib";
@@ -95,7 +93,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   public Icon getIcon() {
-    return SDK_CLOSED;
+    return DevkitIcons.Sdk_closed;
   }
 
   @NotNull
@@ -107,7 +105,7 @@ public class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Override
   @NotNull
   public Icon getIconForAddAction() {
-    return ADD_SDK;
+    return DevkitIcons.Add_sdk;
   }
 
   @Override
