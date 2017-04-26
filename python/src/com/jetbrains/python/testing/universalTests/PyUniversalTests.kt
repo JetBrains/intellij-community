@@ -55,11 +55,15 @@ import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.CommandLinePatcher
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
+import com.jetbrains.python.run.PythonRunConfiguration
 import com.jetbrains.python.testing.*
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
@@ -134,7 +138,7 @@ object PyUniversalTestsLocator : SMTestLocator {
     // Assume qname id good and resolve it directly
     val element = qualifiedName.resolveToElement(QNameResolveContext(scope.module,
                                                                      evalContext = TypeEvalContext.codeAnalysis(project,
-                                                                                                                                   null),
+                                                                                                                null),
                                                                      folderToStart = folder,
                                                                      allowInaccurateResult = true))
     if (element != null) {
@@ -192,6 +196,7 @@ enum class TestTargetType {
  * Default target path (run all tests ion project folder)
  */
 private val DEFAULT_PATH = "."
+
 /**
  * Target depends on target type. It could be path to file/folder or python target
  */
@@ -216,7 +221,7 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
    */
   fun asPsiElement(configuration: PyUniversalTestConfiguration): PsiElement? {
     if (targetType == TestTargetType.PYTHON) {
-      val module = configuration.module?:return null
+      val module = configuration.module ?: return null
       val context = TypeEvalContext.userInitiated(configuration.project, null)
       val workDir = configuration.getWorkingDirectoryAsVirtual()
       val name = QualifiedName.fromDottedString(target)
@@ -260,7 +265,7 @@ data class ConfigurationTarget(@ConfigField var target: String, @ConfigField var
     )
     val qualifiedNameParts = QualifiedName.fromDottedString(target.trim()).tryResolveAndSplit(qNameResolveContext) ?:
                              throw ExecutionException("Can't find file where $target declared. " +
-                                                                             "Make sure it is in project root")
+                                                      "Make sure it is in project root")
 
     // We can't provide element qname here: it may point to parent class in case of inherited functions,
     // so we make fix file part, but obey element(symbol) part of qname
@@ -619,7 +624,11 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
   }
 
   // test configuration is always prefered over regular one
-  override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext)= self.isProducedBy(javaClass)
+  override fun shouldReplace(self: ConfigurationFromContext,
+                             other: ConfigurationFromContext) = other.configuration is PythonRunConfiguration
+
+  override fun isPreferredConfiguration(self: ConfigurationFromContext?,
+                                        other: ConfigurationFromContext) = other.configuration is PythonRunConfiguration
 
   override fun setupConfigurationFromContext(configuration: PyUniversalTestConfiguration?,
                                              context: ConfigurationContext?,
@@ -664,13 +673,13 @@ object PyUniversalTestsConfigurationProducer : AbstractPythonTestConfigurationPr
         when (element) {
           is PyQualifiedNameOwner -> { // Function, class, method
 
-            val module = configuration.module?: return null
-            val elementFolder = element.containingFile.virtualFile.parent?: return null
+            val module = configuration.module ?: return null
+            val elementFolder = element.containingFile.virtualFile.parent ?: return null
 
             val context = QNameResolveContext(module,
-                                                                        evalContext = TypeEvalContext.userInitiated(configuration.project,
-                                                                                                                    null),
-                                                                        folderToStart = elementFolder)
+                                              evalContext = TypeEvalContext.userInitiated(configuration.project,
+                                                                                          null),
+                                              folderToStart = elementFolder)
             val parts = element.tryResolveAndSplit(context) ?: return null
             val qualifiedName = parts.getElementNamePrependingFile()
             return Pair(ConfigurationTarget(qualifiedName.toString(), TestTargetType.PYTHON),
