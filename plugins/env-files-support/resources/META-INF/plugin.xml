@@ -33,6 +33,7 @@
   <depends>com.jetbrains.php</depends>
   <depends>com.intellij.modules.platform</depends>
   <depends optional="true" config-file="docker.xml">Docker</depends>
+  <depends optional="true" config-file="yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="PHP" implementationClass="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>

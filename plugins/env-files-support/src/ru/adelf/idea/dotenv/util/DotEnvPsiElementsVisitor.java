@@ -29,24 +29,15 @@ public class DotEnvPsiElementsVisitor extends PsiRecursiveElementVisitor {
 
     @NotNull
     public Collection<Pair<String, String>> getKeyValues() {
-        return this.collectedProperties.stream().map(property -> {
-            String text = property.getText();
-            int pos = text.indexOf("=");
-
-            if(pos == -1) {
-                return new Pair<>(text.trim(), "");
-            } else {
-                return new Pair<>(text.substring(0, pos).trim(), text.substring(pos + 1).trim());
-            }
-        }).collect(Collectors.toList());
+        return this.collectedProperties.stream()
+                .map(property -> EnvironmentVariablesUtil.getKeyValueFromString(property.getText()))
+                .collect(Collectors.toList());
     }
 
     @NotNull
     public Set<PsiElement> getElementsByKey(String key) {
-        return this.collectedProperties.stream().filter(property -> {
-            String[] splitParts = property.getText().split("=", -1);
-
-            return splitParts[0].trim().equals(key);
-        }).collect(Collectors.toSet());
+        return this.collectedProperties.stream()
+                .filter(property -> EnvironmentVariablesUtil.getKeyFromString(property.getText()).equals(key))
+                .collect(Collectors.toSet());
     }
 }
