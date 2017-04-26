@@ -124,18 +124,10 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
           final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition);
           final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
 
-          // todo whether we need this class?
-          JsonSchemaPropertyProcessor.process(new JsonSchemaPropertyProcessor.PropertyProcessor() {
-            @Override
-            public boolean process(String name, JsonSchemaObject schema) {
-              if (properties.contains(name) && (adapter == null || !name.equals(adapter.getName()))) {
-                return true;
-              }
-
-              addPropertyVariant(name, schema, hasValue, insertComma);
-              return true;
-            }
-          }, schema);
+          final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
+          schemaProperties.keySet().stream()
+            .filter(name -> !properties.contains(name) || adapter != null && name.equals(adapter.getName()))
+            .forEach(name -> addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma));
         }
         else {
           suggestValues(schema);
@@ -153,7 +145,6 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       suggestValuesForSchemaVariants(schema.getAllOf());
 
       if (schema.getEnum() != null) {
-        //myVariants.clear();
         for (Object o : schema.getEnum()) {
           addValueVariant(o.toString(), null);
         }
