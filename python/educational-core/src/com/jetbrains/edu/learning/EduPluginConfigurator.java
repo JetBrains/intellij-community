@@ -4,7 +4,6 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -14,7 +13,6 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.actions.*;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
@@ -24,11 +22,14 @@ import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseGeneration.StudyGenerator;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public interface EduPluginConfigurator {
   String EP_NAME = "Edu.pluginConfigurator";
@@ -39,8 +40,9 @@ public interface EduPluginConfigurator {
 
   /**
    * Creates content (including its directory or module) of new lesson in project
+   *
    * @param project Parameter is used in Java and Kotlin plugins
-   * @param lesson Lesson to create content for. It's already properly initialized and added to course.
+   * @param lesson  Lesson to create content for. It's already properly initialized and added to course.
    * @return PsiDirectory of created lesson
    */
   default PsiDirectory createLessonContent(@NotNull Project project,
@@ -49,7 +51,8 @@ public interface EduPluginConfigurator {
                                            @NotNull PsiDirectory parentDirectory) {
     final PsiDirectory[] lessonDirectory = new PsiDirectory[1];
     ApplicationManager.getApplication().runWriteAction(() -> {
-      lessonDirectory[0] = DirectoryUtil.createSubdirectories(EduNames.LESSON + lesson.getIndex(), parentDirectory, "\\/");
+      String lessonDirName = EduNames.LESSON + lesson.getIndex();
+      lessonDirectory[0] = DirectoryUtil.createSubdirectories(lessonDirName, parentDirectory, "\\/");
     });
     if (lessonDirectory[0] != null) {
       if (view != null) {
@@ -61,11 +64,14 @@ public interface EduPluginConfigurator {
 
   /**
    * Creates content (including its directory or module) of new task in project
+   *
    * @param task Task to create content for. It's already properly initialized and added to corresponding lesson.
    * @return PsiDirectory of created task
    */
-  PsiDirectory createTaskContent(@NotNull final Project project, @NotNull final Task task,
-                                 @Nullable final IdeView view, @NotNull final PsiDirectory parentDirectory,
+  PsiDirectory createTaskContent(@NotNull final Project project,
+                                 @NotNull final Task task,
+                                 @Nullable final IdeView view,
+                                 @NotNull final PsiDirectory parentDirectory,
                                  @NotNull final Course course);
 
   /**
@@ -80,21 +86,27 @@ public interface EduPluginConfigurator {
     return false;
   }
 
-  default void createTestsForNewSubtask(@NotNull Project project, @NotNull TaskWithSubtasks task) {}
+  default void createTestsForNewSubtask(@NotNull Project project, @NotNull TaskWithSubtasks task) {
+  }
 
   /**
    * Used for code highlighting in Task Description tool window
+   *
    * @return parameter for CodeMirror script. Available languages: @see <@linktourl http://codemirror.net/mode/>
    */
   @NotNull
-  default String getDefaultHighlightingMode() {return "";}
+  default String getDefaultHighlightingMode() {
+    return "";
+  }
 
   /**
    * Used for code highlighting in Task Description tool window
    * Example in <a href="https://github.com/JetBrains/intellij-community/tree/master/python/educational-python/Edu-Python">Edu Python</a> plugin
    */
   @NotNull
-  default String getLanguageScriptUrl() {return "";}
+  default String getLanguageScriptUrl() {
+    return "";
+  }
 
   @NotNull
   StudyTaskChecker<PyCharmTask> getPyCharmTaskChecker(@NotNull PyCharmTask task, @NotNull Project project);
@@ -102,15 +114,20 @@ public interface EduPluginConfigurator {
   @NotNull
   default DefaultActionGroup getTaskDescriptionActionGroup() {
     final DefaultActionGroup group = new DefaultActionGroup();
-    String[] ids = new String[]{StudyCheckAction.ACTION_ID, StudyPreviousTaskAction.ACTION_ID, StudyNextTaskAction.ACTION_ID, StudyRefreshTaskFileAction.ACTION_ID,
-      StudyShowHintAction.ACTION_ID};
-    for (String id : ids) {
-      AnAction action = ActionManager.getInstance().getAction(id);
-      if (action == null) {
-        continue;
-      }
-      group.add(action);
-    }
+    String[] ids = new String[]{
+      StudyCheckAction.ACTION_ID,
+      StudyPreviousTaskAction.ACTION_ID,
+      StudyNextTaskAction.ACTION_ID,
+      StudyRefreshTaskFileAction.ACTION_ID,
+      StudyShowHintAction.ACTION_ID,
+      StudyLinkToStepikAction.ACTION_ID,
+    };
+    ActionManager actionManager = ActionManager.getInstance();
+    Arrays.stream(ids)
+      .map(actionManager::getAction)
+      .filter(Objects::nonNull)
+      .forEach(group::add);
+
     group.add(new StudyEditInputAction());
     return group;
   }
@@ -143,5 +160,7 @@ public interface EduPluginConfigurator {
     return null;
   }
 
-  default ModuleType getModuleType() {return StdModuleTypes.JAVA;}
+  default ModuleType getModuleType() {
+    return StdModuleTypes.JAVA;
+  }
 }

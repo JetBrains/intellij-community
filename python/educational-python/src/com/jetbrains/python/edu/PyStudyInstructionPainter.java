@@ -11,6 +11,7 @@ import javax.swing.*;
 
 public class PyStudyInstructionPainter extends EditorEmptyTextPainter {
   private static final String separator = " / ";
+
   @Override
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
     String shortcut = KeymapUtil.getShortcutText(new KeyboardShortcut(KeyStroke.getKeyStroke(StudyNextWindowAction.SHORTCUT2), null));
@@ -22,5 +23,6 @@ public class PyStudyInstructionPainter extends EditorEmptyTextPainter {
     appendAction(painter, "Reset current task file", getActionShortcutText(StudyRefreshTaskFileAction.ACTION_ID));
     appendAction(painter, "Check task", getActionShortcutText(StudyCheckAction.ACTION_ID));
     appendAction(painter, "Get hint for the answer placeholder", getActionShortcutText(StudyShowHintAction.ACTION_ID));
+    appendAction(painter, "Open this task in Stepik", getActionShortcutText(StudyLinkToStepikAction.ACTION_ID));
   }
 }

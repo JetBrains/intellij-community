@@ -166,7 +166,7 @@ public class EduStepicConnector {
     }
     final StepicWrappers.CoursesContainer coursesContainer = getCoursesFromStepik(user, url);
 
-    if (coursesContainer!= null && !coursesContainer.courses.isEmpty()) {
+    if (coursesContainer != null && !coursesContainer.courses.isEmpty()) {
       return coursesContainer.courses.get(0);
     } else {
       return null;
@@ -182,7 +182,7 @@ public class EduStepicConnector {
       if (canBeOpened(info)) {
         final ArrayList<StepicUser> authors = new ArrayList<>();
         for (Integer instructor : info.getInstructors()) {
-          final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor), 
+          final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor),
                                                                   StepicWrappers.AuthorWrapper.class).users.get(0);
           authors.add(author);
         }
@@ -271,17 +271,17 @@ public class EduStepicConnector {
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
     final StepicWrappers.SectionContainer
-      sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId),
-                                                       StepicWrappers.SectionContainer.class);
+      sectionContainer = getFromStepik(EduStepicNames.SECTIONS + String.valueOf(sectionId),
+                                       StepicWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<>();
     for (Integer unitId : unitIds) {
       StepicWrappers.UnitContainer
-        unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
+        unit = getFromStepik(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       StepicWrappers.LessonContainer
-        lessonContainer = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID),
-                                                        StepicWrappers.LessonContainer.class);
+        lessonContainer = getFromStepik(EduStepicNames.LESSONS + String.valueOf(lessonID),
+                                        StepicWrappers.LessonContainer.class);
       Lesson lesson = lessonContainer.lessons.get(0);
       lesson.taskList = new ArrayList<>();
       for (int stepId : lesson.steps) {
@@ -298,7 +298,7 @@ public class EduStepicConnector {
     return lessons;
   }
 
-  private static <T> T getFromStepic(String link, final Class<T> container) throws IOException{
+  private static <T> T getFromStepik(String link, final Class<T> container) throws IOException {
     final StepicUser user = StudySettings.getInstance().getUser();
     final boolean isAuthorized = user != null;
     if (isAuthorized) {
@@ -323,6 +323,7 @@ public class EduStepicConnector {
     task.setStepId(stepicId);
     task.setUpdateDate(step.update_date);
     task.setName(block.options != null ? block.options.title : (PYCHARM_PREFIX + CURRENT_VERSION));
+    task.setPosition(step.position);
 
     for (StepicWrappers.FileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);
@@ -356,7 +357,7 @@ public class EduStepicConnector {
       final int offset = placeholder.getOffset();
       final int length = placeholder.getLength();
       if (fileText.length() > offset + length) {
-        info.setPlaceholderText(fileText.substring(offset, offset+length));
+        info.setPlaceholderText(fileText.substring(offset, offset + length));
       }
     }
   }
@@ -369,15 +370,15 @@ public class EduStepicConnector {
   }
 
   public static StepicWrappers.StepSource getStep(int step) throws IOException {
-    return getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
-                                                     StepicWrappers.StepContainer.class).steps.get(0);
+    return getFromStepik(EduStepicNames.STEPS + String.valueOf(step),
+                         StepicWrappers.StepContainer.class).steps.get(0);
   }
 
   public static void postSolution(@NotNull final Task task, boolean passed, @NotNull final Project project) {
     if (task.getStepId() <= 0) {
       return;
     }
-    
+
     try {
       final String response = postAttempt(task.getStepId());
       if (response.isEmpty()) return;
@@ -402,7 +403,7 @@ public class EduStepicConnector {
           });
         }
       }
-      
+
       postSubmission(passed, attempt, files);
     }
     catch (IOException e) {
