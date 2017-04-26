@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.wrapper.impl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,8 +32,9 @@ public class IntermediateStreamCallImpl extends StreamCallImpl implements Interm
   public IntermediateStreamCallImpl(@NotNull String name,
                                     @NotNull String args,
                                     @NotNull GenericType typeBefore,
-                                    @NotNull GenericType typeAfter) {
-    super(name, args, StreamCallType.INTERMEDIATE);
+                                    @NotNull GenericType typeAfter,
+                                    @NotNull TextRange range) {
+    super(name, args, StreamCallType.INTERMEDIATE, range);
     myTypeBefore = typeBefore;
     myTypeAfter = typeAfter;
   }

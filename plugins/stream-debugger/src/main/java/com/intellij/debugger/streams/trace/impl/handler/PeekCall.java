@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.trace.impl.handler;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,6 +43,12 @@ public class PeekCall implements IntermediateStreamCall {
   @Override
   public String getArguments() {
     return String.format("(%s)", myLambda);
+  }
+
+  @NotNull
+  @Override
+  public TextRange getTextRange() {
+    return TextRange.EMPTY_RANGE;
   }
 
   @NotNull

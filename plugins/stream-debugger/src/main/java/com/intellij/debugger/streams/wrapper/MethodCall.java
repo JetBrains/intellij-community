@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.wrapper;
 
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,4 +27,7 @@ public interface MethodCall {
 
   @NotNull
   String getArguments();
+
+  @NotNull
+  TextRange getTextRange();
 }

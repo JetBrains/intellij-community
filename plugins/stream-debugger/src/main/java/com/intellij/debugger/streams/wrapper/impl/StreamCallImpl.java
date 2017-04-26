@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,11 +27,19 @@ public abstract class StreamCallImpl implements StreamCall {
   private final String myName;
   private final String myArgs;
   private final StreamCallType myType;
+  private final TextRange myTextRange;
 
-  StreamCallImpl(@NotNull String name, @NotNull String args, @NotNull StreamCallType type) {
+  StreamCallImpl(@NotNull String name, @NotNull String args, @NotNull StreamCallType type, @NotNull TextRange range) {
     myName = name;
     myArgs = args;
     myType = type;
+    myTextRange = range;
+  }
+
+  @NotNull
+  @Override
+  public TextRange getTextRange() {
+    return myTextRange;
   }
 
   @NotNull

@@ -62,7 +62,8 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
   @NotNull
   private ProducerStreamCall createProducer(@NotNull PsiMethodCallExpression expression) {
     GenericType prevCallType = resolveType(expression);
-    return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType);
+    return new ProducerStreamCallImpl(resolveProducerCallName(expression), resolveArguments(expression), prevCallType,
+                                      expression.getTextRange());
   }
 
   @NotNull
@@ -75,7 +76,7 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
       final String name = resolveMethodName(callExpression);
       final String args = resolveArguments(callExpression);
       final GenericType type = resolveType(callExpression);
-      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type));
+      result.add(new IntermediateStreamCallImpl(name, args, typeBefore, type, callExpression.getTextRange()));
       typeBefore = type;
     }
 
@@ -87,7 +88,7 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     final String name = resolveMethodName(expression);
     final String args = resolveArguments(expression);
     final GenericType resultType = resolveTerminationCallType(expression);
-    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType);
+    return new TerminatorStreamCallImpl(name, args, typeBefore, resultType, expression.getTextRange());
   }
 
   @NotNull

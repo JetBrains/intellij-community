@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.wrapper.impl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,8 +27,11 @@ import org.jetbrains.annotations.NotNull;
 public class ProducerStreamCallImpl extends StreamCallImpl implements ProducerStreamCall {
   private final GenericType myTypeAfter;
 
-  public ProducerStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeAfter) {
-    super(name, args, StreamCallType.PRODUCER);
+  public ProducerStreamCallImpl(@NotNull String name,
+                                @NotNull String args,
+                                @NotNull GenericType typeAfter,
+                                @NotNull TextRange range) {
+    super(name, args, StreamCallType.PRODUCER, range);
     myTypeAfter = typeAfter;
   }
 

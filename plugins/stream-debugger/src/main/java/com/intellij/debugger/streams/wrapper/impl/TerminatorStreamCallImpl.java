@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.wrapper.impl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,8 +28,12 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
   private final GenericType myTypeBefore;
   private final GenericType myReturnType;
 
-  public TerminatorStreamCallImpl(@NotNull String name, @NotNull String args, @NotNull GenericType typeBefore, GenericType resultType) {
-    super(name, args, StreamCallType.TERMINATOR);
+  public TerminatorStreamCallImpl(@NotNull String name,
+                                  @NotNull String args,
+                                  @NotNull GenericType typeBefore,
+                                  @NotNull GenericType resultType,
+                                  @NotNull TextRange range) {
+    super(name, args, StreamCallType.TERMINATOR, range);
     myTypeBefore = typeBefore;
     myReturnType = resultType;
   }
