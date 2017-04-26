@@ -96,7 +96,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         });
 
         if (chain == null) {
-          complete(null, null, null, FailureReason.CHAIN_CONTRUCTION);
+          complete(null, null, null, FailureReason.CHAIN_CONSTRUCTION);
           return;
         }
 
@@ -281,6 +281,6 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected enum FailureReason {
-    COMPILATION, EVALUATION, CHAIN_CONTRUCTION
+    COMPILATION, EVALUATION, CHAIN_CONSTRUCTION
   }
 }
