@@ -15,7 +15,11 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -50,10 +54,29 @@ public class JsonSchemaResolver {
     return MatchResult.zipTree(node);
   }
 
-  public Collection<JsonSchemaObject> resolve(boolean skipLastExpand) {
+  public Collection<JsonSchemaObject> resolve() {
+    return resolve(false);
+  }
+
+  private Collection<JsonSchemaObject> resolve(boolean skipLastExpand) {
     final MatchResult result = detailedResolve(skipLastExpand);
     final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
     set.addAll(result.myExcludingSchemas);
     return set;
+  }
+
+  @Nullable
+  public PsiElement findNavigationTarget() {
+    final Collection<JsonSchemaObject> schemas = resolve(true);
+
+    return schemas.stream().filter(schema -> schema.getPeerPointer().getElement() != null && schema.getPeerPointer().getElement().isValid())
+      .findFirst()
+      .map(schema -> {
+        final JsonObject jsonObject = schema.getPeerPointer().getElement();
+        if (jsonObject != null && jsonObject.getParent() instanceof JsonProperty)
+          return ((JsonProperty)jsonObject.getParent()).getNameElement();
+        return jsonObject;
+      })
+      .orElse(null);
   }
 }

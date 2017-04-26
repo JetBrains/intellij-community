@@ -26,6 +26,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReader;
+import com.jetbrains.jsonSchema.impl.JsonSchemaResolver;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,11 +61,12 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
     public PsiElement resolveInner() {
       final String text = getCanonicalText();
 
+      final JsonSchemaService service = JsonSchemaService.Impl.get(getElement().getProject());
       final JsonSchemaReader.SchemaUrlSplitter splitter = new JsonSchemaReader.SchemaUrlSplitter(text);
       VirtualFile schemaFile = getElement().getContainingFile().getVirtualFile();
       if (splitter.isAbsolute()) {
         assert splitter.getSchemaId() != null;
-        schemaFile = JsonSchemaService.Impl.get(getElement().getProject()).findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
+        schemaFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
         if (schemaFile == null) return null;
       }
 
@@ -83,8 +85,11 @@ public class JsonSchemaRefReferenceProvider extends PsiReferenceProvider {
         } else canSkip = true;
       }
 
+      final JsonSchemaObject schemaObject = service.getSchemaObjectForSchemaFile(schemaFile);
+      if (schemaObject == null) return null;
+
       final List<JsonSchemaVariantsTreeBuilder.Step> steps = JsonSchemaVariantsTreeBuilder.buildSteps(StringUtil.join(chain, "/"));
-      return new JsonSchemaInsideSchemaResolver(myElement.getProject(), schemaFile, steps).resolveInSchemaRecursively(getElement());
+      return new JsonSchemaResolver(schemaObject, true, steps).findNavigationTarget();
     }
   }
 }

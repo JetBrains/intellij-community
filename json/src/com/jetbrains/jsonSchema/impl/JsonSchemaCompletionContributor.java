@@ -28,6 +28,7 @@ import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -51,24 +52,23 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return;
 
     updateStat(service.getSchemaProvider(schemaFile));
-    doCompletion(parameters, result, rootSchema, schemaFile);
+    doCompletion(parameters, result, rootSchema);
   }
 
   public static void doCompletion(@NotNull final CompletionParameters parameters,
                                   @NotNull final CompletionResultSet result,
-                                  @NotNull final JsonSchemaObject rootSchema,
-                                  @NotNull final VirtualFile schemaFile) {
+                                  @NotNull final JsonSchemaObject rootSchema) {
     final PsiElement completionPosition = parameters.getOriginalPosition() != null ? parameters.getOriginalPosition() :
                                           parameters.getPosition();
-    new Worker(rootSchema, schemaFile, parameters.getPosition(), completionPosition, result).work();
+    new Worker(rootSchema, parameters.getPosition(), completionPosition, result).work();
     result.stopHere();
   }
 
+  @TestOnly
   public static List<LookupElement> getCompletionVariants(@NotNull final JsonSchemaObject schema,
-                                                          @NotNull final PsiElement position, @NotNull final PsiElement originalPosition,
-                                                          @NotNull VirtualFile schemaFile) {
+                                                          @NotNull final PsiElement position, @NotNull final PsiElement originalPosition) {
     final List<LookupElement> result = new ArrayList<>();
-    new Worker(schema, schemaFile, position, originalPosition, element -> result.add(element)).work();
+    new Worker(schema, position, originalPosition, element -> result.add(element)).work();
     return result;
   }
 
@@ -86,7 +86,6 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
 
   private static class Worker {
     @NotNull private final JsonSchemaObject myRootSchema;
-    @NotNull private final VirtualFile mySchemaFile;
     @NotNull private final PsiElement myPosition;
     @NotNull private final PsiElement myOriginalPosition;
     @NotNull private final Consumer<LookupElement> myResultConsumer;
@@ -95,10 +94,9 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     private final Set<LookupElement> myVariants;
     private final JsonLikePsiWalker myWalker;
 
-    public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull final VirtualFile schemaFile, @NotNull PsiElement position,
+    public Worker(@NotNull JsonSchemaObject rootSchema, @NotNull PsiElement position,
                   @NotNull PsiElement originalPosition, @NotNull final Consumer<LookupElement> resultConsumer) {
       myRootSchema = rootSchema;
-      mySchemaFile = schemaFile;
       myPosition = position;
       myOriginalPosition = originalPosition;
       myResultConsumer = resultConsumer;
@@ -116,7 +114,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(checkable, isName, !isName);
       if (position.isEmpty() && !isName) return;
 
-      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve(false);
+      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myRootSchema, false, position).resolve();
       // too long here, refactor further
       schemas.forEach(schema -> {
         if (isName) {

@@ -6,7 +6,6 @@ import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -40,19 +39,17 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (containingFile == null) return null;
     final JsonSchemaService service = JsonSchemaService.Impl.get(element.getProject());
     final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
-    final VirtualFile schemaFile;
-    if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return null;
+    if (rootSchema == null) return null;
 
     if (JsonSchemaFileType.INSTANCE.equals(containingFile.getFileType())) {
       return generateForJsonSchemaFileType(element);
     }
-    return generateDoc(element, rootSchema, schemaFile);
+    return generateDoc(element, rootSchema);
   }
 
   @Nullable
   public static String generateDoc(@NotNull final PsiElement element,
-                                   @NotNull final JsonSchemaObject rootSchema,
-                                   @NotNull final VirtualFile schemaFile) {
+                                   @NotNull final JsonSchemaObject rootSchema) {
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return null;
 
@@ -60,7 +57,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     if (checkable == null) return null;
     final List<JsonSchemaVariantsTreeBuilder.Step> position = walker.findPosition(checkable, true, true);
 
-    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve(false);
+    final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(rootSchema, true, position).resolve();
 
     return schemas.stream().filter(schema -> !StringUtil.isEmptyOrSpaces(schema.getDescription()))
       .findFirst().map(JsonSchemaObject::getDescription).orElse(null);
