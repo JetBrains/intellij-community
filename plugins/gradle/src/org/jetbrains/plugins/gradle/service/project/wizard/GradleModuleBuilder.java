@@ -26,6 +26,7 @@ import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
@@ -130,7 +131,24 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
                    ? (myProjectId.getGroupId() + '.' + myProjectId.getArtifactId())
                    : myProjectId.getArtifactId();
     }
-    String moduleFilePath = myWizardContext.getProjectFileDirectory() + "/.idea/modules/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
+    Project contextProject = myWizardContext.getProject();
+    String projectFileDirectory = null;
+    if (myWizardContext.isCreatingNewProject() || contextProject == null || contextProject.getBasePath() == null) {
+      projectFileDirectory = myWizardContext.getProjectFileDirectory();
+    }
+    else if (myWizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
+      String moduleFileDirectory = getModuleFileDirectory();
+      if (moduleFileDirectory != null) {
+        projectFileDirectory = moduleFileDirectory;
+      }
+    }
+    if (projectFileDirectory == null) {
+      projectFileDirectory = contextProject.getBasePath();
+    }
+    if (myWizardContext.getProjectStorageFormat() == StorageScheme.DIRECTORY_BASED) {
+      projectFileDirectory += "/.idea/modules";
+    }
+    String moduleFilePath = projectFileDirectory + "/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;
     deleteModuleFile(moduleFilePath);
     final ModuleType moduleType = getModuleType();
     final Module module = moduleModel.newModule(moduleFilePath, moduleType.getId());
