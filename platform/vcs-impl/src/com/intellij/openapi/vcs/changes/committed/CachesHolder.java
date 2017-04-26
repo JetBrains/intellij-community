@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,35 +47,12 @@ public class CachesHolder {
     myCacheFiles = ContainerUtil.newConcurrentMap();
   }
 
-  public CachesHolder(final Project project, final RepositoryLocationCache locationCache, final ProjectLevelVcsManager manager) {
-    myProject = project;
-    myPlManager = manager;
-    myLocationCache = locationCache;
-    myCacheFiles = ContainerUtil.newConcurrentMap();
-  }
-
   /**
    * Returns all paths that will be used to collect committed changes about. ideally, for one checkout there should be one file
    */
   public Map<VirtualFile, RepositoryLocation> getAllRootsUnderVcs(final AbstractVcs vcs) {
     final RootsCalculator calculator = new RootsCalculator(myProject, vcs, myLocationCache);
     return calculator.getRoots();
-  }
-
-  public void iterateAllRepositoryLocations(final PairProcessor<RepositoryLocation, AbstractVcs> locationProcessor) {
-    final AbstractVcs[] vcses = myPlManager.getAllActiveVcss();
-    for (AbstractVcs vcs : vcses) {
-      final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-      if (provider instanceof CachingCommittedChangesProvider) {
-        final Map<VirtualFile, RepositoryLocation> map = getAllRootsUnderVcs(vcs);
-        for (VirtualFile root : map.keySet()) {
-          final RepositoryLocation location = map.get(root);
-          if (! Boolean.TRUE.equals(locationProcessor.process(location, vcs))) {
-            return;
-          }
-        }
-      }
-    }
   }
 
   public void iterateAllCaches(final NotNullFunction<ChangesCacheFile, Boolean> consumer) {
