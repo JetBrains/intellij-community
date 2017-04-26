@@ -113,6 +113,7 @@ public class SingleClassesTest {
   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
   @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
   //@Test public void testUnionType() { doTest("pkg/TestUnionType"); } //TODO: fix
+  @Test public void testConstType() { doTest("pkg/TestConstType"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

@@ -367,6 +367,21 @@ public class ConstExprent extends Exprent {
     this.constType = constType;
   }
 
+  public void adjustConstType(VarType expectedType) {
+    // BYTECHAR and SHORTCHAR => CHAR in the CHAR context
+    if (expectedType.equals(VarType.VARTYPE_CHAR) &&
+            (constType.equals(VarType.VARTYPE_BYTECHAR) || constType.equals(VarType.VARTYPE_SHORTCHAR))) {
+      if (getIntValue() != 0) {
+        setConstType(VarType.VARTYPE_CHAR);
+      }
+    }
+    // CHAR => INT in the INT context
+    else if (expectedType.equals(VarType.VARTYPE_INT) &&
+            constType.equals(VarType.VARTYPE_CHAR)) {
+      setConstType(VarType.VARTYPE_INT);
+    }
+  }
+
   public Object getValue() {
     return value;
   }

@@ -885,6 +885,10 @@ public class ExprProcessor implements CodeConstants {
 
     if (quote) buffer.append('(');
 
+    if (exprent.type == Exprent.EXPRENT_CONST) {
+      ((ConstExprent) exprent).adjustConstType(leftType);
+    }
+
     buffer.append(exprent.toJava(indent, tracer));
 
     if (quote) buffer.append(')');
