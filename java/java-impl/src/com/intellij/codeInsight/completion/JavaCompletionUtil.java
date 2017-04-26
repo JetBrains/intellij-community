@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,18 +52,22 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -471,6 +475,14 @@ public class JavaCompletionUtil {
           @Override
           public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
+            Color foreground = presentation.getItemTextForeground();
+
+            //In Darcula: default monospaced bold fonts are very similar to their regular versions.
+            //We need to tune foreground colors here to tell bold elements from regular
+            if (UIUtil.isUnderDarcula()) {
+              presentation.setItemTextForeground(ColorUtil.brighter(foreground, 2));
+            }
+
             presentation.setItemTextBold(true);
           }
         };
