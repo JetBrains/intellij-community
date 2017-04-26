@@ -22,6 +22,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
+import com.jetbrains.jsonSchema.extension.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

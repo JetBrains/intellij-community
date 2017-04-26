@@ -78,7 +78,7 @@
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
 
-    <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.extension.schema.JsonSchemaReferenceContributor"/>
+    <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
     <indexedRootsProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
@@ -90,7 +90,7 @@
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
-    <extensionPoint qualifiedName="Json.Like.Psi.Walker.Factory" interface="com.jetbrains.jsonSchema.impl.JsonLikePsiWalkerFactory"/>
+    <extensionPoint qualifiedName="Json.Like.Psi.Walker.Factory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
   </extensionPoints>
 
 </idea-plugin>

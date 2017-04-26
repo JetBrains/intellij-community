@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

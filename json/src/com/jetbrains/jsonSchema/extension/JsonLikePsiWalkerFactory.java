@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.extension;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
- * @author Irina.Chernushina on 2/20/2017.
+ * @author Irina.Chernushina on 3/7/2017.
  */
-public interface JsonArrayValueAdapter extends JsonValueAdapter {
-  @NotNull List<JsonValueAdapter> getElements();
+public interface JsonLikePsiWalkerFactory {
+  ExtensionPointName<JsonLikePsiWalkerFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("Json.Like.Psi.Walker.Factory");
 
-  @Override
-  default boolean isNull() {
-    return false;
-  }
+  boolean handles(@NotNull PsiElement element);
+
+  JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject);
 }

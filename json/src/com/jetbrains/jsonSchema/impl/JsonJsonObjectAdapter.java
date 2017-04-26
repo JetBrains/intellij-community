@@ -17,6 +17,9 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonObject;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.extension.JsonArrayValueAdapter;
+import com.jetbrains.jsonSchema.extension.JsonObjectValueAdapter;
+import com.jetbrains.jsonSchema.extension.JsonPropertyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

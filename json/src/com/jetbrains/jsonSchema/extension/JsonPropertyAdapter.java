@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;

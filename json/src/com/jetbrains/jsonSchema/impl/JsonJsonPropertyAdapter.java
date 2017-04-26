@@ -20,6 +20,10 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.extension.JsonArrayValueAdapter;
+import com.jetbrains.jsonSchema.extension.JsonObjectValueAdapter;
+import com.jetbrains.jsonSchema.extension.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

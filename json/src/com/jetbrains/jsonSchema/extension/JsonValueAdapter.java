@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.extension;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Irina.Chernushina on 3/7/2017.
+ * @author Irina.Chernushina on 2/20/2017.
  */
-public interface JsonLikePsiWalkerFactory {
-  ExtensionPointName<JsonLikePsiWalkerFactory> EXTENSION_POINT_NAME = ExtensionPointName.create("Json.Like.Psi.Walker.Factory");
+public interface JsonValueAdapter {
+  boolean isObject();
+  boolean isArray();
+  boolean isStringLiteral();
+  boolean isNumberLiteral();
+  boolean isBooleanLiteral();
+  boolean isNull();
 
-  boolean handles(@NotNull PsiElement element);
+  @NotNull PsiElement getDelegate();
 
-  JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject);
+  @Nullable JsonObjectValueAdapter getAsObject();
+  @Nullable JsonArrayValueAdapter getAsArray();
+
+  default boolean shouldCheckIntegralRequirements() {return true;}
 }
