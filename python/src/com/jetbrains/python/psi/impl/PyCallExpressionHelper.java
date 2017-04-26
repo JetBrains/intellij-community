@@ -675,16 +675,64 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
+  public static List<PyCallExpression.PyArgumentsMapping> mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                       @NotNull PyResolveContext resolveContext) {
+    final List<PyCallExpression.PyArgumentsMapping> results = new ArrayList<>();
+    for (PyCallable callable : multiResolveCallee(callSite, resolveContext)) {
+      if (callable == null) continue;
+      results.add(mapArguments(callSite, callable, resolveContext));
+    }
+    return results;
+  }
+
+  @NotNull
+  private static List<PyCallable> multiResolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull PyResolveContext resolveContext) {
+    if (callSite instanceof PyCallExpression) {
+      final List<PyCallExpression.PyRatedCallee> ratedCallees = ((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext);
+      return ContainerUtil.map(PyUtil.filterTopPriorityResults(ratedCallees), PyCallExpression.PyRatedCallee::getElement);
+    }
+    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
+      final List<PyCallable> results = new ArrayList<>();
+      boolean resolvedToUnknownResult = false;
+      for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
+        if (result instanceof PyCallable) {
+          results.add((PyCallable)result);
+          continue;
+        }
+        if (result instanceof PyTypedElement) {
+          final PyType resultType = resolveContext.getTypeEvalContext().getType((PyTypedElement)result);
+          if (resultType instanceof PyFunctionType) {
+            results.add(((PyFunctionType)resultType).getCallable());
+            continue;
+          }
+        }
+        resolvedToUnknownResult = true;
+      }
+      return resolvedToUnknownResult ? Collections.emptyList() : results;
+    }
+    else {
+      return Collections.emptyList();
+    }
+  }
+
+  @NotNull
   public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                  @NotNull PyCallable callable,
                                                                  @NotNull TypeEvalContext context) {
+    return mapArguments(callSite, callable, PyResolveContext.noImplicits().withTypeEvalContext(context));
+  }
+
+  @NotNull
+  private static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                  @NotNull PyCallable callable,
+                                                                  @NotNull PyResolveContext resolveContext) {
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
     if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
     final List<PyCallableParameter> parameters = callableType.getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
     final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyCallableParameter> explicitParameters =
       PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
 

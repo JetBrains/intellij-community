@@ -623,51 +623,6 @@ public class PyTypeChecker {
     return PyNames.TYPE_STR.equals(subClass.getName()) && PyNames.TYPE_UNICODE.equals(superClass.getName());
   }
 
-  @NotNull
-  public static List<AnalyzeCallResults> analyzeCallSite(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    final List<AnalyzeCallResults> results = new ArrayList<>();
-    for (PyCallable callable : multiResolveCallee(callSite, context)) {
-      if (callable == null) continue;
-      final PyExpression receiver = getReceiver(callSite, callable);
-      final PyCallExpression.PyArgumentsMapping mapping = mapArguments(callSite, callable, context);
-      results.add(new AnalyzeCallResults(callable, receiver, mapping));
-    }
-    return results;
-  }
-
-  @NotNull
-  private static List<PyCallable> multiResolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    if (callSite instanceof PyCallExpression) {
-      final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
-        PyUtil.filterTopPriorityResults(((PyCallExpression)callSite).multiResolveRatedCallee(resolveContext));
-
-      return ContainerUtil.map(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement);
-    }
-    else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
-      final List<PyCallable> results = new ArrayList<>();
-      boolean resolvedToUnknownResult = false;
-      for (PsiElement result : PyUtil.multiResolveTopPriority(callSite, resolveContext)) {
-        if (result instanceof PyCallable) {
-          results.add((PyCallable)result);
-          continue;
-        }
-        if (result instanceof PyTypedElement) {
-          final PyType resultType = context.getType((PyTypedElement)result);
-          if (resultType instanceof PyFunctionType) {
-            results.add(((PyFunctionType)resultType).getCallable());
-            continue;
-          }
-        }
-        resolvedToUnknownResult = true;
-      }
-      return resolvedToUnknownResult ? Collections.emptyList() : results;
-    }
-    else {
-      return Collections.emptyList();
-    }
-  }
-
   @Nullable
   public static Boolean isCallable(@Nullable PyType type) {
     if (type == null) {
@@ -824,34 +779,6 @@ public class PyTypeChecker {
     }
     else {
       return null;
-    }
-  }
-
-  public static class AnalyzeCallResults {
-    @NotNull private final PyCallable myCallable;
-    @Nullable private final PyExpression myReceiver;
-    @NotNull private final PyCallExpression.PyArgumentsMapping myMapping;
-
-    public AnalyzeCallResults(@NotNull PyCallable callable, @Nullable PyExpression receiver,
-                              @NotNull PyCallExpression.PyArgumentsMapping mapping) {
-      myCallable = callable;
-      myReceiver = receiver;
-      myMapping = mapping;
-    }
-
-    @NotNull
-    public PyCallable getCallable() {
-      return myCallable;
-    }
-
-    @Nullable
-    public PyExpression getReceiver() {
-      return myReceiver;
-    }
-
-    @NotNull
-    public PyCallExpression.PyArgumentsMapping getMapping() {
-      return myMapping;
     }
   }
 }

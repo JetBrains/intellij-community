@@ -24,10 +24,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyBinaryExpression;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -149,13 +146,17 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       }
       return PyUnionType.union(leftType, rightType);
     }
-    final List<PyTypeChecker.AnalyzeCallResults> results = PyTypeChecker.analyzeCallSite(this, context);
+    final List<PyCallExpression.PyArgumentsMapping> results =
+      PyCallExpressionHelper.mapArguments(this, PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (!results.isEmpty()) {
       final List<PyType> types = new ArrayList<>();
       final List<PyType> matchedTypes = new ArrayList<>();
-      for (PyTypeChecker.AnalyzeCallResults result : results) {
+      for (PyCallExpression.PyArgumentsMapping result : results) {
+        final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
+        if (markedCallee == null) continue;
+
         boolean matched = true;
-        for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMapping().getMappedParameters().entrySet()) {
+        for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMappedParameters().entrySet()) {
           final PyExpression argument = entry.getKey();
           final PyCallableParameter parameter = entry.getValue();
           if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
@@ -168,7 +169,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
             matched = false;
           }
         }
-        final PyType type = result.getCallable().getCallType(context, this);
+        final PyType type = markedCallee.getCallableType().getCallType(context, this);
         if (!PyTypeChecker.isUnknown(type, context) && !(type instanceof PyNoneType)) {
           types.add(type);
           if (matched) {
