@@ -6,9 +6,9 @@ class DynamicRegex {
     s.<warning descr="'matches()' could be replaced with compiled 'java.util.regex.Pattern' construct">matches</warning>("test");
     s.<warning descr="'replaceAll()' could be replaced with compiled 'java.util.regex.Pattern' construct">replaceAll</warning>("all", "nothing");
     s.<warning descr="'replaceFirst()' could be replaced with compiled 'java.util.regex.Pattern' construct">replaceFirst</warning>("first", "second");
-    s.split("a");
-    s.split("\\\\");
-    "abba".replace("bb", "aa");
+    s.<warning descr="'split()' could be replaced with compiled 'java.util.regex.Pattern' construct">split</warning>("a");
+    s.<warning descr="'split()' could be replaced with compiled 'java.util.regex.Pattern' construct">split</warning>("\\\\");
+    "abba".<warning descr="'replace()' could be replaced with compiled 'java.util.regex.Pattern' construct">replace</warning>("bb", "aa");
     "abba".replace('b', 'a');
   }
 }
