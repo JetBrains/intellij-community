@@ -16,11 +16,13 @@
 package com.intellij.navigation;
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -290,6 +292,17 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
                                                           "}");
     myFixture.addClass("class Inheritor extends C.Public {}");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+
+    assertSize(2, getTargets(file));
+  }
+
+  public void testPrivateClassInheritorsInJdkDecompiled() {
+    ModuleRootModificationUtil.setModuleSdk(myModule, IdeaTestUtil.getMockJdk18());
+
+    PsiClass aClass = myFixture.getJavaFacade().findClass("java.util.ResourceBundle.CacheKeyReference");
+    PsiFile file = aClass.getContainingFile();
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.getEditor().getCaretModel().moveToOffset(aClass.getTextOffset());
 
     assertSize(2, getTargets(file));
   }
