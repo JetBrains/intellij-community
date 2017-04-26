@@ -21,7 +21,6 @@ import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.debugger.streams.wrapper.impl.StreamChainBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -39,7 +38,6 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public abstract class StreamChainBuilderTestCase extends LightCodeInsightTestCase {
-  private final StreamChainBuilder myChainBuilder = new StreamChainBuilderImpl();
   private final StreamChainBuilder myNewBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
 
   @NotNull
