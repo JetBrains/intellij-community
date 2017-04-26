@@ -141,7 +141,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
           }
         }
 
-        TextAttributes attributes = getNavigationItemAttributes(value);
+        TextAttributes attributes = element.isValid() ? getNavigationItemAttributes(value) : null;
 
         if (isProblemFile) {
           attributes = TextAttributes.merge(new TextAttributes(color, null, JBColor.RED, EffectType.WAVE_UNDERSCORE, Font.PLAIN), attributes);
