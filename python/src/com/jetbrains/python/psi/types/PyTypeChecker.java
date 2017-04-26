@@ -629,7 +629,7 @@ public class PyTypeChecker {
     for (PyCallable callable : multiResolveCallee(callSite, context)) {
       if (callable == null) continue;
       final PyExpression receiver = getReceiver(callSite, callable);
-      final ArgumentMappingResults mapping = mapArguments(callSite, callable, context);
+      final PyCallExpression.PyArgumentsMapping mapping = mapArguments(callSite, callable, context);
       results.add(new AnalyzeCallResults(callable, receiver, mapping));
     }
     return results;
@@ -830,10 +830,10 @@ public class PyTypeChecker {
   public static class AnalyzeCallResults {
     @NotNull private final PyCallable myCallable;
     @Nullable private final PyExpression myReceiver;
-    @NotNull private final ArgumentMappingResults myMapping;
+    @NotNull private final PyCallExpression.PyArgumentsMapping myMapping;
 
     public AnalyzeCallResults(@NotNull PyCallable callable, @Nullable PyExpression receiver,
-                              @NotNull ArgumentMappingResults mapping) {
+                              @NotNull PyCallExpression.PyArgumentsMapping mapping) {
       myCallable = callable;
       myReceiver = receiver;
       myMapping = mapping;
@@ -850,7 +850,7 @@ public class PyTypeChecker {
     }
 
     @NotNull
-    public ArgumentMappingResults getMapping() {
+    public PyCallExpression.PyArgumentsMapping getMapping() {
       return myMapping;
     }
   }
