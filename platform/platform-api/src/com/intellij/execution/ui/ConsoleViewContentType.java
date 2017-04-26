@@ -49,6 +49,7 @@ public class ConsoleViewContentType {
   public static final TextAttributesKey SYSTEM_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_SYSTEM_OUTPUT");
 
   public static final ConsoleViewContentType NORMAL_OUTPUT = new ConsoleViewContentType("NORMAL_OUTPUT", NORMAL_OUTPUT_KEY);
+  public static final ConsoleViewContentType LOG_WARNING_OUTPUT = new ConsoleViewContentType("LOG_WARNING_OUTPUT", LOG_WARNING_OUTPUT_KEY);
   public static final ConsoleViewContentType ERROR_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", ERROR_OUTPUT_KEY);
   public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_INPUT", USER_INPUT_KEY);
   public static final ConsoleViewContentType SYSTEM_OUTPUT = new ConsoleViewContentType("SYSTEM_OUTPUT", SYSTEM_OUTPUT_KEY);
