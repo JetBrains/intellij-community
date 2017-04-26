@@ -2457,7 +2457,7 @@
                      implementationClass="com.siyeh.ig.style.UnnecessaryFinalOnLocalVariableOrParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryFullyQualifiedName" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.fully.qualified.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFO" cleanupTool="true"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryInterfaceModifier" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.interface.modifier.display.name" groupBundle="messages.InspectionsBundle"
