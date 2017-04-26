@@ -41,7 +41,6 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
   private static final String JAVA_LANG_REFLECT_CONSTRUCTOR = "java.lang.reflect.Constructor";
 
   private static final String INVOKE = "invoke";
-  private static final String NEW_INSTANCE = "newInstance";
 
   @NotNull
   @Override

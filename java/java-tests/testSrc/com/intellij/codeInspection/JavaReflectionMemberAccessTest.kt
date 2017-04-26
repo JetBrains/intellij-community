@@ -47,6 +47,8 @@ class JavaReflectionMemberAccessTest : LightCodeInsightFixtureTestCase() {
   fun testMethodExists() = doTest(true)
   fun testConstructorExists() = doTest(true)
 
+  fun testNewInstance() = doTest(true)
+
 
   private fun doTest(checkExists: Boolean = false) {
     inspection.checkMemberExistsInNonFinalClasses = checkExists
