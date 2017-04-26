@@ -65,6 +65,8 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
   private Document myDocument;
   private Commenter myCommenter;
   private CommenterDataHolder mySelfManagedCommenterData;
+  private String myWarning;
+  private RangeMarker myWarningLocation;
 
   @Override
   public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiFile file) {
@@ -72,6 +74,8 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     myEditor = editor;
     myCaret = caret;
     myFile = file;
+    myWarning = null;
+    myWarningLocation = null;
 
     myDocument = editor.getDocument();
 
@@ -160,6 +164,28 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         myDocument.insertString(caretOffset, prefix + suffix);
         myCaret.moveToOffset(caretOffset + prefix.length());
       }
+    }
+
+    showMessageIfNeeded();
+  }
+
+  private void showMessageIfNeeded() {
+    if (myWarning != null) {
+      myEditor.getScrollingModel().disableAnimation();
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+      myEditor.getScrollingModel().enableAnimation();
+      
+      LogicalPosition hintPosition = myCaret.getLogicalPosition();
+      if (myWarningLocation != null) {
+        LogicalPosition targetPosition = myEditor.offsetToLogicalPosition(myWarningLocation.getStartOffset());
+        Point targetPoint = myEditor.logicalPositionToXY(targetPosition);
+        if (myEditor.getScrollingModel().getVisibleArea().contains(targetPoint)) {
+          hintPosition = targetPosition;
+        }
+      }
+      LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(myWarning));
+      Point p = HintManagerImpl.getHintPosition(hint, myEditor, hintPosition, HintManager.ABOVE);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, myEditor, p, 0, 0, false);
     }
   }
 
@@ -384,7 +410,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
 
   public void commentRange(int startOffset, int endOffset, String commentPrefix, String commentSuffix, Commenter commenter) {
     if (breaksExistingComment(startOffset, true) || breaksExistingComment(endOffset, false)) {
-      showWarning(CodeInsightBundle.message("block.comment.intersects.existing.comment"), myCaret.getOffset());
+      myWarning = CodeInsightBundle.message("block.comment.intersects.existing.comment");
       return;
     }
     final CharSequence chars = myDocument.getCharsSequence();
@@ -474,16 +500,6 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
            commenter.getDocumentationCommentSuffix().endsWith(commenter.getBlockCommentSuffix());
   }
 
-  private void showWarning(String message, int offset) {
-    LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
-    myEditor.getScrollingModel().disableAnimation();
-    myEditor.getScrollingModel().scrollTo(logicalPosition, ScrollType.RELATIVE);
-    myEditor.getScrollingModel().enableAnimation();
-    LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
-    Point p = HintManagerImpl.getHintPosition(hint, myEditor, logicalPosition, HintManager.ABOVE);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, myEditor, p, 0, 0, false);
-  }
-
   private int doBoundCommentingAndGetShift(int offset,
                                            String commented,
                                            int skipLength,
@@ -526,12 +542,14 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     String commentedSuffix = commenter.getCommentedBlockCommentSuffix();
     CharSequence chars = myDocument.getCharsSequence();
     boolean canDetectBlockComments = canDetectBlockComments();
+    boolean warnAboutNestedComments = false;
     for (int i = startOffset; i < endOffset; ++i) {
       if (CharArrayUtil.regionMatches(chars, i, normalizedPrefix)) {
         if (commentedPrefix == null && canDetectBlockComments) {
           TextRange commentRange = getBlockCommentAt(i);
           // skipping prefixes outside of comments (e.g. in string literals) and inside comments
           if (commentRange == null || commentRange.getStartOffset() != i) continue;
+          else warnAboutNestedComments = true;
         }
         nestedCommentPrefixes.add(i);
       }
@@ -539,12 +557,18 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         if (commentedSuffix == null && canDetectBlockComments) {
           TextRange commentRange = getBlockCommentAt(i);
           if (commentRange == null) {
-            showWarning(CodeInsightBundle.message("block.comment.wrapping.suffix"), i);
+            myWarning = CodeInsightBundle.message("block.comment.wrapping.suffix");
+            myWarningLocation = myDocument.createRangeMarker(i, i);
             return null;
           }
         }
         nestedCommentSuffixes.add(i);
       }
+    }
+    if (warnAboutNestedComments) {
+      myWarning = CodeInsightBundle.message("block.comment.nested.comment", nestedCommentPrefixes.size());
+      myWarningLocation = myDocument.createRangeMarker(nestedCommentPrefixes.get(0), 
+                                                       nestedCommentPrefixes.get(0) + normalizedPrefix.length());
     }
     int shift = 0;
     if (!(commentedSuffix == null &&
