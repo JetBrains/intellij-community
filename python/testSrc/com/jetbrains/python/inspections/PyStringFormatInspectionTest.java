@@ -187,6 +187,10 @@ public class PyStringFormatInspectionTest extends PyTestCase {
   public void testPercentStringCallArgument() {
     doTest();
   }
+
+  public void testMultilineString() {
+    doTest();
+  }
   
   // PY-8325
   public void testTooFewMappingKeys() {
