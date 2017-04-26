@@ -46,12 +46,13 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   public void testDefaults() {
+    myScheme.setFontPreferences(new FontPreferencesImpl());
     checkState(myScheme.getFontPreferences(),
                Collections.emptyList(),
                Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
-    String expectedName = SystemInfo.isLinux ? FontPreferences.LINUX_DEFAULT_FONT_FAMILY : FontPreferences.DEFAULT_FONT_NAME;
+    String expectedName = FontPreferences.DEFAULT_FONT_NAME;
     assertEquals(expectedName, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
