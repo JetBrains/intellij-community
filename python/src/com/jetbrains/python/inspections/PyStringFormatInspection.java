@@ -31,7 +31,6 @@ import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
@@ -650,9 +649,7 @@ public class PyStringFormatInspection extends PyInspection {
                 if (((PyUnionType)callType).getMembers().stream().allMatch(PyType::isBuiltin)) return 1;
               }
 
-              else {
-                return 1;
-              }
+              return -1;
             }
           )
         );
@@ -663,8 +660,6 @@ public class PyStringFormatInspection extends PyInspection {
       else {
         return -1;
       }
-
-      return -1;
     }
 
     private static PyReturnStatement[] getFunctionReturnValues(@NotNull PyCallExpression callExpression,

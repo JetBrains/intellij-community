@@ -74,6 +74,8 @@ public class PyStringFormatParser {
     @Nullable private Integer myPosition;
     @Nullable private Integer myAutoPosition;
 
+    private char myConversionType;
+
     public SubstitutionChunk(int startIndex, int endIndex) {
       super(startIndex, endIndex);
     }
@@ -108,6 +110,14 @@ public class PyStringFormatParser {
       myAutoPosition = autoPosition;
     }
 
+    public char getConversionType() {
+      return myConversionType;
+    }
+
+    public void setConversionType(char conversionType) {
+      myConversionType = conversionType;
+    }
+
     @Nullable
     public String getPrecision() {
       return myPrecision;
@@ -139,19 +149,10 @@ public class PyStringFormatParser {
   public static class PercentSubstitutionChunk extends SubstitutionChunk {
     @Nullable private String myConversionFlags;
     private char myLengthModifier;
-    private char myConversionType;
     private boolean myUnclosedMapping;
 
     public PercentSubstitutionChunk(int startIndex) {
       super(startIndex, startIndex);
-    }
-
-    public char getConversionType() {
-      return myConversionType;
-    }
-
-    private void setConversionType(char conversionType) {
-      myConversionType = conversionType;
     }
 
     @Nullable
@@ -184,7 +185,6 @@ public class PyStringFormatParser {
     @Nullable private String myConversion;
     @Nullable private String myMappingKeyAttributeName;
     @Nullable private String myMappingKeyElementIndex;
-    private char myConversionType;
     private boolean signOption;
     private boolean zeroPadding;
     private boolean alternateForm;
@@ -209,14 +209,6 @@ public class PyStringFormatParser {
 
     public void setSignOption() {
       this.signOption = true;
-    }
-
-    public char getConversionType() {
-      return myConversionType;
-    }
-
-    public void setConversionType(char conversionType) {
-      myConversionType = conversionType;
     }
 
     public boolean useAlternateForm() {

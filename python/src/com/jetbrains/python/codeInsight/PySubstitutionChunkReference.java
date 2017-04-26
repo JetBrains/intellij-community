@@ -25,6 +25,7 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
+import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -130,7 +131,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @NotNull
   private Ref<PyExpression> resolveKeywordFormat(@NotNull PyArgumentList argumentList) {
     final Ref<PyExpression> valueExprRef = getKeyValueFromArguments(argumentList);
-    final String indexElement = ((PyStringFormatParser.NewStyleSubstitutionChunk)myChunk).getMappingKeyElementIndex();
+    final String indexElement = myChunk instanceof NewStyleSubstitutionChunk ? ((NewStyleSubstitutionChunk)myChunk).getMappingKeyElementIndex() : null;
     if (valueExprRef != null && !valueExprRef.isNull() && indexElement != null) {
       final PyExpression valueExpr = PyPsiUtils.flattenParens(valueExprRef.get());
       assert valueExpr != null;
