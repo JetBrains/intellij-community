@@ -20,7 +20,10 @@ import com.intellij.debugger.streams.psi.StreamChainTransformer;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,32 +42,65 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
 
   @Override
   public boolean isChainExists(@NotNull PsiElement startElement) {
-    PsiElement current = startElement;
-    while (current != null && current.getChildren().length == 0) {
-      current = current.getNextSibling();
+    PsiElement current = getLatestElementInCurrentScope(ignoreWhiteSpaces(startElement));
+    while (current != null) {
+      myExistenceChecker.reset();
+      current.accept(myExistenceChecker);
+      if (myExistenceChecker.found()) {
+        return true;
+      }
+      current = toUpperLevel(current);
     }
 
-    if (current == null) return false;
-
-    myExistenceChecker.reset();
-    current.accept(myExistenceChecker);
-    return myExistenceChecker.found();
+    return false;
   }
 
   @NotNull
   @Override
   public List<StreamChain> build(@NotNull PsiElement startElement) {
     final MyChainCollectorVisitor visitor = new MyChainCollectorVisitor();
-    PsiElement current = startElement;
-    while (current != null && current.getChildren().length == 0) {
-      current = current.getNextSibling();
+
+    PsiElement current = getLatestElementInCurrentScope(ignoreWhiteSpaces(startElement));
+    while (current != null) {
+      current.accept(visitor);
+      current = toUpperLevel(current);
     }
 
-    if (current == null) return Collections.emptyList();
-
-    current.accept(visitor);
     final List<List<PsiMethodCallExpression>> chains = visitor.getPsiChains();
-    return buildChains(chains, current);
+    return buildChains(chains, startElement);
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  private static PsiElement ignoreWhiteSpaces(@Nullable PsiElement element) {
+    final PsiElement result = PsiTreeUtil.skipSiblingsForward(element, PsiWhiteSpace.class);
+    return result == null ? PsiTreeUtil.skipSiblingsBackward(element, PsiWhiteSpace.class) : result;
+  }
+
+  @Nullable
+  private static PsiElement toUpperLevel(@NotNull PsiElement element) {
+    while (element != null && !(element instanceof PsiLambdaExpression) && !(element instanceof PsiAnonymousClass)) {
+      element = element.getParent();
+    }
+
+    return getLatestElementInCurrentScope(element);
+  }
+
+  @Nullable
+  @Contract("null -> null")
+  private static PsiElement getLatestElementInCurrentScope(@Nullable PsiElement element) {
+    PsiElement current = element;
+    while (current != null) {
+      final PsiElement parent = current.getParent();
+
+      if (parent instanceof PsiCodeBlock || parent instanceof PsiLambdaExpression || parent instanceof PsiStatement) {
+        break;
+      }
+
+      current = parent;
+    }
+
+    return current;
   }
 
   @NotNull
@@ -120,6 +156,7 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
       }
     }
 
+    @NotNull
     List<List<PsiMethodCallExpression>> getPsiChains() {
       final List<List<PsiMethodCallExpression>> chains = new ArrayList<>();
       for (final PsiMethodCallExpression terminationCall : myTerminationCalls) {
