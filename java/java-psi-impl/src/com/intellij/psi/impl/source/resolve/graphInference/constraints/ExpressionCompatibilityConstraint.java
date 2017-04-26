@@ -129,6 +129,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                                                                          PsiExpression expression,
                                                                          PsiType targetType,
                                                                          boolean registerErrorOnFailure) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      return session;
+    }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);
