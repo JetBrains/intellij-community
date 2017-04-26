@@ -675,23 +675,29 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                    @NotNull PyCallable callable,
-                                                    @NotNull List<PyCallableParameter> parameters,
-                                                    @NotNull TypeEvalContext context) {
+  public static PyCallExpression.PyArgumentsMapping mapArguments(@NotNull PyCallSiteExpression callSite,
+                                                                 @NotNull PyCallable callable,
+                                                                 @NotNull TypeEvalContext context) {
+    final PyCallableType callableType = PyUtil.as(context.getType(callable), PyCallableType.class);
+    if (callableType == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
+    final List<PyCallableParameter> parameters = callableType.getParameters(context);
+    if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
+
     final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     final List<PyCallableParameter> explicitParameters =
       PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
 
-    return analyzeArguments(arguments, explicitParameters);
-  }
+    final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
-  @NotNull
-  public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
-                                                    @NotNull PyCallable callable,
-                                                    @NotNull TypeEvalContext context) {
-    return mapArguments(callSite, callable, callable.getParameters(context), context);
+    return new PyCallExpression.PyArgumentsMapping(callSite,
+                                                   new PyCallExpression.PyMarkedCallee(callableType, callable, null, 0, false),
+                                                   mappingResults.getMappedParameters(),
+                                                   mappingResults.getUnmappedParameters(),
+                                                   mappingResults.getUnmappedArguments(),
+                                                   mappingResults.getParametersMappedToVariadicPositionalArguments(),
+                                                   mappingResults.getParametersMappedToVariadicKeywordArguments(),
+                                                   mappingResults.getMappedTupleParameters());
   }
 
   @NotNull

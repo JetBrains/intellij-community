@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     assert mapping.getMarkedCallee() != null;
     final PyFunction function = as(mapping.getMarkedCallee().getCallable(), PyFunction.class);
     assert function != null;
-    final PyCallExpression callExpression = mapping.getCallExpression();
+    final PyCallSiteExpression callSiteExpression = mapping.getCallSiteExpression();
     int positionalParamAnchor = -1;
     final PyParameter[] parameters = function.getParameterList().getParameters();
     for (PyParameter parameter : parameters) {
@@ -72,7 +72,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       positionalParamAnchor++;
     }
     final List<Pair<Integer, PyParameterInfo>> newParameters = new ArrayList<>();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callExpression.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callSiteExpression.getContainingFile());
     final Set<String> usedParamNames = new HashSet<>();
     for (PyExpression arg : mapping.getUnmappedArguments()) {
       if (arg instanceof PyKeywordArgument) {
@@ -87,7 +87,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         usedParamNames.add(paramName);
       }
     }
-    return new PyChangeSignatureQuickFix(function, newParameters, mapping.getCallExpression());
+    return new PyChangeSignatureQuickFix(function, newParameters, mapping.getCallSiteExpression());
   }
 
   @NotNull
@@ -105,7 +105,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   }
   
   private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
-  private final SmartPsiElementPointer<PyCallExpression> myOriginalCallExpression;
+  private final SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
 
 
   /**
@@ -114,14 +114,14 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
    */
   private PyChangeSignatureQuickFix(@NotNull PyFunction function,
                                     @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters,
-                                    @Nullable PyCallExpression expression) {
+                                    @Nullable PyCallSiteExpression expression) {
     super(function);
     myExtraParameters = ContainerUtil.sorted(extraParameters, Comparator.comparingInt(p -> p.getFirst()));
     if (expression != null) {
-      myOriginalCallExpression = SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(expression);
+      myOriginalCallSiteExpression = SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(expression);
     }
     else {
-      myOriginalCallExpression = null;
+      myOriginalCallSiteExpression = null;
     }
   }
 
@@ -163,10 +163,10 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       }
     };
 
-    final PyCallExpression originalCall = myOriginalCallExpression.getElement();
+    final PyCallSiteExpression originalCallSite = myOriginalCallSiteExpression.getElement();
     try {
-      if (originalCall != null) {
-        originalCall.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);
+      if (originalCallSite != null) {
+        originalCallSite.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, true);
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         dialog.createRefactoringProcessor().run();
@@ -176,8 +176,8 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
       }
     }
     finally {
-      if (originalCall != null) {
-        originalCall.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, null);
+      if (originalCallSite != null) {
+        originalCallSite.putUserData(CHANGE_SIGNATURE_ORIGINAL_CALL, null);
       }
     }
   }

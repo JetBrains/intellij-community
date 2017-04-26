@@ -208,7 +208,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private static boolean callDoesNotHaveUnmappedArgumentsAndUnfilledParameters(@NotNull PyTypeChecker.AnalyzeCallResults callResults) {
-      final ArgumentMappingResults mapping = callResults.getMapping();
+      final PyCallExpression.PyArgumentsMapping mapping = callResults.getMapping();
       return mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty();
     }
 
