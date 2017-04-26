@@ -37,73 +37,71 @@ import static com.siyeh.ig.callMatcher.CallMatcher.*;
  */
 public class CustomMethodHandlers {
   interface CustomMethodHandler {
-    List<DfaMemoryState> handle(DfaValue qualifier, DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory);
+    List<DfaMemoryState> handle(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
   }
 
   private static final CallMapper<CustomMethodHandler> CUSTOM_METHOD_HANDLERS = new CallMapper<CustomMethodHandler>()
     .register(instanceCall(JAVA_LANG_STRING, "isEmpty").parameterCount(0),
-              (qualifier, args, memState, factory) -> stringIsEmpty(qualifier, memState, factory))
+              (args, memState, factory) -> stringIsEmpty(args.myQualifier, memState, factory))
     .register(instanceCall(JAVA_LANG_STRING, "indexOf", "lastIndexOf"),
-              (qualifier, args, memState, factory) -> stringIndexOf(qualifier, memState, factory))
+              (args, memState, factory) -> stringIndexOf(args.myQualifier, memState, factory))
     .register(instanceCall(JAVA_LANG_STRING, "equals").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringEquals(qualifier, args, memState, factory, false))
+              (args, memState, factory) -> stringEquals(args, memState, factory, false))
     .register(instanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringEquals(qualifier, args, memState, factory, true))
+              (args, memState, factory) -> stringEquals(args, memState, factory, true))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, false))
+              (args, memState, factory) -> stringStartsEnds(args, memState, factory, false))
     .register(instanceCall(JAVA_LANG_STRING, "endsWith").parameterCount(1),
-              (qualifier, args, memState, factory) -> stringStartsEnds(qualifier, args, memState, factory, true))
+              (args, memState, factory) -> stringStartsEnds(args, memState, factory, true))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_MATH, "max").parameterTypes("long", "long"),
                     staticCall(JAVA_LANG_INTEGER, "max").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "max").parameterTypes("long", "long")),
-              (qualifier, args, memState, factory) -> mathMinMax(args, memState, factory, true))
+              (args, memState, factory) -> mathMinMax(args.myArguments, memState, factory, true))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_MATH, "min").parameterTypes("long", "long"),
                     staticCall(JAVA_LANG_INTEGER, "min").parameterTypes("int", "int"),
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
-              (qualifier, args, memState, factory) -> mathMinMax(args, memState, factory, false))
+              (args, memState, factory) -> mathMinMax(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
-              (qualifier, args, memState, factory) -> mathAbs(args, memState, factory, false))
+              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
-              (qualifier, args, memState, factory) -> mathAbs(args, memState, factory, true));
+              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true));
 
   public static CustomMethodHandler find(PsiMethodCallExpression call) {
     return CUSTOM_METHOD_HANDLERS.mapFirst(call);
   }
 
-  private static List<DfaMemoryState> stringStartsEnds(DfaValue qualifier,
-                                                       DfaValue[] args,
+  private static List<DfaMemoryState> stringStartsEnds(DfaCallArguments args,
                                                        DfaMemoryState memState,
                                                        DfaValueFactory factory,
                                                        boolean ends) {
-    DfaValue arg = ArrayUtil.getFirstElement(args);
+    DfaValue arg = ArrayUtil.getFirstElement(args.myArguments);
     if (arg == null) return Collections.emptyList();
-    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, qualifier), String.class);
+    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, args.myQualifier), String.class);
     String rightConst = ObjectUtils.tryCast(getConstantValue(memState, arg), String.class);
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ends ? leftConst.endsWith(rightConst) : leftConst.startsWith(rightConst)));
     }
-    DfaValue leftLength = factory.createStringLength(qualifier);
+    DfaValue leftLength = factory.createStringLength(args.myQualifier);
     DfaValue rightLength = factory.createStringLength(arg);
     DfaValue trueRelation = factory.createCondition(leftLength, RelationType.GE, rightLength);
     DfaValue falseRelation = factory.createCondition(leftLength, RelationType.LT, rightLength);
     return applyCondition(memState, trueRelation, DfaUnknownValue.getInstance(), falseRelation, factory.getBoolean(false));
   }
 
-  private static List<DfaMemoryState> stringEquals(DfaValue qualifier,
-                                                   DfaValue[] args,
+  private static List<DfaMemoryState> stringEquals(DfaCallArguments args,
                                                    DfaMemoryState memState,
                                                    DfaValueFactory factory,
                                                    boolean ignoreCase) {
-    DfaValue arg = ArrayUtil.getFirstElement(args);
+    DfaValue arg = ArrayUtil.getFirstElement(args.myArguments);
     if (arg == null) return Collections.emptyList();
-    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, qualifier), String.class);
+    String leftConst = ObjectUtils.tryCast(getConstantValue(memState, args.myQualifier), String.class);
     String rightConst = ObjectUtils.tryCast(getConstantValue(memState, arg), String.class);
     if (leftConst != null && rightConst != null) {
       return singleResult(memState, factory.getBoolean(ignoreCase ? leftConst.equalsIgnoreCase(rightConst) : leftConst.equals(rightConst)));
     }
-    DfaValue leftLength = factory.createStringLength(qualifier);
+    DfaValue leftLength = factory.createStringLength(args.myQualifier);
     DfaValue rightLength = factory.createStringLength(arg);
     DfaValue trueRelation = factory.createCondition(leftLength, RelationType.EQ, rightLength);
     DfaValue falseRelation = factory.createCondition(leftLength, RelationType.NE, rightLength);

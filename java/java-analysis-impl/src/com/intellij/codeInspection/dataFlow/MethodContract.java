@@ -15,11 +15,9 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -43,21 +41,24 @@ public abstract class MethodContract {
   public abstract ValueConstraint getReturnValue();
 
   /**
-   * Returns DfaValue describing the return value of this contract or null if this contract assumes that any value could be returned.
+   * Returns DfaValue describing the return value of this contract
    *
    * @param factory factory to create values
-   * @param resultType method result type
+   * @param defaultResult default result value for the called method
    * @return a DfaValue describing the return value of this contract
    */
-  @Nullable
-  DfaValue getDfaReturnValue(DfaValueFactory factory, PsiType resultType) {
+  @NotNull
+  DfaValue getDfaReturnValue(DfaValueFactory factory, DfaValue defaultResult) {
     switch (getReturnValue()) {
       case NULL_VALUE: return factory.getConstFactory().getNull();
-      case NOT_NULL_VALUE: return factory.createTypeValue(resultType, Nullness.NOT_NULL);
+      case NOT_NULL_VALUE:
+        return defaultResult instanceof DfaTypeValue
+               ? ((DfaTypeValue)defaultResult).withNullness(Nullness.NOT_NULL)
+               : DfaUnknownValue.getInstance();
       case TRUE_VALUE: return factory.getConstFactory().getTrue();
       case FALSE_VALUE: return factory.getConstFactory().getFalse();
       case THROW_EXCEPTION: return factory.getConstFactory().getContractFail();
-      default: return null;
+      default: return defaultResult;
     }
   }
 
