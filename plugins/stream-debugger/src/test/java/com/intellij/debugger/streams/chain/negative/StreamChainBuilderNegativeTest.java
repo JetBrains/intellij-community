@@ -54,6 +54,18 @@ public class StreamChainBuilderNegativeTest extends StreamChainBuilderTestCase {
     doTest();
   }
 
+  public void testInLambda() {
+    doTest();
+  }
+
+  public void testInLambdaWithBody() {
+    doTest();
+  }
+
+  public void testInAnonymous() {
+    doTest();
+  }
+
   private void doTest() {
     final List<StreamChain> chains = buildChains();
     assertTrue(chains.isEmpty());
