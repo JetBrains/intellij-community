@@ -66,6 +66,7 @@ public class SingleClassesTest {
   @Test public void testAnonymousClassConstructor() { doTest("pkg/TestAnonymousClassConstructor"); }
   @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
   @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
+  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); } //TODO: fix
   @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
   @Test public void testAmbiguousCall() { doTest("pkg/TestAmbiguousCall"); }
   @Test public void testAmbiguousCallWithDebugInfo() { doTest("pkg/TestAmbiguousCallWithDebugInfo"); }
