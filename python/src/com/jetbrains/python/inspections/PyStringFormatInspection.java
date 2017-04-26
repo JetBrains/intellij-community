@@ -609,29 +609,6 @@ public class PyStringFormatInspection extends PyInspection {
               if (callType instanceof PyTupleType) {
                 return ((PyTupleType)callType).getElementCount();
               }
-              else if (callType instanceof PyCollectionTypeImpl
-                       && ((PyCollectionTypeImpl)callType).getElementTypes(evalContext).size() == 1) {
-                if (isPercent) return 1;
-
-                final PyClass pyClass = ((PyCollectionTypeImpl)callType).getPyClass();
-                if ("list".equals(pyClass.getName())) {
-                  final PyReturnStatement[] returnStatements = getFunctionReturnValues(callExpression, resolveContext, evalContext);
-                  int expressionsSize = -1;
-                  for (PyReturnStatement returnStatement : returnStatements) {
-                    if (returnStatement.getExpression() instanceof PyCallExpression) {
-                      return -1;
-                    }
-                    final int argumentsSize = PyUtil.flattenedParensAndLists(returnStatement.getExpression()).size();
-                    if (expressionsSize < 0) {
-                      expressionsSize = argumentsSize;
-                    }
-                    if (expressionsSize != argumentsSize) {
-                      return -1;
-                    }
-                  }
-                  return expressionsSize;
-                }
-              }
               else if (callType instanceof PyNoneType) {
                 return 1;
               }
@@ -660,17 +637,6 @@ public class PyStringFormatInspection extends PyInspection {
       else {
         return -1;
       }
-    }
-
-    private static PyReturnStatement[] getFunctionReturnValues(@NotNull PyCallExpression callExpression,
-                                                               @NotNull PyResolveContext resolveContext,
-                                                               @NotNull TypeEvalContext evalContext) {
-      final PyCallable callable = callExpression.resolveCalleeFunction(resolveContext);
-      if (callable instanceof PyFunction && evalContext.maySwitchToAST(callable)) {
-        PyStatementList statementList = ((PyFunction)callable).getStatementList();
-        return PyUtil.getAllChildrenOfType(statementList, PyReturnStatement.class);
-      }
-      return new PyReturnStatement[0];
     }
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
