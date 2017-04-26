@@ -21,7 +21,7 @@ import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
-import com.intellij.debugger.streams.psi.impl.StreamChainRangeProvider;
+import com.intellij.debugger.streams.psi.impl.StreamChainOption;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
@@ -84,8 +84,8 @@ public class TraceStreamAction extends AnAction {
           throw new RuntimeException("editor not found");
         }
 
-        new MyStreamChainChooser().show(chains.stream().map(StreamChainRangeProvider::new).collect(Collectors.toList()),
-                                        provider -> runTrace(provider.getChain(), session));
+        new MyStreamChainChooser(editor).show(chains.stream().map(StreamChainOption::new).collect(Collectors.toList()),
+                                              provider -> runTrace(provider.getChain(), session));
       }
     }
     else {
@@ -131,6 +131,9 @@ public class TraceStreamAction extends AnAction {
     return project == null ? null : XDebuggerManager.getInstance(project).getCurrentSession();
   }
 
-  private static class MyStreamChainChooser extends ElementChooserImpl<StreamChainRangeProvider> {
+  private static class MyStreamChainChooser extends ElementChooserImpl<StreamChainOption> {
+    MyStreamChainChooser(@NotNull Editor editor) {
+      super(editor);
+    }
   }
 }

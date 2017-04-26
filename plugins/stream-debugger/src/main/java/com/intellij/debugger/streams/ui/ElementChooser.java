@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public interface ElementChooser<T extends RangeProvider> {
+public interface ElementChooser<T extends ChooserOption> {
 
   void show(@NotNull List<T> options, @NotNull CallBack<T> callBack);
 

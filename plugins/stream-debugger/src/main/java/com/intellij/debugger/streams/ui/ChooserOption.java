@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.streams.psi.impl;
+package com.intellij.debugger.streams.ui;
 
-import com.intellij.debugger.streams.ui.RangeProvider;
-import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,21 +23,10 @@ import java.util.stream.Stream;
 /**
  * @author Vitaliy.Bibaev
  */
-public class StreamChainRangeProvider implements RangeProvider {
-  private final StreamChain myChain;
-
-  public StreamChainRangeProvider(@NotNull StreamChain chain) {
-    myChain = chain;
-  }
+public interface ChooserOption {
+  @NotNull
+  Stream<TextRange> rangeStream();
 
   @NotNull
-  @Override
-  public Stream<TextRange> rangeStream() {
-    return Stream.empty();
-  }
-
-  @NotNull
-  public StreamChain getChain() {
-    return myChain;
-  }
+  String getText();
 }
