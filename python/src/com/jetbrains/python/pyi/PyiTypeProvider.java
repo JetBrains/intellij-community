@@ -108,7 +108,7 @@ public class PyiTypeProvider extends PyTypeProviderBase {
         final PyType returnType = context.getReturnType(overload);
         allReturnTypes.add(PyTypeChecker.substitute(returnType, new HashMap<>(), context));
 
-        final PyCallExpressionHelper.ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
+        final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(callSite, overload, context);
         if (!mapping.getUnmappedArguments().isEmpty() || !mapping.getUnmappedParameters().isEmpty()) {
           continue;
         }

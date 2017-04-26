@@ -269,7 +269,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    *
    * @param resolveContext resolve context
    * @return an object which contains callable and mappings.
-   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallExpression)} if the callee cannot be resolved.
+   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallSiteExpression)} if the callee cannot be resolved.
    */
   @NotNull
   default PyArgumentsMapping mapArguments(@NotNull PyResolveContext resolveContext) {
@@ -285,7 +285,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
    * @param resolveContext resolve context
    * @param implicitOffset implicit offset which is known from the context
    * @return an object which contains callable and mappings.
-   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallExpression)} if the callee cannot be resolved.
+   * Returns mapping created by {@link PyArgumentsMapping#empty(PyCallSiteExpression)} if the callee cannot be resolved.
    * @deprecated Use {@link PyCallExpression#multiMapArguments(PyResolveContext, int)} instead.
    * This method will be removed in 2018.1.
    */
@@ -352,8 +352,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
   }
 
   class PyArgumentsMapping {
-    @NotNull private final PyCallExpression myCallExpression;
-    @Nullable private final PyMarkedCallee myCallee;
+    @NotNull private final PyCallSiteExpression myCallSiteExpression;
+    @Nullable private final PyMarkedCallee myMarkedCallee;
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
@@ -361,7 +361,7 @@ public interface PyCallExpression extends PyCallSiteExpression {
     @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
 
-    public PyArgumentsMapping(@NotNull PyCallExpression expression,
+    public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
                               @Nullable PyMarkedCallee markedCallee,
                               @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
                               @NotNull List<PyCallableParameter> unmappedParameters,
@@ -369,8 +369,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
                               @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
                               @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
                               @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
-      myCallExpression = expression;
-      myCallee = markedCallee;
+      myCallSiteExpression = callSiteExpression;
+      myMarkedCallee = markedCallee;
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
       myUnmappedArguments = unmappedArguments;
@@ -380,8 +380,8 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     @NotNull
-    public static PyArgumentsMapping empty(@NotNull PyCallExpression callExpression) {
-      return new PyCallExpression.PyArgumentsMapping(callExpression,
+    public static PyArgumentsMapping empty(@NotNull PyCallSiteExpression callSiteExpression) {
+      return new PyCallExpression.PyArgumentsMapping(callSiteExpression,
                                                      null,
                                                      Collections.emptyMap(),
                                                      Collections.emptyList(),
@@ -392,13 +392,13 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     @NotNull
-    public PyCallExpression getCallExpression() {
-      return myCallExpression;
+    public PyCallSiteExpression getCallSiteExpression() {
+      return myCallSiteExpression;
     }
 
     @Nullable
     public PyMarkedCallee getMarkedCallee() {
-      return myCallee;
+      return myMarkedCallee;
     }
 
     @NotNull

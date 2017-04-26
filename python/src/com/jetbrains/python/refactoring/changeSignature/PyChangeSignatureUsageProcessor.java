@@ -37,7 +37,6 @@ import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.ArgumentMappingResults;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -152,8 +151,8 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(call.getProject(), null);
     final PyFunction function = changeInfo.getMethod();
 
-    final List<PyCallableParameter> allOrigParams = PyUtil.getParameters(function, typeEvalContext);
-    final ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(call, function, typeEvalContext);
+    final List<PyCallableParameter> allOrigParams = function.getParameters(typeEvalContext);
+    final PyCallExpression.PyArgumentsMapping mapping = PyCallExpressionHelper.mapArguments(call, function, typeEvalContext);
 
     MultiMap<Integer, PyExpression> oldParamIndexToArgs = MultiMap.create();
     for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.getMappedParameters().entrySet()) {
