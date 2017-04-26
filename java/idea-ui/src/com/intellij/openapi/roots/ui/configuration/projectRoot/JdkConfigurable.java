@@ -43,9 +43,10 @@ public class JdkConfigurable extends ProjectStructureElementConfigurable<Sdk> im
   private final SdkEditor mySdkEditor;
   private final SdkProjectStructureElement myProjectStructureElement;
 
-  public JdkConfigurable(final ProjectJdkImpl projectJdk,
-                         final ProjectSdksModel sdksModel,
-                         final Runnable updateTree, @NotNull History history, @NotNull Project project) {
+  public JdkConfigurable(@NotNull ProjectJdkImpl projectJdk,
+                         @NotNull ProjectSdksModel sdksModel,
+                         @NotNull Runnable updateTree,
+                         @NotNull History history, @NotNull Project project) {
     super(true, updateTree);
     myProjectJdk = projectJdk;
     mySdkEditor = createSdkEditor(project, sdksModel, history, myProjectJdk);

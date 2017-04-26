@@ -21,16 +21,17 @@
 package com.intellij.openapi.projectRoots;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public interface JavaSdkType {
   @NonNls
-  String getBinPath(Sdk sdk);
+  String getBinPath(@NotNull Sdk sdk);
 
   @NonNls
-  String getToolsPath(Sdk sdk);
+  String getToolsPath(@NotNull Sdk sdk);
 
   @NonNls
-  String getVMExecutablePath(Sdk sdk);
+  String getVMExecutablePath(@NotNull Sdk sdk);
 
   default boolean isDependent() { return false; }
 }
