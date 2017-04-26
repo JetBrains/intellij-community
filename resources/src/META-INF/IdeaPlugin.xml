@@ -324,6 +324,11 @@
     <extensionPoint name="java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
 
     <extensionPoint name="repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"/>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonCodeModifications" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonCodeModifications"/>
+    </extensionPoint>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -1962,6 +1967,7 @@
     <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
+    <codeInsight.intention.jvmCommonCodeModifications language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonCodeModifications"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
