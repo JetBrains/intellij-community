@@ -28,7 +28,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,9 +40,8 @@ import java.util.Map;
  */
 public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRootContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectRootContainerImpl");
-  private final Map<OrderRootType, CompositeProjectRoot> myRoots = new HashMap<>();
-
-  private Map<OrderRootType, VirtualFile[]> myFiles = new HashMap<>();
+  private final Map<OrderRootType, CompositeProjectRoot> myRoots = new THashMap<>();
+  private final Map<OrderRootType, VirtualFile[]> myCachedFiles = new THashMap<>();
 
   private boolean myInsideChange;
   private final List<ProjectRootListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -54,14 +53,14 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
     for (OrderRootType rootType : OrderRootType.getAllTypes()) {
       myRoots.put(rootType, new CompositeProjectRoot());
-      myFiles.put(rootType, VirtualFile.EMPTY_ARRAY);
+      myCachedFiles.put(rootType, VirtualFile.EMPTY_ARRAY);
     }
   }
 
   @Override
   @NotNull
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
-    return ObjectUtils.chooseNotNull(myFiles.get(type), VirtualFile.EMPTY_ARRAY);
+    return ObjectUtils.chooseNotNull(myCachedFiles.get(type), VirtualFile.EMPTY_ARRAY);
   }
 
   @Override
@@ -70,29 +69,46 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     return myRoots.get(type).getProjectRoots();
   }
 
-  @Override
-  public void startChange() {
-    LOG.assertTrue(!myInsideChange);
+  void startChange() {
+    myInsideChange = true;  // argh!! has to have this abomination just because of horrible Sdk.getSdkModificator()/commitChanges() are separated
+  }
 
-    myInsideChange = true;
+  private void assertNotInsideChange() {
+    if (myInsideChange) throw new IllegalStateException();
+  }
+  private void assertInsideChange() {
+    if (!myInsideChange) throw new IllegalStateException();
   }
 
   @Override
-  public void finishChange() {
-    LOG.assertTrue(myInsideChange);
-    Map<OrderRootType, VirtualFile[]> oldRoots = new HashMap<>(myFiles);
+  public void changeRoots(@NotNull Runnable change) {
+    assertNotInsideChange();
+    myInsideChange = true;
+    Map<OrderRootType, VirtualFile[]> oldRoots = new THashMap<>(myCachedFiles);
 
-    boolean changes = false;
+    try {
+      change.run();
+    }
+    finally {
+      myInsideChange = false;
+
+      if (cacheFiles(oldRoots)) {
+        fireRootsChanged();
+      }
+    }
+  }
+
+
+  private boolean cacheFiles(@NotNull Map<OrderRootType, VirtualFile[]> oldRoots) {
+    myCachedFiles.clear();
+
+    boolean changed = false;
     for (OrderRootType orderRootType : OrderRootType.getAllTypes()) {
       final VirtualFile[] roots = myRoots.get(orderRootType).getVirtualFiles();
-      changes = changes || !Comparing.equal(roots, oldRoots.get(orderRootType));
-      myFiles.put(orderRootType, roots);
+      changed |= !Comparing.equal(roots, oldRoots.get(orderRootType));
+      myCachedFiles.put(orderRootType, roots);
     }
-    if (changes) {
-      fireRootsChanged();
-    }
-
-    myInsideChange = false;
+    return changed;
   }
 
   void addProjectRootContainerListener(@NotNull ProjectRootListener listener) {
@@ -109,41 +125,40 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
   }
 
-
   @Override
   public void removeRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type) {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     myRoots.get(type).remove(root);
   }
 
   @Override
   @NotNull
   public ProjectRoot addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type) {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     return myRoots.get(type).add(virtualFile);
   }
 
   @Override
   public void addRoot(@NotNull ProjectRoot root, @NotNull OrderRootType type) {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     myRoots.get(type).add(root);
   }
 
   @Override
   public void removeAllRoots(@NotNull OrderRootType type) {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     myRoots.get(type).clear();
   }
 
   @Override
   public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType type) {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     myRoots.get(type).remove(root);
   }
 
   @Override
   public void removeAllRoots() {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     for (CompositeProjectRoot myRoot : myRoots.values()) {
       myRoot.clear();
     }
@@ -151,7 +166,7 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   @Override
   public void update() {
-    LOG.assertTrue(myInsideChange);
+    assertInsideChange();
     for (CompositeProjectRoot myRoot : myRoots.values()) {
       myRoot.update();
     }
@@ -159,19 +174,18 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
 
   @Override
   public void readExternal(Element element) {
+    assertInsideChange();
     for (PersistentOrderRootType type : OrderRootType.getAllPersistentTypes()) {
       read(element, type);
     }
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      myFiles = new HashMap<>();
-      for (Map.Entry<OrderRootType, CompositeProjectRoot> entry : myRoots.entrySet()) {
-        CompositeProjectRoot root = entry.getValue();
+      myRoots.values().forEach(root -> {
         if (myNoCopyJars) {
           setNoCopyJars(root);
         }
-        myFiles.put(entry.getKey(), root.getVirtualFiles());
-      }
+      });
+      cacheFiles(new THashMap<>(myCachedFiles));
     });
 
     for (OrderRootType type : OrderRootType.getAllTypes()) {
@@ -190,6 +204,18 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     for (PersistentOrderRootType type : allTypes) {
       write(element, type);
     }
+  }
+
+  void copyRootsFrom(@NotNull ProjectRootContainerImpl rootContainer) {
+    changeRoots(() -> {
+      removeAllRoots();
+      for (OrderRootType rootType : OrderRootType.getAllTypes()) {
+        final ProjectRoot[] newRoots = rootContainer.getRoots(rootType);
+        for (ProjectRoot newRoot : newRoots) {
+          addRoot(newRoot, rootType);
+        }
+      }
+    });
   }
 
   private static void setNoCopyJars(ProjectRoot root) {
@@ -220,7 +246,9 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
     }
 
     List<Element> children = child.getChildren();
-    LOG.assertTrue(children.size() == 1);
+    if (children.size() != 1) {
+      LOG.error(children);
+    }
     CompositeProjectRoot root = (CompositeProjectRoot)ProjectRootUtil.read(children.get(0));
     myRoots.put(type, root);
   }
@@ -232,35 +260,6 @@ public class ProjectRootContainerImpl implements JDOMExternalizable, ProjectRoot
       roots.addContent(e);
       final Element root = ProjectRootUtil.write(myRoots.get(type));
       e.addContent(root);
-    }
-  }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  void readOldVersion(Element child) {
-    for (Element root : child.getChildren("root")) {
-      String url = root.getAttributeValue("file");
-      SimpleProjectRoot projectRoot = new SimpleProjectRoot(url);
-      String type = root.getChild("property").getAttributeValue("value");
-
-      for (PersistentOrderRootType rootType : OrderRootType.getAllPersistentTypes()) {
-        if (type.equals(rootType.getOldSdkRootName())) {
-          addRoot(projectRoot, rootType);
-          break;
-        }
-      }
-    }
-
-    myFiles = new HashMap<>();
-    for (Map.Entry<OrderRootType, CompositeProjectRoot> entry : myRoots.entrySet()) {
-      myFiles.put(entry.getKey(), entry.getValue().getVirtualFiles());
-    }
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      final VirtualFile[] oldRoots = VirtualFile.EMPTY_ARRAY;
-      final VirtualFile[] newRoots = getRootFiles(type);
-      if (!Comparing.equal(oldRoots, newRoots)) {
-        fireRootsChanged();
-        break;
-      }
     }
   }
 }

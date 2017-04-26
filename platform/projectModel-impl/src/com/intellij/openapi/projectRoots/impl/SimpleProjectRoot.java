@@ -18,10 +18,8 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.PathUtil;
 import com.intellij.util.io.URLUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -81,7 +79,7 @@ public class SimpleProjectRoot implements ProjectRoot {
   @Override
   @NotNull
   public String[] getUrls() {
-    return new String[]{myUrl};
+    return new String[]{getUrl()};
   }
 
   @Override
@@ -120,21 +118,7 @@ public class SimpleProjectRoot implements ProjectRoot {
 
   @NotNull
   private static String readUrl(Element element) {
-    String url = element.getAttributeValue(ATTRIBUTE_URL);
-    return migrateJdkAnnotationsToCommunityForDevIdea(url);
-  }
-
-  // hack to migrate internal IDEA jdk annos dir from IDEA_PROJECT_HOME/jdkAnnotations to IDEA_PROJECT_HOME/community/java/jdkAnnotations
-  @NotNull 
-  private static String migrateJdkAnnotationsToCommunityForDevIdea(@NotNull String url) {
-    File root = new File(VfsUtilCore.urlToPath(url) + "/..");
-    boolean isOldJdkAnnotations = new File(root, "community/java/jdkAnnotations").exists()
-                && new File(root, "idea.iml").exists()
-                && new File(root, "testData").exists();
-    if (isOldJdkAnnotations) {
-      return VfsUtilCore.pathToUrl(PathUtil.getCanonicalPath(VfsUtilCore.urlToPath(url + "/../community/java/jdkAnnotations")));
-    }
-    return url;
+    return element.getAttributeValue(ATTRIBUTE_URL);
   }
 
   public void writeExternal(Element element) {
@@ -142,6 +126,6 @@ public class SimpleProjectRoot implements ProjectRoot {
       initialize();
     }
 
-    element.setAttribute(ATTRIBUTE_URL, myUrl);
+    element.setAttribute(ATTRIBUTE_URL, getUrl());
   }
 }
