@@ -402,6 +402,24 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
     testImpl(schema, wrongText);
   }
 
+  public void testPatternWithSpecialEscapedSymbols() throws Exception {
+    final String schema = "{\n" +
+                          "  \"properties\": {\n" +
+                          "    \"withPattern\": {\n" +
+                          "      \"pattern\": \"^\\\\d{4}\\\\-(0?[1-9]|1[012])\\\\-(0?[1-9]|[12][0-9]|3[01])$\"\n" +
+                          "    }\n" +
+                          "  }\n" +
+                          "}";
+    final String correctText = "{\n" +
+                               "  \"withPattern\": \"1234-11-11\"\n" +
+                               "}";
+    final String wrongText = "{\n" +
+                             "  \"withPattern\": <warning descr=\"String is violating the pattern: '^\\d{4}\\-(0?[1-9]|1[012])\\-(0?[1-9]|[12][0-9]|3[01])$'\">\"wrong\"</warning>\n" +
+                             "}";
+    testImpl(schema, correctText);
+    testImpl(schema, wrongText);
+  }
+
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() throws Exception {
     testImpl(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
                                           "\"r1\": \"allowed!\"}");

@@ -246,8 +246,9 @@ public class JsonSchemaObject {
     return myPatternProperties;
   }
 
-  public void setPatternProperties(Map<String, JsonSchemaObject> patternProperties) {
-    myPatternProperties = patternProperties;
+  public void setPatternProperties(@NotNull final Map<String, JsonSchemaObject> patternProperties) {
+    myPatternProperties = new HashMap<>();
+    patternProperties.keySet().forEach(key -> myPatternProperties.put(StringUtil.unescapeBackSlashes(key), patternProperties.get(key)));
     myPatternCalculator.clear();
   }
 
@@ -320,7 +321,7 @@ public class JsonSchemaObject {
   }
 
   public void setPattern(String pattern) {
-    myPattern = pattern;
+    myPattern = StringUtil.unescapeBackSlashes(pattern);
     myValuesPatternCalculator.clear();
   }
 
