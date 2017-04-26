@@ -100,7 +100,7 @@ public class JarRepositoryManager {
     final String copyTo = dialog.getDirectoryPath();
 
     final NewLibraryConfiguration config = resolveAndDownload(
-      project, coord, attachSources, attachJavaDoc, copyTo, RemoteRepositoryDescription.DEFAULT_REPOSITORIES
+      project, coord, attachSources, attachJavaDoc, copyTo, RemoteRepositoriesConfiguration.getInstance(project).getRepositories()
     );
     if (config == null) {
       Messages.showErrorDialog(parentComponent, "No files were downloaded for " + coord, CommonBundle.getErrorTitle());
@@ -184,7 +184,7 @@ public class JarRepositoryManager {
     final JpsMavenRepositoryLibraryDescriptor libDescriptor = new JpsMavenRepositoryLibraryDescriptor(libraryProps.getGroupId(), libraryProps.getArtifactId(), libraryProps.getVersion());
     if (libDescriptor.getMavenId() != null) {
       if (repositories == null || repositories.isEmpty()) {
-        repositories = RepositoryLibraryDescription.findDescription(libDescriptor).getRemoteRepositories();
+        repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
       }
       if (!repositories.isEmpty()) {
         final EnumSet<ArtifactKind> kinds = EnumSet.of(ArtifactKind.ARTIFACT);
@@ -235,7 +235,7 @@ public class JarRepositoryManager {
   
   public static void loadDependenciesAsync(Project project, JpsMavenRepositoryLibraryDescriptor desc, final Set<ArtifactKind> artifactKinds, @Nullable List<RemoteRepositoryDescription> repos, @Nullable String copyTo, Consumer<Collection<OrderRoot>> resultProcessor) {
     if (repos == null || repos.isEmpty()) {
-      repos = RepositoryLibraryDescription.findDescription(desc).getRemoteRepositories();
+      repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     }
     submitBackgroundJob(
       project, "Resolving Maven dependencies...", newOrderRootResolveJob(desc, artifactKinds, repos, copyTo).andThen(
@@ -247,7 +247,7 @@ public class JarRepositoryManager {
   }
 
   public static void getAvailableVersionsAsync(Project project,  RepositoryLibraryDescription libraryDescription, Consumer<Collection<String>> resultProcessor) {
-    final List<RemoteRepositoryDescription> repos = libraryDescription.getRemoteRepositories();
+    final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos)
       .andThen(
         versions -> {
@@ -259,7 +259,7 @@ public class JarRepositoryManager {
 
   @NotNull
   public static Future<Collection<String>> getAvailableVersions(Project project, RepositoryLibraryDescription libraryDescription) {
-    final List<RemoteRepositoryDescription> repos = libraryDescription.getRemoteRepositories();
+    final List<RemoteRepositoryDescription> repos = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
     return submitBackgroundJob(project, "Looking up available versions for " + libraryDescription.getDisplayName(), new VersionResolveJob(libraryDescription, repos));
   }
 
@@ -292,7 +292,7 @@ public class JarRepositoryManager {
       public void run(@NotNull ProgressIndicator indicator) {
         final List<Pair<RepositoryArtifactDescription, RemoteRepositoryDescription>> resultList = new ArrayList<>();
         try {
-          for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls()) {
+          for (String serviceUrl : MavenRepositoryServicesManager.getServiceUrls(project)) {
             try {
               final List<RepositoryArtifactDescription> artifacts = MavenRepositoryServicesManager.findArtifacts(template, serviceUrl);
               if (!artifacts.isEmpty()) {

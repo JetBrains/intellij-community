@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
-import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.util.containers.HashMap;
@@ -26,7 +25,6 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
@@ -105,11 +103,6 @@ public class RepositoryLibraryDescription {
   @Nullable
   public DependencyScope getSuggestedScope() {
     return null;
-  }
-
-  @NotNull
-  public List<RemoteRepositoryDescription> getRemoteRepositories() {
-    return RemoteRepositoryDescription.DEFAULT_REPOSITORIES;
   }
 
   // One library could have more then one description - for ex. in different plugins

@@ -1945,8 +1945,10 @@
 
     <library.type implementation="com.intellij.jarRepository.RepositoryLibraryType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>
-    <applicationService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
+    <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
+    <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibrarySynchronizer"/>
+    <projectConfigurable groupId="build" groupWeight="120" instance="com.intellij.jarRepository.settings.RemoteRepositoriesConfigurable" order="last"/>
 
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
 
