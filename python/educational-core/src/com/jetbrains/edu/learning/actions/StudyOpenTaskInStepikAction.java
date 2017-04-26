@@ -29,12 +29,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class StudyLinkToStepikAction extends StudyActionWithShortcut {
+public class StudyOpenTaskInStepikAction extends StudyActionWithShortcut {
   public static final String SHORTCUT = "ctrl alt pressed HOME";
-  public static final String ACTION_ID = "Edu.LinkToStepik";
+  public static final String ACTION_ID = "Edu.OpenTaskInStepik";
   private static final String TEXT = "Open this task in Stepik";
 
-  public StudyLinkToStepikAction() {
+  public StudyOpenTaskInStepikAction() {
     super(getTextWithShortcuts(), TEXT, EducationalCoreIcons.Stepik);
   }
 
