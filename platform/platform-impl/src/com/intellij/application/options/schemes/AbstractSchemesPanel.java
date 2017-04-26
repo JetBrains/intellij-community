@@ -226,6 +226,17 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
       p.setIcon(AllIcons.General.Gear);
+      p.setEnabledAndVisible(isEnabledAndVisible(e));
+    }
+
+    private boolean isEnabledAndVisible(AnActionEvent e) {
+      // copy existing event because an action update changes its presentation
+      e = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, e.getDataContext());
+      for (AnAction action : myActionGroup.getChildren(e)) {
+        action.update(e); // ensure that at least action is enabled and visible
+        if (e.getPresentation().isEnabledAndVisible()) return true;
+      }
+      return false;
     }
 
     @Override
