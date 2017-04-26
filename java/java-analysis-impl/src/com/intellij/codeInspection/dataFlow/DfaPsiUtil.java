@@ -103,21 +103,34 @@ public class DfaPsiUtil {
     if (PsiJavaPatterns.psiParameter().withParents(PsiParameterList.class, PsiLambdaExpression.class).accepts(owner)) {
       PsiLambdaExpression lambda = (PsiLambdaExpression)owner.getParent().getParent();
       int index = lambda.getParameterList().getParameterIndex((PsiParameter)owner);
-      Nullness nullness = inferLambdaParameterNullness(lambda, index);
-      if(nullness != Nullness.UNKNOWN) {
-        return nullness;
-      }
-      PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(lambda.getFunctionalInterfaceType());
-      if (sam != null && index < sam.getParameterList().getParametersCount()) {
-        return getElementNullability(null, sam.getParameterList().getParameters()[index]);
-      }
+      return getFunctionalParameterNullability(lambda, index);
     }
 
     return Nullness.UNKNOWN;
   }
 
+  /**
+   * Returns the nullness of functional expression parameter
+   *
+   * @param function functional expression
+   * @param index parameter index
+   * @return nullness, defined by SAM parameter annotations or known otherwise
+   */
   @NotNull
-  private static Nullness inferLambdaParameterNullness(PsiLambdaExpression lambda, int parameterIndex) {
+  public static Nullness getFunctionalParameterNullability(PsiFunctionalExpression function, int index) {
+    Nullness nullness = inferLambdaParameterNullness(function, index);
+    if(nullness != Nullness.UNKNOWN) {
+      return nullness;
+    }
+    PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(function.getFunctionalInterfaceType());
+    if (sam != null && index < sam.getParameterList().getParametersCount()) {
+      return getElementNullability(null, sam.getParameterList().getParameters()[index]);
+    }
+    return Nullness.UNKNOWN;
+  }
+
+  @NotNull
+  private static Nullness inferLambdaParameterNullness(PsiFunctionalExpression lambda, int parameterIndex) {
     PsiElement expression = lambda;
     PsiElement expressionParent = lambda.getParent();
     while(expressionParent instanceof PsiConditionalExpression || expressionParent instanceof PsiParenthesizedExpression) {
@@ -204,7 +217,7 @@ public class DfaPsiUtil {
     if (body == null) return Collections.emptySet();
     
     return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<Set<PsiField>>() {
-      @Nullable
+      @NotNull
       @Override
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
@@ -298,7 +311,7 @@ public class DfaPsiUtil {
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {
-      @Nullable
+      @NotNull
       @Override
       public Result<MultiMap<PsiField, PsiExpression>> compute() {
         final Set<String> fieldNames = ContainerUtil.newHashSet();

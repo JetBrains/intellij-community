@@ -34,6 +34,7 @@ import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.lang.java.JavaLanguage;
@@ -292,6 +293,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     return null;
   }
 
+  protected LocalQuickFix createReplaceWithTrivialLambdaFix(Object value) {
+    return null;
+  }
+
   protected void addSurroundWithIfFix(PsiExpression qualifier, List<LocalQuickFix> fixes, boolean onTheFly) {
   }
 
@@ -346,10 +351,19 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportUncheckedOptionalGet(holder, visitor.getOptionalCalls(), visitor.getOptionalQualifiers());
 
-    Map<PsiMethodCallExpression, ThreeState> calls = visitor.getBooleanCalls();
-    calls.forEach((call, state) -> {
+    visitor.getBooleanCalls().forEach((call, state) -> {
       if (state != ThreeState.UNSURE && reportedAnchors.add(call)) {
         reportConstantCondition(holder, visitor, call, state.toBoolean());
+      }
+    });
+
+    visitor.getMethodReferenceResults().forEach((methodRef, dfaValue) -> {
+      if (dfaValue instanceof DfaConstValue) {
+        Object value = ((DfaConstValue)dfaValue).getValue();
+        if(value instanceof Boolean) {
+          holder.registerProblem(methodRef, InspectionsBundle.message("dataflow.message.constant.method.reference", value),
+                                 createReplaceWithTrivialLambdaFix(value));
+        }
       }
     });
 
@@ -970,6 +984,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
+    private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
     private boolean myAlwaysReturnsNotNull = true;
 
@@ -994,6 +1009,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     Map<PsiMethodCallExpression, ThreeState> getBooleanCalls() {
       return myBooleanCalls;
+    }
+
+    Map<PsiMethodReferenceExpression, DfaValue> getMethodReferenceResults() {
+      return myMethodReferenceResults;
     }
 
     List<PsiExpression> getOptionalQualifiers() {
@@ -1059,6 +1078,12 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
         myBooleanCalls.merge(call, state, ThreeState::merge);
       }
+    }
+
+    @Override
+    protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef, DfaValue res) {
+      // Do not track if method reference may have different results
+      myMethodReferenceResults.merge(methodRef, res, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
     }
 
     private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {

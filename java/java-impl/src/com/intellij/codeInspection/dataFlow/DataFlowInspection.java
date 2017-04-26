@@ -57,6 +57,11 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
+  protected LocalQuickFix createReplaceWithTrivialLambdaFix(Object value) {
+    return new ReplaceWithTrivialLambdaFix(value);
+  }
+
+  @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
   }

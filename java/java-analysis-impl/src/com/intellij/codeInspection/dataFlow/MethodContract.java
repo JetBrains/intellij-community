@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -40,6 +41,25 @@ public abstract class MethodContract {
    * @return a value the method will return if the contract conditions fulfill
    */
   public abstract ValueConstraint getReturnValue();
+
+  /**
+   * Returns DfaValue describing the return value of this contract or null if this contract assumes that any value could be returned.
+   *
+   * @param factory factory to create values
+   * @param resultType method result type
+   * @return a DfaValue describing the return value of this contract
+   */
+  @Nullable
+  DfaValue getDfaReturnValue(DfaValueFactory factory, PsiType resultType) {
+    switch (getReturnValue()) {
+      case NULL_VALUE: return factory.getConstFactory().getNull();
+      case NOT_NULL_VALUE: return factory.createTypeValue(resultType, Nullness.NOT_NULL);
+      case TRUE_VALUE: return factory.getConstFactory().getTrue();
+      case FALSE_VALUE: return factory.getConstFactory().getFalse();
+      case THROW_EXCEPTION: return factory.getConstFactory().getContractFail();
+      default: return null;
+    }
+  }
 
   /**
    * @return true if this contract result does not depend on arguments

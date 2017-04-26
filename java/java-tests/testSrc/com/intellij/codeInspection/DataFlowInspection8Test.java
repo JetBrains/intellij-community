@@ -59,6 +59,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
+  public void testMethodReferenceConstantValue() { doTest(); }
 
   public void testOptionalOfNullable() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
