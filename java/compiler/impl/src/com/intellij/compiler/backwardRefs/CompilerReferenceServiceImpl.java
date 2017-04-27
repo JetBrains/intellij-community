@@ -234,9 +234,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
           .map(r -> (LightRef.JavaLightMethodRef) r)
           .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false);
+            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false, 10);
             return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
           })
+          .distinct()
           .map(r -> {
             int count = myReader.getOccurrenceCount(r);
             return count <= 1 ? null : new OccurrencesAware<>(

@@ -35,6 +35,8 @@ public interface LightRef extends RW.Savable {
   LightRef override(int newOwner);
 
   interface NamedLightRef extends LightRef {
+    NamedLightRef[] EMPTY_ARRAY = new NamedLightRef[0];
+
     int getName();
   }
 
