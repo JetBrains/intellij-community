@@ -11,7 +11,7 @@ final class FileStorageAnnotation implements Storage {
 
   private boolean deprecated;
 
-  FileStorageAnnotation(String path, boolean deprecated) {
+  FileStorageAnnotation(@NotNull String path, boolean deprecated) {
     this.path = path;
     this.deprecated = deprecated;
   }
