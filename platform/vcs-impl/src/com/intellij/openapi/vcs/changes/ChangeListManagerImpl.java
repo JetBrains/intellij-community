@@ -100,7 +100,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private Factory<JComponent> myAdditionalInfo;
   private boolean myShowLocalChangesInvalidated;
 
-  @NotNull private volatile ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
+  @NotNull private ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
   private volatile String myFreezeName;
 
   @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<>();
@@ -496,7 +496,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      ProgressManager.getInstance().runProcess(() -> iterateScopes(dataHolder, scopes, wasEverythingDirty), indicator);
+      ProgressManager.getInstance().runProcess(() -> iterateScopes(dataHolder, scopes, wasEverythingDirty, indicator), indicator);
 
       final boolean takeChanges = myUpdateException == null;
       if (takeChanges) {
@@ -585,7 +585,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return checkScopeIsAllIgnored(invalidated);
   }
 
-  private void iterateScopes(DataHolder dataHolder, List<VcsDirtyScope> scopes, boolean wasEverythingDirty) {
+  private void iterateScopes(DataHolder dataHolder,
+                             List<VcsDirtyScope> scopes,
+                             boolean wasEverythingDirty,
+                             @NotNull ProgressIndicator indicator) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
     Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
@@ -594,7 +597,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                                                                             gate);
 
     for (final VcsDirtyScope scope : scopes) {
-      myUpdateChangesProgressIndicator.checkCanceled();
+      indicator.checkCanceled();
 
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
@@ -603,7 +606,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myChangesViewManager.setBusy(true);
       dataHolder.notifyStartProcessingChanges((VcsModifiableDirtyScope)scope);
 
-      actualUpdate(builder, scope, vcs, dataHolder, gate);
+      actualUpdate(builder, scope, vcs, dataHolder, gate, indicator);
 
       if (myUpdateException != null) break;
     }
@@ -681,14 +684,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                             @NotNull VcsDirtyScope scope,
                             @NotNull AbstractVcs vcs,
                             @NotNull DataHolder dataHolder,
-                            @NotNull ChangeListManagerGate gate) {
+                            @NotNull ChangeListManagerGate gate,
+                            @NotNull ProgressIndicator indicator) {
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
         final FoldersCutDownWorker foldersCutDownWorker = new FoldersCutDownWorker();
         try {
           builder.setCurrent(scope, foldersCutDownWorker);
-          changeProvider.getChanges(scope, builder, myUpdateChangesProgressIndicator, gate);
+          changeProvider.getChanges(scope, builder, indicator, gate);
         }
         catch (final VcsException e) {
           handleUpdateException(e);
