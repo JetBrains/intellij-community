@@ -72,40 +72,43 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
   private static final String EXCLUDED_CONVERTED_TO_IGNORED_OPTION = "EXCLUDED_CONVERTED_TO_IGNORED";
 
+  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED =
+    new Topic<>("LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
+
   private final Project myProject;
   private final VcsConfiguration myConfig;
   private final ChangesViewI myChangesViewManager;
   private final FileStatusManager myFileStatusManager;
-  private final UpdateRequestsQueue myUpdater;
+  private final ChangelistConflictTracker myConflictTracker;
+  private VcsDirtyScopeManager myDirtyScopeManager;
 
   private final Scheduler myScheduler = new Scheduler(); // update thread
 
-  private final Modifier myModifier;
-
-  private FileHolderComposite myComposite;
-
-  private ChangeListWorker myWorker;
-  private VcsException myUpdateException;
-  private Factory<JComponent> myAdditionalInfo;
-
   private final EventDispatcher<ChangeListListener> myListeners = EventDispatcher.create(ChangeListListener.class);
+  private final DelayedNotificator myDelayedNotificator; // notifies myListeners on the update thread
 
   private final Object myDataLock = new Object();
 
-  private final List<CommitExecutor> myExecutors = new ArrayList<>();
-
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
-  private boolean myExcludedConvertedToIgnored;
-  @NotNull private volatile ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
+  private final UpdateRequestsQueue myUpdater;
+  private final Modifier myModifier;
 
-  public static final Topic<LocalChangeListsLoadedListener> LISTS_LOADED = new Topic<>(
-    "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
+  private FileHolderComposite myComposite;
+  private ChangeListWorker myWorker;
 
+  private VcsException myUpdateException;
+  private Factory<JComponent> myAdditionalInfo;
   private boolean myShowLocalChangesInvalidated;
+
+  @NotNull private volatile ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
   private volatile String myFreezeName;
 
-  // notifies myListeners on the same thread that local changes update is done
-  private final DelayedNotificator myDelayedNotificator;
+  @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<>();
+  private boolean myModalNotificationsBlocked;
+
+  private final List<CommitExecutor> myExecutors = new ArrayList<>();
+
+  private boolean myExcludedConvertedToIgnored;
 
   private final VcsListener myVcsListener = new VcsListener() {
     @Override
@@ -113,11 +116,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     }
   };
-  private final ChangelistConflictTracker myConflictTracker;
-  private VcsDirtyScopeManager myDirtyScopeManager;
-
-  private boolean myModalNotificationsBlocked;
-  @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<>();
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
@@ -132,15 +130,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myConfig = config;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
-    myComposite = new FileHolderComposite(project);
-    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
-    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, new ActualUpdater());
+    myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
 
+    myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
+
+    myComposite = new FileHolderComposite(project);
     myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, myScheduler));
     myDelayedNotificator = new DelayedNotificator(myListeners, myScheduler);
-    myModifier = new Modifier(myWorker, myDelayedNotificator);
 
-    myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
+    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, new ActualUpdater());
+    myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     myListeners.addListener(new ChangeListAdapter() {
       @Override
@@ -153,6 +152,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         }
       }
     });
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerListener() {
         @Override
