@@ -1309,47 +1309,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
-  private static class MyDirtyFilesScheduler {
-    private static final int ourPiecesLimit = 100;
-    private final List<VirtualFile> myFiles = new ArrayList<>();
-    private final List<VirtualFile> myDirs = new ArrayList<>();
-    private boolean myEveryThing;
-    private int myCnt;
-    private final Project myProject;
-
-    private MyDirtyFilesScheduler(final Project project) {
-      myProject = project;
-      myCnt = 0;
-      myEveryThing = false;
-    }
-
-    public void accept(final Collection<VirtualFile> coll) {
-      for (VirtualFile vf : coll) {
-        if (myCnt > ourPiecesLimit) {
-          myEveryThing = true;
-          break;
-        }
-        if (vf.isDirectory()) {
-          myDirs.add(vf);
-        }
-        else {
-          myFiles.add(vf);
-        }
-        ++myCnt;
-      }
-    }
-
-    public void arise() {
-      final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-      if (myEveryThing) {
-        vcsDirtyScopeManager.markEverythingDirty();
-      }
-      else {
-        vcsDirtyScopeManager.filesDirty(myFiles, myDirs);
-      }
-    }
-  }
-
   @Override
   public void addFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.add(filesToIgnore);
@@ -1371,17 +1330,34 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void scheduleUnversionedUpdate() {
-    final MyDirtyFilesScheduler scheduler = new MyDirtyFilesScheduler(myProject);
-
+    Collection<VirtualFile> unversioned;
+    Collection<VirtualFile> ignored;
     synchronized (myDataLock) {
-      final VirtualFileHolder unversionedHolder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      final IgnoredFilesCompositeHolder ignoredHolder = myComposite.getIgnoredFileHolder();
-
-      scheduler.accept(unversionedHolder.getFiles());
-      scheduler.accept(ignoredHolder.values());
+      unversioned = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles();
+      ignored = myComposite.getIgnoredFileHolder().values();
     }
 
-    scheduler.arise();
+    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
+
+    final int ourPiecesLimit = 100;
+    if (unversioned.size() + ignored.size() > ourPiecesLimit) {
+      vcsDirtyScopeManager.markEverythingDirty();
+    }
+    else {
+      List<VirtualFile> dirs = new ArrayList<>();
+      List<VirtualFile> files = new ArrayList<>();
+
+      for (VirtualFile vf : ContainerUtil.concat(unversioned, ignored)) {
+        if (vf.isDirectory()) {
+          dirs.add(vf);
+        }
+        else {
+          files.add(vf);
+        }
+      }
+
+      vcsDirtyScopeManager.filesDirty(files, dirs);
+    }
   }
 
   @Override
