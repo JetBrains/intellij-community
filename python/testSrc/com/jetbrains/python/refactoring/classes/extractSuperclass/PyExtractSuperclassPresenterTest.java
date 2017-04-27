@@ -65,7 +65,7 @@ public class PyExtractSuperclassPresenterTest
    * Tests that if no members selected, presenter shows error
    */
   public void testNoSelectedMembersLeadsToError() {
-    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.<PyMemberInfo<PyElement>>emptyList()).anyTimes();
+    EasyMock.expect(myView.getSelectedMemberInfos()).andReturn(Collections.emptyList()).anyTimes();
 
     final Capture<String> errorMessageCapture = configureViewToCaptureError();
 

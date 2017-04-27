@@ -592,7 +592,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ModuleExtendedModel.class);
+    Set<Class> result = ContainerUtil.set(GradleBuild.class, ModuleExtendedModel.class);
     result.add(BuildScriptClasspathModel.class);
     result.add(GradleExtensions.class);
     result.add(ExternalProject.class);
@@ -602,7 +602,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getToolingExtensionsClasses() {
-    return ContainerUtil.<Class>set(
+    return ContainerUtil.set(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar

@@ -125,7 +125,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   public static void showApplyPatch(@NotNull final Project project, @NotNull final VirtualFile file) {
     final ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(
       project, new ApplyPatchDefaultExecutor(project),
-      Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
+      Collections.singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, file);
     dialog.show();
   }
 

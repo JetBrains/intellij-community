@@ -61,7 +61,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.util.WaitForProgressToShow.*;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -100,7 +100,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
 
     ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions,
-                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.<AnAction>emptyList());
+                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.emptyList());
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
     myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
@@ -122,7 +122,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
       myBrowser.setTableContextMenu(group, auxiliary.getPopupActions());
     } else {
-      myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
+      myBrowser.setTableContextMenu(group, Collections.emptyList());
     }
 
     EmptyAction.registerWithShortcutSet("CommittedChanges.Refresh", CommonShortcuts.getRerun(), this);
@@ -214,7 +214,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            updateFilteredModel(Collections.<CommittedChangeList>emptyList(), true);
+            updateFilteredModel(Collections.emptyList(), true);
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }

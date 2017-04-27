@@ -107,7 +107,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
         myHashCodePanel = null;
         myFieldsToHashCode = null;
       }
-      myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.<MemberInfo>emptyList(), null);
+      myNonNullPanel = new MemberSelectionPanel(CodeInsightBundle.message("generate.equals.hashcode.non.null.fields.chooser.title"), Collections.emptyList(), null);
       myFieldsToNonNull = createFieldToMemberInfoMap(false);
       for (final Map.Entry<PsiMember, MemberInfo> entry : myFieldsToNonNull.entrySet()) {
         entry.getValue().setChecked(NullableNotNullManager.isNotNull(entry.getKey()));

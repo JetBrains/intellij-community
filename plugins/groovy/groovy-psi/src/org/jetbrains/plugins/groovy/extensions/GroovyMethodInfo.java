@@ -142,7 +142,7 @@ public class GroovyMethodInfo {
     }
     
     if (methodInfos == null) {
-      return lightMethodInfos == null ? Collections.<GroovyMethodInfo>emptyList() : lightMethodInfos;
+      return lightMethodInfos == null ? Collections.emptyList() : lightMethodInfos;
     }
     else {
       if (lightMethodInfos == null) {

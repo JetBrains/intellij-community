@@ -394,7 +394,7 @@ public class GitBranchUtil {
         final String prefix = "ref: refs/heads/";
         return head.startsWith(prefix) ?
                Collections.singletonList(head.substring(prefix.length())) :
-               Collections.<String>emptyList();
+               Collections.emptyList();
       } catch (IOException e) {
         LOG.info(e);
         return Collections.emptyList();

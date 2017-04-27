@@ -46,9 +46,9 @@ public class MessageCounter {
           ContainerUtil.getOrCreate(
             map,
             projectSystemId,
-            ContainerUtil.<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>>newHashMap()),
+            ContainerUtil.newHashMap()),
           groupName,
-          ContainerUtil.<NotificationSource, TObjectIntHashMap<NotificationCategory>>newHashMap()
+          ContainerUtil.newHashMap()
         ),
         source,
         new MyTObjectIntHashMap<>()
@@ -63,13 +63,13 @@ public class MessageCounter {
       ContainerUtil.getOrCreate(
         map,
         projectSystemId,
-        ContainerUtil.<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>>newHashMap());
+        ContainerUtil.newHashMap());
     if (groupName != null) {
       final TObjectIntHashMap<NotificationCategory> counter = ContainerUtil.getOrCreate(
         ContainerUtil.getOrCreate(
           groupMap,
           groupName,
-          ContainerUtil.<NotificationSource, TObjectIntHashMap<NotificationCategory>>newHashMap()
+          ContainerUtil.newHashMap()
         ),
         notificationSource,
         new MyTObjectIntHashMap<>()
@@ -91,7 +91,7 @@ public class MessageCounter {
     final Map<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>> groupMap = ContainerUtil.getOrElse(
       map,
       projectSystemId,
-      Collections.<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>>emptyMap());
+      Collections.emptyMap());
 
     for (Map.Entry<String, Map<NotificationSource, TObjectIntHashMap<NotificationCategory>>> entry : groupMap.entrySet()) {
       if (groupName == null || groupName.equals(entry.getKey())) {

@@ -261,7 +261,7 @@ public class ExceptionUtil {
                                                                     @Nullable PsiElement topElement,
                                                                     boolean includeSelfCalls) {
     final Set<PsiClassType> set = collectUnhandledExceptions(element, topElement, null, includeSelfCalls);
-    return set == null ? Collections.<PsiClassType>emptyList() : set;
+    return set == null ? Collections.emptyList() : set;
   }
 
   @Nullable
@@ -559,7 +559,7 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getCloserExceptions(@NotNull PsiResourceListElement resource) {
     List<PsiClassType> ex = getExceptionsFromClose(resource);
-    return ex != null ? ex : Collections.<PsiClassType>emptyList();
+    return ex != null ? ex : Collections.emptyList();
   }
 
   @NotNull
@@ -571,7 +571,7 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getUnhandledCloserExceptions(PsiElement place, @Nullable PsiElement topElement, PsiType type) {
     List<PsiClassType> ex = type instanceof PsiClassType ? getExceptionsFromClose(type, place.getResolveScope()) : null;
-    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()])) : Collections.<PsiClassType>emptyList();
+    return ex != null ? getUnhandledExceptions(place, topElement, PsiSubstitutor.EMPTY, ex.toArray(new PsiClassType[ex.size()])) : Collections.emptyList();
   }
 
   private static List<PsiClassType> getExceptionsFromClose(PsiResourceListElement resource) {

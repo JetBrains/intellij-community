@@ -113,7 +113,7 @@ public class JpsLibraryDelegate implements LibraryEx {
         invalidPaths.add(pointer.getUrl());
       }
     }
-    return invalidPaths == null ? Collections.<String>emptyList() : invalidPaths;
+    return invalidPaths == null ? Collections.emptyList() : invalidPaths;
   }
 
   @Override

@@ -271,7 +271,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         history.put(repository, getUnmergedCommits(repository, unmergedInfo.myTipOfDeletedUnmergedBranch, unmergedInfo.myBaseBranch));
       }
       else {
-        history.put(repository, Collections.<GitCommit>emptyList());
+        history.put(repository, Collections.emptyList());
       }
     }
     Map<GitRepository, String> baseBranches = Maps.asMap(unmergedBranches.keySet(), it -> unmergedBranches.get(it).myBaseBranch);

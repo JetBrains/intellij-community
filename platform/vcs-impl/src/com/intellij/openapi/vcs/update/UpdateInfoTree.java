@@ -160,7 +160,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     myCenterPanel.add(CARD_STATUS, scrollPane);
-    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.emptyList());
     Disposer.register(this, myTreeBrowser);
     myTreeBrowser.setHelpId(getHelpId());
     myCenterPanel.add(CARD_CHANGES, myTreeBrowser);

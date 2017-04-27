@@ -165,8 +165,8 @@ public class MakeMethodStaticProcessor extends MakeMethodOrClassStaticProcessor<
                                                                                 params.toArray(new ParameterInfoImpl[params.size()]),
                                                                                 new ThrownExceptionInfo[0],
                                                                                 false,
-                                                                                Collections.<PsiMethod>emptySet(),
-                                                                                Collections.<PsiMethod>emptySet()));
+                                                                                Collections.emptySet(),
+                                                                                Collections.emptySet()));
     }
 
     if (mySettings.isMakeClassParameter()) {

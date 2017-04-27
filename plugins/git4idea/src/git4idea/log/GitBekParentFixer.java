@@ -41,7 +41,7 @@ class GitBekParentFixer {
   @NotNull
   static GitBekParentFixer prepare(@NotNull VirtualFile root, @NotNull GitLogProvider provider) throws VcsException {
     if (!BekUtil.isBekEnabled()) {
-      return new GitBekParentFixer(Collections.<Hash>emptySet());
+      return new GitBekParentFixer(Collections.emptySet());
     }
     return new GitBekParentFixer(getWrongCommits(provider, root));
   }
@@ -162,7 +162,7 @@ class GitBekParentFixer {
       @NotNull
       @Override
       public List<VcsLogDetailsFilter> getDetailsFilters() {
-        return Collections.<VcsLogDetailsFilter>singletonList(textFilter);
+        return Collections.singletonList(textFilter);
       }
     };
   }

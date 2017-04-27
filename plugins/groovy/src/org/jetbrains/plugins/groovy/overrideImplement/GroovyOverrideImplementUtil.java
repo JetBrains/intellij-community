@@ -239,7 +239,7 @@ public class GroovyOverrideImplementUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Collection<CandidateInfo> candidates = GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, toImplement);
-    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? ContainerUtil.<CandidateInfo>newArrayList()
+    Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? ContainerUtil.newArrayList()
                                                                               : GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
 
     if (toImplement) {

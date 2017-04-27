@@ -199,7 +199,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
 
   @Override
   protected Set<Class> getModels() {
-    return ContainerUtil.<Class>set(ModuleExtendedModel.class);
+    return ContainerUtil.set(ModuleExtendedModel.class);
   }
 }
 

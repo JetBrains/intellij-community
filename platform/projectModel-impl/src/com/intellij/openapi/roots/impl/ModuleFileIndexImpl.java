@@ -136,7 +136,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     if (entries.size() == 1) {
       OrderEntry entry = entries.get(0);
       return entry.getOwnerModule() == ownerModule ?
-             ContainerUtil.newArrayList(entries) : Collections.<OrderEntry>emptyList();
+             ContainerUtil.newArrayList(entries) : Collections.emptyList();
     }
     int index = Collections.binarySearch(entries, new FakeOrderEntry(ownerModule), RootIndex.BY_OWNER_MODULE);
     if (index < 0) {

@@ -37,7 +37,7 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public List<JpsArtifact> getArtifacts(@NotNull JpsProject project) {
     JpsElementCollection<JpsArtifact> collection = project.getContainer().getChild(JpsArtifactRole.ARTIFACT_COLLECTION_ROLE);
-    return collection != null ? collection.getElements() : Collections.<JpsArtifact>emptyList();
+    return collection != null ? collection.getElements() : Collections.emptyList();
   }
 
   @Override

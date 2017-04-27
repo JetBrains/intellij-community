@@ -63,7 +63,7 @@ public class JavaMethodsOverridingStatisticsTest extends JavaCodeInsightFixtureT
 
     final Set<Pair<String, Integer>> actualValues = new HashSet<>();
     for (PsiMethodWithOverridingPercentMember searchResult : searchResults) {
-      actualValues.add(Pair.<String, Integer>create(searchResult.getElement().getName(), searchResult.getOverridingPercent()));
+      actualValues.add(Pair.create(searchResult.getElement().getName(), searchResult.getOverridingPercent()));
     }
 
     final Set<Pair<String, Integer>> expectedValuesSet = ContainerUtil.newHashSet(expectedValues);

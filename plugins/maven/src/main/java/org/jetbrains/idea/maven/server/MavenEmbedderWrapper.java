@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +221,7 @@ public abstract class MavenEmbedderWrapper extends RemoteObjectWrapper<MavenServ
       @Override
       public MavenServerExecutionResult execute() throws RemoteException, MavenServerProcessCanceledException {
         return getOrCreateWrappee()
-          .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, Collections.<String>emptyList(), false, false);
+          .execute(new File(file.getPath()), activeProfiles, inactiveProfiles, goals, Collections.emptyList(), false, false);
       }
     });
   }

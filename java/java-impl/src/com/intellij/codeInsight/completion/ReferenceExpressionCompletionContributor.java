@@ -132,7 +132,7 @@ public class ReferenceExpressionCompletionContributor {
 
   static Set<LookupElement> completeFinalReference(final PsiElement element, PsiJavaCodeReferenceElement reference, ElementFilter filter,
                                                            final JavaSmartCompletionParameters parameters) {
-    final Set<PsiField> used = parameters.getParameters().getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.<PsiField>emptySet();
+    final Set<PsiField> used = parameters.getParameters().getInvocationCount() < 2 ? findConstantsUsedInSwitch(element) : Collections.emptySet();
 
     final Set<LookupElement> elements =
       JavaSmartCompletionContributor.completeReference(element, reference, new AndFilter(filter, new ElementFilter() {

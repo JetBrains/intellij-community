@@ -259,7 +259,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   public List<VirtualFile> getIncludedUnversionedFiles() {
     return isShowUnversioned()
            ? ContainerUtil.findAll(myViewer.getIncludedChanges(), VirtualFile.class)
-           : Collections.<VirtualFile>emptyList();
+           : Collections.emptyList();
   }
 
   @Override
@@ -483,7 +483,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Change change = e.getRequiredData(VcsDataKeys.CURRENT_CHANGE);
-      askAndMove(myProject, Collections.singletonList(change), Collections.<VirtualFile>emptyList());
+      askAndMove(myProject, Collections.singletonList(change), Collections.emptyList());
     }
   }
 }

@@ -36,7 +36,7 @@ public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.L
   private final List<String> myCategoriesWithDebugLevel;
 
   public Log4jFileLoggerFactory(File logFile, String categoriesWithDebugLevel) throws IOException {
-    myCategoriesWithDebugLevel = categoriesWithDebugLevel.isEmpty() ? Collections.<String>emptyList() : Arrays.asList(categoriesWithDebugLevel.split(","));
+    myCategoriesWithDebugLevel = categoriesWithDebugLevel.isEmpty() ? Collections.emptyList() : Arrays.asList(categoriesWithDebugLevel.split(","));
     PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %30.30c - %m\n");
     myAppender = new RollingFileAppender(pattern, logFile.getAbsolutePath());
     myAppender.setMaxFileSize("20MB");

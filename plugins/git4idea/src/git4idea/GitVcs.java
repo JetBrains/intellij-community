@@ -515,8 +515,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return myCommitAndPushExecutor != null
-           ? Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor)
-           : Collections.<CommitExecutor>emptyList();
+           ? Collections.singletonList(myCommitAndPushExecutor)
+           : Collections.emptyList();
   }
 
   @NotNull

@@ -41,8 +41,8 @@ import java.util.*;
 public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModel {
   //todo[nik] remove LibraryImpl#equals method instead of using identity maps
   private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap =
-    ContainerUtil.<Library, ExistingLibraryEditor>newIdentityTroveMap();
-  private final Set<Library> myRemovedLibraries = ContainerUtil.<Library>newIdentityTroveSet();
+    ContainerUtil.newIdentityTroveMap();
+  private final Set<Library> myRemovedLibraries = ContainerUtil.newIdentityTroveSet();
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;

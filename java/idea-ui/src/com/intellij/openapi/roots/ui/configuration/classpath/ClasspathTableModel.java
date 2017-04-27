@@ -140,7 +140,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
   }
 
   public void clear() {
-    setItems(Collections.<ClasspathTableItem<?>>emptyList());
+    setItems(Collections.emptyList());
   }
 
   private List<OrderEntry> getEntries() {

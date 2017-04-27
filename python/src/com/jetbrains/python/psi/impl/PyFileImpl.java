@@ -86,7 +86,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           final PsiNamedElement namedElement = (PsiNamedElement)element;
           final String name = namedElement.getName();
           if (!myNamedElements.containsKey(name)) {
-            myNamedElements.put(name, Lists.<PsiNamedElement>newArrayList());
+            myNamedElements.put(name, Lists.newArrayList());
           }
           final List<PsiNamedElement> elements = myNamedElements.get(name);
           elements.add(namedElement);

@@ -392,7 +392,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                            return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
                                                          }
                                                          return null;
-                                                       }) : Collections.<LookupElement>emptyList();
+                                                       }) : Collections.emptyList();
   }
 
   @Nullable

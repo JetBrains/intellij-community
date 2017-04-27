@@ -247,7 +247,7 @@ public class ScopeImpl implements Scope {
         if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
           final String name = node.getName();
           if (!namedElements.containsKey(name)) {
-            namedElements.put(name, Sets.<PsiNamedElement>newLinkedHashSet());
+            namedElements.put(name, Sets.newLinkedHashSet());
           }
           namedElements.get(name).add((PsiNamedElement)node);
         }

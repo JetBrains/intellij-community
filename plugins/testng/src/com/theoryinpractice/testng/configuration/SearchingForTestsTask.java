@@ -29,13 +29,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
@@ -123,7 +120,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       if (findTestMethodsForClass && depMethods.isEmpty()) {
         for (PsiMethod method : entry.getKey().getMethods()) {
           if (TestNGUtil.hasTest(method)) {
-            methods.put(method.getName(), Collections.<String>emptyList());
+            methods.put(method.getName(), Collections.emptyList());
           }
         }
       }

@@ -183,7 +183,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
       }
 
       List <String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
-                                                                          Collections.<String>emptyList(), classpath, vmParams, programParams, false);
+                                                                           Collections.emptyList(), classpath, vmParams, programParams, false);
       try {
         Process process = new ProcessBuilder(commandLine).directory(new File(buildFilePath).getParentFile()).start();
         String commandLineString = StringUtil.join(commandLine, " ");

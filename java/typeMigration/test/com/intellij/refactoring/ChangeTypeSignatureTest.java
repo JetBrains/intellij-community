@@ -55,7 +55,7 @@ public class ChangeTypeSignatureTest extends LightCodeInsightTestCase {
       rules.setBoundScope(GlobalSearchScope.projectScope(getProject()));
       new TypeMigrationProcessor(getProject(),
                                  new PsiElement[]{parameterList},
-                                 Functions.<PsiElement, PsiType>constant(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY))),
+                                 Functions.constant(PsiSubstitutor.EMPTY.put(superClass.getTypeParameters()[0], migrationType).substitute(new PsiImmediateClassType(superClass, PsiSubstitutor.EMPTY))),
                                  rules).run();
       if (success) {
         checkResultByFile(dataPath + getTestName(false) + ".java.after");

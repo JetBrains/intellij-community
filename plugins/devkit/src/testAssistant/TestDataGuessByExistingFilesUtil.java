@@ -366,7 +366,7 @@ public class TestDataGuessByExistingFilesUtil {
   }
 
   private static class TestDataDescriptor {
-    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.<TestLocationDescriptor>emptyList(), null);
+    private static final TestDataDescriptor NOTHING_FOUND = new TestDataDescriptor(Collections.emptyList(), null);
 
     private final List<TestLocationDescriptor> myDescriptors = new ArrayList<>();
     private final String myTestName;

@@ -52,7 +52,7 @@ public interface Iconable {
       }
       else {
         if (map == null) {
-          map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.<Icon>createConcurrentIntObjectMap());
+          map = ((UserDataHolderEx)holder).putUserDataIfAbsent(LAST_COMPUTED_ICON, ContainerUtil.createConcurrentIntObjectMap());
         }
         map.put(flags, icon);
       }

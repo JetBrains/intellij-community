@@ -88,7 +88,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   }
 
   protected static Element loadModuleRootTag(File imlFile) {
-    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.<String, String>emptyMap(), imlFile);
+    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.emptyMap(), imlFile);
     return JpsLoaderBase.loadRootElement(imlFile, expander);
   }
 }

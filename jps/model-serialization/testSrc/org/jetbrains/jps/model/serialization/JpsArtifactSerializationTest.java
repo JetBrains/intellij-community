@@ -55,7 +55,7 @@ public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
     Element actual = new Element("component").setAttribute("name", "ArtifactManager");
     JpsArtifactSerializer.saveArtifact(artifact, actual);
     JpsMacroExpander
-      expander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH)));
+      expander = JpsProjectLoader.createProjectMacroExpander(Collections.emptyMap(), new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH)));
     Element expected = JpsLoaderBase.loadRootElement(expectedFile, expander);
     PlatformTestUtil.assertElementsEqual(expected, actual);
   }

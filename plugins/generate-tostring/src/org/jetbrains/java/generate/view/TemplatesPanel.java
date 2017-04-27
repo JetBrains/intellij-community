@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiType;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -124,7 +123,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
       final GenerateTemplateConfigurable configurable =
-        new GenerateTemplateConfigurable(item, Collections.<String, PsiType>emptyMap(), myProject, onMultipleFields());
+        new GenerateTemplateConfigurable(item, Collections.emptyMap(), myProject, onMultipleFields());
       configurable.setHint(myHint);
       return configurable;
     }

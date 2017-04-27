@@ -123,7 +123,7 @@ public class GitCommandResult {
 
   @NotNull
   public static GitCommandResult error(@NotNull String error) {
-    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.<String>emptyList(), null);
+    return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList(), null);
   }
 
   public boolean cancelled() {

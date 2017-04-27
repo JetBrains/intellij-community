@@ -304,7 +304,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     if (myRepos == null) return;
     for (HgRepository repository : myRepos) {
       if (!repositoryMap.keySet().contains(repository)) {
-        repositoryMap.put(repository, Collections.<HgFile>emptySet());
+        repositoryMap.put(repository, Collections.emptySet());
       }
     }
   }

@@ -85,7 +85,7 @@ public class RecursionSaveWalker extends DPatternWalker {
       @Override
       @SuppressWarnings({"unchecked"})
       public THashSet<DPattern> createInstance() {
-        return ContainerUtil.<DPattern>newIdentityTroveSet(256);
+        return ContainerUtil.newIdentityTroveSet(256);
       }
     },
     new SpinAllocator.IDisposer<THashSet<DPattern>>() {

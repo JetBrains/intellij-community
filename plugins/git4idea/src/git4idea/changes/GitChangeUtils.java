@@ -26,8 +26,6 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
@@ -393,7 +391,7 @@ public class GitChangeUtils {
     String output = getDiffOutput(project, root, range, dirtyPaths);
 
     Collection<Change> changes = new ArrayList<>();
-    parseChanges(project, root, newRev, oldRev, output, changes, Collections.<String>emptySet());
+    parseChanges(project, root, newRev, oldRev, output, changes, Collections.emptySet());
     return changes;
   }
 
@@ -417,7 +415,7 @@ public class GitChangeUtils {
     Collection<Change> changes = new ArrayList<>();
     final GitRevisionNumber revisionNumber = resolveReference(project, root, oldRevision);
     parseChanges(project, root, reverse ? revisionNumber : null, reverse ? null : revisionNumber, output, changes,
-                 Collections.<String>emptySet());
+                 Collections.emptySet());
     return changes;
   }
 

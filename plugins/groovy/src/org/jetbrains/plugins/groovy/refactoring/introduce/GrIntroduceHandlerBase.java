@@ -174,20 +174,20 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
 
     if (context.getExpression() != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getExpression()));
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(context.getExpression()));
     }
     else if (context.getStringPart() != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(context.getStringPart()));
       return map;
     }
     else if (context.getVar() != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.ALL, Collections.<Object>singletonList(context.getVar()));
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Collections.singletonList(context.getVar()));
       return map;
     }
 
     PsiElement[] occurrences = context.getOccurrences();
     if (occurrences.length > 1) {
-      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.<Object>asList(occurrences));
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
     }
     return map;
   }

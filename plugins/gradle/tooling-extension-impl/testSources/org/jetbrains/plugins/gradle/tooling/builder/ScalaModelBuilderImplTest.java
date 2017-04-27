@@ -61,6 +61,6 @@ public class ScalaModelBuilderImplTest extends AbstractModelBuilderTest {
 
   @Override
   protected Set<Class> getModels() {
-    return ContainerUtil.<Class>set(ScalaModel.class);
+    return ContainerUtil.set(ScalaModel.class);
   }
 }

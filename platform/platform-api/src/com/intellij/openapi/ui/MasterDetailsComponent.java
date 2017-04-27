@@ -820,7 +820,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     private final Condition<Object[]> myCondition;
 
     public MyDeleteAction() {
-      this(Conditions.<Object[]>alwaysTrue());
+      this(Conditions.alwaysTrue());
     }
 
     public MyDeleteAction(Condition<Object[]> availableCondition) {

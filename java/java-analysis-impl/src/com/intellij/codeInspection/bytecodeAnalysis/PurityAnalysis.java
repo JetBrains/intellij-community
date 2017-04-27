@@ -429,7 +429,7 @@ final class HardCodedPurity {
     ownedFields.add(new Couple<>("java/lang/AbstractStringBuilder", "value"));
 
     solutions.put(new Method("java/lang/Throwable", "fillInStackTrace", "(I)Ljava/lang/Throwable;"), thisChange);
-    solutions.put(new Method("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"), Collections.<EffectQuantum>singleton(new EffectQuantum.ParamChangeQuantum(2)));
+    solutions.put(new Method("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"), Collections.singleton(new EffectQuantum.ParamChangeQuantum(2)));
     solutions.put(new Method("java/lang/AbstractStringBuilder", "expandCapacity", "(I)V"), thisChange);
     solutions.put(new Method("java/lang/StringBuilder", "expandCapacity", "(I)V"), thisChange);
     solutions.put(new Method("java/lang/StringBuffer", "expandCapacity", "(I)V"), thisChange);

@@ -140,7 +140,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
-    setProviders(providers, Collections.<String>emptySet(), Collections.<String>emptySet());
+    setProviders(providers, Collections.emptySet(), Collections.emptySet());
   }
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers, Set<String> associated, Set<String> preselected) {

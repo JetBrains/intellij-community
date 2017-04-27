@@ -241,7 +241,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     gbc.gridwidth = 1;
     gbc.insets = JBUI.insets(4, 0, 4, 4);
 
-    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.<MemberInfo>emptyList(), null);
+    myMemberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("delegate.members"), Collections.emptyList(), null);
     panel.add(myMemberSelectionPanel, gbc);
     MyMemberInfoModel memberInfoModel = new InheritanceToDelegationDialog.MyMemberInfoModel();
     myMemberSelectionPanel.getTable().setMemberInfoModel(memberInfoModel);

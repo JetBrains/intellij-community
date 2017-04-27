@@ -15,7 +15,6 @@
  */
 package com.intellij.structuralsearch;
 
-import com.intellij.dupLocator.PsiElementRole;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
 import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
@@ -577,7 +576,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
 
         if (descriptor1 != null && descriptor2 != null) {
           final boolean result = DuplocatorUtil
-            .match(descriptor1, descriptor2, myGlobalVisitor, Collections.<PsiElementRole>emptySet(), null);
+            .match(descriptor1, descriptor2, myGlobalVisitor, Collections.emptySet(), null);
           myGlobalVisitor.setResult(result);
           return;
         }

@@ -122,7 +122,7 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
   @Override
   public List<File> getLibraries(@NotNull ClientLibraryDescription description) {
     File[] files = getStoreDirectory(description).listFiles();
-    return files == null ? Collections.<File>emptyList() : Arrays.asList(files);
+    return files == null ? Collections.emptyList() : Arrays.asList(files);
   }
 
   @Override

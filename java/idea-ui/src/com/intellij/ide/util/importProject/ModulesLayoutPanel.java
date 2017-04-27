@@ -48,7 +48,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
 
   protected List<ModuleDescriptor> getEntries() {
     final List<ModuleDescriptor> modules = getInsight().getSuggestedModules();
-    return modules != null? modules : Collections.<ModuleDescriptor>emptyList();
+    return modules != null? modules : Collections.emptyList();
   }
 
   protected Collection getDependencies(final ModuleDescriptor entry) {

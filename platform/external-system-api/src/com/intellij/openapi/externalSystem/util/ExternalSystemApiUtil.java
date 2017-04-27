@@ -271,7 +271,7 @@ public class ExternalSystemApiUtil {
       }
       result.add((DataNode<T>)child);
     }
-    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+    return result == null ? Collections.emptyList() : result;
   }
 
   @SuppressWarnings("unchecked")

@@ -133,8 +133,8 @@ public class GitRebaseUtils {
    * Abort the ongoing rebase process in the given repository.
    */
   public static void abort(@NotNull final Project project, @Nullable final GitRepository repository, @NotNull ProgressIndicator indicator) {
-    new GitAbortRebaseProcess(project, repository, Collections.<GitRepository, String>emptyMap(),
-                              Collections.<GitRepository, String>emptyMap(), indicator, null).abortWithConfirmation();
+    new GitAbortRebaseProcess(project, repository, Collections.emptyMap(),
+                              Collections.emptyMap(), indicator, null).abortWithConfirmation();
   }
 
   private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {

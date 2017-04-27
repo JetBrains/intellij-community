@@ -1130,7 +1130,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (environment != null) {
         final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
         Set<VirtualFile> parents =
-          vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.<VirtualFile>emptySet();
+          vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.emptySet();
 
         // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
         // (inside the method) - so common add logic just needs to refresh statuses of parents

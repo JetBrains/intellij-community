@@ -407,7 +407,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
 
     Collection<CandidateInfo> candidates = getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ?
-                                          ContainerUtil.<CandidateInfo>newArrayList() : getMethodsToOverrideImplement(aClass, true);
+                                          ContainerUtil.newArrayList() : getMethodsToOverrideImplement(aClass, true);
 
     final MemberChooser<PsiMethodMember> chooser = showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;

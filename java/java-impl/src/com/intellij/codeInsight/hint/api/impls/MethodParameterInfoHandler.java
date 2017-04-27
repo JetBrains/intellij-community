@@ -56,7 +56,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
-  private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.<Class>newHashSet(
+  private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
 
   private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);

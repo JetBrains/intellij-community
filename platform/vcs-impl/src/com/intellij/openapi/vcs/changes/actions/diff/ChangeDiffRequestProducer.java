@@ -133,7 +133,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
 
   @Nullable
   public static ChangeDiffRequestProducer create(@Nullable Project project, @NotNull Change change) {
-    return create(project, change, Collections.<Key, Object>emptyMap());
+    return create(project, change, Collections.emptyMap());
   }
 
   @Nullable

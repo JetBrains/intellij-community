@@ -219,7 +219,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           ContainerUtil.addIfNotNull(result, Pair.create(node, psi));
         }
 
-        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.<PsiElement>pairSecond());
+        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.pairSecond());
 
         String text = StringUtil.join(result, pair -> {
           PsiElement psi = pair.second;

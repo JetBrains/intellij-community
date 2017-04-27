@@ -57,6 +57,6 @@ public class EclipseCompiler implements BackendCompiler {
   @NotNull
   @Override
   public Set<FileType> getCompilableFileTypes() {
-    return Collections.<FileType>singleton(StdFileTypes.JAVA);
+    return Collections.singleton(StdFileTypes.JAVA);
   }
 }

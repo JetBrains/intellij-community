@@ -28,7 +28,7 @@ public class UpdateRootNode extends GroupTreeNode {
   private final Project myProject;
 
   public UpdateRootNode(UpdatedFiles updatedFiles, Project project, String rootName, ActionInfo actionInfo) {
-    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.<String, String>emptyMap(), null);
+    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.emptyMap(), null);
     myProject = project;
 
     addGroupsToNode(updatedFiles.getTopLevelGroups(), this, actionInfo);

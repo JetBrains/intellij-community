@@ -93,7 +93,7 @@ public class AddToFavoritesAction extends AnAction implements DumbAware {
         nodesToAdd = createNodes(project, moduleContext, elements, inProjectView, ViewSettings.DEFAULT);
       }
     }
-    return nodesToAdd == null ? Collections.<AbstractTreeNode>emptyList() : nodesToAdd;
+    return nodesToAdd == null ? Collections.emptyList() : nodesToAdd;
   }
 
   @Override

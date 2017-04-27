@@ -361,7 +361,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
         WriteAction.run(() -> {
           final PyAssignmentStatement initializer = PsiTreeUtil.getParentOfType(myTarget, PyAssignmentStatement.class);
           assert initializer != null;
-          final Function<String, PyStatement> callback = FunctionUtil.<String, PyStatement>constant(initializer);
+          final Function<String, PyStatement> callback = FunctionUtil.constant(initializer);
           final PyClass pyClass = PyUtil.getContainingClassOrSelf(initializer);
           InitPlace initPlace = myPanel != null ? myPanel.getInitPlace() : myOperation.getInplaceInitPlace();
           if (initPlace == InitPlace.CONSTRUCTOR) {

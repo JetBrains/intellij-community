@@ -197,7 +197,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
       }
       pathMap.put(aClass, superClasses);
     }
-    pathMap.put(baseClass, Collections.<PsiClass>emptySet());
+    pathMap.put(baseClass, Collections.emptySet());
     final ArrayList<PsiFile> psiFiles = new ArrayList<>();
     for (Set<PsiClass> implementors : classes.values()) {
       for (PsiClass psiClass : implementors) {
