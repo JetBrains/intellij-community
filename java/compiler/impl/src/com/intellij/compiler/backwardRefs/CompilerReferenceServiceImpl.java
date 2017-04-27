@@ -243,8 +243,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
-        //noinspection ConstantConditions
-        return onException(e, "find methods");
+        onException(e, "find methods");
+        return Collections.emptySortedSet();
       }
     } finally {
       myReadDataLock.unlock();
@@ -272,8 +272,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         return false;
       }
       catch (Exception e) {
-        //noinspection ConstantConditions
-        return onException(e, "correlation");
+        onException(e, "correlation");
+        return false;
       }
     } finally {
       myReadDataLock.unlock();
