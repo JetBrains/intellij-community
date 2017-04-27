@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.runners.Parameterized;
@@ -23,8 +23,11 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
 public class MultipleRefreshesTest {
+  private static final Logger LOG = getInstance(MultipleRefreshesTest.class);
 
   private final SvnChangesCorrectlyRefreshedTest myTest;
 
@@ -48,7 +51,7 @@ public class MultipleRefreshesTest {
   }
 
   public MultipleRefreshesTest(int cnt) {
-    ChangeListManagerImpl.LOG.info("TEST " + cnt);
+    LOG.info("TEST " + cnt);
     myTest = new SvnChangesCorrectlyRefreshedTest();
   }
 
