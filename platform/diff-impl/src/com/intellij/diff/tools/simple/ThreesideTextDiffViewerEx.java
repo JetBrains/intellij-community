@@ -31,7 +31,6 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -289,12 +288,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     @Override
     protected List<? extends ThreesideDiffChangeBase> getChanges() {
       List<? extends ThreesideDiffChangeBase> changes = ThreesideTextDiffViewerEx.this.getChanges();
-      return ContainerUtil.filter(changes, new Condition<ThreesideDiffChangeBase>() {
-        @Override
-        public boolean value(ThreesideDiffChangeBase change) {
-          return change.isConflict();
-        }
-      });
+      return ContainerUtil.filter(changes, change -> change.isConflict());
     }
   }
 
@@ -305,12 +299,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       List<? extends ThreesideDiffChangeBase> changes = ThreesideTextDiffViewerEx.this.getChanges();
       final ThreeSide currentSide = getCurrentSide();
       if (currentSide == ThreeSide.BASE) return changes;
-      return ContainerUtil.filter(changes, new Condition<ThreesideDiffChangeBase>() {
-        @Override
-        public boolean value(ThreesideDiffChangeBase change) {
-          return change.isChange(currentSide);
-        }
-      });
+      return ContainerUtil.filter(changes, change -> change.isChange(currentSide));
     }
 
     @NotNull
