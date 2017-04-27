@@ -17,8 +17,6 @@ package com.intellij.codeInsight.folding
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
-import com.intellij.codeInsight.folding.impl.CodeFoldingManagerImpl
-import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl
 import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
 import com.intellij.find.FindManager
 import com.intellij.openapi.actionSystem.IdeActions
@@ -37,7 +35,6 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.DocumentUtil
 import org.intellij.lang.annotations.Language
@@ -45,31 +42,14 @@ import org.jetbrains.annotations.NotNull
 
 /**
  * @author Denis Zhdanov
- * @since 1/17/11 1:00 PM
+ * @since 17.01.2011
  */
 @SuppressWarnings("ALL") // too many warnings in injections
-public class JavaFoldingTest extends LightCodeInsightFixtureTestCase {
-  def JavaCodeFoldingSettingsImpl myFoldingSettings
-  def JavaCodeFoldingSettingsImpl myFoldingStateToRestore
-
+class JavaFoldingTest extends JavaFoldingTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_1_7
-  }
-
-  @Override
-  public void setUp() {
-    super.setUp()
-    myFoldingSettings = JavaCodeFoldingSettings.instance as JavaCodeFoldingSettingsImpl
-    myFoldingStateToRestore = new JavaCodeFoldingSettingsImpl()
-    myFoldingStateToRestore.loadState(myFoldingSettings)
-  }
-
-  @Override
-  protected void tearDown() {
-    myFoldingSettings.loadState(myFoldingStateToRestore)
-    super.tearDown()
   }
 
   public void testEndOfLineComments() { doTest() }
@@ -559,14 +539,6 @@ class Test {
     assertEquals(1, folds.length)
     assertEquals(2, folds[0].startOffset)
     assertEquals(6, folds[0].endOffset)
-  }
-
-  private def configure(String text) {
-    myFixture.configureByText("a.java", text)
-    CodeFoldingManagerImpl.getInstance(getProject()).buildInitialFoldings(myFixture.editor);
-    def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
-    foldingModel.rebuild()
-    myFixture.doHighlighting()
   }
 
   public void "test simple property accessors in one line"() {
