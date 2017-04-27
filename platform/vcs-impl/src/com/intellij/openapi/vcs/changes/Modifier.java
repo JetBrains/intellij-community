@@ -68,12 +68,15 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   private void impl(ChangeListCommand command) {
-    command.apply(myWorker);
     if (myInsideUpdate) {
+      // apply command and store it to be applied again when update is finished
+      // notification about this invocation might be sent later if the update is cancelled
+      command.apply(myWorker);
       myCommandQueue.add(command);
-      // notify after change lsist are synchronized
-    } else {
-      // notify immediately
+    }
+    else {
+      // apply and notify immediately
+      command.apply(myWorker);
       myNotificator.callNotify(command);
     }
   }
@@ -107,18 +110,20 @@ public class Modifier implements ChangeListsWriteOperations {
     myInsideUpdate = true;
   }
 
-  public void finishUpdate(ChangeListWorker worker) {
+  public void finishUpdate(@Nullable ChangeListWorker worker) {
     myInsideUpdate = false;
 
-    for (ChangeListCommand command : myCommandQueue) {
-      command.apply(worker);
-      myNotificator.callNotify(command);
+    if (worker != null) {
+      // re-apply commands to the new worker
+      for (ChangeListCommand command : myCommandQueue) {
+        command.apply(worker);
+      }
+      myWorker = worker;
     }
 
+    for (ChangeListCommand command : myCommandQueue) {
+      myNotificator.callNotify(command);
+    }
     myCommandQueue.clear();
-  }
-
-  public void setWorker(ChangeListWorker worker) {
-    myWorker = worker;
   }
 }

@@ -505,14 +505,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         synchronized (myDataLock) {
           // do same modifications to change lists as was done during update + do delayed notifications
           dataHolder.notifyEnd();
-          // should be applied for notifications to be delivered (they were delayed) - anyway whether we take changes or not
-          myModifier.finishUpdate(dataHolder.getChangeListWorker());
           // update member from copy
           if (takeChanges) {
             final ChangeListWorker oldWorker = myWorker;
             myWorker = dataHolder.getChangeListWorker();
             myWorker.onAfterWorkerSwitch(oldWorker);
-            myModifier.setWorker(myWorker);
+            myModifier.finishUpdate(myWorker);
+
             if (LOG.isDebugEnabled()) {
               LOG.debug("refresh procedure finished, unversioned size: " +
                         dataHolder.getComposite().getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() + "\nchanges: " + myWorker);
@@ -522,6 +521,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             if (statusChanged) {
               myDelayedNotificator.unchangedFileStatusChanged();
             }
+          }
+          else {
+            myModifier.finishUpdate(null);
           }
           myShowLocalChangesInvalidated = false;
         }
