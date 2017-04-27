@@ -38,4 +38,9 @@ public interface ChainSearchMagicConstants {
    * Relative coefficient to filter out rarely used methods
    */
   int FILTER_RATIO = 10;
+
+  /**
+   * Qualifier class hierarchy max cardinality
+   */
+  int MAX_HIERARCHY_SIZE = 20;
 }

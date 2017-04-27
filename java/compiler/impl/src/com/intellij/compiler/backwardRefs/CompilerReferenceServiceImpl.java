@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestInfo;
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
+import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.OccurrencesAware;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
@@ -234,7 +235,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
           .map(r -> (LightRef.JavaLightMethodRef) r)
           .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false, 10);
+            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
             return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
           })
           .distinct()
