@@ -69,18 +69,25 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected void doTest(boolean isResultNull) {
+    doTest(isResultNull, DEFAULT_CHAIN_SELECTOR);
+  }
+
+  protected void doTest(boolean isResultNull, @NotNull ChainSelector chainSelector) {
+    final String className = getTestName(false);
+    doTest(isResultNull, className, chainSelector);
+  }
+
+  protected void doTest(boolean isResultNull, @NotNull String className, @NotNull ChainSelector chainSelector) {
     try {
-      doTest(isResultNull, DEFAULT_CHAIN_SELECTOR);
+      doTestImpl(isResultNull, className, chainSelector);
     }
     catch (Exception e) {
       throw new AssertionError("exception thrown", e);
     }
   }
 
-  protected void doTest(boolean isResultNull, @NotNull ChainSelector chainSelector)
+  private void doTestImpl(boolean isResultNull, @NotNull String className, @NotNull ChainSelector chainSelector)
     throws InterruptedException, ExecutionException, InvocationTargetException {
-    final String className = getTestName(false);
-
     createLocalProcess(className);
     final XDebugSession session = getDebuggerSession().getXDebugSession();
     assertNotNull(session);
