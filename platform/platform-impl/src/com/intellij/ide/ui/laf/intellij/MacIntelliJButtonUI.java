@@ -15,11 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
@@ -27,8 +25,6 @@ import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicHTML;
-import javax.swing.text.View;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
@@ -37,10 +33,6 @@ import java.awt.geom.RoundRectangle2D;
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJButtonUI extends DarculaButtonUI {
-  private static Rectangle viewRect = new Rectangle();
-  private static Rectangle textRect = new Rectangle();
-  private static Rectangle iconRect = new Rectangle();
-
   static final int ARC_SIZE = JBUI.scale(6);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
@@ -64,10 +56,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       icon.paintIcon(c, g, x, y);
     } else {
       AbstractButton b = (AbstractButton) c;
-      FontMetrics fm = SwingUtilities2.getFontMetrics(b, g);
-      String text = isSquare(c) ? layout(b, "...", null, fm, b.getWidth(), b.getHeight()) :
-                                  layout(b, b.getText(), b.getIcon(), fm, b.getWidth(), b.getHeight());
-
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         g2.translate(0, 0);
@@ -114,58 +102,12 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
         g2.setPaint(p);
         g2.fill(outline);
+
+        paintContents(g2, b);
       } finally {
         g2.dispose();
       }
-
-      if (isSquare(c)) {
-        UISettings.setupAntialiasing(g);
-        paintText(g, b, textRect, text);
-      } else {
-        // Paint the Icon
-        if(b.getIcon() != null) {
-          paintIcon(g,c,iconRect);
-        }
-
-        if (text != null && !text.isEmpty()){
-          View v = (View) c.getClientProperty(BasicHTML.propertyKey);
-          if (v != null) {
-            v.paint(g, textRect);
-          } else {
-            UISettings.setupAntialiasing(g);
-            paintText(g, b, textRect, text);
-          }
-        }
-      }
     }
-  }
-
-  private static boolean isComboButton(JComponent c) {
-    return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
-  }
-
-  private String layout(AbstractButton b, String text, Icon icon, FontMetrics fm, int width, int height) {
-    Insets i = b.getInsets();
-    viewRect.x = i.left;
-    viewRect.y = i.top;
-    viewRect.width = width - (i.right + viewRect.x);
-    viewRect.height = height - (i.bottom + viewRect.y);
-
-    textRect.x = textRect.y = textRect.width = textRect.height = 0;
-    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
-
-    if (isComboButton(b)) {
-      viewRect.x += 6;
-    } else if (b instanceof JBOptionButton) {
-      viewRect.x -= 4;
-    }
-
-    // layout the text and icon
-    return SwingUtilities.layoutCompoundLabel(
-      b, fm, text, icon,
-      b.getVerticalAlignment(), b.getHorizontalAlignment(),
-      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      viewRect, iconRect, textRect, text == null ? 0 : b.getIconTextGap());
   }
 
   @Override

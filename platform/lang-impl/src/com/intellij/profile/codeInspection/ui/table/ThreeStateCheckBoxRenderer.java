@@ -15,11 +15,11 @@
  */
 package com.intellij.profile.codeInspection.ui.table;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -81,15 +81,7 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
       setSelected((Boolean) value);
     }
 
-    if (Registry.is("ide.intellij.laf.win10.ui")) {
-      try {
-        Integer rr = Integer.valueOf(String.valueOf(getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow")));
-        getModel().setRollover(rr == row);
-      } catch (NumberFormatException ex) {
-        getModel().setRollover(false);
-      }
-    }
-
+    UIUtil.setCellRolloverState(this, row);
     return this;
   }
 

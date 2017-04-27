@@ -54,6 +54,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -4008,5 +4009,36 @@ public class UIUtil {
         source.removeKeyListener(keyAdapter);
       }
     });
+  }
+
+  public static void resetEnabledRollOver(JTable table, int column) {
+    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
+
+    JComponent rc = (JComponent)table.getColumnModel().getColumn(column).getCellRenderer();
+    AbstractTableModel tm = (AbstractTableModel)table.getModel();
+    int lastRow = -1;
+
+    //noinspection EmptyCatchBlock
+    try {
+      lastRow = Integer.valueOf(String.valueOf(rc.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow")));
+    } catch (NumberFormatException nfe) {}
+
+    rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", null);
+
+    if (lastRow >= 0) {
+      tm.fireTableCellUpdated(lastRow, column);
+    }
+  }
+
+  public static void setCellRolloverState(AbstractButton cellRenderer, int row) {
+    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
+
+    try {
+      Object cv = cellRenderer.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow");
+      Integer rr = Integer.valueOf(String.valueOf(cv));
+      cellRenderer.getModel().setRollover(rr == row);
+    } catch (NumberFormatException ex) {
+      cellRenderer.getModel().setRollover(false);
+    }
   }
 }
