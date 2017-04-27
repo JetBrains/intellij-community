@@ -49,9 +49,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.ReferenceQueue;
@@ -384,7 +382,23 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   public ActionButton createToolbarButton(final AnAction action, final ActionButtonLook look, final String place, final Presentation presentation, final Dimension minimumSize) {
     if (action.displayTextInToolbar()) {
-      return new ActionButtonWithText(action, presentation, place, minimumSize);
+      int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
+
+      ActionButtonWithText buttonWithText = new ActionButtonWithText(action, presentation, place, minimumSize);
+      if (mnemonic != KeyEvent.VK_UNDEFINED) {
+        buttonWithText.registerKeyboardAction(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            buttonWithText.click();
+          }
+        }, KeyStroke.getKeyStroke(mnemonic,
+                                /*SystemInfo.isMac
+                                ? InputEvent.CTRL_DOWN_MASK |
+                                  InputEvent.ALT_DOWN_MASK
+                                :*/ InputEvent.ALT_DOWN_MASK), WHEN_IN_FOCUSED_WINDOW);
+      }
+      tweakActionComponentUI(buttonWithText);
+      return buttonWithText;
     }
 
     final ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {

@@ -23,9 +23,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -463,6 +461,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       myScopeDetailsPanel.add(scopeType.name, scopeComponent.second);
     }
     myScopeSelectionToolbar = createToolbar(scopeActions.toArray(AnAction.EMPTY_ARRAY));
+    myScopeSelectionToolbar.setMinimumButtonSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     mySelectedScope = scopeComponents[0].first;
 
     myResultsPreviewTable = new JBTable() {
@@ -719,6 +718,10 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     if (firstFocusableComponent != null) {
       ApplicationManager.getApplication().invokeLater(
         () -> IdeFocusManager.getInstance(myProject).requestFocus(firstFocusableComponent, true));
+    }
+    if (firstFocusableComponent == null && !mySearchComponent.isFocusOwner() && !myReplaceComponent.isFocusOwner()) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(myProject).requestFocus(mySearchComponent, true));
     }
   }
 
@@ -1056,7 +1059,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     }
   }
 
-  private class MySelectScopeToggleAction extends ToggleAction implements CustomComponentAction {
+  private class MySelectScopeToggleAction extends ToggleAction {
     private final FindPopupScopeUI.ScopeType myScope;
 
     public MySelectScopeToggleAction(FindPopupScopeUI.ScopeType scope) {
@@ -1064,11 +1067,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
       getTemplatePresentation().setHoveredIcon(scope.icon);
       getTemplatePresentation().setDisabledIcon(scope.icon);
       myScope = scope;
-    }
-
-    @Override
-    public JComponent createCustomComponent(Presentation presentation) {
-      return new ActionButtonWithText(this, presentation, ActionPlaces.EDITOR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     }
 
     @Override
