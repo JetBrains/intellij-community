@@ -95,7 +95,7 @@ public class StreamChainImpl implements StreamChain {
     final StringBuilder builder = new StringBuilder();
     builder.append(myProducer.getName().replaceAll("\\s+", ""));
     for (final StreamCall call : StreamEx.of(myIntermediateCalls).map(x -> (StreamCall)x).append(myTerminator)) {
-      builder.append(".").append(call.getName());
+      builder.append(" -> ").append(call.getName());
     }
 
     return builder.toString();
