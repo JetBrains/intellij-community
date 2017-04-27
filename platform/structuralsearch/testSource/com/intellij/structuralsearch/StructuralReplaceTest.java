@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 /**
- * @by Maxim.Mossienko
+ * @author Maxim.Mossienko
  */
 @SuppressWarnings({"ALL"})
 public class StructuralReplaceTest extends StructuralReplaceTestCase {
@@ -1930,6 +1930,17 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                       "}";
 
     assertEquals(expected, replacer.testReplace(s1,s2,s3,options));
+  }
+
+  public void testKeepUnmatchedModifiers() {
+    final String in = "class X {" +
+                      "  private static final int foo = 1;" +
+                      "}";
+    final String expected = "class X {" +
+                            "  protected static final int foo = 1;" +
+                            "}";
+
+    assertEquals(expected, replacer.testReplace(in, "private '_Type '_field = '_init;", "protected $Type$ $field$ = $init$;", options));
   }
 
   public void testRemovingRedundancy() throws Exception {
