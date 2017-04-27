@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -564,80 +563,27 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myMap.size();
   }
 
-  private abstract class ExternalVsInternalChangesIntersection {
-    protected final Collection<Change> myInChanges;
-    protected final Map<Couple<String>, LocalChangeList> myInternalMap;
-    protected final LocalChangeList myDefaultCopy;
-    protected final Map<String, LocalChangeList> myIncludedListsCopies;
-
-    protected ExternalVsInternalChangesIntersection(final Collection<Change> inChanges) {
-      myInChanges = inChanges;
-      myInternalMap = new HashMap<>();
-      myDefaultCopy = myDefault.copy();
-      myIncludedListsCopies = new HashMap<>();
-    }
-
-    private Couple<String> keyForChange(final Change change) {
-      final FilePath beforePath = ChangesUtil.getBeforePath(change);
-      final String beforeKey = beforePath == null ? null : beforePath.getPath();
-      final FilePath afterPath = ChangesUtil.getAfterPath(change);
-      final String afterKey = afterPath == null ? null : afterPath.getPath();
-      return Couple.of(beforeKey, afterKey);
-    }
-
-    private void preparation() {
-      for (LocalChangeList list : myMap.values()) {
-        final Collection<Change> managerChanges = list.getChanges();
-        final LocalChangeList copy = list.copy();
-        for (Change change : managerChanges) {
-          myInternalMap.put(keyForChange(change), copy);
-        }
-      }
-    }
-
-    protected abstract void processInChange(final Couple<String> key, final Change change);
-
-    public void run() {
-      preparation();
-
-      for (Change change : myInChanges) {
-        final Couple<String> key = keyForChange(change);
-        processInChange(key, change);
-      }
-    }
-
-    public Map<String, LocalChangeList> getIncludedListsCopies() {
-      return myIncludedListsCopies;
-    }
-  }
-
-  private class GatherListsFilterValidChanges extends ExternalVsInternalChangesIntersection {
-    private final List<Change> myValidChanges;
-
-    private GatherListsFilterValidChanges(final Collection<Change> inChanges) {
-      super(inChanges);
-      myValidChanges = new ArrayList<>();
-    }
-
-    protected void processInChange(Couple<String> key, Change change) {
-      final LocalChangeList list = myInternalMap.get(key);
-      if (list != null) {
-        myIncludedListsCopies.put(list.getName(), list);
-        myValidChanges.add(change);
-      }
-    }
-
-    public List<Change> getValidChanges() {
-      return myValidChanges;
-    }
-  }
-
   @NotNull
-  public Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges) {
-    final GatherListsFilterValidChanges worker = new GatherListsFilterValidChanges(changes);
-    worker.run();
-    validChanges.addAll(worker.getValidChanges());
-    return worker.getIncludedListsCopies().values();
+  public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
+    Set<LocalChangeList> includedListsCopies = new HashSet<>();
+    Map<Change, LocalChangeList> internalMap = new HashMap<>();
+
+    for (LocalChangeList list : myMap.values()) {
+      LocalChangeList copy = list.copy();
+      for (Change change : list.getChanges()) {
+        internalMap.put(change, copy);
+      }
+    }
+
+    for (Change change : changes) {
+      LocalChangeList list = internalMap.get(change);
+      if (list != null) {
+        includedListsCopies.add(list);
+        validChanges.add(change);
+      }
+    }
+
+    return includedListsCopies;
   }
 
   @Nullable
