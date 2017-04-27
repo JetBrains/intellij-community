@@ -23,10 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class FileHolderComposite implements FileHolder {
-  private final Map<HolderType, FileHolder> myHolders;
+  private final Map<HolderType, FileHolder> myHolders = new HashMap<>();
 
   public FileHolderComposite(Project project) {
-    myHolders = new HashMap<>();
     add(new VirtualFileHolder(project, HolderType.UNVERSIONED));
     add(new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
     add(new SwitchedFileHolder(project, HolderType.SWITCHED));
@@ -37,8 +36,7 @@ public class FileHolderComposite implements FileHolder {
     add(new DeletedFilesHolder());
   }
 
-  public FileHolderComposite(FileHolderComposite holder) {
-    myHolders = new HashMap<>();
+  private FileHolderComposite(FileHolderComposite holder) {
     for (FileHolder fileHolder : holder.myHolders.values()) {
       addCopy(fileHolder);
     }
@@ -107,24 +105,15 @@ public class FileHolderComposite implements FileHolder {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    final FileHolderComposite another = (FileHolderComposite) o;
-    if (another.myHolders.size() != myHolders.size()) {
-      return false;
-    }
-
-    for (Map.Entry<HolderType, FileHolder> entry : myHolders.entrySet()) {
-      if (! entry.getValue().equals(another.myHolders.get(entry.getKey()))) {
-        return false;
-      }
-    }
-
-    return true;
+    final FileHolderComposite another = (FileHolderComposite)o;
+    return myHolders.equals(another.myHolders);
   }
 
   @Override
   public int hashCode() {
-    return myHolders != null ? myHolders.hashCode() : 0;
+    return myHolders.hashCode();
   }
+
 
   @Override
   public HolderType getType() {
