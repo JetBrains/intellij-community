@@ -89,8 +89,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract String getChangeListNameIfOnlyOne(Change[] changes);
 
-  @NotNull
-  public abstract Runnable prepareForChangeDeletion(final Collection<Change> changes);
+  public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
 
   @Nullable
   public abstract Change getChange(@NotNull VirtualFile file);

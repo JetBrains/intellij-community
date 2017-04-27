@@ -160,9 +160,8 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public Runnable prepareForChangeDeletion(Collection<Change> changes) {
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
     throw new UnsupportedOperationException();
   }
 

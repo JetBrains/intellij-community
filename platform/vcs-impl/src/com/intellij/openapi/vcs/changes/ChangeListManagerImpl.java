@@ -152,7 +152,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (oldDefaultList == null || oldList.hasDefaultName() || oldDefaultList.equals(newDefaultList)) return;
 
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          scheduleAutomaticChangeListDeletionIfEmpty(oldList, config);
+          scheduleAutomaticEmptyChangeListDeletion(oldList);
         }
       }
     });
@@ -167,17 +167,18 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private void scheduleAutomaticChangeListDeletionIfEmpty(final LocalChangeList oldList, final VcsConfiguration config) {
+  @Override
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList oldList) {
     if (oldList.isReadOnly() || !oldList.getChanges().isEmpty()) return;
 
     invokeAfterUpdate(() -> {
       LocalChangeList actualList = getChangeList(oldList.getId());
-      if (actualList == null) {
-        return; // removed already
+      if (actualList == null || actualList.isDefault() || !actualList.getChanges().isEmpty()) {
+        return;
       }
 
       if (myModalNotificationsBlocked &&
-          config.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+          myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
         myListsToBeDeleted.add(oldList);
       } else {
         deleteEmptyChangeLists(Collections.singletonList(actualList));
@@ -910,30 +911,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void removeChangeList(LocalChangeList list) {
     removeChangeList(list.getName());
-  }
-
-  /**
-   * does no modification to change lists, only notification is sent
-   */
-  @Override
-  @NotNull
-  public Runnable prepareForChangeDeletion(final Collection<Change> changes) {
-    final Map<String, List<Change>> map;
-    synchronized (myDataLock) {
-      map = myWorker.listsForChanges(changes);
-    }
-    return () -> {
-      ApplicationManager.getApplication().runReadAction(() -> {
-        synchronized (myDataLock) {
-          for (String listName : map.keySet()) {
-            final LocalChangeList byName = myWorker.getCopyByName(listName);
-            if (byName != null && !byName.isDefault()) {
-              scheduleAutomaticChangeListDeletionIfEmpty(byName, myConfig);
-            }
-          }
-        }
-      });
-    };
   }
 
   @Override

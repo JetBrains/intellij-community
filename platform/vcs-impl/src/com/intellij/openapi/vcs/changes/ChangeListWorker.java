@@ -611,34 +611,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
   }
 
-  private class GatherChangesVsListsInfo extends ExternalVsInternalChangesIntersection {
-    private final Map<String, List<Change>> myListToChangesMap;
-
-    private GatherChangesVsListsInfo(final Collection<Change> inChanges) {
-      super(inChanges);
-      myListToChangesMap = new HashMap<>();
-    }
-
-    protected void processInChange(Couple<String> key, Change change) {
-      LocalChangeList tmpList = myInternalMap.get(key);
-      if (tmpList == null) {
-        tmpList = myDefaultCopy;
-      }
-      final String tmpName = tmpList.getName();
-      List<Change> list = myListToChangesMap.get(tmpName);
-      if (list == null) {
-        list = new ArrayList<>();
-        myListToChangesMap.put(tmpName, list);
-        myIncludedListsCopies.put(tmpName, tmpList);
-      }
-      list.add(change);
-    }
-
-    public Map<String, List<Change>> getListToChangesMap() {
-      return myListToChangesMap;
-    }
-  }
-
   private class GatherListsFilterValidChanges extends ExternalVsInternalChangesIntersection {
     private final List<Change> myValidChanges;
 
@@ -658,13 +630,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     public List<Change> getValidChanges() {
       return myValidChanges;
     }
-  }
-
-  @NotNull
-  public Map<String, List<Change>> listsForChanges(final Collection<Change> changes) {
-    final GatherChangesVsListsInfo info = new GatherChangesVsListsInfo(changes);
-    info.run();
-    return info.getListToChangesMap();
   }
 
   @NotNull
