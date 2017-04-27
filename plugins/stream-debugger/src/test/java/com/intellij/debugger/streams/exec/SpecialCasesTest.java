@@ -15,15 +15,11 @@
  */
 package com.intellij.debugger.streams.exec;
 
-import com.intellij.execution.ExecutionException;
-
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * @author Vitaliy.Bibaev
  */
 public class SpecialCasesTest extends TraceExecutionTestCase {
-  public void testSortedSignedDoubleZeros() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testSortedSignedDoubleZeros() {
     doTest(false);
   }
 }

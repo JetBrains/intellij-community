@@ -16,15 +16,12 @@
 package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
-import com.intellij.execution.ExecutionException;
-
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class EvaluationFailedTest extends FailEvaluationTestCase {
-  public void testEvaluationExceptionDetected() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testEvaluationExceptionDetected() {
     doTest(true);
   }
 

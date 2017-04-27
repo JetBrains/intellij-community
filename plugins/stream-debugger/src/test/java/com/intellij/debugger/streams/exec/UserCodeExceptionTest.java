@@ -15,15 +15,11 @@
  */
 package com.intellij.debugger.streams.exec;
 
-import com.intellij.execution.ExecutionException;
-
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * @author Vitaliy.Bibaev
  */
 public class UserCodeExceptionTest extends FailEvaluationTestCase {
-  public void testExceptionWhenEvaluating() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testExceptionWhenEvaluating() {
     doTest(false);
   }
 }

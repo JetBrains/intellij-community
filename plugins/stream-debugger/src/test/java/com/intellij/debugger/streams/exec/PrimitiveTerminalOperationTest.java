@@ -15,31 +15,28 @@
  */
 package com.intellij.debugger.streams.exec;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * @author Vitaliy.Bibaev
  */
 public class PrimitiveTerminalOperationTest extends TraceExecutionTestCase {
-  public void testPrimitiveResultBoolean() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testPrimitiveResultBoolean() {
     doTest(false);
   }
 
-  public void testPrimitiveResultInt() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testPrimitiveResultInt() {
     doTest(false);
   }
 
-  public void testPrimitiveResultDouble() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testPrimitiveResultDouble() {
     doTest(false);
   }
 
-  public void testPrimitiveResultLong() throws InterruptedException, ExecutionException, InvocationTargetException {
+  public void testPrimitiveResultLong() {
     doTest(false);
   }
 
