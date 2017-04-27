@@ -381,4 +381,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testHomogeneousTuplePlusHeterogeneousTupleWithTheSameElementsType() {
     doTest();
   }
+
+  // PY-22763
+  public void testChainedComparisons() {
+    doTest();
+  }
 }
