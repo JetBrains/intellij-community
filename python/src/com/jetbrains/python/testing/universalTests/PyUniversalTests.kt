@@ -572,7 +572,7 @@ abstract class PyUniversalTestConfiguration(project: Project,
     // contains tests etc
     when (element) {
       is PyFile -> isTestFile(element)
-      is PsiDirectory -> element.children.any { it is PyFile && isTestFile(it) }
+      is PsiDirectory -> element.name.contains("test", true) || element.children.any { it is PyFile && isTestFile(it) }
       is PyFunction -> PythonUnitTestUtil.isTestCaseFunction(element, runBareFunctions)
       is PyClass -> PythonUnitTestUtil.isTestCaseClass(element, TypeEvalContext.userInitiated(element.project, element.containingFile))
       else -> false
