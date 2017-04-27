@@ -502,21 +502,21 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private String inspectNewStyleChunkAndGetMappingKey(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk) {
-        final HashSet<String> types = new HashSet<>();
+        final HashSet<String> supportedTypes = new HashSet<>();
         boolean hasTypeOptions = false;
 
         final String mappingKey = chunk.getMappingKey() != null ? chunk.getMappingKey() : String.valueOf(chunk.getPosition());
 
         // inspect options available only for numeric types
         if (chunk.hasSignOption() || chunk.useAlternateForm() || chunk.hasZeroPadding() || chunk.hasThousandsSeparator()) {
-          addTypes(types, NUMERIC_TYPES);
+          specifyTypes(supportedTypes, NUMERIC_TYPES);
           hasTypeOptions = true;
         }
 
         if (chunk.getPrecision() != null) {
           // TODO: actually availableTypes doesn't reject int, because int is compatible with float and complex
           final List<String> availableTypes = Arrays.asList("str", "float", "complex");
-          addTypes(types, availableTypes);
+          specifyTypes(supportedTypes, availableTypes);
           hasTypeOptions = true;
         }
 
@@ -524,7 +524,7 @@ public class PyStringFormatInspection extends PyInspection {
         if (conversionType != Character.MIN_VALUE) {
           if (NEW_STYLE_FORMAT_CONVERSIONS.containsKey(conversionType)) {
             final String[] s = NEW_STYLE_FORMAT_CONVERSIONS.get(conversionType).split(" or ");
-            addTypes(types, Arrays.asList(s));
+            specifyTypes(supportedTypes, Arrays.asList(s));
             hasTypeOptions = true;
           }
           else {
@@ -532,8 +532,8 @@ public class PyStringFormatInspection extends PyInspection {
           }
         }
 
-        if (!types.isEmpty()) {
-          myFormatSpec.put(mappingKey, StringUtil.join(types, " or "));
+        if (!supportedTypes.isEmpty()) {
+          myFormatSpec.put(mappingKey, StringUtil.join(supportedTypes, " or "));
         }
         else if (hasTypeOptions) {
           registerProblem(myFormatExpression, PyBundle.message("INSP.incompatible.options", mappingKey));
@@ -582,12 +582,12 @@ public class PyStringFormatInspection extends PyInspection {
         }
       }
 
-      private static void addTypes(@NotNull final Set<String> types, @NotNull final List<String> availableTypes) {
-        if (!types.isEmpty()) {
-          types.retainAll(availableTypes);
+      private static void specifyTypes(@NotNull final Set<String> types, @NotNull final List<String> supportedTypes) {
+        if (types.isEmpty()) {
+          types.addAll(supportedTypes);
         }
         else {
-          types.addAll(availableTypes);
+          types.retainAll(supportedTypes);
         }
       }
 
