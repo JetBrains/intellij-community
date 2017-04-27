@@ -44,34 +44,32 @@ import static com.intellij.util.ObjectUtils.notNull;
 @SomeQueue
 public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
-  private static final String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
+  private final boolean myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty("vcs.local.changes.track.heavy.latch"));
+
   private final Project myProject;
   private final ChangeListManagerImpl.Scheduler myScheduler;
   private final Runnable myDelegate;
-  private final Object myLock;
+  private final Object myLock = new Object();
   private volatile boolean myStarted;
   private volatile boolean myStopped;
   private volatile boolean myIgnoreBackgroundOperation;
 
   private boolean myRequestSubmitted;
   private boolean myRequestRunning;
-  private final List<Runnable> myWaitingUpdateCompletionQueue;
+  private final List<Runnable> myWaitingUpdateCompletionQueue = new ArrayList<>();
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
   private final ProjectLevelVcsManager myPlVcsManager;
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
-  private final boolean myTrackHeavyLatch;
 
   public UpdateRequestsQueue(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, final Runnable delegate) {
     myProject = project;
     myScheduler = scheduler;
-    myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty(ourHeavyLatchOptimization));
 
     myDelegate = delegate;
     myPlVcsManager = ProjectLevelVcsManager.getInstance(myProject);
     myStartupManager = StartupManager.getInstance(myProject);
-    myLock = new Object();
-    myWaitingUpdateCompletionQueue = new ArrayList<>();
+
     // not initialized
     myStarted = false;
     myStopped = false;
@@ -88,7 +86,7 @@ public class UpdateRequestsQueue {
 
   public void schedule() {
     synchronized (myLock) {
-      if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
+      if (!myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
       if (myStopped) return;
       if (myRequestSubmitted) return;
@@ -106,6 +104,7 @@ public class UpdateRequestsQueue {
     }
   }
 
+  @TestOnly
   public void forceGo() {
     synchronized (myLock) {
       myStopped = false;
@@ -154,7 +153,7 @@ public class UpdateRequestsQueue {
         semaphore.down();
         myWaitingUpdateCompletionSemaphores.add(semaphore);
       }
-      if (!semaphore.waitFor(100*1000)) {
+      if (!semaphore.waitFor(100 * 1000)) {
         LOG.error("Too long VCS update");
         return;
       }
@@ -253,11 +252,11 @@ public class UpdateRequestsQueue {
         synchronized (myLock) {
           myRequestRunning = false;
           LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
-          if (! copy.isEmpty()) {
+          if (!copy.isEmpty()) {
             myWaitingUpdateCompletionQueue.removeAll(copy);
           }
 
-          if (! myWaitingUpdateCompletionQueue.isEmpty() && ! myRequestSubmitted && ! myStopped) {
+          if (!myWaitingUpdateCompletionQueue.isEmpty() && !myRequestSubmitted && !myStopped) {
             LOG.error("No update task to handle request(s)");
           }
         }
@@ -272,7 +271,7 @@ public class UpdateRequestsQueue {
 
     @Override
     public String toString() {
-      return "UpdateRequestQueue delegate: "+myDelegate;
+      return "UpdateRequestQueue delegate: " + myDelegate;
     }
   }
 
