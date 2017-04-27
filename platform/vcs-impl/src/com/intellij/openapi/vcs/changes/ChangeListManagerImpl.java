@@ -130,7 +130,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, myScheduler));
     myDelayedNotificator = new DelayedNotificator(myListeners, myScheduler);
 
-    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, new ActualUpdater());
+    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, () -> updateImmediately());
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     myListeners.addListener(new ChangeListAdapter() {
@@ -397,13 +397,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void scheduleUpdate(boolean updateUnversionedFiles) {
     myUpdater.schedule();
-  }
-
-  private class ActualUpdater implements Runnable {
-    @Override
-    public void run() {
-      updateImmediately();
-    }
   }
 
   private void filterOutIgnoredFiles(final List<VcsDirtyScope> scopes) {
