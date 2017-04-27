@@ -227,9 +227,11 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
       parentNode.add(childNode);
     }
     myClassTree.setModel(treeModel);
-    myClassTree.expandRow(0);
-    myClassTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-    myClassTree.getSelectionModel().setSelectionPath(new TreePath(new Object[]{root, root.getFirstChild()}));
+    if (root.getChildCount() > 0) {
+      myClassTree.expandRow(0);
+      myClassTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+      myClassTree.getSelectionModel().setSelectionPath(new TreePath(new Object[]{root, root.getFirstChild()}));
+    }
   }
 
   @Override
