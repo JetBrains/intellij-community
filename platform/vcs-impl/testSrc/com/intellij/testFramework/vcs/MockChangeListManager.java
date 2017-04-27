@@ -148,11 +148,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public boolean isDefaultChangeList(ChangeList list) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public LocalChangeList getChangeList(@NotNull Change change) {
     throw new UnsupportedOperationException();
   }

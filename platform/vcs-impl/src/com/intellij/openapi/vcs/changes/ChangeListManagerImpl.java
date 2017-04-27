@@ -936,11 +936,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public boolean isDefaultChangeList(ChangeList list) {
-    return list instanceof LocalChangeList && myWorker.isDefaultList((LocalChangeList)list);
-  }
-
-  @Override
   @NotNull
   public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
     synchronized (myDataLock) {

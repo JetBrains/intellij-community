@@ -316,10 +316,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myDefault == null ? null : myDefault.copy();
   }
 
-  public boolean isDefaultList(LocalChangeList list) {
-    return myDefault != null && list.getId().equals(myDefault.getId());
-  }
-
   public Project getProject() {
     return myProject;
   }

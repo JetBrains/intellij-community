@@ -76,8 +76,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract String getDefaultListName();
 
-  public abstract boolean isDefaultChangeList(ChangeList list);
-
 
   @NotNull
   public abstract List<File> getAffectedPaths();
