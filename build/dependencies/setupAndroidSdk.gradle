@@ -13,46 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-task setupAndroidSdk {
-  if (!inJetBrainsNetwork) {
-    return
+buildscript {
+  repositories {
+    maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
+    maven { url "https://plugins.gradle.org/m2/" }
   }
-
-  def zipFile = org.gradle.internal.os.OperatingSystem.current().familyName + ".zip"
-  def gradleFile = "gradle-3.3-bin.zip"
-  def archivePath = "$project.buildDir/android-sdk/" + zipFile
-  def gradlePath = "$project.buildDir/android-sdk/" + gradleFile
-  def outputDir ="$project.buildDir/android-sdk/prebuilts/studio/sdk"
-  def outputGradle ="$project.buildDir/android-sdk/tools/external/gradle"
-  outputs.dir(outputDir)
-  outputs.dir(outputGradle)
-  outputs.dir("$project.buildDir/android-sdk/prebuilts/tools/common");
-  outputs.file(archivePath)
-  outputs.file(gradlePath)
-
-  doFirst {
-    download {
-      src "http://repo.labs.intellij.net/thirdparty/android-sdk/" + zipFile
-      dest archivePath
-      onlyIfNewer true
-    }
-    download {
-      src "http://repo.labs.intellij.net/thirdparty/gradle/" + gradleFile
-      dest gradlePath
-      onlyIfNewer true
-    }
+  dependencies {
+    classpath "de.undercouch:gradle-download-task:3.2.0"
   }
+}
+apply plugin: "de.undercouch.download"
+
+import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.intellij.build.DependenciesBuildUtils
+
+def currentOs = org.gradle.internal.os.OperatingSystem.current()
+
+task downloadGradleDistribution(type: Download) {
+  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-3.3-bin.zip"
+  dest "$buildDir/android-sdk/gradle-3.3-bin.zip"
+  onlyIfNewer true
+  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork }
+}
+
+task setupGradleDistribution(dependsOn: downloadGradleDistribution, type: Copy) {
+  from zipTree(downloadGradleDistribution.outputs.files.singleFile)
+  into "$buildDir/android-sdk/tools/external/gradle"
+}
+
+task downloadAndroidSdk(type: Download) {
+  def osFamily = currentOs.familyName
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.zip"
+  dest "$buildDir/android-sdk/${osFamily}.zip"
+  onlyIfNewer true
+  onlyIf { !currentOs.isMacOsX() && DependenciesBuildUtils.inJetBrainsNetwork }
+}
+
+task setupAndroidSdk(dependsOn: [downloadAndroidSdk, setupGradleDistribution], type: Copy) {
+  from zipTree(downloadAndroidSdk.outputs.files.singleFile)
+  into "$buildDir/android-sdk/prebuilts/studio/sdk"
+  onlyIf { !currentOs.isMacOsX() }
+  outputs.dir("$buildDir/android-sdk/prebuilts/tools/common")
   doLast {
-    logger.info("Unpacking android sdk into " + archivePath)
-    copy {
-      from zipTree(file(archivePath))
-      into outputDir
-    }
-    copy {
-      from file(gradlePath)
-      into outputGradle
-    }
-    file("$project.buildDir/android-sdk/prebuilts/tools/common/m2/repository").mkdirs()
-    file("$project.buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
+    file("$buildDir/android-sdk/prebuilts/tools/common/m2/repository").mkdirs()
+    file("$buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
   }
 }
