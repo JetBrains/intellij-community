@@ -30,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -355,6 +356,31 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   }
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
+    @Override
+    public void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void folderIncluded(@NotNull ContentEntryEditor editor, String fileUrl) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void sourceRootPropertiesChanged(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
+      fireConfigurationChanged();
+    }
+
     @Override
     public void editingStarted(@NotNull ContentEntryEditor editor) {
       selectContentEntry(editor.getContentEntryUrl(), true);

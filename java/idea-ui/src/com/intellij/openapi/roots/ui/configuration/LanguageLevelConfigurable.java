@@ -39,7 +39,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   private LanguageLevelCombo myLanguageLevelCombo;
   private JPanel myPanel = new JPanel(new GridBagLayout());
 
-  public LanguageLevelConfigurable(final Project project) {
+  public LanguageLevelConfigurable(final Project project, Runnable onChange) {
     myLanguageLevelCombo = new LanguageLevelCombo(ProjectBundle.message("project.language.level.combo.item")) {
       @Override
       protected LanguageLevel getDefaultLevel() {
@@ -52,6 +52,7 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
       public void actionPerformed(final ActionEvent e) {
         final Object languageLevel = myLanguageLevelCombo.getSelectedItem();
         getLanguageLevelExtension().setLanguageLevel(languageLevel instanceof LanguageLevel ? (LanguageLevel)languageLevel : null);
+        onChange.run();
       }
     });
 

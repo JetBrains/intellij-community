@@ -221,6 +221,11 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
         }
       }
     }
+    for (ModuleConfigurationEditor editor : myEditors) {
+      if (editor instanceof ModuleElementsEditor) {
+        ((ModuleElementsEditor)editor).addListener(this::updateImportedModelWarning);
+      }
+    }
   }
 
   private static Set<Class<?>> ourReportedDeprecatedClasses = new HashSet<>();
@@ -297,6 +302,8 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private void updateImportedModelWarning() {
+    if (!myEditorsInitialized) return;
+
     ProjectModelExternalSource externalSource = ModuleRootManager.getInstance(myModule).getExternalSource();
     if (externalSource != null && isModified()) {
       myModificationOfImportedModelWarningLabel.setVisible(true);
