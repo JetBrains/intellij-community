@@ -82,7 +82,12 @@
                   <preferredSize width="300" height="200"/>
                 </properties>
                 <border type="none"/>
-                <children/>
+                <children>
+                  <component id="acda7" class="com.intellij.ui.FilterComponent" binding="mySearchField" custom-create="true">
+                    <constraints border-constraint="North"/>
+                    <properties/>
+                  </component>
+                </children>
               </grid>
             </children>
           </splitpane>

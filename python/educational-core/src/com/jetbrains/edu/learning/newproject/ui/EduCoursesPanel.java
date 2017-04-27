@@ -25,6 +25,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 public class EduCoursesPanel extends JPanel {
@@ -36,8 +37,10 @@ public class EduCoursesPanel extends JPanel {
   private JBScrollPane myDescriptionScrollPane;
   private JPanel myAdvancedSettingsPlaceholder;
   private JPanel myAdvancedSettings;
+  private FilterComponent mySearchField;
   private JBList<Course> myCoursesList;
   private LabeledComponent<TextFieldWithBrowseButton> myLocationField;
+  private List<Course> myCourses;
 
   public EduCoursesPanel() {
     setLayout(new BorderLayout());
@@ -49,12 +52,10 @@ public class EduCoursesPanel extends JPanel {
   private void initUI() {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myMainPanel, true);
     myDescriptionTextArea.setEditable(false);
-    DefaultListModel<Course> listModel = new DefaultListModel<>();
-    List<Course> courses = new StudyProjectGenerator().getCoursesUnderProgress(true, "Getting Available Courses", null);
-    for (Course course : courses) {
-      listModel.addElement(course);
-    }
-    myCoursesList = new JBList<>(listModel);
+    myCoursesList = new JBList<>();
+    myCourses = new StudyProjectGenerator().getCoursesUnderProgress(true, "Getting Available Courses", null);
+    updateModel(myCourses);
+
     myCoursesList.setCellRenderer(new ListCellRendererWrapper<Course>() {
       @Override
       public void customize(JList list, Course value, int index, boolean selected, boolean hasFocus) {
@@ -70,6 +71,9 @@ public class EduCoursesPanel extends JPanel {
       @Override
       public void valueChanged(ListSelectionEvent e) {
         Course selectedCourse = myCoursesList.getSelectedValue();
+        if (selectedCourse == null) {
+          return;
+        }
         myDescriptionTextArea.setText(selectedCourse.getDescription());
         myAdvancedSettingsPlaceholder.setVisible(true);
         myLocationField.getComponent().setText(nameToLocation(selectedCourse.getName()));
@@ -93,9 +97,11 @@ public class EduCoursesPanel extends JPanel {
     });
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(myCoursesList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                                          ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    installedScrollPane.setBorder(null);
     myCourseListPanel.add(installedScrollPane, BorderLayout.CENTER);
     Border border = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 1, 1);
     myInfoPanel.setBorder(border);
+    myCourseListPanel.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 1, 1, 1));
     HideableDecorator decorator = new HideableDecorator(myAdvancedSettingsPlaceholder, "Advanced Settings", false);
     decorator.setContentComponent(myAdvancedSettings);
     myAdvancedSettings.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
@@ -104,8 +110,37 @@ public class EduCoursesPanel extends JPanel {
     myAdvancedSettingsPlaceholder.setVisible(false);
   }
 
+  private void updateModel(List<Course> courses) {
+    DefaultListModel<Course> listModel = new DefaultListModel<>();
+    for (Course course : courses) {
+      listModel.addElement(course);
+    }
+    myCoursesList.setModel(listModel);
+  }
+
   public Course getSelectedCourse() {
     return myCoursesList.getSelectedValue();
+  }
+
+  private void createUIComponents() {
+    mySearchField = new FilterComponent("Edu.NewCourse", 5, true) {
+      @Override
+      public void filter() {
+        String filter = getFilter();
+        List<Course> filtered = new ArrayList<>();
+        for (Course course : myCourses) {
+          if (accept(filter, course)) {
+            filtered.add(course);
+          }
+        }
+        updateModel(filtered);
+      }
+    };
+    UIUtil.setBackgroundRecursively(mySearchField, UIUtil.getTextFieldBackground());
+  }
+
+  public boolean accept(String filter, Course course) {
+    return course.getName().toLowerCase().contains(filter.toLowerCase()) || filter.isEmpty();
   }
 
   @Nullable
