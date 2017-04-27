@@ -82,12 +82,7 @@ public class UpdateRequestsQueue {
     // not initialized
     myStarted = false;
     myStopped = false;
-    myIsStoppedGetter = new Getter<Boolean>() {
-      @Override
-      public Boolean get() {
-        return isStopped();
-      }
-    };
+    myIsStoppedGetter = () -> isStopped();
   }
 
   public void initialized() {

@@ -2,10 +2,9 @@ package com.intellij.dupLocator.util;
 
 import com.intellij.dupLocator.DuplicatesProfile;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -53,11 +52,7 @@ public abstract class PsiFragment {
   }
 
   protected PsiAnchor createAnchor(final PsiElement element) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiAnchor>() {
-      public PsiAnchor compute() {
-        return PsiAnchor.create(element);
-      }
-    });
+    return ReadAction.compute(() -> PsiAnchor.create(element));
   }
 
   public PsiFragment(List<? extends PsiElement> elements) {

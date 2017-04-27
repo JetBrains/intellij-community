@@ -25,11 +25,10 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -75,7 +74,7 @@ public class NullableStuffInspectionAncientTest extends InspectionTestCase {
 
   @NotNull
   private static Sdk removeAnnotationsJar(@NotNull Sdk sdk) {
-    return ApplicationManager.getApplication().runWriteAction((Computable<Sdk>)() -> {
+    return WriteAction.compute(() -> {
       Sdk clone;
       try {
         clone = (Sdk)sdk.clone();

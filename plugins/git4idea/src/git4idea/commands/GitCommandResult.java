@@ -16,7 +16,6 @@
 package git4idea.commands;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
@@ -132,12 +131,7 @@ public class GitCommandResult {
 
   @NotNull
   private static Collection<String> cleanup(@NotNull Collection<String> errorOutput) {
-    return ContainerUtil.map(errorOutput, new Function<String, String>() {
-      @Override
-      public String fun(String errorMessage) {
-        return GitUtil.cleanupErrorPrefixes(errorMessage);
-      }
-    });
+    return ContainerUtil.map(errorOutput, errorMessage -> GitUtil.cleanupErrorPrefixes(errorMessage));
   }
 
 }

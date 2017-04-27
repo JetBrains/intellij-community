@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -64,48 +63,45 @@ public abstract class InjectedLanguageBlockBuilder {
     final Ref<Integer> suffixLength = new Ref<>();
     final Ref<ASTNode> injectionHostToUse = new Ref<>(injectionHost);
 
-    final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
-        if (places.size() != 1) {
-          return;
-        }
-        final PsiLanguageInjectionHost.Shred shred = places.get(0);
-        TextRange textRange = shred.getRangeInsideHost();
-        PsiLanguageInjectionHost shredHost = shred.getHost();
-        if (shredHost == null) {
-          return;
-        }
-        ASTNode node = shredHost.getNode();
-        if (node == null) {
-          return;
-        }
-        if (node != injectionHost) {
-          int shift = 0;
-          boolean canProcess = false;
-          for (ASTNode n = injectionHost.getTreeParent(), prev = injectionHost; n != null; prev = n, n = n.getTreeParent()) {
-            shift += n.getStartOffset() - prev.getStartOffset();
-            if (n == node) {
-              textRange = textRange.shiftRight(shift);
-              canProcess = true;
-              break;
-            }
-          }
-          if (!canProcess) {
-            return;
-          }
-        }
-        
-        String childText;
-          if ((injectionHost.getTextLength() == textRange.getEndOffset() && textRange.getStartOffset() == 0) ||
-              (canProcessFragment((childText = injectionHost.getText()).substring(0, textRange.getStartOffset()), injectionHost) &&
-               canProcessFragment(childText.substring(textRange.getEndOffset()), injectionHost))) {
-            injectedFile[0] = injectedPsi;
-            injectedRangeInsideHost.set(textRange);
-            prefixLength.set(shred.getPrefix().length());
-            suffixLength.set(shred.getSuffix().length());
-          }
+    final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = (injectedPsi, places) -> {
+      if (places.size() != 1) {
+        return;
       }
+      final PsiLanguageInjectionHost.Shred shred = places.get(0);
+      TextRange textRange = shred.getRangeInsideHost();
+      PsiLanguageInjectionHost shredHost = shred.getHost();
+      if (shredHost == null) {
+        return;
+      }
+      ASTNode node = shredHost.getNode();
+      if (node == null) {
+        return;
+      }
+      if (node != injectionHost) {
+        int shift = 0;
+        boolean canProcess = false;
+        for (ASTNode n = injectionHost.getTreeParent(), prev = injectionHost; n != null; prev = n, n = n.getTreeParent()) {
+          shift += n.getStartOffset() - prev.getStartOffset();
+          if (n == node) {
+            textRange = textRange.shiftRight(shift);
+            canProcess = true;
+            break;
+          }
+        }
+        if (!canProcess) {
+          return;
+        }
+      }
+
+      String childText;
+        if ((injectionHost.getTextLength() == textRange.getEndOffset() && textRange.getStartOffset() == 0) ||
+            (canProcessFragment((childText = injectionHost.getText()).substring(0, textRange.getStartOffset()), injectionHost) &&
+             canProcessFragment(childText.substring(textRange.getEndOffset()), injectionHost))) {
+          injectedFile[0] = injectedPsi;
+          injectedRangeInsideHost.set(textRange);
+          prefixLength.set(shred.getPrefix().length());
+          suffixLength.set(shred.getSuffix().length());
+        }
     };
     final PsiElement injectionHostPsi = injectionHost.getPsi();
     InjectedLanguageUtil.enumerate(injectionHostPsi, injectionHostPsi.getContainingFile(), false, injectedPsiVisitor);

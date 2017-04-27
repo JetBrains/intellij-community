@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -231,13 +230,9 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
       LazyRefreshingSelfQueue<String> queue = myRefreshingQueues.get(vcsRoot);
       if (queue != null) return queue;
 
-      queue = new LazyRefreshingSelfQueue<>(new Getter<Long>() {
-        public Long get() {
-          return myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0
-                 ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000
-                 : ourRottenPeriod;
-        }
-      }, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
+      queue = new LazyRefreshingSelfQueue<>(() -> myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL > 0
+             ? myVcsConfiguration.CHANGED_ON_SERVER_INTERVAL * 60000
+             : ourRottenPeriod, new MyShouldUpdateChecker(vcsRoot), new MyUpdater(vcsRoot));
       myRefreshingQueues.put(vcsRoot, queue);
       return queue;
     }

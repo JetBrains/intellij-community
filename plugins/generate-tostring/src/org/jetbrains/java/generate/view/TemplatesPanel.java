@@ -69,11 +69,8 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         }
     };
 
-    private static final Equality<TemplateResource> COMPARER = new Equality<TemplateResource>() {
-        public boolean equals(TemplateResource o1, TemplateResource o2) {
-            return Comparing.equal(o1.getTemplate(), o2.getTemplate()) && Comparing.equal(o1.getFileName(), o2.getFileName());
-        }
-    };
+    private static final Equality<TemplateResource> COMPARER =
+      (o1, o2) -> Comparing.equal(o1.getTemplate(), o2.getTemplate()) && Comparing.equal(o1.getFileName(), o2.getFileName());
   private final Project myProject;
   private final TemplatesManager myTemplatesManager;
   private String myHint;

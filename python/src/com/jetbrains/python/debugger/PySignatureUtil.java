@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -54,12 +53,7 @@ public class PySignatureUtil {
 
   private static String getPrintableName(PyType type) {
     if (type instanceof PyUnionType) {
-      return StringUtil.join(Collections2.transform(((PyUnionType)type).getMembers(), new Function<PyType, String>() {
-        @Override
-        public String apply(@Nullable PyType input) {
-          return getPrintableName(input);
-        }
-      }), " or ");
+      return StringUtil.join(Collections2.transform(((PyUnionType)type).getMembers(), input -> getPrintableName(input)), " or ");
     }
     else if (type != null) {
       return type.getName();

@@ -19,13 +19,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -35,7 +34,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
@@ -112,12 +110,7 @@ public class PathEditor {
   public JComponent createComponent() {
     myList = new JBList(getListModel());
     myList.setCellRenderer(createListCellRenderer(myList));
-    TreeUIHelper.getInstance().installListSpeedSearch(myList, new Convertor<Object, String>() {
-      @Override
-      public String convert(Object file) {
-        return ((VirtualFile)file).getPresentableUrl();
-      }
-    });
+    TreeUIHelper.getInstance().installListSpeedSearch(myList, file -> ((VirtualFile)file).getPresentableUrl());
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
       .disableUpDownActions()
@@ -330,21 +323,18 @@ public class PathEditor {
   }
 
   private static boolean isJarFile(final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        VirtualFile tempFile = file;
-        if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
-          //[myakovlev] It was bug - directories with *.jar extensions was saved as files of JarFileSystem.
-          //    so we can not just return true, we should filter such directories.
-          String path = file.getPath().substring(0, file.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
-          tempFile = LocalFileSystem.getInstance().findFileByPath(path);
-        }
-        if (tempFile != null && !tempFile.isDirectory()) {
-          return Boolean.valueOf(tempFile.getFileType().equals(FileTypes.ARCHIVE));
-        }
-        return Boolean.FALSE;
+    return ReadAction.compute(() -> {
+      VirtualFile tempFile = file;
+      if ((file.getFileSystem() instanceof JarFileSystem) && file.getParent() == null) {
+        //[myakovlev] It was bug - directories with *.jar extensions was saved as files of JarFileSystem.
+        //    so we can not just return true, we should filter such directories.
+        String path = file.getPath().substring(0, file.getPath().length() - JarFileSystem.JAR_SEPARATOR.length());
+        tempFile = LocalFileSystem.getInstance().findFileByPath(path);
       }
+      if (tempFile != null && !tempFile.isDirectory()) {
+        return Boolean.valueOf(tempFile.getFileType().equals(FileTypes.ARCHIVE));
+      }
+      return Boolean.FALSE;
     }).booleanValue();
   }
 

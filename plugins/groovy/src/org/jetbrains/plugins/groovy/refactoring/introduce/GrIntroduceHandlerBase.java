@@ -21,6 +21,7 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -32,7 +33,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -409,12 +413,9 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
   @NotNull
   protected static GrStatement findAnchor(@NotNull final GrIntroduceContext context, final boolean replaceAll) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<GrStatement>() {
-      @Override
-      public GrStatement compute() {
-        PsiElement[] occurrences = replaceAll ? context.getOccurrences() : new GrExpression[]{context.getExpression()};
-        return getAnchor(occurrences, context.getScope());
-      }
+    return ReadAction.compute(() -> {
+      PsiElement[] occurrences = replaceAll ? context.getOccurrences() : new GrExpression[]{context.getExpression()};
+      return getAnchor(occurrences, context.getScope());
     });
   }
 

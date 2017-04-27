@@ -75,12 +75,7 @@ public class GitRebaseUpdater extends GitUpdater {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
     List<String> params = singletonList(remoteBranch);
-    return myRebaser.rebase(myRoot, params, new Runnable() {
-      @Override
-      public void run() {
-        cancel();
-      }
-    }, null);
+    return myRebaser.rebase(myRoot, params, () -> cancel(), null);
   }
 
   @NotNull

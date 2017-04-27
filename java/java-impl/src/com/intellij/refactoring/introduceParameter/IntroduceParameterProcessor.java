@@ -52,7 +52,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -582,18 +581,16 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
   private void removeParametersFromCall(final PsiExpressionList argList) {
     final PsiExpression[] exprs = argList.getExpressions();
-    myParametersToRemove.forEachDescending(new TIntProcedure() {
-      public boolean execute(final int paramNum) {
-        if (paramNum < exprs.length) {
-          try {
-            exprs[paramNum].delete();
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+    myParametersToRemove.forEachDescending(paramNum -> {
+      if (paramNum < exprs.length) {
+        try {
+          exprs[paramNum].delete();
         }
-        return true;
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
+        }
       }
+      return true;
     });
   }
 

@@ -22,14 +22,13 @@ import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -83,15 +82,12 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         }
 
         if (fileInRoots(file)) {
-          PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-            @Override
-            public PsiClass[] compute() {
-              try {
-                return classOwner.getClasses();
-              }
-              catch (IndexNotReadyException e) {
-                return PsiClass.EMPTY_ARRAY;
-              }
+          PsiClass[] classes = ReadAction.compute(() -> {
+            try {
+              return classOwner.getClasses();
+            }
+            catch (IndexNotReadyException e) {
+              return PsiClass.EMPTY_ARRAY;
             }
           });
           if (classes.length == 1 && !(classes[0] instanceof SyntheticElement) &&

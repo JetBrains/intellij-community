@@ -40,7 +40,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -115,27 +114,24 @@ class RunConfigurable extends BaseConfigurable {
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-          return ((RunnerAndConfigurationSettingsImpl)userObject).getName();
-        }
-        else if (userObject instanceof SingleConfigurationConfigurable) {
-          return ((SingleConfigurationConfigurable)userObject).getNameText();
-        }
-        else {
-          if (userObject instanceof ConfigurationType) {
-            return ((ConfigurationType)userObject).getDisplayName();
-          }
-          else if (userObject instanceof String) {
-            return (String)userObject;
-          }
-        }
-        return o.toString();
+    new TreeSpeedSearch(myTree, o -> {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+        return ((RunnerAndConfigurationSettingsImpl)userObject).getName();
       }
+      else if (userObject instanceof SingleConfigurationConfigurable) {
+        return ((SingleConfigurationConfigurable)userObject).getNameText();
+      }
+      else {
+        if (userObject instanceof ConfigurationType) {
+          return ((ConfigurationType)userObject).getDisplayName();
+        }
+        else if (userObject instanceof String) {
+          return (String)userObject;
+        }
+      }
+      return o.toString();
     });
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override

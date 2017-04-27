@@ -39,7 +39,6 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.Consumer;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
@@ -151,12 +150,7 @@ public class GitUnstashDialog extends DialogWrapper {
                 h.unsilence();
               }
               catch (final VcsException ex) {
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
-                    GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine());
-                  }
-                }, current);
+                ApplicationManager.getApplication().invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
               }
             }
           });
@@ -259,12 +253,7 @@ public class GitUnstashDialog extends DialogWrapper {
     final DefaultListModel listModel = (DefaultListModel)myStashList.getModel();
     listModel.clear();
     VirtualFile root = getGitRoot();
-    GitStashUtils.loadStashStack(myProject, root, new Consumer<StashInfo>() {
-      @Override
-      public void consume(StashInfo stashInfo) {
-        listModel.addElement(stashInfo);
-      }
-    });
+    GitStashUtils.loadStashStack(myProject, root, stashInfo -> listModel.addElement(stashInfo));
     myBranches.clear();
     GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
     if (repository != null) {
@@ -342,13 +331,10 @@ public class GitUnstashDialog extends DialogWrapper {
     try {
       final Ref<GitCommandResult> result = Ref.create();
       final ProgressManager progressManager = ProgressManager.getInstance();
-      boolean completed = progressManager.runProcessWithProgressSynchronously(new Runnable() {
-        @Override
-        public void run() {
-          h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
-          Git git = Git.getInstance();
-          result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
-        }
+      boolean completed = progressManager.runProcessWithProgressSynchronously(() -> {
+        h.addLineListener(new GitHandlerUtil.GitLineHandlerListenerProgress(progressManager.getProgressIndicator(), h, "stash", false));
+        Git git = Git.getInstance();
+        result.set(git.runCommand(new Computable.PredefinedValueComputable<>(h)));
       }, GitBundle.getString("unstash.unstashing"), true, myProject);
 
       if (!completed) return;

@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.reference;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -142,7 +142,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public String getExternalName() {
-    return ApplicationManager.getApplication().runReadAction((Computable<String>)() -> {
+    return ReadAction.compute(() -> {
       PsiField psiField = getElement();
       return psiField != null ? PsiFormatUtil.getExternalName(psiField) : null;
     });

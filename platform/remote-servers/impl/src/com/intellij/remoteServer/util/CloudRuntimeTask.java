@@ -67,22 +67,18 @@ public abstract class CloudRuntimeTask<
 
     final AtomicReference<T> result = new AtomicReference<>();
 
-    final Progressive progressive = new Progressive() {
-
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicator.setIndeterminate(true);
-        while (!indicator.isCanceled()) {
-          if (semaphore.waitFor(500)) {
-            if (mySuccess.get()) {
-              UIUtil.invokeLaterIfNeeded(() -> {
-                if (disposable == null || !Disposer.isDisposed(disposable)) {
-                  postPerform(result.get());
-                }
-              });
-            }
-            break;
+    final Progressive progressive = indicator -> {
+      indicator.setIndeterminate(true);
+      while (!indicator.isCanceled()) {
+        if (semaphore.waitFor(500)) {
+          if (mySuccess.get()) {
+            UIUtil.invokeLaterIfNeeded(() -> {
+              if (disposable == null || !Disposer.isDisposed(disposable)) {
+                postPerform(result.get());
+              }
+            });
           }
+          break;
         }
       }
     };

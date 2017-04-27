@@ -1,6 +1,5 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -85,16 +84,13 @@ public class CCUtils {
                                           final String prefix,
                                           final int delta) {
     ArrayList<VirtualFile> dirsToRename = new ArrayList<>
-      (Collections2.filter(Arrays.asList(dirs), new Predicate<VirtualFile>() {
-        @Override
-        public boolean apply(VirtualFile dir) {
-          final StudyItem item = getStudyItem.fun(dir);
-          if (item == null) {
-            return false;
-          }
-          int index = item.getIndex();
-          return index > threshold;
+      (Collections2.filter(Arrays.asList(dirs), dir -> {
+        final StudyItem item = getStudyItem.fun(dir);
+        if (item == null) {
+          return false;
         }
+        int index = item.getIndex();
+        return index > threshold;
       }));
     Collections.sort(dirsToRename, (o1, o2) -> {
       StudyItem item1 = getStudyItem.fun(o1);

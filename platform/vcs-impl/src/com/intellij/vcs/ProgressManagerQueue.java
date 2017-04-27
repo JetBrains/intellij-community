@@ -71,12 +71,9 @@ public class ProgressManagerQueue {
       }
     }
     else {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          if (!myProject.isDisposed()) {
-            myProgressManager.run(myQueuePollTask);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          myProgressManager.run(myQueuePollTask);
         }
       });
     }

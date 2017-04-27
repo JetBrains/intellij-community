@@ -23,11 +23,10 @@ package com.theoryinpractice.testng.configuration;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.testframework.SearchForTestsTask;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiClass;
@@ -37,7 +36,6 @@ import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
 import com.theoryinpractice.testng.model.TestType;
 import com.theoryinpractice.testng.util.TestNGUtil;
-import org.jetbrains.annotations.Nullable;
 import org.testng.TestNGXmlSuiteHelper;
 import org.testng.xml.LaunchSuite;
 import org.testng.xml.Parser;
@@ -124,14 +122,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
           }
         }
       }
-      final String className = ApplicationManager.getApplication().runReadAction(
-        new Computable<String>() {
-          @Nullable
-          public String compute() {
-            return ClassUtil.getJVMClassName(entry.getKey());
-          }
-        }
-      );
+      final String className = ReadAction.compute(() -> ClassUtil.getJVMClassName(entry.getKey()));
       if (className != null) {
         map.put(className, methods);
       }

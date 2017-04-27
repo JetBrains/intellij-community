@@ -35,7 +35,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -43,12 +43,14 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.*;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -553,21 +555,18 @@ public class FindManagerImpl extends FindManager {
         Set<Language> relevantLanguages;
         if (lang != null) {
           final Language finalLang = lang;
-          relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
-            @Override
-            public Set<Language> compute() {
-              THashSet<Language> result = new THashSet<>();
+          relevantLanguages = ReadAction.compute(() -> {
+            THashSet<Language> result = new THashSet<>();
 
-              FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
-              if (viewProvider != null) {
-                result.addAll(viewProvider.getLanguages());
-              }
-
-              if (result.isEmpty()) {
-                result.add(finalLang);
-              }
-              return result;
+            FileViewProvider viewProvider = PsiManager.getInstance(myProject).findViewProvider(file);
+            if (viewProvider != null) {
+              result.addAll(viewProvider.getLanguages());
             }
+
+            if (result.isEmpty()) {
+              result.add(finalLang);
+            }
+            return result;
           });
 
           for (Language relevantLanguage : relevantLanguages) {

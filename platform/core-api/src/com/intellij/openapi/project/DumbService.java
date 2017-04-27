@@ -18,6 +18,7 @@ package com.intellij.openapi.project;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -121,7 +122,7 @@ public abstract class DumbService {
 
     while (true) {
       waitForSmartMode();
-      boolean success = ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> {
+      boolean success = ReadAction.compute(() -> {
         if (isDumb()) {
           return false;
         }

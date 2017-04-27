@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vcs.checkin.HackSearch;
-import com.intellij.util.containers.Convertor;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -34,17 +33,7 @@ public class HackSearchTest extends TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    mySearch = new HackSearch<>(new Convertor<T, Z>() {
-      @Override
-      public Z convert(T o) {
-        return new Z(o.getInt());
-      }
-    }, new Convertor<S, Z>() {
-      @Override
-      public Z convert(S o) {
-        return new Z(o.getInt());
-      }
-    }, new ZComparator());
+    mySearch = new HackSearch<>(o -> new Z(o.getInt()), o -> new Z(o.getInt()), new ZComparator());
   }
 
   public void testSimple() throws Exception {

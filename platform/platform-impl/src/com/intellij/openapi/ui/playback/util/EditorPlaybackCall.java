@@ -69,22 +69,19 @@ public class EditorPlaybackCall {
     result.doWhenProcessed(() -> Disposer.dispose(connection));
 
 
-    WindowSystemPlaybackCall.findProject().doWhenDone(new Consumer<Project>() {
-      @Override
-      public void consume(Project project) {
-        final MessageBusConnection bus = project.getMessageBus().connect(connection);
-        bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
-          @Override
-          public void daemonFinished() {
-            context.flushAwtAndRunInEdt(result.createSetDoneRunnable());
-          }
+    WindowSystemPlaybackCall.findProject().doWhenDone((Consumer<Project>)project -> {
+      final MessageBusConnection bus = project.getMessageBus().connect(connection);
+      bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
+        @Override
+        public void daemonFinished() {
+          context.flushAwtAndRunInEdt(result.createSetDoneRunnable());
+        }
 
-          @Override
-          public void daemonCancelEventOccurred(@NotNull String reason) {
-            result.setDone();
-          }
-        });
-      }
+        @Override
+        public void daemonCancelEventOccurred(@NotNull String reason) {
+          result.setDone();
+        }
+      });
     }).doWhenRejected(() -> result.setRejected("Cannot find project"));
     
     return result;

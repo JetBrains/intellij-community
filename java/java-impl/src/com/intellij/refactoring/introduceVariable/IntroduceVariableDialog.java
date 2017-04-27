@@ -122,11 +122,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
 
   protected JComponent createNorthPanel() {
     myNameField = new NameSuggestionsField(myProject);
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        updateOkStatus();
-      }
-    };
+    myNameChangedListener = () -> updateOkStatus();
     myNameField.addDataChangedListener(myNameChangedListener);
 
     JPanel panel = new JPanel(new GridBagLayout());

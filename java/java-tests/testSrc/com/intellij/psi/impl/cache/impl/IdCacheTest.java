@@ -36,7 +36,6 @@ import com.intellij.util.ArrayUtil;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Comparator;
 
 public class IdCacheTest extends CodeInsightTestCase{
 
@@ -245,13 +244,10 @@ public class IdCacheTest extends CodeInsightTestCase{
     assertEquals(expected.length, result.length);
     
     Arrays.sort(expected);
-    Arrays.sort(result, new Comparator() {
-      @Override
-      public int compare(Object o1, Object o2) {
-        VirtualFile file1 = (VirtualFile)o1;
-        VirtualFile file2 = (VirtualFile)o2;
-        return file1.getName().compareTo(file2.getName());
-      }
+    Arrays.sort(result, (o1, o2) -> {
+      VirtualFile file1 = (VirtualFile)o1;
+      VirtualFile file2 = (VirtualFile)o2;
+      return file1.getName().compareTo(file2.getName());
     });
 
     for(int i = 0; i < expected.length; i++){

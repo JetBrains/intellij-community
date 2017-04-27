@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
@@ -199,21 +197,13 @@ public class PathsVerifier<BinaryType extends FilePatch> {
   @NotNull
   public Collection<FilePatch> filterBadFileTypePatches() {
     List<Pair<VirtualFile, ApplyTextFilePatch>> failedTextPatches =
-      ContainerUtil.findAll(myTextPatches, new Condition<Pair<VirtualFile, ApplyTextFilePatch>>() {
-        @Override
-        public boolean value(Pair<VirtualFile, ApplyTextFilePatch> textPatch) {
-          final VirtualFile file = textPatch.getFirst();
-          if (file.isDirectory()) return false;
-          return !isFileTypeOk(file);
-        }
+      ContainerUtil.findAll(myTextPatches, textPatch -> {
+        final VirtualFile file = textPatch.getFirst();
+        if (file.isDirectory()) return false;
+        return !isFileTypeOk(file);
       });
     myTextPatches.removeAll(failedTextPatches);
-    return ContainerUtil.map(failedTextPatches, new Function<Pair<VirtualFile, ApplyTextFilePatch>, FilePatch>() {
-      @Override
-      public FilePatch fun(Pair<VirtualFile, ApplyTextFilePatch> patchInfo) {
-        return patchInfo.getSecond().getPatch();
-      }
-    });
+    return ContainerUtil.map(failedTextPatches, patchInfo -> patchInfo.getSecond().getPatch());
   }
 
   private boolean isFileTypeOk(@NotNull VirtualFile file) {

@@ -1,9 +1,7 @@
 package com.intellij.tasks.jira.jql.codeinsight;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,12 +63,8 @@ public enum JqlStandardFunction {
 
   private static final JqlStandardFunction[] VALUES = values();
 
-  private static final Map<String, JqlStandardFunction> NAME_LOOKUP = ContainerUtil.newMapFromValues(ContainerUtil.iterate(VALUES), new Convertor<JqlStandardFunction, String>() {
-    @Override
-    public String convert(JqlStandardFunction field) {
-      return field.getName();
-    }
-  });
+  private static final Map<String, JqlStandardFunction> NAME_LOOKUP = ContainerUtil.newMapFromValues(ContainerUtil.iterate(VALUES),
+                                                                                                     field -> field.getName());
 
   public static JqlStandardFunction byName(@NotNull String name) {
     return NAME_LOOKUP.get(name);

@@ -91,13 +91,10 @@ public class FileTypeConfigurable extends BaseConfigurable implements Searchable
 
   private void updateFileTypeList() {
     FileType[] types = myTempFileTypes.toArray(new FileType[myTempFileTypes.size()]);
-    Arrays.sort(types, new Comparator() {
-      @Override
-      public int compare(@NotNull Object o1, @NotNull Object o2) {
-        FileType fileType1 = (FileType)o1;
-        FileType fileType2 = (FileType)o2;
-        return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
-      }
+    Arrays.sort(types, (o1, o2) -> {
+      FileType fileType1 = (FileType)o1;
+      FileType fileType2 = (FileType)o2;
+      return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
     });
     myRecognizedFileType.setFileTypes(types);
   }

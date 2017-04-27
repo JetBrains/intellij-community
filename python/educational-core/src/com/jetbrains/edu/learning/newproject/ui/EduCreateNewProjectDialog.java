@@ -20,13 +20,12 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -127,10 +126,9 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
 
     projectGenerator.setCourse(myCourse);
 
-    final VirtualFile baseDir = ApplicationManager.getApplication()
-      .runWriteAction((Computable<VirtualFile>)() ->
-        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(directory)
-      );
+    final VirtualFile baseDir = WriteAction.compute(() ->
+                                                      LocalFileSystem.getInstance()
+                                                        .refreshAndFindFileByIoFile(directory));
 
     if (baseDir == null) {
       LOG.error("Couldn't find '" + directory + "' in VFS");

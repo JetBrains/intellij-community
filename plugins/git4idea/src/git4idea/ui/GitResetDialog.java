@@ -94,11 +94,8 @@ public class GitResetDialog extends DialogWrapper {
     myResetTypeComboBox.addItem(HARD);
     myResetTypeComboBox.setSelectedItem(MIXED);
     GitUIUtil.setupRootChooser(project, roots, defaultRoot, myGitRootComboBox, myCurrentBranchLabel);
-    myGitReferenceValidator = new GitReferenceValidator(myProject, myGitRootComboBox, myCommitTextField, myValidateButton, new Runnable() {
-      public void run() {
-        validateFields();
-      }
-    });
+    myGitReferenceValidator = new GitReferenceValidator(myProject, myGitRootComboBox, myCommitTextField, myValidateButton,
+                                                        () -> validateFields());
     init();
   }
 

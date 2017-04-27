@@ -381,12 +381,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     if (LOG.isDebugEnabled()) {
-      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, new Comparator<OrderEntry>() {
-        @Override
-        public int compare(OrderEntry o1, OrderEntry o2) {
-          return o1.compareTo(o2);
-        }
-      });
+      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, (Comparator<OrderEntry>)(o1, o2) -> o1.compareTo(o2));
       LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);

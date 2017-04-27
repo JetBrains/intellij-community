@@ -18,7 +18,7 @@ package com.intellij.psi;
 import com.google.common.util.concurrent.Atomics;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,7 +31,6 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -652,8 +651,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     public CharSequence getText() {
       String content = myContent;
       if (content == null) {
-        myContent = content = ApplicationManager.getApplication().runReadAction(
-          (Computable<String>)() -> myFile.calcTreeElement().getText());
+        myContent = content = ReadAction.compute(() -> myFile.calcTreeElement().getText());
       }
       return content;
     }

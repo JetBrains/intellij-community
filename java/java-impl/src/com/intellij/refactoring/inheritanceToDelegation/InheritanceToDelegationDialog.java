@@ -271,11 +271,7 @@ public class InheritanceToDelegationDialog extends RefactoringDialog {
     @NonNls final String suggestion = "My" + targetClass.getName();
     myInnerClassNameField.setSuggestions(new String[]{suggestion});
 
-    myDataChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myDataChangedListener = () -> validateButtons();
     myInnerClassNameField.addDataChangedListener(myDataChangedListener);
     myFieldNameField.addDataChangedListener(myDataChangedListener);
 

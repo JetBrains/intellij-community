@@ -38,27 +38,24 @@ public class SocketServer {
     myServerSocket = new ServerSocket(0);
     int port = myServerSocket.getLocalPort();
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          boolean _continue = true;
-          while (_continue) {
-            Socket socket = myServerSocket.accept();
-            try {
-              _continue = myProtocol.handleConnection(socket);
-            }
-            finally {
-              socket.close();
-            }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        boolean _continue = true;
+        while (_continue) {
+          Socket socket = myServerSocket.accept();
+          try {
+            _continue = myProtocol.handleConnection(socket);
+          }
+          finally {
+            socket.close();
           }
         }
-        catch (SocketException e) {
-          //socket was closed, that's OK
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e); //TODO implement catch clause
-        }
+      }
+      catch (SocketException e) {
+        //socket was closed, that's OK
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e); //TODO implement catch clause
       }
     });
 

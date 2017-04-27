@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.Executor;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.test.GitSingleRepoTest;
 
@@ -121,12 +120,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
     createCrlfFile("src/win7");
 
     List<VirtualFile> files = ContainerUtil.map(asList("unix", "win1", "win2", "win3", "src/win4", "src/win5", "src/win6", "src/win7"),
-      new Function<String, VirtualFile>() {
-        @Override
-        public VirtualFile fun(String s) {
-          return VfsUtil.findFileByIoFile(new File(myProjectRoot.getPath(), s), true);
-        }
-    });
+                                                s -> VfsUtil.findFileByIoFile(new File(myProjectRoot.getPath(), s), true));
     assertTrue("Warning should be done, since one of the files has CRLFs and no related attributes",
                GitCrlfProblemsDetector.detect(myProject, myGit, files).shouldWarn());
   }

@@ -142,13 +142,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
 
     if (element instanceof PsiMethod) {
       final String className = ApplicationManager.getApplication().runReadAction(
-        new NullableComputable<String>() {
-          @Override
-          @Nullable
-          public String compute() {
-            PsiClass aClass = ((PsiMethod)element).getContainingClass();
-            return aClass == null ? null : aClass.getQualifiedName();
-          }
+        (NullableComputable<String>)() -> {
+          PsiClass aClass = ((PsiMethod)element).getContainingClass();
+          return aClass == null ? null : aClass.getQualifiedName();
         }
       );
       Matcher matcher = ourMethodHeading.matcher(externalDoc);

@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -47,18 +46,15 @@ public class TodoForExistingFile extends TodoForRanges {
   }
 
   protected TodoItemData[] getTodoItems() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<TodoItemData[]>() {
-      @Override
-      public TodoItemData[] compute() {
-        final PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
+    return ReadAction.compute(() -> {
+      final PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
 
-        PsiFile psiFile = myFile == null ? null : PsiManager.getInstance(myProject).findFile(myFile);
-        if (psiFile != null) {
-          return TodoForBaseRevision.convertTodo(helper.findTodoItems(psiFile));
-        }
-
-        return TodoForBaseRevision.convertTodo(getTodoForText(helper));
+      PsiFile psiFile = myFile == null ? null : PsiManager.getInstance(myProject).findFile(myFile);
+      if (psiFile != null) {
+        return TodoForBaseRevision.convertTodo(helper.findTodoItems(psiFile));
       }
+
+      return TodoForBaseRevision.convertTodo(getTodoForText(helper));
     });
   }
 }

@@ -144,11 +144,9 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     if (tabbedPane != null) {
       final JPanel panel = new JPanel();
       panel.add(tabbedPane);
-      return new VcsCommittedViewAuxiliary(actions, new Runnable() {
-        public void run() {
-          for (Runnable runnable : calledOnDispose) {
-            runnable.run();
-          }
+      return new VcsCommittedViewAuxiliary(actions, () -> {
+        for (Runnable runnable : calledOnDispose) {
+          runnable.run();
         }
       }, toolbarActions);
     }

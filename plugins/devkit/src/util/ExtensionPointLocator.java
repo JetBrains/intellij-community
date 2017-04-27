@@ -20,7 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -78,13 +77,10 @@ public class ExtensionPointLocator {
 
     Project project = psiClass.getProject();
     GlobalSearchScope scope = getCandidatesScope(project);
-    PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
-      @Override
-      public boolean process(PsiFile file, int startOffset, int endOffset) {
-        PsiElement element = file.findElementAt(startOffset);
-        processExtensionPointCandidate(element, list);
-        return true;
-      }
+    PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
+      PsiElement element = file.findElementAt(startOffset);
+      processExtensionPointCandidate(element, list);
+      return true;
     }, scope);
   }
 
@@ -100,17 +96,14 @@ public class ExtensionPointLocator {
 
     Project project = psiClass.getProject();
     GlobalSearchScope scope = getCandidatesScope(project);
-    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
-      @Override
-      public boolean process(PsiFile file, int startOffset, int endOffset) {
-        PsiElement at = file.findElementAt(startOffset);
-        String tokenText = at instanceof XmlToken ? at.getText() : null;
-        if (!StringUtil.equals(name, tokenText)) return true;
-        XmlTag tag = PsiTreeUtil.getParentOfType(at, XmlTag.class);
-        if (tag == null) return true;
-        DomElement dom = DomUtil.getDomElement(tag);
-        return !(dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null);
-      }
+    return !PsiSearchHelper.SERVICE.getInstance(project).processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
+      PsiElement at = file.findElementAt(startOffset);
+      String tokenText = at instanceof XmlToken ? at.getText() : null;
+      if (!StringUtil.equals(name, tokenText)) return true;
+      XmlTag tag = PsiTreeUtil.getParentOfType(at, XmlTag.class);
+      if (tag == null) return true;
+      DomElement dom = DomUtil.getDomElement(tag);
+      return !(dom instanceof Extension && ((Extension)dom).getExtensionPoint() != null);
     }, scope);
   }
 

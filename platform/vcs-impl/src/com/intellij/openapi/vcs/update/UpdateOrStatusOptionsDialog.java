@@ -50,11 +50,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     else {
       myMainPanel = new JBTabbedPane();
       final ArrayList<AbstractVcs> vcses = new ArrayList<>(confs.values());
-      Collections.sort(vcses, new Comparator<AbstractVcs>() {
-        public int compare(final AbstractVcs o1, final AbstractVcs o2) {
-          return o1.getDisplayName().compareTo(o2.getDisplayName());
-        }
-      });
+      Collections.sort(vcses, (o1, o2) -> o1.getDisplayName().compareTo(o2.getDisplayName()));
       Map<AbstractVcs, Configurable> vcsToConfigurable = revertMap(confs);
       for (AbstractVcs vcs : vcses) {
         addComponent(vcs, vcsToConfigurable.get(vcs), vcs.getDisplayName());

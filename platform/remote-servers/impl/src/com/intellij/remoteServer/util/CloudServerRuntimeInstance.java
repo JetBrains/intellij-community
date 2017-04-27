@@ -15,7 +15,6 @@
  */
 package com.intellij.remoteServer.util;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.util.CloudAgent;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
@@ -24,8 +23,6 @@ import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguratio
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
-import com.intellij.util.Function;
-import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -109,16 +106,12 @@ public abstract class CloudServerRuntimeInstance
   }
 
   protected List<CloudApplicationRuntime> getApplications() throws ServerRuntimeException {
-    return getAgentTaskExecutor().execute(new Computable<List<CloudApplicationRuntime>>() {
-
-      @Override
-      public List<CloudApplicationRuntime> compute() {
-        CloudRemoteApplication[] applications = getAgent().getApplications();
-        if (applications == null) {
-          return Collections.emptyList();
-        }
-        return ContainerUtil.map(applications, application -> createApplicationRuntime(application));
+    return getAgentTaskExecutor().execute(() -> {
+      CloudRemoteApplication[] applications = getAgent().getApplications();
+      if (applications == null) {
+        return Collections.emptyList();
       }
+      return ContainerUtil.map(applications, application -> createApplicationRuntime(application));
     });
   }
 

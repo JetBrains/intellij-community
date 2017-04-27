@@ -155,12 +155,7 @@ public class ExistingTemplatesComponent {
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     historyList.setSelectedIndex(0);
 
-    final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, new Convertor<Object, String>() {
-      @Override
-      public String convert(Object o) {
-        return o instanceof Configuration ? ((Configuration)o).getName() : o.toString();
-      }
-    });
+    final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, (Convertor<Object, String>)o -> o instanceof Configuration ? ((Configuration)o).getName() : o.toString());
     historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
     configureSelectTemplateAction(historyList);
   }
@@ -209,11 +204,9 @@ public class ExistingTemplatesComponent {
 
     final TreeSpeedSearch speedSearch = new TreeSpeedSearch(
       tree,
-      new Convertor<TreePath, String>() {
-        public String convert(TreePath object) {
-          final Object userObject = ((DefaultMutableTreeNode)object.getLastPathComponent()).getUserObject();
-          return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
-        }
+      object -> {
+        final Object userObject = ((DefaultMutableTreeNode)object.getLastPathComponent()).getUserObject();
+        return (userObject instanceof Configuration) ? ((Configuration)userObject).getName() : userObject.toString();
       }
     );
     tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));

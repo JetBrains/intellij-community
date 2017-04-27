@@ -25,7 +25,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider;
@@ -73,17 +72,9 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
   }
 
   private void sendUpdateCachedListsMessage(final VirtualFile vcsRoot) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
-                                              myProject, vcsRoot);
-      }
-    }, new Condition() {
-      @Override
-      public boolean value(Object o) {
-        return (! myProject.isOpen()) || myProject.isDisposed() || myComponent == null;
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> myComponent.passCachedListsToListener(myBus.syncPublisher(VcsConfigurationChangeListener.BRANCHES_CHANGED_RESPONSE),
+                                                myProject, vcsRoot), o -> (! myProject.isOpen()) || myProject.isDisposed() || myComponent == null);
   }
 
   public JComponent initContent() {
@@ -103,11 +94,9 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
   private class MyVcsListener implements VcsListener {
     public void directoryMappingChanged() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (!myProject.isDisposed()) {
-            updateChangesContent();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          updateChangesContent();
         }
       });
     }
@@ -120,11 +109,9 @@ public class CommittedChangesViewManager implements ChangesViewContentProvider {
 
     @Override
     public void presentationChanged() {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          if (myComponent != null && !myProject.isDisposed()) {
-            myComponent.refreshChanges(true);
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myComponent != null && !myProject.isDisposed()) {
+          myComponent.refreshChanges(true);
         }
       });
     }

@@ -175,12 +175,7 @@ public class RefResolveServiceImpl extends RefResolveService implements Runnable
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         fileCount.set(0);
-        List<VirtualFile> files = ContainerUtil.mapNotNull(events, new Function<VFileEvent, VirtualFile>() {
-          @Override
-          public VirtualFile fun(VFileEvent event) {
-            return event.getFile();
-          }
-        });
+        List<VirtualFile> files = ContainerUtil.mapNotNull(events, (Function<VFileEvent, VirtualFile>)event -> event.getFile());
         queue(files, "VFS events " + events.size());
       }
     });

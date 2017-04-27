@@ -1390,39 +1390,36 @@ public class AbstractTreeUi {
           }
 
           collectNodesToInsert(descriptor, elementToIndexMap, node, expanded, loadedChildren)
-            .doWhenDone(new Consumer<List<TreeNode>>() {
-              @Override
-              public void consume(@NotNull final List<TreeNode> nodesToInsert) {
-                insertNodesInto(nodesToInsert, node);
-                ActionCallback callback = updateNodesToInsert(nodesToInsert, pass, canSmartExpand, isChildNodeForceUpdate(node, forceUpdate, expanded));
-                callback.doWhenDone(new TreeRunnable("AbstractTreeUi.updateNodeChildrenNow: on done updateNodesToInsert") {
-                  @Override
-                  public void perform() {
-                    removeLoading(node, false);
-                    removeFromUpdatingChildren(node);
+            .doWhenDone((Consumer<List<TreeNode>>)nodesToInsert -> {
+              insertNodesInto(nodesToInsert, node);
+              ActionCallback callback = updateNodesToInsert(nodesToInsert, pass, canSmartExpand, isChildNodeForceUpdate(node, forceUpdate, expanded));
+              callback.doWhenDone(new TreeRunnable("AbstractTreeUi.updateNodeChildrenNow: on done updateNodesToInsert") {
+                @Override
+                public void perform() {
+                  removeLoading(node, false);
+                  removeFromUpdatingChildren(node);
 
-                    if (node.getChildCount() > 0) {
-                      if (expanded) {
-                        expand(node, canSmartExpand);
-                      }
+                  if (node.getChildCount() > 0) {
+                    if (expanded) {
+                      expand(node, canSmartExpand);
                     }
-
-                    if (!canInitiateNewActivity()) {
-                      throw new ProcessCanceledException();
-                    }
-
-                    final Object element = getElementFor(node);
-                    addNodeAction(element, new NodeAction() {
-                      @Override
-                      public void onReady(@NotNull final DefaultMutableTreeNode node) {
-                        removeLoading(node, false);
-                      }
-                    }, false);
-
-                    processNodeActionsIfReady(node);
                   }
-                });
-              }
+
+                  if (!canInitiateNewActivity()) {
+                    throw new ProcessCanceledException();
+                  }
+
+                  final Object element = getElementFor(node);
+                  addNodeAction(element, new NodeAction() {
+                    @Override
+                    public void onReady(@NotNull final DefaultMutableTreeNode node1) {
+                      removeLoading(node1, false);
+                    }
+                  }, false);
+
+                  processNodeActionsIfReady(node);
+                }
+              });
             }).doWhenProcessed(new TreeRunnable("AbstractTreeUi.updateNodeChildrenNow: on processed collectNodesToInsert") {
             @Override
             public void perform() {
@@ -3978,17 +3975,12 @@ public class AbstractTreeUi {
 
     myRevalidatedObjects.add(element);
     getBuilder().revalidateElement(element)
-      .doWhenDone(new Consumer<Object>() {
+      .doWhenDone((Consumer<Object>)o -> invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on done revalidateElement") {
         @Override
-        public void consume(final Object o) {
-          invokeLaterIfNeeded(false, new TreeRunnable("AbstractTreeUi.checkPathAndMaybeRevalidate: on done revalidateElement") {
-            @Override
-            public void perform() {
-              _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
-            }
-          });
+        public void perform() {
+          _expand(o, onDone, parentsOnly, checkIfInStructure, canSmartExpand);
         }
-      }).doWhenRejected(wrapDone(onDone, "AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement"));
+      })).doWhenRejected(wrapDone(onDone, "AbstractTreeUi.checkPathAndMaybeRevalidate: on rejected revalidateElement"));
   }
 
   public void scrollSelectionToVisible(@Nullable final Runnable onDone, final boolean shouldBeCentered) {

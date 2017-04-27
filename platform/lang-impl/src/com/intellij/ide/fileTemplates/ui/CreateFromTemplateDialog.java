@@ -24,11 +24,11 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.psi.PsiDirectory;
@@ -127,12 +127,8 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       PsiDirectory directory = myDirectory;
       if (fileName != null) {
         final String finalFileName = fileName;
-        CreateFileAction.MkDirs mkDirs = ApplicationManager.getApplication().runWriteAction(new Computable<CreateFileAction.MkDirs>() {
-            @Override
-            public CreateFileAction.MkDirs compute() {
-              return new CreateFileAction.MkDirs(finalFileName, myDirectory);
-            }
-          });
+        CreateFileAction.MkDirs mkDirs =
+          WriteAction.compute(() -> new CreateFileAction.MkDirs(finalFileName, myDirectory));
         newName = mkDirs.newName;
         directory = mkDirs.directory;
       }

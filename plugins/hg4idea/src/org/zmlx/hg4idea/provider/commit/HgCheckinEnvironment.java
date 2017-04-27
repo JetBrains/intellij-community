@@ -198,16 +198,12 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
   private boolean mayCommitEverything(final String filesNotIncludedString) {
     final int[] choice = new int[1];
-    Runnable runnable = new Runnable() {
-      public void run() {
-        choice[0] = Messages.showOkCancelDialog(
-          myProject,
-          HgVcsMessages.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
-          HgVcsMessages.message("hg4idea.commit.partial.merge.title"),
-          null
-        );
-      }
-    };
+    Runnable runnable = () -> choice[0] = Messages.showOkCancelDialog(
+      myProject,
+      HgVcsMessages.message("hg4idea.commit.partial.merge.message", filesNotIncludedString),
+      HgVcsMessages.message("hg4idea.commit.partial.merge.title"),
+      null
+    );
     ApplicationManager.getApplication().invokeAndWait(runnable);
     return choice[0] == Messages.OK;
   }

@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
@@ -114,12 +113,9 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   private boolean isIgnoredByVcs(final VirtualFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        checkIfDisposed();
-        return myVcsManager.isIgnored(file);
-      }
+    return ReadAction.compute(() -> {
+      checkIfDisposed();
+      return myVcsManager.isIgnored(file);
     });
   }
 

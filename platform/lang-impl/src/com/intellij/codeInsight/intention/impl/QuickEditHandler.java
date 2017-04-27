@@ -59,7 +59,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -358,12 +357,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     final String text = myNewDocument.getText();
     final Map<PsiLanguageInjectionHost, Set<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>>> map = ContainerUtil
       .classify(myMarkers.iterator(),
-                new Convertor<Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer>, PsiLanguageInjectionHost>() {
-                  @Override
-                  public PsiLanguageInjectionHost convert(final Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> o) {
-                    final PsiElement element = o.third.getElement();
-                    return (PsiLanguageInjectionHost)element;
-                  }
+                o -> {
+                  final PsiElement element = o.third.getElement();
+                  return (PsiLanguageInjectionHost)element;
                 });
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
     documentManager.commitDocument(myOrigDocument); // commit here and after each manipulator update

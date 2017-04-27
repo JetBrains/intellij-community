@@ -152,12 +152,9 @@ public class CompilerPaths {
         outPathUrl = url != null ? url : extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            final String url = extension.getCompilerOutputUrlForTests();
-            return url != null ? url : extension.getCompilerOutputUrl();
-          }
+        outPathUrl = application.runReadAction((Computable<String>)() -> {
+          final String url = extension.getCompilerOutputUrlForTests();
+          return url != null ? url : extension.getCompilerOutputUrl();
         });
       }
     }
@@ -166,12 +163,7 @@ public class CompilerPaths {
         outPathUrl = extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return extension.getCompilerOutputUrl();
-          }
-        });
+        outPathUrl = application.runReadAction((Computable<String>)() -> extension.getCompilerOutputUrl());
       }
     }
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
