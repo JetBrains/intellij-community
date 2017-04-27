@@ -102,7 +102,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     "LOCAL_CHANGE_LISTS_LOADED", LocalChangeListsLoadedListener.class);
 
   private boolean myShowLocalChangesInvalidated;
-  private final AtomicReference<String> myFreezeName;
+  private volatile String myFreezeName;
 
   // notifies myListeners on the same thread that local changes update is done
   private final DelayedNotificator myDelayedNotificator;
@@ -130,8 +130,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
     myProject = project;
     myConfig = config;
-    myFreezeName = new AtomicReference<>(null);
-    myAdditionalInfo = null;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
@@ -368,7 +366,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     invokeAfterUpdate(() -> {
       myUpdater.setIgnoreBackgroundOperation(false);
       myUpdater.pause();
-      myFreezeName.set(reason);
+      myFreezeName = reason;
       sem.up();
     }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, "", ModalityState.defaultModalityState());
 
@@ -383,12 +381,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public void unfreeze() {
     myUpdater.go();
-    myFreezeName.set(null);
+    myFreezeName = null;
   }
 
   @Override
   public String isFreezed() {
-    return myFreezeName.get();
+    return myFreezeName;
   }
 
   public void executeOnUpdaterThread(@NotNull Runnable r) {
