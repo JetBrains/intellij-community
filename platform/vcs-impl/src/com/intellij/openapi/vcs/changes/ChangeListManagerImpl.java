@@ -106,7 +106,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull private final Collection<LocalChangeList> myListsToBeDeleted = new HashSet<>();
   private boolean myModalNotificationsBlocked;
 
-  private final List<CommitExecutor> myExecutors = new ArrayList<>();
+  private final List<CommitExecutor> myRegisteredCommitExecutors = new ArrayList<>();
 
   private boolean myExcludedConvertedToIgnored;
 
@@ -1238,7 +1238,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public void registerCommitExecutor(@NotNull CommitExecutor executor) {
-    myExecutors.add(executor);
+    myRegisteredCommitExecutors.add(executor);
   }
 
   @Override
@@ -1314,7 +1314,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull
   @Override
   public List<CommitExecutor> getRegisteredExecutors() {
-    return Collections.unmodifiableList(myExecutors);
+    return Collections.unmodifiableList(myRegisteredCommitExecutors);
   }
 
   private static class MyDirtyFilesScheduler {
