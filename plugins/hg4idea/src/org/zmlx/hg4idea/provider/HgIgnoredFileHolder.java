@@ -33,15 +33,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder, ChangesViewRefresher {
+public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder {
   private final Project myProject;
-  private final HgVcs myVcs;
   private final Map<HgRepository, HgLocalIgnoredHolder> myVcsIgnoredHolderMap;
 
   public HgIgnoredFileHolder(Project project) {
     myProject = project;
-    myVcs = HgVcs.getInstance(myProject);
     myVcsIgnoredHolderMap = ContainerUtil.newHashMap();
+    for (HgRepository repository : HgUtil.getRepositoryManager(myProject).getRepositories()) {
+      myVcsIgnoredHolderMap.put(repository, repository.getLocalIgnoredHolder());
+    }
   }
 
   @Override
@@ -73,9 +74,7 @@ public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder, ChangesViewRe
 
   @Override
   public FileHolder copy() {
-    final HgIgnoredFileHolder result = new HgIgnoredFileHolder(myProject);
-    result.myVcsIgnoredHolderMap.putAll(myVcsIgnoredHolderMap);
-    return result;
+    return new HgIgnoredFileHolder(myProject); // re-scan roots on refresh
   }
 
   @Override
@@ -85,10 +84,6 @@ public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder, ChangesViewRe
 
   @Override
   public void notifyVcsStarted(AbstractVcs scope) {
-    myVcsIgnoredHolderMap.clear();
-    for (HgRepository repository : HgUtil.getRepositoryManager(myProject).getRepositories()) {
-      myVcsIgnoredHolderMap.put(repository, repository.getLocalIgnoredHolder());
-    }
   }
 
   @Override
@@ -96,14 +91,30 @@ public class HgIgnoredFileHolder implements VcsIgnoredFilesHolder, ChangesViewRe
     return myVcsIgnoredHolderMap.values().stream().anyMatch(HgLocalIgnoredHolder::isInUpdateMode);
   }
 
-  @NotNull
-  @Override
-  public AbstractVcs getVcs() {
-    return myVcs;
-  }
+  public static class Provider implements VcsIgnoredFilesHolder.Provider, ChangesViewRefresher {
+    private final Project myProject;
+    private final HgVcs myVcs;
 
-  @Override
-  public void refresh(Project project) {
-    HgUtil.getRepositoryManager(project).getRepositories().forEach(r -> r.getLocalIgnoredHolder().startRescan());
+    public Provider(Project project) {
+      myProject = project;
+      myVcs = HgVcs.getInstance(myProject);
+    }
+
+    @NotNull
+    @Override
+    public AbstractVcs getVcs() {
+      return myVcs;
+    }
+
+    @NotNull
+    @Override
+    public VcsIgnoredFilesHolder createHolder() {
+      return new HgIgnoredFileHolder(myProject);
+    }
+
+    @Override
+    public void refresh(Project project) {
+      HgUtil.getRepositoryManager(project).getRepositories().forEach(r -> r.getLocalIgnoredHolder().startRescan());
+    }
   }
 }

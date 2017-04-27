@@ -57,7 +57,7 @@
                     interface="com.intellij.openapi.vcs.impl.VcsBaseContentProvider"
                     area="IDEA_PROJECT"/>
 
-    <extensionPoint name="vcs.ignoredFilesHolder" interface="com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder" area="IDEA_PROJECT"/>
+    <extensionPoint name="vcs.ignoredFilesHolder" interface="com.intellij.openapi.vcs.changes.VcsIgnoredFilesHolder$Provider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="vcsPopupProvider"
                     interface="com.intellij.openapi.vcs.actions.VcsQuickListContentProvider"/>

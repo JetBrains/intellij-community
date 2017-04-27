@@ -1387,7 +1387,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     synchronized (myDataLock) {
       final VirtualFileHolder unversionedHolder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      final IgnoredFilesHolder ignoredHolder = myComposite.getIgnoredFileHolder();
+      final IgnoredFilesCompositeHolder ignoredHolder = myComposite.getIgnoredFileHolder();
 
       scheduler.accept(unversionedHolder.getFiles());
       scheduler.accept(ignoredHolder.values());
