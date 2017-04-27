@@ -108,25 +108,14 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   public void finishUpdate(ChangeListWorker worker) {
-    exitUpdate();
-    // should be applied for notifications to be delivered (they were delayed)
-    apply(worker);
-    clearQueue();
-  }
-
-  private void exitUpdate() {
     myInsideUpdate = false;
-  }
 
-  private void clearQueue() {
-    myCommandQueue.clear();
-  }
-
-  private void apply(ChangeListWorker worker) {
     for (ChangeListCommand command : myCommandQueue) {
       command.apply(worker);
       myNotificator.callNotify(command);
     }
+
+    myCommandQueue.clear();
   }
 
   public void setWorker(ChangeListWorker worker) {
