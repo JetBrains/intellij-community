@@ -543,11 +543,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return null;
   }
 
-  public FileStatus getStatus(final VirtualFile file) {
+  public FileStatus getStatus(@NotNull VirtualFile file) {
     return myIdx.getStatus(file);
   }
 
-  public FileStatus getStatus(final FilePath file) {
+  public FileStatus getStatus(@NotNull FilePath file) {
     return myIdx.getStatus(file);
   }
 
@@ -628,7 +628,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @NotNull
-  public Collection<Change> getChangesIn(final FilePath dirPath) {
+  public Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
     List<Change> changes = new ArrayList<>();
     for (ChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {

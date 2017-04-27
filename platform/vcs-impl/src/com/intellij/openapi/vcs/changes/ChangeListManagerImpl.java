@@ -342,16 +342,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    * so waiting for its completion on AWT thread is not good runnable is invoked on AWT thread
    */
   @Override
-  public void invokeAfterUpdate(final Runnable afterUpdate,
-                                final InvokeAfterUpdateMode mode,
-                                @Nullable final String title,
-                                @Nullable final ModalityState state) {
+  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
+                                @NotNull InvokeAfterUpdateMode mode,
+                                @Nullable String title,
+                                @Nullable ModalityState state) {
     myUpdater.invokeAfterUpdate(afterUpdate, mode, title, null, state);
   }
 
   @Override
-  public void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                final Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller, final ModalityState state) {
+  public void invokeAfterUpdate(@NotNull Runnable afterUpdate,
+                                @NotNull InvokeAfterUpdateMode mode,
+                                @Nullable String title,
+                                @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManagerFiller,
+                                @Nullable ModalityState state) {
     myUpdater.invokeAfterUpdate(afterUpdate, mode, title, dirtyScopeManagerFiller, state);
   }
 
@@ -735,6 +738,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile());
   }
 
+  @NotNull
   @Override
   public List<LocalChangeList> getChangeListsCopy() {
     synchronized (myDataLock) {
@@ -754,6 +758,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   @Override
   public List<File> getAffectedPaths() {
     synchronized (myDataLock) {
@@ -784,6 +789,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   @Override
   public List<VirtualFile> getModifiedWithoutEditing() {
     synchronized (myDataLock) {
@@ -861,7 +867,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public boolean isFileAffected(final VirtualFile file) {
+  public boolean isFileAffected(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
       return myWorker.getStatus(file) != null;
     }
@@ -887,6 +893,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     return addChangeList(name, comment, null);
   }
 
+  @NotNull
   @Override
   public LocalChangeList addChangeList(@NotNull final String name, @Nullable final String comment, @Nullable final Object data) {
     return ReadAction.compute(() -> {
@@ -939,7 +946,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public Collection<LocalChangeList> getInvolvedListsFilterChanges(final Collection<Change> changes, final List<Change> validChanges) {
+  public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
     synchronized (myDataLock) {
       return myWorker.getInvolvedListsFilterChanges(changes, validChanges);
     }
@@ -965,7 +972,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
    */
   @Override
   @Nullable
-  public LocalChangeList getIdentityChangeList(Change change) {
+  public LocalChangeList getIdentityChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
       final List<LocalChangeList> lists = myWorker.getListsCopy();
       for (LocalChangeList list : lists) {
@@ -1016,7 +1023,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public FileStatus getStatus(VirtualFile file) {
+  public FileStatus getStatus(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
       if (myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).containsFile(file)) return FileStatus.UNKNOWN;
       if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
@@ -1034,7 +1041,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public Collection<Change> getChangesIn(VirtualFile dir) {
+  public Collection<Change> getChangesIn(@NotNull VirtualFile dir) {
     return getChangesIn(VcsUtil.getFilePath(dir));
   }
 
@@ -1049,7 +1056,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @NotNull
-  public Collection<Change> getChangesIn(final FilePath dirPath) {
+  public Collection<Change> getChangesIn(@NotNull FilePath dirPath) {
     synchronized (myDataLock) {
       return myWorker.getChangesIn(dirPath);
     }
@@ -1227,23 +1234,23 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void addChangeListListener(ChangeListListener listener) {
+  public void addChangeListListener(@NotNull ChangeListListener listener) {
     myListeners.addListener(listener);
   }
 
 
   @Override
-  public void removeChangeListListener(ChangeListListener listener) {
+  public void removeChangeListListener(@NotNull ChangeListListener listener) {
     myListeners.removeListener(listener);
   }
 
   @Override
-  public void registerCommitExecutor(CommitExecutor executor) {
+  public void registerCommitExecutor(@NotNull CommitExecutor executor) {
     myExecutors.add(executor);
   }
 
   @Override
-  public void commitChanges(LocalChangeList changeList, List<Change> changes) {
+  public void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     doCommit(changeList, changes, false);
   }
 
@@ -1255,12 +1262,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes) {
+  public void commitChangesSynchronously(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     doCommit(changeList, changes, true);
   }
 
   @Override
-  public boolean commitChangesSynchronouslyWithResult(final LocalChangeList changeList, final List<Change> changes) {
+  public boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     return doCommit(changeList, changes, true);
   }
 
@@ -1305,7 +1312,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   // used in TeamCity
   @Override
-  public void reopenFiles(List<FilePath> paths) {
+  public void reopenFiles(@NotNull List<FilePath> paths) {
     final ReadonlyStatusHandlerImpl readonlyStatusHandler = (ReadonlyStatusHandlerImpl)ReadonlyStatusHandler.getInstance(myProject);
     final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
     readonlyStatusHandler.getState().SHOW_DIALOG = false;
@@ -1317,6 +1324,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   @Override
   public List<CommitExecutor> getRegisteredExecutors() {
     return Collections.unmodifiableList(myExecutors);
@@ -1364,7 +1372,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void addFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
+  public void addFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.add(filesToIgnore);
     scheduleUnversionedUpdate();
   }
@@ -1398,7 +1406,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void setFilesToIgnore(final IgnoredFileBean... filesToIgnore) {
+  public void setFilesToIgnore(@NotNull IgnoredFileBean... filesToIgnore) {
     myIgnoredIdeaLevel.set(filesToIgnore);
     scheduleUnversionedUpdate();
   }
@@ -1422,6 +1430,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   @Override
   public IgnoredFileBean[] getFilesToIgnore() {
     return myIgnoredIdeaLevel.getFilesToIgnore();
@@ -1442,7 +1451,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   @Nullable
-  public String getSwitchedBranch(final VirtualFile file) {
+  public String getSwitchedBranch(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
       return myComposite.getSwitchedFileHolder().getBranchForFile(file);
     }

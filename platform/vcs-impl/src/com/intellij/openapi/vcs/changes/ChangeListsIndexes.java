@@ -55,7 +55,7 @@ public class ChangeListsIndexes {
     myMap.remove(file);
   }
 
-  public FileStatus getStatus(final VirtualFile file) {
+  public FileStatus getStatus(@NotNull VirtualFile file) {
     return getStatus(VcsUtil.getFilePath(file));
   }
 

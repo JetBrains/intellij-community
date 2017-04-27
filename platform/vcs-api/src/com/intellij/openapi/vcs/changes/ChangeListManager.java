@@ -44,23 +44,29 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract void scheduleUpdate();
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
-  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                         final ModalityState state);
-  public abstract void invokeAfterUpdate(final Runnable afterUpdate, final InvokeAfterUpdateMode mode, final String title,
-                                         final Consumer<VcsDirtyScopeManager> dirtyScopeManager,
-                                         final ModalityState state);
+  public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
+                                         @NotNull InvokeAfterUpdateMode mode,
+                                         @Nullable String title,
+                                         @Nullable ModalityState state);
+  public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
+                                         @NotNull InvokeAfterUpdateMode mode,
+                                         @Nullable String title,
+                                         @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManager,
+                                         @Nullable ModalityState state);
   @TestOnly
   public abstract boolean ensureUpToDate(boolean canBeCanceled);
 
   public abstract int getChangeListsNumber();
+  @NotNull
   public abstract List<LocalChangeList> getChangeListsCopy();
   @NotNull
   public abstract List<LocalChangeList> getChangeLists();
 
+  @NotNull
   public abstract List<File> getAffectedPaths();
   @NotNull
   public abstract List<VirtualFile> getAffectedFiles();
-  public abstract boolean isFileAffected(final VirtualFile file);
+  public abstract boolean isFileAffected(@NotNull VirtualFile file);
 
   /**
    * @return all changes in all changelists.
@@ -69,16 +75,17 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract Collection<Change> getAllChanges();
 
   @Nullable
-  public abstract LocalChangeList findChangeList(final String name);
+  public abstract LocalChangeList findChangeList(String name);
   @Nullable
   public abstract LocalChangeList getChangeList(String id);
-//  public abstract LocalChangeList addChangeList(@NotNull String name, final String comment);
-//  public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
+  //  public abstract LocalChangeList addChangeList(@NotNull String name, final String comment);
+  //  public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
 
   /**
    * Returns currently active changelist
    * @return active changelist
    */
+  @Nullable
   public abstract LocalChangeList getDefaultChangeList();
 
   public abstract boolean isDefaultChangeList(ChangeList list);
@@ -103,53 +110,59 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract boolean isUnversioned(VirtualFile file);
 
   @NotNull
-  public abstract FileStatus getStatus(VirtualFile file);
+  public abstract FileStatus getStatus(@NotNull VirtualFile file);
 
   @NotNull
-  public abstract Collection<Change> getChangesIn(VirtualFile dir);
+  public abstract Collection<Change> getChangesIn(@NotNull VirtualFile dir);
 
   @NotNull
-  public abstract Collection<Change> getChangesIn(FilePath path);
+  public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
 
   @Nullable
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
-//  public abstract void removeChangeList(final LocalChangeList list);
+  //  public abstract void removeChangeList(final LocalChangeList list);
 
-//  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
+  //  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
 
-  public abstract void addChangeListListener(ChangeListListener listener);
-  public abstract void removeChangeListListener(ChangeListListener listener);
+  public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 
-  public abstract void registerCommitExecutor(CommitExecutor executor);
-  
-  public abstract void commitChanges(LocalChangeList changeList, List<Change> changes);
+  public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
 
-  public abstract void commitChangesSynchronously(LocalChangeList changeList, List<Change> changes);
+  public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
+
+  public abstract void commitChangesSynchronously(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
   /**
    * @return if commit successful
    */
-  public abstract boolean commitChangesSynchronouslyWithResult(LocalChangeList changeList, List<Change> changes);
+  public abstract boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
 
-  public abstract void reopenFiles(List<FilePath> paths);
+  @Deprecated // used in TeamCity
+  public abstract void reopenFiles(@NotNull List<FilePath> paths);
 
+  @NotNull
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void addFilesToIgnore(final IgnoredFileBean... ignoredFiles);
+  public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
   public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
   public abstract void removeImplicitlyIgnoredDirectory(@NotNull String path);
-  public abstract void setFilesToIgnore(final IgnoredFileBean... ignoredFiles);
+  public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+  @NotNull
   public abstract IgnoredFileBean[] getFilesToIgnore();
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
   @Nullable
-  public abstract String getSwitchedBranch(VirtualFile file);
+  public abstract String getSwitchedBranch(@NotNull VirtualFile file);
+  @Nullable
   public abstract String getDefaultListName();
 
+  @Nullable
   public abstract String isFreezed();
   public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);
-  
+
+  @NotNull
   public abstract List<VirtualFile> getModifiedWithoutEditing();
 
   @NotNull
