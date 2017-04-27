@@ -65,6 +65,10 @@ public class TestPrimitives {
       this.printByte((byte)this.getInt());// 68
       this.printShort((short)this.getInt());// 69
    }// 70
+
+   public void constructor() {
+      new Byte((byte)1);// 73
+   }// 74
 }
 
 class 'pkg/TestPrimitives' {
@@ -201,6 +205,11 @@ class 'pkg/TestPrimitives' {
       f      65
       12      66
    }
+
+   method 'constructor ()V' {
+      4      69
+      9      70
+   }
 }
 
 Lines mapping:
@@ -237,3 +246,5 @@ Lines mapping:
 68 <-> 65
 69 <-> 66
 70 <-> 67
+73 <-> 70
+74 <-> 71
