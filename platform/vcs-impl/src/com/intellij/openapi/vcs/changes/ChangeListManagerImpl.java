@@ -167,7 +167,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
 
       if (myModalNotificationsBlocked &&
-          myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+          myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
         myListsToBeDeleted.add(oldList);
       } else {
         deleteEmptyChangeLists(Collections.singletonList(actualList));
@@ -183,7 +183,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ChangeListRemoveConfirmation.processLists(myProject, false, lists, new ChangeListRemoveConfirmation() {
       @Override
       public boolean askIfShouldRemoveChangeLists(@NotNull List<? extends LocalChangeList> toAsk) {
-        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION ||
+        return myConfig.REMOVE_EMPTY_INACTIVE_CHANGELISTS == VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY ||
                showRemoveEmptyChangeListsProposal(myProject, myConfig, toAsk);
       }
     });
