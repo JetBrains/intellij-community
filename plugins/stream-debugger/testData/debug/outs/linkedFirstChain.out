@@ -1,0 +1,35 @@
+LineBreakpoint created at LinkedChains.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! LinkedChains
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+LinkedChains.java:7
+Stream
+      .of(1, 2, 3, 4, 5, 6)
+.map(x -> x * x)
+.collect(Collectors.toList())
+Stream
+      .of
+    before: nothing
+    after: 1,3,5,7,9,11
+map
+    before: 1,3,5,7,9,11
+    after: 2,4,6,8,10,12
+collect
+    before: 2,4,6,8,10,12
+    after: nothing
+mappings for map
+    nothing -> 1 -> 2
+    nothing -> 3 -> 4
+    nothing -> 5 -> 6
+    nothing -> 7 -> 8
+    nothing -> 9 -> 10
+    nothing -> 11 -> 12
+mappings for collect
+    1 -> 2 -> nothing
+    3 -> 4 -> nothing
+    5 -> 6 -> nothing
+    7 -> 8 -> nothing
+    9 -> 10 -> nothing
+    11 -> 12 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
