@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.*;
@@ -148,21 +149,22 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
+    int scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     checkState(myScheme.getFontPreferences(),
                singletonList(fontName1),
                singletonList(fontName1),
                fontName1,
-               fontName1, FontPreferences.DEFAULT_FONT_SIZE);
+               fontName1, scaledSize);
     assertEquals(fontName1, myScheme.getEditorFontName());
-    assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
+    assertEquals(scaledSize, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
                singletonList(fontName2),
                singletonList(fontName2),
                fontName2,
-               fontName2, FontPreferences.DEFAULT_FONT_SIZE);
+               fontName2, scaledSize);
     assertEquals(fontName2, myScheme.getConsoleFontName());
-    assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
+    assertEquals(scaledSize, myScheme.getConsoleFontSize());
   }
 
   public void testSetSize() throws Exception {
