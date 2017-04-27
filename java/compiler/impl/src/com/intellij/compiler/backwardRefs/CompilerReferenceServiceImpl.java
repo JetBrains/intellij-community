@@ -237,9 +237,13 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false);
             return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
           })
-          .map(r -> new OccurrencesAware<>(
-            new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
-            myReader.getOccurrenceCount(r))))
+          .map(r -> {
+            int count = myReader.getOccurrenceCount(r);
+            return count <= 1 ? null : new OccurrencesAware<>(
+              new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+              count);
+          }))
+          .filter(Objects::nonNull)
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
