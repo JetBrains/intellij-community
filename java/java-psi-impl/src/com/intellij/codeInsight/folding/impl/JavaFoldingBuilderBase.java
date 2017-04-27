@@ -52,6 +52,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.psi.SyntaxTraverser.psiTraverser;
+
 public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.folding.impl.JavaFoldingBuilder");
 
@@ -65,7 +67,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     else if (element instanceof PsiClassInitializer) {
       return getCodeBlockPlaceholder(((PsiClassInitializer)element).getBody());
     }
-    else if (element instanceof PsiClass) {
+    else if (element instanceof PsiClass || element instanceof PsiJavaModule) {
       return getCodeBlockPlaceholder(null);
     }
     else if (element instanceof PsiLambdaExpression) {
@@ -154,6 +156,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       PsiElement rBrace = aClass.getRBrace();
       if (rBrace == null) return null;
       return new TextRange(lBrace.getTextOffset(), rBrace.getTextOffset() + 1);
+    }
+
+    if (element instanceof PsiJavaModule) {
+      PsiElement left = psiTraverser().children(element).find(e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACE));
+      PsiElement right = psiTraverser().children(element).find(e -> PsiUtil.isJavaToken(e, JavaTokenType.RBRACE));
+      return left != null && right != null ? new TextRange(left.getTextOffset(), right.getTextOffset() + 1) : null;
     }
 
     if (element instanceof PsiJavaFile) {
@@ -468,6 +476,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
     }
 
+    PsiJavaModule module = file.getModuleDeclaration();
+    if (module != null) {
+      addElementsToFold(descriptors, module, document);
+    }
+
     PsiClass[] classes = file.getClasses();
     for (PsiClass aClass : classes) {
       ProgressManager.checkCanceled();
@@ -495,6 +508,14 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
       descriptors.add(new FoldingDescriptor(anchorElementToUse, range));
     }
+  }
+
+  private static void addElementsToFold(@NotNull List<FoldingDescriptor> list,
+                                        @NotNull PsiJavaModule module,
+                                        @NotNull Document document) {
+    addToFold(list, module, document, true);
+    addDocCommentToFold(list, document, module);
+    addAnnotationsToFold(module.getModifierList(), list, document);
   }
 
   private void addElementsToFold(@NotNull List<FoldingDescriptor> list,
@@ -704,6 +725,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
     else if (element instanceof PsiLambdaExpression) {
       return settings.isCollapseAnonymousClasses();
+    }
+    else if (element instanceof PsiJavaModule) {
+      return false;
     }
     else {
       LOG.error("Unknown element:" + element);
