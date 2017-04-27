@@ -487,11 +487,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
           myAdditionalInfo = null;
         }
         myUpdateChangesProgressIndicator = indicator;
-      }
-      if (LOG.isDebugEnabled()) {
-        String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
-        LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
-                  "\ncurrent changes: " + myWorker);
+
+        if (LOG.isDebugEnabled()) {
+          String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
+          LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                    "\ncurrent changes: " + myWorker);
+        }
       }
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
@@ -815,7 +816,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   boolean isIgnoredInUpdateMode() {
-    return myComposite.getIgnoredFileHolder().isInUpdatingMode();
+    synchronized (myDataLock) {
+      return myComposite.getIgnoredFileHolder().isInUpdatingMode();
+    }
   }
 
   public List<VirtualFile> getLockedFolders() {
