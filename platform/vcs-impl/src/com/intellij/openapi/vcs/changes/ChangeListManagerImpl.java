@@ -918,26 +918,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   @NotNull
   public Runnable prepareForChangeDeletion(final Collection<Change> changes) {
-    final Map<String, LocalChangeList> lists = new HashMap<>();
     final Map<String, List<Change>> map;
     synchronized (myDataLock) {
-      map = myWorker.listsForChanges(changes, lists);
+      map = myWorker.listsForChanges(changes);
     }
     return () -> {
-      final ChangeListListener multicaster = myDelayedNotificator.getProxyDispatcher();
       ApplicationManager.getApplication().runReadAction(() -> {
         synchronized (myDataLock) {
-          for (Map.Entry<String, List<Change>> entry : map.entrySet()) {
-            final List<Change> changes1 = entry.getValue();
-            for (Iterator<Change> iterator = changes1.iterator(); iterator.hasNext(); ) {
-              final Change change = iterator.next();
-              if (getChangeList(change) != null) {
-                // was not actually rolled back
-                iterator.remove();
-              }
-            }
-            multicaster.changesRemoved(changes1, lists.get(entry.getKey()));
-          }
           for (String listName : map.keySet()) {
             final LocalChangeList byName = myWorker.getCopyByName(listName);
             if (byName != null && !byName.isDefault()) {

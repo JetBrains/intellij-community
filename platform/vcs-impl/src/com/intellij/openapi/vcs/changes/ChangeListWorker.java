@@ -661,10 +661,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @NotNull
-  public Map<String, List<Change>> listsForChanges(final Collection<Change> changes, final Map<String, LocalChangeList> lists) {
+  public Map<String, List<Change>> listsForChanges(final Collection<Change> changes) {
     final GatherChangesVsListsInfo info = new GatherChangesVsListsInfo(changes);
     info.run();
-    lists.putAll(info.getIncludedListsCopies());
     return info.getListToChangesMap();
   }
 
