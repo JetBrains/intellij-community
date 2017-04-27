@@ -72,10 +72,6 @@ public class PyStringFormatInspectionTest extends PyTestCase {
     doTest();
   }
   
-  public void testNewStyleMappingKeyWithSubscriptionFuncArgs() {
-    doTest();
-  }
-  
   public void testNewStyleMappingKeyWithSubscriptionRefArgs() {
     doTest();
   }
@@ -88,11 +84,11 @@ public class PyStringFormatInspectionTest extends PyTestCase {
     doTest();
   }
   
-  public void testNewStyleMappingKeyWithSubscriptionFuncDictArg() {
+  public void testNewStyleMappingKeyWithSubscriptionParenArg() {
     doTest();
   }
-  
-  public void testNewStyleMappingKeyWithSubscriptionParenArg() {
+
+  public void testNewStyleMappingKeyWithSubscriptionDictCall() {
     doTest();
   }
   
