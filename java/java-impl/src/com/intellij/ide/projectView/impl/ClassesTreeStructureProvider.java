@@ -50,18 +50,18 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   @NotNull
   @Override
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children, ViewSettings settings) {
-    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> doModify((ProjectViewNode)parent, children));
+    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> doModify(parent, children));
   }
 
   @NotNull
-  private Collection<AbstractTreeNode> doModify(@NotNull ProjectViewNode parent, @NotNull Collection<AbstractTreeNode> children) {
+  private Collection<AbstractTreeNode> doModify(@NotNull AbstractTreeNode parent, @NotNull Collection<AbstractTreeNode> children) {
     ArrayList<AbstractTreeNode> result = new ArrayList<>();
     for (final AbstractTreeNode child : children) {
       ProgressManager.checkCanceled();
 
       Object o = child.getValue();
       if (o instanceof PsiClassOwner && !(o instanceof ServerPageFile)) {
-        final ViewSettings settings1 = parent.getSettings();
+        final ViewSettings settings1 = ((ProjectViewNode)parent).getSettings();
         final PsiClassOwner classOwner = (PsiClassOwner)o;
         final VirtualFile file = classOwner.getVirtualFile();
 
