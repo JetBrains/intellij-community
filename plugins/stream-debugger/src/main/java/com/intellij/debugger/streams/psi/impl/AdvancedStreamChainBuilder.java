@@ -170,6 +170,9 @@ public class AdvancedStreamChainBuilder implements StreamChainBuilder {
         PsiMethodCallExpression current = terminationCall;
         while (current != null) {
           chain.add(current);
+          if (StreamApiUtil.isProducerStreamCall(current)) {
+            break;
+          }
           current = myPreviousCalls.get(current);
         }
 

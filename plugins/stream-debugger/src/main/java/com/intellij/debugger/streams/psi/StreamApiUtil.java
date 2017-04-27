@@ -35,7 +35,7 @@ public class StreamApiUtil {
     return checkStreamCall(expression, true, false);
   }
 
-  private static boolean isProducerStreamCall(@NotNull PsiMethodCallExpression expression) {
+  public static boolean isProducerStreamCall(@NotNull PsiMethodCallExpression expression) {
     return checkStreamCall(expression, false, true);
   }
 
