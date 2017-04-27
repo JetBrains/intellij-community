@@ -67,8 +67,8 @@ final class KeymapScheme implements Scheme {
     return keymap == original || keymap == mutable;
   }
 
-  private boolean contains(@NotNull Keymap keymap, @NotNull String name) {
-    return name.equals(original.getName()) || name.equals(original.getPresentableName());
+  private static boolean contains(@NotNull Keymap keymap, @NotNull String name) {
+    return name.equals(keymap.getName()) || name.equals(keymap.getPresentableName());
   }
 
   boolean contains(@NotNull String name) {
