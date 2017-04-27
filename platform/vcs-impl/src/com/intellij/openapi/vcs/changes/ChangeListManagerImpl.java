@@ -111,7 +111,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private boolean myExcludedConvertedToIgnored;
 
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
-    return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
+    return (ChangeListManagerImpl)getInstance(project);
   }
 
   void setDirtyScopeManager(VcsDirtyScopeManager dirtyScopeManager) {
