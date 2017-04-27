@@ -242,6 +242,7 @@ public class UpdateRequestsQueue {
           }
 
           copy.addAll(myWaitingUpdateCompletionQueue);
+          myWaitingUpdateCompletionQueue.clear();
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
@@ -252,9 +253,6 @@ public class UpdateRequestsQueue {
         synchronized (myLock) {
           myRequestRunning = false;
           LOG.debug("MyRunnable: delete executed, project: " + myProject.getName() + ", runnable: " + hashCode());
-          if (!copy.isEmpty()) {
-            myWaitingUpdateCompletionQueue.removeAll(copy);
-          }
 
           if (!myWaitingUpdateCompletionQueue.isEmpty() && !myRequestSubmitted && !myStopped) {
             LOG.error("No update task to handle request(s)");
