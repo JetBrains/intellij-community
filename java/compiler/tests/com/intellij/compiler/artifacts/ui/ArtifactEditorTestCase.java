@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Ref;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.util.PathUtil;
 
@@ -45,7 +44,7 @@ public abstract class ArtifactEditorTestCase extends PackagingElementsTestCase {
       settings = new ArtifactEditorSettings(false, Arrays.asList(PackagingElementFactory.getInstance().getComplexElementTypes()));
     }
     else {
-      settings = new ArtifactEditorSettings(false, Collections.<ComplexPackagingElementType<?>>emptyList());
+      settings = new ArtifactEditorSettings(false, Collections.emptyList());
     }
 
     myArtifactEditor = new ArtifactEditorImpl(new MockArtifactsStructureConfigurableContext(), artifact, settings) {
