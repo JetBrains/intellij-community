@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -531,7 +530,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             final boolean statusChanged = !myComposite.equals(dataHolder.getComposite());
             myComposite = dataHolder.getComposite();
             if (statusChanged) {
-              myDelayedNotificator.getProxyDispatcher().unchangedFileStatusChanged();
+              myDelayedNotificator.unchangedFileStatusChanged();
             }
           }
           myShowLocalChangesInvalidated = false;
@@ -561,7 +560,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myDirtyScopeManager.changesProcessed();
 
       synchronized (myDataLock) {
-        myDelayedNotificator.getProxyDispatcher().changeListUpdateDone();
+        myDelayedNotificator.changeListUpdateDone();
         myChangesViewManager.scheduleRefresh();
       }
     }
@@ -666,13 +665,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     private void notifyDoneProcessingChanges() {
       if (!myWasEverythingDirty) {
-        myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
+        myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator);
       }
     }
 
     void notifyEnd() {
       if (myWasEverythingDirty) {
-        myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator.getProxyDispatcher());
+        myChangeListWorker.notifyDoneProcessingChanges(myDelayedNotificator);
       }
     }
 

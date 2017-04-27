@@ -22,16 +22,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public class DelayedNotificator {
+public class DelayedNotificator implements ChangeListListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
+
   private final EventDispatcher<ChangeListListener> myDispatcher;
   private final ChangeListManagerImpl.Scheduler myScheduler;
-  private final MyProxyDispatcher myProxyDispatcher;
 
-  public DelayedNotificator(EventDispatcher<ChangeListListener> dispatcher, @NotNull ChangeListManagerImpl.Scheduler scheduler) {
+  public DelayedNotificator(@NotNull EventDispatcher<ChangeListListener> dispatcher,
+                            @NotNull ChangeListManagerImpl.Scheduler scheduler) {
     myDispatcher = dispatcher;
     myScheduler = scheduler;
-    myProxyDispatcher = new MyProxyDispatcher();
   }
 
   public void callNotify(final ChangeListCommand command) {
@@ -45,54 +45,48 @@ public class DelayedNotificator {
     });
   }
 
-  public ChangeListListener getProxyDispatcher() {
-    return myProxyDispatcher;                                                                                
+
+  public void changeListAdded(final ChangeList list) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListAdded(list));
   }
 
-  private class MyProxyDispatcher implements ChangeListListener {
-    public void changeListAdded(final ChangeList list) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListAdded(list));
-    }
+  public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changesRemoved(changes, fromList));
+  }
 
-    public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changesRemoved(changes, fromList));
-    }
+  public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changesAdded(changes, toList));
+  }
 
-    public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changesAdded(changes, toList));
-    }
+  public void changeListRemoved(final ChangeList list) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRemoved(list));
+  }
 
-    public void changeListRemoved(final ChangeList list) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRemoved(list));
-    }
+  public void changeListChanged(final ChangeList list) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListChanged(list));
+  }
 
-    public void changeListChanged(final ChangeList list) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListChanged(list));
-    }
+  public void changeListRenamed(final ChangeList list, final String oldName) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRenamed(list, oldName));
+  }
 
-    public void changeListRenamed(final ChangeList list, final String oldName) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRenamed(list, oldName));
-    }
+  public void changeListCommentChanged(final ChangeList list, final String oldComment) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment));
+  }
 
-    public void changeListCommentChanged(final ChangeList list, final String oldComment) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment));
-    }
+  public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
+  }
 
-    public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
-    }
+  public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList));
+  }
 
-    public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList));
+  public void unchangedFileStatusChanged() {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().unchangedFileStatusChanged());
+  }
 
-    }
-
-    public void unchangedFileStatusChanged() {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().unchangedFileStatusChanged());
-    }
-
-    public void changeListUpdateDone() {
-      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone());
-    }
+  public void changeListUpdateDone() {
+    myScheduler.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone());
   }
 }
