@@ -60,7 +60,7 @@ public class RollbackWorker {
                          final boolean deleteLocallyAddedFiles,
                          @Nullable final Runnable afterVcsRefreshInAwt,
                          @Nullable final String localHistoryActionName) {
-    ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
     Collection<LocalChangeList> affectedChangelists = changeListManager.getInvolvedListsFilterChanges(changes, new ArrayList<>());
 
     final Runnable afterRefresh = () -> {
@@ -107,7 +107,7 @@ public class RollbackWorker {
     else {
       rollbackAction.run();
     }
-    ((ChangeListManagerImpl) changeListManager).showLocalChangesInvalidated();
+    changeListManager.showLocalChangesInvalidated();
   }
 
   private class MyRollbackRunnable implements Runnable {

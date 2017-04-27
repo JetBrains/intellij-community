@@ -462,7 +462,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     if (myWarningLabel != null) {
       myWarningLabel.setVisible(false);
       @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-      VcsException updateException = ((ChangeListManagerImpl)ChangeListManager.getInstance(myProject)).getUpdateException();
+      VcsException updateException = ChangeListManagerImpl.getInstanceImpl(myProject).getUpdateException();
       if (updateException != null) {
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {

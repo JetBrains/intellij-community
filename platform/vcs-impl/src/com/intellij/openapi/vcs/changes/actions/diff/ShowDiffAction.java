@@ -95,7 +95,7 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
       if (convertedChanges.length == 1) {
         selectedChane = convertedChanges[0];
-        ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
+        ChangeList changeList = ChangeListManagerImpl.getInstanceImpl(project).getIdentityChangeList(selectedChane);
         if (changeList != null) {
           result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
         }

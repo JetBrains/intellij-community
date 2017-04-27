@@ -1424,7 +1424,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public static class DefaultIgnoredFileProvider implements IgnoredFileProvider {
     @Override
     public boolean isIgnoredFile(@NotNull Project project, @NotNull FilePath filePath) {
-      return ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).myIgnoredIdeaLevel.isIgnoredFile(filePath);
+      return getInstanceImpl(project).myIgnoredIdeaLevel.isIgnoredFile(filePath);
     }
   }
 
