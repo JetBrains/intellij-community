@@ -38,6 +38,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.hamcrest; public class CoreMatchers { " +
                        "public static <T> Matcher<T> notNullValue() {}\n" +
                        "public static <T> Matcher<T> not(Matcher<T> matcher) {}\n" +
+                       "public static <T> Matcher<T> is(Matcher<T> matcher) {}\n" +
                        "public static <T> Matcher<T> equalTo(T operand) {}\n" +
                        "}");
     myFixture.addClass("package org.hamcrest; public interface Matcher<T> {}");
