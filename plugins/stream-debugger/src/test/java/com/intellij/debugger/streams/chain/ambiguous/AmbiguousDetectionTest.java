@@ -77,6 +77,10 @@ public class AmbiguousDetectionTest extends AmbiguousChainTestCase {
     doTest(ResultChecker.chainsCountChecker(2));
   }
 
+  public void testLinkedChain() {
+    doTest(ResultChecker.chainsCountChecker(3));
+  }
+
   @NotNull
   @Override
   protected String getDirectoryName() {
