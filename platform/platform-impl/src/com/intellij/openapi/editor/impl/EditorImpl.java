@@ -562,12 +562,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   // todo drop it
   private static void backwardCompatibilityWithSoftWrapAppliancePlaces(SettingsImpl settings, EditorKind kind) {
-    if (kind.equals(EditorKind.CONSOLE))
+    if (kind.equals(EditorKind.CONSOLE)) {
       settings.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
-    if (kind.equals(EditorKind.MAIN_EDITOR))
+    }
+    if (kind.equals(EditorKind.MAIN_EDITOR)) {
       settings.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.MAIN_EDITOR);
-    if (kind.equals(EditorKind.PREVIEW))
+    }
+    if (kind.equals(EditorKind.PREVIEW)) {
       settings.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.PREVIEW);
+    }
   }
 
   /**

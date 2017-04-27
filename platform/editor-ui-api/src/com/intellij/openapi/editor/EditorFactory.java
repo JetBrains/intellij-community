@@ -94,16 +94,7 @@ public abstract class EditorFactory {
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project);
 
   /**
-   * Creates an editor for the specified document associated with the specified project.
-   *
    * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @param project  the project with which the editor is associated.
-   * @param kind the kind of editor
-   * @return the editor instance.
-   * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
    */
   public abstract Editor createEditor(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
@@ -138,18 +129,9 @@ public abstract class EditorFactory {
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer);
 
   /**
-   * Creates an editor for the specified document associated with the specified project.
-   *
    * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @param project  the project for which highlighter should be created
    * @param file     the file according to which the editor contents is highlighted.
    * @param isViewer true if read-only editor should be created
-   * @param kind the kind of editor
-   * @return the editor instance.
-   * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
    */
   public abstract Editor createEditor(@NotNull Document document, Project project, @NotNull VirtualFile file, boolean isViewer,
                                       @NotNull EditorKind kind);
@@ -168,16 +150,7 @@ public abstract class EditorFactory {
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project);
 
   /**
-   * Creates a read-only editor for the specified document associated with the specified project.
-   *
    * Must be invoked in EDT.
-   *
-   * @param document the document to create the editor for.
-   * @param project  the project with which the editor is associated.
-   * @param kind the kind of editor
-   * @return the editor instance.
-   * @see Editor#getProject()
-   * @see #releaseEditor(Editor)
    */
   public abstract Editor createViewer(@NotNull Document document, @Nullable Project project, @NotNull EditorKind kind);
 
