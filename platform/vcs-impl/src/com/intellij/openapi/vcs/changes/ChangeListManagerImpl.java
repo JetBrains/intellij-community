@@ -498,7 +498,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       ProgressManager.getInstance().runProcess(() -> iterateScopes(dataHolder, scopes, wasEverythingDirty, indicator), indicator);
 
-      final boolean takeChanges = myUpdateException == null;
+      boolean takeChanges;
+      synchronized (myDataLock) {
+        takeChanges = myUpdateException == null;
+      }
       if (takeChanges) {
         // update IDEA-level ignored files
         updateIgnoredFiles(dataHolder.getComposite());
@@ -608,7 +611,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       actualUpdate(builder, scope, vcs, dataHolder, gate, indicator);
 
-      if (myUpdateException != null) break;
+      synchronized (myDataLock) {
+        if (myUpdateException != null) break;
+      }
     }
     synchronized (myDataLock) {
       if (myAdditionalInfo == null) {
@@ -720,15 +725,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       ApplicationManager.getApplication().invokeLater(() -> ((VcsConnectionProblem)e).attemptQuickFix(false));
     }
 
-    if (myUpdateException == null) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
-        if (helper instanceof AbstractVcsHelperImpl && ((AbstractVcsHelperImpl)helper).handleCustom(e)) {
-          return;
-        }
-        //noinspection CallToPrintStackTrace
-        e.printStackTrace();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      AbstractVcsHelper helper = AbstractVcsHelper.getInstance(myProject);
+      if (helper instanceof AbstractVcsHelperImpl && ((AbstractVcsHelperImpl)helper).handleCustom(e)) {
+        return;
       }
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
+
+    synchronized (myDataLock) {
       myUpdateException = e;
     }
   }
