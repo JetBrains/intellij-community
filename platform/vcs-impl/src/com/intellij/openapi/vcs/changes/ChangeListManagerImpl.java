@@ -746,10 +746,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  /**
-   * @deprecated this method made equivalent to {@link #getChangeListsCopy()} so to don't be confused by method name,
-   * better use {@link #getChangeListsCopy()}
-   */
   @Override
   @NotNull
   public List<LocalChangeList> getChangeLists() {
@@ -1261,12 +1257,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                             false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
   }
 
-  @Override
-  public void commitChangesSynchronously(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
-    doCommit(changeList, changes, true);
-  }
-
-  @Override
+  @TestOnly
   public boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
     return doCommit(changeList, changes, true);
   }

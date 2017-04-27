@@ -37,16 +37,12 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
 
   /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
+   * They will be shown when notifications are unblocked.
    */
   @CalledInAwt
   public abstract void blockModalNotifications();
-
-  /**
-   * Unblocks modal dialogs showing and shows the ones which were queued.
-   */
   @CalledInAwt
   public abstract void unblockModalNotifications();
-
 
   /**
    * Temporarily disable CLM update

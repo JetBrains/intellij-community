@@ -253,16 +253,6 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void commitChangesSynchronously(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void reopenFiles(@NotNull List<FilePath> paths) {
     throw new UnsupportedOperationException();
   }

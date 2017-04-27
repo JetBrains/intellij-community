@@ -43,6 +43,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   }
 
   public abstract void scheduleUpdate();
+  @Deprecated
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
@@ -58,7 +59,9 @@ public abstract class ChangeListManager implements ChangeListModification {
 
   public abstract int getChangeListsNumber();
   @NotNull
-  public abstract List<LocalChangeList> getChangeListsCopy();
+  public List<LocalChangeList> getChangeListsCopy() {
+    return getChangeLists();
+  }
   @NotNull
   public abstract List<LocalChangeList> getChangeLists();
 
@@ -78,8 +81,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract LocalChangeList findChangeList(String name);
   @Nullable
   public abstract LocalChangeList getChangeList(String id);
-  //  public abstract LocalChangeList addChangeList(@NotNull String name, final String comment);
-  //  public abstract void setDefaultChangeList(@NotNull LocalChangeList list);
 
   /**
    * Returns currently active changelist
@@ -121,10 +122,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
-  //  public abstract void removeChangeList(final LocalChangeList list);
-
-  //  public abstract void moveChangesTo(final LocalChangeList list, final Change[] changes);
-
   public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
@@ -132,12 +129,6 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
 
   public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
-
-  public abstract void commitChangesSynchronously(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
-  /**
-   * @return if commit successful
-   */
-  public abstract boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
 
   @Deprecated // used in TeamCity
   public abstract void reopenFiles(@NotNull List<FilePath> paths);

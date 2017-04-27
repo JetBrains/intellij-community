@@ -123,7 +123,7 @@ public class IgnoredFilesTest extends Svn17TestCase {
 
   private void dirty() {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.scheduleUpdate(true);
+    myChangeListManager.scheduleUpdate();
     myChangeListManager.ensureUpToDate(false);
   }
 
