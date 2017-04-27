@@ -514,7 +514,7 @@ enum class StateLoadPolicy {
 }
 
 internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
-  if (isEmpty()) {
+  if (size < 2) {
     return this
   }
 
