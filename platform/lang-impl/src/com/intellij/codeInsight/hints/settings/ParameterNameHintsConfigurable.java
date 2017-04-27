@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.hints.HintUtilsKt;
-import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
-import com.intellij.codeInsight.hints.InlayParameterHintsProvider;
-import com.intellij.codeInsight.hints.Option;
+import com.intellij.codeInsight.hints.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -138,6 +135,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     });
     
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
+    ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
   }
 
   private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {

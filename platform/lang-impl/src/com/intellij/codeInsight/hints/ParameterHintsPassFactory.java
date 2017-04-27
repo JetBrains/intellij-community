@@ -27,11 +27,13 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
@@ -45,6 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ParameterHintsPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
+  private static final Key<Long> PSI_MODIFICATION_STAMP = Key.create("psi.modification.stamp");
 
   public ParameterHintsPassFactory(Project project, TextEditorHighlightingPassRegistrar registrar) {
     super(project);
@@ -55,7 +58,14 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
   @Override
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
     if (editor.isOneLineMode()) return null;
+    long currentStamp = getCurrentModificationStamp(file);
+    Long savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP);
+    if (savedStamp != null && savedStamp == currentStamp) return null;
     return new ParameterHintsPass(file, editor);
+  }
+
+  private static long getCurrentModificationStamp(@NotNull PsiFile file) {
+    return file.getManager().getModificationTracker().getModificationCount();
   }
 
   public static List<Matcher> getBlackListMatchers(Language language) {
@@ -71,6 +81,12 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       .map((item) -> MatcherConstructor.INSTANCE.createMatcher(item))
       .filter((e) -> e != null)
       .collect(Collectors.toList());
+  }
+
+  public static void forceHintsUpdateOnNextPass() {
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      editor.putUserData(PSI_MODIFICATION_STAMP, null);
+    }
   }
 
   private static class ParameterHintsPass extends EditorBoundHighlightingPass {
@@ -144,6 +160,7 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
       ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints);
       updater.update();
       keeper.restoreOriginalLocation(false);
+      myEditor.putUserData(PSI_MODIFICATION_STAMP, getCurrentModificationStamp(myFile));
     }
 
     @NotNull
