@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "ClientPropertiesManager")
+@State(name = "ClientPropertiesManager", defaultStateAsResource = true)
 public class ClientPropertiesManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(ClientPropertiesManager.class);
 
