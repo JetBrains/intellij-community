@@ -34,34 +34,36 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdatingChangeListBuilder");
   private final ChangeListWorker myChangeListWorker;
   private final FileHolderComposite myComposite;
-  // todo +-
   private final Getter<Boolean> myDisposedGetter;
-  private VcsDirtyScope myScope;
-  private FoldersCutDownWorker myFoldersCutDownWorker;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
   private final ChangeListManagerGate myGate;
+
+  private VcsDirtyScope myScope;
+  private FoldersCutDownWorker myFoldersCutDownWorker;
+
   private Factory<JComponent> myAdditionalInfo;
 
   UpdatingChangeListBuilder(final ChangeListWorker changeListWorker,
                             final FileHolderComposite composite,
                             final Getter<Boolean> disposedGetter,
-                            final ChangeListManager changeListManager, final ChangeListManagerGate gate) {
+                            final ChangeListManager changeListManager,
+                            final ChangeListManagerGate gate) {
     myChangeListWorker = changeListWorker;
     myComposite = composite;
     myDisposedGetter = disposedGetter;
     myChangeListManager = changeListManager;
-    myGate = gate;
     myVcsManager = ProjectLevelVcsManager.getInstance(changeListWorker.getProject());
+    myGate = gate;
   }
 
   private void checkIfDisposed() {
     if (myDisposedGetter.get()) throw new ProcessCanceledException();
   }
 
-  public void setCurrent(final VcsDirtyScope scope, final FoldersCutDownWorker foldersWorker) {
+  public void setCurrent(VcsDirtyScope scope) {
     myScope = scope;
-    myFoldersCutDownWorker = foldersWorker;
+    myFoldersCutDownWorker = new FoldersCutDownWorker();
   }
 
   @Override

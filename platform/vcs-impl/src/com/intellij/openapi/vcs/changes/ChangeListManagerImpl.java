@@ -691,9 +691,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
-        final FoldersCutDownWorker foldersCutDownWorker = new FoldersCutDownWorker();
         try {
-          builder.setCurrent(scope, foldersCutDownWorker);
+          builder.setCurrent(scope);
           changeProvider.getChanges(scope, builder, indicator, gate);
         }
         catch (final VcsException e) {
