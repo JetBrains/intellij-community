@@ -213,6 +213,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   public static PsiClass createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className) {
+    return createSubclass(psiClass, targetDirectory, className, true);
+  }
+
+  public static PsiClass createSubclass(final PsiClass psiClass, final PsiDirectory targetDirectory, final String className, boolean showChooser) {
     final Project project = psiClass.getProject();
     final PsiClass[] targetClass = new PsiClass[1];
     new WriteCommandAction(project, getTitle(psiClass), getTitle(psiClass)) {
@@ -241,7 +245,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass[0].getContainingFile(), targetClass[0]);
       if (editor == null) return targetClass[0];
 
-      chooseAndImplement(psiClass, project, targetClass[0], editor);
+      chooseAndImplement(psiClass, project, targetClass[0], editor, showChooser);
     }
     return targetClass[0];
   }
@@ -325,6 +329,10 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   protected static void chooseAndImplement(PsiClass psiClass, Project project, @NotNull PsiClass targetClass, Editor editor) {
+    chooseAndImplement(psiClass, project, targetClass, editor, true);
+  }
+
+  protected static void chooseAndImplement(PsiClass psiClass, Project project, @NotNull PsiClass targetClass, Editor editor, boolean showChooser) {
     boolean hasNonTrivialConstructor = false;
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod constructor : constructors) {
@@ -348,7 +356,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       editor.getCaretModel().moveToOffset(offset);
     }
 
-    OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass);
+    if (showChooser) OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass);
   }
 
   @Override

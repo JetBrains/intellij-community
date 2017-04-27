@@ -340,7 +340,7 @@ public class JavaPushDownDelegate extends PushDownDelegate<MemberInfo, PsiMember
 
   @Override
   public PsiElement createSubClass(PsiElement aClass, NewSubClassData subClassData) {
-    return CreateSubclassAction.createSubclass((PsiClass)aClass, (PsiDirectory)subClassData.getContext(), subClassData.getNewClassName());
+    return CreateSubclassAction.createSubclass((PsiClass)aClass, (PsiDirectory)subClassData.getContext(), subClassData.getNewClassName(), false);
   }
 
   private static boolean leaveOverrideAnnotation(PsiClass aClass, PsiSubstitutor substitutor, PsiMethod method) {
