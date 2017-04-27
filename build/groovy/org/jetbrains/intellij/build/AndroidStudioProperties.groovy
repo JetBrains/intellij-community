@@ -197,28 +197,6 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.messages.error("Cannot parse GRADLE_MINIMUM_VERSION in com/android/SdkConstants.java from module 'common'.")
   }
 
-  // TODO: Exclude BUILD files
-  // TODO: Remove JavaFX
-  // TODO: Remove annotations-java8.jar
-/*
-  def layoutAndroid(String androidHome, String androidToolsBaseHome) {
-    dir("plugins") {
-      dir("android") {
-        dir("lib") {
-          resources("android")
-
-          fileset(dir: "${androidHome}/android/lib") {
-            include(name: "** /*.jar")
-            include(name: "licenses/*")
-            exclude(name: "** /fest-*.jar")
-            exclude(name: "src/*.jar")
-          }
-        }
-      }
-    }
-  }
-  */
-
   @Override
   @CompileDynamic
   void copyAdditionalFiles(BuildContext buildContext, String targetDirectory) {
