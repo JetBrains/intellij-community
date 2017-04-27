@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -158,7 +159,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   /**
    * Returns tooltip text for the given list item or null if no tooltip is available.
-   *
+   * <p>
    * <p>This method is invoked by panel's list cell render in order to set a tooltip text for the list cell render component.
    * It is invoked before {@link #doCustomizeCellRenderer(SimpleColoredComponent, JList, Object, int, boolean, boolean)},
    * thus the tooltip may still be reset in {@code doCustomizeCellRenderer}.
@@ -214,6 +215,11 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setEmptyText(getListEmptyText());
     list.setCellRenderer(createListCellRenderer());
+
+    if (hasFixedSizeListElements()) {
+      list.setFixedCellHeight(JBUI.scale(UIUtil.LIST_FIXED_CELL_HEIGHT));
+      list.setFixedCellWidth(list.getWidth());
+    }
 
     installListActions(list);
     list.addListSelectionListener(new ListSelectionListener() {
@@ -404,6 +410,16 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   protected void doCustomizeCellRenderer(SimpleColoredComponent comp, JList list, T value, int index, boolean selected, boolean hasFocus) {
+  }
+
+  /**
+   * Whether this list contains "fixed size" elements.
+   *
+   * @return true.
+   * @since 2017.2
+   */
+  protected boolean hasFixedSizeListElements() {
+    return true;
   }
 
   @Nullable
