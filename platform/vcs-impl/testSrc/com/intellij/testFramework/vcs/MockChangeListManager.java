@@ -311,7 +311,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void letGo() {
+  public void freeze(@NotNull String reason) {
+  }
+
+  @Override
+  public void unfreeze() {
   }
 
   @Override

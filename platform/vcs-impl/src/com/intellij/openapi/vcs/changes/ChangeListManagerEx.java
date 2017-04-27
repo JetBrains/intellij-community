@@ -45,4 +45,12 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   @CalledInAwt
   public abstract void unblockModalNotifications();
+
+
+  /**
+   * Temporarily disable CLM update
+   * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
+   */
+  public abstract void freeze(@NotNull String reason);
+  public abstract void unfreeze();
 }

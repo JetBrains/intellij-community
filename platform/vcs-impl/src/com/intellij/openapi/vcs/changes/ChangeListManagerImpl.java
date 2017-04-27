@@ -357,6 +357,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   static class DisposedException extends RuntimeException {}
 
+  @Override
   public void freeze(@NotNull String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
     Semaphore sem = new Semaphore();
@@ -378,7 +379,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public void letGo() {
+  public void unfreeze() {
     myUpdater.go();
     myFreezeName.set(null);
   }
