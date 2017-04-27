@@ -83,13 +83,13 @@ internal class DefaultProjectStoreImpl(override val project: ProjectImpl, privat
   
   override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
   override fun setPath(path: String) {
   }
 
   private class MyExternalizationSession(val externalizationSession: StateStorage.ExternalizationSession) : StateStorageManager.ExternalizationSession {
-    override fun setState(storageSpecs: Array<out Storage>, component: Any, componentName: String, state: Any) {
+    override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
       externalizationSession.setState(component, componentName, state)
     }
 
