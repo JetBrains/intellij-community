@@ -66,7 +66,6 @@ public class SingleClassesTest {
   @Test public void testAnonymousClassConstructor() { doTest("pkg/TestAnonymousClassConstructor"); }
   @Test public void testInnerClassConstructor() { doTest("pkg/TestInnerClassConstructor"); }
   @Test public void testInnerClassConstructor11() { doTest("v11/TestInnerClassConstructor"); }
-  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); } //TODO: fix
   @Test public void testTryCatchFinally() { doTest("pkg/TestTryCatchFinally"); }
   @Test public void testAmbiguousCall() { doTest("pkg/TestAmbiguousCall"); }
   @Test public void testAmbiguousCallWithDebugInfo() { doTest("pkg/TestAmbiguousCallWithDebugInfo"); }
@@ -108,12 +107,16 @@ public class SingleClassesTest {
           "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
           "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
   @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
-  //@Test public void TestSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
   @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
   @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
-  //@Test public void testUnionType() { doTest("pkg/TestUnionType"); } //TODO: fix
   @Test public void testConstType() { doTest("pkg/TestConstType"); }
+
+  // TODO: fix all below
+  //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+  //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

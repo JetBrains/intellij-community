@@ -346,8 +346,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final Map<Object, StubIdList> oldMap = oldStubTree.get(key);
       final Map<Object, StubIdList> newMap = newStubTree.get(key);
 
-      final Map<Object, StubIdList> _oldMap = oldMap != null ? oldMap : Collections.<Object, StubIdList>emptyMap();
-      final Map<Object, StubIdList> _newMap = newMap != null ? newMap : Collections.<Object, StubIdList>emptyMap();
+      final Map<Object, StubIdList> _oldMap = oldMap != null ? oldMap : Collections.emptyMap();
+      final Map<Object, StubIdList> _newMap = newMap != null ? newMap : Collections.emptyMap();
 
       stubIndex.updateIndex(key, inputId, _oldMap, _newMap);
     }
@@ -516,7 +516,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     @Override
     public void clear() throws StorageException {
       final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
-      final Collection<StubIndexKey> allStubIndexKeys = stubIndex != null? stubIndex.getAllStubIndexKeys() : Collections.<StubIndexKey>emptyList();
+      final Collection<StubIndexKey> allStubIndexKeys = stubIndex != null? stubIndex.getAllStubIndexKeys() : Collections.emptyList();
       try {
         for (StubIndexKey key : allStubIndexKeys) {
           //noinspection ConstantConditions

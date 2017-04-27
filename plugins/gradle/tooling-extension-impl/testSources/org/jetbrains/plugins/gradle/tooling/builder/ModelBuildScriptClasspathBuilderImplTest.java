@@ -90,6 +90,6 @@ public class ModelBuildScriptClasspathBuilderImplTest extends AbstractModelBuild
 
   @Override
   protected Set<Class> getModels() {
-    return ContainerUtil.<Class>set(BuildScriptClasspathModel.class);
+    return ContainerUtil.set(BuildScriptClasspathModel.class);
   }
 }

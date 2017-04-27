@@ -91,7 +91,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   private static PsiElement createVariable(Map prop, PsiElement place, PsiManager manager) {
     String name = String.valueOf(prop.get("name"));
     final String type = String.valueOf(prop.get("type"));
-    return new GrLightVariable(manager, name, type, Collections.<PsiElement>emptyList(), place.getContainingFile());
+    return new GrLightVariable(manager, name, type, Collections.emptyList(), place.getContainingFile());
   }
 
   @Nullable

@@ -84,9 +84,9 @@ public class GitRebaseSpec {
                                                           @NotNull GitRepository repository,
                                                           @NotNull ProgressIndicator indicator) {
     if (!repository.isRebaseInProgress()) return null;
-    GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, Collections.<GitRebaseUtils.CommitInfo>emptyList());
+    GitRebaseStatus suspended = new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, Collections.emptyList());
     return new GitRebaseSpec(null, Collections.singletonMap(repository, suspended),
-                             Collections.<GitRepository, String>emptyMap(), Collections.<GitRepository, String>emptyMap(), newSaver(project, indicator), false);
+                             Collections.emptyMap(), Collections.emptyMap(), newSaver(project, indicator), false);
   }
 
   public boolean isValid() {

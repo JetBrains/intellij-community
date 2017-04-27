@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Disposer;
@@ -45,7 +44,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,10 +96,8 @@ public abstract class LineStatusMarkerPopup {
   }
 
   public void showAfterScroll() {
-    myEditor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-      public void run() {
-        showHintAt(null);
-      }
+    myEditor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      showHintAt(null);
     });
   }
 
@@ -163,11 +159,8 @@ public abstract class LineStatusMarkerPopup {
     final CharSequence vcsContent = myTracker.getVcsContent(myRange);
     final CharSequence currentContent = myTracker.getCurrentContent(myRange);
 
-    return BackgroundTaskUtil.tryComputeFast(new Function<ProgressIndicator, List<DiffFragment>>() {
-      @Override
-      public List<DiffFragment> fun(ProgressIndicator indicator) {
-        return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
-      }
+    return BackgroundTaskUtil.tryComputeFast(indicator -> {
+      return ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator);
     }, 200);
   }
 

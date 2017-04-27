@@ -27,13 +27,13 @@ public class ResourceIntegrityTest {
 
   @Test
   public void launcher() throws Exception {
-    String contents = ExecUtil.loadTemplate(myClassLoader, "launcher.py", Collections.<String, String>emptyMap());
+    String contents = ExecUtil.loadTemplate(myClassLoader, "launcher.py", Collections.emptyMap());
     assertFalse(contents.contains("\r\n"));
   }
 
   @Test
   public void desktopEntry() throws Exception {
-    String contents = ExecUtil.loadTemplate(myClassLoader, "entry.desktop", Collections.<String, String>emptyMap());
+    String contents = ExecUtil.loadTemplate(myClassLoader, "entry.desktop", Collections.emptyMap());
     assertFalse(contents.contains("\r\n"));
   }
 }

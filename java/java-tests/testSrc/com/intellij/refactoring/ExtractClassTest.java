@@ -30,7 +30,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.extractclass.ExtractClassProcessor;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
@@ -228,7 +227,7 @@ public class ExtractClassTest extends MultiFileTestCase{
                              boolean inner) {
     try {
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), StringUtil.getPackageName(aClass.getQualifiedName()), null,
-                                                                  "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
+                                                                  "Extracted", null, generateGettersSetters, Collections.emptyList());
       processor.setExtractInnerClass(inner);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
@@ -342,7 +341,7 @@ public class ExtractClassTest extends MultiFileTestCase{
       fields.add(aClass.findFieldByName("myT", false));
 
       final ExtractClassProcessor processor =
-        new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.<MemberInfo>emptyList());
+        new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.emptyList());
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();

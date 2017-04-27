@@ -173,7 +173,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
 
     if (sdk instanceof JythonSdkFlavor) {
-      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(myFixture.getTempDirPath())));
+      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.newArrayList(myFixture.getTempDirPath())));
     }
     else {
       PythonEnvUtil.addToPythonPath(config.getEnvs(), myFixture.getTempDirPath());

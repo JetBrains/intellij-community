@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
@@ -91,7 +90,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, null,
          isResizable(), aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
-         null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(),
+         null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.emptyList(),
          null, null, false, true, true, true, null);
 
     registerAction("disposeAll", KeyEvent.VK_ESCAPE, InputEvent.SHIFT_MASK, new AbstractAction() {

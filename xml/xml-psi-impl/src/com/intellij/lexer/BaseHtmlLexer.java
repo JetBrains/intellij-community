@@ -217,7 +217,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
     }
     Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(mimeType.trim());
     if (instancesByMimeType.isEmpty() && mimeType.contains("template")) {
-      instancesByMimeType = Collections.<Language>singletonList(HTMLLanguage.INSTANCE);
+      instancesByMimeType = Collections.singletonList(HTMLLanguage.INSTANCE);
     }
     for (Language language : instancesByMimeType) {
       HtmlScriptContentProvider scriptContentProvider = LanguageHtmlScriptContentProvider.getScriptContentProvider(language);

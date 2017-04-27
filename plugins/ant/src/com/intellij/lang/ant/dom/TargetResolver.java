@@ -66,7 +66,7 @@ public class TargetResolver extends PropertyProviderFinder {
 
     @NotNull
     public Map<String, AntDomTarget> getVariants() {
-      return myVariants != null? myVariants : Collections.<String, AntDomTarget>emptyMap();
+      return myVariants != null? myVariants : Collections.emptyMap();
     }
   }
 
@@ -95,7 +95,7 @@ public class TargetResolver extends PropertyProviderFinder {
   }
   
   public static void validateDuplicateTargets(AntDomProject project, final TargetSink sink) {
-    final TargetResolver resolver = new TargetResolver(Collections.<String>emptyList(), null) {
+    final TargetResolver resolver = new TargetResolver(Collections.emptyList(), null) {
       protected void duplicateTargetFound(AntDomTarget existingTarget, AntDomTarget duplicatingTarget, String taregetEffectiveName) {
         sink.duplicateTargetDetected(existingTarget, duplicatingTarget, taregetEffectiveName);
       }

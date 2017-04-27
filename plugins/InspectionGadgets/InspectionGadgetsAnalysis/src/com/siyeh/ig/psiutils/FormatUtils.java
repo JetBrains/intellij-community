@@ -51,7 +51,7 @@ public class FormatUtils {
   private FormatUtils() {}
 
   public static boolean isFormatCall(PsiMethodCallExpression expression) {
-    return isFormatCall(expression, Collections.<String>emptyList(), Collections.<String>emptyList());
+    return isFormatCall(expression, Collections.emptyList(), Collections.emptyList());
   }
 
   public static boolean isFormatCall(PsiMethodCallExpression expression, List<String> optionalMethods, List<String> optionalClasses) {

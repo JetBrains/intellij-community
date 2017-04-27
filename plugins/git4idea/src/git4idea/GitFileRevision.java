@@ -47,7 +47,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @Nullable private final VirtualFile myRoot;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
-    this(project, null, path, revision, null, null, null, null, Collections.<String>emptyList());
+    this(project, null, path, revision, null, null, null, null, Collections.emptyList());
   }
 
   public GitFileRevision(@NotNull Project project, @Nullable VirtualFile root, @NotNull FilePath path, @NotNull GitRevisionNumber revision,

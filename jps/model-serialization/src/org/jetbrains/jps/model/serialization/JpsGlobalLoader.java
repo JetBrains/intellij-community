@@ -54,7 +54,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
 
   public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
     File optionsDir = new File(FileUtil.toCanonicalPath(optionsPath));
-    new JpsGlobalLoader(global, Collections.<String, String>emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
+    new JpsGlobalLoader(global, Collections.emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
   }

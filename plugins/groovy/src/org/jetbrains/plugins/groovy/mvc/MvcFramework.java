@@ -105,8 +105,8 @@ public abstract class MvcFramework {
 
   @NotNull
   public Map<String, Runnable> createConfigureActions(final @NotNull Module module) {
-    return Collections.<String, Runnable>singletonMap("Configure " + getFrameworkName() + " SDK",
-                                                      () -> configureAsLibraryDependency(module));
+    return Collections.singletonMap("Configure " + getFrameworkName() + " SDK",
+                                    () -> configureAsLibraryDependency(module));
   }
 
   protected void configureAsLibraryDependency(@NotNull Module module) {

@@ -1239,7 +1239,7 @@ public class IncProjectBuilder {
             if (!files.isEmpty()) {
               final SourceToOutputMapping mapping = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
               for (File srcFile : files) {
-                mapping.setOutputs(srcFile.getPath(), Collections.<String>emptyList());
+                mapping.setOutputs(srcFile.getPath(), Collections.emptyList());
               }
             }
           }

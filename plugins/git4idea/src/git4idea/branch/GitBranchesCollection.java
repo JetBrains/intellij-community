@@ -43,7 +43,7 @@ import java.util.Map;
 public final class GitBranchesCollection {
 
   public static final GitBranchesCollection EMPTY =
-    new GitBranchesCollection(Collections.<GitLocalBranch, Hash>emptyMap(), Collections.<GitRemoteBranch, Hash>emptyMap());
+    new GitBranchesCollection(Collections.emptyMap(), Collections.emptyMap());
 
   @NotNull
   private final Map<GitLocalBranch, Hash> myLocalBranches;

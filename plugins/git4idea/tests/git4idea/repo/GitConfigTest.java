@@ -257,7 +257,7 @@ public class GitConfigTest extends GitPlatformTest {
   }
 
   private static List<String> getSingletonOrEmpty(String[] array, int i) {
-    return array.length < i + 1 ? Collections.<String>emptyList() : Collections.singletonList(array[i]);
+    return array.length < i + 1 ? Collections.emptyList() : Collections.singletonList(array[i]);
   }
 
   private static class TestSpec {

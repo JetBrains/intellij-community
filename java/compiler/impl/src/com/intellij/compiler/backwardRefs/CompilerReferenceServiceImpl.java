@@ -234,17 +234,22 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
           .map(r -> (LightRef.JavaLightMethodRef) r)
           .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false);
+            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false, 10);
             return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
           })
-          .map(r -> new OccurrencesAware<>(
-            new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
-            myReader.getOccurrenceCount(r))))
+          .distinct()
+          .map(r -> {
+            int count = myReader.getOccurrenceCount(r);
+            return count <= 1 ? null : new OccurrencesAware<>(
+              new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
+              count);
+          }))
+          .filter(Objects::nonNull)
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
-        //noinspection ConstantConditions
-        return onException(e, "find methods");
+        onException(e, "find methods");
+        return Collections.emptySortedSet();
       }
     } finally {
       myReadDataLock.unlock();
@@ -272,8 +277,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         return false;
       }
       catch (Exception e) {
-        //noinspection ConstantConditions
-        return onException(e, "correlation");
+        onException(e, "correlation");
+        return false;
       }
     } finally {
       myReadDataLock.unlock();

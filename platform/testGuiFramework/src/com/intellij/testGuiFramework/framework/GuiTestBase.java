@@ -129,7 +129,7 @@ public abstract class GuiTestBase {
 
   @After
   public void tearDown() throws InvocationTargetException, InterruptedException {
-    GuiTestUtil.failIfIdeHasFatalErrors();
+    failIfIdeHasFatalErrors();
     if (myProjectFrame != null) {
       DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(new Runnable() {
         @Override

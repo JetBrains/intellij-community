@@ -143,7 +143,7 @@ public class PyUserSkeletonsUtil {
           return (PyFile)fileSkeleton;
         }
       }
-      cache.put(cacheQName, Collections.<PsiElement>emptyList());
+      cache.put(cacheQName, Collections.emptyList());
     }
     return null;
   }

@@ -30,8 +30,6 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsUser;
 import git4idea.DialogManager;
 import git4idea.history.GitHistoryUtils;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +98,7 @@ public class GitRebaseOverMergeProblem {
     String range = baseRef + ".." + currentRef;
     try {
       GitHistoryUtils.readCommits(project, root, Arrays.asList(range, "--merges"),
-                                  EmptyConsumer.<VcsUser>getInstance(), EmptyConsumer.<VcsRef>getInstance(), detectingConsumer);
+                                  EmptyConsumer.getInstance(), EmptyConsumer.getInstance(), detectingConsumer);
     }
     catch (VcsException e) {
       LOG.warn("Couldn't get git log --merges " + range, e);

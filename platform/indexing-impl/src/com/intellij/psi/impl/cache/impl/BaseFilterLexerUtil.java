@@ -61,8 +61,8 @@ public class BaseFilterLexerUtil {
     }
 
     data = new ScanContent(
-      consumer != null? consumer.getResult():Collections.<IdIndexEntry, Integer>emptyMap(),
-      todoMap != null ? todoMap: Collections.<TodoIndexEntry,Integer>emptyMap()
+      consumer != null? consumer.getResult():Collections.emptyMap(),
+      todoMap != null ? todoMap: Collections.emptyMap()
     );
     if (needIdIndex && needTodo) content.putUserData(scanContentKey, data);
     return data;

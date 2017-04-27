@@ -67,7 +67,7 @@ public class JavaFxAntTaskTest extends TestCase {
            "<fx:fileset refid=\"all_jarDeployNoInfo\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.<String, String>emptyMap());
+           "</fx:deploy>\n", Collections.emptyMap());
   }
 
   public void testJarDeployTitle() throws Exception {

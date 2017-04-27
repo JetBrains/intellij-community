@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.generators
 
 import com.intellij.framework.PresentableVersion
 import com.intellij.ide.plugins.PluginTable
+import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -179,6 +180,18 @@ class JTreeGenerator : ComponentCodeGenerator<JTree> {
     val path = getJTreePath(cmp, cmp.getPath(cp))
     if (me.isRightButton()) return "jTree(\"$path\").rightClickPath(\"$path\")"
     return "jTree(\"$path\").clickPath(\"$path\")"
+  }
+}
+
+class ProjectViewTreeGenerator : ComponentCodeGenerator<ProjectViewTree> {
+  override fun priority() = 1
+  override fun accept(cmp: Component) = cmp is ProjectViewTree
+  private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
+  override fun generate(cmp: ProjectViewTree, me: MouseEvent, cp: Point): String {
+    val path = getJTreePath(cmp, cmp.getPath(cp))
+    if (me.isRightButton()) return "path(\"$path\").rightClick()"
+    if (me.clickCount == 2) return "path(\"$path\").doubleClick()"
+    return "path(\"$path\").click()"
   }
 }
 

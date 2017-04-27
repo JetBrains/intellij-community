@@ -27,7 +27,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.vcs.ProgressManagerQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
@@ -51,6 +50,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import com.intellij.vcs.ProgressManagerQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +152,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             final List<ChangesCacheFile> files = myCachesHolder.getAllCaches();
             for (ChangesCacheFile file : files) {
               final RepositoryLocation location = file.getLocation();
-              fireChangesLoaded(location, Collections.<CommittedChangeList>emptyList());
+              fireChangesLoaded(location, Collections.emptyList());
             }
             fireIncomingReloaded();
           }
@@ -532,7 +532,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
     MessageBusUtil.invokeLaterIfNeededOnSyncPublisher(myProject, COMMITTED_TOPIC, new Consumer<CommittedChangesListener>() {
       @Override
       public void consume(CommittedChangesListener listener) {
-        listener.incomingChangesUpdated(Collections.<CommittedChangeList>emptyList());
+        listener.incomingChangesUpdated(Collections.emptyList());
       }
     });
   }
@@ -723,7 +723,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
             if (file.isEmpty()) return;
             file.editChangelist(number, newMessage);
             loadIncomingChanges(true);
-            fireChangesLoaded(location, Collections.<CommittedChangeList>emptyList());
+            fireChangesLoaded(location, Collections.emptyList());
           }
           catch (IOException e) {
             VcsBalloonProblemNotifier.showOverChangesView(myProject, "Didn't update Repository changes with new message due to error: " + e.getMessage(),

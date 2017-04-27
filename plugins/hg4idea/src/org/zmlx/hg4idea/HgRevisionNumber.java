@@ -36,7 +36,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   private final boolean isWorkingVersion;
 
   // this is needed in place of VcsRevisionNumber.NULL, because sometimes we need to return HgRevisionNumber.
-  public static final HgRevisionNumber NULL_REVISION_NUMBER = new HgRevisionNumber("", "", "", "", Collections.<HgRevisionNumber>emptyList()) {
+  public static final HgRevisionNumber NULL_REVISION_NUMBER = new HgRevisionNumber("", "", "", "", Collections.emptyList()) {
     @Override
     public int compareTo(VcsRevisionNumber o) {
       return NULL.compareTo(o);
@@ -49,11 +49,11 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   };
 
   public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull  String author,@NotNull  String commitMessage) {
-    return new HgRevisionNumber(revision, changeset, author, commitMessage, Collections.<HgRevisionNumber>emptyList());
+    return new HgRevisionNumber(revision, changeset, author, commitMessage, Collections.emptyList());
   }
 
   public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset) {
-    return new HgRevisionNumber(revision, changeset, "", "", Collections.<HgRevisionNumber>emptyList());
+    return new HgRevisionNumber(revision, changeset, "", "", Collections.emptyList());
   }
 
   public static HgRevisionNumber getInstance(@NotNull String revision,@NotNull  String changeset,@NotNull  List<HgRevisionNumber> parents) {
@@ -61,7 +61,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   public static HgRevisionNumber getLocalInstance(@NotNull String revision) {
-    return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
+    return new HgRevisionNumber(revision, "", "", "", Collections.emptyList());
   }
 
   public HgRevisionNumber(@NotNull String revision,

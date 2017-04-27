@@ -28,7 +28,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -107,7 +106,7 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       public Iterable<ExpressionTypeProvider> fun(Language language) {
         return DumbService.getInstance(project).filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language));
       }
-    }).addAllTo(ContainerUtil.<ExpressionTypeProvider>newLinkedHashSet());
+    }).addAllTo(ContainerUtil.newLinkedHashSet());
   }
 
 }

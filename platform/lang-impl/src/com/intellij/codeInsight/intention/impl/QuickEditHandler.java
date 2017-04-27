@@ -299,7 +299,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
-        Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer);
+        Trinity.create(origMarker, rangeMarker, elementPointer);
       myMarkers.add(markers);
 
       origMarker.setGreedyToRight(true);

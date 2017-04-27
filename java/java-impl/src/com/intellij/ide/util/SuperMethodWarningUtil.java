@@ -47,7 +47,7 @@ public class SuperMethodWarningUtil {
 
   @NotNull
   public static PsiMethod[] checkSuperMethods(@NotNull PsiMethod method, @NotNull String actionString) {
-    return checkSuperMethods(method, actionString, Collections.<PsiElement>emptyList());
+    return checkSuperMethods(method, actionString, Collections.emptyList());
   }
 
   @NotNull

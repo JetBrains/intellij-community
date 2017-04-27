@@ -240,7 +240,7 @@ public class DomUtil {
 
     if (parent instanceof DomFileElement) {
       final DomFileElement element = (DomFileElement)parent;
-      return tags ? Arrays.asList(element.getRootElement()) : Collections.<DomElement>emptyList();
+      return tags ? Arrays.asList(element.getRootElement()) : Collections.emptyList();
     }
 
     final XmlElement xmlElement = parent.getXmlElement();

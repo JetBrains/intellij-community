@@ -19,11 +19,7 @@ package com.intellij.ide.projectView;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
-import com.intellij.ide.util.treeView.AbstractTreeBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
-import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.util.StatusBarProgress;
@@ -80,7 +76,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<>();
-          _select(value, virtualFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), callback, indicator, target, focusRequestor, false);
+          _select(value, virtualFile, false, Conditions.alwaysTrue(), callback, indicator, target, focusRequestor, false);
           callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
         }
       });
@@ -146,7 +142,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
   @NotNull
   public ActionCallback select(Object element, VirtualFile file, final boolean requestFocus) {
-    return _select(element, file, requestFocus, Conditions.<AbstractTreeNode>alwaysTrue());
+    return _select(element, file, requestFocus, Conditions.alwaysTrue());
   }
 
   public ActionCallback selectInWidth(final Object element,

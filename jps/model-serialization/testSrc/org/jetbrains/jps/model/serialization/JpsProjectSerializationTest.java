@@ -217,7 +217,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     Element actual = new Element("library");
     JpsLibraryTableSerializer.saveLibrary(library, actual, libName);
     JpsMacroExpander
-      macroExpander = JpsProjectLoader.createProjectMacroExpander(Collections.<String, String>emptyMap(), getFileInSampleProject(""));
+      macroExpander = JpsProjectLoader.createProjectMacroExpander(Collections.emptyMap(), getFileInSampleProject(""));
     Element rootElement = JpsLoaderBase.loadRootElement(libFile, macroExpander);
     Element expected = rootElement.getChild("library");
     PlatformTestUtil.assertElementsEqual(expected, actual);

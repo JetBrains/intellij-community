@@ -80,7 +80,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         LOG.error(e);
       }
       catch (ExecutionException e) {
-        throw analyzeException(e, helper, Collections.<String>emptyList());
+        throw analyzeException(e, helper, Collections.emptyList());
       }
     }
     return null;

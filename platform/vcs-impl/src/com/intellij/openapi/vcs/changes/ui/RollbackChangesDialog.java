@@ -85,7 +85,7 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.<Change>emptyList(), true, null).show();
+    new RollbackChangesDialog(project, Collections.singletonList(changeList), Collections.emptyList(), true, null).show();
   }
 
   private static void showNoChangesDialog(Project project) {

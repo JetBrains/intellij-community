@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,6 +196,7 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getOptionHintAtOffset(editor, file) ?: return
     option.disable()
+    refreshAllOpenEditors()
   }
 
   override fun startInWriteAction() = false
@@ -243,6 +244,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getDisabledOptionInfoAtCaretOffset(editor, file) ?: return
     option.enable()
+    refreshAllOpenEditors()
   }
 
   override fun startInWriteAction() = false
@@ -316,6 +318,7 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
 
 
 private fun refreshAllOpenEditors() {
+  ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
   ProjectManager.getInstance().openProjects.forEach {
     val psiManager = PsiManager.getInstance(it)
     val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(it)

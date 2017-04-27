@@ -19,7 +19,6 @@ import com.intellij.codeInspection.i18n.I18nQuickFixHandler;
 import com.intellij.codeInspection.i18n.I18nizeAction;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -62,9 +61,9 @@ public class I18nizeTest extends LightCodeInsightTestCase {
     if (afterFileExists) {
       PsiLiteralExpression literalExpression = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
       assertNotNull(handler);
-      ApplicationManager.getApplication().runWriteAction(() -> handler.performI18nization(getFile(), getEditor(), literalExpression, Collections.<PropertiesFile>emptyList(), "key1", "value1",
-                                                                                        "i18nizedExpr",
-                                                                                        PsiExpression.EMPTY_ARRAY, JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER));
+      ApplicationManager.getApplication().runWriteAction(() -> handler.performI18nization(getFile(), getEditor(), literalExpression, Collections.emptyList(), "key1", "value1",
+                                                                                          "i18nizedExpr",
+                                                                                          PsiExpression.EMPTY_ARRAY, JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER));
 
       checkResultByFile(afterFile);
     }

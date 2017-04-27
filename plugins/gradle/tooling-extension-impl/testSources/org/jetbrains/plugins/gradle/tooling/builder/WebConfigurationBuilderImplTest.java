@@ -71,6 +71,6 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
 
   @Override
   protected Set<Class> getModels() {
-    return ContainerUtil.<Class>set(WebConfiguration.class);
+    return ContainerUtil.set(WebConfiguration.class);
   }
 }

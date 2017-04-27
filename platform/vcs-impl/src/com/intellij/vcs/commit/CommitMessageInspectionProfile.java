@@ -72,6 +72,11 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return ((BodyLimitInspection)notNull(toolWrapper).getTool()).RIGHT_MARGIN;
   }
 
+  @Override
+  protected boolean forceInitInspectionTools() {
+    return true;
+  }
+
   @NotNull
   @Override
   @Transient

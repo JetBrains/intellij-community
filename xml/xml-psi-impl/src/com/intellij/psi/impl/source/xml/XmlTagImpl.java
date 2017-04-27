@@ -359,7 +359,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         }
       }
     }
-    return map == null ? Collections.<String, CachedValue<XmlNSDescriptor>>emptyMap() : map;
+    return map == null ? Collections.emptyMap() : map;
   }
 
   private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(@NotNull final String namespace,

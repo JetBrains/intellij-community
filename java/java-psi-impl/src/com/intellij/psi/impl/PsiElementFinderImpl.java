@@ -148,7 +148,7 @@ public class PsiElementFinderImpl extends PsiElementFinder implements DumbAware 
       }
 
     }
-    return names == null ? Collections.<String>emptySet() : names;
+    return names == null ? Collections.emptySet() : names;
   }
 
   @Override

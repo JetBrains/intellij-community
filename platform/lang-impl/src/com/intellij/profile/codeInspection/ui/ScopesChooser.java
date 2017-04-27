@@ -54,7 +54,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     myDefaultDescriptors = defaultDescriptors;
     myInspectionProfile = inspectionProfile;
     myProject = project;
-    myExcludedScopeNames = excludedScopeNames == null ? Collections.<String>emptySet() : ContainerUtil.newHashSet(excludedScopeNames);
+    myExcludedScopeNames = excludedScopeNames == null ? Collections.emptySet() : ContainerUtil.newHashSet(excludedScopeNames);
     setPopupTitle(TITLE);
     getTemplatePresentation().setText("In All Scopes");
   }

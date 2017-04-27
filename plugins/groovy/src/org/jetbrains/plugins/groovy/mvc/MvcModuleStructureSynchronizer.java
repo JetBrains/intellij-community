@@ -272,7 +272,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
         final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)
-                                                                                    : Collections.<Trinity<Module, SyncAction, MvcFramework>>emptySet();
+                                                                                    : Collections.emptySet();
         return new Continuation(() -> {
           if (isUpToDate()) {
             runActions(actions);

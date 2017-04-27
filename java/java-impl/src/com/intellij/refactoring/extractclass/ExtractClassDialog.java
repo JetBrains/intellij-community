@@ -49,8 +49,10 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings({"OverridableMethodCallInConstructor"})
 class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeListener<PsiMember, MemberInfo> {
@@ -150,7 +152,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
                                                                         false),
                                                                       newClassName, myVisibilityPanel.getVisibility(),
                                                                       isGenerateAccessors(),
-                                                                      isExtractAsEnum() ? enumConstants : Collections.<MemberInfo>emptyList());
+                                                                      isExtractAsEnum() ? enumConstants : Collections.emptyList());
     processor.setExtractInnerClass(createInner.isSelected());
     if (processor.getCreatedClass() == null) {
       Messages.showErrorDialog(myVisibilityPanel, "Unable to create class with the given name");

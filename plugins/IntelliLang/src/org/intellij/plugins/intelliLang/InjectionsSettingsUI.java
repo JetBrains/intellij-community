@@ -759,7 +759,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
+        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {

@@ -37,8 +37,10 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
@@ -271,7 +273,7 @@ public class ExternalSystemApiUtil {
       }
       result.add((DataNode<T>)child);
     }
-    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+    return result == null ? Collections.emptyList() : result;
   }
 
   @SuppressWarnings("unchecked")
@@ -792,6 +794,10 @@ public class ExternalSystemApiUtil {
     };
     //noinspection unchecked
     return (T)loader.loadClass(clazz.getName()).newInstance();
+  }
+
+  public static ProjectModelExternalSource toExternalSource(@NotNull ProjectSystemId systemId) {
+    return ExternalProjectSystemRegistry.getInstance().getSourceById(systemId.getId());
   }
 
   @Contract(value = "_, null -> false", pure=true)

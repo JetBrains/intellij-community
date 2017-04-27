@@ -58,7 +58,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final int IS_LOCAL_MASK     = 0x1000000;
 
   private Set<RefClass> myBases; // singleton (to conserve the memory) or THashSet
-  private Set<RefClass> mySubClasses; // singleton (to conserve the memory) or THashSet
+  private volatile Set<RefClass> mySubClasses;
   private List<RefMethod> myConstructors;
   private RefMethodImpl myDefaultConstructor;
   private List<RefMethod> myOverridingMethods;
@@ -341,23 +341,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   private void addSubClass(@NotNull RefClass refClass){
     if (mySubClasses == null) {
-      mySubClasses = Collections.singleton(refClass);
-      return;
-    }
-    if (mySubClasses.size() == 1) {
-      // convert from singleton
-      mySubClasses = new THashSet<>(mySubClasses);
+      mySubClasses = ContainerUtil.newConcurrentSet();
     }
     mySubClasses.add(refClass);
   }
+
   private void removeSubClass(RefClass refClass){
     if (mySubClasses == null) return;
-    if (mySubClasses.size() == 1) {
-      mySubClasses = null;
-    }
-    else {
-      mySubClasses.remove(refClass);
-    }
+    mySubClasses.remove(refClass);
   }
 
   @Override

@@ -187,7 +187,7 @@ public class ResolveClassTest extends ResolveTestCase {
     final VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();
     assertNotNull(file);
     createFile(myModule, file.getParent(), "ModuleSourceAsLibrarySourceDep.java", loadFile("class/ModuleSourceAsLibrarySourceDep.java"));
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.<String>emptyList(), Collections.singletonList(file.getParent().getUrl()));
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.emptyList(), Collections.singletonList(file.getParent().getUrl()));
 
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
@@ -198,7 +198,7 @@ public class ResolveClassTest extends ResolveTestCase {
     final VirtualFile file = psiFile.getVirtualFile();
     assertNotNull(file);
     createFile(myModule, file.getParent(), "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(file.getParent().getUrl()), Collections.<String>emptyList());
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(file.getParent().getUrl()), Collections.emptyList());
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
     DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
       @Override

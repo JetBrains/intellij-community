@@ -75,7 +75,7 @@ public class FileContentUtil extends FileContentUtilCore {
 
   public static void reparseOpenedFiles() {
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      reparseFiles(project, Collections.emptyList(), true);
     }
   }
 }

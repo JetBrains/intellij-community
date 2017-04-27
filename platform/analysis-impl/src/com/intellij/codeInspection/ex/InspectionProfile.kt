@@ -109,7 +109,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
 
   @JvmOverloads
   fun initInspectionTools(project: Project? = (profileManager as? ProjectInspectionProfileManager)?.project) {
-    if (initialized || ApplicationManager.getApplication().isUnitTestMode && !INIT_INSPECTIONS) {
+    if (initialized || !forceInitInspectionTools()) {
       return
     }
 
@@ -119,6 +119,8 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       }
     }
   }
+
+  protected open fun forceInitInspectionTools() = !ApplicationManager.getApplication().isUnitTestMode || INIT_INSPECTIONS
 
   protected abstract fun initialize(project: Project?)
 

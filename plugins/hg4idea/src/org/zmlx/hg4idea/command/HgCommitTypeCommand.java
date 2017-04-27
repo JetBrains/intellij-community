@@ -81,7 +81,7 @@ public abstract class HgCommitTypeCommand {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
     if (myFiles.isEmpty()) {
-      executeChunked(Collections.<List<String>>emptyList());
+      executeChunked(Collections.emptyList());
     }
     else {
       List<String> relativePaths = ContainerUtil.map2List(myFiles, new Function<HgFile, String>() {

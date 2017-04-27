@@ -30,7 +30,10 @@ import com.intellij.util.Chunk;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -104,7 +107,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
       problemsHolder.registerProblem(new ProjectStructureProblemDescription(message, description, place,
                                                                             ProjectStructureProblemType
                                                                               .warning("module-circular-dependency"),
-                                                                            Collections.<ConfigurationErrorQuickFix>emptyList()));
+                                                                            Collections.emptyList()));
     }
   }
 

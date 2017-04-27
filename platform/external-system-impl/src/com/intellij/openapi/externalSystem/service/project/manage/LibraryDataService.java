@@ -78,7 +78,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       syncPaths(toImport, library, modelsProvider);
       return;
     }
-    library = modelsProvider.createLibrary(libraryName);
+    library = modelsProvider.createLibrary(libraryName, ExternalSystemApiUtil.toExternalSource(toImport.getOwner()));
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(library);
     registerPaths(toImport.isUnresolved(), libraryFiles, libraryModel, libraryName);
   }

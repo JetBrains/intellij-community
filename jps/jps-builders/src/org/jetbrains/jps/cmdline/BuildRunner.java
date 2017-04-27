@@ -68,11 +68,11 @@ public class BuildRunner {
   }
 
   public void setFilePaths(List<String> filePaths) {
-    myFilePaths = filePaths != null? filePaths : Collections.<String>emptyList();
+    myFilePaths = filePaths != null? filePaths : Collections.emptyList();
   }
 
   public void setBuilderParams(Map<String, String> builderParams) {
-    myBuilderParams = builderParams != null? builderParams : Collections.<String, String>emptyMap();
+    myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {

@@ -142,7 +142,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
   @NotNull
   public Collection<PackagingNodeSource> getNodeSource(@NotNull PackagingElement<?> element) {
     final Collection<PackagingNodeSource> nodeSources = myNodeSources.get(element);
-    return nodeSources != null ? nodeSources : Collections.<PackagingNodeSource>emptyList();
+    return nodeSources != null ? nodeSources : Collections.emptyList();
   }
 
   public ArtifactEditorContext getContext() {

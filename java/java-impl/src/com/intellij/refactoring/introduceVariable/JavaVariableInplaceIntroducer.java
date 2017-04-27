@@ -291,12 +291,12 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
     if (isReplaceAllOccurrences()) {
       for (PsiExpression expression : getOccurrences()) {
         LOG.assertTrue(expression.isValid(), expression.getText());
-        stringUsages.add(Pair.<PsiElement, TextRange>create(expression, new TextRange(0, expression.getTextLength())));
+        stringUsages.add(Pair.create(expression, new TextRange(0, expression.getTextLength())));
       }
     } else if (getExpr() != null && !myReplaceSelf && getExpr().getParent() != getVariable()) {
       final PsiExpression expr = getExpr();
       LOG.assertTrue(expr.isValid(), expr.getText());
-      stringUsages.add(Pair.<PsiElement, TextRange>create(expr, new TextRange(0, expr.getTextLength())));
+      stringUsages.add(Pair.create(expr, new TextRange(0, expr.getTextLength())));
     }
   }
 

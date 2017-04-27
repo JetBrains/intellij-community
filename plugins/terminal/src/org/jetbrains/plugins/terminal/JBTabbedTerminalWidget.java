@@ -75,7 +75,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     super(settingsProvider, new Predicate<TerminalWidget>() {
       @Override
       public boolean apply(TerminalWidget input) {
-        return createNewSessionAction.apply(Pair.<TerminalWidget, String>create(input, null));
+        return createNewSessionAction.apply(Pair.create(input, null));
       }
     });
     myProject = project;
@@ -100,7 +100,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
                                                           PsiFileSystemItem element = (PsiFileSystemItem)ao.getPsiElements()[0];
                                                           PsiDirectory dir = element instanceof PsiFile ? ((PsiFile)element).getContainingDirectory() : (PsiDirectory)element;
 
-                                                          createNewSessionAction.apply(Pair.<TerminalWidget, String>create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
+                                                          createNewSessionAction.apply(Pair.create(JBTabbedTerminalWidget.this, dir.getVirtualFile().getPath()));
                                                         }
                                                       }
                                                     }

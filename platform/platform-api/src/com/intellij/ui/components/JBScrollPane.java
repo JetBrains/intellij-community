@@ -345,6 +345,10 @@ public class JBScrollPane extends JScrollPane {
         Container parent = component.getParent();
         if (parent instanceof JScrollPane) {
           JScrollPane pane = (JScrollPane)parent;
+          if (pane.getLayout() instanceof ScrollPaneLayout.UIResource) {
+            LOG.debug("replace default scroll pane layout to support our scroll bars");
+            pane.setLayout(new Layout());
+          }
           if (component == pane.getColumnHeader()) {
             return TOP;
           }

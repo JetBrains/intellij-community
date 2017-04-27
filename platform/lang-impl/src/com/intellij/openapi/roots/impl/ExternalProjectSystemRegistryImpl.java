@@ -39,14 +39,37 @@ public class ExternalProjectSystemRegistryImpl implements ExternalProjectSystemR
       return getSourceById(externalSystemId);
     }
     if ("true".equals(module.getOptionValue(IS_MAVEN_MODULE_KEY))) {
-      return getSourceById("Maven");
+      return getSourceById(MAVEN_EXTERNAL_SOURCE_ID);
     }
     return null;
   }
 
+  @Override
   @NotNull
-  private ProjectModelExternalSource getSourceById(String id) {
-    //todo[nik] specify display name explicitly instead, the current code is copied from ProjectSystemId constructor
-    return myExternalSources.computeIfAbsent(id, (sourceId) -> () -> StringUtil.capitalize(sourceId.toLowerCase(Locale.US)));
+  public ProjectModelExternalSource getSourceById(String id) {
+    return myExternalSources.computeIfAbsent(id, ProjectModelExternalSourceImpl::new);
+  }
+
+  private static class ProjectModelExternalSourceImpl implements ProjectModelExternalSource {
+    private final String myId;
+    private final String myDisplayName;
+
+    public ProjectModelExternalSourceImpl(String id) {
+      myId = id;
+      //todo[nik] specify display name explicitly instead, the current code is copied from ProjectSystemId constructor
+      myDisplayName = StringUtil.capitalize(myId.toLowerCase(Locale.US));
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      return myDisplayName;
+    }
+
+    @NotNull
+    @Override
+    public String getId() {
+      return myId;
+    }
   }
 }

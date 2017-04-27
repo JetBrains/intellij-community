@@ -246,7 +246,7 @@ public class ProjectStructureDaemonAnalyzer implements Disposable {
       updateUsages(element, getUsagesInElement(element));
     }
     final Collection<ProjectStructureElementUsage> usages = mySourceElement2Usages.get(selected);
-    return usages != null ? usages : Collections.<ProjectStructureElementUsage>emptyList();
+    return usages != null ? usages : Collections.emptyList();
   }
 
   public void addListener(ProjectStructureDaemonAnalyzerListener listener) {

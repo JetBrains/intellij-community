@@ -247,7 +247,7 @@ public abstract class TestNGTestObject {
       }
     }
     if (psiMember instanceof PsiMethod) {
-      final boolean add = psiMethods.put((PsiMethod)psiMember, Collections.<String>emptyList()) != null;
+      final boolean add = psiMethods.put((PsiMethod)psiMember, Collections.emptyList()) != null;
       if (add) {
         return underConsideration.add(psiMember);
       }
@@ -291,7 +291,7 @@ public abstract class TestNGTestObject {
     }
     for (PsiMethod method : methods) {
       if (!psiMethods.containsKey(method)) {
-        psiMethods.put(method, Collections.<String>emptyList());
+        psiMethods.put(method, Collections.emptyList());
       }
     }
   }

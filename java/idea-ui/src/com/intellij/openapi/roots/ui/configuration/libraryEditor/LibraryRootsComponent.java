@@ -31,11 +31,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.PersistentOrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.*;
 import com.intellij.openapi.roots.libraries.ui.impl.RootDetectionUtil;
+import com.intellij.openapi.roots.ui.configuration.ModificationOfImportedModelWarningComponent;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -79,9 +81,11 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private JPanel myTreePanel;
   private MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
+  private JPanel myBottomPanel;
   private LibraryPropertiesEditor myPropertiesEditor;
   private Tree myTree;
   private LibraryTableTreeBuilder myTreeBuilder;
+  private final ModificationOfImportedModelWarningComponent myModificationOfImportedModelWarningComponent;
   private VirtualFile myLastChosen;
 
   private final Collection<Runnable> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -112,6 +116,8 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     if (myDescriptor == null) {
       myDescriptor = new DefaultLibraryRootsComponentDescriptor();
     }
+    myModificationOfImportedModelWarningComponent = new ModificationOfImportedModelWarningComponent();
+    myBottomPanel.add(BorderLayout.CENTER, myModificationOfImportedModelWarningComponent.getLabel());
     init(new LibraryTreeStructure(this, myDescriptor));
     updatePropertiesLabel();
     onRootsChanged();
@@ -136,7 +142,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     StringBuilder text = new StringBuilder();
     final LibraryType<?> type = getLibraryEditor().getType();
     final Set<LibraryKind> excluded =
-      type != null ? Collections.<LibraryKind>singleton(type.getKind()) : Collections.<LibraryKind>emptySet();
+      type != null ? Collections.singleton(type.getKind()) : Collections.emptySet();
     for (String description : LibraryPresentationManager.getInstance().getDescriptions(getLibraryEditor().getFiles(OrderRootType.CLASSES),
                                                                                        excluded)) {
       if (text.length() > 0) {
@@ -489,6 +495,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private void fireLibraryChanged() {
     for (Runnable listener : myListeners) {
       listener.run();
+    }
+    ProjectModelExternalSource externalSource = getLibraryEditor().getExternalSource();
+    if (externalSource != null && hasChanges()) {
+      String name = getLibraryEditor().getName();
+      myModificationOfImportedModelWarningComponent.showWarning(name != null ? "Library '" + name + "'" : "Library", externalSource);
+    }
+    else {
+      myModificationOfImportedModelWarningComponent.hideWarning();
     }
   }
 

@@ -406,7 +406,7 @@ public class PushController implements Disposable {
             boolean shouldBeSelected;
             if (!errors.isEmpty()) {
               shouldBeSelected = false;
-              model.setLoadedCommits(ContainerUtil.<VcsFullCommitDetails>emptyList());
+              model.setLoadedCommits(ContainerUtil.emptyList());
               myPushLog.setChildren(node, ContainerUtil.map(errors, new Function<VcsError, DefaultMutableTreeNode>() {
                 @Override
                 public DefaultMutableTreeNode fun(final VcsError error) {

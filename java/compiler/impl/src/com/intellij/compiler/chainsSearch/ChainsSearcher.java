@@ -119,7 +119,7 @@ public class ChainsSearcher {
             if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrences() < vertexDistance) {
               if (currentVertexMethodsChain.size() < pathMaximalLength - 1) {
                 MethodsChain newBestMethodsChain =
-                  currentVertexMethodsChain.continuation(indexValue.getUnderlying(), indexValue.getOccurrences(), context);
+                  currentVertexMethodsChain.continuation(indexValue.getUnderlying(), vertexDistance, context);
                 if (newBestMethodsChain != null) {
                   currentSignatures
                     .add(new OccurrencesAware<>(indexValue.getUnderlying(), vertexDistance));

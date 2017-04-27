@@ -83,13 +83,13 @@ class GitPushRepoResult {
   @NotNull
   static GitPushRepoResult error(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch target, @NotNull String error) {
     return new GitPushRepoResult(Type.ERROR, -1, source.getFullName(), target.getFullName(),
-                                 target.getRemote().getName(), Collections.<String>emptyList(), error, null);
+                                 target.getRemote().getName(), Collections.emptyList(), error, null);
   }
 
   @NotNull
   static GitPushRepoResult notPushed(GitLocalBranch source, GitRemoteBranch target) {
     return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getFullName(), target.getFullName(),
-                                 target.getRemote().getName(), Collections.<String>emptyList(), null, null);
+                                 target.getRemote().getName(), Collections.emptyList(), null, null);
   }
 
   @NotNull

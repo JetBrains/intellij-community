@@ -17,7 +17,6 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.*;
@@ -32,7 +31,6 @@ import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
-import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -120,6 +118,6 @@ public class ArtifactBuildTarget extends ArtifactBasedBuildTarget {
   @Override
   public Collection<File> getOutputRoots(CompileContext context) {
     String outputFilePath = getArtifact().getOutputFilePath();
-    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.<File>emptyList();
+    return outputFilePath != null && !StringUtil.isEmpty(outputFilePath) ? Collections.singleton(new File(FileUtil.toSystemDependentName(outputFilePath))) : Collections.emptyList();
   }
 }

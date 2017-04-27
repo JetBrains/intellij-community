@@ -5,7 +5,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Not thread-safe.
@@ -37,7 +40,7 @@ public class LibraryData extends AbstractNamedData implements Named {
   @NotNull
   public Set<String> getPaths(@NotNull LibraryPathType type) {
     Set<String> result = myPaths.get(type);
-    return result == null ? Collections.<String>emptySet() : result;
+    return result == null ? Collections.emptySet() : result;
   }
 
   public void addPath(@NotNull LibraryPathType type, @NotNull String path) {

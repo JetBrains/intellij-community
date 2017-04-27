@@ -153,7 +153,7 @@ public class CreateParameterForFieldIntention extends Intention {
       JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, selectedValue.getName(), null, null).names;
 
     final DefaultGroovyVariableNameValidator nameValidator =
-      new DefaultGroovyVariableNameValidator(constructor, Collections.<String>emptyList(), false);
+      new DefaultGroovyVariableNameValidator(constructor, Collections.emptyList(), false);
     String parameterName = ContainerUtil.find(suggestedNames, name -> !nameValidator.validateName(name, false).isEmpty());
 
     if (parameterName == null) {

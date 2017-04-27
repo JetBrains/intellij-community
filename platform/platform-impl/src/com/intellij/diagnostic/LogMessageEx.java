@@ -144,6 +144,6 @@ public class LogMessageEx extends LogMessage {
                                              @Nullable final String notificationText,
                                              @Nullable Attachment attachment) {
     return createEvent(userMessage, details, title, notificationText,
-                       attachment != null ? Collections.singletonList(attachment) : Collections.<Attachment>emptyList());
+                       attachment != null ? Collections.singletonList(attachment) : Collections.emptyList());
   }
 }

@@ -68,7 +68,7 @@ class GitCompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createCenterPanel() {
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true,
+    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.emptyList(), null, false, true,
                                                              null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
 
     myHeadToBranchListPanel = new GitCommitListPanel(getHeadToBranchCommits(myInitialRepo),

@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.template.emmet;
 
-import com.intellij.codeInsight.template.emmet.filters.ZenCodingFilter;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -56,7 +55,7 @@ public class EmmetPreviewUtil {
         final String templatePrefix = new ZenCodingTemplate().computeTemplateKeyWithoutContextChecking(callback);
         if (templatePrefix != null) {
           try {
-            ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.<ZenCodingFilter>emptyList(),
+            ZenCodingTemplate.expand(templatePrefix, callback, generator, Collections.emptyList(),
                                      expandPrimitiveAbbreviations, 0);
             TemplateImpl template = callback.getGeneratedTemplate();
             String templateText = template != null ? template.getTemplateText() : null;

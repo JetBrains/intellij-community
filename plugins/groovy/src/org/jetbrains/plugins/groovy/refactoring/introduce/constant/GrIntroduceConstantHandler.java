@@ -120,20 +120,20 @@ public class GrIntroduceConstantHandler extends GrIntroduceFieldHandlerBase<GrIn
 
     GrVariable localVar = resolveLocalVar(context);
     if (localVar != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.<Object>asList(context.getOccurrences()));
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(context.getOccurrences()));
       return map;
     }
 
     if (context.getExpression() != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getExpression()));
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(context.getExpression()));
     }
     else if (context.getStringPart() != null) {
-      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.<Object>singletonList(context.getStringPart()));
+      map.put(OccurrencesChooser.ReplaceChoice.NO, Collections.singletonList(context.getStringPart()));
     }
 
     PsiElement[] occurrences = context.getOccurrences();
     if (occurrences.length > 1) {
-      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.<Object>asList(occurrences));
+      map.put(OccurrencesChooser.ReplaceChoice.ALL, Arrays.asList(occurrences));
     }
     return map;
   }

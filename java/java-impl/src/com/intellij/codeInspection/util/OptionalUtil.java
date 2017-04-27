@@ -17,9 +17,12 @@ package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
@@ -32,6 +35,9 @@ public class OptionalUtil {
   private static final String OPTIONAL_INT = "java.util.OptionalInt";
   private static final String OPTIONAL_LONG = "java.util.OptionalLong";
   private static final String OPTIONAL_DOUBLE = "java.util.OptionalDouble";
+
+  private static final CallMatcher OPTIONAL_OF =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "of", "ofNullable").parameterCount(1);
 
   @NotNull
   @Contract(pure = true)
@@ -102,37 +108,59 @@ public class OptionalUtil {
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType, boolean useOrElseGet) {
     if (!ExpressionUtils.isReferenceTo(trueExpression, var)) {
-      if(trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
+      if (trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiTypeCastExpression castExpression = (PsiTypeCastExpression)trueExpression;
         PsiTypeElement castType = castExpression.getCastType();
         // pull cast outside to avoid the .map() step
-        if(castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
+        if (castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
           return "(" + castType.getText() + ")" + qualifier + ".orElse(null)";
         }
       }
-      if(ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.FALSE) && PsiType.BOOLEAN.equals(trueExpression.getType())) {
+        if (ExpressionUtils.isLiteral(trueExpression, Boolean.TRUE)) {
+          return qualifier + ".isPresent()";
+        }
         return qualifier + ".filter(" + LambdaUtil.createLambda(var, trueExpression) + ").isPresent()";
       }
-      if(trueExpression instanceof PsiConditionalExpression) {
+      if (ExpressionUtils.isLiteral(falseExpression, Boolean.TRUE) && ExpressionUtils.isLiteral(trueExpression, Boolean.FALSE)) {
+        return "!" + qualifier + ".isPresent()";
+      }
+      if (trueExpression instanceof PsiConditionalExpression) {
         PsiConditionalExpression condition = (PsiConditionalExpression)trueExpression;
+        PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
-        if(elseExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
+        if (elseExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
           return generateOptionalUnwrap(
             qualifier + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", var,
             condition.getThenExpression(), falseExpression, targetType, useOrElseGet);
         }
-      }
-      if(isOptionalEmptyCall(falseExpression)) {
-        // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
-        if (trueExpression instanceof PsiMethodCallExpression &&
-            MethodCallUtils.isCallToStaticMethod((PsiMethodCallExpression)trueExpression, CommonClassNames.JAVA_UTIL_OPTIONAL, "of", 1)) {
-          PsiExpression arg = ((PsiMethodCallExpression)trueExpression).getArgumentList().getExpressions()[0];
-          if(ExpressionUtils.isReferenceTo(arg, var)) {
-            return qualifier;
-          }
-          return qualifier + ".map(" + LambdaUtil.createLambda(var, arg) + ")";
+        if (thenExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, thenExpression)) {
+          return generateOptionalUnwrap(
+            qualifier + ".filter(" + var.getName() + " -> " + BoolUtils.getNegatedExpressionText(condition.getCondition()) + ")", var,
+            condition.getElseExpression(), falseExpression, targetType, useOrElseGet);
         }
-        return qualifier + ".flatMap(" + LambdaUtil.createLambda(var, trueExpression) + ")";
+      }
+      String suffix = null;
+      if (isOptionalEmptyCall(falseExpression)) {
+        suffix = "";
+      }
+      else if (PsiUtil.isLanguageLevel9OrHigher(trueExpression) &&
+               InheritanceUtil.isInheritor(falseExpression.getType(), CommonClassNames.JAVA_UTIL_OPTIONAL) &&
+               LambdaGenerationUtil.canBeUncheckedLambda(falseExpression)) {
+        suffix = ".or(() -> " + falseExpression.getText() + ")";
+      }
+      if (suffix != null) {
+        // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
+        if (trueExpression instanceof PsiMethodCallExpression && OPTIONAL_OF.test((PsiMethodCallExpression)trueExpression)) {
+          PsiExpression arg = ((PsiMethodCallExpression)trueExpression).getArgumentList().getExpressions()[0];
+          if (ExpressionUtils.isReferenceTo(arg, var)) {
+            return qualifier + suffix;
+          }
+          return qualifier + ".map(" + LambdaUtil.createLambda(var, arg) + ")" + suffix;
+        }
+        if (suffix.isEmpty()) {
+          return qualifier + ".flatMap(" + LambdaUtil.createLambda(var, trueExpression) + ")";
+        }
       }
       trueExpression =
         targetType == null ? trueExpression : RefactoringUtil.convertInitializerToNormalExpression(trueExpression, targetType);
