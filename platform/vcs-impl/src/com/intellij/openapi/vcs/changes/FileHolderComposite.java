@@ -67,7 +67,7 @@ public class FileHolderComposite implements FileHolder {
 
 
   @Override
-  public FileHolder copy() {
+  public FileHolderComposite copy() {
     return new FileHolderComposite(this);
   }
 

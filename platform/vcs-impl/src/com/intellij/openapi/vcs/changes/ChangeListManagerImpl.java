@@ -466,7 +466,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       final DataHolder dataHolder;
       ProgressIndicator indicator = createProgressIndicator();
       synchronized (myDataLock) {
-        dataHolder = new DataHolder((FileHolderComposite)myComposite.copy(), myWorker.copy(), wasEverythingDirty);
+        dataHolder = new DataHolder(myComposite.copy(), myWorker.copy(), wasEverythingDirty);
         myModifier.enterUpdate();
         if (wasEverythingDirty) {
           myUpdateException = null;
@@ -483,7 +483,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       dataHolder.notifyStart();
       myChangesViewManager.scheduleRefresh();
 
-      ProgressManager.getInstance().runProcess(() -> iterateScopes(dataHolder, scopes, wasEverythingDirty, indicator), indicator);
+      ProgressManager.getInstance().runProcess(() -> {
+        iterateScopes(dataHolder, scopes, wasEverythingDirty, indicator);
+      }, indicator);
 
       boolean takeChanges;
       synchronized (myDataLock) {
