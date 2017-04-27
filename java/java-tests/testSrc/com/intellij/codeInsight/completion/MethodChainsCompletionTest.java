@@ -100,7 +100,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testChainsWithIndependentCallings() {
-    assertOneElement(doCompletion());
+    assertSize(2, doCompletion());
   }
 
   public void _testMethodReturnsSubclassOfTargetClassShowed2() {
