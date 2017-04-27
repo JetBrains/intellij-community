@@ -29,7 +29,7 @@ apply plugin: 'java'
 apply plugin: "kotlin"
 
 group 'com.intellij.debugger.stream'
-version '0.0.9'
+version '0.0.11'
 
 intellij {
   type = 'IC'
