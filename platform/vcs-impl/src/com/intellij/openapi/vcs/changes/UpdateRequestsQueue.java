@@ -90,14 +90,13 @@ public class UpdateRequestsQueue {
     synchronized (myLock) {
       if (! myStarted && ApplicationManager.getApplication().isUnitTestMode()) return;
 
-      if (! myStopped) {
-        if (! myRequestSubmitted) {
-          final MyRunnable runnable = new MyRunnable();
-          myRequestSubmitted = true;
-          myScheduler.schedule(runnable, 300, TimeUnit.MILLISECONDS);
-          LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
-        }
-      }
+      if (myStopped) return;
+      if (myRequestSubmitted) return;
+      myRequestSubmitted = true;
+
+      final MyRunnable runnable = new MyRunnable();
+      myScheduler.schedule(runnable, 300, TimeUnit.MILLISECONDS);
+      LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
     }
   }
 
@@ -227,25 +226,23 @@ public class UpdateRequestsQueue {
       try {
         synchronized (myLock) {
           if (!myRequestSubmitted) return;
-          
+          myRequestSubmitted = false;
+
           LOG.assertTrue(!myRequestRunning);
           myRequestRunning = true;
           if (myStopped) {
-            myRequestSubmitted = false;
             LOG.debug("MyRunnable: STOPPED, project: " + myProject.getName() + ", runnable: " + hashCode());
             return;
           }
 
           if (checkLifeCycle() || checkHeavyOperations()) {
             LOG.debug("MyRunnable: reschedule, project: " + myProject.getName() + ", runnable: " + hashCode());
-            myRequestSubmitted = false;
             // try again after time
             schedule();
             return;
           }
 
           copy.addAll(myWaitingUpdateCompletionQueue);
-          myRequestSubmitted = false;
         }
 
         LOG.debug("MyRunnable: INVOKE, project: " + myProject.getName() + ", runnable: " + hashCode());
