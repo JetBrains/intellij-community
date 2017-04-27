@@ -149,12 +149,12 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable"]
 
-    String coreProperties = submapToXml(properties, coreKeys);
+    String coreProperties = submapToXml(properties, coreKeys)
 
     StringBuilder effectiveProperties = new StringBuilder()
     properties.each { k, v ->
       if (!coreKeys.contains(k)) {
-        effectiveProperties.append("$k=$v\n");
+        effectiveProperties.append("$k=$v\n")
       }
     }
 
@@ -198,7 +198,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       </array>
 """
     }
-    String bundledHelpAttributes;
+    String bundledHelpAttributes
     if (helpId != null) {
       bundledHelpAttributes = """
         <key>CFBundleHelpBookName</key>
@@ -231,7 +231,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@help_id@@", value: helpId)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
       replacefilter(token: "@@archs@@", value: archsString)
-      replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
       replacefilter(token: "@@bundled_help_attributes@@", value: bundledHelpAttributes)
     }
@@ -341,7 +340,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private Map<String, String> readIdeaProperties(File propertiesFile, Map<String, String> customProperties = [:]) {
     Map<String, String> ideaProperties = [:]
     propertiesFile.withReader {
-      Properties loadedProperties = new Properties();
+      Properties loadedProperties = new Properties()
       loadedProperties.load(it)
       ideaProperties.putAll(loadedProperties as Map<String, String>)
     }

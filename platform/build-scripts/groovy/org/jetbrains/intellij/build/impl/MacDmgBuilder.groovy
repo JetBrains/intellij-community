@@ -211,7 +211,7 @@ class MacDmgBuilder {
       by the main Ant classloader as well and fail because 'commons-net-*.jar' isn't included to Ant classpath.
       Probably we could call FTPClient directly to avoid this hack.
      */
-    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER";
+    def ftpTaskLoaderRef = "FTP_TASK_CLASS_LOADER"
     Path ftpPath = new Path(ant.project)
     ftpPath.createPathElement().setLocation(new File("$communityLib/commons-net-3.3.jar"))
     ftpPath.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-commons-net.jar"))
@@ -219,7 +219,7 @@ class MacDmgBuilder {
                                                                     ["FTP", "FTPTaskConfig"] as String[]))
     ant.taskdef(name: "ftp", classname: "org.apache.tools.ant.taskdefs.optional.net.FTP", loaderRef: ftpTaskLoaderRef)
 
-    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER";
+    def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
     Path pathSsh = new Path(ant.project)
     pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
     pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
