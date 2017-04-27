@@ -19,7 +19,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.testFramework.TestFileType;
 
 public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
@@ -50,15 +52,22 @@ public class EditorColorsSchemeDelegateTest extends AbstractEditorTest {
   }
   
   public void testSecondaryFontIsAvailable() throws Exception {
-    FontPreferences globalPrefs = myTestScheme.getFontPreferences();
-    assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
-    ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
-    assertEquals(2, globalPrefs.getRealFontFamilies().size());
-    
-    init("blah", TestFileType.TEXT);
-    
-    FontPreferences editorPrefs = myEditor.getColorsScheme().getFontPreferences();
-    assertEquals(2, editorPrefs.getRealFontFamilies().size());
-    assertEquals("DummyFont", editorPrefs.getRealFontFamilies().get(1));
+    FontPreferences globalPrefs = AppEditorFontOptions.getInstance().getFontPreferences();
+    FontPreferences tempCopy = new FontPreferencesImpl();
+    globalPrefs.copyTo(tempCopy);
+    try {
+      assertInstanceOf(globalPrefs, ModifiableFontPreferences.class);
+      ((ModifiableFontPreferences)globalPrefs).register("DummyFont", globalPrefs.getSize(globalPrefs.getFontFamily()));
+      assertEquals(2, globalPrefs.getRealFontFamilies().size());
+
+      init("blah", TestFileType.TEXT);
+
+      FontPreferences editorPrefs = myEditor.getColorsScheme().getFontPreferences();
+      assertEquals(2, editorPrefs.getRealFontFamilies().size());
+      assertEquals("DummyFont", editorPrefs.getRealFontFamilies().get(1));
+    }
+    finally {
+      tempCopy.copyTo(globalPrefs);
+    }
   }
 }
