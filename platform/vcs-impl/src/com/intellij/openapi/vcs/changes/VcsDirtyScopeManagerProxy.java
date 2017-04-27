@@ -91,7 +91,6 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
     if (dirsRecursivelyDirty != null) {
       myDirs.addAll(dirsRecursivelyDirty);
     }
-    return;
   }
 
   public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
@@ -101,7 +100,6 @@ class VcsDirtyScopeManagerProxy extends VcsDirtyScopeManager {
     if (dirsRecursivelyDirty != null) {
       myVDirs.addAll(dirsRecursivelyDirty);
     }
-    return;
   }
 
   public void callRealManager(final VcsDirtyScopeManager manager) {
