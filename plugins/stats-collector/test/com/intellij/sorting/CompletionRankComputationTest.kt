@@ -148,7 +148,7 @@ class X {
             
             val old_order = weights["before_rerank_order"].toString().toInt()
 
-            val state = CompletionState(old_order, prefixLength, 0, element.lookupString.length)
+            val state = CompletionState(old_order, prefixLength, element.lookupString.length)
             
             //todo check this shit
             val calculated_ml_rank = ranker.rank(state, relevance)

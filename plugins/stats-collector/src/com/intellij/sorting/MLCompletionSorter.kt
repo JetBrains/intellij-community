@@ -20,7 +20,15 @@ import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.Pair
 import com.jetbrains.completion.ranker.CompletionRanker
-import com.jetbrains.completion.ranker.features.*
+import com.jetbrains.completion.ranker.features.CompletionState
+import com.jetbrains.completion.ranker.features.FeatureReader.binaryFactors
+import com.jetbrains.completion.ranker.features.FeatureReader.categoricalFactors
+import com.jetbrains.completion.ranker.features.FeatureReader.completionFactors
+import com.jetbrains.completion.ranker.features.FeatureReader.doubleFactors
+import com.jetbrains.completion.ranker.features.FeatureReader.featuresOrder
+import com.jetbrains.completion.ranker.features.FeatureReader.ignoredFactors
+import com.jetbrains.completion.ranker.features.FeatureTransformer
+import com.jetbrains.completion.ranker.features.IgnoredFactorsMatcher
 
 
 interface Ranker {
