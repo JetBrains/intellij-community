@@ -177,10 +177,10 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     }
   }
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.isEmpty()) {
-      return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
     }
 
     if (isDirectoryBased) {
@@ -196,14 +196,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
 
       if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
         result!!.sortWith(deprecatedComparator)
         // if we create project from default, component state written not to own storage file, but to project file,
         // we don't have time to fix it properly, so, ancient hack restored
         result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
-        return result.toTypedArray()
+        return result
       }
     }
     else {
@@ -223,14 +223,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
         }
       }
       if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
         if (hasOnlyDeprecatedStorages) {
           result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
         }
         result!!.sortWith(deprecatedComparator)
-        return result.toTypedArray()
+        return result
       }
     }
   }

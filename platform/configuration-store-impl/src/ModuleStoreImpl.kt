@@ -16,8 +16,10 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.containers.computeOrNull
 import com.intellij.util.io.exists
 import java.nio.file.Paths
 
@@ -30,34 +32,42 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
-    private var moduleComponentLoadPolicy: StateLoadPolicy? = null
-
-    override fun setPath(path: String) {
-      setPath(path, null)
-    }
-
-    override fun setPath(path: String, file: VirtualFile?) {
-      super.setPath(path, file)
-
-      if ((file != null && file.isValid) || Paths.get(path).exists()) {
-        moduleComponentLoadPolicy = StateLoadPolicy.LOAD
-      }
-    }
-
-    override val loadPolicy: StateLoadPolicy
-      get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
+  // todo what about Upsource? For now this implemented not in the ModuleStoreBase because `project` and `module` are available only in this class (ModuleStoreImpl)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+    val result =  super.getStorageSpecs(component, stateSpec, operation)
+    return StreamProviderFactory.EP_NAME.getExtensions(project).computeOrNull {
+      LOG.catchAndLog { it.customizeStorageSpecs(component, storageManager.componentManager!!, result, operation) }
+    } ?: result
   }
+}
+
+private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
+  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
+
+  override fun setPath(path: String) {
+    setPath(path, null)
+  }
+
+  override fun setPath(path: String, file: VirtualFile?) {
+    super.setPath(path, file)
+
+    if ((file != null && file.isValid) || Paths.get(path).exists()) {
+      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
+    }
+  }
+
+  override val loadPolicy: StateLoadPolicy
+    get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
 }
 
 // used in upsource
 abstract class ModuleStoreBase : ComponentStoreImpl() {
   override abstract val storageManager: StateStorageManagerImpl
 
-  override final fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     return if (storages.isEmpty()) {
-      arrayOf(MODULE_FILE_STORAGE_ANNOTATION)
+      listOf(MODULE_FILE_STORAGE_ANNOTATION)
     }
     else {
       super.getStorageSpecs(component, stateSpec, operation)
