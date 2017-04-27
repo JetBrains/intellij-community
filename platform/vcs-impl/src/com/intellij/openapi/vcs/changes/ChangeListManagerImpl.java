@@ -1278,7 +1278,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final IgnoredFilesComponent ignoredFilesComponent;
     final ChangeListWorker worker;
     synchronized (myDataLock) {
-      ignoredFilesComponent = new IgnoredFilesComponent(myIgnoredIdeaLevel);
+      ignoredFilesComponent = myIgnoredIdeaLevel.copy();
       worker = myWorker.copy();
     }
     ChangeListManagerSerialization.writeExternal(element, ignoredFilesComponent, worker);

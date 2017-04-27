@@ -64,7 +64,7 @@ public class IgnoredFilesComponent {
     myDirectoriesManuallyRemovedFromIgnored = new THashSet<>();
   }
 
-  public IgnoredFilesComponent(@NotNull IgnoredFilesComponent other) {
+  private IgnoredFilesComponent(@NotNull IgnoredFilesComponent other) {
     myProject = other.myProject;
     myFilesToIgnore = new LinkedHashSet<>(other.myFilesToIgnore);
     myFilesMap = new HashMap<>(other.myFilesMap);
@@ -224,5 +224,9 @@ public class IgnoredFilesComponent {
     finally {
       myReadLock.unlock();
     }
+  }
+
+  public IgnoredFilesComponent copy() {
+    return new IgnoredFilesComponent(this);
   }
 }
