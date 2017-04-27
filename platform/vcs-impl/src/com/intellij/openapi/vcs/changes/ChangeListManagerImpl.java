@@ -283,18 +283,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @CalledInAwt
   private void initializeForNewProject() {
-    ApplicationManager.getApplication().runReadAction(() -> {
-      synchronized (myDataLock) {
-        if (myWorker.isEmpty()) {
-          setDefaultChangeList(myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null));
-        }
-        if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
-          convertExcludedToIgnored();
-          myExcludedConvertedToIgnored = true;
-        }
+    synchronized (myDataLock) {
+      if (myWorker.isEmpty()) {
+        setDefaultChangeList(myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null));
       }
-    });
+      if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
+        convertExcludedToIgnored();
+        myExcludedConvertedToIgnored = true;
+      }
+    }
   }
 
   void convertExcludedToIgnored() {
