@@ -24,11 +24,10 @@ import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration;
-import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
-import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
-import com.jetbrains.python.testing.newTestRunners.PyTestLegacyInteropKt;
-import com.jetbrains.python.testing.newTestRunners.PyTestsSharedKt;
+import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration;
+import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration;
+import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration;
+import com.jetbrains.python.testing.PyTestLegacyInteropKt;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 

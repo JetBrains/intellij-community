@@ -16,8 +16,8 @@
 package com.jetbrains.env.ut;
 
 import com.jetbrains.env.ProcessWithConsoleRunner;
-import com.jetbrains.python.testing.newTestRunners.PyPyTestConfiguration;
-import com.jetbrains.python.testing.newTestRunners.PyPyTestFactory;
+import com.jetbrains.python.testing.PyPyTestConfiguration;
+import com.jetbrains.python.testing.PyPyTestFactory;
 import org.jetbrains.annotations.NotNull;
 
 

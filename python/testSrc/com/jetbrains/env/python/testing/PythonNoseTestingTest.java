@@ -8,8 +8,8 @@ import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurat
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.newTestRunners.PyNoseTestConfiguration;
-import com.jetbrains.python.testing.newTestRunners.PyNoseTestFactory;
+import com.jetbrains.python.testing.PyNoseTestConfiguration;
+import com.jetbrains.python.testing.PyNoseTestFactory;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 import org.junit.Test;

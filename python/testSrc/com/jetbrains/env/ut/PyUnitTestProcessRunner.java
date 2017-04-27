@@ -18,9 +18,9 @@ package com.jetbrains.env.ut;
 import com.jetbrains.env.ProcessWithConsoleRunner;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.testing.newTestRunners.PyUnitTestConfiguration;
-import com.jetbrains.python.testing.newTestRunners.PyUnitTestFactory;
-import com.jetbrains.python.testing.newTestRunners.TestTargetType;
+import com.jetbrains.python.testing.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

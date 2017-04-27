@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.testing.doctest;
+package com.jetbrains.python.testing.nosetestLegacy;
 
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.PyBundle;
@@ -27,19 +27,41 @@ import java.awt.*;
 /**
  * User: catherine
  */
-public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfigurationParams {
+public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConfigurationParams {
   private JPanel myRootPanel;
 
   private final PythonTestLegacyRunConfigurationForm myTestRunConfigurationForm;
 
-
-  public PythonDocTestRunConfigurationForm(final Project project, final PythonDocTestRunConfiguration configuration) {
+  public PythonNoseTestRunConfigurationForm(final Project project, final PythonNoseTestRunConfiguration configuration) {
     myRootPanel = new JPanel(new BorderLayout());
     myTestRunConfigurationForm = new PythonTestLegacyRunConfigurationForm(project, configuration);
-    TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
-    border.setTitle(PyBundle.message("runcfg.doctest.display_name"));
-
     myRootPanel.add(myTestRunConfigurationForm.getPanel(), BorderLayout.CENTER);
+    myTestRunConfigurationForm.getPatternComponent().setVisible(false);
+    TitledBorder border = (TitledBorder)myTestRunConfigurationForm.getTestsPanel().getBorder();
+    border.setTitle(PyBundle.message("runcfg.nosetests.display_name"));
+    myTestRunConfigurationForm.setParamsVisible();
+
+    myTestRunConfigurationForm.getParamCheckBox().setSelected(configuration.useParam());
+    myTestRunConfigurationForm.setPatternVisible(false);
+
+  }
+
+  public String getParams() {
+    return myTestRunConfigurationForm.getParams();
+  }
+
+  public void setParams(String params) {
+    myTestRunConfigurationForm.setParams(params);
+  }
+
+  @Override
+  public boolean useParam() {
+    return myTestRunConfigurationForm.getParamCheckBox().isSelected();
+  }
+
+  @Override
+  public void useParam(boolean useParam) {
+    myTestRunConfigurationForm.getParamCheckBox().setSelected(useParam);
   }
 
   @Override
@@ -50,6 +72,7 @@ public class PythonDocTestRunConfigurationForm implements PythonDocTestRunConfig
   public JComponent getPanel() {
     return myRootPanel;
   }
+
 }
 
 

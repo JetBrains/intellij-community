@@ -20,9 +20,9 @@ import com.jetbrains.env.ConfigurationBasedProcessRunner;
 import com.jetbrains.env.PyAbstractTestProcessRunner;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfigurationParams;
-import com.jetbrains.python.testing.newTestRunners.ConfigurationTarget;
-import com.jetbrains.python.testing.newTestRunners.PyAbstractTestConfiguration;
-import com.jetbrains.python.testing.newTestRunners.TestTargetType;
+import com.jetbrains.python.testing.ConfigurationTarget;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.TestTargetType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;

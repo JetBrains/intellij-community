@@ -16,8 +16,8 @@
 package com.jetbrains.env.ut;
 
 import com.jetbrains.env.ProcessWithConsoleRunner;
-import com.jetbrains.python.testing.newTestRunners.PyNoseTestConfiguration;
-import com.jetbrains.python.testing.newTestRunners.PyNoseTestFactory;
+import com.jetbrains.python.testing.PyNoseTestConfiguration;
+import com.jetbrains.python.testing.PyNoseTestFactory;
 import org.jetbrains.annotations.NotNull;
 
 /**
