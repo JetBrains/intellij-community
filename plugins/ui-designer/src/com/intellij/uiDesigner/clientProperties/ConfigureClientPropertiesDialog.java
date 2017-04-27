@@ -24,6 +24,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.uiDesigner.LoaderFactory;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +123,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
               if (className.length() == 0) return;
               final Class aClass;
               try {
-                aClass = Class.forName(className);
+                aClass = Class.forName(className, true, LoaderFactory.getInstance(myProject).getProjectClassLoader());
               }
               catch (ClassNotFoundException ex) {
                 Messages.showErrorDialog(mySplitter,
@@ -192,7 +193,7 @@ public class ConfigureClientPropertiesDialog extends DialogWrapper {
   }
 
   private void fillClassTree() {
-    List<Class> configuredClasses = myManager.getConfiguredClasses();
+    List<Class> configuredClasses = myManager.getConfiguredClasses(myProject);
     Collections.sort(configuredClasses, new Comparator<Class>() {
       @Override
       public int compare(final Class o1, final Class o2) {

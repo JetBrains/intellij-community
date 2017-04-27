@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.uiDesigner.LoaderFactory;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -182,11 +183,11 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     }
   }
 
-  public List<Class> getConfiguredClasses() {
+  public List<Class> getConfiguredClasses(@NotNull Project project) {
     List<Class> result = new ArrayList<>();
     for(String className: myPropertyMap.keySet()) {
       try {
-        result.add(Class.forName(className));
+        result.add(Class.forName(className, true, LoaderFactory.getInstance(project).getProjectClassLoader()));
       }
       catch (ClassNotFoundException e) {
         // TODO: do something better than ignore?
