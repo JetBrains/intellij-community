@@ -137,7 +137,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
         myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).addFile(file);
       }
       // if a file was previously marked as switched through recursion, remove it from switched list
-      myChangeListWorker.removeSwitched(file);
+      myComposite.getSwitchedFileHolder().removeFile(file);
     }
   }
 
@@ -150,7 +150,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     final FilePath file = locallyDeletedChange.getPath();
     if (FileTypeManager.getInstance().isFileIgnored(file.getName())) return;
     if (myScope.belongsTo(file)) {
-      myChangeListWorker.addLocallyDeleted(locallyDeletedChange);
+      myComposite.getDeletedFileHolder().addFile(locallyDeletedChange);
     }
   }
 
@@ -198,7 +198,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     checkIfDisposed();
     if (isIgnoredByVcs(file)) return;
     if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      myChangeListWorker.addSwitched(file, branch, recursive);
+      myComposite.getSwitchedFileHolder().addFile(file, branch, recursive);
     }
   }
 

@@ -27,12 +27,14 @@ public class FileHolderComposite implements FileHolder {
 
   public FileHolderComposite(final Project project) {
     myHolders = new HashMap<>();
-    add(new VirtualFileHolder(project, FileHolder.HolderType.UNVERSIONED));
+    add(new VirtualFileHolder(project, HolderType.UNVERSIONED));
     add(new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
-    add(new VirtualFileHolder(project, FileHolder.HolderType.MODIFIED_WITHOUT_EDITING));
+    add(new SwitchedFileHolder(project, HolderType.SWITCHED));
+    add(new VirtualFileHolder(project, HolderType.MODIFIED_WITHOUT_EDITING));
     add(new IgnoredFilesCompositeHolder(project));
-    add(new VirtualFileHolder(project, FileHolder.HolderType.LOCKED));
+    add(new VirtualFileHolder(project, HolderType.LOCKED));
     add(new LogicallyLockedHolder(project));
+    add(new DeletedFilesHolder());
   }
 
   public FileHolderComposite(final FileHolderComposite holder) {
@@ -86,6 +88,14 @@ public class FileHolderComposite implements FileHolder {
 
   public SwitchedFileHolder getRootSwitchFileHolder() {
     return (SwitchedFileHolder)myHolders.get(HolderType.ROOT_SWITCH);
+  }
+
+  public SwitchedFileHolder getSwitchedFileHolder() {
+    return (SwitchedFileHolder)myHolders.get(HolderType.SWITCHED);
+  }
+
+  public DeletedFilesHolder getDeletedFileHolder() {
+    return (DeletedFilesHolder)myHolders.get(HolderType.DELETED);
   }
 
 

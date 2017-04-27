@@ -648,7 +648,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
 
       myComposite.notifyVcsStarted(scope.getVcs());
-      myChangeListWorker.notifyVcsStarted(scope.getVcs());
     }
 
     private void notifyDoneProcessingChanges() {
@@ -824,19 +823,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   public boolean isContainedInLocallyDeleted(final FilePath filePath) {
     synchronized (myDataLock) {
-      return myWorker.isContainedInLocallyDeleted(filePath);
+      return myComposite.getDeletedFileHolder().isContainedInLocallyDeleted(filePath);
     }
   }
 
   public List<LocallyDeletedChange> getDeletedFiles() {
     synchronized (myDataLock) {
-      return myWorker.getLocallyDeleted().getFiles();
+      return myComposite.getDeletedFileHolder().getFiles();
     }
   }
 
   MultiMap<String, VirtualFile> getSwitchedFilesMap() {
     synchronized (myDataLock) {
-      return myWorker.getSwitchedHolder().getBranchToFileMap();
+      return myComposite.getSwitchedFileHolder().getBranchToFileMap();
     }
   }
 
@@ -1058,7 +1057,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
       if (myComposite.getIgnoredFileHolder().containsFile(file)) return FileStatus.IGNORED;
 
-      final boolean switched = myWorker.isSwitched(file);
+      final boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
       final FileStatus status = myWorker.getStatus(file);
       if (status != null) {
         return FileStatus.NOT_CHANGED.equals(status) && switched ? FileStatus.SWITCHED : status;
@@ -1480,7 +1479,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public String getSwitchedBranch(final VirtualFile file) {
     synchronized (myDataLock) {
-      return myWorker.getBranchForFile(file);
+      return myComposite.getSwitchedFileHolder().getBranchForFile(file);
     }
   }
 
