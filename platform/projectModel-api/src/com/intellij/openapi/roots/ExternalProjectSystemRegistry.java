@@ -18,6 +18,7 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,9 +30,16 @@ public interface ExternalProjectSystemRegistry {
     return ServiceManager.getService(ExternalProjectSystemRegistry.class);
   }
 
+  @NotNull
+  ProjectModelExternalSource getSourceById(String id);
+
   @Nullable
   ProjectModelExternalSource getExternalSource(Module module);
 
+  /**
+   * These fields are temporary added to API until we have proper extension points for different external systems.
+   */
+  String MAVEN_EXTERNAL_SOURCE_ID = "Maven";
   String EXTERNAL_SYSTEM_ID_KEY = "external.system.id";
   String IS_MAVEN_MODULE_KEY = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
 }
