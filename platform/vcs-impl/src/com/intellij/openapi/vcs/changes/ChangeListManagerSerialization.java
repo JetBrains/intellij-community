@@ -141,11 +141,11 @@ class ChangeListManagerSerialization {
       element.addContent(fileNode);
       String path = bean.getPath();
       if (path != null) {
-        fileNode.setAttribute("path", path);
+        fileNode.setAttribute(ATT_PATH, path);
       }
       String mask = bean.getMask();
       if (mask != null) {
-        fileNode.setAttribute("mask", mask);
+        fileNode.setAttribute(ATT_MASK, mask);
       }
     }
 
