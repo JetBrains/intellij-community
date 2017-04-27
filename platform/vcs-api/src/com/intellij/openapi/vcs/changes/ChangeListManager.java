@@ -33,9 +33,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author max
- */
 public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public static ChangeListManager getInstance(Project project) {
@@ -43,75 +40,86 @@ public abstract class ChangeListManager implements ChangeListModification {
   }
 
   public abstract void scheduleUpdate();
+
   @Deprecated
   public abstract void scheduleUpdate(boolean updateUnversionedFiles);
+
+
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable String title,
                                          @Nullable ModalityState state);
+
   public abstract void invokeAfterUpdate(@NotNull Runnable afterUpdate,
                                          @NotNull InvokeAfterUpdateMode mode,
                                          @Nullable String title,
                                          @Nullable Consumer<VcsDirtyScopeManager> dirtyScopeManager,
                                          @Nullable ModalityState state);
-  @TestOnly
-  public abstract boolean ensureUpToDate(boolean canBeCanceled);
+
 
   public abstract int getChangeListsNumber();
+
   @NotNull
   public List<LocalChangeList> getChangeListsCopy() {
     return getChangeLists();
   }
+
   @NotNull
   public abstract List<LocalChangeList> getChangeLists();
 
   @NotNull
-  public abstract List<File> getAffectedPaths();
-  @NotNull
-  public abstract List<VirtualFile> getAffectedFiles();
-  public abstract boolean isFileAffected(@NotNull VirtualFile file);
-
-  /**
-   * @return all changes in all changelists.
-   */
-  @NotNull
   public abstract Collection<Change> getAllChanges();
 
   @Nullable
+  public abstract LocalChangeList getDefaultChangeList();
+
+  @Nullable
+  public abstract String getDefaultListName();
+
+  public abstract boolean isDefaultChangeList(ChangeList list);
+
+
+  @NotNull
+  public abstract List<File> getAffectedPaths();
+
+  @NotNull
+  public abstract List<VirtualFile> getAffectedFiles();
+
+  /**
+   * @return if a file belongs to some changelist
+   */
+  public abstract boolean isFileAffected(@NotNull VirtualFile file);
+
+
+  @Nullable
   public abstract LocalChangeList findChangeList(String name);
+
   @Nullable
   public abstract LocalChangeList getChangeList(String id);
 
-  /**
-   * Returns currently active changelist
-   * @return active changelist
-   */
-  @Nullable
-  public abstract LocalChangeList getDefaultChangeList();
-
-  public abstract boolean isDefaultChangeList(ChangeList list);
 
   @Nullable
   public abstract LocalChangeList getChangeList(@NotNull Change change);
 
   @Nullable
+  public abstract LocalChangeList getChangeList(@NotNull VirtualFile file);
+
+  @Nullable
   public abstract String getChangeListNameIfOnlyOne(Change[] changes);
 
-  public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
 
   @Nullable
   public abstract Change getChange(@NotNull VirtualFile file);
 
   @Nullable
-  public abstract LocalChangeList getChangeList(@NotNull VirtualFile file);
-
-  @Nullable
   public abstract Change getChange(FilePath file);
 
-  public abstract boolean isUnversioned(VirtualFile file);
 
   @NotNull
   public abstract FileStatus getStatus(@NotNull VirtualFile file);
+
+  public abstract boolean isUnversioned(VirtualFile file);
+
 
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull VirtualFile dir);
@@ -119,43 +127,59 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull FilePath path);
 
+  @NotNull
+  public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
+
   @Nullable
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
+
 
   public abstract void addChangeListListener(@NotNull ChangeListListener listener);
 
   public abstract void removeChangeListListener(@NotNull ChangeListListener listener);
 
+
   public abstract void registerCommitExecutor(@NotNull CommitExecutor executor);
-
-  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
-
-  @Deprecated // used in TeamCity
-  public abstract void reopenFiles(@NotNull List<FilePath> paths);
 
   @NotNull
   public abstract List<CommitExecutor> getRegisteredExecutors();
 
-  public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
-  public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
-  public abstract void removeImplicitlyIgnoredDirectory(@NotNull String path);
-  public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+  public abstract void commitChanges(@NotNull LocalChangeList changeList, @NotNull List<Change> changes);
+
+
+  public abstract void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list);
+
+
   @NotNull
   public abstract IgnoredFileBean[] getFilesToIgnore();
+
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
-  @Nullable
-  public abstract String getSwitchedBranch(@NotNull VirtualFile file);
-  @Nullable
-  public abstract String getDefaultListName();
+  public abstract void setFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
 
-  @Nullable
-  public abstract String isFreezed();
-  public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);
+  public abstract void addFilesToIgnore(@NotNull IgnoredFileBean... ignoredFiles);
+
+  public abstract void addDirectoryToIgnoreImplicitly(@NotNull String path);
+
+  public abstract void removeImplicitlyIgnoredDirectory(@NotNull String path);
+
 
   @NotNull
   public abstract List<VirtualFile> getModifiedWithoutEditing();
 
-  @NotNull
-  public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
+  @Nullable
+  public abstract String getSwitchedBranch(@NotNull VirtualFile file);
+
+
+  @Nullable
+  public abstract String isFreezed();
+
+  public abstract boolean isFreezedWithNotification(@Nullable String modalTitle);
+
+
+  @Deprecated // used in TeamCity
+  public abstract void reopenFiles(@NotNull List<FilePath> paths);
+
+  @TestOnly
+  public abstract boolean ensureUpToDate(boolean canBeCanceled);
 }

@@ -22,13 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author yole
- */
 public abstract class ChangeListManagerEx extends ChangeListManager {
+  public abstract boolean isInUpdate();
+
   @Nullable
   public abstract LocalChangeList getIdentityChangeList(@NotNull Change change);
-  public abstract boolean isInUpdate();
+
   @NotNull
   public abstract Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges);
 
