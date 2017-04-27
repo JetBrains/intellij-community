@@ -177,13 +177,8 @@ public class UpdateRequestsQueue {
     LOG.debug("invokeAfterUpdate for project: " + myProject.getName());
     final CallbackData data = CallbackData.create(myProject, mode, afterUpdate, title, state);
 
-    if (dirtyScopeManagerFiller != null) {
-      VcsDirtyScopeManagerProxy managerProxy = new VcsDirtyScopeManagerProxy();
-
-      dirtyScopeManagerFiller.consume(managerProxy);
-      if (!myProject.isDisposed()) {
-        managerProxy.callRealManager(VcsDirtyScopeManager.getInstance(myProject));
-      }
+    if (dirtyScopeManagerFiller != null && !myProject.isDisposed()) {
+      dirtyScopeManagerFiller.consume(VcsDirtyScopeManager.getInstance(myProject));
     }
 
     boolean stopped;
