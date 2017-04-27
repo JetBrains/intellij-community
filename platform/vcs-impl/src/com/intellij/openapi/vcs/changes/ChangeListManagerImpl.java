@@ -110,13 +110,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private boolean myExcludedConvertedToIgnored;
 
-  private final VcsListener myVcsListener = new VcsListener() {
-    @Override
-    public void directoryMappingChanged() {
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    }
-  };
-
   public static ChangeListManagerImpl getInstanceImpl(final Project project) {
     return (ChangeListManagerImpl)PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangeListManager.class);
   }
@@ -256,17 +249,24 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void projectOpened() {
     initializeForNewProject();
 
+    VcsListener vcsListener = new VcsListener() {
+      @Override
+      public void directoryMappingChanged() {
+        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+      }
+    };
+
     final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myUpdater.initialized();
-      myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, myVcsListener);
+      myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
     }
     else {
       ((ProjectLevelVcsManagerImpl)vcsManager).addInitializationRequest(
         VcsInitObject.CHANGE_LIST_MANAGER, (DumbAwareRunnable)() -> {
           myUpdater.initialized();
           broadcastStateAfterLoad();
-          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, myVcsListener);
+          myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED, vcsListener);
         });
 
       myConflictTracker.startTracking();
