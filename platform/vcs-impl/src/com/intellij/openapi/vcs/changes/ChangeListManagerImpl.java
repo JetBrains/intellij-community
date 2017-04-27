@@ -273,10 +273,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   private void broadcastStateAfterLoad() {
-    final List<LocalChangeList> listCopy;
-    synchronized (myDataLock) {
-      listCopy = getChangeListsCopy();
-    }
+    List<LocalChangeList> listCopy = getChangeListsCopy();
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(LISTS_LOADED).processLoadedLists(listCopy);
     }
