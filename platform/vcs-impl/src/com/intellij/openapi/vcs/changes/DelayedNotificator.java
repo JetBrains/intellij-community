@@ -21,34 +21,28 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class DelayedNotificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.DelayedNotificator");
   private final EventDispatcher<ChangeListListener> myDispatcher;
-  private final AtomicReference<Future> myFuture;
-  // this is THE SAME service as is used for change list manager update (i.e. one thread for both processes)
-  private final ExecutorService myService;
+  private final ChangeListManagerImpl.Scheduler myScheduler;
   private final MyProxyDispatcher myProxyDispatcher;
 
-  public DelayedNotificator(EventDispatcher<ChangeListListener> dispatcher, final AtomicReference<Future> future, @NotNull ExecutorService service) {
+  public DelayedNotificator(EventDispatcher<ChangeListListener> dispatcher, @NotNull ChangeListManagerImpl.Scheduler scheduler) {
     myDispatcher = dispatcher;
-    myFuture = future;
-    myService = service;
+    myScheduler = scheduler;
     myProxyDispatcher = new MyProxyDispatcher();
   }
 
   public void callNotify(final ChangeListCommand command) {
-    myFuture.set(myService.submit(() -> {
+    myScheduler.submit(() -> {
       try {
         command.doNotify(myDispatcher);
       }
       catch (Throwable e) {
         LOG.error(e);
       }
-    }));
+    });
   }
 
   public ChangeListListener getProxyDispatcher() {
@@ -57,48 +51,48 @@ public class DelayedNotificator {
 
   private class MyProxyDispatcher implements ChangeListListener {
     public void changeListAdded(final ChangeList list) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changeListAdded(list)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListAdded(list));
     }
 
     public void changesRemoved(final Collection<Change> changes, final ChangeList fromList) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changesRemoved(changes, fromList)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changesRemoved(changes, fromList));
     }
 
     public void changesAdded(final Collection<Change> changes, final ChangeList toList) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changesAdded(changes, toList)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changesAdded(changes, toList));
     }
 
     public void changeListRemoved(final ChangeList list) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changeListRemoved(list)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRemoved(list));
     }
 
     public void changeListChanged(final ChangeList list) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changeListChanged(list)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListChanged(list));
     }
 
     public void changeListRenamed(final ChangeList list, final String oldName) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changeListRenamed(list, oldName)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListRenamed(list, oldName));
     }
 
     public void changeListCommentChanged(final ChangeList list, final String oldComment) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListCommentChanged(list, oldComment));
     }
 
     public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changesMoved(changes, fromList, toList));
     }
 
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList)));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().defaultListChanged(oldDefaultList, newDefaultList));
 
     }
 
     public void unchangedFileStatusChanged() {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().unchangedFileStatusChanged()));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().unchangedFileStatusChanged());
     }
 
     public void changeListUpdateDone() {
-      myFuture.set(myService.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone()));
+      myScheduler.submit(() -> myDispatcher.getMulticaster().changeListUpdateDone());
     }
   }
 }

@@ -78,8 +78,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   private final FileStatusManager myFileStatusManager;
   private final UpdateRequestsQueue myUpdater;
 
-  private static final AtomicReference<Future> ourUpdateAlarm = new AtomicReference<>();
-  private final ScheduledExecutorService myScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool",1);
+  private final Scheduler myScheduler = new Scheduler(); // update thread
 
   private final Modifier myModifier;
 
@@ -137,10 +136,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myComposite = new FileHolderComposite(project);
     myIgnoredIdeaLevel = new IgnoredFilesComponent(myProject, true);
-    myUpdater = new UpdateRequestsQueue(myProject, ourUpdateAlarm, myScheduledExecutorService, new ActualUpdater());
+    myUpdater = new UpdateRequestsQueue(myProject, myScheduler, new ActualUpdater());
 
-    myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, ourUpdateAlarm, myScheduledExecutorService));
-    myDelayedNotificator = new DelayedNotificator(myListeners, ourUpdateAlarm, myScheduledExecutorService);
+    myWorker = new ChangeListWorker(myProject, new MyChangesDeltaForwarder(myProject, myScheduler));
+    myDelayedNotificator = new DelayedNotificator(myListeners, myScheduler);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
     myConflictTracker = new ChangelistConflictTracker(project, this, myFileStatusManager, EditorNotifications.getInstance(project));
@@ -390,6 +389,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public String isFreezed() {
     return myFreezeName.get();
+  }
+
+  public void executeOnUpdaterThread(@NotNull Runnable r) {
+    myScheduler.submit(r);
   }
 
   @Override
@@ -1501,21 +1504,21 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     waitUpdateAlarm();
   }
 
-  // this is for perforce tests to ensure that LastSuccessfulUpdateTracker receives the event it needs
+  @TestOnly
   private void waitUpdateAlarm() {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
-    myScheduledExecutorService.execute(() -> semaphore.up());
+    myScheduler.submit(() -> semaphore.up());
     semaphore.waitFor();
   }
 
   @TestOnly
   public void stopEveryThingIfInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    Future future = ourUpdateAlarm.get();
+    Future future = myScheduler.myLastTask.get();
     if (future != null) {
       future.cancel(true);
-      ourUpdateAlarm.compareAndSet(future, null);
+      myScheduler.myLastTask.compareAndSet(future, null);
     }
   }
 
@@ -1523,7 +1526,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void waitEverythingDoneInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     while (true) {
-      Future future = ourUpdateAlarm.get();
+      Future future = myScheduler.myLastTask.get();
       if (future == null) break;
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -1545,10 +1548,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   public void forceGoInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myUpdater.forceGo();
-  }
-
-  public void executeOnUpdaterThread(Runnable r) {
-    ourUpdateAlarm.set(myScheduledExecutorService.submit(r));
   }
 
   @Override
@@ -1588,49 +1587,47 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     private final RemoteRevisionsCache myRevisionsCache;
     private final ProjectLevelVcsManager myVcsManager;
     private final Project myProject;
-    private final AtomicReference<Future> myFuture;
-    private final ExecutorService myService;
+    private final ChangeListManagerImpl.Scheduler myScheduler;
 
-    public MyChangesDeltaForwarder(final Project project, final AtomicReference<Future> future, @NotNull ExecutorService service) {
+    public MyChangesDeltaForwarder(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler) {
       myProject = project;
-      myFuture = future;
-      myService = service;
+      myScheduler = scheduler;
       myRevisionsCache = RemoteRevisionsCache.getInstance(project);
       myVcsManager = ProjectLevelVcsManager.getInstance(project);
     }
 
     @Override
     public void modify(final BaseRevision was, final BaseRevision become) {
-      myFuture.set(myService.submit(() -> {
+      myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
           myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
         }
         // maybe define modify method?
         myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
-      }));
+      });
     }
 
     @Override
     public void plus(final BaseRevision baseRevision) {
-      myFuture.set(myService.submit(() -> {
+      myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(baseRevision);
         if (vcs != null) {
           myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
         }
         myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
-      }));
+      });
     }
 
     @Override
     public void minus(final BaseRevision baseRevision) {
-      myFuture.set(myService.submit(() -> {
+      myScheduler.submit(() -> {
         final AbstractVcs vcs = getVcs(baseRevision);
         if (vcs != null) {
           myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
         }
         myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
-      }));
+      });
     }
 
     @Nullable
@@ -1669,5 +1666,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       }
     }
     return freezeReason != null;
+  }
+
+  static class Scheduler {
+    private final AtomicReference<Future> myLastTask = new AtomicReference<>(); // @TestOnly
+    private final ScheduledExecutorService myExecutor =
+      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool", 1);
+
+    public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
+      myLastTask.set(myExecutor.schedule(command, delay, unit));
+    }
+
+    public void submit(@NotNull Runnable command) {
+      myLastTask.set(myExecutor.submit(command));
+    }
   }
 }

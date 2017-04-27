@@ -33,10 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -50,8 +47,7 @@ public class UpdateRequestsQueue {
   private final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.UpdateRequestsQueue");
   private static final String ourHeavyLatchOptimization = "vcs.local.changes.track.heavy.latch";
   private final Project myProject;
-  private final AtomicReference<Future> myFuture;
-  private final ScheduledExecutorService myExecutor;
+  private final ChangeListManagerImpl.Scheduler myScheduler;
   private final Runnable myDelegate;
   private final Object myLock;
   private volatile boolean myStarted;
@@ -68,10 +64,9 @@ public class UpdateRequestsQueue {
   private final boolean myTrackHeavyLatch;
   private final Getter<Boolean> myIsStoppedGetter;
 
-  public UpdateRequestsQueue(final Project project, final AtomicReference<Future> future, @NotNull ScheduledExecutorService executor, final Runnable delegate) {
+  public UpdateRequestsQueue(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, final Runnable delegate) {
     myProject = project;
-    myFuture = future;
-    myExecutor = executor;
+    myScheduler = scheduler;
     myTrackHeavyLatch = Boolean.parseBoolean(System.getProperty(ourHeavyLatchOptimization));
 
     myDelegate = delegate;
@@ -106,7 +101,7 @@ public class UpdateRequestsQueue {
         if (! myRequestSubmitted) {
           final MyRunnable runnable = new MyRunnable();
           myRequestSubmitted = true;
-          myFuture.set(myExecutor.schedule(runnable, 300, TimeUnit.MILLISECONDS));
+          myScheduler.schedule(runnable, 300, TimeUnit.MILLISECONDS);
           LOG.debug("Scheduled for project: " + myProject.getName() + ", runnable: " + runnable.hashCode());
         }
       }
@@ -161,7 +156,7 @@ public class UpdateRequestsQueue {
         }
 
         if (!myRequestRunning) {
-          myFuture.set(myExecutor.submit(new MyRunnable()));
+          myScheduler.submit(new MyRunnable());
         }
 
         semaphore.down();
