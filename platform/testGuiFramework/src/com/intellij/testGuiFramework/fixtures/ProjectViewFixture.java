@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
@@ -150,15 +151,21 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
     catch (WaitTimedOutError error) {
       Throwable throwable = lastThrowable.get();
-      if (throwable != null)
+      if (throwable != null) {
         throw new AssertionError(
           "Failed on waiting project structure update for " + timeout.toString() + ", expected and actual structures are still different: ",
           throwable);
+      }
       else {
         throw error;
       }
     }
   }
+
+  public NodeFixture path(String... path) {
+    return selectProjectPane().getNode(path);
+  }
+
 
   public class PaneFixture {
     @NotNull private final AbstractProjectViewPane myPane;
@@ -228,9 +235,21 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public NodeFixture selectByPath(@NotNull final String... paths) {
-      final AbstractTreeStructure treeStructure = getTreeStructure();
+      NodeFixture nodeFixture = getNode(paths);
+      nodeFixture.select();
+      return nodeFixture;
+    }
 
-      final BasePsiNode node = GuiActionRunner.execute(new GuiQuery<BasePsiNode>() {
+    public NodeFixture expandByPath(@NotNull final String... paths) {
+      NodeFixture nodeFixture = getNode(paths);
+      nodeFixture.expand();
+      return nodeFixture;
+    }
+
+    @Nullable
+    private NodeFixture getNode(@NotNull String[] path) {
+      AbstractTreeStructure treeStructure = getTreeStructure();
+      BasePsiNode basePsiNode = GuiActionRunner.execute(new GuiQuery<BasePsiNode>() {
         @Nullable
         @Override
         protected BasePsiNode executeInEDT() throws Throwable {
@@ -238,7 +257,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
           final List<Object> treePath = new ArrayList();
           treePath.add(root);
 
-          for (String pathItem : paths) {
+          for (String pathItem : path) {
             Object[] childElements = treeStructure.getChildElements(root);
             Object newRoot = null;
             for (Object child : childElements) {
@@ -261,7 +280,6 @@ public class ProjectViewFixture extends ToolWindowFixture {
               if (child instanceof ClassTreeNode) {
                 ClassTreeNode ctn = (ClassTreeNode)child;
                 if (ctn.getPsiClass().getContainingFile().getName().equals(pathItem)) {
-
                   newRoot = child;
                   treePath.add(newRoot);
                   break;
@@ -275,38 +293,16 @@ public class ProjectViewFixture extends ToolWindowFixture {
               return null;
             }
           }
-          if (root == treeStructure.getRootElement()) {
-            return null;
-          }
 
           VirtualFile vf2select = root instanceof ClassTreeNode
                                   ? ((ClassTreeNode)root).getPsiClass().getContainingFile().getVirtualFile()
                                   : ((BasePsiNode)root).getVirtualFile();
 
-          myPane.expand(treePath.toArray(), true);
-          myPane.select(root, vf2select, true);
           return (BasePsiNode)root;
         }
       });
-
-      assertNotNull(node);
-
-      pause(new Condition("Node to be selected") {
-        @Override
-        public boolean test() {
-          return node.equals(GuiActionRunner.execute(new GuiQuery<Object>() {
-            @Override
-            protected Object executeInEDT() throws Throwable {
-              DefaultMutableTreeNode selectedNode = myPane.getSelectedNode();
-              if (selectedNode != null) {
-                return selectedNode.getUserObject();
-              }
-              return null;
-            }
-          }));
-        }
-      }, SHORT_TIMEOUT);
-      return (new NodeFixture(node, treeStructure, myPane));
+      if (basePsiNode == null) return null;
+      return new NodeFixture(basePsiNode, treeStructure, myPane);
     }
   }
 
@@ -314,11 +310,13 @@ public class ProjectViewFixture extends ToolWindowFixture {
     @NotNull private final ProjectViewNode<?> myNode;
     @NotNull private final AbstractTreeStructure myTreeStructure;
     @NotNull private final AbstractProjectViewPane myPane;
+    @NotNull private final Object[] myPath;
 
     NodeFixture(@NotNull ProjectViewNode<?> node, @NotNull AbstractTreeStructure treeStructure, @NotNull AbstractProjectViewPane pane) {
       myNode = node;
       myTreeStructure = treeStructure;
       myPane = pane;
+      myPath = createPath(treeStructure, node);
     }
 
     @NotNull
@@ -345,7 +343,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
         final TreePath path = TreeUtil.getPathFromRoot(dmtn);
         final Rectangle bounds = tree.getPathBounds(path);
         assertNotNull(bounds);
-        return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+        return new Point(bounds.x + bounds.height / 2, bounds.y + bounds.height / 2);
       });
     }
 
@@ -357,10 +355,12 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public void click() {
+      expand().select().scrollTo();
       myRobot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 1);
     }
 
     public void doubleClick() {
+      expand().select().scrollTo();
       myRobot.click(getLocationOnScreen(), MouseButton.LEFT_BUTTON, 2);
     }
 
@@ -369,6 +369,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
 
     public void invokeContextMenu() {
+      expand().select().scrollTo();
       myRobot.click(getLocationOnScreen(), MouseButton.RIGHT_BUTTON, 1);
     }
 
@@ -394,10 +395,80 @@ public class ProjectViewFixture extends ToolWindowFixture {
       return this;
     }
 
+    private Object[] createPath(AbstractTreeStructure ats, Object node) {
+      ArrayList<Object> buildPath = new ArrayList<>();
+      Object root = ats.getRootElement();
+      Object curr = node;
+      while (curr != root) {
+        buildPath.add(0, curr);
+        curr = ats.getParentElement(curr);
+      }
+      buildPath.add(0, curr);
+      return buildPath.toArray();
+    }
+
 
     @Override
     public String toString() {
       return StringUtil.notNullize(myNode.getName());
+    }
+
+    @NotNull
+    public NodeFixture expand() {
+      GuiActionRunner.execute(new GuiTask() {
+        @Override
+        protected void executeInEDT() throws Throwable {
+          myPane.expand(myPath, true);
+        }
+      });
+      return this;
+    }
+
+    @NotNull
+    public NodeFixture select() {
+      GuiActionRunner.execute(new GuiTask() {
+        @Override
+        protected void executeInEDT() throws Throwable {
+          VirtualFile vf2select = myNode instanceof ClassTreeNode
+                                  ? ((ClassTreeNode)myNode).getPsiClass().getContainingFile().getVirtualFile()
+                                  : ((BasePsiNode)myNode).getVirtualFile();
+          myPane.select(myNode, vf2select, true);
+        }
+      });
+      pause(new Condition("Node to be selected") {
+        @Override
+        public boolean test() {
+          return myNode.equals(GuiActionRunner.execute(new GuiQuery<Object>() {
+            @Override
+            protected Object executeInEDT() throws Throwable {
+              DefaultMutableTreeNode selectedNode = myPane.getSelectedNode();
+              if (selectedNode != null) {
+                return selectedNode.getUserObject();
+              }
+              return null;
+            }
+          }));
+        }
+      }, SHORT_TIMEOUT);
+      return this;
+    }
+
+    @NotNull
+    public NodeFixture scrollTo() {
+      GuiActionRunner.execute(new GuiTask() {
+        @Override
+        protected void executeInEDT() throws Throwable {
+          myPane.getTree().scrollRowToVisible(getRow());
+        }
+      });
+      return this;
+    }
+
+    private int getRow() {
+      TreeNode treeNode = TreeUtil.findNodeWithObject((DefaultMutableTreeNode)myPane.getTree().getModel().getRoot(), myNode);
+      assert treeNode != null;
+      TreePath treePath = TreeUtil.getPathFromRoot(treeNode);
+      return myPane.getTree().getRowForPath(treePath);
     }
   }
 }
