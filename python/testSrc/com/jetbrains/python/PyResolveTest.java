@@ -1229,4 +1229,12 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testDunderClassInDeclarationInsideFunction() {
     assertUnresolved();
   }
+
+  // PY-22763
+  public void testComparisonOperatorReceiver() {
+    final PsiElement element = doResolve();
+    final PyFunction dunderLt = assertInstanceOf(element, PyFunction.class);
+    assertEquals("__lt__", dunderLt.getName());
+    assertEquals("str", dunderLt.getContainingClass().getName());
+  }
 }
