@@ -53,6 +53,7 @@ import java.util.function.Function;
  * @author Vitaliy.Bibaev
  */
 public abstract class TraceExecutionTestCase extends DebuggerTestCase {
+  private static final ChainSelector DEFAULT_CHAIN_SELECTOR = ChainSelector.byIndex(0);
   private final DebuggerPositionResolver myPositionResolver = new DebuggerPositionResolverImpl();
   private final TraceResultInterpreter myResultInterpreter = new TraceResultInterpreterImpl();
   private final StreamChainBuilder myChainBuilder = new AdvancedStreamChainBuilder(new StreamChainTransformerImpl());
@@ -67,7 +68,17 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     return new File("testData/debug/").getAbsolutePath();
   }
 
-  protected void doTest(boolean isResultNull) throws InterruptedException, ExecutionException, InvocationTargetException {
+  protected void doTest(boolean isResultNull) {
+    try {
+      doTest(isResultNull, DEFAULT_CHAIN_SELECTOR);
+    }
+    catch (Exception e) {
+      throw new AssertionError("exception thrown", e);
+    }
+  }
+
+  protected void doTest(boolean isResultNull, @NotNull ChainSelector chainSelector)
+    throws InterruptedException, ExecutionException, InvocationTargetException {
     final String className = getTestName(false);
 
     createLocalProcess(className);
@@ -92,7 +103,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
         final StreamChain chain = ApplicationManager.getApplication().runReadAction((Computable<StreamChain>)() -> {
           final PsiElement elementAtBreakpoint = positionResolver.getNearestElementToBreakpoint(session);
           final List<StreamChain> chains = elementAtBreakpoint == null ? null : chainBuilder.build(elementAtBreakpoint);
-          return chains == null || chains.isEmpty() ? null : chains.get(0);
+          return chains == null || chains.isEmpty() ? null : chainSelector.select(chains);
         });
 
         if (chain == null) {
@@ -282,5 +293,15 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   protected enum FailureReason {
     COMPILATION, EVALUATION, CHAIN_CONSTRUCTION
+  }
+
+  @FunctionalInterface
+  protected interface ChainSelector {
+    @NotNull
+    StreamChain select(@NotNull List<StreamChain> chains);
+
+    static ChainSelector byIndex(int index) {
+      return chains -> chains.get(index);
+    }
   }
 }
