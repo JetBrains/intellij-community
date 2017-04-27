@@ -1645,17 +1645,17 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @Override
-  public boolean isFreezedWithNotification(String modalTitle) {
+  public boolean isFreezedWithNotification(@Nullable String modalTitle) {
     final String freezeReason = isFreezed();
-    if (freezeReason != null) {
-      if (modalTitle != null) {
-        Messages.showErrorDialog(myProject, freezeReason, modalTitle);
-      }
-      else {
-        VcsBalloonProblemNotifier.showOverChangesView(myProject, freezeReason, MessageType.WARNING);
-      }
+    if (freezeReason == null) return false;
+
+    if (modalTitle != null) {
+      Messages.showErrorDialog(myProject, freezeReason, modalTitle);
     }
-    return freezeReason != null;
+    else {
+      VcsBalloonProblemNotifier.showOverChangesView(myProject, freezeReason, MessageType.WARNING);
+    }
+    return true;
   }
 
   static class Scheduler {
