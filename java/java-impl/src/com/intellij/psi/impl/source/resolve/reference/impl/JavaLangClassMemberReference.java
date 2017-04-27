@@ -126,7 +126,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
             return Arrays.stream(psiClass.getMethods())
               .filter(method -> isRegularMethod(method))
               .sorted(Comparator.comparing(PsiMethod::getName))
-              .map(method -> lookupMethod(method))
+              .map(method -> lookupMethod(method, this))
               .filter(Objects::nonNull)
               .toArray();
 
@@ -136,7 +136,7 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
               .map(MethodSignatureBackedByPsiMethod::getMethod)
               .filter(method -> isRegularMethod(method) && isPotentiallyAccessible(method, psiClass))
               .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
-              .map(method -> withPriority(lookupMethod(method), -getMethodSortOrder(method)))
+              .map(method -> withPriority(lookupMethod(method, this), -getMethodSortOrder(method)))
               .filter(Objects::nonNull)
               .toArray();
           }
@@ -153,17 +153,6 @@ public class JavaLangClassMemberReference extends PsiReferenceBase<PsiLiteralExp
   @Contract("null, _ -> false")
   private static boolean isPotentiallyAccessible(PsiMember member, PsiClass psiClass) {
     return member != null && (member.getContainingClass() == psiClass || isPublic(member));
-  }
-
-  @Nullable
-  private LookupElement lookupMethod(@NotNull PsiMethod method) {
-    final ReflectiveSignature signature = getMethodSignature(method);
-    return signature != null
-           ? LookupElementBuilder.create(signature, method.getName())
-             .withIcon(signature.getIcon())
-             .withTailText(signature.getShortArgumentTypes())
-             .withInsertHandler(this)
-           : null;
   }
 
   @Override

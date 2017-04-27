@@ -15,10 +15,12 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl;
 
+import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.RecursionGuard;
@@ -372,6 +374,17 @@ public class JavaReflectionReferenceUtil {
   @NotNull
   static LookupElement lookupField(@NotNull PsiField field) {
     return JavaLookupElementBuilder.forField(field);
+  }
+
+  @Nullable
+  static LookupElement lookupMethod(@NotNull PsiMethod method, @Nullable InsertHandler<LookupElement> insertHandler) {
+    final ReflectiveSignature signature = getMethodSignature(method);
+    return signature != null
+           ? LookupElementBuilder.create(signature, method.getName())
+             .withIcon(signature.getIcon())
+             .withTailText(signature.getShortArgumentTypes())
+             .withInsertHandler(insertHandler)
+           : null;
   }
 
   static void replaceText(@NotNull InsertionContext context, @NotNull String text) {

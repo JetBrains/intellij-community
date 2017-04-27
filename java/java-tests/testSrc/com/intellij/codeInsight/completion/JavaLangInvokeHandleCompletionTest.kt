@@ -30,10 +30,10 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/invokeHandle/"
 
 
-  fun testVirtual() = doTestFirst(1, "m1", "pm1", "m2")
-  fun testVirtualPrefixed() = doTest(1, "m1", "m2", "pm1")
+  fun testVirtual() = doTestFirst(1, "m1(int)", "pm1(int)", "m2(float, double)")
+  fun testVirtualPrefixed() = doTest(1, "m1(int)", "m2(float, double)", "pm1(int)")
 
-  fun testStatic() = doTest(0, "psm1", "sm1", "sm2")
+  fun testStatic() = doTest(0, "psm1(char)", "sm1(char)", "sm2(short)")
 
   fun testGetter() = doTest(0, "f1", "pf1", "f2")
   fun testSetter() = doTest(2, "f1", "pf1", "f2")
@@ -43,6 +43,8 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
 
   fun testVarHandle() = doTest(0, "f1", "pf1", "f2")
   fun testStaticVarHandle() = doTest(0, "psf1", "sf1", "sf2")
+
+  fun testOverloaded() = doTestTypes(1, "strMethod()", "strMethod(int, int)")
 
 
   fun testVirtualType() = doTestTypes(0, "MethodType.methodType(String.class)", "MethodType.methodType(String.class, int.class, int.class)")
@@ -77,7 +79,7 @@ class JavaLangInvokeHandleCompletionTest : LightFixtureCompletionTestCase() {
   }
 
   private fun doTestFirst(index: Int, vararg expected: String) {
-    doTest(index, { assertLookupTexts(true, *expected, "clone") })
+    doTest(index, { assertLookupTexts(true, *expected, "clone()") })
   }
 
   private fun doTestTypes(index: Int, vararg expected: String) {
@@ -113,7 +115,10 @@ public class Constructed<T> {
   private fun assertLookupTexts(compareFirst: Boolean, vararg expected: String) {
     val elements = myFixture.lookupElements
     assertNotNull(elements)
-    val lookupTexts = elements!!.map { LookupElementPresentation.renderElement(it).itemText }
+    val lookupTexts = elements!!.map {
+      val presentation = LookupElementPresentation.renderElement(it)
+      (presentation.itemText ?: "") + (presentation.tailText ?: "")
+    }
 
     val actual = if (compareFirst) lookupTexts.subList(0, Math.min(expected.size, lookupTexts.size)) else lookupTexts
     assertOrderedEquals(actual, *expected)
