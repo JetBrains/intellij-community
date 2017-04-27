@@ -138,7 +138,7 @@ public class ChainsSearcher {
         boolean isBreak = false;
         for (OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
           if (!isBreak) {
-            if (indexReader.mayHappen(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.CORRELATION)) {
+            if (indexReader.mayHappen(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;
