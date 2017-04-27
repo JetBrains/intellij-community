@@ -16,12 +16,15 @@
 package com.intellij.jarRepository;
 
 import com.google.common.base.Predicate;
+import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -29,6 +32,7 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -81,29 +85,31 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
 
   @Override
   public void runActivity(@NotNull final Project project) {
-    StartupManager.getInstance(project).registerPostStartupActivity(new DumbAwareRunnable() {
+    final DumbAwareRunnable syncTask = () -> ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+      final Collection<Library> toSync = collectLibraries(project, library -> {
+        if (library instanceof LibraryEx) {
+          final LibraryEx libraryEx = (LibraryEx)library;
+          return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
+                 isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
+        }
+        return false;
+      });
+      for (Library library : toSync) {
+        RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
+      }
+    }, project.getDisposed());
+
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
       @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            final Collection<Library> toSync = collectLibraries(project, new Predicate<Library>() {
-              @Override
-              public boolean apply(Library library) {
-                if (!(library instanceof LibraryEx)) {
-                  return false;
-                }
-                final LibraryEx libraryEx = (LibraryEx)library;
-                return libraryEx.getProperties() instanceof RepositoryLibraryProperties &&
-                       isLibraryNeedToBeReloaded(libraryEx, (RepositoryLibraryProperties)libraryEx.getProperties());
-              }
-            });
-            for (Library library : toSync) {
-              RepositoryUtils.reloadDependencies(project, (LibraryEx)library);
-            }
-          }
-        }, project.getDisposed());
+      public void rootsChanged(final ModuleRootEvent event) {
+        if (event.getSource() instanceof Project) {
+          myAlarm.cancelAllRequests();
+          myAlarm.addRequest(syncTask, 300L);
+        }
       }
     });
+
+    StartupManager.getInstance(project).registerPostStartupActivity(syncTask);
   }
 }
