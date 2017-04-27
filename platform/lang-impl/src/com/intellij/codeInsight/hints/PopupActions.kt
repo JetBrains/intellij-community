@@ -196,6 +196,7 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getOptionHintAtOffset(editor, file) ?: return
     option.disable()
+    refreshAllOpenEditors()
   }
 
   override fun startInWriteAction() = false
@@ -243,6 +244,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getDisabledOptionInfoAtCaretOffset(editor, file) ?: return
     option.enable()
+    refreshAllOpenEditors()
   }
 
   override fun startInWriteAction() = false
