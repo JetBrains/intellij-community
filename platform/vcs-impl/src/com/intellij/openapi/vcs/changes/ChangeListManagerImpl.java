@@ -1604,7 +1604,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myFuture.set(myService.submit(() -> {
         final AbstractVcs vcs = getVcs(was);
         if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(was.getPath().getPath(), vcs));
+          myRevisionsCache.plus(Pair.create(was.getPath(), vcs));
         }
         // maybe define modify method?
         myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(become);
@@ -1616,7 +1616,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myFuture.set(myService.submit(() -> {
         final AbstractVcs vcs = getVcs(baseRevision);
         if (vcs != null) {
-          myRevisionsCache.plus(Pair.create(baseRevision.getPath().getPath(), vcs));
+          myRevisionsCache.plus(Pair.create(baseRevision.getPath(), vcs));
         }
         myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision);
       }));
@@ -1627,9 +1627,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myFuture.set(myService.submit(() -> {
         final AbstractVcs vcs = getVcs(baseRevision);
         if (vcs != null) {
-          myRevisionsCache.minus(Pair.create(baseRevision.getPath().getPath(), vcs));
+          myRevisionsCache.minus(Pair.create(baseRevision.getPath(), vcs));
         }
-        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath().getPath());
+        myProject.getMessageBus().syncPublisher(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirty(baseRevision.getPath());
       }));
     }
 
@@ -1637,7 +1637,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     private AbstractVcs getVcs(final BaseRevision baseRevision) {
       VcsKey vcsKey = baseRevision.getVcs();
       if (vcsKey == null) {
-        FilePath path = baseRevision.getPath();
+        FilePath path = baseRevision.getFilePath();
         vcsKey = findVcs(path);
         if (vcsKey == null) return null;
       }
