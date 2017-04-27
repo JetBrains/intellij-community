@@ -353,8 +353,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myUpdater.invokeAfterUpdate(afterUpdate, mode, title, dirtyScopeManagerFiller, state);
   }
 
-  static class DisposedException extends RuntimeException {}
-
   @Override
   public void freeze(@NotNull String reason) {
     myUpdater.setIgnoreBackgroundOperation(true);
@@ -470,7 +468,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final List<VcsDirtyScope> scopes = invalidated.getScopes();
 
     try {
-      checkIfDisposed();
+      if (myUpdater.isStopped()) return;
 
       // copy existing data to objects that would be updated.
       // mark for "modifier" that update started (it would create duplicates of modification commands done by user during update;
@@ -550,7 +548,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       myChangesViewManager.scheduleRefresh();
     }
-    catch (DisposedException | ProcessCanceledException e) {
+    catch (ProcessCanceledException e) {
       // OK, we're finishing all the stuff now.
     }
     catch (Exception | AssertionError ex) {
@@ -736,10 +734,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       myUpdateException = e;
     }
-  }
-
-  private void checkIfDisposed() {
-    if (myUpdater.isStopped()) throw new DisposedException();
   }
 
   public static boolean isUnder(final Change change, final VcsDirtyScope scope) {

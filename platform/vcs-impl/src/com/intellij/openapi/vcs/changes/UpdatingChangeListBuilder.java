@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.FilePath;
@@ -55,7 +56,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
   }
 
   private void checkIfDisposed() {
-    if (myDisposedGetter.get()) throw new ChangeListManagerImpl.DisposedException();
+    if (myDisposedGetter.get()) throw new ProcessCanceledException();
   }
 
   public void setCurrent(final VcsDirtyScope scope, final FoldersCutDownWorker foldersWorker) {
