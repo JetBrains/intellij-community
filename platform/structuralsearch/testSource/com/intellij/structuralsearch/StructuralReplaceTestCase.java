@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,6 @@ abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-
-    StructuralSearchUtil.ourUseUniversalMatchingAlgorithm = false;
 
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_4);
 
