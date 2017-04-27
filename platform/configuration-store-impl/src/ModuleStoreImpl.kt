@@ -29,25 +29,25 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
   override val storageManager = ModuleStateStorageManager(pathMacroManager.createTrackingSubstitutor(), module)
 
   override final fun getPathMacroManagerForDefaults() = pathMacroManager
+}
 
-  private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
-    private var moduleComponentLoadPolicy: StateLoadPolicy? = null
+private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
+  private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
-    override fun setPath(path: String) {
-      setPath(path, null)
-    }
-
-    override fun setPath(path: String, file: VirtualFile?) {
-      super.setPath(path, file)
-
-      if ((file != null && file.isValid) || Paths.get(path).exists()) {
-        moduleComponentLoadPolicy = StateLoadPolicy.LOAD
-      }
-    }
-
-    override val loadPolicy: StateLoadPolicy
-      get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
+  override fun setPath(path: String) {
+    setPath(path, null)
   }
+
+  override fun setPath(path: String, file: VirtualFile?) {
+    super.setPath(path, file)
+
+    if ((file != null && file.isValid) || Paths.get(path).exists()) {
+      moduleComponentLoadPolicy = StateLoadPolicy.LOAD
+    }
+  }
+
+  override val loadPolicy: StateLoadPolicy
+    get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
 }
 
 // used in upsource
