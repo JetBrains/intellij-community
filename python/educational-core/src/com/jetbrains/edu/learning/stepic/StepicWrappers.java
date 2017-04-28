@@ -193,6 +193,7 @@ public class StepicWrappers {
       this.lesson.setName(lesson.getName());
       this.lesson.setId(lesson.getId());
       this.lesson.steps = new ArrayList<>();
+      this.lesson.setPublic(true);
     }
   }
 
