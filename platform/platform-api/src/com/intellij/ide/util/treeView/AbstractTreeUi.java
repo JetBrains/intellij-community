@@ -408,7 +408,8 @@ public class AbstractTreeUi {
     myBusyAlarm.cancelAllRequests();
 
     if (!myWasEverShown) return;
-
+    // ask for termination of background children calculation
+    if (myProgress != null && myProgress.isRunning()) myProgress.cancel();
     if (!isReady()) {
       cancelUpdate();
       myUpdateFromRootRequested = true;
@@ -918,7 +919,7 @@ public class AbstractTreeUi {
     while(true) {
       try (LockToken ignored = attemptLock()) {
         if (ignored == null) {  // async children calculation is in progress under lock
-          if (!myProgress.isCanceled()) myProgress.cancel();
+          if (myProgress != null && myProgress.isRunning()) myProgress.cancel();
           continue;
         }
         final AtomicBoolean update = new AtomicBoolean();
