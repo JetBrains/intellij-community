@@ -101,9 +101,13 @@ public class IdeaWideProxySelector extends ProxySelector {
       ProxySelector pacProxySelector = pair.first;
 
       if (pacProxySelector != null) {
-        List<Proxy> select = pacProxySelector.select(uri);
-        LOG.debug("Autodetected proxies: ", select);
-        return select;
+        try {
+          List<Proxy> select = pacProxySelector.select(uri);
+          LOG.debug("Autodetected proxies: ", select);
+          return select;
+        } catch (StackOverflowError ignore) {
+          LOG.debug("Too large PAC script (JRE-247)");
+        }
       }
       else {
         LOG.debug("No proxies detected");
