@@ -19,8 +19,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.NamedConfigurable;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author nik
  */
@@ -34,10 +32,4 @@ public abstract class ProjectStructureElementConfigurable<T> extends NamedConfig
 
   @Nullable
   public abstract ProjectStructureElement getProjectStructureElement();
-
-  @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
-    return null;
-  }
 }
