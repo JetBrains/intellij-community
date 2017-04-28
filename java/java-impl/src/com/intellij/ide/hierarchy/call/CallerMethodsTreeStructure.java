@@ -17,7 +17,6 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -46,10 +45,6 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   @NotNull
   @Override
   protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> calcChildren(descriptor));
-  }
-
-  private Object[] calcChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     HierarchyNodeDescriptor nodeDescriptor = getBaseDescriptor();
 

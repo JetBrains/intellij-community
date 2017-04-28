@@ -17,7 +17,6 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
@@ -40,10 +39,6 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
 
   @NotNull
   protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
-    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> calcChildren(descriptor));
-  }
-
-  private Object[] calcChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final PsiMember enclosingElement = ((CallHierarchyNodeDescriptor)descriptor).getEnclosingElement();
     if (!(enclosingElement instanceof PsiMethod)) {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
