@@ -234,11 +234,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
-   * If unable to run read action because of interfering write action, this method waits for that write action to complete.
-   * So under no circumstances must you call this method from read action or under critical locks.
+   * @param action the code to execute under read action
+   * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
    * @since 171.*
    */
-  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action);
+  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
 
   public abstract boolean isInNonCancelableSection();
 }
