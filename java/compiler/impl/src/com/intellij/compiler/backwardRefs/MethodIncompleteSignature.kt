@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.jps.backwardRefs.LightRef
 import org.jetbrains.jps.backwardRefs.SignatureData
+import java.util.function.Predicate
 
 class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
                                 private val signatureData: SignatureData,
@@ -48,15 +49,23 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
   val isStatic: Boolean
     get() = signatureData.isStatic
 
-  fun resolveQualifier(project: Project, resolveScope: GlobalSearchScope) = JavaPsiFacade.getInstance(project).findClass(owner, resolveScope)
+  fun resolveQualifier(project: Project,
+                       resolveScope: GlobalSearchScope,
+                       accessValidator: Predicate<PsiMember>): PsiClass? {
+    val clazz = JavaPsiFacade.getInstance(project).findClass(owner, resolveScope)
+    return if (clazz != null && accessValidator.test(clazz)) clazz else null
+  }
 
-  fun resolve(project: Project, resolveScope: GlobalSearchScope): Array<PsiMethod> {
+  fun resolve(project: Project,
+              resolveScope: GlobalSearchScope,
+              accessValidator: Predicate<PsiMember>): Array<PsiMethod> {
     if (CONSTRUCTOR_METHOD_NAME == name) {
       return PsiMethod.EMPTY_ARRAY
     }
-    val aClass = resolveQualifier(project, resolveScope) ?: return PsiMethod.EMPTY_ARRAY
+    val aClass = resolveQualifier(project, resolveScope, accessValidator) ?: return PsiMethod.EMPTY_ARRAY
     return aClass.findMethodsByName(name, true)
       .filter { it.hasModifierProperty(PsiModifier.STATIC) == isStatic }
+      .filter { accessValidator.test(it) }
       .filter {
         val returnType = it.returnType
         when (signatureData.iteratorKind) {

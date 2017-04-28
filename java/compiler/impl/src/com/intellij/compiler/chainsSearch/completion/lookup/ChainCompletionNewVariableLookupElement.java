@@ -16,43 +16,47 @@
 package com.intellij.compiler.chainsSearch.completion.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /**
  * @author Dmitry Batkovich
  */
-public class ChainCompletionNewVariableLookupElement extends LookupElementDecorator<LookupElement> {
-  private static final Logger LOG = Logger.getInstance(ChainCompletionNewVariableLookupElement.class);
-
+public class ChainCompletionNewVariableLookupElement extends LookupElement {
   @NotNull
   private final PsiClass myQualifierClass;
   @NotNull
   private final String myNewVarName;
 
-  public ChainCompletionNewVariableLookupElement(@NotNull final PsiClass qualifierClass, final LookupElement calledMethods) {
-    super(calledMethods);
-    myNewVarName = StringUtil.decapitalize(ObjectUtils.notNull(qualifierClass.getName()));
+  public ChainCompletionNewVariableLookupElement(@NotNull final PsiClass qualifierClass) {
+    Project project = qualifierClass.getProject();
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    myNewVarName = Stream
+      .of(codeStyleManager.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, elementFactory.createType(qualifierClass)).names)
+      .sorted(Comparator.comparing(String::length).reversed())
+      .findFirst()
+      .orElseThrow(IllegalStateException::new);
     myQualifierClass = qualifierClass;
   }
 
   @Override
+  public AutoCompletionPolicy getAutoCompletionPolicy() {
+    return AutoCompletionPolicy.NEVER_AUTOCOMPLETE;
+  }
+
+  @Override
   public void handleInsert(final InsertionContext context) {
-    final RangeMarker rangeMarker = context.getDocument().createRangeMarker(context.getStartOffset(), context.getStartOffset());
-    getDelegate().handleInsert(context);
-    context.getDocument().insertString(rangeMarker.getStartOffset(), myNewVarName + ".");
-    context.commitDocument();
     final PsiFile file = context.getFile();
     ((PsiJavaFile)file).importClass(myQualifierClass);
     final PsiElement caretElement = ObjectUtils.notNull(file.findElementAt(context.getEditor().getCaretModel().getOffset()));
@@ -71,33 +75,12 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
                                                                                                      elementFactory.createType(myQualifierClass),
                                                                                                      elementFactory.createExpressionFromText(PsiKeyword.NULL, null));
 
-    PsiStatement newVarDeclaration = (PsiStatement)statement.getParent().addBefore(newVarDeclarationTemplate, statement);
-    final PsiLiteralExpression nullKeyword = findNullElement(newVarDeclaration);
-    final int offset = nullKeyword.getTextOffset();
-    final int endOffset = offset + nullKeyword.getTextLength();
-    context.getEditor().getSelectionModel().setSelection(offset, endOffset);
-    context.getEditor().getCaretModel().moveToOffset(offset);
+    statement.getParent().addBefore(newVarDeclarationTemplate, statement);
   }
 
   @NotNull
   @Override
   public String getLookupString() {
-    return getDelegate().getLookupString();
-  }
-
-  @Override
-  public void renderElement(final LookupElementPresentation presentation) {
-    super.renderElement(presentation);
-    presentation.setItemText(myNewVarName + "." + presentation.getItemText());
-  }
-
-  private static PsiLiteralExpression findNullElement(final PsiElement psiElement) {
-    final Collection<PsiLiteralExpression> literalExpressions = PsiTreeUtil.findChildrenOfType(psiElement, PsiLiteralExpression.class);
-    for (final PsiLiteralExpression literalExpression : literalExpressions) {
-      if (PsiKeyword.NULL.equals(literalExpression.getText())) {
-        return literalExpression;
-      }
-    }
-    throw new IllegalArgumentException();
+    return myNewVarName;
   }
 }

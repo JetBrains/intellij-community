@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -50,7 +51,7 @@ public class ChainCompletionContext {
   @NotNull
   private final Project myProject;
   @NotNull
-  private final PsiManager myPsiManager;
+  private final PsiResolveHelper myResolveHelper;
   @NotNull
   private final FactoryMap<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
   @NotNull
@@ -66,19 +67,19 @@ public class ChainCompletionContext {
     myContext = context;
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
-    myPsiManager = PsiManager.getInstance(myProject);
+    myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
     myQualifierClassResolver = new FactoryMap<MethodIncompleteSignature, PsiClass>() {
       @Nullable
       @Override
       protected PsiClass create(MethodIncompleteSignature sign) {
-        return sign.resolveQualifier(myProject, myResolveScope);
+        return sign.resolveQualifier(myProject, myResolveScope, accessValidator());
       }
     };
     myResolver = new FactoryMap<MethodIncompleteSignature, PsiMethod[]>() {
       @NotNull
       @Override
       protected PsiMethod[] create(MethodIncompleteSignature sign) {
-        return sign.resolve(myProject, myResolveScope);
+        return sign.resolve(myProject, myResolveScope, accessValidator());
       }
     };
   }
@@ -119,11 +120,6 @@ public class ChainCompletionContext {
     return myProject;
   }
 
-  @NotNull
-  public PsiManager getPsiManager() {
-    return myPsiManager;
-  }
-
   @Nullable
   public PsiElement findRelevantStringInContext(String stringParameterName) {
     String sanitizedTarget = MethodChainsSearchUtil.sanitizedToLowerCase(stringParameterName);
@@ -157,6 +153,10 @@ public class ChainCompletionContext {
   @NotNull
   public PsiMethod[] resolve(MethodIncompleteSignature sign) {
     return myResolver.get(sign);
+  }
+
+  private Predicate<PsiMember> accessValidator() {
+    return m -> myResolveHelper.isAccessible(m, myContext, null);
   }
 
   @Nullable

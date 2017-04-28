@@ -95,7 +95,7 @@ public class MethodsChainLookupRangingHelper {
     }
 
     if (newVariableClass != null) {
-      chainLookupElement = new ChainCompletionNewVariableLookupElement(newVariableClass, chainLookupElement);
+      chainLookupElement = new JavaChainLookupElement(new ChainCompletionNewVariableLookupElement(newVariableClass), chainLookupElement);
     }
 
     ChainRelevance relevance =

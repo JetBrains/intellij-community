@@ -100,9 +100,7 @@ public class ChainSearchTarget {
   @Nullable
   private static ChainSearchTarget create(PsiClassType classType) {
     PsiClass resolvedClass = PsiUtil.resolveClassInClassTypeOnly(classType);
-    if (resolvedClass == null || resolvedClass instanceof PsiTypeParameter || LambdaUtil.isFunctionalClass(resolvedClass)) return null;
-    String packageName = JavaHierarchyUtil.getPackageName(resolvedClass);
-    if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) return null;
+    if (resolvedClass == null) return null;
     byte iteratorKind = SignatureData.ZERO_DIM;
     String iteratorClass = getIteratorKind(resolvedClass);
     if (iteratorClass != null) {
@@ -110,9 +108,10 @@ public class ChainSearchTarget {
       if (resolvedClass == null) return null;
       iteratorKind = SignatureData.ITERATOR_ONE_DIM;
     }
-    if (resolvedClass.hasTypeParameters()) {
-      return null;
-    }
+    if (resolvedClass.hasTypeParameters() || resolvedClass instanceof PsiTypeParameter || LambdaUtil.isFunctionalClass(resolvedClass)) return null;
+    String packageName = JavaHierarchyUtil.getPackageName(resolvedClass);
+    if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) return null;
+
     String classQName = resolvedClass.getQualifiedName();
     if (classQName == null) {
       return null;
