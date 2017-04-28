@@ -90,15 +90,22 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myExternalRootProjects.clear();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
+      if(projectInfos.isEmpty()) {
+        ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
+      }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
         if (validate(projectInfo)) {
           myExternalRootProjects.put(
             Pair.create(projectInfo.getProjectSystemId(), new File(projectInfo.getExternalProjectPath())), projectInfo);
         }
+        else {
+          ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(projectInfo.getExternalProjectPath());
+        }
       }
     }
     catch (IOException e) {
       LOG.debug(e);
+      ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
     }
 
     mergeLocalSettings();
@@ -256,6 +263,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
           final DataNode<ProjectData> dataNode = convert(systemId, projectPojo, entry.getValue(), availableTasks);
           externalProjectInfo = new InternalExternalProjectInfo(systemId, externalProjectPath, dataNode);
           myExternalRootProjects.put(key, externalProjectInfo);
+          ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(externalProjectPath);
 
           changed.set(true);
         }
