@@ -23,18 +23,20 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.io.DataExternalizer
-import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.PersistentHashMap
-import java.io.*
+import com.intellij.util.io.*
+import java.io.DataInput
+import java.io.DataOutput
+import java.io.IOException
+import java.io.InputStream
 import java.util.*
 
 private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
@@ -93,10 +95,14 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 }
 
-private fun createStorage(project: Project): PersistentHashMap<String, ByteArray> {
-  val file = File(ExternalProjectsDataStorage.getProjectConfigurationDir(), "${project.locationHash}/modules")
+private val MODULE_FILE_FORMAT_VERSION = 0
 
-  fun createMap() = PersistentHashMap<String, ByteArray>(file, EnumeratorStringDescriptor.INSTANCE, object : DataExternalizer<ByteArray> {
+private fun createStorage(project: Project): PersistentHashMap<String, ByteArray> {
+  val dir = ExternalProjectsDataStorage.getProjectConfigurationDir(project)
+  val versionFile = dir.resolve("modules.version")
+  val file = dir.resolve("modules")
+
+  fun createMap() = PersistentHashMap<String, ByteArray>(file.toFile(), EnumeratorStringDescriptor.INSTANCE, object : DataExternalizer<ByteArray> {
     override fun read(`in`: DataInput): ByteArray {
       val available = (`in` as InputStream).available()
       val result = ByteArray(available)
@@ -109,13 +115,27 @@ private fun createStorage(project: Project): PersistentHashMap<String, ByteArray
     }
   })
 
+  fun deleteFileAndWriteLatestFormatVersion() {
+    file.delete()
+    versionFile.outputStream().use { it.write(MODULE_FILE_FORMAT_VERSION) }
+
+    StartupManager.getInstance(project).runWhenProjectIsInitialized {
+      val externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project)
+      externalProjectsManager.init()
+      externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+    }
+  }
+
   try {
+    val fileVersion = versionFile.inputStreamIfExists()?.use { it.read() } ?: -1
+    if (fileVersion != MODULE_FILE_FORMAT_VERSION) {
+      deleteFileAndWriteLatestFormatVersion()
+    }
     return createMap()
   }
   catch (e: IOException) {
-    // todo force project reimport
     LOG.info(e)
-    FileUtil.delete(file)
+    deleteFileAndWriteLatestFormatVersion()
   }
   return createMap()
 }
