@@ -114,7 +114,19 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
                                            Object... infos) {
     final PsiElement nameIdentifier = method.getNameIdentifier();
     if (nameIdentifier == null) {
-      registerError(method.getContainingFile(), infos);
+      final LocalQuickFix[] fixes = createAndInitFixes(infos);
+      final String description = inspection.buildErrorString(infos);
+
+      final TextRange methodTextRange;
+      PsiCodeBlock body = method.getBody();
+      if (body != null) {
+        methodTextRange = new TextRange(0, body.getStartOffsetInParent());
+      }
+      else {
+        methodTextRange = new TextRange(0, method.getTextLength());
+      }
+
+      holder.registerProblem(method, methodTextRange, description, fixes);
     }
     else {
       registerError(nameIdentifier, infos);
