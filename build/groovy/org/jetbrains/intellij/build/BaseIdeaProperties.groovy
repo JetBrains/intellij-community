@@ -170,9 +170,10 @@ abstract class BaseIdeaProperties extends ProductProperties {
     }
 
     if ("true".equalsIgnoreCase(System.getProperty("bundle.kotlin.plugin"))) {
-      context.ant.copy(todir: "$targetDirectory/plugins/Kotlin") {
-        fileset(dir: "$context.paths.communityHome/build/kotlinc/plugin/Kotlin")
-      }
+      def currentVersion = "kotlin-plugin-1.1.2-release-Studio2.4-2.zip"
+      context.ant.unzip(
+        src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/$currentVersion",
+        dest: "$targetDirectory/plugins")
     }
 
     /* Disabled in Android Studio:
