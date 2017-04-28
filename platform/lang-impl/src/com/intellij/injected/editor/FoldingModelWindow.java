@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-class FoldingModelWindow implements FoldingModelEx{
+class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   private final FoldingModelEx myDelegate;
   private final DocumentWindow myDocumentWindow;
   private final EditorWindow myEditorWindow;
@@ -205,5 +206,10 @@ class FoldingModelWindow implements FoldingModelEx{
   @Override
   public void clearFoldRegions() {
     myDelegate.clearFoldRegions();
+  }
+
+  @Override
+  public long getModificationCount() {
+    return myDelegate instanceof ModificationTracker ? ((ModificationTracker)myDelegate).getModificationCount() : 0;
   }
 }
