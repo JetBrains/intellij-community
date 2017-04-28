@@ -42,34 +42,39 @@ import java.util.*
 private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
 private val LOG = logger<ExternalSystemStreamProviderFactory>()
 
+private fun isEnabled() = Registry.`is`("store.imported.project.elements.separately", false)
+
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val nameToData = createStorage(project)
+  val nameToData by lazy { createStorage(project) }
+
   private var isStorageFlushInProgress = false
 
   init {
-    Disposer.register(project, Disposable { nameToData.close() })
+    if (isEnabled()) {
+      Disposer.register(project, Disposable { nameToData.close() })
 
-    // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
-    ApplicationManager.getApplication().messageBus
-      .connect(project)
-      .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
-        if (it === project && !isStorageFlushInProgress && nameToData.isDirty) {
-          isStorageFlushInProgress = true
-          ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-              LOG.catchAndLog { nameToData.force() }
-            }
-            finally {
-              isStorageFlushInProgress = false
+      // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
+      ApplicationManager.getApplication().messageBus
+        .connect(project)
+        .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
+          if (it === project && !isStorageFlushInProgress && nameToData.isDirty) {
+            isStorageFlushInProgress = true
+            ApplicationManager.getApplication().executeOnPooledThread {
+              try {
+                LOG.catchAndLog { nameToData.force() }
+              }
+              finally {
+                isStorageFlushInProgress = false
+              }
             }
           }
-        }
-      })
+        })
+    }
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    if (componentManager !is Module || component !is ProjectModelElement || !Registry.`is`("store.imported.project.elements.separately", false)) {
+    if (componentManager !is Module || component !is ProjectModelElement || !isEnabled()) {
       return null
     }
 
