@@ -378,7 +378,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
         if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
       }
       else {
-        size = ((readSize.toFloat() / readScale) * normalizingScale).toInt()
+        if (readScale != normalizingScale) size = Math.round((readSize / readScale) * normalizingScale)
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$normalizingScale")
       return size
