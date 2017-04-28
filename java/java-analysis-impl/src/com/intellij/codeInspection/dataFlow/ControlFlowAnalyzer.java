@@ -1376,8 +1376,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
-  static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
-                                                               @Nullable PsiMethodCallExpression call) {
+  public static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
+                                                                      @Nullable PsiMethodCallExpression call) {
     List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, call);
     return !contracts.isEmpty() ? contracts : getMethodContracts(method);
   }

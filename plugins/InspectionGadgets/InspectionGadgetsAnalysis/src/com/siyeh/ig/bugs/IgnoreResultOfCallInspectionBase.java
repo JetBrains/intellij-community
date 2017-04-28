@@ -18,7 +18,6 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -170,23 +169,7 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
-      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
-      final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
-      if (anno != null &&
-          (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) &&
-          Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
-        String text = AnnotationUtil.getStringAttributeValue(anno, null);
-        if (text != null) {
-          try {
-            if (StandardMethodContract.parseContract(text).stream()
-              .anyMatch(c -> c.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION)) {
-              return;
-            }
-          }
-          catch (StandardMethodContract.ParseException ignored) {
-          }
-        }
-
+      if (isPureMethod(method)) {
         registerMethodCallOrRefError(call, aClass);
         return;
       }
@@ -202,6 +185,16 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       }
 
       registerMethodCallOrRefError(call, aClass);
+    }
+
+    private boolean isPureMethod(PsiMethod method) {
+      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
+      if (anno == null) return false;
+      final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
+      if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
+      return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure")) &&
+             ControlFlowAnalyzer.getMethodCallContracts(method, null).stream()
+               .noneMatch(c -> c.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {
