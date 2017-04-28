@@ -1,15 +1,10 @@
 #!/bin/bash
-
-#immediately exit script with an error if a command fails
-set -euo pipefail
-
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
 EXPLODED=$2.exploded
 USERNAME=$3
 PASSWORD=$4
 CODESIGN_STRING=$5
-HELP_DIR_NAME=$6
 
 cd $(dirname $0)
 
@@ -24,8 +19,8 @@ unzip -q $1.sit -d ${EXPLODED}/
 rm $1.sit
 BUILD_NAME=$(ls ${EXPLODED}/)
 
-if [ $# -eq 7 ] && [ -f $7 ]; then
-  archiveJDK="$7"
+if [ $# -eq 6 ] && [ -f $6 ]; then
+  archiveJDK="$6"
   echo "Modifying Info.plist"
   sed -i -e 's/1.6\*/1.6\+/' ${EXPLODED}/"$BUILD_NAME"/Contents/Info.plist
   jdk=jdk-bundled
@@ -42,12 +37,11 @@ if [ $# -eq 7 ] && [ -f $7 ]; then
   rm -f $archiveJDK
 fi
 
-if [ $HELP_DIR_NAME != "no-help" ]; then
-  HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_DIR_NAME"/Contents/Resources/English.lproj/
+HELP_FILE=`ls ${EXPLODED}/"$BUILD_NAME"/Contents/Resources/ | grep -i help`
+HELP_DIR=${EXPLODED}/"$BUILD_NAME"/Contents/Resources/"$HELP_FILE"/Contents/Resources/English.lproj/
 
-  echo "Building help indices for $HELP_DIR"
-  hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
-fi
+echo "Building help indices for $HELP_DIR"
+hiutil -Cagvf "$HELP_DIR/search.helpindex" "$HELP_DIR"
 
 #enable nullglob option to ensure that 'for' cycles don't iterate if nothing matches to the file pattern
 shopt -s nullglob
@@ -67,6 +61,8 @@ for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
 done
 shopt -u nullglob
 
+#immediately exit script with an error if a command fails
+set -euo pipefail
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
 
