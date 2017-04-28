@@ -104,7 +104,9 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
 
   void resetActionInKeymap(Keymap mutable, String actionId) {
     KeymapScheme scheme = find(mutable);
-    if (scheme != null) scheme.reset(actionId);
+    if (scheme == null) return;
+    scheme.reset(actionId);
+    selectKeymap(scheme, false);
   }
 
   private KeymapScheme find(Keymap keymap) {

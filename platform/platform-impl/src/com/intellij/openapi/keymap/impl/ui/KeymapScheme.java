@@ -54,7 +54,7 @@ final class KeymapScheme implements Scheme {
   }
 
   @NotNull
-  Keymap getCurrent() {
+  KeymapImpl getCurrent() {
     return mutable != null ? mutable : original;
   }
 
@@ -83,26 +83,21 @@ final class KeymapScheme implements Scheme {
   }
 
   boolean canReset() {
-    return mutable != null && !mutable.equals(original);
+    return getCurrent().getOwnActionIds().length > 0;
   }
 
   void reset() {
     assert canReset() : "reset all modified shortcuts unexpectedly";
-    mutable = null;
+    getMutable().clearOwnActionsIds();
   }
 
   boolean canReset(@NotNull String actionId) {
-    return mutable != null && !deepEquals(original.getShortcuts(actionId), mutable.getShortcuts(actionId));
+    return getCurrent().hasOwnActionId(actionId);
   }
 
   void reset(@NotNull String actionId) {
     assert canReset(actionId) : "reset modified action shortcuts unexpectedly";
-    if (mutable != null) {
-      mutable.removeAllActionShortcuts(actionId);
-      for (Shortcut shortcut : original.getShortcuts(actionId)) {
-        mutable.addShortcut(actionId, shortcut);
-      }
-    }
+    getMutable().clearOwnActionsId(actionId);
   }
 
   @NotNull
