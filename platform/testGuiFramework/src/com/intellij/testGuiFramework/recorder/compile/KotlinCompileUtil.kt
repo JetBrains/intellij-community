@@ -29,13 +29,15 @@ object KotlinCompileUtil {
 
   private val LOG by lazy { Logger.getInstance("#${KotlinCompileUtil::class.qualifiedName}") }
 
+  private val localCompiler: LocalCompiler by lazy {LocalCompiler()}
+
   fun compile(codeString: String) {
-    LocalCompiler().compileOnPooledThread(ScriptGenerator.ScriptWrapper.wrapScript(codeString),
+    localCompiler.compileOnPooledThread(ScriptGenerator.ScriptWrapper.wrapScript(codeString),
                                           getAllUrls().map { Paths.get(it.toURI()).toFile().path })
   }
 
   fun compileAndRun(codeString: String) {
-    LocalCompiler().compileAndRunOnPooledThread(ScriptGenerator.ScriptWrapper.wrapScript(codeString),
+    localCompiler.compileAndRunOnPooledThread(ScriptGenerator.ScriptWrapper.wrapScript(codeString),
                                                 getAllUrls().map { Paths.get(it.toURI()).toFile().path })
   }
 
