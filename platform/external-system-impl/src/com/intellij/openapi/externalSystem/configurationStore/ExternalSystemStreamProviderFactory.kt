@@ -94,7 +94,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
 }
 
 private fun createStorage(project: Project): PersistentHashMap<String, ByteArray> {
-  val file = File(ExternalProjectsDataStorage.getProjectConfigurationDir(), "${project.locationHash}/projectConfiguration")
+  val file = File(ExternalProjectsDataStorage.getProjectConfigurationDir(), "${project.locationHash}/modules")
 
   fun createMap() = PersistentHashMap<String, ByteArray>(file, EnumeratorStringDescriptor.INSTANCE, object : DataExternalizer<ByteArray> {
     override fun read(`in`: DataInput): ByteArray {
