@@ -37,12 +37,15 @@ final class KeymapScheme implements Scheme {
   @NotNull
   @Override
   public String getName() {
-    Keymap keymap = getCurrent();
-    return keymap.getPresentableName();
+    return getCurrent().getPresentableName();
+  }
+
+  void setName(@NotNull String name) {
+    getMutable().setName(name);
   }
 
   Keymap getParent() {
-    return !canRename() ? null : original.getParent();
+    return !isMutable() ? null : original.getParent();
   }
 
   @NotNull
@@ -58,9 +61,13 @@ final class KeymapScheme implements Scheme {
   @NotNull
   KeymapImpl getMutable() {
     if (mutable != null) return mutable;
-    assert canRename() : "create a mutable copy for immutable keymap";
+    assert isMutable() : "create a mutable copy for immutable keymap";
     mutable = original.copyTo(new KeymapImpl());
     return mutable;
+  }
+
+  boolean isMutable() {
+    return original.canModify();
   }
 
   boolean contains(@NotNull Keymap keymap) {
@@ -73,14 +80,6 @@ final class KeymapScheme implements Scheme {
 
   boolean contains(@NotNull String name) {
     return contains(original, name) || mutable != null && contains(mutable, name);
-  }
-
-  boolean canRename() {
-    return original.canModify();
-  }
-
-  void rename(@NotNull String name) {
-    getMutable().setName(name);
   }
 
   boolean canReset() {

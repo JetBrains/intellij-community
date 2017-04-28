@@ -71,7 +71,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
 
   void visitMutableKeymaps(Consumer<Keymap> consumer) {
     for (KeymapScheme scheme : schemes) {
-      if (scheme.canRename()) {
+      if (scheme.isMutable()) {
         consumer.accept(scheme.getMutable());
       }
     }
@@ -85,7 +85,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
   Keymap getMutableKeymap(Keymap keymap) {
     KeymapScheme scheme = find(keymap);
     if (scheme == null) return null;
-    if (scheme.canRename()) return scheme.getMutable();
+    if (scheme.isMutable()) return scheme.getMutable();
 
     String name = message("new.keymap.name", keymap.getPresentableName());
     //noinspection ForLoopThatDoesntUseLoopVariable
@@ -143,7 +143,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
 
       @Override
       protected void renameScheme(@NotNull KeymapScheme scheme, @NotNull String name) {
-        scheme.rename(name);
+        scheme.setName(name);
         selectKeymap(scheme, false);
       }
 
@@ -161,12 +161,12 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
 
   @Override
   public boolean canResetScheme(@NotNull KeymapScheme scheme) {
-    return scheme.canReset();
+    return scheme.isMutable();
   }
 
   @Override
   public boolean canRenameScheme(@NotNull KeymapScheme scheme) {
-    return scheme.canRename();
+    return scheme.isMutable();
   }
 
   @Override
@@ -176,7 +176,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
 
   @Override
   public boolean canDeleteScheme(@NotNull KeymapScheme scheme) {
-    return scheme.canRename();
+    return scheme.isMutable();
   }
 
   @Override
