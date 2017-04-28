@@ -600,6 +600,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "  }" +
                  "}";
     assertEquals("Should find statements and comments in statement context only", 2, findMatchesCount(in2, "'_statement;"));
+
+    String in3 = "new Object().hashCode();" +
+                 "new Object().toString();";
+    assertEquals("Find typed expression statements", 1, findMatchesCount(in3, "'_expr:[exprtype( int )];"));
   }
 
   public void testSearchClass() {
