@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -32,33 +33,34 @@ import static java.util.stream.Collectors.toList;
 /**
  * @author Sergey.Malenkov
  */
-final class Keymaps {
+final class KeymapSchemeManager {
   private static final Condition<Keymap> FILTER = keymap -> !isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
+  private final ArrayList<KeymapScheme> list = new ArrayList<>();
 
-  static KeymapScheme find(@NotNull List<KeymapScheme> list, @NotNull Predicate<KeymapScheme> predicate) {
+  KeymapScheme find(@NotNull Predicate<KeymapScheme> predicate) {
     for (KeymapScheme scheme : list) {
       if (predicate.test(scheme)) return scheme;
     }
     return null;
   }
 
-  static KeymapScheme add(@NotNull List<KeymapScheme> list, @NotNull KeymapScheme scheme) {
+  KeymapScheme add(@NotNull KeymapScheme scheme) {
     list.add(scheme);
     return scheme;
   }
 
-  static KeymapScheme remove(@NotNull List<KeymapScheme> list, @NotNull KeymapScheme scheme) {
+  KeymapScheme remove(@NotNull KeymapScheme scheme) {
     list.remove(scheme);
     return getSchemeToSelect(list, scheme.getParent());
   }
 
-  static KeymapScheme reset(@NotNull List<KeymapScheme> list) {
+  KeymapScheme reset() {
     list.clear();
-    getKeymaps().forEach(keymap -> add(list, new KeymapScheme(keymap)));
+    getKeymaps().forEach(keymap -> list.add(new KeymapScheme(keymap)));
     return getSchemeToSelect(list, null);
   }
 
-  static KeymapScheme apply(@NotNull List<KeymapScheme> list, KeymapScheme selected) {
+  KeymapScheme apply(KeymapScheme selected) {
     Keymap active = selected == null ? null : selected.getOriginal();
     List<Keymap> keymaps = list.stream().map(scheme -> scheme.apply()).collect(toList());
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
@@ -87,15 +89,19 @@ final class Keymaps {
     return found;
   }
 
-  static boolean isModified(@NotNull List<KeymapScheme> list, KeymapScheme selected) {
+  boolean isModified(KeymapScheme selected) {
     Keymap active = selected == null ? null : selected.getOriginal();
     if (!Objects.equals(active, KeymapManager.getInstance().getActiveKeymap())) return true;
 
     Iterator<Keymap> keymaps = getKeymaps().iterator();
-    Iterator<KeymapScheme> schemes = list.iterator();
+    Iterator<KeymapScheme> schemes = this.list.iterator();
     while (keymaps.hasNext() && schemes.hasNext()) {
       if (!Objects.equals(keymaps.next(), schemes.next().getCurrent())) return true;
     }
     return keymaps.hasNext() || schemes.hasNext();
+  }
+
+  List<KeymapScheme> getAll() {
+    return list;
   }
 }

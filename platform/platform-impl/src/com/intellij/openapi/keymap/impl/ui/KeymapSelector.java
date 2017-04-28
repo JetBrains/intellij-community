@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.function.Consumer;
 
@@ -35,7 +34,7 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
  * @author Sergey.Malenkov
  */
 final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements SchemesModel<KeymapScheme> {
-  private final ArrayList<KeymapScheme> schemes = new ArrayList<>();
+  private final KeymapSchemeManager manager = new KeymapSchemeManager();
   private final Consumer<Keymap> consumer;
   private String messageReplacement;
   private boolean messageShown;
@@ -46,12 +45,12 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
   }
 
   void reset() {
-    selectKeymap(Keymaps.reset(schemes), true);
+    selectKeymap(manager.reset(), true);
   }
 
   String apply() {
-    HashSet<String> set = new HashSet<>(schemes.size());
-    for (KeymapScheme scheme : schemes) {
+    HashSet<String> set = new HashSet<>();
+    for (KeymapScheme scheme : manager.getAll()) {
       String name = scheme.getName();
       if (isEmptyOrSpaces(name)) {
         return message("configuration.all.keymaps.should.have.non.empty.names.error.message");
@@ -60,17 +59,17 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
         return message("configuration.all.keymaps.should.have.unique.names.error.message");
       }
     }
-    notifyConsumer(Keymaps.apply(schemes, getSelectedScheme()));
+    notifyConsumer(manager.apply(getSelectedScheme()));
     updateAllToolbarsImmediately();
     return null;
   }
 
   boolean isModified() {
-    return Keymaps.isModified(schemes, getSelectedScheme());
+    return manager.isModified(getSelectedScheme());
   }
 
   void visitMutableKeymaps(Consumer<Keymap> consumer) {
-    for (KeymapScheme scheme : schemes) {
+    for (KeymapScheme scheme : manager.getAll()) {
       if (scheme.isMutable()) {
         consumer.accept(scheme.getMutable());
       }
@@ -92,7 +91,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
     for (int i = 1; containsScheme(name, false); i++) {
       name = message("new.indexed.keymap.name", keymap.getPresentableName(), i);
     }
-    KeymapScheme copy = Keymaps.add(schemes, scheme.copy(name));
+    KeymapScheme copy = manager.add(scheme.copy(name));
     selectKeymap(copy, true);
     return copy.getMutable();
   }
@@ -110,7 +109,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
   }
 
   private KeymapScheme find(Keymap keymap) {
-    return keymap == null ? null : Keymaps.find(schemes, scheme -> scheme.contains(keymap));
+    return keymap == null ? null : manager.find(scheme -> scheme.contains(keymap));
   }
 
   @NotNull
@@ -140,25 +139,25 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
       @Override
       protected void resetScheme(@NotNull KeymapScheme scheme) {
         scheme.reset();
-        selectKeymap(scheme, false);
+        selectKeymap(scheme, true);
       }
 
       @Override
       protected void renameScheme(@NotNull KeymapScheme scheme, @NotNull String name) {
         scheme.setName(name);
-        selectKeymap(scheme, false);
+        selectKeymap(scheme, true);
       }
 
       @Override
       protected void duplicateScheme(@NotNull KeymapScheme parent, @NotNull String name) {
-        selectKeymap(Keymaps.add(schemes, parent.copy(name)), true);
+        selectKeymap(manager.add(parent.copy(name)), true);
       }
     };
   }
 
   @Override
   public void removeScheme(@NotNull KeymapScheme scheme) {
-    selectKeymap(Keymaps.remove(schemes, scheme), true);
+    selectKeymap(manager.remove(scheme), true);
   }
 
   @Override
@@ -183,7 +182,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
 
   @Override
   public boolean containsScheme(@NotNull String name, boolean isProjectScheme) {
-    return null != Keymaps.find(schemes, scheme -> scheme.contains(name));
+    return null != manager.find(scheme -> scheme.contains(name));
   }
 
   @Override
@@ -234,7 +233,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
   private void selectKeymap(KeymapScheme scheme, boolean reset) {
     try {
       internal = true;
-      if (reset) resetSchemes(schemes);
+      if (reset) resetSchemes(manager.getAll());
       if (scheme != null) selectScheme(scheme);
     }
     finally {
