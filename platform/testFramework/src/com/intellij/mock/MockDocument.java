@@ -15,17 +15,17 @@
  */
 package com.intellij.mock;
 
-import com.intellij.openapi.editor.BaseDocumentAdapter;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-public class MockDocument extends BaseDocumentAdapter implements DocumentEx {
+public class MockDocument extends UserDataHolderBase implements DocumentEx {
   private StringBuffer myText = new StringBuffer();
   private long myModStamp = LocalTimeCounter.currentTime();
 
@@ -119,6 +119,18 @@ public class MockDocument extends BaseDocumentAdapter implements DocumentEx {
 
   @NotNull
   @Override
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
   public LineIterator createLineIterator() {
     throw new UnsupportedOperationException();
   }
@@ -129,13 +141,8 @@ public class MockDocument extends BaseDocumentAdapter implements DocumentEx {
   }
 
   @Override
-  public RangeMarker getRangeGuard(int start, int end) {
-    return null;
-  }
-
-  @Override
-  public RangeMarker getOffsetGuard(int offset) {
-    return null;
+  public void setText(@NotNull CharSequence text) {
+    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
