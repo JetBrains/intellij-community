@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -153,6 +154,17 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @NotNull
   public List<String> getElementNames() {
     return Collections.unmodifiableList(myFields);
+  }
+
+  @Override
+  public boolean isCallable() {
+    return myDefinitionLevel == DefinitionLevel.NEW_TYPE;
+  }
+
+  @Nullable
+  @Override
+  public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
+    return isCallable() ? ContainerUtil.map(myFields, field -> new PyCallableParameterImpl(field, null)) : null;
   }
 
   public enum DefinitionLevel {

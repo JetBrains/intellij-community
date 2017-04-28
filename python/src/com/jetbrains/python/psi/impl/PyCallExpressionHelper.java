@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -118,6 +119,13 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyCallExpression call,
                                                                                    @NotNull PyResolveContext resolveContext,
                                                                                    int implicitOffset) {
+    final PyExpression callee = call.getCallee();
+
+    final List<PyCallExpression.PyRatedMarkedCallee> calleesFromProviders = getCalleesFromProviders(callee, resolveContext.getTypeEvalContext());
+    if (calleesFromProviders != null) {
+      return calleesFromProviders;
+    }
+
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
@@ -133,12 +141,35 @@ public class PyCallExpressionHelper {
 
     return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement, context)
       // while clarifying resolve results we could get duplicate callable types so we have to group them and select result with highest rate
-      .collect(Collectors.groupingBy(markedCallee -> markedCallee.getMarkedCallee().getCallableType(), LinkedHashMap::new, Collectors.toList()))
+      .collect(
+        Collectors.groupingBy(markedCallee -> markedCallee.getMarkedCallee().getCallableType(), LinkedHashMap::new, Collectors.toList())
+      )
       .entrySet()
       .stream()
       .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate)).orElse(null))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
+  }
+
+  @Nullable
+  private static List<PyCallExpression.PyRatedMarkedCallee> getCalleesFromProviders(@Nullable PyExpression callee, @NotNull TypeEvalContext context) {
+    if (callee instanceof PyReferenceExpression) {
+      final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
+
+      final List<PyCallExpression.PyRatedMarkedCallee> callees = StreamEx
+        .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+        .map(provider -> provider.getReferenceExpressionType(referenceExpression, context))
+        .select(PyCallableType.class)
+        .map(type -> new PyCallExpression.PyMarkedCallee(type, null, null, 0, false))
+        .map(markedCallee -> new PyCallExpression.PyRatedMarkedCallee(markedCallee, RatedResolveResult.RATE_NORMAL))
+        .toList();
+
+      if (!callees.isEmpty()) {
+        return callees;
+      }
+    }
+
+    return null;
   }
 
   @NotNull
