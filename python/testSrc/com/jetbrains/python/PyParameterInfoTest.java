@@ -32,6 +32,7 @@ import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyCallExpression;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -646,6 +647,44 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         final List<String[]> highlighted = Collections.singletonList(new String[]{"...: int, "});
 
         feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+      }
+    );
+  }
+
+  // PY-22249
+  public void testInitializingCollectionsNamedTuple() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+          final List<String> texts = Collections.singletonList("bar, baz");
+          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+
+          feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+        }
+      }
+    );
+  }
+
+  public void testInitializingTypingNamedTuple() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(5);
+
+        for (int offset : StreamEx.of(1, 2, 3, 4).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
+          final List<String> texts = Collections.singletonList("bar, baz");
+          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+
+          feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+        }
+
+        final List<String> texts = Collections.singletonList("bar, baz, foo");
+        final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+
+        feignCtrlP(test.get("<arg5>").getTextOffset()).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
       }
     );
   }
