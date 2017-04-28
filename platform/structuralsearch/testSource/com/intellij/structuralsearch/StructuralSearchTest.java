@@ -714,6 +714,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "class B { { a = 10; } }\n" +
                         "class C { { a = 10; } }";
     assertEquals("static block search", 1, findMatchesCount(s141, "class '_ { static { a = 10; } } "));
+
+    final String in = "class D<T> {}\n" +
+                      "class T {}";
+    assertEquals("search for class should not find type parameters", 1, findMatchesCount(in, "class T {}"));
   }
 
   public void testParameterlessConstructorSearch() {
