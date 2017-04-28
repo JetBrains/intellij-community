@@ -40,6 +40,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -68,6 +69,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
@@ -76,7 +78,8 @@ import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
  * @author Vladislav.Soroka
  * @since 1/30/2017
  */
-public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificationListenerAdapter {
+public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotificationListenerAdapter
+  implements ExternalSystemProjectsWatcher {
   private static final Key<Long> CRC_WITHOUT_SPACES_CURRENT =
     Key.create("ExternalSystemProjectsWatcher.CRC_WITHOUT_SPACES_CURRENT");
   private static final Key<Long> CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT =
@@ -93,7 +96,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
   private final MultiMap<VirtualFilePointer, String /* project path */> myFilesPointers = MultiMap.createConcurrentSet();
   private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<>();
 
-  public ExternalSystemProjectsWatcher(Project project) {
+  public ExternalSystemProjectsWatcherImpl(Project project) {
     myProject = project;
     myChangedDocumentsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Document changes queue",
                                                      DOCUMENT_SAVE_DELAY, false, ANY_COMPONENT, myProject);
@@ -114,8 +117,23 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
     myNotificationMap = ContainerUtil.newConcurrentMap();
   }
 
+  @Override
+  public void markDirtyAllExternalProjects() {
+    findLinkedProjectsSettings().forEach(pair -> scheduleUpdate(pair));
+  }
+
+  @Override
+  public void markDirty(Module module) {
+    scheduleUpdate(ExternalSystemApiUtil.getExternalProjectPath(module));
+  }
+
+  @Override
+  public void markDirty(String projectPath) {
+    scheduleUpdate(projectPath);
+  }
+
   public synchronized void start() {
-    if(ExternalSystemUtil.isNoBackgroundMode()) {
+    if (ExternalSystemUtil.isNoBackgroundMode()) {
       return;
     }
     myUpdatesQueue.activate();
@@ -137,7 +155,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
         synchronized (myChangedDocuments) {
           myChangedDocuments.add(doc);
         }
-        myChangedDocumentsQueue.queue(new Update(ExternalSystemProjectsWatcher.this) {
+        myChangedDocumentsQueue.queue(new Update(ExternalSystemProjectsWatcherImpl.this) {
           @Override
           public void run() {
             final Document[] copy;
@@ -203,8 +221,12 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
   private void scheduleUpdate(String projectPath) {
     Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject = findLinkedProjectSettings(projectPath);
     if (linkedProject == null) return;
+    scheduleUpdate(linkedProject);
+  }
 
+  private void scheduleUpdate(@NotNull Pair<ExternalSystemManager, ExternalProjectSettings> linkedProject) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = linkedProject.first;
+    String projectPath = linkedProject.second.getExternalProjectPath();
     ProjectSystemId systemId = manager.getSystemId();
     boolean useAutoImport = linkedProject.second.isUseAutoImport();
 
@@ -244,13 +266,14 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
           timeStamp += file.lastModified();
         }
         Map<String, Long> modificationStamps = manager.getLocalSettingsProvider().fun(myProject).getExternalConfigModificationStamps();
-        if(isProjectOpen && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
+        if (isProjectOpen && myProject.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) != Boolean.TRUE) {
           Long affectedFilesTimestamp = modificationStamps.get(settings.getExternalProjectPath());
           affectedFilesTimestamp = affectedFilesTimestamp == null ? -1L : affectedFilesTimestamp;
-          if(timeStamp != affectedFilesTimestamp.longValue()) {
+          if (timeStamp != affectedFilesTimestamp.longValue()) {
             scheduleUpdate(settings.getExternalProjectPath());
           }
-        } else {
+        }
+        else {
           modificationStamps.put(settings.getExternalProjectPath(), timeStamp);
         }
 
@@ -270,7 +293,7 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
             final VirtualFile virtualFile = pointer.getFile();
             if (virtualFile != null) {
               Long crc = virtualFile.getUserData(CRC_WITHOUT_SPACES_BEFORE_LAST_IMPORT);
-              if(crc != null) {
+              if (crc != null) {
                 modificationStamps.put(path, crc);
               }
             }
@@ -444,12 +467,12 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
   }
 
   private class MyFileChangeListener extends FileChangeListenerBase {
-    private final ExternalSystemProjectsWatcher myWatcher;
+    private final ExternalSystemProjectsWatcherImpl myWatcher;
     private MultiMap<String/* file path */, String /* project path */> myKnownFiles = MultiMap.createSet();
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
 
-    public MyFileChangeListener(ExternalSystemProjectsWatcher watcher) {
+    public MyFileChangeListener(ExternalSystemProjectsWatcherImpl watcher) {
       myWatcher = watcher;
     }
 
@@ -595,6 +618,15 @@ public class ExternalSystemProjectsWatcher extends ExternalSystemTaskNotificatio
     if (!systemManager.isPresent()) return null;
     ExternalSystemManager<?, ?, ?, ?, ?> manager = systemManager.get();
     return Pair.create(manager, linkedProjectSettings[0]);
+  }
+
+  @NotNull
+  private List<Pair<ExternalSystemManager, ExternalProjectSettings>> findLinkedProjectsSettings() {
+    return ExternalSystemApiUtil.getAllManagers().stream()
+      .flatMap(
+        manager -> manager.getSettingsProvider().fun(myProject).getLinkedProjectsSettings().stream()
+          .map(settings -> Pair.create((ExternalSystemManager)manager, (ExternalProjectSettings)settings)))
+      .collect(Collectors.toList());
   }
 
   @Nullable

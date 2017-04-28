@@ -27,6 +27,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
+import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -70,7 +71,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   private final ExternalSystemTaskActivator myTaskActivator;
   private final ExternalSystemShortcutsManager myShortcutsManager;
   private final List<ExternalProjectsView> myProjectsViews = new SmartList<>();
-  private ExternalSystemProjectsWatcher myWatcher;
+  private ExternalSystemProjectsWatcherImpl myWatcher;
 
   public ExternalProjectsManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -99,6 +100,11 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     return myTaskActivator;
   }
 
+  @Override
+  public ExternalSystemProjectsWatcher getExternalProjectsWatcher() {
+    return myWatcher;
+  }
+
   public void registerView(@NotNull ExternalProjectsView externalProjectsView) {
     assert getExternalProjectsView(externalProjectsView.getSystemId()) == null;
 
@@ -122,7 +128,7 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public void init() {
     if (isInitializationStarted.getAndSet(true)) return;
 
-    myWatcher = new ExternalSystemProjectsWatcher(myProject);
+    myWatcher = new ExternalSystemProjectsWatcherImpl(myProject);
     myWatcher.start();
 
     // load external projects data
