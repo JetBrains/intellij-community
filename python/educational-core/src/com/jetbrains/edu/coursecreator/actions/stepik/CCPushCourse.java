@@ -67,7 +67,7 @@ public class CCPushCourse extends DumbAwareAction {
               if (lessonId != -1) {
                 final List<Integer> sections = ((RemoteCourse)course).getSections();
                 final Integer sectionId = sections.get(sections.size() - 1);
-                CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
+                CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId, project);
               }
             }
             indicator.setFraction((double)lesson.getIndex()/course.getLessons().size());

@@ -83,7 +83,7 @@ public class CCPushLesson extends DumbAwareAction {
           final int lessonId = CCStepicConnector.postLesson(project, lesson);
           final List<Integer> sections = ((RemoteCourse)course).getSections();
           final Integer sectionId = sections.get(sections.size()-1);
-          CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
+          CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId, project);
         }
       }});
   }
