@@ -18,7 +18,6 @@ package com.intellij.sorting
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.util.Pair
 import com.jetbrains.completion.ranker.CompletionRanker
 import com.jetbrains.completion.ranker.features.CompletionState
 import com.jetbrains.completion.ranker.features.FeatureReader.binaryFactors
@@ -36,7 +35,7 @@ interface Ranker {
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
      */
-    fun rank(state: CompletionState, lookupRelevance: List<Pair<String, Any>>): Double?
+    fun rank(state: CompletionState, lookupRelevance: MutableMap<String, Any>): Double?
 
     companion object {
         fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
@@ -76,40 +75,14 @@ class MLRanker(val provider: FeatureTransformerProvider): Ranker {
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
     
-    override fun rank(state: CompletionState, lookupRelevance: List<Pair<String, Any>>): Double? {
-        val map = featuresMap(lookupRelevance)
-        val featureArray = featureTransformer.featureArray(state, map)
+    override fun rank(state: CompletionState, lookupRelevance: MutableMap<String, Any>): Double? {
+        val featureArray = featureTransformer.featureArray(state, lookupRelevance)
         if (featureArray != null) {
             return ranker.rank(featureArray)
         }
         return null
     }
     
-}
-
-fun featuresMap(lookupRelevance: List<Pair<String, Any>>): Map<String, Any> {
-    val map = HashMap<String, Any>()
-    lookupRelevance.forEach {
-        if (it.first == "proximity") {
-            val proximityValue = it.second?.toString() ?: return@forEach
-            map.putAll(proximityValue.toProximityMap())
-        } else {
-            map.put(it.first, it.second)
-        }
-    }
-    return map
-}
-
-/**
- * Proximity features now came like [samePsiFile=true, openedInEditor=false], need to convert to proper map
- */
-fun String.toProximityMap(): Map<String, Any> {
-    val items = replace("[", "").replace("]", "").split(",")
-
-    return items.map { 
-        val (key, value) = it.trim().split("=")
-        "prox_$key" to value
-    }.toMap()
 }
 
 fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.enabled", true)

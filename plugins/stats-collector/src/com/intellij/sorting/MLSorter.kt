@@ -99,8 +99,10 @@ class MLSorter : CompletionFinalSorter() {
         val elementLength = element.lookupString.length
 
         val state = CompletionState(position, query_length = prefixLength, result_length = elementLength)
-        
-        val mlRank = ranker.rank(state, relevance) ?: return null
+
+        //TODO remove toMutableMap
+        val mutableRelevanceMap = relevance.associate { it.first to it.second }.toMutableMap()
+        val mlRank = ranker.rank(state, mutableRelevanceMap) ?: return null
 
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
