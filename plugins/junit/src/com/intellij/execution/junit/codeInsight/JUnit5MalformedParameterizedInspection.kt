@@ -205,12 +205,12 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
           return collectionItemType
         }
 
-        val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 1, false)
+        val streamItemType = PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_STREAM_STREAM, 0, false)
         if (streamItemType != null) {
           return streamItemType
         }
 
-        return PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_ITERATOR, 1, false)
+        return PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_ITERATOR, 0, false)
       }
     }
   }

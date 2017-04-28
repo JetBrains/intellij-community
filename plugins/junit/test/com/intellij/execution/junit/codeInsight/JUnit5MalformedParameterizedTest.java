@@ -46,9 +46,12 @@ public class JUnit5MalformedParameterizedTest extends LightInspectionTestCase {
                         "long[] longs() default {};\n" +
                         "double[] doubles() default {};\n" +
                         "}\n");
+    addEnvironmentClass("package org.junit.jupiter.params.provider;\n" +
+                        "public interface Arguments {}\n");
   }
 
   public void testMalformedSources() { doTest(); }
+  public void testMalformedSourcesArguments() { doTest(); }
   public void testMalformedSourcesImplicitConversion() { doTest(); }
 
   @Override
