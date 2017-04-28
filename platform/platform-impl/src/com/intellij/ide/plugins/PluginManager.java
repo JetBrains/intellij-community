@@ -119,6 +119,7 @@ public class PluginManager extends PluginManagerCore {
           getLogger().error(t);
         }
         catch (Throwable ignore) { }
+        if (t instanceof StackOverflowError) return; // workaround for startup's SOE parsing PAC file (JRE-247)
       }
 
       final ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
