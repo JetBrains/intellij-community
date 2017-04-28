@@ -49,7 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.attribute
-import com.intellij.util.containers.computeOrNull
+import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
@@ -285,7 +285,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       }
     }
 
-    return ProjectNameProvider.EP_NAME.extensions.computeOrNull {
+    return ProjectNameProvider.EP_NAME.extensions.computeIfAny {
       LOG.catchAndLog { it.getName(project) }
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
