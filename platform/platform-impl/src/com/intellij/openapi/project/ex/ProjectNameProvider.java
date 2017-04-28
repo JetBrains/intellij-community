@@ -24,5 +24,5 @@ public interface ProjectNameProvider {
   ExtensionPointName<ProjectNameProvider> EP_NAME = ExtensionPointName.create("com.intellij.projectNameProvider");
 
   @Nullable
-  String getName(@NotNull Project project);
+  String getDefaultName(@NotNull Project project);
 }
