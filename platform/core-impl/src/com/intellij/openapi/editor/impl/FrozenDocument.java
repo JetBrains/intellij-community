@@ -251,12 +251,6 @@ public class FrozenDocument implements DocumentEx {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  @Override
-  public RangeMarker createRangeMarker(@NotNull TextRange textRange) {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public int getLineSeparatorLength(int line) {
     return getLineSet().getSeparatorLength(line);

@@ -108,6 +108,11 @@ public class MockDocument extends BaseDocumentAdapter implements DocumentEx {
   }
 
   @Override
+  public boolean isWritable() {
+    return false;
+  }
+
+  @Override
   public long getModificationStamp() {
     return myModStamp;
   }
@@ -131,12 +136,6 @@ public class MockDocument extends BaseDocumentAdapter implements DocumentEx {
   @Override
   public RangeMarker getOffsetGuard(int offset) {
     return null;
-  }
-
-  @Override
-  @NotNull
-  public RangeMarker createRangeMarker(@NotNull final TextRange textRange) {
-    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
   }
 
   @Override

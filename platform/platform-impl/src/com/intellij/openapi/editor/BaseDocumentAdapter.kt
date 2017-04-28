@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.editor
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 
 abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
-  override fun getLineSeparatorLength(line: Int) = 0
-
   override fun getModificationStamp() = 0L
 
   override fun insertString(offset: Int, s: CharSequence) {
@@ -39,8 +36,6 @@ abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
     throw UnsupportedOperationException("Not implemented")
   }
 
-  override fun isWritable() = false
-  
   override fun createRangeMarker(startOffset: Int, endOffset: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
 
   override fun createRangeMarker(startOffset: Int, endOffset: Int, surviveOnExternalChange: Boolean): RangeMarker {
@@ -56,6 +51,4 @@ abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
   override fun getOffsetGuard(offset: Int): RangeMarker? = null
 
   override fun getRangeGuard(start: Int, end: Int): RangeMarker? = null
-  
-  override fun createRangeMarker(textRange: TextRange): RangeMarker = throw UnsupportedOperationException("Not implemented")
 }

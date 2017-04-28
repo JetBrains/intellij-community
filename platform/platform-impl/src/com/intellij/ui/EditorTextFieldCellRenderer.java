@@ -436,5 +436,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     public int getLineEndOffset(int line) { return myChars.length == 0 ? 0 : myLineSet.getLineEnd(line); }
+
+    @Override
+    public boolean isWritable() {
+      return false;
+    }
   }
 }

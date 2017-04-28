@@ -339,8 +339,12 @@ public interface Document extends UserDataHolder {
   void setText(@NotNull final CharSequence text);
 
   @NotNull
-  RangeMarker createRangeMarker(@NotNull TextRange textRange);
+  default RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  }
 
   @Contract(pure=true)
-  int getLineSeparatorLength(int line);
+  default int getLineSeparatorLength(int line) {
+    return 0;
+  }
 }
