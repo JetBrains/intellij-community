@@ -286,7 +286,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
 
     return ProjectNameProvider.EP_NAME.extensions.computeIfAny {
-      LOG.catchAndLog { it.getName(project) }
+      LOG.catchAndLog { it.getDefaultName(project) }
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
 
