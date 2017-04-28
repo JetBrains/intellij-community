@@ -50,7 +50,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     }
     final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
     final List<String> paths = configurator.getBundledCoursePaths();
-    if (paths.isEmpty()) {
+    if (!paths.isEmpty()) {
       return;
     }
     Presentation presentation = e.getPresentation();
