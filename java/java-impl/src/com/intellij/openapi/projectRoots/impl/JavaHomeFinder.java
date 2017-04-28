@@ -64,8 +64,10 @@ public abstract class JavaHomeFinder {
     return new DefaultFinder();
   }
 
-  protected static void scanFolder(File javasFolder, List<String> result) {
-    @SuppressWarnings("RedundantCast") File[] candidates = javasFolder.listFiles((FileFilter)JdkUtil::checkForJdk);
+  protected static void scanFolder(File folder, List<String> result) {
+    if (JdkUtil.checkForJdk(folder))
+      result.add(folder.getAbsolutePath());
+    @SuppressWarnings("RedundantCast") File[] candidates = folder.listFiles((FileFilter)JdkUtil::checkForJdk);
     if (candidates != null) {
       for (File file : candidates) {
         result.add(file.getAbsolutePath());
