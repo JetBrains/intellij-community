@@ -44,13 +44,19 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
     this.consumer = consumer;
   }
 
+  /**
+   * @see KeymapPanel#reset()
+   */
   void reset() {
     selectKeymap(manager.reset(), true);
   }
 
+  /**
+   * @see KeymapPanel#apply()
+   */
   String apply() {
     HashSet<String> set = new HashSet<>();
-    for (KeymapScheme scheme : manager.getAll(false)) {
+    for (KeymapScheme scheme : manager.getSchemes(false)) {
       String name = scheme.getName();
       if (isEmptyOrSpaces(name)) {
         return message("configuration.all.keymaps.should.have.non.empty.names.error.message");
@@ -64,12 +70,15 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
     return null;
   }
 
+  /**
+   * @see KeymapPanel#isModified()
+   */
   boolean isModified() {
     return manager.isModified(getSelectedScheme());
   }
 
   void visitMutableKeymaps(Consumer<Keymap> consumer) {
-    for (KeymapScheme scheme : manager.getAll(false)) {
+    for (KeymapScheme scheme : manager.getSchemes(false)) {
       if (scheme.isMutable()) {
         consumer.accept(scheme.getMutable());
       }
@@ -238,7 +247,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
   private void selectKeymap(KeymapScheme scheme, boolean reset) {
     try {
       internal = true;
-      if (reset) resetSchemes(manager.getAll(true));
+      if (reset) resetSchemes(manager.getSchemes(true));
       if (scheme != null) selectScheme(scheme);
     }
     finally {

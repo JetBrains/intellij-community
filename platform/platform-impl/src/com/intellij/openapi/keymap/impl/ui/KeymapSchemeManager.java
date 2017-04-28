@@ -33,12 +33,18 @@ import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 import static java.util.stream.Collectors.toList;
 
 /**
+ * This class operates with the KeymapManager.
+ *
  * @author Sergey.Malenkov
  */
 final class KeymapSchemeManager {
   private static final Condition<Keymap> FILTER = keymap -> !isMac || !KeymapManager.DEFAULT_IDEA_KEYMAP.equals(keymap.getName());
   private final ArrayList<KeymapScheme> list = new ArrayList<>();
 
+  /**
+   * @param predicate a predicate to test a scheme
+   * @return a first scheme that belongs to the specified predicate, or {@code null}
+   */
   KeymapScheme find(@NotNull Predicate<KeymapScheme> predicate) {
     for (KeymapScheme scheme : list) {
       if (predicate.test(scheme)) return scheme;
@@ -46,22 +52,41 @@ final class KeymapSchemeManager {
     return null;
   }
 
+  /**
+   * @param scheme a scheme to add into the list of schemes
+   * @return the same scheme to select
+   */
   KeymapScheme add(@NotNull KeymapScheme scheme) {
     list.add(scheme);
     return scheme;
   }
 
+  /**
+   * @param scheme a scheme to remove from the list of schemes
+   * @return a scheme to select
+   */
   KeymapScheme remove(@NotNull KeymapScheme scheme) {
     list.remove(scheme);
-    return getSchemeToSelect(list, scheme.getParent());
+    return getSchemeToSelect(scheme.getParent());
   }
 
+  /**
+   * Initializes a list of schemes from loaded keymaps.
+   *
+   * @return a scheme to select
+   * @see KeymapSelector#reset()
+   */
   KeymapScheme reset() {
     list.clear();
     getKeymaps().forEach(keymap -> list.add(new KeymapScheme(keymap)));
-    return getSchemeToSelect(list, null);
+    return getSchemeToSelect(null);
   }
 
+  /**
+   * @param selected a selected scheme to activate corresponding keymap
+   * @return the same scheme to select
+   * @see KeymapSelector#apply()
+   */
   KeymapScheme apply(KeymapScheme selected) {
     Keymap active = selected == null ? null : selected.getOriginal();
     List<Keymap> keymaps = list.stream().map(scheme -> scheme.apply()).collect(toList());
@@ -70,13 +95,20 @@ final class KeymapSchemeManager {
     return selected;
   }
 
+  /**
+   * @return a list of loaded keymaps
+   */
   @NotNull
   private static List<Keymap> getKeymaps() {
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     return manager.getKeymaps(FILTER);
   }
 
-  private static KeymapScheme getSchemeToSelect(@NotNull List<KeymapScheme> list, Keymap active) {
+  /**
+   * @param active a keymap or {@code null} if the current active keymap should be used
+   * @return a scheme to select according to the specified keymap
+   */
+  private KeymapScheme getSchemeToSelect(Keymap active) {
     if (active == null) active = KeymapManager.getInstance().getActiveKeymap();
     KeymapScheme found = null;
     for (KeymapScheme scheme : list) {
@@ -91,6 +123,11 @@ final class KeymapSchemeManager {
     return found;
   }
 
+  /**
+   * @param selected a selected scheme to test
+   * @return {@code true} if the current list of schemes differs from the list of loaded keymaps
+   * @see KeymapSelector#isModified()
+   */
   boolean isModified(KeymapScheme selected) {
     Keymap active = selected == null ? null : selected.getOriginal();
     if (!Objects.equals(active, KeymapManager.getInstance().getActiveKeymap())) return true;
@@ -103,7 +140,7 @@ final class KeymapSchemeManager {
     return keymaps.hasNext() || schemes.hasNext();
   }
 
-  List<KeymapScheme> getAll(boolean sorted) {
+  List<KeymapScheme> getSchemes(boolean sorted) {
     if (sorted) list.sort(COMPARATOR);
     return list;
   }
