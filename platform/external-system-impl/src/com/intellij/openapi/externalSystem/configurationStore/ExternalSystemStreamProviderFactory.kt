@@ -43,7 +43,7 @@ private val LOG = logger<ExternalSystemStreamProviderFactory>()
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
   val nameToData = createStorage(project)
-  private var isStorageFlushed = true
+  private var isStorageFlushInProgress = false
 
   init {
     Disposer.register(project, Disposable { nameToData.close() })
@@ -52,14 +52,14 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     ApplicationManager.getApplication().messageBus
       .connect(project)
       .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
-        if (it === project && !isStorageFlushed && nameToData.isDirty) {
-          isStorageFlushed = false
+        if (it === project && !isStorageFlushInProgress && nameToData.isDirty) {
+          isStorageFlushInProgress = true
           ApplicationManager.getApplication().executeOnPooledThread {
             try {
               LOG.catchAndLog { nameToData.force() }
             }
             finally {
-              isStorageFlushed = true
+              isStorageFlushInProgress = false
             }
           }
         }
