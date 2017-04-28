@@ -164,7 +164,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
     }
     TemplateSettings templateSettings = TemplateSettings.getInstance();
     templateSettings.setTemplates(mutatorHelper.apply(templateGroups, (original, copied) -> {
-      if (!original.getElements().equals(copied.getElements())) {
+      if (!original.isModified() && !original.getElements().equals(copied.getElements())) {
         original.setModified(true);
       }
     }));
