@@ -213,7 +213,8 @@ public class CCStepicConnector {
     final int lessonId = lesson.getId();
 
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + "/step-sources/" + String.valueOf(task.getStepId()));
-    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
+    final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
+      registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();
     ApplicationManager.getApplication().invokeLater(() -> {
       task.addTestsTexts("tests.py", task.getTestsText(project));
       final String requestBody = gson.toJson(new StepicWrappers.StepSourceWrapper(project, task, lessonId));
