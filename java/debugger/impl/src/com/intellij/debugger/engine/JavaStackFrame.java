@@ -41,6 +41,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -582,8 +583,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
 
         if (_elem instanceof PsiJavaCodeReferenceElement) {
-          final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
-          if (resolved instanceof PsiVariable) {
+          try {
+            final PsiElement resolved = ((PsiJavaCodeReferenceElement)_elem).resolve();
+            if (resolved instanceof PsiVariable) {
+              return false;
+            }
+          }
+          catch (IndexNotReadyException e) {
             return false;
           }
         }
