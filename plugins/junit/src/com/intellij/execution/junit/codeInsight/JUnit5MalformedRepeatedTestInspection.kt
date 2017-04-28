@@ -22,12 +22,10 @@ import com.intellij.execution.junit.JUnitUtil
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.JavaElementVisitor
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import com.siyeh.ig.psiutils.ExpressionUtils
 import org.jetbrains.annotations.Nls
 
 class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool() {
@@ -54,6 +52,13 @@ class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool()
           if (testAnno != null) {
             holder.registerProblem(testAnno, "Suspicious combination @Test and @RepeatedTest",
                                    DeleteElementFix(testAnno))
+          }
+          val repeatedNumber = repeatedAnno.findDeclaredAttributeValue("value")
+          if (repeatedNumber is PsiExpression) {
+            val constant = ExpressionUtils.computeConstantExpression(repeatedNumber)
+            if (constant is Int && constant <= 0) {
+              holder.registerProblem(repeatedNumber, "The number of repetitions must be greater than zero")
+            }
           }
         }
         else {
