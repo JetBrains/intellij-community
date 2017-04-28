@@ -333,7 +333,7 @@ public class JavaCompletionUtil {
         final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
         memberProcessor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
           if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
-            set.add(memberProcessor.createLookupElement(member, psiClass, true));
+            ContainerUtil.addIfNotNull(set, memberProcessor.createLookupElement(member, psiClass, true));
           }
         });
       }
