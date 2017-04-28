@@ -154,8 +154,9 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   @Nullable
   private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression,
                                                                      CompletionParameters parameters) {
-    if (!(assignmentExpression instanceof PsiReferenceExpression)) return null;
-    PsiElement resolved = ((PsiReferenceExpression)assignmentExpression).resolve();
+    PsiExpression lExpr = assignmentExpression.getLExpression();
+    if (!(lExpr instanceof PsiReferenceExpression)) return null;
+    PsiElement resolved = ((PsiReferenceExpression)lExpr).resolve();
     return resolved instanceof PsiVariable
            ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression, suggestIterators(parameters))
            : null;
