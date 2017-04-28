@@ -49,7 +49,11 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -100,28 +104,35 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
   @NotNull
   @Override
   public PsiElement getClsFileNavigationElement(PsiJavaFile clsFile) {
+    Function<VirtualFile, VirtualFile> finder = null;
+
     PsiClass[] classes = clsFile.getClasses();
-    if (classes.length == 0) return clsFile;
-
-    String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
-    String packageName = clsFile.getPackageName();
-    String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
-
-    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    for (OrderEntry orderEntry : index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile())) {
-      if (!(orderEntry instanceof LibraryOrSdkOrderEntry) || !orderEntry.isValid()) continue;
-      for (VirtualFile root : orderEntry.getFiles(OrderRootType.SOURCES)) {
-        VirtualFile source = root.findFileByRelativePath(relativePath);
-        if (source != null && source.isValid()) {
-          PsiFile psiSource = clsFile.getManager().findFile(source);
-          if (psiSource instanceof PsiClassOwner) {
-            return psiSource;
-          }
-        }
+    if (classes.length > 0) {
+      String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
+      String packageName = clsFile.getPackageName();
+      String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
+      finder = root -> root.findFileByRelativePath(relativePath);
+    }
+    else {
+      PsiJavaModule module = clsFile.getModuleDeclaration();
+      if (module != null) {
+        String moduleName = module.getName();
+        finder = root -> moduleName.equals(root.getName()) ? root.findChild(PsiJavaModule.MODULE_INFO_FILE) : null;
       }
     }
 
-    return clsFile;
+    if (finder == null) return clsFile;
+
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
+    return index.getOrderEntriesForFile(clsFile.getContainingFile().getVirtualFile()).stream()
+      .filter(entry -> entry instanceof LibraryOrSdkOrderEntry && entry.isValid())
+      .flatMap(entry -> Stream.of(entry.getFiles(OrderRootType.SOURCES)))
+      .map(finder)
+      .filter(source -> source != null && source.isValid())
+      .map(clsFile.getManager()::findFile)
+      .filter(PsiClassOwner.class::isInstance)
+      .findFirst()
+      .orElse(clsFile);
   }
 
   @NotNull
