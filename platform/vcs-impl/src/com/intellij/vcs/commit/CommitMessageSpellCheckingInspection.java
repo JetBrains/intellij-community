@@ -22,13 +22,14 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.psi.PsiElementVisitor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.AtomicNullableLazyValue.createValue;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.find;
 
@@ -36,10 +37,7 @@ public class CommitMessageSpellCheckingInspection extends BaseCommitMessageInspe
 
   private static final Logger LOG = Logger.getInstance(CommitMessageSpellCheckingInspection.class);
 
-  private static final LocalInspectionTool ourSpellCheckingInspection = createSpellCheckingInspection();
-
-  @Nullable
-  private static LocalInspectionTool createSpellCheckingInspection() {
+  private static final AtomicNullableLazyValue<LocalInspectionTool> ourSpellCheckingInspection = createValue(() -> {
     LocalInspectionTool result = null;
     List<InspectionToolWrapper> tools = InspectionToolRegistrar.getInstance().createTools();
     InspectionToolWrapper spellCheckingWrapper = find(tools, wrapper -> wrapper.getShortName().equals("SpellCheckingInspection"));
@@ -55,15 +53,14 @@ public class CommitMessageSpellCheckingInspection extends BaseCommitMessageInspe
     }
 
     return result;
-  }
-
+  });
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return ourSpellCheckingInspection != null
-           ? ourSpellCheckingInspection.buildVisitor(holder, isOnTheFly)
-           : super.buildVisitor(holder, isOnTheFly);
+    LocalInspectionTool tool = ourSpellCheckingInspection.getValue();
+
+    return tool != null ? tool.buildVisitor(holder, isOnTheFly) : super.buildVisitor(holder, isOnTheFly);
   }
 
   @Nls

@@ -6,14 +6,17 @@ import com.jetbrains.edu.learning.StudySettings;
 import icons.PythonEducationalIcons;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
 
   public CustomizeEduStepPanel() {
+    int iconSize = 180;
     final JPanel studentPanel = new JPanel(new VerticalFlowLayout());
     final JButton student = new JButton(PythonEducationalIcons.Student);
+    student.setPreferredSize(new Dimension(iconSize, iconSize));
     student.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -25,6 +28,7 @@ public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
     add(studentPanel);
 
     final JButton teacher = new JButton(PythonEducationalIcons.Teacher);
+    teacher.setPreferredSize(new Dimension(iconSize, iconSize));
     final JPanel teacherPanel = new JPanel(new VerticalFlowLayout());
     teacherPanel.add(teacher);
     teacherPanel.add(new JLabel("Teacher", SwingConstants.CENTER));
