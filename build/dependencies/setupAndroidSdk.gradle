@@ -19,15 +19,25 @@ task setupAndroidSdk {
   }
 
   def zipFile = org.gradle.internal.os.OperatingSystem.current().familyName + ".zip"
+  def gradleFile = "gradle-3.3-bin.zip"
   def archivePath = "$project.buildDir/android-sdk/" + zipFile
+  def gradlePath = "$project.buildDir/android-sdk/" + gradleFile
   def outputDir ="$project.buildDir/android-sdk/prebuilts/studio/sdk"
+  def outputGradle ="$project.buildDir/android-sdk/tools/external/gradle"
   outputs.dir(outputDir)
+  outputs.dir(outputGradle)
   outputs.file(archivePath)
+  outputs.file(gradlePath)
 
   doFirst {
     download {
       src "http://repo.labs.intellij.net/thirdparty/android-sdk/" + zipFile
       dest archivePath
+      onlyIfNewer true
+    }
+    download {
+      src "http://repo.labs.intellij.net/thirdparty/gradle/" + gradleFile
+      dest gradlePath
       onlyIfNewer true
     }
   }
@@ -36,6 +46,10 @@ task setupAndroidSdk {
     copy {
       from zipTree(file(archivePath))
       into outputDir
+    }
+    copy {
+      from file(gradlePath)
+      into outputGradle
     }
   }
 }
