@@ -461,19 +461,31 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
   LOG.catchAndLog {
     val iterator = element.getChildren("component").iterator()
     for (component in iterator) {
-      when (component.getAttributeValue("name")) {
-        "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), "InspectionProjectProfileManager", projectConfigDir.resolve("inspectionProfiles"))
+      val componentName = component.getAttributeValue("name")
+
+      fun writeProfileSettings(schemeDir: Path) {
+        component.removeAttribute("name")
+        if (!component.isEmpty()) {
+          val wrapper = Element("component").attribute("name", componentName)
+          component.name = "settings"
+          wrapper.addContent(component)
+          JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
+        }
+      }
+
+      when (componentName) {
+        "InspectionProjectProfileManager" -> {
+          iterator.remove()
+          val schemeDir = projectConfigDir.resolve("inspectionProfiles")
+          convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir)
+          component.removeChild("version")
+          writeProfileSettings(schemeDir)
+        }
         "CopyrightManager" -> {
           iterator.remove()
           val schemeDir = projectConfigDir.resolve("copyright")
-          convertProfiles(component.getChildren("copyright").iterator(), "CopyrightManager", schemeDir)
-          component.removeAttribute("name")
-          if (!component.isEmpty()) {
-            val wrapper = Element("component").attribute("name", "CopyrightManager")
-            component.name = "settings"
-            wrapper.addContent(component)
-            JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
-          }
+          convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
+          writeProfileSettings(schemeDir)
         }
       }
     }
