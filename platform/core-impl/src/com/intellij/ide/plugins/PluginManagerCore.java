@@ -159,6 +159,12 @@ public class PluginManagerCore {
       ourDisabledPlugins = new ArrayList<>();
       if (System.getProperty("idea.ignore.disabled.plugins") == null && !isUnitTestMode()) {
         loadDisabledPlugins(PathManager.getConfigPath(), ourDisabledPlugins);
+
+        // Android Studio: we do not bundle the Maven plugin, but include it anyway when running from the IDE.
+        // Currently the Kotlin plugin fails to load due to broken dependencies if the Maven support is enabled.
+        if (ApplicationManager.getApplication().isInternal() && PlatformUtils.isAndroidStudio()) {
+          ourDisabledPlugins.add("org.jetbrains.idea.maven");
+        }
       }
     }
     return ourDisabledPlugins;
