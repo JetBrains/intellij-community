@@ -22,12 +22,14 @@ import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 import static com.intellij.openapi.util.SystemInfo.isMac;
+import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -101,7 +103,33 @@ final class KeymapSchemeManager {
     return keymaps.hasNext() || schemes.hasNext();
   }
 
-  List<KeymapScheme> getAll() {
+  List<KeymapScheme> getAll(boolean sorted) {
+    if (sorted) list.sort(COMPARATOR);
     return list;
   }
+
+  static final Comparator<KeymapScheme> COMPARATOR = (scheme1, scheme2) -> {
+    if (scheme1 == scheme2) return 0;
+    if (scheme1 == null) return -1;
+    if (scheme2 == null) return 1;
+
+    Keymap keymap1 = scheme1.getCurrent();
+    Keymap keymap2 = scheme2.getCurrent();
+
+    Keymap parent1 = scheme1.getParent();
+    Keymap parent2 = scheme2.getParent();
+
+    if (parent1 == null) parent1 = keymap1;
+    if (parent2 == null) parent2 = keymap2;
+
+    if (parent1 == parent2) {
+      if (!keymap1.canModify()) return -1;
+      if (!keymap2.canModify()) return 1;
+
+      return naturalCompare(keymap1.getPresentableName(), keymap2.getPresentableName());
+    }
+    else {
+      return naturalCompare(parent1.getPresentableName(), parent2.getPresentableName());
+    }
+  };
 }
