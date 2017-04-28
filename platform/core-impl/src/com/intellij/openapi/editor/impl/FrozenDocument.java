@@ -198,12 +198,6 @@ public class FrozenDocument implements DocumentEx {
 
   @NotNull
   @Override
-  public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
     throw new UnsupportedOperationException();
   }

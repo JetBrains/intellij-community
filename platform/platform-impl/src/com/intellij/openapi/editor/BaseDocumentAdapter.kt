@@ -36,8 +36,6 @@ abstract class BaseDocumentAdapter : UserDataHolderBase(), Document {
     throw UnsupportedOperationException("Not implemented")
   }
 
-  override fun createRangeMarker(startOffset: Int, endOffset: Int): RangeMarker = throw UnsupportedOperationException("Not implemented")
-
   override fun createRangeMarker(startOffset: Int, endOffset: Int, surviveOnExternalChange: Boolean): RangeMarker {
     throw UnsupportedOperationException("Not implemented")
   }

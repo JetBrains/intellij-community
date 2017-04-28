@@ -225,7 +225,9 @@ public interface Document extends UserDataHolder {
    * @param endOffset the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
-  @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset);
+  default @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset) {
+    return createRangeMarker(startOffset, endOffset, false);
+  }
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
