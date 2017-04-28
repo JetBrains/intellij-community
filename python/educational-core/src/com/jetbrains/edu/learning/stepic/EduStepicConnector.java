@@ -323,7 +323,6 @@ public class EduStepicConnector {
     task.setStepId(stepicId);
     task.setUpdateDate(step.update_date);
     task.setName(block.options != null ? block.options.title : (PYCHARM_PREFIX + CURRENT_VERSION));
-    task.setPosition(step.position);
 
     for (StepicWrappers.FileWrapper wrapper : block.options.test) {
       task.addTestsTexts(wrapper.name, wrapper.text);

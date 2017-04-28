@@ -50,7 +50,6 @@ public abstract class Task implements StudyItem {
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
-  @Expose @SerializedName("position") private int myPosition;
 
   public Task() {}
 
@@ -277,10 +276,7 @@ public abstract class Task implements StudyItem {
   }
 
   public int getPosition() {
-    return myPosition;
-  }
-
-  public void setPosition(int position) {
-    myPosition = position;
+    final Lesson lesson = getLesson();
+    return lesson.getTaskList().indexOf(this) + 1;
   }
 }
