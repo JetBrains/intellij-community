@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.event.EditorMouseAdapter;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
@@ -155,7 +156,13 @@ public class ValueLookupManager extends EditorMouseAdapter implements EditorMous
     if (myRequest != null && myRequest.isInsideHint(editor, point)) {
       return;
     }
-    Promise<AbstractValueHint> hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
+    Promise<AbstractValueHint> hintPromise;
+    try {
+      hintPromise = handler.createValueHintAsync(myProject, editor, point, type);
+    }
+    catch (IndexNotReadyException e) {
+      return;
+    }
     hintPromise.done(hint -> {
       if (hint == null)
         return;
