@@ -119,7 +119,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
   @Override
   public void markDirtyAllExternalProjects() {
-    findLinkedProjectsSettings().forEach(pair -> scheduleUpdate(pair));
+    findLinkedProjectsSettings().forEach(this::scheduleUpdate);
   }
 
   @Override
