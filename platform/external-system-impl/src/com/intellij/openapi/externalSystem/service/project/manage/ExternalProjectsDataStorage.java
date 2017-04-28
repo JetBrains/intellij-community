@@ -91,24 +91,35 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
       if(projectInfos.isEmpty()) {
-        ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
+        markDirtyAllExternalProjects();
       }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
         if (validate(projectInfo)) {
           myExternalRootProjects.put(
             Pair.create(projectInfo.getProjectSystemId(), new File(projectInfo.getExternalProjectPath())), projectInfo);
+          if (projectInfo.getLastImportTimestamp() != projectInfo.getLastSuccessfulImportTimestamp()) {
+            markDirty(projectInfo.getExternalProjectPath());
+          }
         }
         else {
-          ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(projectInfo.getExternalProjectPath());
+          markDirty(projectInfo.getExternalProjectPath());
         }
       }
     }
     catch (IOException e) {
       LOG.debug(e);
-      ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
+      markDirtyAllExternalProjects();
     }
 
     mergeLocalSettings();
+  }
+
+  private void markDirtyAllExternalProjects() {
+    ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
+  }
+
+  private void markDirty(String projectPath) {
+    ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(projectPath);
   }
 
   private static boolean validate(InternalExternalProjectInfo externalProjectInfo) {
