@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.facet;
+package com.jetbrains.python.minor.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.module.Module;
+import com.jetbrains.python.facet.LibraryContributingFacet;
+import com.jetbrains.python.facet.PythonFacetUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
