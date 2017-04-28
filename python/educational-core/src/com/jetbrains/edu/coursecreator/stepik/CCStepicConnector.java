@@ -70,6 +70,7 @@ public class CCStepicConnector {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
+      indicator.setIndeterminate(false);
     }
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/courses");
 
@@ -114,9 +115,14 @@ public class CCStepicConnector {
       for (Lesson lesson : course.getLessons()) {
         if (indicator != null) {
           indicator.checkCanceled();
+          indicator.setText2("Publishing lesson " + lesson.getIndex());
         }
         final int lessonId = postLesson(project, lesson);
         postUnit(lessonId, position, sectionId);
+        if (indicator != null) {
+          indicator.setFraction((double)lesson.getIndex()/course.getLessons().size());
+          indicator.checkCanceled();
+        }
         position += 1;
       }
       ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(course, project, postedCourse.getId()));
@@ -130,6 +136,10 @@ public class CCStepicConnector {
   private static void postAdditionalFiles(Course course, @NotNull final Project project, int id) {
     final Lesson lesson = CCUtils.createAdditionalLesson(course, project);
     if (lesson != null) {
+      final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null) {
+        indicator.setText2("Publishing additional files");
+      }
       final int sectionId = postModule(id, 2, EduNames.PYCHARM_ADDITIONAL);
       final int lessonId = postLesson(project, lesson);
       postUnit(lessonId, 1, sectionId);
