@@ -21,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
 import com.intellij.util.textCompletion.TextCompletionProvider;
 import com.intellij.util.textCompletion.TextFieldWithCompletion;
-import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.textCompletion.ValuesCompletionProvider.ValuesCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +53,7 @@ public class PushTargetTextField extends TextFieldWithCompletion {
     return new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor() {
       @Override
       public int compare(String item1, String item2) {
-        return Integer.valueOf(ContainerUtil.indexOf(targetVariants, item1)).compareTo(ContainerUtil.indexOf(targetVariants, item2));
+        return Integer.compare(ContainerUtil.indexOf(targetVariants, item1), ContainerUtil.indexOf(targetVariants, item2));
       }
     }, targetVariants);
   }

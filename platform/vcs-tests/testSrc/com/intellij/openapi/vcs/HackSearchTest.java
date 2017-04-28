@@ -90,7 +90,7 @@ public class HackSearchTest extends TestCase {
   private static class ZComparator implements Comparator<Z> {
     @Override
     public int compare(Z o1, Z o2) {
-      return new Integer(o1.getInt()).compareTo(new Integer(o2.getInt()));
+      return Integer.compare(o1.getInt(), o2.getInt());
     }
   }
 }
