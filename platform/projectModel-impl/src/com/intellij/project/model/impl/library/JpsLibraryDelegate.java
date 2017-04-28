@@ -16,6 +16,7 @@
 package com.intellij.project.model.impl.library;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.roots.impl.libraries.JarDirectories;
@@ -34,6 +35,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -130,6 +132,12 @@ public class JpsLibraryDelegate implements LibraryEx {
   @Override
   public RootProvider getRootProvider() {
     return myRootProvider;
+  }
+
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return null;
   }
 
   @Override

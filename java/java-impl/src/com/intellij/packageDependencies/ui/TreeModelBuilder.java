@@ -18,9 +18,9 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -141,13 +141,11 @@ public class TreeModelBuilder {
   private void countFiles(Project project) {
     final Integer fileCount = project.getUserData(FILE_COUNT);
     if (fileCount == null) {
-      myFileIndex.iterateContent(new ContentIterator() {
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory()) {
-            counting();
-          }
-          return true;
+      myFileIndex.iterateContent(fileOrDir -> {
+        if (!fileOrDir.isDirectory()) {
+          counting();
         }
+        return true;
       });
 
       for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {

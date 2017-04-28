@@ -111,12 +111,7 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
   }
 
   private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {
-    return resolvesToFunction(elementAt, new Function<PyFunction, Boolean>() {
-      @Override
-      public Boolean apply(PyFunction input) {
-        return !isReturnTypeDefined(input);
-      }
-    });
+    return resolvesToFunction(elementAt, input -> !isReturnTypeDefined(input));
   }
 
   static boolean resolvesToFunction(@NotNull PsiElement elementAt, Function<PyFunction, Boolean> isAvailableForFunction) {

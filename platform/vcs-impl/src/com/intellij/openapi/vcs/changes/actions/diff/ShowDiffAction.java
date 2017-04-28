@@ -77,37 +77,35 @@ public class ShowDiffAction extends AnAction implements DumbAware {
 
     // this trick is essential since we are under some conditions to refresh changes;
     // but we can only rely on callback after refresh
-    final Runnable performer = new Runnable() {
-      public void run() {
-        Change[] convertedChanges;
-        if (needsConversion) {
-          convertedChanges = loadFakeRevisions(project, changes);
-        }
-        else {
-          convertedChanges = changes;
-        }
-
-        if (convertedChanges == null || convertedChanges.length == 0) {
-          return;
-        }
-
-        Change selectedChane = null;
-        List<Change> result = null;
-
-        if (convertedChanges.length == 1) {
-          selectedChane = convertedChanges[0];
-          ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
-          if (changeList != null) {
-            result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
-          }
-        }
-        if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
-
-        //ContainerUtil.sort(result, ChangesComparator.getInstance(false));
-        int index = selectedChane == null ? 0 : Math.max(0, ContainerUtil.indexOfIdentity(result, selectedChane));
-
-        showDiffForChange(project, result, index);
+    final Runnable performer = () -> {
+      Change[] convertedChanges;
+      if (needsConversion) {
+        convertedChanges = loadFakeRevisions(project, changes);
       }
+      else {
+        convertedChanges = changes;
+      }
+
+      if (convertedChanges == null || convertedChanges.length == 0) {
+        return;
+      }
+
+      Change selectedChane = null;
+      List<Change> result = null;
+
+      if (convertedChanges.length == 1) {
+        selectedChane = convertedChanges[0];
+        ChangeList changeList = ((ChangeListManagerImpl)ChangeListManager.getInstance(project)).getIdentityChangeList(selectedChane);
+        if (changeList != null) {
+          result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
+        }
+      }
+      if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
+
+      //ContainerUtil.sort(result, ChangesComparator.getInstance(false));
+      int index = selectedChane == null ? 0 : Math.max(0, ContainerUtil.indexOfIdentity(result, selectedChane));
+
+      showDiffForChange(project, result, index);
     };
 
     if (needsConversion) {

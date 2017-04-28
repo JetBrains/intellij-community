@@ -357,6 +357,7 @@ public class JavaDebugProcess extends XDebugProcess {
       }
 
       private void registerMemoryViewPanel(@NotNull RunnerLayoutUi ui) {
+        if (!MemoryViewManager.getInstance().isEnabled()) return;
         final XDebugSession session = getSession();
         final DebugProcessImpl process = myJavaSession.getProcess();
         final InstancesTracker tracker = InstancesTracker.getInstance(myJavaSession.getProject());

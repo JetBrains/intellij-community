@@ -119,7 +119,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       int column = columnAtPoint(point);
       int row = rowAtPoint(point);
 
-      resetEnabledRollOver();
+      UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
 
       switch (column) {
         case SEVERITIES_COLUMN:
@@ -159,7 +159,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
 
     addMouseListener(new MouseAdapter() {
       @Override public void mouseExited(MouseEvent e) {
-        resetEnabledRollOver();
+        UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
       }
     });
 
@@ -204,25 +204,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText("No enabled inspections available");
-  }
-
-  private void resetEnabledRollOver() {
-    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
-
-    JComponent rc = (JComponent)getColumnModel().getColumn(IS_ENABLED_COLUMN).getCellRenderer();
-    AbstractTableModel tm = (AbstractTableModel)getModel();
-    int lastRow = -1;
-
-    //noinspection EmptyCatchBlock
-    try {
-      lastRow = Integer.valueOf(String.valueOf(rc.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow")));
-    } catch (NumberFormatException nfe) {}
-
-    rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", null);
-
-    if (lastRow > 0) {
-      tm.fireTableCellUpdated(lastRow, IS_ENABLED_COLUMN);
-    }
   }
 
   @Override

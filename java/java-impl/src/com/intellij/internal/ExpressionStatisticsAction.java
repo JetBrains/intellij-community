@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,14 +95,11 @@ public class ExpressionStatisticsAction extends AnAction {
   @NotNull
   private static List<VirtualFile> collectJavaFiles(VirtualFile dir, Project project) {
     final List<VirtualFile> javaFiles = ContainerUtil.newArrayList();
-    ProjectFileIndex.SERVICE.getInstance(project).iterateContentUnderDirectory(dir, new ContentIterator() {
-      @Override
-      public boolean processFile(VirtualFile file) {
-        if (file.getName().endsWith(".java")) {
-          javaFiles.add(file);
-        }
-        return true;
+    ProjectFileIndex.SERVICE.getInstance(project).iterateContentUnderDirectory(dir, file -> {
+      if (file.getName().endsWith(".java")) {
+        javaFiles.add(file);
       }
+      return true;
     });
     return javaFiles;
   }

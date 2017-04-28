@@ -109,63 +109,61 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   public int editCommits(final String path) {
     ensureOpen();
     final Ref<Boolean> isSuccess = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      public void run() {
-        try {
-          myEditorCancelled = false;
-          myNoopSituation = false;
-          if (myRebaseEditorShown) {
-            GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      try {
+        myEditorCancelled = false;
+        myNoopSituation = false;
+        if (myRebaseEditorShown) {
+          GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
+          DialogManager.show(editor);
+          if (editor.isOK()) {
+            editor.save();
+          }
+          else {
+            myEditorCancelled = true;
+          }
+          isSuccess.set(true);
+          return;
+        }
+        else {
+          setRebaseEditorShown();
+          GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
+          try {
+            List<GitRebaseEntry> entries = rebaseFile.load();
+            GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
             DialogManager.show(editor);
             if (editor.isOK()) {
-              editor.save();
+              rebaseFile.save(editor.getEntries());
+              isSuccess.set(true);
+              return;
+            }
+            else {
+              rebaseFile.cancel();
+              myEditorCancelled = true;
+            }
+          }
+          catch (GitInteractiveRebaseFile.NoopException e) {
+            LOG.info("Noop situation while rebasing " + myRoot);
+            String message = "There are no commits to rebase because the current branch is directly below the base branch, " +
+                             "or they point to the same commit (the 'noop' situation).\n" +
+                             "Do you want to continue (this will reset the current branch to the base branch)?";
+            int rebase = DialogManager.showOkCancelDialog(myProject, message, "Git Rebase", CommonBundle.getOkButtonText(),
+                                                          CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
+            if (rebase == Messages.OK) {
+              isSuccess.set(true);
+              myNoopSituation = true;
+              return;
             }
             else {
               myEditorCancelled = true;
             }
-            isSuccess.set(true);
-            return;
-          }
-          else {
-            setRebaseEditorShown();
-            GitInteractiveRebaseFile rebaseFile = new GitInteractiveRebaseFile(myProject, myRoot, path);
-            try {
-              List<GitRebaseEntry> entries = rebaseFile.load();
-              GitRebaseEditor editor = new GitRebaseEditor(myProject, myRoot, entries);
-              DialogManager.show(editor);
-              if (editor.isOK()) {
-                rebaseFile.save(editor.getEntries());
-                isSuccess.set(true);
-                return;
-              }
-              else {
-                rebaseFile.cancel();
-                myEditorCancelled = true;
-              }
-            }
-            catch (GitInteractiveRebaseFile.NoopException e) {
-              LOG.info("Noop situation while rebasing " + myRoot);
-              String message = "There are no commits to rebase because the current branch is directly below the base branch, " +
-                               "or they point to the same commit (the 'noop' situation).\n" +
-                               "Do you want to continue (this will reset the current branch to the base branch)?";
-              int rebase = DialogManager.showOkCancelDialog(myProject, message, "Git Rebase", CommonBundle.getOkButtonText(),
-                                                            CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
-              if (rebase == Messages.OK) {
-                isSuccess.set(true);
-                myNoopSituation = true;
-                return;
-              }
-              else {
-                myEditorCancelled = true;
-              }
-            }
           }
         }
-        catch (Exception e) {
-          LOG.error("Failed to edit the git rebase file: " + path, e);
-        }
-        isSuccess.set(false);
       }
+      catch (Exception e) {
+        LOG.error("Failed to edit the git rebase file: " + path, e);
+      }
+      isSuccess.set(false);
     });
     return (isSuccess.isNull() || !isSuccess.get().booleanValue()) ? GitRebaseEditorMain.ERROR_EXIT_CODE : 0;
   }

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettin
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoConstants;
@@ -276,7 +277,9 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
   @NotNull
   public static PsiFile copyFile(@NotNull PsiFile file, @NotNull StringBuilder fileContentWithoutKey) {
     final PsiFileFactory psiFileFactory = PsiFileFactory.getInstance(file.getProject());
-    PsiFile copy = psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
+    Language language = LanguageUtil.getLanguageForPsi(file.getProject(), file.getVirtualFile());
+    PsiFile copy = language != null ? psiFileFactory.createFileFromText(file.getName(), language, fileContentWithoutKey, false, true)
+                                    : psiFileFactory.createFileFromText(file.getName(), file.getFileType(), fileContentWithoutKey);
 
     if (copy instanceof PsiFileImpl) {
       ((PsiFileImpl)copy).setOriginalFile(TemplateLanguageUtil.getBaseFile(file));

@@ -21,7 +21,6 @@ import com.intellij.ide.UiActivityMonitor;
 import com.intellij.ide.favoritesTreeView.FavoritesTreeNodeDescriptor;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -72,13 +71,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       final ActionCallback callback = new ActionCallback();
       final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(ObjectUtils.tryCast(value, PsiElement.class));
       final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
-      batch(new Progressive() {
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          final Ref<Object> target = new Ref<>();
-          _select(value, virtualFile, false, Conditions.alwaysTrue(), callback, indicator, target, focusRequestor, false);
-          callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
-        }
+      batch(indicator -> {
+        final Ref<Object> target = new Ref<>();
+        _select(value, virtualFile, false, Conditions.alwaysTrue(), callback, indicator, target, focusRequestor, false);
+        callback.doWhenDone(() -> result.setDone(target.get())).doWhenRejected(() -> result.setRejected());
       });
     }
     else {
@@ -198,15 +194,12 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
-        .doWhenDone(new Consumer<AbstractTreeNode>() {
-          @Override
-          public void consume(AbstractTreeNode node) {
-            if (virtualSelectTarget == null) {
-              select(node, onDone);
-            }
-            else {
-              onDone.run();
-            }
+        .doWhenDone((Consumer<AbstractTreeNode>)node -> {
+          if (virtualSelectTarget == null) {
+            select(node, onDone);
+          }
+          else {
+            onDone.run();
           }
         }).doWhenRejected(() -> {
           if (isSecondAttempt) {
@@ -345,12 +338,9 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
       if (nonStopCondition.value(eachKid)) {
         final AsyncResult<AbstractTreeNode> result = expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget);
-        result.doWhenDone(new Consumer<AbstractTreeNode>() {
-          @Override
-          public void consume(AbstractTreeNode abstractTreeNode) {
-            indicator.checkCanceled();
-            async.setDone(abstractTreeNode);
-          }
+        result.doWhenDone((Consumer<AbstractTreeNode>)abstractTreeNode -> {
+          indicator.checkCanceled();
+          async.setDone(abstractTreeNode);
         });
 
         if (!result.isProcessed()) {

@@ -76,12 +76,7 @@ public class PatchDiffRequestFactory {
     if (file.getFileType().isBinary()) throw new DiffRequestProducerException("Can't show diff for binary file '" + name + "'");
 
     final Ref<ApplyPatchForBaseRevisionTexts> textsRef = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        textsRef.set(textsGetter.get());
-      }
-    }, indicator.getModalityState());
+    ApplicationManager.getApplication().invokeAndWait(() -> textsRef.set(textsGetter.get()), indicator.getModalityState());
     ApplyPatchForBaseRevisionTexts texts = textsRef.get();
 
     if (texts.getLocal() == null) throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");

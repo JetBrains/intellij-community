@@ -180,9 +180,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
         }
       }
     };
-    return new VcsCommittedViewAuxiliary(Collections.singletonList(copyHashAction), new Runnable() {
-      public void run() {
-      }
+    return new VcsCommittedViewAuxiliary(Collections.singletonList(copyHashAction), () -> {
     }, Collections.singletonList(copyHashAction));
   }
 
@@ -260,12 +258,8 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
                                      localRevision.getAuthor(), localRevision.getRevisionDate(), changes);
   }
 
-  private static final Comparator<HgCommittedChangeList> BRANCH_COLUMN_COMPARATOR = new Comparator<HgCommittedChangeList>() {
-    @Override
-    public int compare(HgCommittedChangeList o1, HgCommittedChangeList o2) {
-      return Comparing.compare(o1.getBranch(), o2.getBranch());
-    }
-  };
+  private static final Comparator<HgCommittedChangeList> BRANCH_COLUMN_COMPARATOR =
+    (o1, o2) -> Comparing.compare(o1.getBranch(), o2.getBranch());
 
   private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
     public String getTitle() {

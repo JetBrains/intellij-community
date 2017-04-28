@@ -161,15 +161,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
 
   public static void showIfNoProjectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-        windowManager.disposeRootFrame();
-        IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
-        if (frames.length == 0) {
-          showNow();
-        }
+    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      windowManager.disposeRootFrame();
+      IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
+      if (frames.length == 0) {
+        showNow();
       }
     }, ModalityState.NON_MODAL);
   }

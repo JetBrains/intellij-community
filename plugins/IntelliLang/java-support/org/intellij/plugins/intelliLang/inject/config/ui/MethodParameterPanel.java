@@ -19,11 +19,11 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -34,7 +34,6 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns;
 import com.intellij.ui.treeStructure.treetable.TreeColumnInfo;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
@@ -48,7 +47,6 @@ import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -119,12 +117,9 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
     });
     init(injection.copy());
-    new TreeTableSpeedSearch(myParamsTable, new Convertor<TreePath, String>() {
-      @Nullable
-      public String convert(final TreePath o) {
-        final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
-        return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
-      }
+    new TreeTableSpeedSearch(myParamsTable, o -> {
+      final Object userObject = ((DefaultMutableTreeNode)o.getLastPathComponent()).getUserObject();
+      return userObject instanceof PsiNamedElement? ((PsiNamedElement)userObject).getName() : null;
     });
     new AnAction("Toggle") {
       @Override
@@ -231,11 +226,9 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
 
   protected void apply(final MethodParameterInjection other) {
-    final boolean applyMethods = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        other.setClassName(getClassName());
-        return getClassType() != null;
-      }
+    final boolean applyMethods = ReadAction.compute(() -> {
+      other.setClassName(getClassName());
+      return getClassType() != null;
     }).booleanValue();
     if (applyMethods) {
       other.setMethodInfos(ContainerUtil.findAll(myData.values(), methodInfo -> methodInfo.isEnabled()));

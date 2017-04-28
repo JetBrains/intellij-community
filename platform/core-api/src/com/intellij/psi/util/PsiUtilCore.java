@@ -19,7 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,7 +29,6 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -587,7 +586,7 @@ public class PsiUtilCore {
   }
 
   public static Project getProjectInReadAction(@NotNull final PsiElement element) {
-    return ApplicationManager.getApplication().runReadAction((Computable<Project>)() -> element.getProject());
+    return ReadAction.compute(() -> element.getProject());
   }
 
   @Contract("null -> null;!null -> !null")

@@ -131,7 +131,7 @@ public class DiffUtil {
   //
 
   public static boolean isDiffEditor(@NotNull Editor editor) {
-    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+    return editor.getEditorKind() == EditorKind.DIFF;
   }
 
   @Nullable
@@ -207,9 +207,8 @@ public class DiffUtil {
   @NotNull
   public static EditorEx createEditor(@NotNull Document document, @Nullable Project project, boolean isViewer, boolean enableFolding) {
     EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
-
-    editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
+    EditorKind kind = EditorKind.DIFF;
+    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
 
     editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);

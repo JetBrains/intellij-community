@@ -329,6 +329,10 @@ public class SettingsImpl implements EditorSettings {
     fireEditorRefresh();
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
   public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
     if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
       mySoftWrapAppliancePlace = softWrapAppliancePlace;
@@ -336,6 +340,10 @@ public class SettingsImpl implements EditorSettings {
     }
   }
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
     return mySoftWrapAppliancePlace;
   }

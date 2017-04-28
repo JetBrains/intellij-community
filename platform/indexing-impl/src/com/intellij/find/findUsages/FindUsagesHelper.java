@@ -36,12 +36,9 @@ public class FindUsagesHelper {
                                                @NotNull Collection<String> stringToSearch,
                                                @NotNull GlobalSearchScope searchScope,
                                                @NotNull Processor<UsageInfo> processor) {
-    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new NullableComputable<TextRange>() {
-      @Override
-      public TextRange compute() {
-        if (!element.isValid() || element instanceof PsiCompiledElement) return null;
-        return element.getTextRange();
-      }
+    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction((NullableComputable<TextRange>)() -> {
+      if (!element.isValid() || element instanceof PsiCompiledElement) return null;
+      return element.getTextRange();
     });
     UsageInfoFactory factory = new UsageInfoFactory() {
       @Override

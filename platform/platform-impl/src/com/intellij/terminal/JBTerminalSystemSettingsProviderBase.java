@@ -56,15 +56,12 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     myColorScheme = createBoundColorSchemeDelegate(null);
 
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(UISettingsListener.TOPIC, new UISettingsListener() {
-      @Override
-      public void uiSettingsChanged(UISettings uiSettings) {
-        int size = consoleFontSize(JBTerminalSystemSettingsProviderBase.this.myColorScheme);
+    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
+      int size = consoleFontSize(JBTerminalSystemSettingsProviderBase.this.myColorScheme);
 
-        if (myColorScheme.getConsoleFontSize() != size) {
-          myColorScheme.setConsoleFontSize(size);
-          fireFontChanged();
-        }
+      if (myColorScheme.getConsoleFontSize() != size) {
+        myColorScheme.setConsoleFontSize(size);
+        fireFontChanged();
       }
     });
     connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {

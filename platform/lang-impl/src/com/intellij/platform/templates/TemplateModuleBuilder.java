@@ -42,7 +42,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
@@ -364,8 +363,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     final File location = new File(FileUtil.toSystemDependentName(path));
     LOG.assertTrue(location.exists());
 
-    final VirtualFile baseDir = ApplicationManager.getApplication().runWriteAction(
-      (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
+    final VirtualFile baseDir = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location));
     if (baseDir == null) {
       LOG.error("Couldn't find path '" + path + "' in VFS");
       return null;

@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -33,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.Function;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -87,14 +85,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private static class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
-    static final Comparator<MapInfo> COMPARATOR = new Comparator<MapInfo>() {
-      @Override
-      public int compare(@NotNull MapInfo o1, @NotNull MapInfo o2) {
-        if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
-          return NewMappings.MAPPINGS_COMPARATOR.compare(o1.mapping, o2.mapping);
-        }
-        return o1.type.ordinal() - o2.type.ordinal();
+    static final Comparator<MapInfo> COMPARATOR = (o1, o2) -> {
+      if (o1.type.isRegistered() && o2.type.isRegistered() || o1.type == Type.UNREGISTERED && o2.type == Type.UNREGISTERED) {
+        return NewMappings.MAPPINGS_COMPARATOR.compare(o1.mapping, o2.mapping);
       }
+      return o1.type.ordinal() - o2.type.ordinal();
     };
 
     static MapInfo unregistered(@NotNull String path, @NotNull String vcs) {
@@ -387,12 +382,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
-    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).find(), new Condition<VcsRootError>() {
-      @Override
-      public boolean value(VcsRootError error) {
-        return error.getType() == VcsRootError.Type.UNREGISTERED_ROOT;
-      }
-    });
+    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).find(),
+                                error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
 
   private boolean isMappingValid(@NotNull VcsDirectoryMapping mapping) {
@@ -486,14 +477,9 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
     mappings.removeAll(selection);
 
-    Collection<MapInfo> removedValidRoots = ContainerUtil.mapNotNull(selection, new Function<MapInfo, MapInfo>() {
-      @Override
-      public MapInfo fun(MapInfo info) {
-        return info.type == MapInfo.Type.NORMAL && myCheckers.get(info.mapping.getVcs()) != null ?
-               MapInfo.unregistered(info.mapping.getDirectory(), info.mapping.getVcs()) :
-               null;
-      }
-    });
+    Collection<MapInfo> removedValidRoots = ContainerUtil.mapNotNull(selection, info -> info.type == MapInfo.Type.NORMAL && myCheckers.get(info.mapping.getVcs()) != null ?
+                                                                                    MapInfo.unregistered(info.mapping.getDirectory(), info.mapping.getVcs()) :
+                                                                                    null);
     mappings.addAll(removedValidRoots);
     sortAndAddSeparatorIfNeeded(mappings);
 
@@ -570,12 +556,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @NotNull
   private List<MapInfo> getSelectedUnregisteredRoots() {
-    return ContainerUtil.filter(myDirectoryMappingTable.getSelection(), new Condition<MapInfo>() {
-      @Override
-      public boolean value(MapInfo info) {
-        return info.type == MapInfo.Type.UNREGISTERED;
-      }
-    });
+    return ContainerUtil.filter(myDirectoryMappingTable.getSelection(), info -> info.type == MapInfo.Type.UNREGISTERED);
   }
 
   private boolean rootsOfOneKindInSelection() {
@@ -593,12 +574,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   @NotNull
   private List<MapInfo> getSelectedRegisteredRoots() {
     Collection<MapInfo> selection = myDirectoryMappingTable.getSelection();
-    return ContainerUtil.filter(selection, new Condition<MapInfo>() {
-      @Override
-      public boolean value(MapInfo info) {
-        return info.type == MapInfo.Type.NORMAL || info.type == MapInfo.Type.INVALID;
-      }
-    });
+    return ContainerUtil.filter(selection, info -> info.type == MapInfo.Type.NORMAL || info.type == MapInfo.Type.INVALID);
   }
 
   private boolean onlyRegisteredRootsInSelection() {
@@ -664,12 +640,8 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   @NotNull
   private List<VcsDirectoryMapping> getModelMappings() {
-    return ContainerUtil.mapNotNull(myModel.getItems(), new Function<MapInfo, VcsDirectoryMapping>() {
-      @Override
-      public VcsDirectoryMapping fun(MapInfo info) {
-        return info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED ? null : info.mapping;
-      }
-    });
+    return ContainerUtil.mapNotNull(myModel.getItems(),
+                                    info -> info == MapInfo.SEPARATOR || info.type == MapInfo.Type.UNREGISTERED ? null : info.mapping);
   }
 
   public void addVcsListener(final ModuleVcsListener moduleVcsListener) {

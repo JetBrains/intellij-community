@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.roots;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.VcsRootErrorImpl;
@@ -179,12 +178,8 @@ public class VcsRootErrorsFinderTest extends VcsRootBaseTest {
     expected.addAll(unregAll(vcsRootConfiguration.getUnregErrors()));
     expected.addAll(extraAll(vcsRootConfiguration.getExtraErrors()));
     myProjectRoot.refresh(false, true);
-    Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(), new Condition<VcsRootError>() {
-      @Override
-      public boolean value(VcsRootError error) {
-        return error.getVcsKey().equals(myVcs.getKeyInstanceMethod());
-      }
-    });
+    Collection<VcsRootError> actual = ContainerUtil.filter(new VcsRootErrorsFinder(myProject).find(),
+                                                           error -> error.getVcsKey().equals(myVcs.getKeyInstanceMethod()));
     VcsTestUtil.assertEqualCollections(actual, expected);
   }
 

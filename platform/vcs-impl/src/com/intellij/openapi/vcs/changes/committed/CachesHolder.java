@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.security.MessageDigest;
@@ -81,12 +80,9 @@ public class CachesHolder {
 
   public List<ChangesCacheFile> getAllCaches() {
     final List<ChangesCacheFile> result = new ArrayList<>();
-    iterateAllCaches(new NotNullFunction<ChangesCacheFile, Boolean>() {
-      @NotNull
-      public Boolean fun(final ChangesCacheFile changesCacheFile) {
-        result.add(changesCacheFile);
-        return false;
-      }
+    iterateAllCaches(changesCacheFile -> {
+      result.add(changesCacheFile);
+      return false;
     });
     return result;
   }

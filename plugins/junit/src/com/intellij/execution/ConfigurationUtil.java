@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -61,13 +60,8 @@ public class ConfigurationUtil {
     }
 
     // classes having suite() method
-    final PsiMethod[] suiteMethods = ApplicationManager.getApplication().runReadAction(
-        new Computable<PsiMethod[]>() {
-          public PsiMethod[] compute() {
-            return PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope);
-          }
-        }
-    );
+    final PsiMethod[] suiteMethods =
+      ReadAction.compute(() -> PsiShortNamesCache.getInstance(project).getMethodsByName(JUnitUtil.SUITE_METHOD_NAME, scope));
     for (final PsiMethod method : suiteMethods) {
       ApplicationManager.getApplication().runReadAction(() -> {
         final PsiClass containingClass = method.getContainingClass();

@@ -52,7 +52,6 @@ import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
@@ -199,16 +198,13 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     TreeUtil.installActions(getTree());
 
-    new TreeSpeedSearch(getTree(), new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject != null) {
-          return FileStructurePopup.getSpeedSearchText(userObject);
-        }
-        return null;
+    new TreeSpeedSearch(getTree(), treePath -> {
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)treePath.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject != null) {
+        return FileStructurePopup.getSpeedSearchText(userObject);
       }
+      return null;
     });
 
     addTreeKeyListener();
@@ -478,16 +474,14 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   }
 
   public boolean select(final Object element, final boolean requestFocus) {
-    myAbstractTreeBuilder.getReady(this).doWhenDone(() -> expandPathToElement(element).doWhenDone(new Consumer<AbstractTreeNode>() {
-      @Override
-      public void consume(AbstractTreeNode abstractTreeNode) {
+    myAbstractTreeBuilder.getReady(this).doWhenDone(() -> expandPathToElement(element).doWhenDone(
+      (Consumer<AbstractTreeNode>)abstractTreeNode -> {
         myAbstractTreeBuilder.select(abstractTreeNode, () -> {
           if (requestFocus) {
             IdeFocusManager.getInstance(myProject).requestFocus(myAbstractTreeBuilder.getTree(), false);
           }
         });
-      }
-    }));
+      }));
     return true;
   }
 

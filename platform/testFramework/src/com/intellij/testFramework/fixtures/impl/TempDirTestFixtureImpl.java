@@ -106,7 +106,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   public VirtualFile createFile(@NotNull final String name) {
     final File file = new File(createTempDirectory(), name);
-    return ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> {
+    return WriteAction.compute(() -> {
       FileUtil.createIfDoesntExist(file);
       return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     });

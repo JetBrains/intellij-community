@@ -53,8 +53,8 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getAllFiles;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
 
@@ -158,11 +158,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
 
   @NotNull
   protected Runnable getDoubleClickHandler() {
-    return new Runnable() {
-      public void run() {
-        showDiff();
-      }
-    };
+    return () -> showDiff();
   }
 
   protected void setInitialSelection(final List<? extends ChangeList> changeLists,

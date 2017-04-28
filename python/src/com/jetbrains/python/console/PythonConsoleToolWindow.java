@@ -22,7 +22,6 @@ import com.google.common.collect.Lists;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.ToolWindow;
@@ -47,12 +46,7 @@ public class PythonConsoleToolWindow {
   public static final Key<RunContentDescriptor> CONTENT_DESCRIPTOR = Key.create("CONTENT_DESCRIPTOR");
 
   public static final Function<Content, RunContentDescriptor>
-    CONTENT_TO_DESCRIPTOR_FUNCTION = new Function<Content, RunContentDescriptor>() {
-    @Override
-    public RunContentDescriptor apply(@Nullable Content input) {
-      return input != null ? input.getUserData(CONTENT_DESCRIPTOR) : null;
-    }
-  };
+    CONTENT_TO_DESCRIPTOR_FUNCTION = input -> input != null ? input.getUserData(CONTENT_DESCRIPTOR) : null;
 
   private final Project myProject;
 

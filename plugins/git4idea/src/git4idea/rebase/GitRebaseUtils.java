@@ -19,7 +19,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -278,12 +277,7 @@ public class GitRebaseUtils {
 
   @NotNull
   public static Collection<GitRepository> getRebasingRepositories(@NotNull Project project) {
-    return ContainerUtil.filter(GitUtil.getRepositories(project), new Condition<GitRepository>() {
-      @Override
-      public boolean value(@NotNull GitRepository repository) {
-        return repository.getState() == Repository.State.REBASING;
-      }
-    });
+    return ContainerUtil.filter(GitUtil.getRepositories(project), repository -> repository.getState() == Repository.State.REBASING);
   }
 
   /**

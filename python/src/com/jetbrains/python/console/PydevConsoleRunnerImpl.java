@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.google.common.base.CharMatcher;
 import com.google.common.collect.Lists;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
@@ -286,12 +285,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
           }
           catch (final Exception e) {
             LOG.warn("Error running console", e);
-            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                showErrorsInConsole(e);
-              }
-            });
+            UIUtil.invokeAndWaitIfNeeded((Runnable)() -> showErrorsInConsole(e));
           }
         }
       }));

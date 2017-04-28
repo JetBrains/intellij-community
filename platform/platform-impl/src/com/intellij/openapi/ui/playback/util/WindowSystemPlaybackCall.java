@@ -131,17 +131,14 @@ public class WindowSystemPlaybackCall {
   public static AsyncResult<String> waitForToolWindow(final PlaybackContext context, final String id) {
     final AsyncResult<String> result = new AsyncResult<>();
 
-    findProject().doWhenDone(new Consumer<Project>() {
-      @Override
-      public void consume(Project project) {
-        ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(id);
-        if (toolWindow == null) {
-          result.setRejected("Cannot find tool window with id: " + id);
-          return;
-        }
-
-        toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> result.setRejected("Cannot activate tool window with id:" + id));
+    findProject().doWhenDone((Consumer<Project>)project -> {
+      ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(id);
+      if (toolWindow == null) {
+        result.setRejected("Cannot find tool window with id: " + id);
+        return;
       }
+
+      toolWindow.getReady(context).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(() -> result.setRejected("Cannot activate tool window with id:" + id));
     }).doWhenRejected(() -> result.setRejected("Cannot retrieve open project"));
 
     return result;
@@ -214,12 +211,8 @@ public class WindowSystemPlaybackCall {
       if (each.getComponent() instanceof AbstractButton) {
         final AbstractButton eachButton = (AbstractButton)each.getComponent();
         if (eachButton.getText() != null && eachButton.getText().startsWith(target)) {
-          activateItem(context, each).doWhenDone(new Consumer<MenuElement[]>() {
-            @Override
-            public void consume(MenuElement[] menuElements) {
-              selectNext(context, toSelect, toSelectIndex + 1, menuElements, result);
-            }
-          }).doWhenRejected(() -> {
+          activateItem(context, each).doWhenDone(
+            (Consumer<MenuElement[]>)menuElements1 -> selectNext(context, toSelect, toSelectIndex + 1, menuElements1, result)).doWhenRejected(() -> {
             result.setRejected("Cannot activate menu element: " + eachButton.getText());
             return;
           });

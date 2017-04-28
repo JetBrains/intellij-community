@@ -18,7 +18,6 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -26,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -136,12 +134,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(final TreePath treePath) {
-        return ((MyNode)treePath.getLastPathComponent()).getDisplayName();
-      }
-    }, true);
+    new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
   }
 
   @Override

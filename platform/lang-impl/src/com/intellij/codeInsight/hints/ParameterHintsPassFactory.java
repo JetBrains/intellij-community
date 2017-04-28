@@ -85,8 +85,12 @@ public class ParameterHintsPassFactory extends AbstractProjectComponent implemen
 
   public static void forceHintsUpdateOnNextPass() {
     for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      editor.putUserData(PSI_MODIFICATION_STAMP, null);
+      forceHintsUpdateOnNextPass(editor);
     }
+  }
+
+  public static void forceHintsUpdateOnNextPass(@NotNull Editor editor) {
+    editor.putUserData(PSI_MODIFICATION_STAMP, null);
   }
 
   private static class ParameterHintsPass extends EditorBoundHighlightingPass {

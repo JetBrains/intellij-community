@@ -182,12 +182,9 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
   private void doInit() {
     listenForProjectsChanges();
     if (isUnitTestMode()) return;
-    MavenUtil.runWhenInitialized(myProject, new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        initToolWindow();
-      }
+    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      if (myProject.isDisposed()) return;
+      initToolWindow();
     });
   }
 

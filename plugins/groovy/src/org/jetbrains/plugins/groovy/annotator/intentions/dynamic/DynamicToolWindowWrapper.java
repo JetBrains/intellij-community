@@ -43,7 +43,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
@@ -215,18 +214,15 @@ public class DynamicToolWindowWrapper {
 
     myTreeTable = new MyTreeTable(myTreeTableModel);
 
-    new TreeTableSpeedSearch(myTreeTable, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        final Object node = o.getLastPathComponent();
-        if (node instanceof DefaultMutableTreeNode) {
-          final Object object = ((DefaultMutableTreeNode)node).getUserObject();
-          if (object instanceof DNamedElement) {
-            return ((DNamedElement)object).getName();
-          }
+    new TreeTableSpeedSearch(myTreeTable, o -> {
+      final Object node = o.getLastPathComponent();
+      if (node instanceof DefaultMutableTreeNode) {
+        final Object object = ((DefaultMutableTreeNode)node).getUserObject();
+        if (object instanceof DNamedElement) {
+          return ((DNamedElement)object).getName();
         }
-        return "";
       }
+      return "";
     });
 
     DefaultActionGroup group = new DefaultActionGroup();

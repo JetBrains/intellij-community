@@ -89,11 +89,6 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener, Vcs
     }
 
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        myRootProblemNotifier.rescanAndNotifyIfNeeded();
-      }
-    }, WAIT_BEFORE_SCAN);
+    myAlarm.addRequest(() -> myRootProblemNotifier.rescanAndNotifyIfNeeded(), WAIT_BEFORE_SCAN);
   }
 }

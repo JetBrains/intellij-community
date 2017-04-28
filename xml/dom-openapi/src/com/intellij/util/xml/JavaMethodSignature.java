@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class JavaMethodSignature {
 
   @Nullable
   public final <T extends Annotation> Method findAnnotatedMethod(final Class<T> annotationClass, final Class startFrom) {
-    CommonProcessors.FindFirstProcessor<Method> processor = new CommonProcessors.FindFirstProcessor<Method>() {
+    CommonProcessors.FindProcessor<Method> processor = new CommonProcessors.FindProcessor<Method>() {
       @Override
       protected boolean accept(Method method) {
         final T annotation = method.getAnnotation(annotationClass);
@@ -103,7 +103,7 @@ public class JavaMethodSignature {
 
   @Nullable
   public final <T extends Annotation> T findAnnotation(final Class<T> annotationClass, final Class startFrom) {
-    CommonProcessors.FindFirstProcessor<Method> processor = new CommonProcessors.FindFirstProcessor<Method>() {
+    CommonProcessors.FindProcessor<Method> processor = new CommonProcessors.FindProcessor<Method>() {
       @Override
       protected boolean accept(Method method) {
         final T annotation = method.getAnnotation(annotationClass);

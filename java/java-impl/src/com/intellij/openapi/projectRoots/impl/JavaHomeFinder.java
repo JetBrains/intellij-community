@@ -21,6 +21,8 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -71,12 +73,22 @@ public abstract class JavaHomeFinder {
     }
   }
 
+  protected static File getJavaHome() {
+    String property = SystemProperties.getJavaHome();
+    if (property == null)
+      return null;
+
+    File javaHome = new File(property).getParentFile();//actually java.home points to to jre home
+    return javaHome == null || !javaHome.isDirectory() ? null : javaHome;
+  }
+
   protected static class DefaultFinder extends JavaHomeFinder {
 
     private final String[] myPaths;
 
     protected DefaultFinder(String... paths) {
-      myPaths = paths;
+      File javaHome = getJavaHome();
+      myPaths = javaHome == null ? paths : ArrayUtil.prepend(javaHome.getAbsolutePath(), paths);
     }
 
     @NotNull

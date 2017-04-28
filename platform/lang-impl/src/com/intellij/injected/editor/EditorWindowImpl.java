@@ -310,6 +310,12 @@ public class EditorWindowImpl extends UserDataHolderBase implements EditorWindow
     return myInlayModel;
   }
 
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return myDelegate.getEditorKind();
+  }
+
   @Override
   public void reinitSettings() {
     myDelegate.reinitSettings();

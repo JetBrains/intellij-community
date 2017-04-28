@@ -39,30 +39,24 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @BeforeMethod
   protected void setUp() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          UndeclaredTestsInspectionTest.super.setUp();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        UndeclaredTestsInspectionTest.super.setUp();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
 
   @AfterMethod
   protected void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          UndeclaredTestsInspectionTest.super.tearDown();
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        UndeclaredTestsInspectionTest.super.tearDown();
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }
@@ -79,16 +73,13 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @Test(dataProvider = "data")
   public void doTest(final String name) throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          TestNGUtil.hasDocTagsSupport = true;
-          doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        TestNGUtil.hasDocTagsSupport = true;
+        doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

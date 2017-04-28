@@ -49,7 +49,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.attribute
-import com.intellij.util.containers.computeOrNull
+import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
@@ -177,10 +177,10 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     }
   }
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.isEmpty()) {
-      return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
     }
 
     if (isDirectoryBased) {
@@ -196,14 +196,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
 
       if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
         result!!.sortWith(deprecatedComparator)
         // if we create project from default, component state written not to own storage file, but to project file,
         // we don't have time to fix it properly, so, ancient hack restored
         result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
-        return result.toTypedArray()
+        return result
       }
     }
     else {
@@ -223,14 +223,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
         }
       }
       if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
         if (hasOnlyDeprecatedStorages) {
           result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
         }
         result!!.sortWith(deprecatedComparator)
-        return result.toTypedArray()
+        return result
       }
     }
   }
@@ -285,7 +285,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       }
     }
 
-    return ProjectNameProvider.EP_NAME.extensions.computeOrNull {
+    return ProjectNameProvider.EP_NAME.extensions.computeIfAny {
       LOG.catchAndLog { it.getName(project) }
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
@@ -461,19 +461,31 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
   LOG.catchAndLog {
     val iterator = element.getChildren("component").iterator()
     for (component in iterator) {
-      when (component.getAttributeValue("name")) {
-        "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), "InspectionProjectProfileManager", projectConfigDir.resolve("inspectionProfiles"))
+      val componentName = component.getAttributeValue("name")
+
+      fun writeProfileSettings(schemeDir: Path) {
+        component.removeAttribute("name")
+        if (!component.isEmpty()) {
+          val wrapper = Element("component").attribute("name", componentName)
+          component.name = "settings"
+          wrapper.addContent(component)
+          JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
+        }
+      }
+
+      when (componentName) {
+        "InspectionProjectProfileManager" -> {
+          iterator.remove()
+          val schemeDir = projectConfigDir.resolve("inspectionProfiles")
+          convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir)
+          component.removeChild("version")
+          writeProfileSettings(schemeDir)
+        }
         "CopyrightManager" -> {
           iterator.remove()
           val schemeDir = projectConfigDir.resolve("copyright")
-          convertProfiles(component.getChildren("copyright").iterator(), "CopyrightManager", schemeDir)
-          component.removeAttribute("name")
-          if (!component.isEmpty()) {
-            val wrapper = Element("component").attribute("name", "CopyrightManager")
-            component.name = "settings"
-            wrapper.addContent(component)
-            JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
-          }
+          convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
+          writeProfileSettings(schemeDir)
         }
       }
     }

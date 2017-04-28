@@ -16,12 +16,15 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.psi.PsiClass
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
 class JavaReflectionClassNavigationTest : LightCodeInsightFixtureTestCase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor =
+    if (getTestName(false).contains("Java9")) JAVA_9 else super.getProjectDescriptor()
 
   fun testPublicClass() {
     myFixture.addClass("package foo.bar; public class PublicClass {}")
@@ -56,6 +59,11 @@ class JavaReflectionClassNavigationTest : LightCodeInsightFixtureTestCase() {
   fun testWithClassLoader() {
     myFixture.addClass("package foo.bar; public class PublicClass {}")
     doTest("foo.bar.<caret>PublicClass.PrivateInnerClass", { "Thread.currentThread().getContextClassLoader().loadClass(\"$it\")" })
+  }
+
+  fun testJava9MethodHandlesLookup() {
+    myFixture.addClass("package foo.bar; public class PublicClass {}")
+    doTest("foo.bar.PublicClass", { "java.lang.invoke.MethodHandles.lookup().findClass(\"$it\")" })
   }
 
   private fun doTest(className: String, usageFormatter: (String) -> String = { "Class.forName(\"$it\")" }) {

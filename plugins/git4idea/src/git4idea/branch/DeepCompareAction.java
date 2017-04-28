@@ -21,7 +21,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
@@ -65,12 +64,9 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
       VcsLogBranchFilter branchFilter = ui.getFilterUi().getFilters().getBranchFilter();
       String singleBranchName = branchFilter != null ? VcsLogUtil.getSingleFilteredBranch(branchFilter, ui.getDataPack().getRefs()) : null;
       if (singleBranchName == null) {
-        selectBranchAndPerformAction(ui.getDataPack(), e, new Consumer<String>() {
-          @Override
-          public void consume(String selectedBranch) {
-            ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
-            dc.highlightInBackground(selectedBranch, dataProvider);
-          }
+        selectBranchAndPerformAction(ui.getDataPack(), e, selectedBranch -> {
+          ui.getFilterUi().setFilter(VcsLogBranchFilterImpl.fromBranch(selectedBranch));
+          dc.highlightInBackground(selectedBranch, dataProvider);
         }, getAllVisibleRoots(ui));
         return;
       }
@@ -119,12 +115,7 @@ public class DeepCompareAction extends ToggleAction implements DumbAware {
 
   private static boolean hasGitRoots(@NotNull Project project, @NotNull Set<VirtualFile> roots) {
     final GitRepositoryManager manager = GitRepositoryManager.getInstance(project);
-    return ContainerUtil.exists(roots, new Condition<VirtualFile>() {
-      @Override
-      public boolean value(VirtualFile root) {
-        return manager.getRepositoryForRootQuick(root) != null;
-      }
-    });
+    return ContainerUtil.exists(roots, root -> manager.getRepositoryForRootQuick(root) != null);
   }
 
   @NotNull

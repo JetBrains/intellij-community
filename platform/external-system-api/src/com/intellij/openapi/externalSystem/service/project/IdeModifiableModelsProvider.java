@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
@@ -58,6 +59,8 @@ public interface IdeModifiableModelsProvider extends IdeModelsProvider {
   ModifiableArtifactModel getModifiableArtifactModel();
 
   Library createLibrary(String name);
+
+  Library createLibrary(String name, @Nullable ProjectModelExternalSource externalSource);
 
   void removeLibrary(Library library);
 

@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,13 +25,8 @@ import org.jetbrains.annotations.NotNull;
  */
 public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return getTestName(false).endsWith("Java9.java") ? LanguageLevel.JDK_1_9 : LanguageLevel.JDK_1_8;
-  }
-
-  @Override
   protected Sdk getProjectJDK() {
-    return getTestName(false).endsWith("Java9.java") ? IdeaTestUtil.getMockJdk9() : IdeaTestUtil.getMockJdk18();
+    return IdeaTestUtil.getMockJdk9();
   }
 
   @NotNull

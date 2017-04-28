@@ -41,7 +41,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
@@ -373,12 +376,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   private void importPlaces(final List<BaseInjection> injections) {
-    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), new Convertor<BaseInjection, String>() {
-      @Override
-      public String convert(final BaseInjection o) {
-        return o.getSupportId();
-      }
-    });
+    final Map<String, Set<BaseInjection>> map = ContainerUtil.classify(injections.iterator(), o -> o.getSupportId());
     List<BaseInjection> originalInjections = new ArrayList<>();
     List<BaseInjection> newInjections = new ArrayList<>();
     for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {

@@ -78,14 +78,11 @@ public class PlainTextUsagesTest extends PsiTestCase {
     final IntArrayList endsList = new IntArrayList();
     helper.processUsagesInNonJavaFiles(originalElement,
                                        qNameToSearch,
-                                       new PsiNonJavaFileReferenceProcessor() {
-                                         @Override
-                                         public boolean process(PsiFile file, int startOffset, int endOffset) {
-                                           filesList.add(file);
-                                           startsList.add(startOffset);
-                                           endsList.add(endOffset);
-                                           return true;
-                                         }
+                                       (file, startOffset, endOffset) -> {
+                                         filesList.add(file);
+                                         startsList.add(startOffset);
+                                         endsList.add(endOffset);
+                                         return true;
                                        },
                                        GlobalSearchScope.projectScope(myProject)
     );

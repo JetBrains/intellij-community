@@ -218,13 +218,11 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private class MyVcsListener implements VcsListener {
     public void directoryMappingChanged() {
       myVcsChangeAlarm.cancelAllRequests();
-      myVcsChangeAlarm.addRequest(new Runnable() {
-        public void run() {
-          if (myProject.isDisposed()) return;
-          updateToolWindowAvailability();
-          if (myContentManager != null) {
-            updateExtensionTabs();
-          }
+      myVcsChangeAlarm.addRequest(() -> {
+        if (myProject.isDisposed()) return;
+        updateToolWindowAvailability();
+        if (myContentManager != null) {
+          updateExtensionTabs();
         }
       }, 100, ModalityState.NON_MODAL);
     }

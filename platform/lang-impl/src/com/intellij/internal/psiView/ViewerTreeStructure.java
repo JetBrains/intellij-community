@@ -92,12 +92,7 @@ public class ViewerTreeStructure extends AbstractTreeStructure {
           }
           final PsiElement psi = root.getPsi();
           if (psi instanceof PsiLanguageInjectionHost) {
-            InjectedLanguageUtil.enumerate(psi, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-              @Override
-              public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-                list.add(new Inject(psi, injectedPsi));
-              }
-            });
+            InjectedLanguageUtil.enumerate(psi, (injectedPsi, places) -> list.add(new Inject(psi, injectedPsi)));
           }
         }
         result = ArrayUtil.toObjectArray(list);

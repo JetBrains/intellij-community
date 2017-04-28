@@ -36,12 +36,7 @@ public class HgQImportCommand {
   }
 
   public void execute(@NotNull final String startRevisionNumber) {
-    HgUtil.executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        executeInCurrentThread(startRevisionNumber);
-      }
-    }, myRepository.getProject());
+    HgUtil.executeOnPooledThread(() -> executeInCurrentThread(startRevisionNumber), myRepository.getProject());
   }
 
   public void executeInCurrentThread(@NotNull final String startRevisionNumber) {

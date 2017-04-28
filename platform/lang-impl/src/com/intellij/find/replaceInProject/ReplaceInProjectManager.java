@@ -26,15 +26,15 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -246,12 +246,7 @@ public class ReplaceInProjectManager {
       final VirtualFile virtualFile = psiFile.getVirtualFile();
 
       Runnable selectOnEditorRunnable = () -> {
-        if (virtualFile != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-          @Override
-          public Boolean compute() {
-            return virtualFile.isValid();
-          }
-        }).booleanValue()) {
+        if (virtualFile != null && ReadAction.compute(() -> virtualFile.isValid()).booleanValue()) {
 
           if (usage.isValid()) {
             usage.highlightInEditor();
@@ -260,12 +255,7 @@ public class ReplaceInProjectManager {
         }
       };
 
-      String path = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          return virtualFile != null ? virtualFile.getPath() : null;
-        }
-      });
+      String path = ReadAction.compute(() -> virtualFile != null ? virtualFile.getPath() : null);
       CommandProcessor.getInstance()
         .executeCommand(myProject, selectOnEditorRunnable, FindBundle.message("find.replace.select.on.editor.command"), null);
       String title = FindBundle.message("find.replace.found.usage.title", i + 1, usages.length, path);
@@ -412,34 +402,31 @@ public class ReplaceInProjectManager {
                               final boolean justCheck)
     throws FindManager.MalformedReplacementStringException {
     final Ref<FindManager.MalformedReplacementStringException> exceptionResult = Ref.create();
-    final boolean result = ApplicationManager.getApplication().runWriteAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (excludedSet.contains(usage)) {
+    final boolean result = WriteAction.compute(() -> {
+      if (excludedSet.contains(usage)) {
+        return false;
+      }
+
+      final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
+      if (!document.isWritable()) return false;
+
+      boolean result1 = ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
+        final int textOffset = segment.getStartOffset();
+        final int textEndOffset = segment.getEndOffset();
+        final Ref<String> stringToReplace = Ref.create();
+        try {
+          if (!getStringToReplace(textOffset, textEndOffset, document, findModel, stringToReplace)) return true;
+          if (!stringToReplace.isNull() && !justCheck) {
+            document.replaceString(textOffset, textEndOffset, stringToReplace.get());
+          }
+        }
+        catch (FindManager.MalformedReplacementStringException e) {
+          exceptionResult.set(e);
           return false;
         }
-
-        final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
-        if (!document.isWritable()) return false;
-
-        boolean result = ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
-          final int textOffset = segment.getStartOffset();
-          final int textEndOffset = segment.getEndOffset();
-          final Ref<String> stringToReplace = Ref.create();
-          try {
-            if (!getStringToReplace(textOffset, textEndOffset, document, findModel, stringToReplace)) return true;
-            if (!stringToReplace.isNull() && !justCheck) {
-              document.replaceString(textOffset, textEndOffset, stringToReplace.get());
-            }
-          }
-          catch (FindManager.MalformedReplacementStringException e) {
-            exceptionResult.set(e);
-            return false;
-          }
-          return true;
-        });
-        return result;
-      }
+        return true;
+      });
+      return result1;
     });
 
     if (!exceptionResult.isNull()) {

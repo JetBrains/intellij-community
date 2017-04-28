@@ -37,7 +37,6 @@ import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -108,16 +107,13 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-            @Override
-            public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-              if (places.size() == 1) {
-                Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
-                if (!(document instanceof DocumentWindow)) return;
-                for (TodoItem item : helper.findTodoItems(injectedPsi)) {
-                  TextRange rangeInHost = ((DocumentWindow)document).injectedToHost(item.getTextRange());
-                  todoItems.add(new TodoItemImpl(psiFile, rangeInHost.getStartOffset(), rangeInHost.getEndOffset(), item.getPattern()));
-                }
+          InjectedLanguageUtil.enumerate(element, (injectedPsi, places) -> {
+            if (places.size() == 1) {
+              Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
+              if (!(document instanceof DocumentWindow)) return;
+              for (TodoItem item : helper.findTodoItems(injectedPsi)) {
+                TextRange rangeInHost = ((DocumentWindow)document).injectedToHost(item.getTextRange());
+                todoItems.add(new TodoItemImpl(psiFile, rangeInHost.getStartOffset(), rangeInHost.getEndOffset(), item.getPattern()));
               }
             }
           });

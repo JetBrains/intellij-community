@@ -15,8 +15,6 @@
  */
 package com.intellij.vcs.log.graph.collapsing;
 
-import com.intellij.openapi.util.Condition;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -60,12 +58,8 @@ class CollapsedActionManager {
 
   public static void expandNodes(@NotNull final CollapsedGraph collapsedGraph, Set<Integer> nodesToShow) {
     FragmentGenerator generator =
-      new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph()), new Condition<Integer>() {
-        @Override
-        public boolean value(Integer nodeIndex) {
-          return collapsedGraph.isNodeVisible(nodeIndex);
-        }
-      });
+      new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(collapsedGraph.getDelegatedGraph()),
+                            nodeIndex -> collapsedGraph.isNodeVisible(nodeIndex));
 
     CollapsedGraph.Modification modification = collapsedGraph.startModification();
 
@@ -141,12 +135,7 @@ class CollapsedActionManager {
 
     @NotNull
     Set<Integer> convertToDelegateNodeIndex(@NotNull Collection<Integer> compiledNodeIndexes) {
-      return ContainerUtil.map2Set(compiledNodeIndexes, new Function<Integer, Integer>() {
-        @Override
-        public Integer fun(Integer nodeIndex) {
-          return convertToDelegateNodeIndex(nodeIndex);
-        }
-      });
+      return ContainerUtil.map2Set(compiledNodeIndexes, nodeIndex -> convertToDelegateNodeIndex(nodeIndex));
     }
 
     @NotNull
@@ -166,12 +155,8 @@ class CollapsedActionManager {
     private FragmentGenerators(@NotNull final LinearGraph linearGraph,
                                @NotNull PermanentGraphInfo<?> permanentGraphInfo,
                                @NotNull final UnsignedBitSet matchedNodeId) {
-      fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), new Condition<Integer>() {
-        @Override
-        public boolean value(Integer nodeIndex) {
-          return matchedNodeId.get(linearGraph.getNodeId(nodeIndex));
-        }
-      });
+      fragmentGenerator = new FragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph),
+                                                nodeIndex -> matchedNodeId.get(linearGraph.getNodeId(nodeIndex)));
 
       Set<Integer> branchNodeIndexes = LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, permanentGraphInfo.getBranchNodeIds());
       linearFragmentGenerator = new LinearFragmentGenerator(LinearGraphUtils.asLiteLinearGraph(linearGraph), branchNodeIndexes);
@@ -204,23 +189,13 @@ class CollapsedActionManager {
       Set<GraphEdge> dottedCompiledEdges = ContainerUtil.newHashSet();
       for (Integer middleNodeIndex : middleCompiledNodes) {
         dottedCompiledEdges.addAll(ContainerUtil.filter(context.getCompiledGraph().getAdjacentEdges(middleNodeIndex, EdgeFilter.NORMAL_ALL),
-                                                        new Condition<GraphEdge>() {
-                                                          @Override
-                                                          public boolean value(GraphEdge edge) {
-                                                            return edge.getType() == GraphEdgeType.DOTTED;
-                                                          }
-                                                        }));
+                                                        edge -> edge.getType() == GraphEdgeType.DOTTED));
       }
 
       int upNodeIndex = context.convertToDelegateNodeIndex(fragment.upNodeIndex);
       int downNodeIndex = context.convertToDelegateNodeIndex(fragment.downNodeIndex);
       Set<Integer> middleNodes = context.convertToDelegateNodeIndex(middleCompiledNodes);
-      Set<GraphEdge> dottedEdges = ContainerUtil.map2Set(dottedCompiledEdges, new Function<GraphEdge, GraphEdge>() {
-        @Override
-        public GraphEdge fun(GraphEdge edge) {
-          return context.convertToDelegateEdge(edge);
-        }
-      });
+      Set<GraphEdge> dottedEdges = ContainerUtil.map2Set(dottedCompiledEdges, edge -> context.convertToDelegateEdge(edge));
 
       CollapsedGraph.Modification modification = context.myCollapsedGraph.startModification();
       for (GraphEdge edge : dottedEdges) modification.removeEdge(edge);
@@ -376,12 +351,7 @@ class CollapsedActionManager {
     @Nullable
     @Override
     public Runnable getGraphUpdater() {
-      return new Runnable() {
-        @Override
-        public void run() {
-          myModification.apply();
-        }
-      };
+      return () -> myModification.apply();
     }
   }
 }

@@ -91,12 +91,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     int i = Comparing.compare(o2.getUpdated(), o1.getUpdated());
     return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
   };
-  private static final Convertor<Task, String> KEY_CONVERTOR = new Convertor<Task, String>() {
-    @Override
-    public String convert(Task o) {
-      return o.getId();
-    }
-  };
+  private static final Convertor<Task, String> KEY_CONVERTOR = o -> o.getId();
   static final String TASKS_NOTIFICATION_GROUP = "Task Group";
 
   private final Project myProject;

@@ -28,4 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public interface ProjectModelExternalSource {
   @NotNull
   String getDisplayName();
+
+  @NotNull
+  String getId();
 }

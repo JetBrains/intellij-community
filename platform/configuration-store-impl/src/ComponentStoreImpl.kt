@@ -375,15 +375,15 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.size == 1 || component is StateStorageChooserEx) {
-      return storages
+      return storages.toList()
     }
 
     if (storages.isEmpty()) {
       if (stateSpec.defaultStateAsResource) {
-        return storages
+        return emptyList()
       }
 
       throw AssertionError("No storage specified")
@@ -513,26 +513,26 @@ enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
-  if (isEmpty()) {
-    return this
+internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
+  if (size < 2) {
+    return toList()
   }
 
-  if (!this[0].deprecated) {
+  if (!first().deprecated) {
     var othersAreDeprecated = true
     for (i in 1..size - 1) {
-      if (!this[i].deprecated) {
+      if (!get(i).deprecated) {
         othersAreDeprecated = false
         break
       }
     }
 
     if (othersAreDeprecated) {
-      return this
+      return toList()
     }
   }
 
-  return sortedArrayWith(deprecatedComparator)
+  return sortedWith(deprecatedComparator)
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {

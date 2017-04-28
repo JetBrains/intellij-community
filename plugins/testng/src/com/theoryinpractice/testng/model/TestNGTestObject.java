@@ -20,6 +20,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -276,13 +277,7 @@ public abstract class TestNGTestObject {
                                         final PsiClass psiClass,
                                         final String methodName,
                                         final GlobalSearchScope searchScope) {
-    final PsiMethod[] methods = ApplicationManager.getApplication().runReadAction(
-      new Computable<PsiMethod[]>() {
-        public PsiMethod[] compute() {
-          return psiClass.findMethodsByName(methodName, true);
-        }
-      }
-    );
+    final PsiMethod[] methods = ReadAction.compute(() -> psiClass.findMethodsByName(methodName, true));
     calculateDependencies(methods, classes, searchScope, psiClass);
     Map<PsiMethod, List<String>> psiMethods = classes.get(psiClass);
     if (psiMethods == null) {

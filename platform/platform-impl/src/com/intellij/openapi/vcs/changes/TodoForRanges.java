@@ -15,11 +15,10 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.checkin.StepIntersection;
@@ -98,12 +97,8 @@ public abstract class TodoForRanges {
   protected abstract TodoItemData[] getTodoItems();
 
   protected TodoItem[] getTodoForText(PsiTodoSearchHelper helper) {
-    final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        return PsiFileFactory.getInstance(myProject).createFileFromText((myOldRevision ? "old" : "") + myFileName, myFileType, myText);
-      }
-    });
+    final PsiFile psiFile = ReadAction.compute(
+      () -> PsiFileFactory.getInstance(myProject).createFileFromText((myOldRevision ? "old" : "") + myFileName, myFileType, myText));
     return helper.findTodoItemsLight(psiFile);
   }
 }

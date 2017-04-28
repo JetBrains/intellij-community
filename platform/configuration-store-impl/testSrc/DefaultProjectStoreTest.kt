@@ -117,6 +117,21 @@ internal class DefaultProjectStoreTest {
           <option name="notice" value="where" />
         </copyright>
       </component>
+      <component name="InspectionProjectProfileManager">
+        <profile version="1.0">
+          <option name="myName" value="Project Default" />
+          <inspection_tool class="AntDuplicateTargetsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="AntMissingPropertiesFileInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="AntResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="ArgNamesErrorsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="ArgNamesWarningsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="AroundAdviceStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+          <inspection_tool class="EmptyEventHandler" enabled="false" level="WARNING" enabled_by_default="false" />
+          <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        </profile>
+        <version value="1.0" />
+      </component>
       <component name="ProjectLevelVcsManager" settingsEditedManually="false" />
       <component name="masterDetails">
         <states>
@@ -162,6 +177,23 @@ internal class DefaultProjectStoreTest {
         <option name="myName" value="Foo" />
         <option name="notice" value="where" />
       </copyright>
+    </component>
+
+      ├──inspectionProfiles/
+        ├──Project_Default.xml
+    <component name="InspectionProjectProfileManager">
+      <profile version="1.0">
+        <option name="myName" value="Project Default" />
+        <inspection_tool class="AntDuplicateTargetsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="AntMissingPropertiesFileInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="AntResolveInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="ArgNamesErrorsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="ArgNamesWarningsInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="AroundAdviceStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="DeclareParentsInspection" enabled="false" level="ERROR" enabled_by_default="false" />
+        <inspection_tool class="EmptyEventHandler" enabled="false" level="WARNING" enabled_by_default="false" />
+        <inspection_tool class="PointcutMethodStyleInspection" enabled="false" level="WARNING" enabled_by_default="false" />
+      </profile>
     </component>""".trimIndent())
   }
 }

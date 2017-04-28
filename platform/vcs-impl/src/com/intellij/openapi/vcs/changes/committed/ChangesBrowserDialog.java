@@ -69,26 +69,20 @@ public class ChangesBrowserDialog extends DialogWrapper {
     myAppender = new AsynchConsumer<List<CommittedChangeList>>() {
 
       public void finished() {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (ChangesBrowserDialog.this.isShowing()) {
-              myCommittedChangesBrowser.stopLoading();
-            }
+        SwingUtilities.invokeLater(() -> {
+          if (ChangesBrowserDialog.this.isShowing()) {
+            myCommittedChangesBrowser.stopLoading();
           }
         });
       }
 
       public void consume(final List<CommittedChangeList> committedChangeLists) {
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            if (ChangesBrowserDialog.this.isShowing()) {
-              final boolean selectFirst = (myChanges.getRowCount() == 0) && (!committedChangeLists.isEmpty());
-              myChanges.addRows(committedChangeLists);
-              if (selectFirst) {
-                myCommittedChangesBrowser.selectFirstIfAny();
-              }
+        SwingUtilities.invokeLater(() -> {
+          if (ChangesBrowserDialog.this.isShowing()) {
+            final boolean selectFirst = (myChanges.getRowCount() == 0) && (!committedChangeLists.isEmpty());
+            myChanges.addRows(committedChangeLists);
+            if (selectFirst) {
+              myCommittedChangesBrowser.selectFirstIfAny();
             }
           }
         });

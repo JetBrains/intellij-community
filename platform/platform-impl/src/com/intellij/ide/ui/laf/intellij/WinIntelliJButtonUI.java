@@ -16,6 +16,8 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.MacUIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -28,6 +30,8 @@ import java.beans.PropertyChangeListener;
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJButtonUI extends DarculaButtonUI {
+  static final float DISABLED_ALPHA_LEVEL = 0.47f;
+
   private PropertyChangeListener helpButtonListener = new PropertyChangeListener() {
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -42,6 +46,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    ((AbstractButton)c).setRolloverEnabled(true);
     return new WinIntelliJButtonUI();
   }
 
@@ -58,20 +63,51 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override
-  protected boolean paintDecorations(Graphics2D g, JComponent c) {
+  public void paint(Graphics g, JComponent c) {
+    if (!(c.getBorder() instanceof WinIntelliJButtonBorder) && !isComboButton(c)) {
+      //Insets i = c.getInsets();
+      //g.fillRect(i.left, i.top, c.getWidth() - i.left - i.right, c.getHeight() - i.top - i.bottom);
+      super.paint(g, c);
+      return;
+    }
+
     if (isHelpButton(c)) {
-      final Icon help = MacIntelliJIconCache.getIcon("winHelp");
+      Icon help = MacIntelliJIconCache.getIcon("winHelp");
       help.paintIcon(c, g, (c.getWidth() - help.getIconWidth()) / 2, (c.getHeight() - help.getIconHeight()) / 2);
-      return false;
+    } else if (c instanceof AbstractButton) {
+      AbstractButton b = (AbstractButton)c;
+      ButtonModel bm = b.getModel();
+
+      Graphics2D g2 = (Graphics2D)g.create();
+      try {
+        g2.translate(0, 0);
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+
+        Color color = bm.isPressed() ? UIManager.getColor("Button.intellij.native.pressedBackgroundColor") :
+                      c.hasFocus() || bm.isRollover() ? UIManager.getColor("Button.intellij.native.focusedBackgroundColor") :
+                      c.getBackground();
+
+        g.setColor(color);
+        g.fillRect(0, 0, c.getWidth(), c.getHeight());
+
+        paintContents(g2, b);
+      } finally {
+        g2.dispose();
+      }
     }
-    final Insets i = c.getInsets();
-    g.setColor(c.hasFocus() ? UIManager.getColor("Button.intellij.native.activeBackgroundColor") : c.getBackground());
-    if (c.getBorder() instanceof WinIntelliJButtonPainter) {
-     g.fillRect(0,0,c.getWidth(), c.getHeight());
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    if (isHelpButton(c)) {
+      Icon icon = MacIntelliJIconCache.getIcon("winHelp");
+      return new Dimension(icon.getIconWidth(), icon.getIconHeight());
+    } else if (isSquare(c)) {
+      return new JBDimension(22, 22);
     } else {
-      g.fillRect(i.left, i.top, c.getWidth() - i.left - i.right, c.getHeight() - i.top - i.bottom);
+      return super.getPreferredSize(c);
     }
-    return true;
   }
 
   @Override
@@ -81,9 +117,15 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   protected void paintDisabledText(Graphics g, String text, JComponent c, Rectangle textRect, FontMetrics metrics) {
-    g.setColor(UIManager.getColor("Button.disabledText"));
-    SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
-                                              textRect.x + getTextShiftOffset(),
-                                              textRect.y + metrics.getAscent() + getTextShiftOffset());
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      g2.setColor(UIManager.getColor("Button.disabledText"));
+      g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
+      SwingUtilities2.drawStringUnderlineCharAt(c, g2, text, -1,
+                                                textRect.x + getTextShiftOffset(),
+                                                textRect.y + metrics.getAscent() + getTextShiftOffset());
+    } finally {
+      g2.dispose();
+    }
   }
 }

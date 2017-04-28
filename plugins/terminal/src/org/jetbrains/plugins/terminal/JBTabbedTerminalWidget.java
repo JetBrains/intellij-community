@@ -72,12 +72,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
   public JBTabbedTerminalWidget(@NotNull Project project,
                                 @NotNull JBTerminalSystemSettingsProviderBase settingsProvider,
                                 final @NotNull Predicate<Pair<TerminalWidget, String>> createNewSessionAction, @NotNull Disposable parent) {
-    super(settingsProvider, new Predicate<TerminalWidget>() {
-      @Override
-      public boolean apply(TerminalWidget input) {
-        return createNewSessionAction.apply(Pair.create(input, null));
-      }
-    });
+    super(settingsProvider, input -> createNewSessionAction.apply(Pair.create(input, null)));
     myProject = project;
 
     mySettingsProvider = settingsProvider;
@@ -143,12 +138,9 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
     widget.addMessageFilter(myProject, new UrlFilter());
 
     convertActions(widget, widget.getActions());
-    convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), new Predicate<KeyEvent>() {
-      @Override
-      public boolean apply(KeyEvent input) {
-        widget.getTerminalPanel().handleKeyEvent(input);
-        return true;
-      }
+    convertActions(widget.getTerminalPanel(), widget.getTerminalPanel().getActions(), input -> {
+      widget.getTerminalPanel().handleKeyEvent(input);
+      return true;
     });
 
     return widget;

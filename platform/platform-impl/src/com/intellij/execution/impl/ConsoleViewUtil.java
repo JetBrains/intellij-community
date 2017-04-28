@@ -53,6 +53,10 @@ import java.util.Map;
  */
 public class ConsoleViewUtil {
 
+  /**
+   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
+   */
+  @Deprecated
   public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
@@ -63,14 +67,13 @@ public class ConsoleViewUtil {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
-    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project);
+    EditorEx editor = (EditorEx) editorFactory.createViewer(document, project, EditorKind.CONSOLE);
     setupConsoleEditor(editor, foldingOutlineShown, lineMarkerAreaShown);
     return editor;
   }
 
   public static void setupConsoleEditor(@NotNull final EditorEx editor, final boolean foldingOutlineShown, final boolean lineMarkerAreaShown) {
     ApplicationManager.getApplication().runReadAction(() -> {
-      editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.CONSOLE);
 
       final EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
@@ -83,8 +86,6 @@ public class ConsoleViewUtil {
       editorSettings.setRightMarginShown(false);
       editorSettings.setCaretRowShown(false);
       editor.getGutterComponentEx().setPaintBackground(false);
-
-      editor.putUserData(EDITOR_IS_CONSOLE_VIEW, true);
 
       final DelegateColorScheme scheme = updateConsoleColorScheme(editor.getColorsScheme());
       if (UISettings.getInstance().getPresentationMode()) {
@@ -153,7 +154,7 @@ public class ConsoleViewUtil {
   }
 
   public static boolean isConsoleViewEditor(@NotNull Editor editor) {
-    return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE;
+    return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE || editor.getEditorKind() == (EditorKind.CONSOLE);
   }
 
   public static boolean isReplaceActionEnabledForConsoleViewEditor(@NotNull Editor editor) {

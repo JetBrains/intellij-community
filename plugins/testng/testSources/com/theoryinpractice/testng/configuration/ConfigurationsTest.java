@@ -81,18 +81,15 @@ public class ConfigurationsTest {
 
   @AfterMethod
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          myProjectFixture.tearDown();
-          myProjectFixture = null;
-          myFixture.tearDown();
-          myFixture = null;
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        myProjectFixture.tearDown();
+        myProjectFixture = null;
+        myFixture.tearDown();
+        myFixture = null;
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
   }

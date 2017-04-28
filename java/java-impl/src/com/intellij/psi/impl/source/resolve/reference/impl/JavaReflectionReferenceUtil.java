@@ -69,6 +69,7 @@ public class JavaReflectionReferenceUtil {
   public static final String FIND_STATIC_VAR_HANDLE = "findStaticVarHandle";
 
   public static final String FIND_CONSTRUCTOR = "findConstructor";
+  public static final String FIND_CLASS = "findClass";
 
   public static final String[] HANDLE_FACTORY_METHOD_NAMES = {
     FIND_VIRTUAL, FIND_STATIC, FIND_SPECIAL,

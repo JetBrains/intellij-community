@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.refResolve.RefResolveServiceImpl;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -99,12 +98,7 @@ public class RefQueueIndex extends FileBasedIndexExtension<Void,Void> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
-      @Override
-      public boolean acceptInput(@NotNull VirtualFile file) {
-        return RefResolveService.ENABLED && !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
-      }
-    };
+    return file -> RefResolveService.ENABLED && !file.isDirectory() && RefResolveServiceImpl.isSupportedFileType(file);
   }
 
   @Override

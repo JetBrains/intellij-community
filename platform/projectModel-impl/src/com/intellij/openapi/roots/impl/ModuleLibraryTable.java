@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
@@ -90,8 +91,13 @@ public class ModuleLibraryTable implements LibraryTable, LibraryTableBase.Modifi
   }
 
   @Override
-  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
-    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager);
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
+    return createLibrary(name, type, null);
+  }
+
+  @Override
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
+    LibraryOrderEntry orderEntry = new ModuleLibraryOrderEntryImpl(name, kind, myRootModel, myProjectRootManager, externalSource);
     myRootModel.addOrderEntry(orderEntry);
     return orderEntry.getLibrary();
   }

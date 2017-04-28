@@ -48,7 +48,7 @@ interface StateStorageManager {
   fun expandMacros(path: String): String
 
   interface ExternalizationSession {
-    fun setState(storageSpecs: Array<out Storage>, component: Any, componentName: String, state: Any)
+    fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any)
 
     fun setStateInOldStorage(component: Any, componentName: String, state: Any)
 

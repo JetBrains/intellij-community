@@ -16,10 +16,9 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -46,10 +45,7 @@ public class CurrentContentRevision implements ByteBackedContentRevision {
     if (vFile == null) {
       return null;
     }
-    final Document doc = ApplicationManager.getApplication().runReadAction(new Computable<Document>() {
-      public Document compute() {
-        return FileDocumentManager.getInstance().getDocument(vFile);
-    }});
+    final Document doc = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(vFile));
     if (doc == null) return null;
     return doc.getText();
   }

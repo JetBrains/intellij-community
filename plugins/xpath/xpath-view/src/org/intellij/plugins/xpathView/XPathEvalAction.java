@@ -503,15 +503,12 @@ public class XPathEvalAction extends XPathAction {
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
                 indicator.setText("Collecting matches...");
 
-                Collections.sort(list, new Comparator() {
-                    @Override
-                    public int compare(Object o1, Object o2) {
-                        indicator.checkCanceled();
-                        if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
-                            return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
-                        } else {
-                            return String.valueOf(o1).compareTo(String.valueOf(o2));
-                        }
+                Collections.sort(list, (Comparator)(o1, o2) -> {
+                    indicator.checkCanceled();
+                    if (o1 instanceof PsiElement && o2 instanceof PsiElement) {
+                        return ((PsiElement)o1).getTextRange().getStartOffset() - ((PsiElement)o2).getTextRange().getStartOffset();
+                    } else {
+                        return String.valueOf(o1).compareTo(String.valueOf(o2));
                     }
                 });
                 for (int i = 0; i < size; i++) {

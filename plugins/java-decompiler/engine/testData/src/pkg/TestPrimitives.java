@@ -68,4 +68,8 @@ public class TestPrimitives {
     printByte((byte)getInt());
     printShort((short)getInt());
   }
+
+  public void constructor() {
+    new Byte((byte)1);
+  }
 }

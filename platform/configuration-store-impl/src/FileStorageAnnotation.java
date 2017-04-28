@@ -2,18 +2,25 @@ package com.intellij.configurationStore;
 
 import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
 @SuppressWarnings("ClassExplicitlyAnnotation")
-final class FileStorageAnnotation implements Storage {
+public final class FileStorageAnnotation implements Storage {
   private String path;
 
   private boolean deprecated;
+  private final Class<? extends StateStorage> storageClass;
 
-  FileStorageAnnotation(String path, boolean deprecated) {
+  public FileStorageAnnotation(@NotNull String path, boolean deprecated) {
+    this(path, deprecated, StateStorage.class);
+  }
+
+  public FileStorageAnnotation(@NotNull String path, boolean deprecated, @Nullable Class<? extends StateStorage> storageClass) {
     this.path = path;
     this.deprecated = deprecated;
+    this.storageClass = storageClass;
   }
 
   @Override
@@ -53,7 +60,7 @@ final class FileStorageAnnotation implements Storage {
 
   @Override
   public Class<? extends StateStorage> storageClass() {
-    return StateStorage.class;
+    return storageClass;
   }
 
   @Override

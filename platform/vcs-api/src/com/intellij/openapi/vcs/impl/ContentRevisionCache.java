@@ -30,7 +30,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.VcsUtil;
@@ -107,24 +106,18 @@ public class ContentRevisionCache {
     // ContentRevisionCache (i.e. call getOrLoadCurrentAsBytes()) under write action while other thread invokes clearScope(). To prevent
     // such deadlocks we also perform locking "myLock" (and other logic) under read action.
     // TODO: "myCurrentRevisionsCache" logic should be refactored to be more clear and possibly to avoid creating such wrapping read actions
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        synchronized (myLock) {
-          ++myCounter;
-          for (final VcsDirtyScope scope : scopes) {
-            final Set<CurrentKey> toRemove = new HashSet<>();
-            myCurrentRevisionsCache.iterateKeys(new Consumer<CurrentKey>() {
-              @Override
-              public void consume(CurrentKey currentKey) {
-                if (scope.belongsTo(currentKey.getPath())) {
-                  toRemove.add(currentKey);
-                }
-              }
-            });
-            for (CurrentKey key : toRemove) {
-              myCurrentRevisionsCache.remove(key);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      synchronized (myLock) {
+        ++myCounter;
+        for (final VcsDirtyScope scope : scopes) {
+          final Set<CurrentKey> toRemove = new HashSet<>();
+          myCurrentRevisionsCache.iterateKeys(currentKey -> {
+            if (scope.belongsTo(currentKey.getPath())) {
+              toRemove.add(currentKey);
             }
+          });
+          for (CurrentKey key : toRemove) {
+            myCurrentRevisionsCache.remove(key);
           }
         }
       }
@@ -138,12 +131,9 @@ public class ContentRevisionCache {
     }
     synchronized (myLock) {
       final Set<CurrentKey> toRemove = new HashSet<>();
-      myCurrentRevisionsCache.iterateKeys(new Consumer<CurrentKey>() {
-        @Override
-        public void consume(CurrentKey currentKey) {
-          if (converted.contains(FilePathsHelper.convertPath(currentKey.getPath().getPath()))) {
-            toRemove.add(currentKey);
-          }
+      myCurrentRevisionsCache.iterateKeys(currentKey -> {
+        if (converted.contains(FilePathsHelper.convertPath(currentKey.getPath().getPath()))) {
+          toRemove.add(currentKey);
         }
       });
       for (CurrentKey key : toRemove) {

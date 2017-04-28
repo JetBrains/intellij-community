@@ -17,11 +17,10 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
@@ -66,11 +65,9 @@ public abstract class ProjectLevelVcsManager {
    * @return component instance
    */
   public static ProjectLevelVcsManager getInstanceChecked(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ProjectLevelVcsManager>() {
-      public ProjectLevelVcsManager compute() {
-        if (project.isDisposed()) throw new ProcessCanceledException();
-        return getInstance(project);
-      }
+    return ReadAction.compute(() -> {
+      if (project.isDisposed()) throw new ProcessCanceledException();
+      return getInstance(project);
     });
   }
 

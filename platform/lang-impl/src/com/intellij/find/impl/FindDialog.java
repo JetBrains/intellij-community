@@ -77,7 +77,6 @@ import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -644,12 +643,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
         myUsagePreviewPanel.setBorder(IdeBorderFactory.createBorder());
         registerNavigateToSourceShortcutOnComponent(table, myUsagePreviewPanel);
         myResultsPreviewTable = table;
-        new TableSpeedSearch(table, new Convertor<Object, String>() {
-          @Override
-          public String convert(Object o) {
-            return ((UsageInfo2UsageAdapter)o).getFile().getName();
-          }
-        });
+        new TableSpeedSearch(table, o -> ((UsageInfo2UsageAdapter)o).getFile().getName());
         myResultsPreviewTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
           @Override
           public void valueChanged(ListSelectionEvent e) {

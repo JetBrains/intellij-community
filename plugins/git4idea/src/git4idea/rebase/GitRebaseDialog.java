@@ -148,11 +148,7 @@ public class GitRebaseDialog extends DialogWrapper {
     myProject = project;
     mySettings = ServiceManager.getService(myProject, GitRebaseSettings.class);
     myRepositoryManager = GitUtil.getRepositoryManager(myProject);
-    final Runnable validateRunnable = new Runnable() {
-      public void run() {
-        validateFields();
-      }
-    };
+    final Runnable validateRunnable = () -> validateFields();
     myOntoValidator = new GitReferenceValidator(myProject, myGitRootComboBox, GitUIUtil.getTextField(myOntoComboBox), myOntoValidateButton,
                                                 validateRunnable);
     myFromValidator = new GitReferenceValidator(myProject, myGitRootComboBox, GitUIUtil.getTextField(myFromComboBox), myFromValidateButton,

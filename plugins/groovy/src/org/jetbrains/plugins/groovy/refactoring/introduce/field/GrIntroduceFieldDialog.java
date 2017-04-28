@@ -149,12 +149,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       myReplaceAllOccurrencesCheckBox.setVisible(false);
     }
 
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        validateOKAction();
-      }
-    });
+    myNameField.addDataChangedListener(() -> validateOKAction());
 
     ItemListener l = new ItemListener() {
       @Override

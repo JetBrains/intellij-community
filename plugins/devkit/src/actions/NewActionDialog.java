@@ -126,11 +126,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
         }
       }
     });
-    new ListSpeedSearch(myGroupList, new Function<Object, String>() {
-      public String fun(Object o) {
-        return ActionManager.getInstance().getId((AnAction) o);
-      }
-    });
+    new ListSpeedSearch(myGroupList, (Function<Object, String>)o -> ActionManager.getInstance().getId((AnAction) o));
 
     myActionList.setCellRenderer(new MyActionRenderer());
     myActionList.addListSelectionListener(new ListSelectionListener() {

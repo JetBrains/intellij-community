@@ -4,7 +4,6 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,12 +97,9 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   public void updateAllRepositories() {
-    ContainerUtil.process(getRepositories(), new Processor<T>() {
-      @Override
-      public boolean process(T repo) {
-        repo.update();
-        return true;
-      }
+    ContainerUtil.process(getRepositories(), repo -> {
+      repo.update();
+      return true;
     });
   }
 

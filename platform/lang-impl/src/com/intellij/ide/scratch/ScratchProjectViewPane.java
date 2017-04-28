@@ -24,10 +24,9 @@ import com.intellij.ide.projectView.impl.ProjectTreeStructure;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -245,23 +244,20 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Override
     protected Collection<AbstractTreeNode> getChildrenImpl() {
       if (isAlwaysLeaf()) return Collections.emptyList();
-      return ApplicationManager.getApplication().runReadAction(new Computable<Collection<AbstractTreeNode>>() {
-        @Override
-        public Collection<AbstractTreeNode> compute() {
-          final PsiFileSystemItem value = getValue();
-          if (value == null || !value.isValid()) return Collections.emptyList();
-          final List<AbstractTreeNode> list = ContainerUtil.newArrayList();
-          value.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
-            @Override
-            public boolean execute(@NotNull PsiFileSystemItem element) {
-              if (!myRootType.isIgnored(value.getProject(), element.getVirtualFile())) {
-                list.add(new MyPsiNode(value.getProject(), myRootType, element));
-              }
-              return true;
+      return ReadAction.compute(() -> {
+        final PsiFileSystemItem value = getValue();
+        if (value == null || !value.isValid()) return Collections.emptyList();
+        final List<AbstractTreeNode> list = ContainerUtil.newArrayList();
+        value.processChildren(new PsiElementProcessor<PsiFileSystemItem>() {
+          @Override
+          public boolean execute(@NotNull PsiFileSystemItem element) {
+            if (!myRootType.isIgnored(value.getProject(), element.getVirtualFile())) {
+              list.add(new MyPsiNode(value.getProject(), myRootType, element));
             }
-          });
-          return list;
-        }
+            return true;
+          }
+        });
+        return list;
       });
     }
 

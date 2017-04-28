@@ -279,19 +279,16 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
   @Override
   public void loadState(final Element state) {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
-        for (Bookmark bookmark : myBookmarks) {
-          bookmark.release();
-          publisher.bookmarkRemoved(bookmark);
-          unmap(bookmark.getDocument(), bookmark);
-        }
-        myBookmarks.clear();
-
-        readExternal(state);
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      BookmarksListener publisher = myBus.syncPublisher(BookmarksListener.TOPIC);
+      for (Bookmark bookmark : myBookmarks) {
+        bookmark.release();
+        publisher.bookmarkRemoved(bookmark);
+        unmap(bookmark.getDocument(), bookmark);
       }
+      myBookmarks.clear();
+
+      readExternal(state);
     });
   }
 

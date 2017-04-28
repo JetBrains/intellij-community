@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +37,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
@@ -144,12 +144,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
 
     final Map<PsiMember, Set<Module>> memberWithModulesMap = new HashMap<>();
     for (final PsiMember member : members) {
-      final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-        @Override
-        public Module compute() {
-          return ModuleUtilCore.findModuleForPsiElement(member);
-        }
-      });
+      final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(member));
       if (module != null) {
         final HashSet<Module> dependencies = new HashSet<>();
         ApplicationManager.getApplication().runReadAction(() -> ModuleUtilCore.collectModulesDependsOn(module, dependencies));

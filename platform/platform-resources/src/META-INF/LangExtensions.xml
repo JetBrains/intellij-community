@@ -353,7 +353,7 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.ExternalProjectSystemRegistryImpl"/>
     <moduleService serviceInterface="com.intellij.openapi.components.impl.stores.IComponentStore"
                    serviceImplementation="com.intellij.configurationStore.ModuleStoreImpl"
-                   testServiceImplementation="com.intellij.configurationStore.ModuleStoreImpl$TestModuleStore"/>
+                   testServiceImplementation="com.intellij.configurationStore.TestModuleStore"/>
     <moduleService serviceInterface="com.intellij.openapi.roots.TestModuleProperties"
                    serviceImplementation="com.intellij.openapi.roots.impl.TestModulePropertiesImpl"/>
 

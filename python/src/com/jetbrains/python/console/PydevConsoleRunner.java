@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.Collections2;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -144,12 +143,8 @@ public interface PydevConsoleRunner {
 
   static String constructPyPathAndWorkingDirCommand(Collection<String> pythonPath, String workingDir, String command) {
     pythonPath.add(workingDir);
-    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
-      @Override
-      public String apply(String input) {
-        return "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'";
-      }
-    }));
+    final String path = Joiner.on(", ").join(Collections2.transform(pythonPath,
+                                                                    input -> "'" + input.replace("\\", "\\\\").replace("'", "\\'") + "'"));
 
     return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path);
   }

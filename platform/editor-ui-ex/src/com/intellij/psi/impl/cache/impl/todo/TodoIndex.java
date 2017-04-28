@@ -43,7 +43,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -111,25 +110,22 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
     }
   };
 
-  private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
-    @Override
-    public boolean acceptInput(@NotNull final VirtualFile file) {
-      if (!file.isInLocalFileSystem()) {
-        return false; // do not index TODOs in library sources
-      }
-
-      final FileType fileType = file.getFileType();
-
-      if (fileType instanceof LanguageFileType) {
-        final Language lang = ((LanguageFileType)fileType).getLanguage();
-        final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
-        final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
-        return commentTokens != null;
-      }
-
-      return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
-             fileType instanceof CustomSyntaxTableFileType;
+  private final FileBasedIndex.InputFilter myInputFilter = file -> {
+    if (!file.isInLocalFileSystem()) {
+      return false; // do not index TODOs in library sources
     }
+
+    final FileType fileType = file.getFileType();
+
+    if (fileType instanceof LanguageFileType) {
+      final Language lang = ((LanguageFileType)fileType).getLanguage();
+      final ParserDefinition parserDef = LanguageParserDefinitions.INSTANCE.forLanguage(lang);
+      final TokenSet commentTokens = parserDef != null ? parserDef.getCommentTokens() : null;
+      return commentTokens != null;
+    }
+
+    return PlatformIdTableBuilding.isTodoIndexerRegistered(fileType) ||
+           fileType instanceof CustomSyntaxTableFileType;
   };
 
   @Override

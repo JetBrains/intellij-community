@@ -351,12 +351,8 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   protected void afterDiffRefresh() {
     rebuildList();
     setDataIsDirty(false);
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        IdeFocusManager.findInstance().requestFocus(myViewer.getPreferredFocusedComponent(), true);
-      }
-    });
+    ApplicationManager.getApplication().invokeLater(
+      () -> IdeFocusManager.findInstance().requestFocus(myViewer.getPreferredFocusedComponent(), true));
   }
 
   @Override
@@ -367,11 +363,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
   }
 
   private void updateListsInChooser() {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
-      }
-    };
+    Runnable runnable = () -> myChangeListChooser.updateLists(ChangeListManager.getInstance(myProject).getChangeListsCopy());
     if (SwingUtilities.isEventDispatchThread()) {
       runnable.run();
     }
@@ -382,12 +374,7 @@ public class MultipleChangeListBrowser extends ChangesBrowserBase<Object> {
 
   @Nullable
   private static ChangeList findDefaultList(@NotNull List<? extends ChangeList> lists) {
-    return ContainerUtil.find(lists, new Condition<ChangeList>() {
-      @Override
-      public boolean value(@NotNull ChangeList list) {
-        return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
-      }
-    });
+    return ContainerUtil.find(lists, (Condition<ChangeList>)list -> list instanceof LocalChangeList && ((LocalChangeList)list).isDefault());
   }
 
   private class ChangeListChooser extends JPanel {

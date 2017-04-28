@@ -36,6 +36,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -43,7 +44,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Clock;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -485,12 +485,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
           int line = Integer.parseInt(lineNumberStr);
 
           final File file = new File(fileName);
-          final VirtualFile result = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-            public VirtualFile compute() {
-              String url =
-                VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getAbsolutePath().replace(File.separatorChar, '/'));
-              return VirtualFileManager.getInstance().findFileByUrl(url);
-            }
+          final VirtualFile result = ReadAction.compute(() -> {
+            String url =
+              VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, file.getAbsolutePath().replace(File.separatorChar, '/'));
+            return VirtualFileManager.getInstance().findFileByUrl(url);
           });
 
           // convert separators

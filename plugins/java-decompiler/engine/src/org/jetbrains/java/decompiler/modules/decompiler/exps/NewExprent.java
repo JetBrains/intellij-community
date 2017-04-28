@@ -340,7 +340,7 @@ public class NewExprent extends Exprent {
                 buf.append(", ");
               }
 
-              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, tracer);
+              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, false, true, tracer);
 
               firstParam = false;
             }

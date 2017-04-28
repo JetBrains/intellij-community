@@ -202,6 +202,10 @@ public class HardcodedContracts {
           }
         }
       }
+      if ("is".equals(calledName)) {
+        PsiExpression[] args = ((PsiMethodCallExpression)expr).getArgumentList().getExpressions();
+        if (args.length == 1) return isNotNullMatcher(args[0]);
+      }
     }
     return false;
   }

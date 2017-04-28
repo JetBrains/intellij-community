@@ -384,7 +384,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   override final fun startExternalization() = object : StateStorageManager.ExternalizationSession {
     private val sessions = LinkedHashMap<StateStorage, StateStorage.ExternalizationSession>()
 
-    override fun setState(storageSpecs: Array<out Storage>, component: Any, componentName: String, state: Any) {
+    override fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any) {
       val stateStorageChooser = component as? StateStorageChooserEx
       for (storageSpec in storageSpecs) {
         @Suppress("IfThenToElvis")

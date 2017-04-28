@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.terminal;
 
-import com.google.common.base.Predicate;
 import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -17,7 +16,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -79,12 +77,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   @NotNull
   public JBTabbedTerminalWidget createTerminalWidget(@NotNull Disposable parent) {
     final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(myProject, provider, new Predicate<Pair<TerminalWidget, String>>() {
-      @Override
-      public boolean apply(Pair<TerminalWidget, String> widget) {
-        openSessionInDirectory(widget.getFirst(), widget.getSecond());
-        return true;
-      }
+    JBTabbedTerminalWidget terminalWidget = new JBTabbedTerminalWidget(myProject, provider, widget -> {
+      openSessionInDirectory(widget.getFirst(), widget.getSecond());
+      return true;
     }, parent);
     openSessionInDirectory(terminalWidget, null);
     return terminalWidget;
@@ -112,12 +107,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     toolbarActions.add(createCloseAction(defaultExecutor, contentDescriptor));
 
     final JBTerminalSystemSettingsProvider provider = new JBTerminalSystemSettingsProvider();
-    TerminalWidget widget = new JBTabbedTerminalWidget(myProject, provider, new Predicate<Pair<TerminalWidget, String>>() {
-      @Override
-      public boolean apply(Pair<TerminalWidget, String> widget) {
-        openSessionInDirectory(widget.getFirst(), widget.getSecond());
-        return true;
-      }
+    TerminalWidget widget = new JBTabbedTerminalWidget(myProject, provider, widget1 -> {
+      openSessionInDirectory(widget1.getFirst(), widget1.getSecond());
+      return true;
     }, contentDescriptor);
 
     createAndStartSession(widget, createTtyConnector(process));

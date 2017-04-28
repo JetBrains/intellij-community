@@ -22,7 +22,7 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.ApplyPatchException;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -241,12 +240,9 @@ public class ShelvedChange {
 
     private String getBaseContent() {
       myBeforeFilePath.refresh();
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
-          return doc.getText();
-        }
+      return ReadAction.compute(() -> {
+        final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
+        return doc.getText();
       });
     }
 

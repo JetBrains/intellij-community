@@ -21,7 +21,7 @@ import com.intellij.codeInsight.generation.GenerationInfo;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.psi.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
@@ -64,12 +64,8 @@ public class GenerateMembersUtilTest extends LightCodeInsightTestCase {
     PsiMethod method = factory.createMethod("foo", PsiType.VOID);
     int offset = getEditor().getCaretModel().getOffset();
     List<GenerationInfo> list = Collections.singletonList(new PsiGenerationInfo<>(method));
-    List<GenerationInfo> members = ApplicationManager.getApplication().runWriteAction(new Computable<List<GenerationInfo>>() {
-      @Override
-      public List<GenerationInfo> compute() {
-        return GenerateMembersUtil.insertMembersAtOffset(getFile(), offset, list);
-      }
-    });
+    List<GenerationInfo> members =
+      WriteAction.compute(() -> GenerateMembersUtil.insertMembersAtOffset(getFile(), offset, list));
     members.get(0).positionCaret(myEditor, true);
     checkResultByFile(null, BASE_PATH + getTestName(false) + "_after.java", true);
   }

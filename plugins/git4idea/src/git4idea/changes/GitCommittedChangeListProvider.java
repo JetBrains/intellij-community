@@ -40,7 +40,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.*;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -108,12 +107,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
   public void loadCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount,
                                    final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     try {
-      getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
-        @Override
-        public void consume(GitCommittedChangeList gitCommittedChangeList) {
-          consumer.consume(gitCommittedChangeList);
-        }
-      });
+      getCommittedChangesImpl(settings, location, maxCount, gitCommittedChangeList -> consumer.consume(gitCommittedChangeList));
     }
     finally {
       consumer.finished();
@@ -125,11 +119,7 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
     final List<CommittedChangeList> result = new ArrayList<>();
 
-    getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
-      public void consume(GitCommittedChangeList committedChangeList) {
-        result.add(committedChangeList);
-      }
-    });
+    getCommittedChangesImpl(settings, location, maxCount, committedChangeList -> result.add(committedChangeList));
 
     return result;
   }
@@ -148,29 +138,27 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
       throw new VcsException("The repository does not exists anymore: " + l.getRoot());
     }
 
-    GitUtil.getLocalCommittedChanges(myProject, root, new Consumer<GitSimpleHandler>() {
-      public void consume(GitSimpleHandler h) {
-        if (!StringUtil.isEmpty(author)) {
-          h.addParameters("--author=" + author);
-        }
-        if (beforeDate != null) {
-          h.addParameters("--before=" + GitUtil.gitTime(beforeDate));
-        }
-        if (afterDate != null) {
-          h.addParameters("--after=" + GitUtil.gitTime(afterDate));
-        }
-        if (maxCount != getUnlimitedCountValue()) {
-          h.addParameters("-n" + maxCount);
-        }
-        if (beforeRev != null && afterRev != null) {
-          h.addParameters(GitUtil.formatLongRev(afterRev) + ".." + GitUtil.formatLongRev(beforeRev));
-        }
-        else if (beforeRev != null) {
-          h.addParameters(GitUtil.formatLongRev(beforeRev));
-        }
-        else if (afterRev != null) {
-          h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
-        }
+    GitUtil.getLocalCommittedChanges(myProject, root, h -> {
+      if (!StringUtil.isEmpty(author)) {
+        h.addParameters("--author=" + author);
+      }
+      if (beforeDate != null) {
+        h.addParameters("--before=" + GitUtil.gitTime(beforeDate));
+      }
+      if (afterDate != null) {
+        h.addParameters("--after=" + GitUtil.gitTime(afterDate));
+      }
+      if (maxCount != getUnlimitedCountValue()) {
+        h.addParameters("-n" + maxCount);
+      }
+      if (beforeRev != null && afterRev != null) {
+        h.addParameters(GitUtil.formatLongRev(afterRev) + ".." + GitUtil.formatLongRev(beforeRev));
+      }
+      else if (beforeRev != null) {
+        h.addParameters(GitUtil.formatLongRev(beforeRev));
+      }
+      else if (afterRev != null) {
+        h.addParameters(GitUtil.formatLongRev(afterRev) + "..");
       }
     }, consumer, false);
   }

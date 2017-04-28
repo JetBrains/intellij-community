@@ -52,22 +52,17 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -79,18 +74,15 @@ public class JavaCompletionUtil {
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
   private static final Key<PsiType> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
-  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
-    @Override
-    @Nullable
-    public ExpectedTypeInfo[] fun(final CompletionLocation location) {
-      if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
-        .accepts(location.getCompletionParameters().getPosition())) {
-        return ExpectedTypeInfo.EMPTY_ARRAY;
-      }
+  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes",
+                                                                                                               location -> {
+                                                                                                                 if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
+                                                                                                                   .accepts(location.getCompletionParameters().getPosition())) {
+                                                                                                                   return ExpectedTypeInfo.EMPTY_ARRAY;
+                                                                                                                 }
 
-      return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
-    }
-  });
+                                                                                                                 return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
+                                                                                                               });
 
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");
 
@@ -475,14 +467,6 @@ public class JavaCompletionUtil {
           @Override
           public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
             element.getDelegate().renderElement(presentation);
-            Color foreground = presentation.getItemTextForeground();
-
-            //In Darcula: default monospaced bold fonts are very similar to their regular versions.
-            //We need to tune foreground colors here to tell bold elements from regular
-            if (UIUtil.isUnderDarcula()) {
-              presentation.setItemTextForeground(ColorUtil.brighter(foreground, 2));
-            }
-
             presentation.setItemTextBold(true);
           }
         };

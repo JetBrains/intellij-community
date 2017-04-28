@@ -106,22 +106,18 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   public void openMessagesView(final VcsErrorViewPanel errorTreeView, final String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
-    commandProcessor.executeCommand(myProject, new Runnable() {
-      public void run() {
-        final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-        messageView.runWhenInitialized(new Runnable() {
-          public void run() {
-            final Content content =
-              ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
-            messageView.getContentManager().addContent(content);
-            Disposer.register(content, errorTreeView);
-            messageView.getContentManager().setSelectedContent(content);
-            removeContents(content, tabDisplayName);
+    commandProcessor.executeCommand(myProject, () -> {
+      final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
+      messageView.runWhenInitialized(() -> {
+        final Content content =
+          ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
+        messageView.getContentManager().addContent(content);
+        Disposer.register(content, errorTreeView);
+        messageView.getContentManager().setSelectedContent(content);
+        removeContents(content, tabDisplayName);
 
-            ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
-          }
-        });
-      }
+        ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
+      });
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
@@ -230,15 +226,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
-    showErrorsImpl(abstractVcsExceptions.isEmpty(), new Getter<VcsException>() {
-      public VcsException get() {
-        return abstractVcsExceptions.get(0);
-      }
-    }, tabDisplayName, new Consumer<VcsErrorViewPanel>() {
-      public void consume(VcsErrorViewPanel vcsErrorViewPanel) {
-        addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions);
-      }
-    });
+    showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName, vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
   }
   
   @Override
@@ -277,19 +265,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       }
       return;
     }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (isEmpty) {
-          removeContents(null, tabDisplayName);
-          return;
-        }
-
-        final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
-        openMessagesView(errorTreeView, tabDisplayName);
-
-        viewFiller.consume(errorTreeView);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      if (isEmpty) {
+        removeContents(null, tabDisplayName);
+        return;
       }
+
+      final VcsErrorViewPanel errorTreeView = new VcsErrorViewPanel(myProject);
+      openMessagesView(errorTreeView, tabDisplayName);
+
+      viewFiller.consume(errorTreeView);
     });
   }
 
@@ -303,27 +289,23 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
   @Override
   public void showErrors(final Map<HotfixData, List<VcsException>> exceptionGroups, @NotNull final String tabDisplayName) {
-    showErrorsImpl(exceptionGroups.isEmpty(), new Getter<VcsException>() {
-      public VcsException get() {
-        final List<VcsException> exceptionList = exceptionGroups.values().iterator().next();
-        return exceptionList == null ? null : (exceptionList.isEmpty() ? null : exceptionList.get(0));
-      }
-    }, tabDisplayName, new Consumer<VcsErrorViewPanel>() {
-      public void consume(VcsErrorViewPanel vcsErrorViewPanel) {
-        for (Map.Entry<HotfixData, List<VcsException>> entry : exceptionGroups.entrySet()) {
-          if (entry.getKey() == null) {
-            addDirectMessages(vcsErrorViewPanel, entry.getValue());
-          } else {
-            final List<VcsException> exceptionList = entry.getValue();
-            final List<SimpleErrorData> list = new ArrayList<>(exceptionList.size());
-            for (VcsException exception : exceptionList) {
-              final String[] messages = getExceptionMessages(exception);
-              list.add(new SimpleErrorData(
-                ErrorTreeElementKind.convertMessageFromCompilerErrorType(getErrorCategory(exception)), messages, exception.getVirtualFile()));
-            }
-
-            vcsErrorViewPanel.addHotfixGroup(entry.getKey(), list);
+    showErrorsImpl(exceptionGroups.isEmpty(), () -> {
+      final List<VcsException> exceptionList = exceptionGroups.values().iterator().next();
+      return exceptionList == null ? null : (exceptionList.isEmpty() ? null : exceptionList.get(0));
+    }, tabDisplayName, vcsErrorViewPanel -> {
+      for (Map.Entry<HotfixData, List<VcsException>> entry : exceptionGroups.entrySet()) {
+        if (entry.getKey() == null) {
+          addDirectMessages(vcsErrorViewPanel, entry.getValue());
+        } else {
+          final List<VcsException> exceptionList = entry.getValue();
+          final List<SimpleErrorData> list = new ArrayList<>(exceptionList.size());
+          for (VcsException exception : exceptionList) {
+            final String[] messages = getExceptionMessages(exception);
+            list.add(new SimpleErrorData(
+              ErrorTreeElementKind.convertMessageFromCompilerErrorType(getErrorCategory(exception)), messages, exception.getVirtualFile()));
           }
+
+          vcsErrorViewPanel.addHotfixGroup(entry.getKey(), list);
         }
       }
     });
@@ -514,12 +496,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         final CommittedChangesTableModel model = new CommittedChangesTableModel(versions, true);
         final AsynchronousListsLoader[] task = new AsynchronousListsLoader[1];
         final ChangeBrowserSettings finalSettings = settings;
-        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent, new Consumer<ChangesBrowserDialog>() {
-          @Override
-          public void consume(ChangesBrowserDialog changesBrowserDialog) {
-            task[0] = new AsynchronousListsLoader(myProject, provider, location, finalSettings, changesBrowserDialog);
-            ProgressManager.getInstance().run(task[0]);
-          }
+        final ChangesBrowserDialog dlg = createChangesBrowserDialog(model, title, filterUI != null, parent, changesBrowserDialog -> {
+          task[0] = new AsynchronousListsLoader(myProject, provider, location, finalSettings, changesBrowserDialog);
+          ProgressManager.getInstance().run(task[0]);
         });
 
         dlg.startLoading();
@@ -753,22 +732,14 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             appender.finished();
 
             if (! myRevisionsReturned) {
-              application.invokeLater(new Runnable() {
-                public void run() {
-                  myDlg.close(-1);
-                }
-              }, ModalityState.stateForComponent(myDlg.getWindow()));
+              application.invokeLater(() -> myDlg.close(-1), ModalityState.stateForComponent(myDlg.getWindow()));
             }
           }
         });
       }
       catch (VcsException e) {
         myExceptions.add(e);
-        application.invokeLater(new Runnable() {
-          public void run() {
-            myDlg.close(-1);
-          }
-        }, ModalityState.stateForComponent(myDlg.getWindow()));
+        application.invokeLater(() -> myDlg.close(-1), ModalityState.stateForComponent(myDlg.getWindow()));
       }
     }
 

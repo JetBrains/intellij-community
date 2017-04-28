@@ -22,6 +22,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
@@ -268,7 +269,7 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
       @NonNls final String libraryPrefix = "library.";
       final String libPath = System.getProperty(libraryPrefix + name);
       if (libPath != null) {
-        final LibraryImpl libraryFromProperty = new LibraryImpl(name, null, LibraryTableBase.this, null);
+        final LibraryImpl libraryFromProperty = new LibraryImpl(name, null, LibraryTableBase.this, null, null);
         libraryFromProperty.addRoot(libPath, OrderRootType.CLASSES);
         return libraryFromProperty;
       }
@@ -293,8 +294,13 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
 
     @Override
     public Library createLibrary(String name, @Nullable PersistentLibraryKind kind) {
+      return createLibrary(name, kind, null);
+    }
+
+    @Override
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind kind, @Nullable ProjectModelExternalSource externalSource) {
       assertWritable();
-      final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null);
+      final LibraryImpl library = new LibraryImpl(name, kind, LibraryTableBase.this, null, externalSource);
       myLibraries.add(library);
       myLibraryByNameCache = null;
       return library;

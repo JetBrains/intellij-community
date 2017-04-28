@@ -15,7 +15,6 @@
  */
 package git4idea.log;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
@@ -56,12 +55,7 @@ public class GitBranchComparatorTest extends GitRefManagerTest {
 
   public void test_tracking_local_branch_is_more_important_than_nontracking_local_branch() throws IOException {
     Collection<VcsRef> refs = given("zoo", "origin/zoo", "feature");
-    refs = ContainerUtil.filter(refs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return !ref.getName().equals("origin/zoo");
-      }
-    });
+    refs = ContainerUtil.filter(refs, ref -> !ref.getName().equals("origin/zoo"));
     assertEquals("zoo", getTheMostPowerfulRef(refs).getName());
   }
 

@@ -15,8 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
@@ -45,12 +44,7 @@ public class MethodDeepestSuperSearcher implements QueryExecutor<PsiMethod, PsiM
                                                          Set<PsiMethod> guard,
                                                          @NotNull Processor<PsiMethod> processor) {
     if (guard != null && !guard.add(method)) return true;
-    PsiMethod[] supers = ApplicationManager.getApplication().runReadAction(new Computable<PsiMethod[]>() {
-      @Override
-      public PsiMethod[] compute() {
-        return method.findSuperMethods();
-      }
-    });
+    PsiMethod[] supers = ReadAction.compute(() -> method.findSuperMethods());
 
     if (supers.length == 0 && set.add(method) && !processor.process(method)) {
       return false;

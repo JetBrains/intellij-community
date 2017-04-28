@@ -281,13 +281,10 @@ public class CodeFormatterFacade {
       }
       else {
         Collection<PsiLanguageInjectionHost> injectionHosts = collectInjectionHosts(file, range);
-        PsiLanguageInjectionHost.InjectedPsiVisitor visitor = new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-          @Override
-          public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-            for (PsiLanguageInjectionHost.Shred place : places) {
-              Segment rangeMarker = place.getHostRangeMarker();
-              injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
-            }
+        PsiLanguageInjectionHost.InjectedPsiVisitor visitor = (injectedPsi, places) -> {
+          for (PsiLanguageInjectionHost.Shred place : places) {
+            Segment rangeMarker = place.getHostRangeMarker();
+            injectedFileRangesSet.add(TextRange.create(rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
           }
         };
         for (PsiLanguageInjectionHost host : injectionHosts) {

@@ -438,9 +438,7 @@ public class RefManagerImpl extends RefManager {
 
   @NotNull
   private static PsiAnchor createAnchor(@NotNull final PsiElement element) {
-    return ApplicationManager.getApplication().runReadAction(
-      (Computable<PsiAnchor>)() -> PsiAnchor.create(element)
-    );
+    return ReadAction.compute(() -> PsiAnchor.create(element));
   }
 
   public void initializeAnnotators() {
@@ -488,8 +486,8 @@ public class RefManagerImpl extends RefManager {
 
   @Nullable
   public RefElement getReference(final PsiElement elem, final boolean ignoreScope) {
-    if (ApplicationManager.getApplication().runReadAction((Computable<Boolean>)() -> elem == null || !elem.isValid() ||
-                                                                                 elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
+    if (ReadAction.compute(() -> elem == null || !elem.isValid() ||
+                                 elem instanceof LightElement || !(elem instanceof PsiDirectory) && !belongsToScope(elem, ignoreScope))) {
       return null;
     }
 
@@ -610,15 +608,14 @@ public class RefManagerImpl extends RefManager {
   private boolean belongsToScope(final PsiElement psiElement, final boolean ignoreScope) {
     if (psiElement == null || !psiElement.isValid()) return false;
     if (psiElement instanceof PsiCompiledElement) return false;
-    final PsiFile containingFile = ApplicationManager.getApplication().runReadAction((Computable<PsiFile>)psiElement::getContainingFile);
+    final PsiFile containingFile = ReadAction.compute(psiElement::getContainingFile);
     if (containingFile == null) {
       return false;
     }
     for (RefManagerExtension extension : myExtensions.values()) {
       if (!extension.belongsToScope(psiElement)) return false;
     }
-    final Boolean inProject = ApplicationManager.getApplication().runReadAction(
-      (Computable<Boolean>)() -> psiElement.getManager().isInProject(psiElement));
+    final Boolean inProject = ReadAction.compute(() -> psiElement.getManager().isInProject(psiElement));
     return inProject.booleanValue() && (ignoreScope || getScope() == null || getScope().contains(psiElement));
   }
 

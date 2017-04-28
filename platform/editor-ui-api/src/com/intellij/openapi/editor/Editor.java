@@ -393,4 +393,7 @@ public interface Editor extends UserDataHolder {
 
   @NotNull
   InlayModel getInlayModel();
+
+  @NotNull
+  EditorKind getEditorKind();
 }

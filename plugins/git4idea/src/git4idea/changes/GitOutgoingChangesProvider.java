@@ -26,13 +26,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitBranch;
 import git4idea.GitBranchesSearcher;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
-import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +60,8 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (base == null) {
       return new Pair<>(null, Collections.<CommittedChangeList>emptyList());
     }
-    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot, new Consumer<GitSimpleHandler>() {
-      public void consume(final GitSimpleHandler handler) {
-        handler.addParameters(base.asString() + "..HEAD");
-      }
-    });
+    final List<GitCommittedChangeList> lists = GitUtil.getLocalCommittedChanges(myProject, vcsRoot,
+                                                                                handler -> handler.addParameters(base.asString() + "..HEAD"));
     return new Pair<>(base, map(lists, identity()));
   }
 

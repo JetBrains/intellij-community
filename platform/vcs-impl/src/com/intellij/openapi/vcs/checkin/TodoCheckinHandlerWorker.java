@@ -24,6 +24,7 @@ import com.intellij.diff.util.TextDiffType;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -47,7 +48,6 @@ import com.intellij.psi.search.IndexPatternOccurrence;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.searches.IndexPatternSearch;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -117,12 +117,7 @@ public class TodoCheckinHandlerWorker {
       myPsiFile = null;
 
       if (afterFile.isValid()) {
-        myPsiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          @Override
-          public PsiFile compute() {
-            return myPsiManager.findFile(afterFile);
-          }
-        });
+        myPsiFile = ReadAction.compute(() -> myPsiManager.findFile(afterFile));
       }
       if (myPsiFile == null) {
         mySkipped.add(Pair.create(change.getAfterRevision().getFile(), ourInvalidFile));
@@ -237,12 +232,8 @@ public class TodoCheckinHandlerWorker {
 
     private void checkEditedFragment(TodoItem newTodoItem) {
       if (myBeforeFile == null) {
-        myBeforeFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-          @Override
-          public PsiFile compute() {
-            return myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
-          }
-        });
+        myBeforeFile = ReadAction
+          .compute(() -> myPsiFileFactory.createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent));
       }
       if (myOldItems == null)  {
         final Collection<IndexPatternOccurrence> all =
@@ -264,12 +255,8 @@ public class TodoCheckinHandlerWorker {
         final StepIntersection<LineFragment, TodoItem> intersection = new StepIntersection<>(
           LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR, myOldItems);
         myOldTodoTexts = new HashSet<>();
-        intersection.process(Collections.singletonList(myCurrentLineFragment), new PairConsumer<LineFragment, TodoItem>() {
-          @Override
-          public void consume(LineFragment lineFragment, TodoItem todoItem) {
-            myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent));
-          }
-        });
+        intersection.process(Collections.singletonList(myCurrentLineFragment),
+                             (lineFragment, todoItem) -> myOldTodoTexts.add(getTodoText(todoItem, myBeforeContent)));
       }
       final String text = getTodoText(newTodoItem, myAfterContent);
       if (! myOldTodoTexts.contains(text)) {

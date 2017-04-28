@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -67,4 +68,7 @@ public interface LibraryEditor {
   LibraryType<?> getType();
 
   void addRoots(Collection<? extends OrderRoot> roots);
+
+  @Nullable
+  ProjectModelExternalSource getExternalSource();
 }

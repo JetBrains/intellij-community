@@ -92,7 +92,6 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
   private final List<DiffTool> myAdditionTools = new SmartList<>();
   public static final DiffTool INTERNAL_DIFF = new FrameDiffTool();
 
-  public static final Key<Boolean> EDITOR_IS_DIFF_KEY = new Key<>("EDITOR_IS_DIFF_KEY");
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
     @Override
     public boolean avaliableIn(Editor editor) {
