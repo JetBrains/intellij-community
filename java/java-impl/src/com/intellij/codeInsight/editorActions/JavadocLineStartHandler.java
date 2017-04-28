@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,7 +29,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Nullable;
 
-public class JavadocLineStartHandler extends EditorWriteActionHandler {
+public class JavadocLineStartHandler extends EditorActionHandler {
   private static final String WHITESPACE = " \t";
   
   private final EditorActionHandler myOriginalHandler;
@@ -41,7 +40,7 @@ public class JavadocLineStartHandler extends EditorWriteActionHandler {
   }
 
   @Override
-  public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
+  protected void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
     assert caret != null;
     Project project = editor.getProject();
     if (project != null && EditorSettingsExternalizable.getInstance().isSmartHome()) {
