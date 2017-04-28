@@ -1365,6 +1365,8 @@
 
     <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
 
+    <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
+
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
                                  id="editor.preferences.javadocOptions"
                                  key="javadoc.generate.message.title"
