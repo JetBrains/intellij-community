@@ -37,7 +37,7 @@ fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   return byteOut
 }
 
-private fun unarchiveState(state: ByteArray) = SnappyFramedInputStream(ByteArrayInputStream(state), false).use { readElement(it) }
+private fun unarchiveState(state: ByteArray) = SnappyFramedInputStream(ByteArrayInputStream(state), false).use { deserializeElementFromBinary(it) }
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray

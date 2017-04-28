@@ -28,7 +28,7 @@ internal class ExternalProjectStorage(private val module: Module, storageManager
 
   override public fun loadLocalData(): Element? {
     val data = manager.nameToData.get(module.name) ?: return null
-    return ByteArrayInputStream(data).use { readElement(it) }
+    return ByteArrayInputStream(data).use { deserializeElementFromBinary(it) }
   }
 
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
