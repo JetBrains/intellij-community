@@ -191,6 +191,11 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> implements S
   }
 
   @Override
+  public int getIndent(@NotNull KeymapScheme scheme) {
+    return null == scheme.getParent() ? 0 : 1;
+  }
+
+  @Override
   protected boolean supportsProjectSchemes() {
     return false;
   }

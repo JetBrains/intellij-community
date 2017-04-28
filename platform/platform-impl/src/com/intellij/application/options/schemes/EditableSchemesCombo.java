@@ -158,6 +158,11 @@ public class EditableSchemesCombo<T extends Scheme> {
         return mySchemesPanel.getModel().isProjectScheme(scheme);
       }
 
+      @Override
+      protected int getIndent(@NotNull T scheme) {
+        return mySchemesPanel.getModel().getIndent(scheme);
+      }
+
       @NotNull
       @Override
       protected SimpleTextAttributes getSchemeAttributes(T scheme) {
