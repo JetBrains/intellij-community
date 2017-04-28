@@ -26,6 +26,7 @@ task setupAndroidSdk {
   def outputGradle ="$project.buildDir/android-sdk/tools/external/gradle"
   outputs.dir(outputDir)
   outputs.dir(outputGradle)
+  outputs.dir("$project.buildDir/android-sdk/prebuilts/tools/common");
   outputs.file(archivePath)
   outputs.file(gradlePath)
 
@@ -51,5 +52,7 @@ task setupAndroidSdk {
       from file(gradlePath)
       into outputGradle
     }
+    file("$project.buildDir/android-sdk/prebuilts/tools/common/m2/repository").mkdirs()
+    file("$project.buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
   }
 }
