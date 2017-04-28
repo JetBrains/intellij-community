@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TerminatorHandler extends HandlerBase {
+public class TerminatorHandler extends CallTraceHandlerBase {
   private final PeekTracerHandler myPeekTracerHandler;
 
   TerminatorHandler(@NotNull GenericType beforeType) {

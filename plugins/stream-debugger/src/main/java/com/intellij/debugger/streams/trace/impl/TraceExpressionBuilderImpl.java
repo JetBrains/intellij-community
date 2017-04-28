@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.psi.impl.LambdaToAnonymousTransformer;
 import com.intellij.debugger.streams.psi.impl.MethodReferenceToLambdaTransformer;
 import com.intellij.debugger.streams.psi.impl.ToObjectInheritorTransformer;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
+import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.impl.handler.HandlerFactory;
 import com.intellij.debugger.streams.trace.impl.handler.PeekCall;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
@@ -198,20 +199,16 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     return result;
   }
 
-  public interface StreamCallTraceHandler {
+  public interface StreamChainTraceHandler extends TraceHandler {
     @NotNull
-    String additionalVariablesDeclaration();
+    String getTraceExpression(@NotNull StreamChain chain);
+  }
 
+  public interface StreamCallTraceHandler extends TraceHandler {
     @NotNull
     List<IntermediateStreamCall> additionalCallsBefore();
 
     @NotNull
     List<IntermediateStreamCall> additionalCallsAfter();
-
-    @NotNull
-    String prepareResult();
-
-    @NotNull
-    String getResultExpression();
   }
 }

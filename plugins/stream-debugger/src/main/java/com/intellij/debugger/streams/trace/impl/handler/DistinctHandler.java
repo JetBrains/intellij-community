@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class DistinctHandler extends HandlerBase {
+public class DistinctHandler extends CallTraceHandlerBase {
   private final PeekTracerHandler myPeekTracer;
   private final HashMapVariableImpl myStoreMapVariable;
   private final HashMapVariableImpl myResolveMapVariable;

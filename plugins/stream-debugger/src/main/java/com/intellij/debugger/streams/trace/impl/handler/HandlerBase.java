@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.TraceHandler;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public abstract class HandlerBase implements TraceExpressionBuilderImpl.StreamCallTraceHandler {
+public abstract class HandlerBase implements TraceHandler {
   private static final String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
 
   @NotNull

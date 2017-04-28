@@ -16,8 +16,7 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -26,40 +25,28 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerHandler extends HandlerBase implements TraceExpressionBuilderImpl.StreamCallTraceHandler {
-  private final PeekTracerHandler myPeekTracerHandler;
-
-  ProducerHandler(@NotNull GenericType afterType) {
-    myPeekTracerHandler = new PeekTracerHandler(0, "producer", GenericType.OBJECT, afterType);
-  }
-
+public class StreamChainTraceHandlerImpl extends HandlerBase implements TraceExpressionBuilderImpl.StreamChainTraceHandler {
   @NotNull
   @Override
-  protected List<Variable> getVariables() {
-    return myPeekTracerHandler.getVariables();
-  }
-
-  @NotNull
-  @Override
-  public List<IntermediateStreamCall> additionalCallsBefore() {
-    return Collections.emptyList();
-  }
-
-  @NotNull
-  @Override
-  public List<IntermediateStreamCall> additionalCallsAfter() {
-    return myPeekTracerHandler.additionalCallsAfter();
+  public String getTraceExpression(@NotNull StreamChain chain) {
+    return "";
   }
 
   @NotNull
   @Override
   public String prepareResult() {
-    return myPeekTracerHandler.prepareResult();
+    return "";
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return myPeekTracerHandler.getResultExpression();
+    return "";
+  }
+
+  @NotNull
+  @Override
+  protected List<Variable> getVariables() {
+    return Collections.emptyList();
   }
 }
