@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.LightColors;
 import org.gradle.util.GUtil;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
@@ -101,7 +102,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         if (settings.isDisableWrapperSourceDistributionNotification()) return null;
         if (!showUseDistributionWithSourcesTip(rootProjectPath)) return null;
 
-        final EditorNotificationPanel panel = new EditorNotificationPanel();
+        final EditorNotificationPanel panel = new EditorNotificationPanel(LightColors.SLIGHTLY_GREEN);
         panel.setText(GradleBundle.message("gradle.notifications.use.distribution.with.sources"));
         panel.createActionLabel(GradleBundle.message("gradle.notifications.hide.tip"), () -> {
           settings.setDisableWrapperSourceDistributionNotification(true);
