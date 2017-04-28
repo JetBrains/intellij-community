@@ -113,7 +113,7 @@ public class LambdaUtil {
     if (type instanceof PsiIntersectionType) {
       return extractFunctionalConjunct((PsiIntersectionType)type) != null;
     }
-    return isFunctionalClass(PsiUtil.resolveGenericsClassInType(type).getElement());
+    return isFunctionalClass(PsiUtil.resolveClassInClassTypeOnly(type));
   }
 
   @Contract("null -> false")
