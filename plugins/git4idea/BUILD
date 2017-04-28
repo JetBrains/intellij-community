@@ -7,6 +7,7 @@ iml_module(
         "src",
         "gen",
     ],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     resources = ["resources"],
     tags = ["managed"],
     test_srcs = ["tests"],

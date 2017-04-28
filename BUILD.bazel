@@ -294,6 +294,7 @@ iml_module(
         "java/java-analysis-impl/src",
         "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src",
     ],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
@@ -432,6 +433,7 @@ iml_module(
         "java/debugger/impl/src",
         "java/compiler/impl/src",
     ],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     resources = ["platform/external-system-impl/resources"],
     tags = ["managed"],
     test_srcs = [

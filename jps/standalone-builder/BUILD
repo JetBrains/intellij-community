@@ -3,6 +3,7 @@ load("//tools/base/bazel:bazel.bzl", "iml_module")
 iml_module(
     name = "jps-standalone-builder",
     srcs = ["src"],
+    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/idea/jps/model-serialization:jps-model-serialization"],
