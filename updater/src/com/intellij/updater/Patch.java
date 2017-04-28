@@ -316,11 +316,11 @@ public class Patch {
     }
 
     List<PatchAction> appliedActions = new ArrayList<>();
+    List<File> createdDirectories = new ArrayList<>();
     boolean shouldRevert = false;
     boolean cancelled = false;
-    try {
-      List<File> createdDirectories = new ArrayList<>();
 
+    try {
       forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
@@ -340,13 +340,6 @@ public class Patch {
           }
         }
       });
-
-      for (File directory : createdDirectories) {
-        if (Utils.isEmptyDirectory(directory)) {
-          Runner.logger().info("Pruning empty directory: " + directory);
-          Utils.delete(directory);
-        }
-      }
     }
     catch (OperationCancelledException e) {
       Runner.printStackTrace(e);
@@ -366,6 +359,14 @@ public class Patch {
       appliedActions.clear();
 
       if (cancelled) throw new OperationCancelledException();
+    }
+    else {
+      for (File directory : createdDirectories) {
+        if (Utils.isEmptyDirectory(directory)) {
+          Runner.logger().info("Pruning empty directory: " + directory);
+          Utils.delete(directory);
+        }
+      }
     }
 
     // on OS X we need to update bundle timestamp to reset Info.plist caches.
