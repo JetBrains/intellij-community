@@ -317,6 +317,7 @@ public class Patch {
 
     List<PatchAction> appliedActions = new ArrayList<>();
     List<File> createdDirectories = new ArrayList<>();
+    Set<File> createdOptionalFiles = new HashSet<>();
     boolean shouldRevert = false;
     boolean cancelled = false;
 
@@ -336,6 +337,9 @@ public class Patch {
             File file = action.getFile(toDir);
             if (file.isDirectory()) {
               createdDirectories.add(0, file);
+            }
+            else if (action.isOptional()) {
+              createdOptionalFiles.add(file);
             }
           }
         }
@@ -362,7 +366,8 @@ public class Patch {
     }
     else {
       for (File directory : createdDirectories) {
-        if (Utils.isEmptyDirectory(directory)) {
+        File[] children = directory.listFiles();
+        if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
           Runner.logger().info("Pruning empty directory: " + directory);
           Utils.delete(directory);
         }
