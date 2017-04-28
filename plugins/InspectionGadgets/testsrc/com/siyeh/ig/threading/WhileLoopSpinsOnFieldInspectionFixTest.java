@@ -37,19 +37,13 @@ public class WhileLoopSpinsOnFieldInspectionFixTest extends LightQuickFixParamet
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    if(getTestName(false).endsWith("Java9.java")) {
-      return LanguageLevel.JDK_1_9;
-    }
+  protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_8;
   }
 
   @Override
   protected Sdk getProjectJDK() {
-    if(getTestName(false).endsWith("Java9.java")) {
-      return IdeaTestUtil.getMockJdk9();
-    }
-    return IdeaTestUtil.getMockJdk18();
+    return IdeaTestUtil.getMockJdk9();
   }
 
   public void test() throws Exception {
