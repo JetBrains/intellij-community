@@ -286,7 +286,7 @@ public class Patch {
                result != null &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
                deletedPaths.contains(mapPath(action.getPath()))) {
-        // create action + the same element was deleted + validated as already exists
+        // do not warn about files which are going to be deleted
         result = null;
       }
 
