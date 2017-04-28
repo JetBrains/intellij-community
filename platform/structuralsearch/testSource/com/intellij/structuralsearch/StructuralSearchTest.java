@@ -1727,6 +1727,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}"));
     assertEquals("Find class within type hierarchy with not, 2", 1,
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )]{}"));
+    assertEquals("Search in hierarchy on class identifier", 2, findMatchesCount(s1, "class '_X:*B2 {}"));
   }
 
   public void testFindTryWithoutProperFinally() {
