@@ -16,7 +16,7 @@ class NoInferenceResult {
 
     void test() {
         m((String s1) ->  <error descr="Target type of a lambda conversion must be an interface">(String s2) ->  s1 + s2</error>);
-        m(<error descr="B is not a functional interface">(String s1) ->  {return (String s2) ->  s1 + s2;}</error>);
+        m((String s1) ->  {return <error descr="Target type of a lambda conversion must be an interface">(String s2) ->  s1 + s2</error>;});
 
         m((String s1) -> s1.length());
         m((String s1) -> s1);

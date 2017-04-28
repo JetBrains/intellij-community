@@ -175,6 +175,8 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testRecursiveTypeWithCapture() { doTest(); }
   public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
 
+  public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
+
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() throws Exception {
     doTest();
   }

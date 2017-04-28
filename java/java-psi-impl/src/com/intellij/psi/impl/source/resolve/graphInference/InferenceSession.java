@@ -260,7 +260,8 @@ public class InferenceSession {
             if (isTypeParameterType(owner, paramType)) return false;
           }
         }
-        else if (expectedReturnType != null && parent instanceof PsiLambdaExpression) {
+        else if (expectedReturnType != null && (parent instanceof PsiLambdaExpression ||
+                                                parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) != null)) {
           if (isTypeParameterType(method, expectedReturnType)) return false;
           paramType = expectedReturnType;
         }
