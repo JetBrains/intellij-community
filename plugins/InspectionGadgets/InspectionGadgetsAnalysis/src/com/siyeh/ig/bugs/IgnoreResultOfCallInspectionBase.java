@@ -17,6 +17,8 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -173,6 +175,18 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       if (anno != null &&
           (honorInferred || !AnnotationUtil.isInferredAnnotation(anno)) &&
           Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure"))) {
+        String text = AnnotationUtil.getStringAttributeValue(anno, null);
+        if (text != null) {
+          try {
+            if (StandardMethodContract.parseContract(text).stream()
+              .anyMatch(c -> c.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION)) {
+              return;
+            }
+          }
+          catch (StandardMethodContract.ParseException ignored) {
+          }
+        }
+
         registerMethodCallOrRefError(call, aClass);
         return;
       }
