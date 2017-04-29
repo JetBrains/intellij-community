@@ -1,10 +1,9 @@
 import dis
 from _pydev_imps._pydev_saved_modules import threading
 from _pydevd_bundle.pydevd_additional_thread_info import PyDBAdditionalThreadInfo
-from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_THREAD_SUSPEND
-from _pydevd_bundle.pydevd_constants import STATE_RUN, STATE_SUSPEND, get_thread_id
+from _pydevd_bundle.pydevd_comm import get_global_debugger
 from _pydevd_bundle.pydevd_dont_trace_files import DONT_TRACE
-from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict
+from _pydevd_frame_eval.pydevd_frame_tracing import pydev_trace_code_wrapper, update_globals_dict, dummy_tracing_holder
 from _pydevd_frame_eval.pydevd_modify_bytecode import insert_code
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
@@ -34,12 +33,8 @@ def set_use_code_extra(new_value):
     UseCodeExtraHolder.use_code_extra = new_value
 
 
-def enable_tracing_debugger_for_frame(main_debugger, frame, thread_id):
-    main_debugger.SetTrace(main_debugger.trace_dispatch)
-    main_debugger.set_trace_for_frame_and_parents(frame)
-    if thread_id not in main_debugger.disable_tracing_after_exit_frames:
-        main_debugger.disable_tracing_after_exit_frames[thread_id] = set()
-    main_debugger.disable_tracing_after_exit_frames[thread_id].add(frame)
+cpdef dummy_trace_dispatch(frame, str event, arg):
+    return None
 
 
 cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
@@ -105,12 +100,8 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             additional_info.is_tracing = False
             return _PyEval_EvalFrameDefault(frame_obj, exc)
 
-        main_debugger = get_global_debugger()
-        if (additional_info.pydev_state == STATE_SUSPEND and t.stop_reason == CMD_THREAD_SUSPEND) or \
-            (additional_info.pydev_state == STATE_RUN and main_debugger.disable_tracing_after_exit_frames):
-            main_debugger.process_internal_commands()
-
         was_break = False
+        main_debugger = get_global_debugger()
         breakpoints = main_debugger.breakpoints.get(abs_path_real_path_and_base[1])
         code_object = frame.f_code
         if breakpoints:
@@ -128,7 +119,7 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
                             frame_obj.f_code = <PyCodeObject *> new_code
                             was_break = True
                         else:
-                            enable_tracing_debugger_for_frame(main_debugger, frame, get_thread_id(t))
+                            main_debugger.set_trace_for_frame_and_parents(frame)
                             was_break = False
                             break
             if was_break:
@@ -159,6 +150,8 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
 def frame_eval_func():
     cdef PyThreadState *state = PyThreadState_Get()
     state.interp.eval_frame = get_bytecode_while_frame_eval
+    global dummy_tracing_holder
+    dummy_tracing_holder.set_trace_func(dummy_trace_dispatch)
 
 def stop_frame_eval():
     cdef PyThreadState *state = PyThreadState_Get()

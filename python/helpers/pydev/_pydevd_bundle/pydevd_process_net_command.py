@@ -17,7 +17,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, pydevd_check_frame_for_new_breakpoint
+    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, enable_tracing_in_frames
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, \
     STATE_RUN
 
@@ -328,7 +328,7 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                 py_db.set_tracing_for_untraced_contexts(overwrite_prev_trace=True)
                 if py_db.frame_eval_func is not None:
-                    pydevd_check_frame_for_new_breakpoint(py_db, breakpoint, file)
+                    enable_tracing_in_frames(py_db)
 
             elif cmd_id == CMD_REMOVE_BREAK:
                 #command to remove some breakpoint
