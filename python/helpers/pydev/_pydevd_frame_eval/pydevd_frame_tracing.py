@@ -7,6 +7,16 @@ from _pydevd_bundle.pydevd_comm import get_global_debugger, CMD_SET_BREAK
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER
 
 
+class DummyTracingHolder:
+    dummy_trace_func = None
+
+    def set_trace_func(self, trace_func):
+        self.dummy_trace_func = trace_func
+
+
+dummy_tracing_holder = DummyTracingHolder()
+
+
 def update_globals_dict(globals_dict):
     new_globals = {'_pydev_stop_at_break': _pydev_stop_at_break}
     globals_dict.update(new_globals)
@@ -81,7 +91,7 @@ def _pydev_stop_at_break():
     if t.additional_info.is_tracing:
         return
 
-    if t.additional_info.pydev_step_cmd == -1 and sys.gettrace() is None:
+    if t.additional_info.pydev_step_cmd == -1 and frame.f_trace in (None, dummy_tracing_holder.dummy_trace_func):
         # do not handle breakpoints while stepping, because they're handled by old tracing function
         t.additional_info.is_tracing = True
         debugger = get_global_debugger()
