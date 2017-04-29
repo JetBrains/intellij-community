@@ -8,7 +8,6 @@ import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
-import ru.adelf.idea.dotenv.util.DotEnvPsiElementsVisitor;
 
 import java.util.Collection;
 import java.util.Set;

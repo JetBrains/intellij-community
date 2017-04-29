@@ -15,9 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.util.PsiUtil;
 
-import java.util.*;
-
-import static ru.adelf.idea.dotenv.api.EnvironmentVariablesApi.getKeyDeclarations;
+import java.util.Map;
 
 public class DotEnvCompletionContributor extends CompletionContributor implements GotoDeclarationHandler {
     public DotEnvCompletionContributor() {
@@ -30,7 +28,7 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
                     return;
                 }
 
-                for(Map.Entry<String, String> entry: EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
+                for(Map.Entry<String, String> entry : EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
                     LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
 
                     if(StringUtils.isNotEmpty(entry.getValue())) {

@@ -3,21 +3,11 @@ package ru.adelf.idea.dotenv.extension;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
-import ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.php.PhpEnvironmentCallsVisitor;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
-
-import java.util.Collections;
-import java.util.HashSet;
 
 public class DotEnvKeyGotoHandler implements GotoDeclarationHandler {
 

@@ -1,8 +1,8 @@
 package ru.adelf.idea.dotenv.docker;
 
+import com.intellij.docker.dockerFile.DockerFileType;
 import com.intellij.docker.dockerFile.DockerPsiFile;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.docker.dockerFile.DockerFileType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.indexing.FileContent;

@@ -50,7 +50,7 @@ public class DockerComposeYamlPsiElementsVisitor  extends PsiRecursiveElementVis
      * FOO: [foobar]
      */
     @NotNull
-    private static Collection<YAMLSequenceItem> getSequenceItems(@NotNull YAMLKeyValue yamlKeyValue) {
+    private Collection<YAMLSequenceItem> getSequenceItems(@NotNull YAMLKeyValue yamlKeyValue) {
         PsiElement yamlSequence = yamlKeyValue.getLastChild();
 
         if(yamlSequence instanceof YAMLSequence) {

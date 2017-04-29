@@ -1,10 +1,11 @@
-package ru.adelf.idea.dotenv.util;
+package ru.adelf.idea.dotenv;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collection;
 import java.util.HashSet;
