@@ -51,7 +51,7 @@ def _on_forked_process():
 
 def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
-        global_debugger.SetTrace(global_debugger.trace_dispatch, global_debugger.frame_eval_func)
+        global_debugger.SetTrace(global_debugger.trace_dispatch, global_debugger.frame_eval_func, global_debugger.dummy_trace_dispatch)
 
 #===============================================================================
 # Things related to monkey-patching

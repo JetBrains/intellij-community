@@ -1,5 +1,5 @@
 try:
-    from _pydevd_frame_eval.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, set_use_code_extra
+    from _pydevd_frame_eval.pydevd_frame_evaluator import frame_eval_func, stop_frame_eval, set_use_code_extra, dummy_trace_dispatch
 except ImportError:
     try:
         import struct
