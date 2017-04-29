@@ -34,9 +34,9 @@ public class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
         String key = ((StringLiteralExpression)parameters[0]).getContents();
 
         if(collectedKeys.containsKey(key)) {
-            collectedKeys.get(key).add(expression);
+            collectedKeys.get(key).add(parameters[0]);
         } else {
-            collectedKeys.put(key, new HashSet<>(Collections.singletonList(expression)));
+            collectedKeys.put(key, new HashSet<>(Collections.singletonList(parameters[0])));
         }
     }
 
