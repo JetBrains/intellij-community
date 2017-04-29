@@ -136,9 +136,13 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
+    javaParameters.getClassPath().add(getJUnit5RtFile());
+  }
+
+  public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
     String junit5Name = junit4Rt.getName().replace("junit", "junit5");
-    javaParameters.getClassPath().add(new File(junit4Rt.getParent(), junit5Name));
+    return new File(junit4Rt.getParent(), junit5Name);
   }
 
   @Override
