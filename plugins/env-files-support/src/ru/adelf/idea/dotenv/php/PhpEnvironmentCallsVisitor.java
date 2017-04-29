@@ -1,14 +1,15 @@
-package ru.adelf.idea.dotenv.util;
+package ru.adelf.idea.dotenv.php;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.jetbrains.php.lang.psi.elements.FunctionReference;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.util.PsiUtil;
 
 import java.util.*;
 
-public class DotEnvCallsVisitor extends PsiRecursiveElementVisitor {
+public class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
     final private Map<String, Set<PsiElement>> collectedKeys = new HashMap<>();
 
     @Override
@@ -45,11 +46,7 @@ public class DotEnvCallsVisitor extends PsiRecursiveElementVisitor {
     }
 
     @NotNull
-    public PsiElement[] getTargets(String key) {
-        Set<PsiElement> psiElements = collectedKeys.get(key);
-
-        if(psiElements == null) return new PsiElement[0];
-
-        return psiElements.toArray(new PsiElement[0]);
+    public Set<PsiElement> getTargets(String key) {
+        return collectedKeys.get(key);
     }
 }

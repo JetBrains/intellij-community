@@ -5,25 +5,19 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
-import ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex;
-import ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex;
-import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.util.PsiUtil;
 
 import java.util.*;
+
+import static ru.adelf.idea.dotenv.api.EnvironmentVariablesApi.getKeyDeclarations;
 
 public class DotEnvCompletionContributor extends CompletionContributor implements GotoDeclarationHandler {
     public DotEnvCompletionContributor() {
@@ -32,32 +26,11 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
             protected void addCompletions(@NotNull CompletionParameters completionParameters, ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if(psiElement == null) {
+                if(psiElement == null || getStringLiteral(psiElement) == null) {
                     return;
                 }
 
-                if(getStringLiteral(psiElement) == null) return;
-
-                Project project = psiElement.getProject();
-                FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-
-                Map<String, String> keys = new HashMap<>();
-
-                fileBasedIndex.processAllKeys(DotEnvKeyValuesIndex.KEY, s -> {
-                    if(fileBasedIndex.getContainingFiles(DotEnvKeyValuesIndex.KEY, s, GlobalSearchScope.allScope(project)).size() > 0) {
-
-                        String[] splitParts = s.split("=");
-
-                        String key = splitParts[0].trim();
-
-                        if(keys.containsKey(key)) return true;
-
-                        keys.put(key, s.substring(splitParts[0].length() + 1).trim());
-                    }
-                    return true;
-                }, project);
-
-                for(Map.Entry<String, String> entry: keys.entrySet()) {
+                for(Map.Entry<String, String> entry: EnvironmentVariablesApi.getAllKeyValues(psiElement.getProject()).entrySet()) {
                     LookupElementBuilder lockup = LookupElementBuilder.create(entry.getKey());
 
                     if(StringUtils.isNotEmpty(entry.getValue())) {
@@ -84,26 +57,7 @@ public class DotEnvCompletionContributor extends CompletionContributor implement
             return new PsiElement[0];
         }
 
-        final Project project = psiElement.getProject();
-        String key = stringLiteral.getContents();
-        List<PsiElement> targets = new ArrayList<>();
-
-        FileBasedIndex.getInstance().getFilesWithKey(DotEnvKeysIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
-            PsiFile psiFileTarget = PsiManager.getInstance(project).findFile(virtualFile);
-            if(psiFileTarget == null) {
-                return true;
-            }
-
-            for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
-                if(provider.acceptFile(virtualFile)) {
-                    targets.addAll(provider.getTargetsByKey(key, psiFileTarget));
-                }
-            }
-
-            return true;
-        }, GlobalSearchScope.allScope(project));
-
-        return targets.toArray(new PsiElement[0]);
+        return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), stringLiteral.getContents());
     }
 
     @Nullable

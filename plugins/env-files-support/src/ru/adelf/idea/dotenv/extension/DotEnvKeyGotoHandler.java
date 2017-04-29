@@ -10,9 +10,11 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex;
 import ru.adelf.idea.dotenv.psi.DotEnvProperty;
-import ru.adelf.idea.dotenv.util.DotEnvCallsVisitor;
+import ru.adelf.idea.dotenv.php.PhpEnvironmentCallsVisitor;
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -33,22 +35,7 @@ public class DotEnvKeyGotoHandler implements GotoDeclarationHandler {
             return new PsiElement[0];
         }
 
-        String key = psiElement.getText().split("=")[0].trim();
-        final DotEnvCallsVisitor visitor = new DotEnvCallsVisitor();
-        Project project = psiElement.getProject();
-
-        FileBasedIndex.getInstance().getFilesWithKey(DotEnvUsagesIndex.KEY, new HashSet<>(Collections.singletonList(key)), virtualFile -> {
-            PsiFile psiFileTarget = PsiManager.getInstance(project).findFile(virtualFile);
-            if(psiFileTarget == null) {
-                return true;
-            }
-
-            psiFileTarget.acceptChildren(visitor);
-
-            return true;
-        }, GlobalSearchScope.allScope(project));
-
-        return visitor.getTargets(key);
+        return EnvironmentVariablesApi.getKeyUsages(psiElement.getProject(), EnvironmentVariablesUtil.getKeyFromString(psiElement.getText()));
     }
 
     @Nullable

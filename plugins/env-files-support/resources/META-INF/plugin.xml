@@ -28,6 +28,7 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider"/>
+    <extensionPoint qualifiedName="ru.adelf.idea.dotenv.environmentVariablesUsagesProvider" interface="ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider"/>
   </extensionPoints>
 
   <depends>com.jetbrains.php</depends>
@@ -50,6 +51,7 @@
 
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
     <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.DotEnvVariablesProvider"/>
+    <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.php.PhpEnvironmentVariablesUsagesProvider"/>
   </extensions>
 
   <actions>

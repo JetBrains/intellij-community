@@ -7,8 +7,12 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
 import com.jetbrains.php.lang.PhpFileType;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ru.adelf.idea.dotenv.util.DotEnvCallsVisitor;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
+import ru.adelf.idea.dotenv.php.PhpEnvironmentCallsVisitor;
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,14 +34,10 @@ public class DotEnvUsagesIndex extends FileBasedIndexExtension<String, Void> {
         return fileContent -> {
             final Map<String, Void> map = new HashMap<>();
 
-            PsiFile psiFile = fileContent.getPsiFile();
-
-            DotEnvCallsVisitor visitor = new DotEnvCallsVisitor();
-
-            psiFile.acceptChildren(visitor);
-
-            for(String key: visitor.getKeys()) {
-                map.put(key, null);
+            for(EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.USAGES_PROVIDERS) {
+                for(String key : provider.getKeys(fileContent)) {
+                    map.put(key, null);
+                }
             }
 
             return map;
@@ -59,7 +59,13 @@ public class DotEnvUsagesIndex extends FileBasedIndexExtension<String, Void> {
     @NotNull
     @Override
     public FileBasedIndex.InputFilter getInputFilter() {
-        return file -> file.getFileType().equals(PhpFileType.INSTANCE);
+        return file -> {
+            for(EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.USAGES_PROVIDERS) {
+                if(provider.acceptFile(file)) return true;
+            }
+
+            return false;
+        };
     }
 
     @Override
