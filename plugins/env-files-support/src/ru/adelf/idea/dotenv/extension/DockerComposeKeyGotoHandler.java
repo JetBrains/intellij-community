@@ -22,6 +22,10 @@ public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
             return new PsiElement[0];
         }
 
+        if(!psiElement.getContainingFile().getName().equals("docker-compose.yml") && !psiElement.getContainingFile().getName().equals("docker-compose.yaml")) {
+            return new PsiElement[0];
+        }
+
         psiElement = psiElement.getParent();
 
         if(!(psiElement instanceof YAMLScalar)) {

@@ -2,4 +2,8 @@
   <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
     <environmentVariablesProvider implementation="ru.adelf.idea.dotenv.docker.DockerComposeYamlVariablesProvider"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DockerComposeKeyGotoHandler"/>
+  </extensions>
 </idea-plugin>

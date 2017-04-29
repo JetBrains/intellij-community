@@ -41,8 +41,6 @@
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvCompletionContributor"/>
     <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DotEnvKeyGotoHandler"/>
 
-    <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.extension.DockerComposeKeyGotoHandler"/>
-
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeysIndex"/>
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvKeyValuesIndex"/>
     <fileBasedIndex implementation="ru.adelf.idea.dotenv.indexing.DotEnvUsagesIndex"/>
