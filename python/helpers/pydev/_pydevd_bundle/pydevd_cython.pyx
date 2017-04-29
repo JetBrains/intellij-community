@@ -9,7 +9,7 @@ from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 # from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 3
+version = 4
 
 if not hasattr(sys, '_current_frames'):
 
@@ -556,16 +556,6 @@ cdef class PyDBFrame:
                         if can_skip and is_return and main_debugger.show_return_values and info.pydev_step_cmd == 108 and frame.f_back is info.pydev_step_stop:
                             # trace function for showing return values after step over
                             can_skip = False
-
-                if main_debugger.frame_eval_func and event == 'return' and info.pydev_step_cmd == -1:
-                    frames_set = main_debugger.disable_tracing_after_exit_frames.get(get_thread_id(thread), None)
-                    if frames_set is not None:
-                        if frame in frames_set:
-                            frames_set.remove(frame)
-                        if len(frames_set) == 0:
-                            # there were some frames, but we exited all of them, stop tracing
-                            main_debugger.disable_tracing_after_exit_frames.pop(get_thread_id(thread))
-                            main_debugger.SetTrace(None)
 
                 # Let's check to see if we are in a function that has a breakpoint. If we don't have a breakpoint,
                 # we will return nothing for the next trace
