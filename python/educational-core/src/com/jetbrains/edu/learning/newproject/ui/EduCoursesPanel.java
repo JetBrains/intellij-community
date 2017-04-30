@@ -65,7 +65,7 @@ public class EduCoursesPanel extends JPanel {
     myCourses = new StudyProjectGenerator().getCoursesUnderProgress(true, "Getting Available Courses", null);
     updateModel(myCourses);
 
-    myCoursesList.setCellRenderer(new ListCellRendererWrapper<Course>() {
+    ListCellRendererWrapper<Course> renderer = new ListCellRendererWrapper<Course>() {
       @Override
       public void customize(JList list, Course value, int index, boolean selected, boolean hasFocus) {
         setText(value.getName());
@@ -74,7 +74,9 @@ public class EduCoursesPanel extends JPanel {
           setIcon(generator.getLogo());
         }
       }
-    });
+    };
+    myCoursesList.setCellRenderer(renderer);
+    myCoursesList.setFixedCellHeight(30);
     myLocationField = createLocationComponent();
     myCoursesList.addListSelectionListener(new ListSelectionListener() {
       @Override
