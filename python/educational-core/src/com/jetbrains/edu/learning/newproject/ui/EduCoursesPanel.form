@@ -28,7 +28,7 @@
             </properties>
             <border type="empty"/>
             <children>
-              <grid id="7d113" binding="myInfoPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+              <grid id="7d113" binding="myCoursePanel" layout-manager="BorderLayout" hgap="0" vgap="0">
                 <constraints>
                   <splitpane position="right"/>
                 </constraints>
@@ -40,24 +40,6 @@
                   <size top="2" left="4" bottom="2" right="4"/>
                 </border>
                 <children>
-                  <scrollpane id="8853a" class="com.intellij.ui.components.JBScrollPane" binding="myDescriptionScrollPane">
-                    <constraints border-constraint="Center"/>
-                    <properties/>
-                    <border type="empty"/>
-                    <children>
-                      <component id="db08a" class="javax.swing.JEditorPane" binding="myDescriptionTextArea">
-                        <constraints/>
-                        <properties>
-                          <contentType value="text/html"/>
-                          <editable value="false"/>
-                          <maximumSize width="-1" height="-1"/>
-                        </properties>
-                        <clientProperties>
-                          <JEditorPane.honorDisplayProperties class="java.lang.Boolean" value="true"/>
-                        </clientProperties>
-                      </component>
-                    </children>
-                  </scrollpane>
                   <grid id="e1c40" binding="myAdvancedSettingsPlaceholder" layout-manager="BorderLayout" hgap="0" vgap="0">
                     <constraints border-constraint="South"/>
                     <properties/>
@@ -71,6 +53,43 @@
                       </grid>
                     </children>
                   </grid>
+                  <scrollpane id="323c9" class="com.intellij.ui.components.JBScrollPane" binding="myInfoScroll">
+                    <constraints border-constraint="Center"/>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <grid id="d6214" layout-manager="BorderLayout" hgap="0" vgap="0">
+                        <constraints/>
+                        <properties/>
+                        <border type="none"/>
+                        <children>
+                          <grid id="2b5af" layout-manager="BorderLayout" hgap="0" vgap="0">
+                            <constraints border-constraint="North"/>
+                            <properties/>
+                            <border type="none"/>
+                            <children>
+                              <component id="9fa0e" class="com.intellij.ui.components.JBLabel" binding="myCourseNameLabel">
+                                <constraints border-constraint="North"/>
+                                <properties>
+                                  <horizontalAlignment value="2"/>
+                                </properties>
+                              </component>
+                              <grid id="97d3d" binding="myTagsPanel" layout-manager="FlowLayout" hgap="5" vgap="5" flow-align="0">
+                                <constraints border-constraint="Center"/>
+                                <properties/>
+                                <border type="none"/>
+                                <children/>
+                              </grid>
+                            </children>
+                          </grid>
+                          <component id="5fbab" class="javax.swing.JEditorPane" binding="myDescriptionTextArea">
+                            <constraints border-constraint="Center"/>
+                            <properties/>
+                          </component>
+                        </children>
+                      </grid>
+                    </children>
+                  </scrollpane>
                 </children>
               </grid>
               <grid id="83ed3" binding="myCourseListPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
