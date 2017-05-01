@@ -1,8 +1,4 @@
 <scheme name="WarmNeon" version="142" parent_scheme="Default">
-  <option name="LINE_SPACING" value="1.1" />
-  <option name="EDITOR_FONT_SIZE" value="11" />
-  <option name="EDITOR_QUICK_DOC_FONT_SIZE" value="MEDIUM" />
-  <option name="EDITOR_FONT_NAME" value="DejaVu Sans Mono" />
   <colors>
     <option name="ADDED_LINES_COLOR" value="395439" />
     <option name="ANNOTATIONS_COLOR" value="8178af" />

@@ -2023,7 +2023,7 @@ public abstract class DialogWrapper {
 
             ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
             if (fc.hasFocus()) {
-              SwingUtilities.invokeLater(() -> fl.showErrorTip());
+              fl.showErrorTip();
             }
 
             fc.addFocusListener(fl);
@@ -2393,18 +2393,21 @@ public abstract class DialogWrapper {
           if (rootPane != null) {
             rootPane.removeComponentListener(rl);
           }
-          component.putClientProperty("JComponent.error.balloon", null);
+
+          if (component.getClientProperty("JComponent.error.balloon") == event.asBalloon()) {
+            component.putClientProperty("JComponent.error.balloon", null);
+          }
         }
       });
 
       getRootPane().addComponentListener(rl);
 
-      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane());
+      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane().getLayeredPane());
       Dimension bSize = balloon.getPreferredSize();
 
       Insets cInsets = component.getInsets();
       int top =  cInsets != null ? cInsets.top : 0;
-      if (componentPos.y >= bSize.height + Registry.intValue("ide.balloon.shadow.size") + top) {
+      if (componentPos.y >= bSize.height + top) {
         balloon.show(new ErrorTipTracker(component, 0), Balloon.Position.above);
       } else {
         balloon.show(new ErrorTipTracker(component, component.getHeight()), Balloon.Position.below);

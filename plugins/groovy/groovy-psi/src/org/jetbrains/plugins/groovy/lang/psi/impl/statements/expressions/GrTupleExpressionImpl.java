@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtilRt;
@@ -31,18 +30,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleE
  */
 public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleExpression {
 
-  @Override
-  public String toString() {
-    return "Tuple Assignment Expression";
-  }
-
   public GrTupleExpressionImpl(@NotNull ASTNode node) {
     super(node);
   }
 
   @Override
   public PsiType getType() {
-    return getTypeByFQName(CommonClassNames.JAVA_UTIL_LIST);
+    // The reason this method exists is that tuple expression can appear in the left side of an assignment.
+    // LHS should probably have its own interface with implementations: GrReferenceExpression, GrIndexProperty, GrTupleExpression,
+    // while GrTupleExpression will just implement it, but not an GrExpression.
+    throw new UnsupportedOperationException("Tuple expressions cannot have type");
   }
 
   @Override
@@ -60,5 +57,10 @@ public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleEx
   @Override
   public void accept(GroovyElementVisitor visitor) {
     visitor.visitTupleExpression(this);
+  }
+
+  @Override
+  public String toString() {
+    return "Tuple Assignment Expression";
   }
 }

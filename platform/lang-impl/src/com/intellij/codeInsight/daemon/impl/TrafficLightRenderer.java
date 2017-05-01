@@ -90,7 +90,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     myDocument = document;
     myFile = file;
     mySeverityRegistrar = SeverityRegistrar.getSeverityRegistrar(myProject);
-    refresh();
+    refresh(null);
 
     if (project != null) {
       final MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
@@ -113,7 +113,12 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
   }
 
-  private void refresh() {
+  @NotNull
+  public SeverityRegistrar getSeverityRegistrar() {
+    return mySeverityRegistrar;
+  }
+
+  protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
     int maxIndex = mySeverityRegistrar.getSeverityMaxIndex();
     if (errorCount != null && maxIndex + 1 == errorCount.length) return;
     errorCount = new int[maxIndex + 1];
@@ -130,8 +135,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
     if (renderer instanceof TrafficLightRenderer) {
       TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
-      tlr.refresh();
-      ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
+      EditorMarkupModelImpl markupModelImpl = (EditorMarkupModelImpl)editorMarkupModel;
+      tlr.refresh(markupModelImpl);
+      markupModelImpl.repaintVerticalScrollBar();
       if (tlr.myFile == null || tlr.myFile.isValid()) return;
       Disposer.dispose(tlr);
     }

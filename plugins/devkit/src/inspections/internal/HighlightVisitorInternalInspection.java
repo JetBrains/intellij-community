@@ -40,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public class HighlightVisitorInternalInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + HighlightVisitorInternalInspection.class.getName());
+  public static final Logger LOG = Logger.getInstance(HighlightVisitorInternalInspection.class);
 
   @Nls
   @NotNull

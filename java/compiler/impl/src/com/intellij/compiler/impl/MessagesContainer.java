@@ -40,7 +40,7 @@ public class MessagesContainer {
   }
 
   @NotNull
-  public Collection<CompilerMessage> getMessages(CompilerMessageCategory category) {
+  public Collection<CompilerMessage> getMessages(@NotNull CompilerMessageCategory category) {
     final Collection<CompilerMessage> collection = myMessages.get(category);
     if (collection == null) {
       return Collections.emptyList();
@@ -58,11 +58,7 @@ public class MessagesContainer {
   }
 
   public boolean addMessage(CompilerMessage msg) {
-    Collection<CompilerMessage> messages = myMessages.get(msg.getCategory());
-    if (messages == null) {
-      messages = new LinkedHashSet<>();
-      myMessages.put(msg.getCategory(), messages);
-    }
+    Collection<CompilerMessage> messages = myMessages.computeIfAbsent(msg.getCategory(), k -> new LinkedHashSet<>());
     return messages.add(msg);
   }
 
@@ -79,7 +75,7 @@ public class MessagesContainer {
     return file;
   }
 
-  public int getMessageCount(CompilerMessageCategory category) {
+  public int getMessageCount(@Nullable CompilerMessageCategory category) {
     if (category != null) {
       Collection<CompilerMessage> collection = myMessages.get(category);
       return collection != null ? collection.size() : 0;

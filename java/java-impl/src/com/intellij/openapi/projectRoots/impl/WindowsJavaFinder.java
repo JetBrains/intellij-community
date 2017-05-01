@@ -29,14 +29,9 @@ class WindowsJavaFinder extends JavaHomeFinder {
   @NotNull
   @Override
   protected List<String> findExistingJdks() {
-    String property = System.getProperty("java.home");
-    if (property == null)
-      return Collections.emptyList();
+    File javaHome = getJavaHome();
+    if (javaHome == null) return Collections.emptyList();
 
-    File javaHome = new File(property).getParentFile();//actually java.home points to to jre home
-    if (javaHome == null || !javaHome.isDirectory() || javaHome.getParentFile() == null) {
-      return Collections.emptyList();
-    }
     ArrayList<String> result = new ArrayList<>();
     File javasFolder = javaHome.getParentFile();
     scanFolder(javasFolder, result);

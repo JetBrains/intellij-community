@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
  */
 public class JavaFxPsiUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxPsiUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxPsiUtil.class);
 
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
     final String importText = "<?import " + qualifiedName + "?>";

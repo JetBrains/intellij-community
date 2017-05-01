@@ -54,7 +54,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
-  var fontSize by storedProperty(12)
+  var fontSize by storedProperty((UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.normalizingScale).toInt())
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
@@ -378,7 +378,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
         if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
       }
       else {
-        size = ((readSize.toFloat() / readScale) * normalizingScale).toInt()
+        if (readScale != normalizingScale) size = Math.round((readSize / readScale) * normalizingScale)
       }
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$normalizingScale")
       return size

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Tagir Valeev
  */
 class MatchMigration extends BaseStreamApiMigration {
-  private static final Logger LOG = Logger.getInstance("#" + MatchMigration.class.getName());
+  private static final Logger LOG = Logger.getInstance(MatchMigration.class);
 
   public MatchMigration(boolean shouldWarn, String methodName) {
     super(shouldWarn, methodName+"()");

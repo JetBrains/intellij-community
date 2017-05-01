@@ -153,7 +153,7 @@ public class CreateParameterForFieldIntention extends Intention {
       JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.PARAMETER, selectedValue.getName(), null, null).names;
 
     final DefaultGroovyVariableNameValidator nameValidator =
-      new DefaultGroovyVariableNameValidator(constructor, Collections.<String>emptyList(), false);
+      new DefaultGroovyVariableNameValidator(constructor, Collections.emptyList(), false);
     String parameterName = ContainerUtil.find(suggestedNames, name -> !nameValidator.validateName(name, false).isEmpty());
 
     if (parameterName == null) {
@@ -267,12 +267,7 @@ public class CreateParameterForFieldIntention extends Intention {
     List<GrField> fields = new ArrayList<>();
     for (final GrField field : clazz.getFields()) {
       if (field.getInitializerGroovy() != null) continue;
-      if (ContainerUtil.find(usedFields, new Condition<PsiField>() {
-        @Override
-        public boolean value(PsiField o) {
-          return manager.areElementsEquivalent(o, field);
-        }
-      }) == null) {
+      if (ContainerUtil.find(usedFields, (Condition<PsiField>)o -> manager.areElementsEquivalent(o, field)) == null) {
         fields.add(field);
       }
     }

@@ -172,7 +172,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
     if (alternativeID != null) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(place);
       if (module != null) {
-        if (!ClassPathStorageUtil.isDefaultStorage(module)) {
+        if (ClassPathStorageUtil.isClasspathStorage(module)) {
           return alternativeID;
         }
       }

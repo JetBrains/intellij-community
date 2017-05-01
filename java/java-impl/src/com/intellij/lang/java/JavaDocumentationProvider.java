@@ -71,7 +71,7 @@ import java.util.Set;
  * @author Maxim.Mossienko
  */
 public class JavaDocumentationProvider extends DocumentationProviderEx implements CodeDocumentationProvider, ExternalDocumentationProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaDocumentationProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaDocumentationProvider.class);
 
   private static final String LINE_SEPARATOR = "\n";
   private static final String PARAM_TAG = "@param";

@@ -69,13 +69,9 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
     List<? extends T> elements = new ArrayList<T>(items);
     if (sort) {
-      Collections.sort(elements, new Comparator<T>() {
-        public int compare(final T o1, final T o2) {
-          return getItemText(o1).compareToIgnoreCase(getItemText(o2));
-        }
-      });
+      Collections.sort(elements, (Comparator<T>)(o1, o2) -> getItemText(o1).compareToIgnoreCase(getItemText(o2)));
     }
-    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.<T>emptyList());
+    setElements(elements, elements.size() > 0 ? elements.subList(0, 1) : Collections.emptyList());
     myChooser.getComponent().registerKeyboardAction(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         doOKAction();
@@ -106,7 +102,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
   @NotNull
   public List<T> getChosenElements() {
-    return isOK() ? myChooser.getSelectedElements() : Collections.<T>emptyList();
+    return isOK() ? myChooser.getSelectedElements() : Collections.emptyList();
   }
 
   public void selectElements(@NotNull List<T> elements) {

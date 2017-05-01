@@ -30,7 +30,8 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   @NonNls public static final String PRODUCTION = "production";
   @NonNls public static final String TEST = "test";
 
-  public static @Nullable CompilerModuleExtension getInstance(final Module module) {
+  @Nullable
+  public static CompilerModuleExtension getInstance(final Module module) {
     return ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class);
   }
 
@@ -85,7 +86,7 @@ public abstract class CompilerModuleExtension extends ModuleExtension {
   public abstract void inheritCompilerOutputPath(boolean inherit);
 
   /**
-   * Returns <code>true</code> if compiler output for this module is inherited from a project
+   * Returns {@code true} if compiler output for this module is inherited from a project
    * @return true if compiler output path is inherited, false otherwise
    */
   public abstract boolean isCompilerOutputPathInherited();

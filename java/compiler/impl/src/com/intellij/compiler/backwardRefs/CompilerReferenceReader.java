@@ -62,7 +62,7 @@ class CompilerReferenceReader {
     }
     else {
       LightRef.LightClassHierarchyElementDef hierarchyElement = ((LightRef.LightMember)ref).getOwner();
-      hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+      hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity, -1);
     }
     if (hierarchy == null) return null;
     TIntHashSet set = new TIntHashSet();
@@ -222,13 +222,16 @@ class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity) {
+  LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity, int interruptNumber) {
     try {
       Set<LightRef.NamedLightRef> result = new THashSet<>();
       Queue<LightRef.NamedLightRef> q = new Queue<>(10);
       q.addLast(hierarchyElement);
       while (!q.isEmpty()) {
         LightRef.NamedLightRef curClass = q.pullFirst();
+        if (interruptNumber != -1 && result.size() > interruptNumber) {
+          break;
+        }
         if (result.add(curClass)) {
           if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
             if (hasMultipleDefinitions(curClass)) {
@@ -245,7 +248,7 @@ class CompilerReferenceReader {
           });
         }
       }
-      return result.toArray(new LightRef.NamedLightRef[result.size()]);
+      return result.toArray(LightRef.NamedLightRef.EMPTY_ARRAY);
     }
     catch (StorageException e) {
       throw new RuntimeException(e);

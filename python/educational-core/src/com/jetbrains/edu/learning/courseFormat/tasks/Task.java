@@ -274,4 +274,9 @@ public abstract class Task implements StudyItem {
   public StudyTaskChecker getChecker(@NotNull Project project) {
     return new StudyTaskChecker<>(this, project);
   }
+
+  public int getPosition() {
+    final Lesson lesson = getLesson();
+    return lesson.getTaskList().indexOf(this) + 1;
+  }
 }

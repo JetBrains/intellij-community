@@ -33,7 +33,7 @@ import java.util.Set;
  * Date: Aug 26, 2010
  */
 public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
-  private static final Logger LOG = Logger.getInstance("#" + ResourceBundleMoveProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(ResourceBundleMoveProvider.class);
 
   @Override
   public boolean canMove(DataContext dataContext) {

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl
 
 import com.intellij.ProjectTopics
@@ -25,7 +24,10 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.Extensions
@@ -55,9 +57,9 @@ private val SELECTED_ATTR = "selected"
 internal val METHOD = "method"
 private val OPTION = "option"
 
-// open for Upsource
+// open for Upsource (UpsourceRunManager overrides to disable loadState (empty impl))
 @State(name = "RunManager", defaultStateAsResource = true, storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
-open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, NamedComponent, Disposable {
+open class RunManagerImpl(internal val project: Project) : RunManagerEx(), PersistentStateComponent<Element>, Disposable {
   companion object {
     @JvmField
     val CONFIGURATION = "configuration"
@@ -124,6 +126,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
+  @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
 
   internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
@@ -258,9 +261,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       existingId = findExistingConfigurationId(settings)
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
-      if (existingId != null) {
+      existingId?.let {
         // idToSettings is a LinkedHashMap - we must remove even if existingId equals to newId and in any case we will replace it on put
-        idToSettings.remove(existingId!!)
+        idToSettings.remove(it)
       }
 
       if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
@@ -278,9 +281,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       else {
         (if (settings.isShared) workspaceSchemeManager else projectSchemeManager)?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
-
-      checkRecentsLimit()
     }
+
+    checkRecentsLimit()
 
     if (existingId == null) {
       myDispatcher.multicaster.runConfigurationAdded(settings)
@@ -325,23 +328,25 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     lock.write {
       trimUsagesListToLimit()
 
-      while (idToSettings.values.count { it.isTemporary } > config.recentsLimit) {
-        val it = idToSettings.values.iterator()
-        while (it.hasNext()) {
-          val settings = it.next()
-          if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings)) {
-            if (removed == null) {
-              immutableSortedSettingsList = null
-              removed = SmartList<RunnerAndConfigurationSettings>()
-            }
-            removed!!.add(settings)
-            it.remove()
+      var excess = idToSettings.values.count { it.isTemporary } - config.recentsLimit
+      if (excess <= 0) {
+        return
+      }
+
+      for (settings in idToSettings.values) {
+        if (settings.isTemporary && !recentlyUsedTemporaries.contains(settings)) {
+          if (removed == null) {
+            removed = SmartList<RunnerAndConfigurationSettings>()
+          }
+          removed!!.add(settings)
+          if (--excess <= 0) {
             break
           }
         }
       }
     }
-    removed?.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
+
+    removed?.let { removeConfigurations(it) }
   }
 
   // comparator is null if want just to save current order (e.g. if want to keep order even after reload)
@@ -746,14 +751,12 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = provider.createTask(settings.configuration)
-      if (beforeRunTask != null) {
-        beforeRunTask.readExternal(methodElement)
-        if (result == null) {
-          result = SmartList()
-        }
-        result.add(beforeRunTask)
+      val beforeRunTask = provider.createTask(settings.configuration) ?: continue
+      beforeRunTask.readExternal(methodElement)
+      if (result == null) {
+        result = SmartList()
       }
+      result.add(beforeRunTask)
     }
     return result ?: emptyList()
   }
@@ -777,8 +780,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     val factoryName = _factoryName ?: type.configurationFactories.get(0).name
     return type.configurationFactories.firstOrNull { it.name == factoryName }
   }
-
-  override fun getComponentName() = "RunManager"
 
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {
     if (tempConfiguration == null) {
@@ -854,20 +855,16 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getConfigurationIcon(settings: RunnerAndConfigurationSettings, withLiveIndicator: Boolean): Icon {
-    val uniqueID = settings.uniqueID
-    val selectedConfiguration = selectedConfiguration
-    val selectedId = if (selectedConfiguration != null) selectedConfiguration.uniqueID else ""
-    if (selectedId == uniqueID) {
-      iconCache.checkValidity(uniqueID)
+    val uniqueId = settings.uniqueID
+    if (selectedConfiguration?.uniqueID == uniqueId) {
+      iconCache.checkValidity(uniqueId)
     }
-    var icon = iconCache.get(uniqueID, settings, project)
+    var icon = iconCache.get(uniqueId, settings, project)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { it === settings }
-      if (runningDescriptors.size == 1) {
-        icon = ExecutionUtil.getLiveIndicator(icon)
-      }
-      if (runningDescriptors.size > 1) {
-        icon = IconUtil.addText(icon, runningDescriptors.size.toString())
+      when {
+        runningDescriptors.size == 1 -> icon = ExecutionUtil.getLiveIndicator(icon)
+        runningDescriptors.size > 1 -> icon = IconUtil.addText(icon, runningDescriptors.size.toString())
       }
     }
     return icon
@@ -1109,6 +1106,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           settings.schemeManager?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
           recentlyUsedTemporaries.remove(settings)
           removed.add(settings)
+          iconCache.remove(settings.uniqueID)
         }
         else {
           var isChanged = false
@@ -1116,7 +1114,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
           val newList = otherConfiguration.beforeRunTasks.nullize()?.toMutableSmartList() ?: continue
           val beforeRunTaskIterator = newList.iterator()
           for (task in beforeRunTaskIterator) {
-            if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && toRemove.contains(task.settings)) {
+            if (task is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && toRemove.firstOrNull { task.isMySettings(it) } != null) {
               beforeRunTaskIterator.remove()
               isChanged = true
               changedSettings.add(settings)

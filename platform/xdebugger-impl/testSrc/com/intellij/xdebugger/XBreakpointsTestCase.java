@@ -16,8 +16,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.configurationStore.XmlSerializer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TempFiles;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
@@ -59,8 +58,8 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   }
 
   protected List<XBreakpoint<?>> getAllBreakpoints() {
-    final XBreakpointBase<?,?,?>[] breakpoints = ApplicationManager.getApplication().runReadAction(
-      (Computable<XBreakpointBase<?, ?, ?>[]>)() -> myBreakpointManager.getAllBreakpoints());
+    final XBreakpointBase<?, ?, ?>[] breakpoints =
+      ReadAction.compute(() -> myBreakpointManager.getAllBreakpoints());
     final List<XBreakpoint<?>> result = new ArrayList<>();
     for (XBreakpointBase<?, ?, ?> breakpoint : breakpoints) {
       final XBreakpointType type = breakpoint.getType();

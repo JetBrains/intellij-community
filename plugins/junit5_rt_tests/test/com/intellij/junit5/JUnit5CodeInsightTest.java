@@ -47,6 +47,7 @@ class JUnit5CodeInsightTest {
       myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}");
       myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}");
       myFixture.addClass("package org.junit.jupiter.api; public @interface TestFactory {}");
+      myFixture.addClass("package org.junit.jupiter.params.provider; public @interface MethodSource {}");
     });
     EdtTestUtil.runInEdtAndWait(run);
   }

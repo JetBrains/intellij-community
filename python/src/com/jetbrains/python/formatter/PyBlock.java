@@ -147,7 +147,7 @@ public class PyBlock implements ASTBlock {
       mySubBlockByNode = buildSubBlocks();
       mySubBlocks = new ArrayList<>(mySubBlockByNode.values());
     }
-    return Collections.<Block>unmodifiableList(mySubBlocks);
+    return Collections.unmodifiableList(mySubBlocks);
   }
 
   @Nullable

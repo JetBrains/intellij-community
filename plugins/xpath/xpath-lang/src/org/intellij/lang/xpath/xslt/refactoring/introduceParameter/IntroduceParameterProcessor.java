@@ -52,7 +52,7 @@ class IntroduceParameterProcessor extends BaseRefactoringProcessor {
         super(project);
         mySettings = settings;
         myExpression = expression;
-        myOtherExpressions = settings.isReplaceAll() ? otherExpressions : Collections.<XPathExpression>emptySet();
+        myOtherExpressions = settings.isReplaceAll() ? otherExpressions : Collections.emptySet();
 
         final XmlTag templateTag = XsltCodeInsightUtil.getTemplateTag(myExpression, true, true);
         myTemplate = templateTag != null ? XsltElementFactory.getInstance().wrapElement(templateTag, XsltTemplate.class) : null;

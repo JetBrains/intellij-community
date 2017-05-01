@@ -40,7 +40,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -67,11 +66,6 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
-
-  private static final Icon ADD_ICON = IconUtil.getAddIcon();
-  private static final Icon REMOVE_ICON = IconUtil.getRemoveIcon();
-  private static final Icon SHARED_ICON = AllIcons.Nodes.Shared;
-  private static final Icon NON_SHARED_ICON = EmptyIcon.ICON_16;
 
   @NonNls private static final Object DEFAULTS = new Object() {
     @Override
@@ -120,27 +114,24 @@ class RunConfigurable extends BaseConfigurable {
     myTree.setShowsRootHandles(true);
     UIUtil.setLineStyleAngled(myTree);
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
-        final Object userObject = node.getUserObject();
-        if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-          return ((RunnerAndConfigurationSettingsImpl)userObject).getName();
-        }
-        else if (userObject instanceof SingleConfigurationConfigurable) {
-          return ((SingleConfigurationConfigurable)userObject).getNameText();
-        }
-        else {
-          if (userObject instanceof ConfigurationType) {
-            return ((ConfigurationType)userObject).getDisplayName();
-          }
-          else if (userObject instanceof String) {
-            return (String)userObject;
-          }
-        }
-        return o.toString();
+    new TreeSpeedSearch(myTree, o -> {
+      DefaultMutableTreeNode node = (DefaultMutableTreeNode)o.getLastPathComponent();
+      final Object userObject = node.getUserObject();
+      if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+        return ((RunnerAndConfigurationSettingsImpl)userObject).getName();
       }
+      else if (userObject instanceof SingleConfigurationConfigurable) {
+        return ((SingleConfigurationConfigurable)userObject).getNameText();
+      }
+      else {
+        if (userObject instanceof ConfigurationType) {
+          return ((ConfigurationType)userObject).getDisplayName();
+        }
+        else if (userObject instanceof String) {
+          return (String)userObject;
+        }
+      }
+      return o.toString();
     });
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -194,7 +185,7 @@ class RunConfigurable extends BaseConfigurable {
           }
           if (shared != null) {
             Icon icon = getIcon();
-            LayeredIcon layeredIcon = new LayeredIcon(icon, shared ? SHARED_ICON : NON_SHARED_ICON);
+            LayeredIcon layeredIcon = new LayeredIcon(icon, shared ? AllIcons.Nodes.Shared : EmptyIcon.ICON_16);
             setIcon(layeredIcon);
             setIconTextGap(0);
           } else {
@@ -491,7 +482,7 @@ class RunConfigurable extends BaseConfigurable {
     panel.setBorder(new EmptyBorder(30, 0, 0, 0));
     panel.add(new JLabel("Press the"));
 
-    ActionLink addIcon = new ActionLink("", ADD_ICON, myAddAction);
+    ActionLink addIcon = new ActionLink("", IconUtil.getAddIcon(), myAddAction);
     addIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
     panel.add(addIcon);
 
@@ -1104,7 +1095,7 @@ class RunConfigurable extends BaseConfigurable {
   private class MyToolbarAddAction extends AnAction implements AnActionButtonRunnable {
     public MyToolbarAddAction() {
       super(ExecutionBundle.message("add.new.run.configuration.acrtion.name"),
-            ExecutionBundle.message("add.new.run.configuration.acrtion.name"), ADD_ICON);
+            ExecutionBundle.message("add.new.run.configuration.acrtion.name"), IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
@@ -1162,7 +1153,7 @@ class RunConfigurable extends BaseConfigurable {
 
     public MyRemoveAction() {
       super(ExecutionBundle.message("remove.run.configuration.action.name"),
-            ExecutionBundle.message("remove.run.configuration.action.name"), REMOVE_ICON);
+            ExecutionBundle.message("remove.run.configuration.action.name"), IconUtil.getRemoveIcon());
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
     }
 

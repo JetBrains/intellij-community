@@ -62,7 +62,7 @@ import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
   @NonNls public static final String IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition";
-  private static final Logger LOG = Logger.getInstance("#" + PluginsAdvertiser.class.getName());
+  private static final Logger LOG = Logger.getInstance(PluginsAdvertiser.class);
   private static final String FEATURE_IMPLEMENTATIONS_URL = "https://plugins.jetbrains.com/feature/getImplementations?";
   private static final String CASHED_EXTENSIONS = "extensions.xml";
 

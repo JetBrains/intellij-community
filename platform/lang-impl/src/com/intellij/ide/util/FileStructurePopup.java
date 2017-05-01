@@ -41,6 +41,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -48,7 +49,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -72,7 +72,6 @@ import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
@@ -94,6 +93,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author Konstantin Bulenkov
@@ -218,7 +219,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
           ContainerUtil.addIfNotNull(result, Pair.create(node, psi));
         }
 
-        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.<PsiElement>pairSecond());
+        final Set<PsiElement> psiSelection = ContainerUtil.map2LinkedSet(result, Functions.pairSecond());
 
         String text = StringUtil.join(result, pair -> {
           PsiElement psi = pair.second;
@@ -870,7 +871,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
   static Shortcut[] extractShortcutFor(@NotNull TreeAction action) {
     if (action instanceof ActionShortcutProvider) {
       String actionId = ((ActionShortcutProvider)action).getActionIdForShortcut();
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+      return getActiveKeymapShortcuts(actionId).getShortcuts();
     }
     return action instanceof FileStructureFilter ?
                            ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
@@ -950,14 +951,10 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     // NB!: this point is achievable if the following method returns null
     // see com.intellij.ide.util.treeView.NodeDescriptor.toString
     if (userObject instanceof StructureViewComponent.StructureViewTreeElementWrapper) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Nullable
-        @Override
-        public String compute() {
-          final ItemPresentation presentation =
-            ((StructureViewComponent.StructureViewTreeElementWrapper)userObject).getValue().getPresentation();
-          return presentation.getPresentableText();
-        }
+      return ReadAction.compute(() -> {
+        final ItemPresentation presentation =
+          ((StructureViewComponent.StructureViewTreeElementWrapper)userObject).getValue().getPresentation();
+        return presentation.getPresentableText();
       });
     }
 
@@ -1029,17 +1026,13 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   public class MyTreeSpeedSearch extends TreeSpeedSearch {
     public MyTreeSpeedSearch() {
-      super(myTree, new Convertor<TreePath, String>() {
-        @Override
-        @Nullable
-        public String convert(TreePath path) {
-          final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-          final Object userObject = node.getUserObject();
-          if (userObject instanceof FilteringTreeStructure.FilteringNode) {
-            return getSpeedSearchText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
-          }
-          return "";
+      super(myTree, path -> {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
+        final Object userObject = node.getUserObject();
+        if (userObject instanceof FilteringTreeStructure.FilteringNode) {
+          return getSpeedSearchText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
         }
+        return "";
       }, true);
     }
 

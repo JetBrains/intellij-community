@@ -148,12 +148,7 @@ public class GitLogParser {
   }
 
   private static String makeFormatFromOptions(GitLogOption[] options) {
-    Function<GitLogOption, String> function = new Function<GitLogOption, String>() {
-      @Override
-      public String fun(GitLogOption option) {
-        return "%" + option.getPlaceholder();
-      }
-    };
+    Function<GitLogOption, String> function = option -> "%" + option.getPlaceholder();
     return RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
   }
 

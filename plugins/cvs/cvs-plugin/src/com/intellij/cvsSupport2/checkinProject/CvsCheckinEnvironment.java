@@ -121,7 +121,7 @@ public class CvsCheckinEnvironment implements CheckinEnvironment {
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
-    return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
+    return commit(changes, preparedComment, FunctionUtil.nullConstant(), null);
   }
 
   public List<VcsException> scheduleMissingFileForDeletion(List<FilePath> files) {

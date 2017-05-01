@@ -8,6 +8,7 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/build/dependencies" />
+            <option value="$PROJECT_DIR$/build/dependencies/buildSrc" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

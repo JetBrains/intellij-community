@@ -90,7 +90,7 @@ public class GradleManager
   GradleLocalSettings,
   GradleExecutionSettings> {
 
-  private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(GradleManager.class);
 
   @NotNull private final ExternalSystemAutoImportAware myAutoImportDelegate =
     new CachingExternalSystemAutoImportAware(new GradleAutoImportAware());
@@ -177,7 +177,15 @@ public class GradleManager
         LOG.info("Instructing gradle to use java from " + javaHome);
       }
       result.setJavaHome(javaHome);
-      result.setIdeProjectPath(project.getBasePath() == null ? rootProjectPath : project.getBasePath());
+      String ideProjectPath;
+      if (project.getBasePath() == null ||
+          (project.getProjectFilePath() != null && StringUtil.endsWith(project.getProjectFilePath(), ".ipr"))) {
+        ideProjectPath = rootProjectPath;
+      }
+      else {
+        ideProjectPath = project.getBasePath() + "/.idea/modules";
+      }
+      result.setIdeProjectPath(ideProjectPath);
       if (projectLevelSettings != null) {
         result.setResolveModulePerSourceSet(projectLevelSettings.isResolveModulePerSourceSet());
       }

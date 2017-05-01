@@ -95,7 +95,7 @@ public class CreateTestDialog extends DialogWrapper {
   private JCheckBox myGenerateBeforeBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.setUp"));
   private JCheckBox myGenerateAfterBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.tearDown"));
   private JCheckBox myShowInheritedMethodsBox = new JCheckBox(CodeInsightBundle.message("intention.create.test.dialog.show.inherited"));
-  private MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.<MemberInfo>emptyList(), null);
+  private MemberSelectionTable myMethodsTable = new MemberSelectionTable(Collections.emptyList(), null);
   private JButton myFixLibraryButton = new JButton(CodeInsightBundle.message("intention.create.test.dialog.fix.library"));
   private JPanel myFixLibraryPanel;
   private JLabel myFixLibraryLabel;

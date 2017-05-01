@@ -102,7 +102,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   private final Set<PsiFile> myExcluded;
   private Content myContent;
   private final DependencyPanelSettings mySettings = new DependencyPanelSettings();
-  private static final Logger LOG = Logger.getInstance("#" + DependenciesPanel.class.getName());
+  private static final Logger LOG = Logger.getInstance(DependenciesPanel.class);
 
   private final boolean myForward;
   private final AnalysisScope myScopeOfInterest;

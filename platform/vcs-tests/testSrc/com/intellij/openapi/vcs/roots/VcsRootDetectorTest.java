@@ -18,12 +18,10 @@ package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,30 +139,24 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
 
   @NotNull
   public static Collection<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
-    return ContainerUtil.map(relPaths, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        try {
-          return FileUtil.toSystemIndependentName(new File(project.getBaseDir().getPath(), s).getCanonicalPath());
-        }
-        catch (IOException e) {
-          fail();
-          e.printStackTrace();
-          return null;
-        }
+    return ContainerUtil.map(relPaths, s -> {
+      try {
+        return FileUtil.toSystemIndependentName(new File(project.getBaseDir().getPath(), s).getCanonicalPath());
+      }
+      catch (IOException e) {
+        fail();
+        e.printStackTrace();
+        return null;
       }
     });
   }
 
   @NotNull
   static Collection<String> getPaths(@NotNull Collection<VcsRoot> files) {
-    return ContainerUtil.map(files, new Function<VcsRoot, String>() {
-      @Override
-      public String fun(VcsRoot root) {
-        VirtualFile file = root.getPath();
-        assert file != null;
-        return FileUtil.toSystemIndependentName(file.getPath());
-      }
+    return ContainerUtil.map(files, root -> {
+      VirtualFile file = root.getPath();
+      assert file != null;
+      return FileUtil.toSystemIndependentName(file.getPath());
     });
   }
 
@@ -183,12 +175,9 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
     }
     Collection<VcsRoot> vcsRoots = detect(startDir);
     assertRoots(Arrays.asList(expectedPaths), getPaths(
-      ContainerUtil.filter(vcsRoots, new Condition<VcsRoot>() {
-        @Override
-        public boolean value(VcsRoot root) {
-          assert root.getVcs() != null;
-          return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
-        }
+      ContainerUtil.filter(vcsRoots, root -> {
+        assert root.getVcs() != null;
+        return root.getVcs().getKeyInstanceMethod().equals(myVcs.getKeyInstanceMethod());
       })
     ));
   }

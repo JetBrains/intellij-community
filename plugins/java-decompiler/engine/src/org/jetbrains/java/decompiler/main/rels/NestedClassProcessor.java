@@ -142,19 +142,25 @@ public class NestedClassProcessor {
           if (expr.type == Exprent.EXPRENT_NEW) {
             NewExprent new_expr = (NewExprent)expr;
 
+            VarNamesCollector enclosingCollector = new VarNamesCollector(enclosingMethod.varproc.getVarNames());
+
             if (new_expr.isLambda() && lambda_class_type.equals(new_expr.getNewType())) {
               InvocationExprent inv_dynamic = new_expr.getConstructor();
 
               int param_index = is_static_lambda_content ? 0 : 1;
               int varIndex = is_static_lambda_content ? 0 : 1;
 
-              for (int i = 0; i < vars_count; ++i) {
-                Exprent param = inv_dynamic.getLstParameters().get(param_index + i);
+              for (int i = 0; i < md_content.params.length; ++i) {
+                VarVersionPair varVersion = new VarVersionPair(varIndex, 0);
+                if (i < vars_count) {
+                  Exprent param = inv_dynamic.getLstParameters().get(param_index + i);
 
-                if (param.type == Exprent.EXPRENT_VAR) {
-                  VarVersionPair pair = new VarVersionPair((VarExprent)param);
-                  String name = enclosingMethod.varproc.getVarName(pair);
-                  mapNewNames.put(new VarVersionPair(varIndex, 0), name);
+                  if (param.type == Exprent.EXPRENT_VAR) {
+                    mapNewNames.put(varVersion, enclosingMethod.varproc.getVarName(new VarVersionPair((VarExprent)param)));
+                  }
+                }
+                else {
+                  mapNewNames.put(varVersion, enclosingCollector.getFreeName(method.varproc.getVarName(varVersion)));
                 }
 
                 varIndex += md_content.params[i].stackSize;
@@ -192,7 +198,7 @@ public class NestedClassProcessor {
 
         if (!setEnclosing.isEmpty()) {
           StructEnclosingMethodAttribute attr =
-            (StructEnclosingMethodAttribute)child.classStruct.getAttributes().getWithKey("EnclosingMethod");
+            (StructEnclosingMethodAttribute)child.classStruct.getAttribute("EnclosingMethod");
           if (attr != null &&
               attr.getMethodName() != null &&
               node.classStruct.qualifiedName.equals(attr.getClassName()) &&

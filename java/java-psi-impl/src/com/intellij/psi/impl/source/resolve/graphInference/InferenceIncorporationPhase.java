@@ -34,7 +34,7 @@ import java.util.*;
  * User: anna
  */
 public class InferenceIncorporationPhase {
-  private static final Logger LOG = Logger.getInstance("#" + InferenceIncorporationPhase.class.getName());
+  private static final Logger LOG = Logger.getInstance(InferenceIncorporationPhase.class);
   private final InferenceSession mySession;
   private final List<Pair<InferenceVariable[], PsiClassType>> myCaptures = new ArrayList<>();
   private final Map<InferenceVariable, Map<InferenceBound, Set<PsiType>>> myCurrentBounds =

@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  *  @author dsl
  */
-public interface Library extends JDOMExternalizable, Disposable {
+public interface Library extends JDOMExternalizable, Disposable, ProjectModelElement {
   Library[] EMPTY_ARRAY = new Library[0];
 
   @Nullable String getName();

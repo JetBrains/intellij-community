@@ -237,11 +237,9 @@ final class ImagesOptionsComponent {
   private final class ExternalEditorPathActionListener implements ActionListener {
     public void actionPerformed(ActionEvent e) {
       Application application = ApplicationManager.getApplication();
-      VirtualFile previous = application.runWriteAction(new NullableComputable<VirtualFile>() {
-        public VirtualFile compute() {
-          final String path = FileUtil.toSystemIndependentName(externalEditorPath.getText());
-          return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        }
+      VirtualFile previous = application.runWriteAction((NullableComputable<VirtualFile>)() -> {
+        final String path = FileUtil.toSystemIndependentName(externalEditorPath.getText());
+        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
       });
       FileChooserDescriptor fileDescriptor = new FileChooserDescriptor(true, SystemInfo.isMac, false, false, false, false);
       fileDescriptor.setShowFileSystemRoots(true);

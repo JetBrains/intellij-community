@@ -240,7 +240,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       final int level = getRelativeLevel();
       if (level > 0) {
         final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
-        return upper == null ? Collections.<PsiElement>emptyList() : Collections.<PsiElement>singletonList(upper);
+        return upper == null ? Collections.emptyList() : Collections.singletonList(upper);
       }
     }
     return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
@@ -267,7 +267,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @Override
   public Iterable<PyElement> iterateNames() {
     final PyElement resolved = as(resolveImplicitSubModule(), PyElement.class);
-    return resolved != null ? ImmutableList.<PyElement>of(resolved) : Collections.<PyElement>emptyList();
+    return resolved != null ? ImmutableList.of(resolved) : Collections.emptyList();
   }
 
   @NotNull

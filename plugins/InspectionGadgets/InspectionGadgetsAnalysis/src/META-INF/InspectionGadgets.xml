@@ -219,6 +219,10 @@
                      key="equals.between.inconvertible.types.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.EqualsBetweenInconvertibleTypesInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="EqualsOnSuspiciousObject" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="equals.called.on.suspicious.object.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.EqualsOnSuspiciousObjectInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsWithItself" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="equals.with.itself.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
@@ -2116,10 +2120,6 @@
                      level="WARNING" implementationClass="com.siyeh.ig.portability.UseOfSunClassesInspection"/>
 
     <!--group.names.declaration.redundancy-->
-    <globalInspection groupPath="Java" language="JAVA" shortName="ElementOnlyUsedFromTestCode" bundle="com.siyeh.InspectionGadgetsBundle"
-                      key="element.only.used.from.test.code.display.name" groupBundle="messages.InspectionsBundle"
-                      groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
-                      implementationClass="com.siyeh.ig.redundancy.ElementOnlyUsedFromTestCodeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnusedLabel" bundle="com.siyeh.InspectionGadgetsBundle" key="unused.label.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
                      level="WARNING" implementationClass="com.siyeh.ig.redundancy.UnusedLabelInspection"/>
@@ -2457,7 +2457,7 @@
                      implementationClass="com.siyeh.ig.style.UnnecessaryFinalOnLocalVariableOrParameterInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryFullyQualifiedName" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.fully.qualified.name.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFO" cleanupTool="true"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION" cleanupTool="true"
                      implementationClass="com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="UnnecessaryInterfaceModifier" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.interface.modifier.display.name" groupBundle="messages.InspectionsBundle"

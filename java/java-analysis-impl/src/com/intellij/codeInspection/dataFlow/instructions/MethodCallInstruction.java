@@ -31,6 +31,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +145,8 @@ public class MethodCallInstruction extends Instruction {
 
   private boolean isPureCall() {
     if (myTargetMethod == null) return false;
-    return ControlFlowAnalyzer.isPure(myTargetMethod);
+    return ControlFlowAnalyzer.isPure(myTargetMethod) ||
+           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isMyMethod(myTargetMethod));
   }
 
   @Nullable

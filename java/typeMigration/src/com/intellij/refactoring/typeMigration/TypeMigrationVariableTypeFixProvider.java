@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQuickFixProvider {
-  private static final Logger LOG1 = Logger.getInstance("#" + TypeMigrationVariableTypeFixProvider.class.getName());
+  private static final Logger LOG1 = Logger.getInstance(TypeMigrationVariableTypeFixProvider.class);
 
   @NotNull
   public IntentionAction[] getFixes(@NotNull PsiVariable variable, @NotNull PsiType toReturn) {

@@ -17,11 +17,9 @@ package git4idea.ui.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitCommit;
@@ -38,7 +36,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -68,7 +65,7 @@ class GitCompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createCenterPanel() {
-    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.<Change>emptyList(), null, false, true,
+    final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, Collections.emptyList(), null, false, true,
                                                              null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
 
     myHeadToBranchListPanel = new GitCommitListPanel(getHeadToBranchCommits(myInitialRepo),
@@ -148,12 +145,9 @@ class GitCompareBranchesLogPanel extends JPanel {
   private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel,
                                            @NotNull final GitCommitListPanel otherPanel,
                                            @NotNull final ChangesBrowser changesBrowser) {
-    sourcePanel.addListMultipleSelectionListener(new Consumer<java.util.List<Change>>() {
-      @Override
-      public void consume(List<Change> changes) {
-        changesBrowser.setChangesToDisplay(changes);
-        otherPanel.clearSelection();
-      }
+    sourcePanel.addListMultipleSelectionListener(changes -> {
+      changesBrowser.setChangesToDisplay(changes);
+      otherPanel.clearSelection();
     });
   }
 

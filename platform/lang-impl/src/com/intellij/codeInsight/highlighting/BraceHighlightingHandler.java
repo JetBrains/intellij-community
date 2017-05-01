@@ -135,27 +135,19 @@ public class BraceHighlightingHandler {
         }
         catch (RuntimeException e) {
           // Reset processing flag in case of unexpected exception.
-          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-            @Override
-            public void run() {
-              PROCESSED_EDITORS.remove(editor);
-            }
-          });
+          ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> PROCESSED_EDITORS.remove(editor));
           throw e;
         }
-        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            try {
-              if (isValidEditor(editor) && isValidFile(injected)) {
-                Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
-                BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
-                processor.process(handler);
-              }
+        ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+          try {
+            if (isValidEditor(editor) && isValidFile(injected)) {
+              Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
+              BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
+              processor.process(handler);
             }
-            finally {
-              PROCESSED_EDITORS.remove(editor);
-            }
+          }
+          finally {
+            PROCESSED_EDITORS.remove(editor);
           }
         }, ModalityState.stateForComponent(editor.getComponent()));
       })) {

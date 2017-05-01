@@ -80,24 +80,21 @@ public class PyRemoteLibrariesNode extends PsiDirectoryNode {
   @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
 
-    return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform(new Function<PsiElement, AbstractTreeNode>() {
-      @Override
-      public AbstractTreeNode apply(PsiElement input) {
-        if (input instanceof PsiFileSystemItem) {
-          String path = ((PsiFileSystemItem)input).getVirtualFile().getPath();
+    return FluentIterable.from(Lists.newArrayList(getValue().getChildren())).transform((Function<PsiElement, AbstractTreeNode>)input -> {
+      if (input instanceof PsiFileSystemItem) {
+        String path = ((PsiFileSystemItem)input).getVirtualFile().getPath();
 
 
-          PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
+        PsiDirectory dir = input instanceof PsiDirectory ? (PsiDirectory)input : getDirectoryForJar((PsiFile)input);
 
 
-          if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
-            return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
-                                        getProject(), dir, getSettings());
-          }
+        if (myRemoteSdkData.getPathMappings().canReplaceLocal(path)) {
+          return new PyRemoteRootNode(myRemoteSdkData.getPathMappings().convertToRemote(path),
+                                      getProject(), dir, getSettings());
         }
-
-        return null;
       }
+
+      return null;
     }).filter(Predicates.notNull()).toList();
   }
 

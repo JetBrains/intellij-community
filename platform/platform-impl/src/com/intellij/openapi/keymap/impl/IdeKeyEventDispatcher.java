@@ -23,6 +23,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -520,6 +521,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (component instanceof JLabel) {
         final JLabel label = (JLabel)component;
         if (label.getDisplayedMnemonic() == keyCode) return true;
+      }
+      if (component instanceof ActionButtonWithText) {
+        if (((ActionButtonWithText)component).getMnemonic() == keyCode) return true;
       }
       if (component instanceof Container) {
         if (hasMnemonic((Container)component, keyCode)) return true;

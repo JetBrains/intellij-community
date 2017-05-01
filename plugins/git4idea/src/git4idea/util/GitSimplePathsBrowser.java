@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,11 +60,6 @@ public class GitSimplePathsBrowser extends JPanel {
 
   @NotNull
   private static List<FilePath> toFilePaths(@NotNull Collection<String> absolutePaths) {
-    return ContainerUtil.map(absolutePaths, new Function<String, FilePath>() {
-      @Override
-      public FilePath fun(String path) {
-        return VcsUtil.getFilePath(path, false);
-      }
-    });
+    return ContainerUtil.map(absolutePaths, path -> VcsUtil.getFilePath(path, false));
   }
 }

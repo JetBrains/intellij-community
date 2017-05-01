@@ -30,10 +30,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.testFramework.*;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -576,14 +573,14 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       log.add("write started");
       app.executeSuspendingWriteAction(ourProject, "", () -> {
         app.invokeAndWait(() ->
-          futures.add(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("foreign read")))));
+          futures.add(app.executeOnPooledThread((Runnable)() -> ReadAction.run((ThrowableRunnable<RuntimeException>)() -> log.add("foreign read")))));
 
         mayStartForeignRead.up();
         TimeoutUtil.sleep(50);
 
         ReadAction.run(() -> log.add("progress read"));
         app.invokeAndWait(() -> WriteAction.run(() -> log.add("nested write")));
-        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> log.add("forked read"))));
+        waitForFuture(app.executeOnPooledThread((Runnable)() -> ReadAction.run((ThrowableRunnable<RuntimeException>)() -> log.add("forked read"))));
       });
       log.add("write finished");
     });
@@ -610,7 +607,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
       assertTrue(app.hasWriteAction(actionClass));
       app.executeSuspendingWriteAction(ourProject, "", () -> ReadAction.run(() -> {
         assertTrue(app.hasWriteAction(actionClass));
-        waitForFuture(app.executeOnPooledThread(() -> ReadAction.run(() -> assertTrue(app.hasWriteAction(actionClass)))));
+        waitForFuture(app.executeOnPooledThread((Runnable)() -> ReadAction.run((ThrowableRunnable<RuntimeException>)() -> assertTrue(app.hasWriteAction(actionClass)))));
       }));
     });
   }

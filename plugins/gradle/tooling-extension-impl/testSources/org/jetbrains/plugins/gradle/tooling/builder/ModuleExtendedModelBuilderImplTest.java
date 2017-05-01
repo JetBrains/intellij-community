@@ -49,90 +49,87 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
     DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getIdeaProject().getModules();
 
     List<ModuleExtendedModel> models =
-      ContainerUtil.mapNotNull(ideaModules, new Function<IdeaModule, ModuleExtendedModel>() {
-        @Override
-        public ModuleExtendedModel fun(IdeaModule module) {
-          ModuleExtendedModel moduleExtendedModel = allModels.getExtraProject(module, ModuleExtendedModel.class);
+      ContainerUtil.mapNotNull(ideaModules, (Function<IdeaModule, ModuleExtendedModel>)module -> {
+        ModuleExtendedModel moduleExtendedModel = allModels.getExtraProject(module, ModuleExtendedModel.class);
 
-          assertNotNull(moduleExtendedModel);
+        assertNotNull(moduleExtendedModel);
 
-          List<String> sourceDirectories = ContainerUtil.newArrayList();
-          List<String> resourceDirectories = ContainerUtil.newArrayList();
-          List<String> testResourceDirectories = ContainerUtil.newArrayList();
-          List<String> testDirectories = ContainerUtil.newArrayList();
-          List<String> excludeDirectories = ContainerUtil.newArrayList();
+        List<String> sourceDirectories = ContainerUtil.newArrayList();
+        List<String> resourceDirectories = ContainerUtil.newArrayList();
+        List<String> testResourceDirectories = ContainerUtil.newArrayList();
+        List<String> testDirectories = ContainerUtil.newArrayList();
+        List<String> excludeDirectories = ContainerUtil.newArrayList();
 
-          fillDirectories(moduleExtendedModel,
-                          sourceDirectories, resourceDirectories,
-                          testDirectories, testResourceDirectories,
-                          excludeDirectories);
+        fillDirectories(moduleExtendedModel,
+                        sourceDirectories, resourceDirectories,
+                        testDirectories, testResourceDirectories,
+                        excludeDirectories);
 
-          if (module.getName().equals("defaultJavaModule") || module.getName().equals("moduleWithSourceSetDirBothAsResourceAndJava")) {
-            assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else if (module.getName().equals("moduleWithSourceSetDirBothAsResourceAndGroovy")) {
-            assertEquals(ContainerUtil.newArrayList("src/main/groovy", "src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/groovy", "src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else if (module.getName().equals("moduleWithCustomSourceSet")) {
-            assertEquals(ContainerUtil.newArrayList("src/custom/java", "src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/custom/resources", "src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else if (module.getName().equals("withIntegrationTests")) {
-            assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(
-              "src/integration-test/java", "src/integrationTest/java", "src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList(
-              "src/integration-test/resources",
-              "src/integrationTest/resources",
-              "src/test/resources"), testResourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else if (module.getName().equals("testGradleSourcesSetsInterpretation")) {
-            assertTrue(sourceDirectories.isEmpty());
-            assertTrue(resourceDirectories.isEmpty());
-            assertTrue(testDirectories.isEmpty());
-            assertTrue(testResourceDirectories.isEmpty());
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else if (module.getName().equals("withIdeaPluginCustomization1")) {
-            assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/intTest/java", "src/intTest/resources", "src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build", "some-extra-exclude-folder"), excludeDirectories);
-          }
-          else if (module.getName().equals("withIdeaPluginCustomization2")) {
-            assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
-            assertTrue(testDirectories.isEmpty());
-            assertTrue(testResourceDirectories.isEmpty());
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else if (module.getName().equals("withIdeaPluginCustomization3")) {
-            assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/awesome-test/resources", "src/main/resources"), resourceDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/awesome-test/java", "src/test/java"), testDirectories);
-            assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
-            assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
-          }
-          else {
-            fail();
-          }
-
-          return moduleExtendedModel;
+        if (module.getName().equals("defaultJavaModule") || module.getName().equals("moduleWithSourceSetDirBothAsResourceAndJava")) {
+          assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/java"), testDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
         }
+        else if (module.getName().equals("moduleWithSourceSetDirBothAsResourceAndGroovy")) {
+          assertEquals(ContainerUtil.newArrayList("src/main/groovy", "src/main/java"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/groovy", "src/test/java"), testDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+        }
+        else if (module.getName().equals("moduleWithCustomSourceSet")) {
+          assertEquals(ContainerUtil.newArrayList("src/custom/java", "src/main/java"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/custom/resources", "src/main/resources"), resourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/java"), testDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+        }
+        else if (module.getName().equals("withIntegrationTests")) {
+          assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(
+            "src/integration-test/java", "src/integrationTest/java", "src/test/java"), testDirectories);
+          assertEquals(ContainerUtil.newArrayList(
+            "src/integration-test/resources",
+            "src/integrationTest/resources",
+            "src/test/resources"), testResourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+        }
+        else if (module.getName().equals("testGradleSourcesSetsInterpretation")) {
+          assertTrue(sourceDirectories.isEmpty());
+          assertTrue(resourceDirectories.isEmpty());
+          assertTrue(testDirectories.isEmpty());
+          assertTrue(testResourceDirectories.isEmpty());
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+        }
+        else if (module.getName().equals("withIdeaPluginCustomization1")) {
+          assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/intTest/java", "src/intTest/resources", "src/test/java"), testDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build", "some-extra-exclude-folder"), excludeDirectories);
+        }
+        else if (module.getName().equals("withIdeaPluginCustomization2")) {
+          assertEquals(ContainerUtil.newArrayList("src/main/java", "src/test/java", "src/test/resources"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/main/resources"), resourceDirectories);
+          assertTrue(testDirectories.isEmpty());
+          assertTrue(testResourceDirectories.isEmpty());
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+        }
+        else if (module.getName().equals("withIdeaPluginCustomization3")) {
+          assertEquals(ContainerUtil.newArrayList("src/main/java"), sourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/awesome-test/resources", "src/main/resources"), resourceDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/awesome-test/java", "src/test/java"), testDirectories);
+          assertEquals(ContainerUtil.newArrayList("src/test/resources"), testResourceDirectories);
+          assertEquals(ContainerUtil.newArrayList(".gradle", "build"), excludeDirectories);
+        }
+        else {
+          fail();
+        }
+
+        return moduleExtendedModel;
       });
 
     assertEquals(modulesSize, models.size());
@@ -170,28 +167,22 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
   }
 
   private Collection<? extends String> getAllPaths(Collection<? extends File> directories, final String moduleName) {
-    List<String> list = ContainerUtil.map2List(directories, new Function<File, String>() {
-      @Override
-      public String fun(File sourceDirectory) {
-        String path =
-          FileUtil.toCanonicalPath(FileUtil.getRelativePath(new File(testDir, moduleName), sourceDirectory));
-        Assert.assertNotNull(path);
-        return path.substring(path.indexOf("/") + 1);
-      }
+    List<String> list = ContainerUtil.map2List(directories, (Function<File, String>)sourceDirectory -> {
+      String path =
+        FileUtil.toCanonicalPath(FileUtil.getRelativePath(new File(testDir, moduleName), sourceDirectory));
+      Assert.assertNotNull(path);
+      return path.substring(path.indexOf("/") + 1);
     });
     Collections.sort(list);
     return list;
   }
 
   private Collection<? extends String> getAllPaths(DomainObjectSet<? extends IdeaSourceDirectory> directories, final String moduleName) {
-    List<String> list = ContainerUtil.map2List(directories, new Function<IdeaSourceDirectory, String>() {
-      @Override
-      public String fun(IdeaSourceDirectory sourceDirectory) {
-        String path =
-          FileUtil.toCanonicalPath(FileUtil.getRelativePath(new File(testDir, moduleName), sourceDirectory.getDirectory()));
-        Assert.assertNotNull(path);
-        return path.substring(path.indexOf("/") + 1);
-      }
+    List<String> list = ContainerUtil.map2List(directories, (Function<IdeaSourceDirectory, String>)sourceDirectory -> {
+      String path =
+        FileUtil.toCanonicalPath(FileUtil.getRelativePath(new File(testDir, moduleName), sourceDirectory.getDirectory()));
+      Assert.assertNotNull(path);
+      return path.substring(path.indexOf("/") + 1);
     });
     Collections.sort(list);
     return list;
@@ -199,7 +190,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
 
   @Override
   protected Set<Class> getModels() {
-    return ContainerUtil.<Class>set(ModuleExtendedModel.class);
+    return ContainerUtil.set(ModuleExtendedModel.class);
   }
 }
 

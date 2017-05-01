@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase implements GenerationInfo {
   private SmartPsiElementPointer<T> myMember;
   private final boolean myMergeIfExists;
-  private static final Logger LOG = Logger.getInstance("#" + PsiGenerationInfo.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiGenerationInfo.class);
 
   public PsiGenerationInfo(@NotNull final T member) {
     this(member, true);

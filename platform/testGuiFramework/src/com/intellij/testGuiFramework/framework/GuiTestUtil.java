@@ -298,12 +298,7 @@ GuiTestUtil {
       execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              acceptButton.doClick();
-            }
-          });
+          EdtInvocationManager.getInstance().invokeLater(() -> acceptButton.doClick());
         }
       });
     }

@@ -52,25 +52,11 @@ public class GitRefGroupsTest extends GitRefManagerTest {
     List<RefGroup> actualGroups = new GitRefManager(myGitRepositoryManager).groupForBranchFilter(actual);
 
     List<SingletonRefGroup> singleGroups = ContainerUtil.findAll(actualGroups, SingletonRefGroup.class);
-    assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups, new Function<RefGroup, String>() {
-      @Override
-      public String fun(RefGroup singletonRefGroup) {
-        return singletonRefGroup.getName();
-      }
-    }));
+    assertEquals(expectedSingleGroups, ContainerUtil.map(singleGroups,
+                                                         (Function<RefGroup, String>)singletonRefGroup -> singletonRefGroup.getName()));
 
     actualGroups.removeAll(singleGroups);
 
-    assertEquals(Arrays.asList(expectedOtherGroups), ContainerUtil.map(actualGroups, new Function<RefGroup, Pair<String, List<String>>>() {
-      @Override
-      public Pair<String, List<String>> fun(RefGroup refGroup) {
-        return Pair.create(refGroup.getName(), ContainerUtil.map(refGroup.getRefs(), new Function<VcsRef, String>() {
-          @Override
-          public String fun(VcsRef vcsRef) {
-            return vcsRef.getName();
-          }
-        }));
-      }
-    }));
+    assertEquals(Arrays.asList(expectedOtherGroups), ContainerUtil.map(actualGroups, refGroup -> Pair.create(refGroup.getName(), ContainerUtil.map(refGroup.getRefs(), vcsRef -> vcsRef.getName()))));
   }
 }

@@ -34,7 +34,7 @@ public class PsiPackageAccessibilityStatementStubImpl extends StubBase<PsiPackag
   public PsiPackageAccessibilityStatementStubImpl(StubElement parent, IStubElementType type, String packageName, List<String> targets) {
     super(parent, type);
     myPackageName = notNull(packageName, "");
-    myTargets = targets == null || targets.isEmpty() ? Collections.<String>emptyList() : Collections.unmodifiableList(targets);
+    myTargets = targets == null || targets.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(targets);
   }
 
   @Override

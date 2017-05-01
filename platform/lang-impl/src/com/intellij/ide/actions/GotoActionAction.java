@@ -61,6 +61,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @Override
@@ -206,19 +208,14 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     };
 
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(ProgressWindow.TOPIC, new ProgressWindow.Listener() {
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw, new Disposable() {
       @Override
-      public void progressWindowCreated(ProgressWindow pw) {
-        Disposer.register(pw, new Disposable() {
-          @Override
-          public void dispose() {
-            if (!popup.checkDisposed()) {
-              popup.repaintList();
-            }
-          }
-        });
+      public void dispose() {
+        if (!popup.checkDisposed()) {
+          popup.repaintList();
+        }
       }
-    });
+    }));
 
     if (project != null) {
       project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
@@ -235,7 +232,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
       }
     });
 
-    CustomShortcutSet shortcutSet = new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    ShortcutSet shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
 
     new DumbAwareAction() {
       @Override

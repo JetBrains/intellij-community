@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
+import org.jetbrains.java.decompiler.modules.decompiler.ClasspathHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
@@ -39,6 +40,7 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -225,7 +227,7 @@ public class InvocationExprent extends Exprent {
 
       ClassNode node = (ClassNode)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS_NODE);
       if (node == null || !classname.equals(node.classStruct.qualifiedName)) {
-        buf.append(DecompilerContext.getImportCollector().getShortName(ExprProcessor.buildJavaClassName(classname)));
+        buf.append(DecompilerContext.getImportCollector().getShortNameInClassContext(ExprProcessor.buildJavaClassName(classname)));
       }
     }
     else {
@@ -343,14 +345,18 @@ public class InvocationExprent extends Exprent {
 
     BitSet setAmbiguousParameters = getAmbiguousParameters();
 
+    // omit 'new Type[] {}' for the last parameter of a vararg method call
+    if (lstParameters.size() == descriptor.params.length && isVarArgCall()) {
+      Exprent lastParam = lstParameters.get(lstParameters.size() - 1);
+      if (lastParam.type == EXPRENT_NEW && lastParam.getExprType().arrayDim >= 1) {
+        ((NewExprent) lastParam).setVarArgParam(true);
+      }
+    }
+
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
       if (sigFields == null || sigFields.get(i) == null) {
-        if (!firstParameter) {
-          buf.append(", ");
-        }
-
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
 
@@ -361,7 +367,14 @@ public class InvocationExprent extends Exprent {
         }
         // 'byte' and 'short' literals need an explicit narrowing type cast when used as a parameter
         ExprProcessor.getCastedExprent(param, descriptor.params[i], buff, indent, true, ambiguous, true, tracer);
-        buf.append(buff);
+
+        // the last "new Object[0]" in the vararg call is not printed
+        if (buff.length() > 0) {
+          if (!firstParameter) {
+            buf.append(", ");
+          }
+          buf.append(buff);
+        }
 
         firstParameter = false;
       }
@@ -370,6 +383,24 @@ public class InvocationExprent extends Exprent {
     buf.append(")");
 
     return buf;
+  }
+
+  private boolean isVarArgCall() {
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    if (cl != null) {
+      StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
+      if (mt != null) {
+        return mt.hasModifier(CodeConstants.ACC_VARARGS);
+      }
+    }
+    else {
+      // TODO: tap into IDEA indices to access libraries methods details
+
+      // try to check the class on the classpath
+      Method mtd = ClasspathHelper.findMethod(classname, name, descriptor);
+      return mtd != null && mtd.isVarArgs();
+    }
+    return false;
   }
 
   private boolean isBoxingCall() {

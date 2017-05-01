@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.packaging;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
@@ -80,7 +79,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         LOG.error(e);
       }
       catch (ExecutionException e) {
-        throw analyzeException(e, helper, Collections.<String>emptyList());
+        throw analyzeException(e, helper, Collections.emptyList());
       }
     }
     return null;
@@ -127,12 +126,7 @@ public class PyRemotePackageManagerImpl extends PyPackageManagerImpl {
         final List<String> cmdline = new ArrayList<>();
         cmdline.add(homePath);
         cmdline.add(RemoteFile.detectSystemByPath(homePath).createRemoteFile(helperPath).getPath());
-        cmdline.addAll(Collections2.transform(args, new Function<String, String>() {
-          @Override
-          public String apply(@Nullable String input) {
-            return quoteIfNeeded(input);
-          }
-        }));
+        cmdline.addAll(Collections2.transform(args, input -> quoteIfNeeded(input)));
         ProcessOutput processOutput;
         do {
           final PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData = (PyRemoteSdkAdditionalDataBase)sdkData;

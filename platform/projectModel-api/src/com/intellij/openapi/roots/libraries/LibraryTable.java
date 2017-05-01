@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,9 @@ public interface LibraryTable {
 
   LibraryTablePresentation getPresentation();
 
-  boolean isEditable();
+  default boolean isEditable() {
+    return true;
+  }
 
   /**
    * Returns the interface which allows to create or removed libraries from the table.
@@ -68,6 +71,8 @@ public interface LibraryTable {
     Library createLibrary(String name);
 
     Library createLibrary(String name, @Nullable PersistentLibraryKind type);
+
+    Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource);
 
     void removeLibrary(@NotNull Library library);
 

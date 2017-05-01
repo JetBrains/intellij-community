@@ -519,12 +519,9 @@ public class EventLog {
     }
 
     private void doPrintNotification(@NotNull final Notification notification, @NotNull final EventLogConsole console) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
-            ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
-          }
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+        if (!ShutDownTracker.isShutdownHookRunning() && !myProject.isDisposed()) {
+          ApplicationManager.getApplication().runReadAction(() -> console.doPrintNotification(notification));
         }
       });
     }

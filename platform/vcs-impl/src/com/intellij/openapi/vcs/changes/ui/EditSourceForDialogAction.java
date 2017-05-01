@@ -18,7 +18,9 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.pom.Navigatable;
@@ -42,11 +44,7 @@ public class EditSourceForDialogAction extends EditSourceAction {
   public void actionPerformed(AnActionEvent e) {
     final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
     if (navigatableArray != null && navigatableArray.length > 0) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          OpenSourceUtil.navigate(navigatableArray);
-        }
-      });
+      ApplicationManager.getApplication().invokeLater(() -> OpenSourceUtil.navigate(navigatableArray));
       DialogWrapper dialog = DialogWrapper.findInstance(mySourceComponent);
       if (dialog != null && dialog.isModal()) {
         dialog.doCancelAction();

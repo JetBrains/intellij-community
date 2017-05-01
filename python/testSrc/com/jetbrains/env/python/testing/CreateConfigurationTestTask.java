@@ -31,9 +31,9 @@ import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.PyAbstractTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,11 +113,13 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
 
 
-    final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
-      .filter(o -> expectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
-      .findFirst();
-    Assert.assertTrue("No configuration of expected type created for element " + elementToRightClickOn, maybeConfig.isPresent());
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
+    Assert.assertEquals("One and only one configuration should be produced", 1, configurationsFromContext.size());
+
+    final ConfigurationFromContext configurationFromContext = configurationsFromContext.get(0);
+    Assert.assertThat("Bad configuration type", configurationFromContext.getConfiguration(),
+                      Matchers.instanceOf(expectedConfigurationType));
+
+    final RunnerAndConfigurationSettings runnerAndConfigurationSettings = configurationFromContext.getConfigurationSettings();
 
 
     Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
@@ -146,7 +148,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
   /**
    * Task to create configuration
    */
-  abstract static class PyConfigurationCreationTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+  abstract static class PyConfigurationCreationTask<T extends PyAbstractTestConfiguration> extends PyExecutionFixtureTestTask {
     private volatile T myConfiguration;
 
 
@@ -164,7 +166,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
     }
 
     @NotNull
-    protected abstract PyUniversalTestFactory<T> createFactory();
+    protected abstract PyAbstractTestFactory<T> createFactory();
 
     @NotNull
     T getConfiguration() {

@@ -24,13 +24,11 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistoryProviderBackgroundableProxy;
-import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog;
 import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsSelection;
 import com.intellij.vcsUtil.VcsSelectionUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -85,23 +83,21 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
       new VcsHistoryProviderBackgroundableProxy(activeVcs, provider, activeVcs.getDiffProvider()).
         createSessionFor(activeVcs.getKeyInstanceMethod(), VcsUtil.getFilePath(file),
-        new Consumer<VcsHistorySession>() {
-          public void consume(VcsHistorySession session) {
-            if (session == null) return;
-            final VcsSelectionHistoryDialog vcsHistoryDialog =
-              new VcsSelectionHistoryDialog(project,
-                                            file,
-                                            selection.getDocument(),
-                                            provider,
-                                            session,
-                                            activeVcs,
-                                            Math.min(selectionStart, selectionEnd),
-                                            Math.max(selectionStart, selectionEnd),
-                                            selection.getDialogTitle());
+                         session -> {
+                           if (session == null) return;
+                           final VcsSelectionHistoryDialog vcsHistoryDialog =
+                             new VcsSelectionHistoryDialog(project,
+                                                           file,
+                                                           selection.getDocument(),
+                                                           provider,
+                                                           session,
+                                                           activeVcs,
+                                                           Math.min(selectionStart, selectionEnd),
+                                                           Math.max(selectionStart, selectionEnd),
+                                                           selection.getDialogTitle());
 
-            vcsHistoryDialog.show();
-          }
-        }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false, null);
+                           vcsHistoryDialog.show();
+                         }, VcsBackgroundableActions.HISTORY_FOR_SELECTION, false, null);
     }
     catch (Exception exception) {
       reportError(exception);

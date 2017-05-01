@@ -95,7 +95,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withProjectLibrary("snakeyaml")
         withoutProjectLibrary("Ant")
         withoutProjectLibrary("Gradle")
-        withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")
       }
     } as Consumer<PlatformLayout>
 

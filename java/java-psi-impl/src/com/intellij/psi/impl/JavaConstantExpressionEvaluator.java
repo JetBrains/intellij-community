@@ -64,6 +64,9 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
       Object result = myConstantExpressionVisitor.handle(element);
       cache(element, result);
     }
+    else {
+      myConstantExpressionVisitor.store(element, value == NO_VALUE ? null : value);
+    }
   }
 
   @Override
@@ -74,7 +77,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
       // will cache back in elementFinished()
     }
     else {
-      ConstantExpressionVisitor.store(element, value == NO_VALUE ? null : value);
+      myConstantExpressionVisitor.store(element, value == NO_VALUE ? null : value);
     }
   }
 
@@ -122,7 +125,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
         PsiElement operand = ((PsiPrefixExpression)expression).getOperand();
         if (operand == null) return null;
         Object value = evaluator.myConstantExpressionVisitor.handle(operand);
-        ConstantExpressionVisitor.store(operand, value);
+        evaluator.myConstantExpressionVisitor.store(operand, value);
       }
       return evaluator.myConstantExpressionVisitor.handle(expression);
     }

@@ -67,7 +67,11 @@ class MethodParamCount {
 
     Method m = cls.getMethod("m0", new Class[0]);
     m.invoke(obj, new Object[0]);
+    m.invoke(obj, new Object[]{});
     m.invoke(obj, <warning descr="Empty array is expected">new Object[] {"abc"}</warning>);
+
+    m = cls.getMethod("m0", new Class[]{});
+    m.invoke(obj, new Object[]{});
   }
 
   static class Test {

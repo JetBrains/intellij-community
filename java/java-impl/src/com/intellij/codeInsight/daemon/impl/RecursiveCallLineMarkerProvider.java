@@ -95,7 +95,7 @@ public class RecursiveCallLineMarkerProvider extends LineMarkerProviderDescripto
             methodCall.getTextRange(),
             AllIcons.Gutter.RecursiveMethod,
             Pass.LINE_MARKERS,
-            FunctionUtil.<PsiMethodCallExpression, String>constant("Recursive call"),
+            FunctionUtil.constant("Recursive call"),
             null,
             GutterIconRenderer.Alignment.RIGHT
       );

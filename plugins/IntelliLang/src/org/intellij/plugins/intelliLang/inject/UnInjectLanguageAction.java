@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -107,7 +106,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
       }
     }
     finally {
-      FileContentUtil.reparseFiles(project, Collections.<VirtualFile>emptyList(), true);
+      FileContentUtil.reparseFiles(project, Collections.emptyList(), true);
     }
   }
 

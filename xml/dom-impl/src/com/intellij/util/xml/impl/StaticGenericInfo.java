@@ -20,11 +20,13 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.intellij.util.xml.reflect.DomCollectionChildDescription;
+import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Type;
 import java.util.*;
@@ -223,7 +225,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   @Override
   @NotNull
   public List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
-    return myCustomDescription == null ? Collections.<CustomDomChildrenDescriptionImpl>emptyList() : Collections.singletonList(myCustomDescription);
+    return myCustomDescription == null ? Collections.emptyList() : Collections.singletonList(myCustomDescription);
   }
 
   @Nullable

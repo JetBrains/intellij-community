@@ -600,6 +600,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  "  }" +
                  "}";
     assertEquals("Should find statements and comments in statement context only", 2, findMatchesCount(in2, "'_statement;"));
+
+    String in3 = "new Object().hashCode();" +
+                 "new Object().toString();";
+    assertEquals("Find typed expression statements", 1, findMatchesCount(in3, "'_expr:[exprtype( int )];"));
   }
 
   public void testSearchClass() {
@@ -714,6 +718,10 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "class B { { a = 10; } }\n" +
                         "class C { { a = 10; } }";
     assertEquals("static block search", 1, findMatchesCount(s141, "class '_ { static { a = 10; } } "));
+
+    final String in = "class D<T> {}\n" +
+                      "class T {}";
+    assertEquals("search for class should not find type parameters", 1, findMatchesCount(in, "class T {}"));
   }
 
   public void testParameterlessConstructorSearch() {
@@ -1723,6 +1731,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )] implements '_Implements:[regex( I )] {}"));
     assertEquals("Find class within type hierarchy with not, 2", 1,
                  findMatchesCount(s1, "class '_ extends '_Extends:[!regex( *A )]{}"));
+    assertEquals("Search in hierarchy on class identifier", 2, findMatchesCount(s1, "class '_X:*B2 {}"));
   }
 
   public void testFindTryWithoutProperFinally() {

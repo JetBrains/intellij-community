@@ -40,10 +40,10 @@ public class JavacMain {
   private static final String JAVA_VERSION = System.getProperty("java.version", "");
   
   //private static final boolean ECLIPSE_COMPILER_SINGLE_THREADED_MODE = Boolean.parseBoolean(System.getProperty("jdt.compiler.useSingleThread", "false"));
-  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+  private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.asList(
     "-d", "-classpath", "-cp", "-bootclasspath"
   ));
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.<String>asList(
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = new HashSet<String>(Arrays.asList(
     /*javac options*/  "-verbose", "-proc:only", "-implicit:class", "-implicit:none", "-Xprefer:newer", "-Xprefer:source"
   ));
   public static final String JAVA_RUNTIME_VERSION = System.getProperty("java.runtime.version");

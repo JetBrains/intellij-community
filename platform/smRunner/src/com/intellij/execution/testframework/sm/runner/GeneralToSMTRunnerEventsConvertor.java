@@ -278,7 +278,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
                                 final Function<SMTestProxy, String> nameFunction,
                                 boolean preferSuite) {
     if (myTreeBuildBeforeStart) {
-      Set<SMTestProxy> acceptedProxies = new HashSet<>();
+      Set<SMTestProxy> acceptedProxies = new LinkedHashSet<>();
       final Collection<? extends SMTestProxy> children = myGetChildren ? parentSuite.getChildren() : myCurrentChildren;
       for (SMTestProxy proxy : children) {
         if (fullName.equals(nameFunction.fun(proxy)) && !proxy.isFinal()) {

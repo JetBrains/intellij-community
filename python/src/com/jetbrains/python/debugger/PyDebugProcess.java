@@ -222,7 +222,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   private MultiProcessDebugger createMultiprocessDebugger(ServerSocket serverSocket) {
-    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, 10000);
+    MultiProcessDebugger debugger = new MultiProcessDebugger(this, serverSocket, getConnectTimeout());
     debugger.addOtherDebuggerCloseListener(new MultiProcessDebugger.DebuggerProcessListener() {
       @Override
       public void threadsClosed(Set<String> threadIds) {

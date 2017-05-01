@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.project.model.impl.library;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -114,11 +115,6 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
   }
 
   @Override
-  public boolean isEditable() {
-    return true;
-  }
-
-  @Override
   public String getTableLevel() {
     return myTableLevel;
   }
@@ -147,6 +143,11 @@ public class JpsLibraryTableImpl implements LibraryTable, Disposable {
 
     @Override
     public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
+      return createLibrary(name, type, null);
+    }
+
+    @Override
+    public Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource) {
       throw new UnsupportedOperationException("'createLibrary' not implemented in " + getClass().getName());
     }
 

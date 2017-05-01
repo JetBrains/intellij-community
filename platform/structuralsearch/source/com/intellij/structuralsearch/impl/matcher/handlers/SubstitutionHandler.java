@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,7 +332,7 @@ public class SubstitutionHandler extends MatchingHandler {
 
         final PsiElement startMatching = matchedNodes.current();
         do {
-          final PsiElement element = handler.getPinnedNode(null);
+          final PsiElement element = handler.getPinnedNode();
           final PsiElement matchedNode = (element != null) ? element : matchedNodes.current();
 
           if (element == null) matchedNodes.advance();

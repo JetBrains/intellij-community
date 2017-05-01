@@ -39,7 +39,7 @@
                     <option name="status" value="Unchecked" />
                     <option name="stepId" value="0" />
                     <option name="text" />
-                    <option name="theoryTask" value="false" />
+                    <option name="theoryTask" value="true" />
                     <option name="updateDate" />
                     <option name="taskFiles">
                       <map>
@@ -48,36 +48,6 @@
                             <TaskFile>
                               <option name="answerPlaceholders">
                                 <list>
-                                  <AnswerPlaceholder>
-                                    <option name="index" value="0" />
-                                    <option name="initialState" />
-                                    <option name="length" value="5" />
-                                    <option name="offset" value="42" />
-                                    <option name="selected" value="false" />
-                                    <option name="subtaskInfos">
-                                      <map>
-                                        <entry key="0">
-                                          <value>
-                                            <AnswerPlaceholderSubtaskInfo>
-                                              <option name="answer" value="" />
-                                              <option name="hasFrame" value="true" />
-                                              <option name="hints">
-                                                <list>
-                                                  <option value="hint1" />
-                                                </list>
-                                              </option>
-                                              <option name="needInsertText" value="false" />
-                                              <option name="placeholderText" value="place" />
-                                              <option name="possibleAnswer" value="pass" />
-                                              <option name="selected" value="false" />
-                                              <option name="status" value="Unchecked" />
-                                            </AnswerPlaceholderSubtaskInfo>
-                                          </value>
-                                        </entry>
-                                      </map>
-                                    </option>
-                                    <option name="useLength" value="false" />
-                                  </AnswerPlaceholder>
                                 </list>
                               </option>
                               <option name="highlightErrors" value="true" />

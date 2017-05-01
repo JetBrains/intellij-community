@@ -565,12 +565,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
 
       if (item.parameter.oldParameterIndex < 0) {
-        String def = WriteCommandAction.runWriteCommandAction(myProject, new Computable<String>() {
-          @Override
-          public String compute() {
-            return JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim();
-          }
-        });
+        String def = WriteCommandAction.runWriteCommandAction(myProject,
+                                                              (Computable<String>)() -> JavaCodeStyleManager.getInstance(myProject).qualifyClassReferences(item.defaultValueCodeFragment).getText().trim());
         item.parameter.defaultValue = def;
         if (!(type instanceof PsiEllipsisType)) {
           try {

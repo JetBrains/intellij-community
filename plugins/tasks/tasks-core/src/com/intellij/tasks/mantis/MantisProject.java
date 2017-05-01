@@ -75,7 +75,7 @@ public final class MantisProject {
   @Transient
   @NotNull
   public List<MantisFilter> getFilters() {
-    return myFilters == null? Collections.<MantisFilter>emptyList() : myFilters;
+    return myFilters == null ? Collections.emptyList() : myFilters;
   }
 
   public void setFilters(@NotNull List<MantisFilter> filters) {

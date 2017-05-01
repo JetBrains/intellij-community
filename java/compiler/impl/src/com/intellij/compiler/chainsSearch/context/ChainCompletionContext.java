@@ -33,12 +33,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ChainCompletionContext {
   @NotNull
-  private final TargetType myTarget;
+  private final ChainSearchTarget myTarget;
   @NotNull
   private final List<PsiNamedElement> myContextElements;
   @NotNull
@@ -50,13 +51,13 @@ public class ChainCompletionContext {
   @NotNull
   private final Project myProject;
   @NotNull
-  private final PsiManager myPsiManager;
+  private final PsiResolveHelper myResolveHelper;
   @NotNull
   private final FactoryMap<MethodIncompleteSignature, PsiClass> myQualifierClassResolver;
   @NotNull
   private final FactoryMap<MethodIncompleteSignature, PsiMethod[]> myResolver;
 
-  public ChainCompletionContext(@NotNull TargetType target,
+  public ChainCompletionContext(@NotNull ChainSearchTarget target,
                                 @NotNull List<PsiNamedElement> contextElements,
                                 @NotNull List<PsiNamedElement> contextStrings,
                                 @NotNull PsiElement context) {
@@ -66,25 +67,25 @@ public class ChainCompletionContext {
     myContext = context;
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
-    myPsiManager = PsiManager.getInstance(myProject);
+    myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
     myQualifierClassResolver = new FactoryMap<MethodIncompleteSignature, PsiClass>() {
       @Nullable
       @Override
       protected PsiClass create(MethodIncompleteSignature sign) {
-        return sign.resolveQualifier(myProject, myResolveScope);
+        return sign.resolveQualifier(myProject, myResolveScope, accessValidator());
       }
     };
     myResolver = new FactoryMap<MethodIncompleteSignature, PsiMethod[]>() {
       @NotNull
       @Override
       protected PsiMethod[] create(MethodIncompleteSignature sign) {
-        return sign.resolve(myProject, myResolveScope);
+        return sign.resolve(myProject, myResolveScope, accessValidator());
       }
     };
   }
 
   @NotNull
-  public TargetType getTarget() {
+  public ChainSearchTarget getTarget() {
     return myTarget;
   }
 
@@ -117,11 +118,6 @@ public class ChainCompletionContext {
   @NotNull
   public Project getProject() {
     return myProject;
-  }
-
-  @NotNull
-  public PsiManager getPsiManager() {
-    return myPsiManager;
   }
 
   @Nullable
@@ -159,11 +155,15 @@ public class ChainCompletionContext {
     return myResolver.get(sign);
   }
 
+  private Predicate<PsiMember> accessValidator() {
+    return m -> myResolveHelper.isAccessible(m, myContext, null);
+  }
+
   @Nullable
   public static ChainCompletionContext createContext(@Nullable PsiType targetType,
                                                      @Nullable PsiElement containingElement, boolean suggestIterators) {
     if (containingElement == null) return null;
-    TargetType target = TargetType.create(targetType);
+    ChainSearchTarget target = ChainSearchTarget.create(targetType);
     if (target == null) return null;
     if (suggestIterators) {
       target = target.toIterators();

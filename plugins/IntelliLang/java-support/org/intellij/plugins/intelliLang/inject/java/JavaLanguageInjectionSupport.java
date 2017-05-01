@@ -393,7 +393,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     configuration.replaceInjectionsWithUndo(
       project, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
-      Collections.<PsiElement>emptyList());
+      Collections.emptyList());
   }
 
   private static void collectInjections(PsiLiteralExpression host,

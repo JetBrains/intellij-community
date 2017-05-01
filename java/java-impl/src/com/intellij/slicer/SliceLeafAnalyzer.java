@@ -19,12 +19,12 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaReference;
@@ -48,31 +48,24 @@ class SliceLeafAnalyzer {
     @Override
     public int computeHashCode(final PsiElement element) {
       if (element == null) return 0;
-      String text = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          PsiElement elementToCompare = element;
-          if (element instanceof PsiJavaReference) {
-            PsiElement resolved = ((PsiJavaReference)element).resolve();
-            if (resolved != null) {
-              elementToCompare = resolved;
-            }
+      String text = ReadAction.compute(() -> {
+        PsiElement elementToCompare = element;
+        if (element instanceof PsiJavaReference) {
+          PsiElement resolved = ((PsiJavaReference)element).resolve();
+          if (resolved != null) {
+            elementToCompare = resolved;
           }
-          return elementToCompare instanceof PsiNamedElement ? ((PsiNamedElement)elementToCompare).getName()
-                                                             : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
         }
+        return elementToCompare instanceof PsiNamedElement ? ((PsiNamedElement)elementToCompare).getName()
+                                                           : AstBufferUtil.getTextSkippingWhitespaceComments(elementToCompare.getNode());
       });
       return Comparing.hashcode(text);
     }
 
     @Override
     public boolean equals(final PsiElement o1, final PsiElement o2) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-        @Override
-        public Boolean compute() {
-          return o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2);
-        }
-      });
+      return ReadAction
+        .compute(() -> o1 != null && o2 != null && PsiEquivalenceUtil.areElementsEquivalent(o1, o2));
     }
   };
 

@@ -46,8 +46,10 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
@@ -100,12 +102,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     final FileEditorProvider fileEditorProvider = getProvider();
     Pair<FileEditor[], FileEditorProvider[]> result = Pair.create(new FileEditor[]{fileEditor}, new FileEditorProvider[]{fileEditorProvider});
 
-    modifyTabWell(new Runnable() {
-      @Override
-      public void run() {
-        myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider);
-      }
-    });
+    modifyTabWell(() -> myTestEditorSplitter.openAndFocusTab(file, fileEditor, fileEditorProvider));
 
     return result;
   }
@@ -125,12 +122,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
         new FileEditorManagerEvent(this, lastFocusedFile, lastFocusedEditor, oldProvider, currentlyFocusedFile, currentlyFocusedEditor, newProvider);
     final FileEditorManagerListener publisher = getProject().getMessageBus().syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER);
 
-    notifyPublisher(new Runnable() {
-      @Override
-      public void run() {
-        publisher.selectionChanged(event);
-      }
-    });
+    notifyPublisher(() -> publisher.selectionChanged(event));
   }
 
   @NotNull
@@ -368,12 +360,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       myActiveFile = null;
     }
 
-    modifyTabWell(new Runnable() {
-      @Override
-      public void run() {
-        myTestEditorSplitter.closeFile(file);
-      }
-    });
+    modifyTabWell(() -> myTestEditorSplitter.closeFile(file));
   }
 
   @Override

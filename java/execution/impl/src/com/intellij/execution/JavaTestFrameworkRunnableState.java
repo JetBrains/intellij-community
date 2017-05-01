@@ -75,7 +75,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   ModuleBasedConfiguration<JavaRunConfigurationModule>
   & CommonJavaRunConfigurationParameters
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
-  private static final Logger LOG = Logger.getInstance("#" + JavaTestFrameworkRunnableState.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaTestFrameworkRunnableState.class);
   protected ServerSocket myServerSocket;
   protected File myTempFile;
   protected File myWorkingDirsFile = null;

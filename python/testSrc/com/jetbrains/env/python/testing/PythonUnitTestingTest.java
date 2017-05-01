@@ -30,9 +30,9 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalUnitTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.PyUnitTestConfiguration;
+import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -50,6 +50,160 @@ import static org.junit.Assert.assertEquals;
  * @author traff
  */
 public final class PythonUnitTestingTest extends PyEnvTestCase {
+
+
+
+  /**
+   * tests failfast as example of argument
+   */
+  @Test
+  public void testFailFast() throws Exception {
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/failFast", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1){
+          @Override
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration) throws IOException {
+            super.configurationCreatedAndWillLaunch(configuration);
+            configuration.setAdditionalArguments("-f"); //FailFast
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
+        runner.getFormattedTestTree();
+        Assert.assertEquals("Bad tree produced for failfast", "Test tree:\n" +
+                                "[root]\n" +
+                                ".test_test\n" +
+                                "..SomeTestCase\n" +
+                                "...test_1_test(-)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+
+
+
+  /**
+   * tests with docstrings are reported as "test.name (text)" by unittest.
+   */
+  @Test
+  public void testWithDocString() throws Exception {
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/withDocString", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        if (runner.getCurrentRerunStep() == 0) {
+          assertEquals("test with docstring produced bad tree", "Test tree:\n" +
+                                                                "[root]\n" +
+                                                                ".test_test\n" +
+                                                                "..SomeTestCase\n" +
+                                                                "...testSomething (Only with docstring test is parsed with extra space)(+)\n" +
+                                                                "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
+        }
+        else {
+          assertEquals("test with docstring failed to rerun",
+                       "Test tree:\n" +
+                       "[root]\n" +
+                       ".test_test\n" +
+                       "..SomeTestCase\n" +
+                       "...testSomethingBad (Fail)(-)\n", runner.getFormattedTestTree());
+        }
+      }
+    });
+  }
+
+  /**
+   * subtest names may have dots and shall not break test tree
+   */
+  @EnvTestTagsRequired(tags = "python3")
+  @Test
+  public void testDotsInSubtest() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestDots", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals("dots in subtest names broke output", "Test tree:\n" +
+                                                           "[root]\n" +
+                                                           ".test_test\n" +
+                                                           "..SampleTest\n" +
+                                                           "...test_sample\n" +
+                                                           "....(i='0_0')(-)\n" +
+                                                           "....(i='1_1')(-)\n" +
+                                                           "....(i='2_2')(+)\n" +
+                                                           "....(i='3_3')(+)\n" +
+                                                           "....(i='4_4')(+)\n" +
+                                                           "....(i='5_5')(+)\n" +
+                                                           "....(i='6_6')(+)\n" +
+                                                           "....(i='7_7')(+)\n" +
+                                                           "....(i='8_8')(+)\n" +
+                                                           "....(i='9_9')(+)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+  @EnvTestTagsRequired(tags = "unittest2")
+  @Test
+  public void testUnitTest2() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/unittest2", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        runner.getFormattedTestTree();
+        assertEquals("unittest2 produced wrong tree", "Test tree:\n" +
+                                                      "[root]\n" +
+                                                      ".test_test\n" +
+                                                      "..SampleTest\n" +
+                                                      "...test_sample\n" +
+                                                      "....(i=0)(-)\n" +
+                                                      "....(i=1)(-)\n" +
+                                                      "....(i=2)(-)\n" +
+                                                      "....(i=3)(-)\n" +
+                                                      "....(i=4)(+)\n" +
+                                                      "....(i=5)(+)\n" +
+                                                      "....(i=6)(+)\n" +
+                                                      "....(i=7)(+)\n" +
+                                                      "....(i=8)(+)\n" +
+                                                      "....(i=9)(+)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
 
   // Ensures setup/teardown does not break anything
   @Test
@@ -141,7 +295,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(myScriptName), 2) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull final PyUniversalUnitTestConfiguration configuration)
+          protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration)
             throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setPattern("test*");
@@ -186,7 +340,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
         return new PyUnitTestProcessRunner(".", 1) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             // Unittest can't find tests in folders with out of init.py, even in py2k, so we set working dir explicitly
             configuration.setWorkingDirectory(toFullPath("tests"));
@@ -209,7 +363,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         // Full pass is required because it is folder
         return new PyUnitTestProcessRunner(toFullPath(myScriptName), 2) {
           @Override
-          protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+          protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
             configuration.setWorkingDirectory(null); //Unset working dir: should be set to tests automatically
           }
@@ -279,7 +433,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testMultipleCases() throws Exception {
     runPythonTest(
       new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                 PyUniversalUnitTestConfiguration.class));
+                                                 PyUnitTestConfiguration.class));
   }
 
   /**
@@ -288,21 +442,21 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test
   public void testConfigurationProducerObeysDefaultDir() throws Exception {
     runPythonTest(
-      new CreateConfigurationByFileTask<PyUniversalUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                          PyUniversalUnitTestConfiguration.class) {
+      new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                                                          PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override
         public void runTestOn(final String sdkHome) throws InvalidSdkException, IOException {
           // Set default working directory to some random location before actual exection
-          final PyUniversalUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUniversalUnitTestFactory.INSTANCE);
+          final PyUnitTestConfiguration templateConfiguration = getTemplateConfiguration(PyUnitTestFactory.INSTANCE);
           templateConfiguration.setWorkingDirectory(SOME_RANDOM_DIR);
           super.runTestOn(sdkHome);
           templateConfiguration.setWorkingDirectory("");
         }
 
         @Override
-        protected void checkConfiguration(@NotNull final PyUniversalUnitTestConfiguration configuration,
+        protected void checkConfiguration(@NotNull final PyUnitTestConfiguration configuration,
                                           @NotNull final PsiElement elementToRightClickOn) {
           super.checkConfiguration(configuration, elementToRightClickOn);
           Assert.assertEquals("UnitTest does not obey default working directory", SOME_RANDOM_DIR,
@@ -314,7 +468,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
   @Test
   public void testConfigurationProducer() throws Exception {
-    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUniversalUnitTestConfiguration.class);
+    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class);
   }
 
   /**
@@ -329,7 +483,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
           return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }
@@ -350,7 +504,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
         protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
           return new PyUnitTestProcessRunner(toFullPath("tests"), 0) {
             @Override
-            protected void configurationCreatedAndWillLaunch(@NotNull PyUniversalUnitTestConfiguration configuration) throws IOException {
+            protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
               super.configurationCreatedAndWillLaunch(configuration);
               configuration.setWorkingDirectory(getWorkingFolderForScript());
             }
@@ -363,16 +517,16 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Exception {
 
-    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration> task =
-      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUniversalUnitTestConfiguration>() {
+    final CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration> task =
+      new CreateConfigurationTestTask.PyConfigurationCreationTask<PyUnitTestConfiguration>() {
         @NotNull
         @Override
-        protected PyUniversalUnitTestFactory createFactory() {
-          return PyUniversalUnitTestFactory.INSTANCE;
+        protected PyUnitTestFactory createFactory() {
+          return PyUnitTestFactory.INSTANCE;
         }
       };
     runPythonTest(task);
-    final PyUniversalUnitTestConfiguration configuration = task.getConfiguration();
+    final PyUnitTestConfiguration configuration = task.getConfiguration();
     configuration.setPattern("foo");
     configuration.getTarget().setTargetType(TestTargetType.PATH);
     configuration.getTarget().setTarget("foo.py");
@@ -384,7 +538,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testConfigurationProducerOnDirectory() throws Exception {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameFolderTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                                     PyUniversalUnitTestConfiguration.class));
+                                                                                     PyUnitTestConfiguration.class));
   }
 
   @Test
@@ -392,7 +546,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     runPythonTest(
       new CreateConfigurationByFileTask.CreateConfigurationTestAndRenameClassTask<>(
         PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-        PyUniversalUnitTestConfiguration.class));
+        PyUnitTestConfiguration.class));
   }
 
   @Test

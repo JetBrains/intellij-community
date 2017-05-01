@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -34,7 +35,7 @@ public class PythonSdkTableListener implements Disposable {
   public PythonSdkTableListener(MessageBus messageBus) {
     ProjectJdkTable.Listener jdkTableListener = new ProjectJdkTable.Listener() {
       @Override
-      public void jdkAdded(final Sdk sdk) {
+      public void jdkAdded(@NotNull final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().runWriteAction(() -> {
             addLibrary(sdk);
@@ -43,14 +44,14 @@ public class PythonSdkTableListener implements Disposable {
       }
 
       @Override
-      public void jdkRemoved(final Sdk sdk) {
+      public void jdkRemoved(@NotNull final Sdk sdk) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           removeLibrary(sdk);
         }
       }
 
       @Override
-      public void jdkNameChanged(final Sdk sdk, final String previousName) {
+      public void jdkNameChanged(@NotNull final Sdk sdk, @NotNull final String previousName) {
         if (sdk.getSdkType() instanceof PythonSdkType) {
           renameLibrary(sdk, previousName);
         }

@@ -38,10 +38,9 @@ class IdeaLogger : IFernflowerLogger() {
 
   override fun writeMessage(message: String, t: Throwable) {
     when (t) {
-      is InternalException -> throw t
       is ProcessCanceledException -> throw t
       is InterruptedException -> throw ProcessCanceledException(t)
-      else -> throw InternalException(extendMessage(message), t)
+      else -> LOG.warn(message, t)
     }
   }
 

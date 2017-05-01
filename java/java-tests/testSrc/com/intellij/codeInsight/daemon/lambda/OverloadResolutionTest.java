@@ -252,6 +252,11 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testDontSkipInapplicableMethodsDuringSameSignatureCheck() throws Exception {
+    doTest(false);
+  }
+
+
   private void doTest() {
     doTest(true);
   }

@@ -21,7 +21,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -70,7 +69,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
     final MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Adapter() {
       @Override
-      public void jdkRemoved(Sdk jdk) {
+      public void jdkRemoved(@NotNull Sdk jdk) {
         if (jdk == sdk) {
           Disposer.dispose(PythonSdkPathCache.this);
         }
@@ -81,18 +80,15 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
         clearCache();
       }
     });
-    sdk.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
-      @Override
-      public void rootSetChanged(@NotNull RootProvider wrapper) {
-        clearCache();
-        if (!project.isDisposed()) {
-          final Module[] modules = ModuleManager.getInstance(project).getModules();
-          for (Module module : modules) {
-            PythonModulePathCache.getInstance(module).clearCache();
-          }
+    sdk.getRootProvider().addRootSetChangedListener(wrapper -> {
+      clearCache();
+      if (!project.isDisposed()) {
+        final Module[] modules = ModuleManager.getInstance(project).getModules();
+        for (Module module : modules) {
+          PythonModulePathCache.getInstance(module).clearCache();
         }
-        myBuiltins.set(null);
       }
+      myBuiltins.set(null);
     }, this);
     VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), this);
   }

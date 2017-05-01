@@ -33,7 +33,7 @@ import java.util.*;
  * @since 25.01.2011
  */
 public abstract class NullableNotNullManager {
-  protected static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
+  protected static final Logger LOG = Logger.getInstance(NullableNotNullManager.class);
 
   public String myDefaultNullable = AnnotationUtil.NULLABLE;
   public String myDefaultNotNull = AnnotationUtil.NOT_NULL;

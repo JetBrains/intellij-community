@@ -359,7 +359,8 @@ public final class EditorUtil {
   }
 
   public static int nextTabStop(int x, @NotNull Editor editor, int tabSize) {
-    return nextTabStop(x, getSpaceWidth(Font.PLAIN, editor), tabSize);
+    int leftInset = editor.getContentComponent().getInsets().left;
+    return nextTabStop(x - leftInset, getSpaceWidth(Font.PLAIN, editor), tabSize) + leftInset;
   }
 
   public static int nextTabStop(int x, int plainSpaceWidth, int tabSize) {

@@ -30,7 +30,7 @@
               <option name="updateDate" />
               <option name="taskList">
                 <list>
-                  <Task>
+                  <TheoryTask>
                     <option name="activeSubtaskIndex" value="0" />
                     <option name="index" value="1" />
                     <option name="lastSubtaskIndex" value="0" />
@@ -45,38 +45,7 @@
                           <value>
                             <TaskFile>
                               <option name="answerPlaceholders">
-                                <list>
-                                  <AnswerPlaceholder>
-                                    <option name="index" value="0" />
-                                    <option name="initialState" />
-                                    <option name="length" value="5" />
-                                    <option name="offset" value="42" />
-                                    <option name="selected" value="false" />
-                                    <option name="subtaskInfos">
-                                      <map>
-                                        <entry key="0">
-                                          <value>
-                                            <AnswerPlaceholderSubtaskInfo>
-                                              <option name="answer" value="" />
-                                              <option name="hasFrame" value="true" />
-                                              <option name="hints">
-                                                <list>
-                                                  <option value="hint1" />
-                                                </list>
-                                              </option>
-                                              <option name="needInsertText" value="false" />
-                                              <option name="placeholderText" value="place" />
-                                              <option name="possibleAnswer" value="pass" />
-                                              <option name="selected" value="false" />
-                                              <option name="status" value="Unchecked" />
-                                            </AnswerPlaceholderSubtaskInfo>
-                                          </value>
-                                        </entry>
-                                      </map>
-                                    </option>
-                                    <option name="useLength" value="false" />
-                                  </AnswerPlaceholder>
-                                </list>
+                                <list />
                               </option>
                               <option name="highlightErrors" value="true" />
                               <option name="index" value="1" />
@@ -90,7 +59,7 @@
                         </entry>
                       </map>
                     </option>
-                  </Task>
+                  </TheoryTask>
                 </list>
               </option>
             </Lesson>

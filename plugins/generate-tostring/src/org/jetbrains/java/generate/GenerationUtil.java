@@ -43,7 +43,7 @@ import java.io.StringWriter;
 import java.util.*;
 
 public class GenerationUtil {
-  private static final Logger logger = Logger.getInstance("#" + GenerationUtil.class.getName());
+  private static final Logger logger = Logger.getInstance(GenerationUtil.class);
 
   /**
      * Handles any exception during the executing on this plugin.
@@ -141,7 +141,7 @@ public class GenerationUtil {
                                             int sortElements,
                                             boolean useFullyQualifiedName)
     throws GenerateCodeException {
-    return velocityGenerateCode(clazz, selectedMembers, Collections.<PsiMember>emptyList(), params, Collections.<String, Object>emptyMap(), templateMacro, sortElements, useFullyQualifiedName, false);
+    return velocityGenerateCode(clazz, selectedMembers, Collections.emptyList(), params, Collections.emptyMap(), templateMacro, sortElements, useFullyQualifiedName, false);
   }
 
   /**

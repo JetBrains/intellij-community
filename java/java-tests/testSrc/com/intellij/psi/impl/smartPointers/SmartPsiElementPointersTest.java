@@ -371,7 +371,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     SmartPsiElementPointer classp = createPointer(aClass);
     SmartPsiElementPointer filep = createPointer(aClass.getContainingFile());
 
-    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singleton(vfile), true);
+    FileContentUtil.reparseFiles(myProject, Collections.singleton(vfile), true);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertFalse(aClass.isValid());
 

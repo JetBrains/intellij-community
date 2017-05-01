@@ -163,15 +163,8 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   }
 
   @Override
-  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action) {
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throw new AssertionError("runInReadActionWithWriteActionPriority shouldn't be invoked from read action");
-    }
-    boolean success = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
-    if (!success) {
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-    }
-    return success;
+  public boolean runInReadActionWithWriteActionPriority(@NotNull Runnable action, @Nullable ProgressIndicator indicator) {
+    return ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator);
   }
 
   @Nullable

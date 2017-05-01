@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 public class ToggleSortBookmarksAction extends ToggleAction {
   public ToggleSortBookmarksAction() {
     super(null, IdeBundle.message("action.bookmark.toggle.sort"), AllIcons.ObjectBrowser.Sorted);
+    setEnabledInModalContext(true);
   }
 
   @Override

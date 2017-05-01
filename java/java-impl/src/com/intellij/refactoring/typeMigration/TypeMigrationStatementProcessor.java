@@ -43,7 +43,7 @@ import java.util.Map;
 class TypeMigrationStatementProcessor extends JavaRecursiveElementVisitor {
   private final PsiElement myStatement;
   private final TypeMigrationLabeler myLabeler;
-  private static final Logger LOG = Logger.getInstance("#" + TypeMigrationStatementProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TypeMigrationStatementProcessor.class);
   private final TypeEvaluator myTypeEvaluator;
 
   public TypeMigrationStatementProcessor(final PsiElement expression, TypeMigrationLabeler labeler) {

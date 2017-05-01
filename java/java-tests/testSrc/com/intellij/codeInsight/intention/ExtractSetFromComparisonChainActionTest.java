@@ -23,11 +23,8 @@ public class ExtractSetFromComparisonChainActionTest extends LightIntentionActio
   public void test() throws Exception { doAllTests(); }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    String name = getTestName(false);
-    return name.contains("Java9") ? LanguageLevel.JDK_1_9 :
-           name.contains("Java4") ? LanguageLevel.JDK_1_4 :
-           LanguageLevel.JDK_1_8;
+  protected LanguageLevel getDefaultLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
   }
 
   @Override

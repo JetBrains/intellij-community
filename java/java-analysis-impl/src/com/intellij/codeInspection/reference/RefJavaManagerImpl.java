@@ -45,7 +45,7 @@ import javax.swing.*;
  * Date: 20-Dec-2007
  */
 public class RefJavaManagerImpl extends RefJavaManager {
-  private static final Logger LOG = Logger.getInstance("#" + RefJavaManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   private PsiMethod myAppMainPattern;
   private PsiMethod myAppPremainPattern;
   private PsiMethod myAppAgentmainPattern;

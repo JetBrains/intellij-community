@@ -77,15 +77,13 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
       rootModel.inheritSdk();
     }
 
-    MavenUtil.runWhenInitialized(project, new DumbAwareRunnable() {
-      public void run() {
-        if (myEnvironmentForm != null) {
-          myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
-        }
-
-        new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                     myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
+    MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
+      if (myEnvironmentForm != null) {
+        myEnvironmentForm.setData(MavenProjectsManager.getInstance(project).getGeneralSettings());
       }
+
+      new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
+                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
     });
   }
 

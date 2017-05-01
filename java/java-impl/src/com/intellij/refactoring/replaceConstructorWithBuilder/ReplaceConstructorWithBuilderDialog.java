@@ -74,7 +74,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private ComboboxWithBrowseButton myDestinationCb;
   private JPanel myCreateNewPanel;
 
-  private static final Logger LOG = Logger.getInstance("#" + ReplaceConstructorWithBuilderDialog.class.getName());
+  private static final Logger LOG = Logger.getInstance(ReplaceConstructorWithBuilderDialog.class);
   private final LinkedHashMap<String, ParameterData> myParametersMap;
   private MyTableModel myTableModel;
   private JBTable myTable;

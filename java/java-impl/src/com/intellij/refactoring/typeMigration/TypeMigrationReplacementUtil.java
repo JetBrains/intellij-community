@@ -35,7 +35,7 @@ import java.util.Map;
  * Date: 04-Apr-2008
  */
 public class TypeMigrationReplacementUtil {
-  public static final Logger LOG = Logger.getInstance("#" + TypeMigrationReplacementUtil.class.getName());
+  public static final Logger LOG = Logger.getInstance(TypeMigrationReplacementUtil.class);
 
   private TypeMigrationReplacementUtil() {
   }

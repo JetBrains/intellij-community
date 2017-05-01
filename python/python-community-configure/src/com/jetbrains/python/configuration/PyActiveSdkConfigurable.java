@@ -17,6 +17,7 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -31,7 +32,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -252,12 +252,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     Sdk selectedSdk = getSelectedSdk();
     if (selectedSdk instanceof PyDetectedSdk) {
       final String sdkName = selectedSdk.getName();
-      final VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        @Override
-        public VirtualFile compute() {
-          return LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName);
-        }
-      });
+      final VirtualFile sdkHome =
+        WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(sdkName));
       if (sdkHome != null) {
         selectedSdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
         if (selectedSdk != null) {

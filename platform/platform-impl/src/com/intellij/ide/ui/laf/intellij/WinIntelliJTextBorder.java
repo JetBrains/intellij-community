@@ -42,7 +42,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
 
       Object eop = ((JComponent)c).getClientProperty("JComponent.error.outline");
       if (Registry.is("ide.inplace.errors.outline") && Boolean.parseBoolean(String.valueOf(eop))) {
-        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, c.hasFocus(), true);
+        DarculaUIUtil.paintErrorBorder(g2, width, height, 0, true, c.hasFocus());
       } else {
         int d = JBUI.scale(1);
         int dd = JBUI.scale(2);

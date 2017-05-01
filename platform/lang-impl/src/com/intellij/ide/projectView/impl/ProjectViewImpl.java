@@ -154,13 +154,11 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Map<String, AbstractProjectViewPane> myId2Pane = new LinkedHashMap<>();
   private final Collection<AbstractProjectViewPane> myUninitializedPanes = new THashSet<>();
 
-  static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
+  private static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
 
   private DefaultActionGroup myActionGroup;
   private String mySavedPaneId = ProjectViewPane.ID;
   private String mySavedPaneSubId;
-  //private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/compactEmptyPackages.png");
-  //private static final Icon HIDE_EMPTY_MIDDLE_PACKAGES_ICON = IconLoader.getIcon("/objectBrowser/hideEmptyPackages.png");
   @NonNls private static final String ELEMENT_NAVIGATOR = "navigator";
   @NonNls private static final String ELEMENT_PANES = "panes";
   @NonNls private static final String ELEMENT_PANE = "pane";

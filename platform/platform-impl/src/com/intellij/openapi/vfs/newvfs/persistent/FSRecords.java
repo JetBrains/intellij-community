@@ -48,6 +48,7 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -174,7 +175,7 @@ public class FSRecords {
 
     private static boolean myDirty;
     private static ScheduledFuture<?> myFlushingFuture;
-    private static boolean myCorrupted;
+    @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private static boolean myCorrupted;
 
     private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
@@ -510,20 +511,32 @@ public class FSRecords {
       return myAttributesList.getId(attId) + FIRST_ATTR_ID_OFFSET;
     }
 
+    private static final Object CORRUPTION_LOCK = new Object();
+
     private static void handleError(@NotNull Throwable e) throws RuntimeException, Error {
-      if (!ourIsDisposed) {
-        // No need to forcibly mark VFS corrupted if it is already shut down
-        if (!myCorrupted && w.tryLock()) { // avoid deadlock if r lock is occupied by current thread
-          w.unlock();
-          createBrokenMarkerFile(e);
-          myCorrupted = true;
-          force();
+      if (!ourIsDisposed) { // No need to forcibly mark VFS corrupted if it is already shut down
+        synchronized (CORRUPTION_LOCK) {  
+          if (!myCorrupted) {
+            createBrokenMarkerFile(e);
+            myCorrupted = true;
+            // avoid deadlock if r lock is occupied by current thread
+            if (canWriteWithoutDeadlock()) force();
+            else flush();
+          }
         }
       }
 
       if (e instanceof Error) throw (Error)e;
       if (e instanceof RuntimeException) throw (RuntimeException)e;
       throw new RuntimeException(e);
+    }
+
+    private static boolean canWriteWithoutDeadlock() {
+      if (w.tryLock()) {
+        w.unlock();
+        return true;
+      }
+      return false;
     }
 
     private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
@@ -875,7 +888,7 @@ public class FSRecords {
     try {
       DbConnection.markDirty();
       if (ourStoreRootsSeparately) {
-        java.util.List<String> rootsThatLeft = new ArrayList<>();
+        List<String> rootsThatLeft = new ArrayList<>();
         try {
           try (LineNumberReader stream = new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
             String str;
@@ -1632,12 +1645,8 @@ public class FSRecords {
   private static final MessageDigest myDigest = ContentHashesUtil.createHashDigest();
 
   static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) {
-    try {
-      new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
-    }
-    catch (Throwable e) {
-      DbConnection.handleError(e);
-    }
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
   }
 
   static int storeUnlinkedContent(byte[] bytes) {
@@ -1694,16 +1703,11 @@ public class FSRecords {
     public void close() throws IOException {
       super.close();
 
-      try {
-        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-        writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
-      }
-      catch (Throwable e) {
-        DbConnection.handleError(e);
-      }
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
     }
 
-    public void writeBytes(ByteSequence bytes) throws IOException {
+    private void writeBytes(ByteSequence bytes) {
       RefCountingStorage contentStorage = getContentStorage();
       w.lock();
       try {
@@ -1747,14 +1751,14 @@ public class FSRecords {
           bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
         }
         contentStorage.writeBytes(page, bytes, fixedSize);
-      }
-      finally {
+      } catch (Throwable e) {
+        DbConnection.handleError(e);
+      } finally {
         w.unlock();
       }
     }
   }
 
-  private static final boolean DO_HARD_CONSISTENCY_CHECK = false;
   private static final boolean DUMP_STATISTICS = weHaveContentHashes;  // TODO: remove once not needed
   private static long totalContents;
   private static long totalReuses;
@@ -1788,38 +1792,14 @@ public class FSRecords {
       ++reuses;
       getContentStorage().acquireRecord(page);
       totalReuses += length;
-
-      if (DO_HARD_CONSISTENCY_CHECK) {
-        DataInputStream stream = doReadContentById(page);
-        int i = offset;
-        for(int c = 0; c < length; ++c) {
-          if (stream.available() == 0) {
-            assert false;
-          }
-          if (bytes[i++] != stream.readByte()) {
-            assert false;
-          }
-        }
-        if (stream.available() > 0) {
-          assert false;
-        }
-      }
+      
       return page;
     } else {
       int newRecord = getContentStorage().acquireNewRecord();
       if (page != newRecord) {
         assert false:"Unexpected content storage modification";
       }
-      if (DO_HARD_CONSISTENCY_CHECK) {
-        if (hashesEnumerator.enumerate(digest) != page) {
-          assert false;
-        }
-
-        byte[] bytes1 = hashesEnumerator.valueOf(page);
-        if (!Arrays.equals(digest, bytes1)) {
-          assert false;
-        }
-      }
+      
       return -page;
     }
   }
@@ -1921,6 +1901,7 @@ public class FSRecords {
             if (attIdOnPage != encodedAttrId) {
               if (dataStream == null) {
                 unchangedPreviousDirectoryStream = new BufferExposingByteArrayOutputStream();
+                //noinspection IOResourceOpenedButNotSafelyClosed
                 dataStream = new DataOutputStream(unchangedPreviousDirectoryStream);
               }
               DataInputOutputUtil.writeINT(dataStream, attIdOnPage);

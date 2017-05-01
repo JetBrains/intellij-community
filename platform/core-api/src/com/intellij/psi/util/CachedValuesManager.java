@@ -27,7 +27,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
 
@@ -116,7 +115,7 @@ public abstract class CachedValuesManager {
    * @return The cached value
    */
   public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder, @NotNull CachedValueProvider<T> provider) {
-    return getCachedValue(dataHolder, this.<T>getKeyForClass(provider.getClass()), provider, false);
+    return getCachedValue(dataHolder, this.getKeyForClass(provider.getClass()), provider, false);
   }
 
   /**
@@ -124,7 +123,7 @@ public abstract class CachedValuesManager {
    * @return The cached value
    */
   public static <T> T getCachedValue(@NotNull final PsiElement psi, @NotNull final CachedValueProvider<T> provider) {
-    return getCachedValue(psi, CachedValuesManager.<T>getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
+    return getCachedValue(psi, CachedValuesManager.getKeyForClass(provider.getClass(), globalKeyForProvider), provider);
   }
 
   /**
@@ -163,7 +162,7 @@ public abstract class CachedValuesManager {
     assert name != null : providerClass + " doesn't have a name; can't be used for cache value provider";
     Key<CachedValue> key = keyForProvider.get(name);
     if (key == null) {
-      key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.<CachedValue>create(name));
+      key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.create(name));
     }
     //noinspection unchecked
     return (Key)key;

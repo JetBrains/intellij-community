@@ -62,7 +62,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -154,25 +153,22 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
     }.installOn(myTree);
 
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        final Object lc = o.getLastPathComponent();
-        final Object lastComponent = lc == null ? null : ((DefaultMutableTreeNode) lc).getUserObject();
-        if (lastComponent instanceof ShelvedChangeList) {
-          return ((ShelvedChangeList) lastComponent).DESCRIPTION;
-        } else if (lastComponent instanceof ShelvedChange) {
-          final ShelvedChange shelvedChange = (ShelvedChange)lastComponent;
-          return shelvedChange.getBeforeFileName() == null ? shelvedChange.getAfterFileName() : shelvedChange.getBeforeFileName();
-        } else if (lastComponent instanceof ShelvedBinaryFile) {
-          final ShelvedBinaryFile sbf = (ShelvedBinaryFile) lastComponent;
-          final String value = sbf.BEFORE_PATH == null ? sbf.AFTER_PATH : sbf.BEFORE_PATH;
-          int idx = value.lastIndexOf("/");
-          idx = (idx == -1) ? value.lastIndexOf("\\") : idx;
-          return idx > 0 ? value.substring(idx + 1) : value;
-        }
-        return null;
+    new TreeSpeedSearch(myTree, o -> {
+      final Object lc = o.getLastPathComponent();
+      final Object lastComponent = lc == null ? null : ((DefaultMutableTreeNode) lc).getUserObject();
+      if (lastComponent instanceof ShelvedChangeList) {
+        return ((ShelvedChangeList) lastComponent).DESCRIPTION;
+      } else if (lastComponent instanceof ShelvedChange) {
+        final ShelvedChange shelvedChange = (ShelvedChange)lastComponent;
+        return shelvedChange.getBeforeFileName() == null ? shelvedChange.getAfterFileName() : shelvedChange.getBeforeFileName();
+      } else if (lastComponent instanceof ShelvedBinaryFile) {
+        final ShelvedBinaryFile sbf = (ShelvedBinaryFile) lastComponent;
+        final String value = sbf.BEFORE_PATH == null ? sbf.AFTER_PATH : sbf.BEFORE_PATH;
+        int idx = value.lastIndexOf("/");
+        idx = (idx == -1) ? value.lastIndexOf("\\") : idx;
+        return idx > 0 ? value.substring(idx + 1) : value;
       }
+      return null;
     }, true);
   }
 

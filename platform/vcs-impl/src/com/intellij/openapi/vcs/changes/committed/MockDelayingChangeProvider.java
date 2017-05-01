@@ -62,14 +62,12 @@ public class MockDelayingChangeProvider implements ChangeProvider {
       if (runnable == null) {
         myExecuteInsideUpdate = null;
       } else {
-        myExecuteInsideUpdate = new Thread(new Runnable() {
-          public void run() {
-            // wait until starter sleeps
-            synchronized (myLock) {
-              runnable.run();
-            }
+        myExecuteInsideUpdate = new Thread(() -> {
+          // wait until starter sleeps
+          synchronized (myLock) {
+            runnable.run();
           }
-        },"vcs delaying execute");
+        }, "vcs delaying execute");
       }
     }
   }

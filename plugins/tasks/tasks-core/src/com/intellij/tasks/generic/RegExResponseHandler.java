@@ -1,12 +1,11 @@
 package com.intellij.tasks.generic;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
@@ -105,14 +104,11 @@ public final class RegExResponseHandler extends ResponseHandler {
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
       // temporary workaround to make AssemblaIntegrationTestPass
       final String finalSummary = summary;
-      summary = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-        @Override
-        public String compute() {
-          XmlElementFactory factory = XmlElementFactory.getInstance(ProjectManager.getInstance().getDefaultProject());
-          XmlTag text = factory.createTagFromText("<a>" + finalSummary + "</a>");
-          String trimmedText = text.getValue().getTrimmedText();
-          return XmlUtil.decode(trimmedText);
-        }
+      summary = ReadAction.compute(() -> {
+        XmlElementFactory factory = XmlElementFactory.getInstance(ProjectManager.getInstance().getDefaultProject());
+        XmlTag text = factory.createTagFromText("<a>" + finalSummary + "</a>");
+        String trimmedText = text.getValue().getTrimmedText();
+        return XmlUtil.decode(trimmedText);
       });
       tasks.add(new GenericTask(id, summary, myRepository));
     }

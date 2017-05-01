@@ -86,7 +86,7 @@ public abstract class ReferenceSetBase<T extends PsiReference> {
   protected List<T> createReferences(final TextRange range, final int index) {
     T reference = createReference(range, index);
 
-    return reference == null? Collections.<T>emptyList() : Collections.singletonList(reference);
+    return reference == null ? Collections.emptyList() : Collections.singletonList(reference);
   }
 
   public PsiElement getElement() {

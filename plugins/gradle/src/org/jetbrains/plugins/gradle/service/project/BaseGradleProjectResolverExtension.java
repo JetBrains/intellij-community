@@ -260,12 +260,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     final List<BuildScriptClasspathData.ClasspathEntry> classpathEntries;
     if (buildScriptClasspathModel != null) {
       classpathEntries = ContainerUtil.map(
-        buildScriptClasspathModel.getClasspath(), new Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>() {
-          @Override
-          public BuildScriptClasspathData.ClasspathEntry fun(ClasspathEntryModel model) {
-            return new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc());
-          }
-        });
+        buildScriptClasspathModel.getClasspath(),
+        (Function<ClasspathEntryModel, BuildScriptClasspathData.ClasspathEntry>)model -> new BuildScriptClasspathData.ClasspathEntry(model.getClasses(), model.getSources(), model.getJavadoc()));
     }
     else {
       classpathEntries = ContainerUtil.emptyList();
@@ -592,7 +588,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getExtraProjectModelClasses() {
-    Set<Class> result = ContainerUtil.<Class>set(GradleBuild.class, ModuleExtendedModel.class);
+    Set<Class> result = ContainerUtil.set(GradleBuild.class, ModuleExtendedModel.class);
     result.add(BuildScriptClasspathModel.class);
     result.add(GradleExtensions.class);
     result.add(ExternalProject.class);
@@ -602,7 +598,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @NotNull
   @Override
   public Set<Class> getToolingExtensionsClasses() {
-    return ContainerUtil.<Class>set(
+    return ContainerUtil.set(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar

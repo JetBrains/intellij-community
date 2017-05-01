@@ -36,13 +36,10 @@ public class FindClassInDeepPackagesTest extends PsiTestCase {
 
   private void setUpLibrary(final String s) throws Exception {
     final String testRoot = PathManagerEx.getTestDataPath() + "/psi/repositoryUse/deepPackages";
-    VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        String path = testRoot + "/" + s;
-        path = path.replace(File.separatorChar, '/');
-        return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      }
+    VirtualFile classesRoot = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> {
+      String path = testRoot + "/" + s;
+      path = path.replace(File.separatorChar, '/');
+      return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     });
     assertNotNull(classesRoot);
     ModuleRootModificationUtil.addModuleLibrary(myModule, classesRoot.getUrl());

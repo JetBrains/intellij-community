@@ -81,7 +81,7 @@ public class TemplateContext {
   // used during initialization => no sync
   @VisibleForTesting
   public void setDefaultContext(@NotNull TemplateContext defContext) {
-    HashMap<String, Boolean> copy = new HashMap<>(myContextStates);
+    Map<String, Boolean> copy = new THashMap<>(myContextStates);
     myContextStates.clear();
     myContextStates.putAll(defContext.myContextStates);
     myContextStates.putAll(copy);
@@ -107,7 +107,7 @@ public class TemplateContext {
    */
   @NotNull
   private Map<String, Boolean> makeInheritanceExplicit() {
-    Map<String, Boolean> explicitStates = ContainerUtil.newHashMap();
+    Map<String, Boolean> explicitStates = new THashMap<>();
     for (TemplateContextType type : ContainerUtil.filter(TemplateManagerImpl.getAllContextTypes(), this::isDisabledByInheritance)) {
       explicitStates.put(type.getContextId(), false);
     }

@@ -535,7 +535,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     CommandProcessor.getInstance().executeCommand(getProject(), () -> {
       for (Usage usage : usages) {
         try {
-          ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.<Usage>emptySet(), false);
+          ReplaceInProjectManager.getInstance(getProject()).replaceUsage(usage, findModel, Collections.emptySet(), false);
         }
         catch (FindManager.MalformedReplacementStringException e) {
           throw new RuntimeException(e);

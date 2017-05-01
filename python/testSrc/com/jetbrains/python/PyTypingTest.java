@@ -341,6 +341,28 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-16585
+  public void testCommentAfterComprehensionInAssignment() {
+    doTest("int",
+           "from typing import List\n" +
+           "\n" +
+           "xs = [expr for expr in range(10)]  # type: List[int]");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInForLoop() {
+    doTest("int",
+           "for _ in [str(expr) for expr in range(10)]:  # type: str\n" +
+           "    pass");
+  }
+
+  // PY-16585
+  public void testCommentAfterComprehensionInWithStatement() {
+    doTest("int",
+           "with f([expr for expr in range(10)]) as _: # type: str\n" +
+           "    pass");
+  }
+
   public void testStringLiteralInjection() {
     doTestInjectedText("class C:\n" +
                        "    def foo(self, expr: '<caret>C'):\n" +
@@ -362,6 +384,32 @@ public class PyTypingTest extends PyTestCase {
     doTestNoInjectedText("class C:\n" +
                          "    def foo(self, expr: '<caret>foo bar'):\n" +
                          "        pass\n");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionTuple() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testVariableTypeCommentInjectionParenthesisedTuple() {
+    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
+                       "(int, int)");
+  }
+
+  // PY-22620
+  public void testForTypeCommentInjectionTuple() {
+    doTestInjectedText("for x, y in undefined():  # type: int,<caret> int\n" +
+                       "    pass", 
+                       "int, int");
+  }
+
+  // PY-22620
+  public void testWithTypeCommentInjectionTuple() {
+    doTestInjectedText("with undefined() as (x, y):  # type: int,<caret> int\n" +
+                       "    pass",
+                       "int, int");
   }
 
   // PY-16125
@@ -926,17 +974,6 @@ public class PyTypingTest extends PyTestCase {
     assertFalse(files.isEmpty());
     final PsiElement injected = files.get(0).getFirst();
     assertEquals(expected, injected.getText());
-  }
-
-  @NotNull
-  private PsiElement getElementAtCaret() {
-    final Editor editor = myFixture.getEditor();
-    final Document document = editor.getDocument();
-    final PsiFile file = PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document);
-    assertNotNull(file);
-    final PsiElement element = file.findElementAt(myFixture.getCaretOffset());
-    assertNotNull(element);
-    return element;
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {

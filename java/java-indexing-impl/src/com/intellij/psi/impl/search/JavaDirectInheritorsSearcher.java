@@ -59,7 +59,7 @@ import java.util.stream.Stream;
 public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectClassInheritorsSearch.SearchParameters> {
   @Override
   public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters parameters, @NotNull final Processor<PsiClass> consumer) {
-    final PsiClass baseClass = parameters.getClassToProcess();
+    PsiClass baseClass = getClassToSearch(parameters);
     assert parameters.isCheckInheritance();
 
     final Project project = PsiUtilCore.getProjectInReadAction(baseClass);
@@ -145,6 +145,10 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     return true;
+  }
+
+  private static PsiClass getClassToSearch(@NotNull DirectClassInheritorsSearch.SearchParameters parameters) {
+    return ReadAction.compute(() -> (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess()));
   }
 
   private static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiClass subClass) {
@@ -285,9 +289,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     SearchScope scope = parameters.getScope();
     if (!(scope instanceof GlobalSearchScope)) return null;
 
-    PsiClass searchClass = ReadAction.compute(() -> (PsiClass)PsiUtil.preferCompiledElement(parameters.getClassToProcess()));
-    final CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
-    return compilerReferenceService.getDirectInheritors(searchClass,
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
+    return compilerReferenceService.getDirectInheritors(getClassToSearch(parameters),
                                                         (GlobalSearchScope)useScope,
                                                         (GlobalSearchScope)scope,
                                                         JavaFileType.INSTANCE);

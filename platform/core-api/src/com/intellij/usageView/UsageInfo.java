@@ -35,8 +35,8 @@ public class UsageInfo {
   public final boolean isNonCodeUsage;
   protected boolean myDynamicUsage;
 
-  public UsageInfo(@NotNull PsiElement element, final int startOffset, final int endOffset, boolean isNonCodeUsage) {
-    element = element.getNavigationElement();
+  public UsageInfo(@NotNull PsiElement originalElement, final int startOffset, final int endOffset, boolean isNonCodeUsage) {
+    PsiElement element = originalElement.getNavigationElement();
     PsiFile file = element.getContainingFile();
     PsiElement topElement = file == null ? element : file;
     LOG.assertTrue(topElement.isValid(), element);
@@ -55,6 +55,19 @@ public class UsageInfo {
     else {
       effectiveStart = startOffset;
       effectiveEnd = endOffset;
+      if (element != originalElement) {
+        PsiFile originalFile = originalElement.getContainingFile();
+        if (originalFile == file) {
+          int delta = originalElement.getTextRange().getStartOffset() - elementRange.getStartOffset();
+          effectiveStart += delta;
+          effectiveEnd += delta;
+        }
+        else {
+          throw new IllegalArgumentException("element.getNavigationElement() for element "+originalElement+"("+startOffset+", "+endOffset+
+               ") from " + originalFile + " led to different file "+file+
+               ", thus making passed offsets invalid. Specify -1 for start/end offsets to calculate correct offsets for navigation.");
+        }
+      }
     }
 
     if (effectiveStart < 0 || effectiveStart > effectiveEnd) {

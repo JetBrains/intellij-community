@@ -49,7 +49,7 @@ import java.io.File;
 
 /**
  * Parent of all python test old-style test runners.
- * For new style see {@link com.jetbrains.python.testing.universalTests}
+ * For new style see {@link com.jetbrains.python.testing}
  * User: catherine
  */
 public abstract class AbstractPythonLegacyTestRunConfiguration<T extends AbstractPythonTestRunConfiguration<T>>

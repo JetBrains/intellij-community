@@ -31,12 +31,14 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
   private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
 
   public AppEditorFontOptions() {
-    myFontPreferences.setTemplateFontSize(UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
+    myFontPreferences.register(
+      FontPreferences.DEFAULT_FONT_NAME,
+      UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f));
   }
 
   public static class PersistentFontPreferences {
-    public int FONT_SIZE;
-    public String FONT_FAMILY;
+    public int FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE;
+    public @NotNull String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
     public float FONT_SCALE = 1.0f;
 
     /**

@@ -33,7 +33,6 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
-import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
@@ -113,13 +112,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   }
 
   private void installSpeedSearch() {
-    new TableSpeedSearch(myCommitsTable, new PairFunction<Object, Cell, String>() {
-      @Nullable
-      @Override
-      public String fun(Object o, Cell cell) {
-        return cell.column == 0 ? null : String.valueOf(o);
-      }
-    });
+    new TableSpeedSearch(myCommitsTable, (o, cell) -> cell.column == 0 ? null : String.valueOf(o));
   }
 
   @Nullable

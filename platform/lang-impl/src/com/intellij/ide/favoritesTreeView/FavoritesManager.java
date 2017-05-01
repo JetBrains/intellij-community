@@ -261,77 +261,6 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  public synchronized boolean addRoot(@NotNull String name,
-                                      @NotNull List<AbstractTreeNode> parentElements,
-                                      final AbstractTreeNode newElement,
-                                      @Nullable AbstractTreeNode sibling) {
-    final List<TreeItem<Pair<AbstractUrl, String>>> items = myName2FavoritesRoots.get(name);
-    if (items == null) return false;
-    AbstractUrl url = createUrlByElement(newElement.getValue(), myProject);
-    if (url == null) return false;
-    final TreeItem<Pair<AbstractUrl, String>> newItem =
-      new TreeItem<>(Pair.create(url, newElement.getClass().getName()));
-
-    if (parentElements.isEmpty()) {
-      // directly to list
-      if (sibling != null) {
-        TreeItem<Pair<AbstractUrl, String>> after = null;
-        AbstractUrl siblingUrl = createUrlByElement(sibling.getValue(), myProject);
-        int idx = -1;
-        for (int i = 0; i < items.size(); i++) {
-          TreeItem<Pair<AbstractUrl, String>> item = items.get(i);
-          if (item.getData().getFirst().equals(siblingUrl)) {
-            idx = i;
-            break;
-          }
-        }
-        if (idx != -1) {
-          items.add(idx, newItem);
-        }
-        else {
-          items.add(newItem);
-        }
-      }
-      else {
-        items.add(newItem);
-      }
-
-      rootsChanged();
-      return true;
-    }
-
-    Collection<TreeItem<Pair<AbstractUrl, String>>> list = items;
-    TreeItem<Pair<AbstractUrl, String>> item = null;
-    for (AbstractTreeNode obj : parentElements) {
-      AbstractUrl objUrl = createUrlByElement(obj.getValue(), myProject);
-      item = findNextItem(objUrl, list);
-      if (item == null) return false;
-      list = item.getChildren();
-    }
-
-    if (sibling != null) {
-      TreeItem<Pair<AbstractUrl, String>> after = null;
-      AbstractUrl siblingUrl = createUrlByElement(sibling.getValue(), myProject);
-      for (TreeItem<Pair<AbstractUrl, String>> treeItem : list) {
-        if (treeItem.getData().getFirst().equals(siblingUrl)) {
-          after = treeItem;
-          break;
-        }
-      }
-      if (after == null) {
-        item.addChild(newItem);
-      }
-      else {
-        item.addChildAfter(newItem, after);
-      }
-    }
-    else {
-      item.addChild(newItem);
-    }
-    rootsChanged();
-    return true;
-  }
-
   private <T> boolean findListToRemoveFrom(@NotNull String name, @NotNull final List<T> elements,
                                            final Convertor<T, AbstractUrl> convertor) {
     Collection<TreeItem<Pair<AbstractUrl, String>>> list = getFavoritesListRootUrls(name);
@@ -364,12 +293,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public synchronized boolean removeRoot(@NotNull String name, @NotNull List<AbstractTreeNode> elements) {
-    final Convertor<AbstractTreeNode, AbstractUrl> convertor = new Convertor<AbstractTreeNode, AbstractUrl>() {
-      @Override
-      public AbstractUrl convert(AbstractTreeNode obj) {
-        return createUrlByElement(obj.getValue(), myProject);
-      }
-    };
+    final Convertor<AbstractTreeNode, AbstractUrl> convertor = obj -> createUrlByElement(obj.getValue(), myProject);
     boolean result = true;
     for (AbstractTreeNode element : elements) {
       final List<AbstractTreeNode> path = TaskDefaultFavoriteListProvider.getPathToUsualNode(element);
@@ -378,7 +302,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     return result;
   }
 
-  private TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<TreeItem<Pair<AbstractUrl, String>>> list) {
+  private static TreeItem<Pair<AbstractUrl, String>> findNextItem(AbstractUrl url, Collection<TreeItem<Pair<AbstractUrl, String>>> list) {
     for (TreeItem<Pair<AbstractUrl, String>> pair : list) {
       if (url.equals(pair.getData().getFirst())) {
         return pair;
@@ -439,9 +363,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myName2FavoritesRoots.clear();
-    for (Object list : element.getChildren(ELEMENT_FAVORITES_LIST)) {
-      final String name = ((Element)list).getAttributeValue(ATTRIBUTE_NAME);
-      List<TreeItem<Pair<AbstractUrl, String>>> roots = readRoots((Element)list, myProject);
+    for (Element list : element.getChildren(ELEMENT_FAVORITES_LIST)) {
+      final String name = list.getAttributeValue(ATTRIBUTE_NAME);
+      List<TreeItem<Pair<AbstractUrl, String>>> roots = readRoots(list, myProject);
       myName2FavoritesRoots.put(name, roots);
       myFavoritesRootsOrder.add(name);
     }
@@ -460,17 +384,13 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   private static void readFavoritesOneLevel(Element list, Project project, Collection<TreeItem<Pair<AbstractUrl, String>>> result) {
-    final List listChildren = list.getChildren(FAVORITES_ROOT);
-    if (listChildren == null || listChildren.isEmpty()) return;
-
-    for (Object favorite : listChildren) {
-      final Element favoriteElement = (Element)favorite;
-      final String className = favoriteElement.getAttributeValue(CLASS_NAME);
-      final AbstractUrl abstractUrl = readUrlFromElement(favoriteElement, project);
+    for (Element favorite : list.getChildren(FAVORITES_ROOT)) {
+      final String className = favorite.getAttributeValue(CLASS_NAME);
+      final AbstractUrl abstractUrl = readUrlFromElement(favorite, project);
       if (abstractUrl != null) {
         final TreeItem<Pair<AbstractUrl, String>> treeItem = new TreeItem<>(Pair.create(abstractUrl, className));
         result.add(treeItem);
-        readFavoritesOneLevel(favoriteElement, project, treeItem.getChildren());
+        readFavoritesOneLevel(favorite, project, treeItem.getChildren());
       }
     }
   }
@@ -627,7 +547,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
       if (element instanceof NamedLibraryElement) {
         NamedLibraryElement namedLibraryElement = (NamedLibraryElement)element;
         final VirtualFile[] files = namedLibraryElement.getOrderEntry().getRootFiles(OrderRootType.CLASSES);
-        if (files != null && ArrayUtil.find(files, vFile) > -1) {
+        if (ArrayUtil.find(files, vFile) > -1) {
           return true;
         }
       }

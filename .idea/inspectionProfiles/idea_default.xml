@@ -754,6 +754,9 @@
         <constraint name="field" script="&quot;import com.intellij.psi.PsiField&#10;import com.intellij.psi.PsiModifier&#10;import com.intellij.psi.PsiReferenceExpression&#10;import com.intellij.psi.PsiVariable&#10;&#10;field instanceof PsiReferenceExpression &amp;&amp;&#10;((PsiReferenceExpression)field).resolve() instanceof PsiField &amp;&amp;&#10;((PsiField)((PsiReferenceExpression)field).resolve()).hasModifierProperty(PsiModifier.VOLATILE) &amp;&amp;&#10;var instanceof PsiReferenceExpression &amp;&amp;&#10;((PsiReferenceExpression)var).resolve() instanceof PsiVariable &amp;&amp;&#10;!((PsiVariable)((PsiReferenceExpression)var).resolve()).hasModifierProperty(PsiModifier.VOLATILE)&quot;" within="" contains="" />
         <constraint name="__context__" target="true" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Logger.getInstance(&quot;#&quot; + class.getName()) can be simplified" text="com.intellij.openapi.diagnostic.Logger.getInstance(&quot;#&quot; + $c$.class.getName())" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.diagnostic.Logger.getInstance($c$.class)">
+        <constraint name="c" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />

@@ -42,7 +42,8 @@
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
-    
+
+    <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
   </extensions>
 
 </idea-plugin>

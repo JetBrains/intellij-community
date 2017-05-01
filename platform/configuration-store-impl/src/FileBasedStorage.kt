@@ -38,9 +38,9 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.readChars
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.loadElement
+import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import org.jdom.JDOMException
-import org.jdom.Parent
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
@@ -251,12 +251,6 @@ private fun doWrite(requestor: Any, file: VirtualFile, content: Any, lineSeparat
       }
     }
   }
-}
-
-internal fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
-  val out = BufferExposingByteArrayOutputStream(512)
-  JDOMUtil.write(this, out, lineSeparator)
-  return out
 }
 
 internal fun detectLineSeparators(chars: CharSequence, defaultSeparator: LineSeparator?): LineSeparator {

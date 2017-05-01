@@ -54,7 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactoringProcessor {
-  public static final Logger LOG = Logger.getInstance("#" + InlineSuperClassRefactoringProcessor.class.getName());
+  public static final Logger LOG = Logger.getInstance(InlineSuperClassRefactoringProcessor.class);
 
   private final PsiClass myCurrentInheritor;
   private final PsiClass mySuperClass;

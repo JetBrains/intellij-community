@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class SearchForTestsTask extends Task.Backgroundable {
 
-  private static final Logger LOG = Logger.getInstance("#" + SearchForTestsTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(SearchForTestsTask.class);
   protected Socket mySocket;
   private ServerSocket myServerSocket;
   private ProgressIndicator myProcessIndicator;

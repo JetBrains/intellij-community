@@ -59,7 +59,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
              PropertyChangeListener, Dumpable, Disposable
 {
 
-  private static final Logger LOG = Logger.getInstance("#" + SoftWrapModelImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(SoftWrapModelImpl.class);
 
   private final List<SoftWrapChangeListener>  mySoftWrapListeners = new ArrayList<>();
   

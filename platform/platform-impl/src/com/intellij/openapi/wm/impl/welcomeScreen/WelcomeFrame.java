@@ -21,7 +21,9 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareRunnable;
@@ -114,23 +116,14 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     frame.addWindowListener(
       new WindowAdapter() {
         public void windowClosing(final WindowEvent e) {
-          frame.dispose();
-
           if (ProjectManager.getInstance().getOpenProjects().length == 0) {
             ApplicationManagerEx.getApplicationEx().exit();
           }
+          else {
+            frame.dispose();
+          }
         }
-      }
-    );
-  }
-
-  public static void clearRecents() {
-    if (ourInstance != null) {
-      if (ourInstance instanceof WelcomeFrame) {
-        WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
-        // todo clear recent projects
-      }
-    }
+      });
   }
 
   private static WelcomeScreen createScreen(JRootPane rootPane) {
@@ -168,15 +161,12 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
 
   public static void showIfNoProjectOpened() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
-        windowManager.disposeRootFrame();
-        IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
-        if (frames.length == 0) {
-          showNow();
-        }
+    ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
+      WindowManagerImpl windowManager = (WindowManagerImpl)WindowManager.getInstance();
+      windowManager.disposeRootFrame();
+      IdeFrameImpl[] frames = windowManager.getAllProjectFrames();
+      if (frames.length == 0) {
+        showNow();
       }
     }, ModalityState.NON_MODAL);
   }

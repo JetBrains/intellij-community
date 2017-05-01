@@ -30,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
@@ -105,7 +106,7 @@ public class CompilerPaths {
    * Null is returned if output directory is not specified or is not valid
    */
   @Nullable
-  public static VirtualFile getModuleOutputDirectory(final Module module, boolean forTestClasses) {
+  public static VirtualFile getModuleOutputDirectory(@NotNull Module module, boolean forTestClasses) {
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
     if (compilerModuleExtension == null) {
       return null;
@@ -151,12 +152,9 @@ public class CompilerPaths {
         outPathUrl = url != null ? url : extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            final String url = extension.getCompilerOutputUrlForTests();
-            return url != null ? url : extension.getCompilerOutputUrl();
-          }
+        outPathUrl = application.runReadAction((Computable<String>)() -> {
+          final String url = extension.getCompilerOutputUrlForTests();
+          return url != null ? url : extension.getCompilerOutputUrl();
         });
       }
     }
@@ -165,12 +163,7 @@ public class CompilerPaths {
         outPathUrl = extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction(new Computable<String>() {
-          @Override
-          public String compute() {
-            return extension.getCompilerOutputUrl();
-          }
-        });
+        outPathUrl = application.runReadAction((Computable<String>)() -> extension.getCompilerOutputUrl());
       }
     }
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;

@@ -16,12 +16,16 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.impl.*;
+import com.intellij.notification.impl.NotificationParentGroup;
+import com.intellij.notification.impl.NotificationParentGroupBean;
+import com.intellij.notification.impl.NotificationSettings;
+import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BooleanTableCellRenderer;
 import com.intellij.ui.ScrollPaneFactory;
@@ -37,16 +41,14 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -261,6 +263,31 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         readAloudColumn.setMaxWidth(readAloudColumn.getPreferredWidth());
         readAloudColumn.setCellRenderer(new BooleanTableCellRenderer());
       }
+
+      if (Registry.is("ide.intellij.laf.win10.ui")) {
+        addMouseMotionListener(new MouseAdapter() {
+          @Override
+          public void mouseMoved(final MouseEvent e) {
+            Point point = e.getPoint();
+            int column = columnAtPoint(point);
+            int row = rowAtPoint(point);
+
+            UIUtil.resetEnabledRollOver(NotificationsTreeTable.this, LOG_COLUMN);
+            if (column == LOG_COLUMN) {
+              JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
+              rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", row);
+              ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
+            }
+          }
+        });
+
+        addMouseListener(new MouseAdapter() {
+          @Override public void mouseExited(MouseEvent e) {
+            UIUtil.resetEnabledRollOver(NotificationsTreeTable.this, LOG_COLUMN);
+          }
+        });
+      }
+
 
       new TableSpeedSearch(this);
       getEmptyText().setText("No notifications configured");

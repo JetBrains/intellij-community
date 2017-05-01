@@ -41,6 +41,7 @@ import com.intellij.util.*
 import com.intellij.util.containers.ConcurrentList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.catch
+import com.intellij.util.containers.filterSmart
 import com.intellij.util.io.*
 import com.intellij.util.messages.MessageBus
 import com.intellij.util.text.UniqueNameGenerator
@@ -772,15 +773,13 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(val fileSpec: String,
   override fun getRootDirectory(): File = ioDirectory.toFile()
 
   override fun setSchemes(newSchemes: List<T>, newCurrentScheme: T?, removeCondition: Condition<T>?) {
-    if (removeCondition == null) {
-      schemes.clear()
-    }
-    else {
-      val iterator = schemes.iterator()
-      for (scheme in iterator) {
-        if (removeCondition.value(scheme)) {
-          iterator.remove()
-        }
+    if (schemes.isNotEmpty()) {
+      if (removeCondition == null) {
+        schemes.clear()
+      }
+      else {
+        // we must not use remove or removeAll to avoid "equals" call
+        schemesRef.set(ContainerUtil.createConcurrentList(schemes.filterSmart { !removeCondition.value(it) }))
       }
     }
 

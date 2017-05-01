@@ -96,7 +96,13 @@ public class VcsHistoryUtil {
     FilePath path1 = getRevisionPath(revision1);
     FilePath path2 = getRevisionPath(revision2);
 
-    String title = DiffRequestFactoryImpl.getTitle(path1, path2, " -> ");
+    String title;
+    if (path1 != null && path2 != null) {
+      title = DiffRequestFactoryImpl.getTitle(path1, path2, " -> ");
+    }
+    else {
+      title = DiffRequestFactoryImpl.getContentTitle(path);
+    }
 
     DiffContent diffContent1 = createContent(project, content1, revision1, path);
     DiffContent diffContent2 = createContent(project, content2, revision2, path);
@@ -106,11 +112,7 @@ public class VcsHistoryUtil {
     diffContent1.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision1));
     diffContent2.putUserData(DiffUserDataKeysEx.REVISION_INFO, getRevisionInfo(revision2));
 
-    WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-      public void run() {
-        DiffManager.getInstance().showDiff(project, request);
-      }
-    }, null, project);
+    WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> DiffManager.getInstance().showDiff(project, request), null, project);
   }
 
   @Nullable
@@ -194,12 +196,9 @@ public class VcsHistoryUtil {
         }
         catch (final VcsException e) {
           LOG.info(e);
-          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
-                                       VcsBundle.message("message.title.show.differences"));
-            }
-          }, null, project);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+            () -> Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                         VcsBundle.message("message.title.show.differences")), null, project);
         }
         catch (IOException e) {
           LOG.info(e);

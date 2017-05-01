@@ -52,7 +52,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
@@ -192,14 +191,11 @@ public class MultipleFileMergeDialog extends DialogWrapper {
         return true;
       }
     }.installOn(myTable);
-    new TableSpeedSearch(myTable, new Convertor<Object, String>() {
-      @Override
-      public String convert(Object o) {
-        if (o instanceof VirtualFile) {
-          return ((VirtualFile)o).getName();
-        }
-        return null;
+    new TableSpeedSearch(myTable, o -> {
+      if (o instanceof VirtualFile) {
+        return ((VirtualFile)o).getName();
       }
+      return null;
     });
   }
 

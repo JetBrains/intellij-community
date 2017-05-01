@@ -29,6 +29,10 @@ interface StateStorageManager {
 
   fun getStateStorage(storageSpec: Storage): StateStorage
 
+  fun addStreamProvider(provider: StreamProvider, first: Boolean = false)
+
+  fun removeStreamProvider(clazz: Class<out StreamProvider>)
+
   /**
    * Rename file
    * @param path System-independent full old path (/project/bar.iml or collapse $MODULE_FILE$)
@@ -44,7 +48,7 @@ interface StateStorageManager {
   fun expandMacros(path: String): String
 
   interface ExternalizationSession {
-    fun setState(storageSpecs: Array<out Storage>, component: Any, componentName: String, state: Any)
+    fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any)
 
     fun setStateInOldStorage(component: Any, componentName: String, state: Any)
 

@@ -1851,10 +1851,15 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2) {
+    return commonPrefixLength(s1, s2, false);
+  }
+
+  @Contract(pure = true)
+  public static int commonPrefixLength(@NotNull CharSequence s1, @NotNull CharSequence s2, boolean ignoreCase) {
     int i;
     int minLength = Math.min(s1.length(), s2.length());
     for (i = 0; i < minLength; i++) {
-      if (s1.charAt(i) != s2.charAt(i)) {
+      if (!charsMatch(s1.charAt(i), s2.charAt(i), ignoreCase)) {
         break;
       }
     }
@@ -1937,7 +1942,12 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start) {
-    for (int i = start; i <= sequence.length() - infix.length(); i++) {
+    return indexOf(sequence, infix, start, sequence.length());
+  }
+
+  @Contract(pure = true)
+  public static int indexOf(@NotNull CharSequence sequence, @NotNull CharSequence infix, int start, int end) {
+    for (int i = start; i <= end - infix.length(); i++) {
       if (startsWith(sequence, i, infix)) {
         return i;
       }

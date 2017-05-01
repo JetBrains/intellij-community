@@ -23,11 +23,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -52,19 +52,9 @@ public class StaticIconFieldsAction extends AnAction {
       public void run(@NotNull ProgressIndicator indicator) {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         final GlobalSearchScope all = GlobalSearchScope.allScope(project);
-        PsiClass allIcons = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-          @Override
-          public PsiClass compute() {
-            return facade.findClass("com.intellij.icons.AllIcons", all);
-          }
-        });
+        PsiClass allIcons = ReadAction.compute(() -> facade.findClass("com.intellij.icons.AllIcons", all));
         searchFields(allIcons, view, indicator);
-        PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-          @Override
-          public PsiClass[] compute() {
-            return facade.findPackage("icons").getClasses(all);
-          }
-        });
+        PsiClass[] classes = ReadAction.compute(() -> facade.findPackage("icons").getClasses(all));
         for (PsiClass iconsClass : classes) {
           searchFields(iconsClass, view, indicator);
         }

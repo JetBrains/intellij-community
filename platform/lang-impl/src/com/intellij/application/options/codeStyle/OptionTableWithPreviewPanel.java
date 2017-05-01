@@ -59,7 +59,7 @@ import java.util.List;
  * @author max
  */
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
-  private static final Logger LOG = Logger.getInstance("#" + OptionTableWithPreviewPanel.class.getName());
+  private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 
   protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();

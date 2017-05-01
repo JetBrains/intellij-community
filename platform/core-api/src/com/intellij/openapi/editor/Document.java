@@ -187,7 +187,9 @@ public interface Document extends UserDataHolder {
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
    */
   @Contract(pure=true)
-  long getModificationStamp();
+  default long getModificationStamp() {
+    return 0;
+  }
 
   /**
    * Fires a notification that the user would like to remove the read-only state
@@ -225,7 +227,9 @@ public interface Document extends UserDataHolder {
    * @param endOffset the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
-  @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset);
+  default @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset) {
+    return createRangeMarker(startOffset, endOffset, false);
+  }
 
   /**
    * Creates a range marker which points to the specified range of text in the document and
@@ -265,7 +269,8 @@ public interface Document extends UserDataHolder {
    * @see #isWritable()
    * @see #fireReadOnlyModificationAttempt()
    */
-  void setReadOnly(boolean isReadOnly);
+  default void setReadOnly(boolean isReadOnly) {
+  }
 
   /**
    * Marks a range of text in the document as read-only (attempts to modify text in the
@@ -287,7 +292,8 @@ public interface Document extends UserDataHolder {
    * @param block the marker to remove.
    * @see #createGuardedBlock(int, int)
    */
-  void removeGuardedBlock(@NotNull RangeMarker block);
+  default void removeGuardedBlock(@NotNull RangeMarker block) {
+  }
 
   /**
    * Returns the read-only marker covering the specified offset in the document.
@@ -296,7 +302,9 @@ public interface Document extends UserDataHolder {
    * @return the marker instance, or null if the specified offset is not covered by a read-only marker.
    */
   @Nullable
-  RangeMarker getOffsetGuard(int offset);
+  default RangeMarker getOffsetGuard(int offset) {
+    return null;
+  }
 
   /**
    * Returns the read-only marker covering the specified range in the document.
@@ -306,7 +314,9 @@ public interface Document extends UserDataHolder {
    * @return the marker instance, or null if the specified range is not covered by a read-only marker.
    */
   @Nullable
-  RangeMarker getRangeGuard(int start, int end);
+  default RangeMarker getRangeGuard(int start, int end) {
+    return null;
+  }
 
   /**
    * Enables checking for read-only markers when the document is modified. Checking is disabled by default.
@@ -339,8 +349,12 @@ public interface Document extends UserDataHolder {
   void setText(@NotNull final CharSequence text);
 
   @NotNull
-  RangeMarker createRangeMarker(@NotNull TextRange textRange);
+  default RangeMarker createRangeMarker(@NotNull TextRange textRange) {
+    return createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+  }
 
   @Contract(pure=true)
-  int getLineSeparatorLength(int line);
+  default int getLineSeparatorLength(int line) {
+    return 0;
+  }
 }

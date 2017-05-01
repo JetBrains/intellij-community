@@ -358,6 +358,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
+        LOG.warn(line);
         notifyOnFailure(line, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;
       }

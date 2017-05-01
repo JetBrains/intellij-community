@@ -54,7 +54,7 @@ public class GitRebaserReorderCommitsTest extends GitSingleRepoTest {
   }
 
   public void testReorderingNothingShouldDoNothing() throws Exception {
-    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.<String>emptyList());
+    myRebaser.reoderCommitsIfNeeded(myProjectRoot, myFirstCommit, Collections.emptyList());
     assertCommits(myFirstCommit);
   }
 

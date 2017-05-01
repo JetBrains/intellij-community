@@ -49,7 +49,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
   @NonNls public static final String FILE = "file";
 
-  private static final Logger LOG = Logger.getInstance("#" + ProjectPatternProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(ProjectPatternProvider.class);
 
 
   @Override

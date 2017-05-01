@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,10 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
+import org.jetbrains.java.decompiler.modules.decompiler.SwitchHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.ConstExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.exps.FieldExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.SwitchExprent;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 
@@ -41,11 +43,11 @@ public class SwitchStatement extends Statement {
 
   private List<List<StatEdge>> caseEdges = new ArrayList<>();
 
-  private List<List<ConstExprent>> caseValues = new ArrayList<>();
+  private List<List<Exprent>> caseValues = new ArrayList<>();
 
   private StatEdge default_edge;
 
-  private final List<Exprent> headexprent = new ArrayList<>();
+  private final List<Exprent> headexprent = new ArrayList<>(1);
 
   // *****************************************************************************
   // constructors
@@ -108,6 +110,8 @@ public class SwitchStatement extends Statement {
   }
 
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
+    SwitchHelper.simplify(this);
+
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     buf.append(first.toJava(indent, tracer));
@@ -126,7 +130,7 @@ public class SwitchStatement extends Statement {
 
       Statement stat = caseStatements.get(i);
       List<StatEdge> edges = caseEdges.get(i);
-      List<ConstExprent> values = caseValues.get(i);
+      List<Exprent> values = caseValues.get(i);
 
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == default_edge) {
@@ -134,10 +138,20 @@ public class SwitchStatement extends Statement {
           tracer.incrementCurrentSourceLine();
         }
         else {
-          ConstExprent value = (ConstExprent)values.get(j).copy();
-          value.setConstType(switch_type);
+          buf.appendIndent(indent).append("case ");
+          Exprent value = values.get(j);
+          if (value instanceof ConstExprent) {
+            value = value.copy();
+            ((ConstExprent)value).setConstType(switch_type);
+          }
+          if (value instanceof FieldExprent && ((FieldExprent)value).isStatic()) { // enum values
+            buf.append(((FieldExprent)value).getName());
+          }
+          else {
+            buf.append(value.toJava(indent, tracer));
+          }
 
-          buf.appendIndent(indent).append("case ").append(value.toJava(indent, tracer)).append(":").appendLineSeparator();
+          buf.append(":").appendLineSeparator();
           tracer.incrementCurrentSourceLine();
         }
       }
@@ -211,8 +225,8 @@ public class SwitchStatement extends Statement {
     BasicBlockStatement bbstat = (BasicBlockStatement)first;
     int[] values = ((SwitchInstruction)bbstat.getBlock().getLastInstruction()).getValues();
 
-    List<Statement> nodes = new ArrayList<>();
-    List<List<Integer>> edges = new ArrayList<>();
+    List<Statement> nodes = new ArrayList<>(stats.size() - 1);
+    List<List<Integer>> edges = new ArrayList<>(stats.size() - 1);
 
     // collect regular edges
     for (int i = 1; i < stats.size(); i++) {
@@ -293,12 +307,12 @@ public class SwitchStatement extends Statement {
     }
 
     // translate indices back into edges
-    List<List<StatEdge>> lstEdges = new ArrayList<>();
-    List<List<ConstExprent>> lstValues = new ArrayList<>();
+    List<List<StatEdge>> lstEdges = new ArrayList<>(edges.size());
+    List<List<Exprent>> lstValues = new ArrayList<>(edges.size());
 
     for (List<Integer> lst : edges) {
-      List<StatEdge> lste = new ArrayList<>();
-      List<ConstExprent> lstv = new ArrayList<>();
+      List<StatEdge> lste = new ArrayList<>(lst.size());
+      List<Exprent> lstv = new ArrayList<>(lst.size());
 
       List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
       for (Integer in : lst) {
@@ -362,7 +376,7 @@ public class SwitchStatement extends Statement {
     return default_edge;
   }
 
-  public List<List<ConstExprent>> getCaseValues() {
+  public List<List<Exprent>> getCaseValues() {
     return caseValues;
   }
 }

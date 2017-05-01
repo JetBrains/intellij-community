@@ -22,7 +22,7 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.Consumer
 
-open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myRegistrar, source.profileManager, source.myBaseProfile, null), ModifiableModel {
+open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null), ModifiableModel {
   private var modified = false
 
   init {

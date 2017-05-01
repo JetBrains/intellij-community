@@ -126,7 +126,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
-    List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :
+    List<TaskListItem> items = project == null ? Collections.emptyList() :
                                createPopupActionGroup(project, shiftPressed, PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext));
     final String title = withTitle ? "Switch to Task" : null;
     ListPopupStep<TaskListItem> step = new MultiSelectionListPopupStep<TaskListItem>(title, items) {

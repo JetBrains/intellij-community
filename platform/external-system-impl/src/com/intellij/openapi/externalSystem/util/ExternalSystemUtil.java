@@ -26,10 +26,7 @@ import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,7 +65,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -106,7 +102,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.doW
  */
 public class ExternalSystemUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExternalSystemUtil.class);
 
   @NotNull private static final Map<String, String> RUNNER_IDS = ContainerUtilRt.newHashMap();
 
@@ -777,12 +773,7 @@ public class ExternalSystemUtil {
 
   @Nullable
   private static VirtualFile findLocalFileByPathUnderReadAction(final String path) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return StandardFileSystems.local().findFileByPath(path);
-      }
-    });
+    return ReadAction.compute(() -> StandardFileSystems.local().findFileByPath(path));
   }
 
   public static void scheduleExternalViewStructureUpdate(@NotNull final Project project, @NotNull final ProjectSystemId systemId) {

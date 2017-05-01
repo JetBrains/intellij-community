@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -90,18 +93,36 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     myExternalRootProjects.clear();
     try {
       final Collection<InternalExternalProjectInfo> projectInfos = load(myProject);
+      if(projectInfos.isEmpty()) {
+        markDirtyAllExternalProjects();
+      }
       for (InternalExternalProjectInfo projectInfo : projectInfos) {
         if (validate(projectInfo)) {
           myExternalRootProjects.put(
             Pair.create(projectInfo.getProjectSystemId(), new File(projectInfo.getExternalProjectPath())), projectInfo);
+          if (projectInfo.getLastImportTimestamp() != projectInfo.getLastSuccessfulImportTimestamp()) {
+            markDirty(projectInfo.getExternalProjectPath());
+          }
+        }
+        else {
+          markDirty(projectInfo.getExternalProjectPath());
         }
       }
     }
     catch (IOException e) {
       LOG.debug(e);
+      markDirtyAllExternalProjects();
     }
 
     mergeLocalSettings();
+  }
+
+  private void markDirtyAllExternalProjects() {
+    ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirtyAllExternalProjects();
+  }
+
+  private void markDirty(String projectPath) {
+    ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(projectPath);
   }
 
   private static boolean validate(InternalExternalProjectInfo externalProjectInfo) {
@@ -256,6 +277,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
           final DataNode<ProjectData> dataNode = convert(systemId, projectPojo, entry.getValue(), availableTasks);
           externalProjectInfo = new InternalExternalProjectInfo(systemId, externalProjectPath, dataNode);
           myExternalRootProjects.put(key, externalProjectInfo);
+          ExternalProjectsManager.getInstance(myProject).getExternalProjectsWatcher().markDirty(externalProjectPath);
 
           changed.set(true);
         }
@@ -302,8 +324,8 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   private static void doSave(@NotNull final Project project, @NotNull Collection<InternalExternalProjectInfo> externalProjects)
     throws IOException {
-    final File projectConfigurationFile = getProjectConfigurationFile(project);
-    if (!FileUtil.createParentDirs(projectConfigurationFile)) {
+    final Path projectConfigurationFile = getProjectConfigurationFile(project);
+    if (!FileUtil.createParentDirs(projectConfigurationFile.toFile())) {
       throw new IOException("Unable to save " + projectConfigurationFile);
     }
 
@@ -324,7 +346,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
       });
     }
 
-    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(projectConfigurationFile)));
+    DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(projectConfigurationFile)));
     try {
       out.writeUTF(STORAGE_VERSION);
       out.writeInt(externalProjects.size());
@@ -359,10 +381,10 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
   @NotNull
   private static Collection<InternalExternalProjectInfo> load(@NotNull Project project) throws IOException {
     SmartList<InternalExternalProjectInfo> projects = new SmartList<>();
-    @SuppressWarnings("unchecked") final File configurationFile = getProjectConfigurationFile(project);
-    if (!configurationFile.isFile()) return projects;
+    @SuppressWarnings("unchecked") final Path configurationFile = getProjectConfigurationFile(project);
+    if (!Files.isRegularFile(configurationFile)) return projects;
 
-    DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(configurationFile)));
+    DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(configurationFile)));
 
     try {
       final String storage_version = in.readUTF();
@@ -390,16 +412,19 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
     return projects;
   }
 
-  private static File getProjectConfigurationFile(@NotNull Project project) {
-    return new File(getProjectConfigurationDir(), project.getLocationHash() + "/project.dat");
+  @NotNull
+  private static Path getProjectConfigurationFile(@NotNull Project project) {
+    return getProjectConfigurationDir(project).resolve("project.dat");
   }
 
-  private static File getProjectConfigurationDir() {
-    return getExternalBuildSystemDir("Projects");
+  @NotNull
+  public static Path getProjectConfigurationDir(@NotNull Project project) {
+    return getExternalBuildSystemDir("Projects").resolve(project.getLocationHash());
   }
 
-  private static File getExternalBuildSystemDir(String folder) {
-    return new File(PathManager.getSystemPath(), "external_build_system" + "/" + folder).getAbsoluteFile();
+  @NotNull
+  private static Path getExternalBuildSystemDir(String folder) {
+    return Paths.get(PathManager.getSystemPath(), "external_build_system", folder).toAbsolutePath();
   }
 
   @Nullable

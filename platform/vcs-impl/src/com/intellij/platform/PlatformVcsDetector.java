@@ -39,26 +39,20 @@ public class PlatformVcsDetector implements ProjectComponent {
 
   @Override
   public void projectOpened() {
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        final DumbAwareRunnable runnable = new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            VirtualFile file = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myProject.getBaseDir());
-            if (myVcsManager.needAutodetectMappings()) {
-              AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
-              if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
-                myVcsManager.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
-                myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());
-                myVcsManager.cleanupMappings();
-                myVcsManager.updateActiveVcss();
-              }
-            }
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
+      final DumbAwareRunnable runnable = () -> {
+        VirtualFile file = ProjectBaseDirectory.getInstance(myProject).getBaseDir(myProject.getBaseDir());
+        if (myVcsManager.needAutodetectMappings()) {
+          AbstractVcs vcs = myVcsManager.findVersioningVcs(file);
+          if (vcs != null && vcs != myVcsManager.getVcsFor(file)) {
+            myVcsManager.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
+            myVcsManager.setAutoDirectoryMapping(file.getPath(), vcs.getName());
+            myVcsManager.cleanupMappings();
+            myVcsManager.updateActiveVcss();
           }
-        };
-        ApplicationManager.getApplication().invokeLater(runnable, o -> (! myProject.isOpen()) || myProject.isDisposed());
-      }
+        }
+      };
+      ApplicationManager.getApplication().invokeLater(runnable, o -> (! myProject.isOpen()) || myProject.isDisposed());
     });
   }
 }

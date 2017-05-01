@@ -1024,4 +1024,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testSameErasureForStaticMethodsInInterfaces() throws Exception {
     doTest();
   }
+
+  public void testConditionalExpressionInIncompleteCall() throws Exception {
+    doTest();
+  }
 }

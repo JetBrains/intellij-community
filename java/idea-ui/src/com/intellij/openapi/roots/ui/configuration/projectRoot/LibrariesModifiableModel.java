@@ -17,6 +17,7 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.impl.libraries.LibraryImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -41,8 +42,8 @@ import java.util.*;
 public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModel {
   //todo[nik] remove LibraryImpl#equals method instead of using identity maps
   private final Map<Library, ExistingLibraryEditor> myLibrary2EditorMap =
-    ContainerUtil.<Library, ExistingLibraryEditor>newIdentityTroveMap();
-  private final Set<Library> myRemovedLibraries = ContainerUtil.<Library>newIdentityTroveSet();
+    ContainerUtil.newIdentityTroveMap();
+  private final Set<Library> myRemovedLibraries = ContainerUtil.newIdentityTroveSet();
 
   private LibraryTable.ModifiableModel myLibrariesModifiableModel;
   private final Project myProject;
@@ -62,8 +63,13 @@ public class LibrariesModifiableModel implements LibraryTableBase.ModifiableMode
 
   @Override
   public Library createLibrary(String name, @Nullable PersistentLibraryKind type) {
-    final Library library = getLibrariesModifiableModel().createLibrary(name, type);
-    //createLibraryEditor(library);                     \
+    return createLibrary(name, type, null);
+  }
+
+  @Override
+  public Library createLibrary(String name, @Nullable PersistentLibraryKind type, @Nullable ProjectModelExternalSource externalSource) {
+    final Library library = getLibrariesModifiableModel().createLibrary(name, type, externalSource);
+    //createLibraryEditor(library);
     final BaseLibrariesConfigurable configurable = ProjectStructureConfigurable.getInstance(myProject).getConfigurableFor(library);
     configurable.createLibraryNode(library);
     return library;

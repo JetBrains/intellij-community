@@ -334,12 +334,12 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
 
   @Override
   @NotNull
-  public Set<RefClass> getSubClasses() {
+  public synchronized Set<RefClass> getSubClasses() {
     if (mySubClasses == null) return EMPTY_CLASS_SET;
     return mySubClasses;
   }
 
-  private void addSubClass(@NotNull RefClass refClass){
+  private synchronized void addSubClass(@NotNull RefClass refClass){
     if (mySubClasses == null) {
       mySubClasses = Collections.singleton(refClass);
       return;
@@ -350,7 +350,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
     mySubClasses.add(refClass);
   }
-  private void removeSubClass(RefClass refClass){
+  private synchronized void removeSubClass(RefClass refClass){
     if (mySubClasses == null) return;
     if (mySubClasses.size() == 1) {
       mySubClasses = null;

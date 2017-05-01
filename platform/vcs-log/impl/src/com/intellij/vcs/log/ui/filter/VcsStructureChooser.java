@@ -15,7 +15,7 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.ex.FileNodeDescriptor;
@@ -25,9 +25,9 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ui.PlusMinus;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileListCellRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -36,11 +36,10 @@ import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
-import com.intellij.openapi.vcs.changes.ui.PlusMinus;
-import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.treeWithCheckedNodes.SelectionManager;
+import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -103,11 +102,7 @@ public class VcsStructureChooser extends DialogWrapper {
 
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
     // assertion for read access inside
-    Module[] modules = ApplicationManager.getApplication().runReadAction(new Computable<Module[]>() {
-      public Module[] compute() {
-        return moduleManager.getModules();
-      }
-    });
+    Module[] modules = ReadAction.compute(() -> moduleManager.getModules());
 
     TreeSet<VirtualFile> checkSet = new TreeSet<>(FilePathComparator.getInstance());
     checkSet.addAll(roots);

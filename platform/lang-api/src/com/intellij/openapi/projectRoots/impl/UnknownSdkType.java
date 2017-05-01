@@ -42,12 +42,7 @@ public class UnknownSdkType extends SdkType{
 
   @NotNull
   public static UnknownSdkType getInstance(@NotNull String typeName) {
-    UnknownSdkType instance = ourTypeNameToInstanceMap.get(typeName);
-    if (instance == null) {
-      instance = new UnknownSdkType(typeName);
-      ourTypeNameToInstanceMap.put(typeName, instance);
-    }
-    return instance;
+    return ourTypeNameToInstanceMap.computeIfAbsent(typeName, UnknownSdkType::new);
   }
 
   @Override

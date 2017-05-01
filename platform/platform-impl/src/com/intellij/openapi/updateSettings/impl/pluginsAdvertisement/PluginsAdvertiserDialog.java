@@ -32,7 +32,7 @@ import java.util.*;
  * @author anna
  */
 public class PluginsAdvertiserDialog extends DialogWrapper {
-  private static final Logger LOG = Logger.getInstance("#" + PluginsAdvertiserDialog.class.getName());
+  private static final Logger LOG = Logger.getInstance(PluginsAdvertiserDialog.class);
 
   @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;

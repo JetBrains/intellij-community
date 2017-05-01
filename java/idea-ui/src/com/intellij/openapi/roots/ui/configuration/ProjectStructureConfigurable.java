@@ -112,7 +112,8 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
   private final ModulesConfigurator myModuleConfigurator;
   private JdkListConfigurable myJdkListConfig;
 
-  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>", JLabel.CENTER);
+  private final JLabel myEmptySelection = new JLabel("<html><body><center>Select a setting to view or edit its details here</center></body></html>",
+                                                     SwingConstants.CENTER);
 
   public ProjectStructureConfigurable(final Project project,
                                       final ProjectLibrariesConfigurable projectLibrariesConfigurable,
@@ -593,6 +594,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     return ServiceManager.getService(project, ProjectStructureConfigurable.class);
   }
 
+  @NotNull
   public ProjectSdksModel getProjectJdksModel() {
     return myProjectJdksModel;
   }

@@ -188,12 +188,9 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
 
     private GraphAnswer<CommitId> convert(@NotNull final LinearGraphController.LinearGraphAnswer answer) {
       final Runnable graphUpdater = answer.getGraphUpdater();
-      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : new Runnable() {
-        @Override
-        public void run() {
-          graphUpdater.run();
-          updatePrintElementGenerator();
-        }
+      return new GraphAnswerImpl<>(answer.getCursorToSet(), null, graphUpdater == null ? null : (Runnable)() -> {
+        graphUpdater.run();
+        updatePrintElementGenerator();
       }, false);
     }
   }

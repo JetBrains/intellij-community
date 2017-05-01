@@ -20,18 +20,14 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.startup.StartupManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.testing.doctest.PythonDocTestRunConfiguration;
-import com.jetbrains.python.testing.nosetest.PythonNoseTestRunConfiguration;
-import com.jetbrains.python.testing.pytest.PyTestRunConfiguration;
-import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestLegacyInteropKt;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestsKt;
+import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration;
+import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration;
+import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration;
+import com.jetbrains.python.testing.PyTestLegacyInteropKt;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +37,7 @@ import javax.swing.*;
  * User : catherine
  * <p>
  * This type is used both with Legacy and New test runners.
- * {@link PyUniversalTestLegacyInteropKt} is used to support legacy. To drop legacy support, remove all code that depends on it.
+ * {@link PyTestLegacyInteropKt} is used to support legacy. To drop legacy support, remove all code that depends on it.
  */
 public final class PythonTestConfigurationType implements ConfigurationType {
   public static final String ID = "tests";
@@ -147,8 +143,8 @@ public final class PythonTestConfigurationType implements ConfigurationType {
   @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     // Use new or legacy factories depending to new config
-    final ConfigurationFactory[] factories = PyUniversalTestLegacyInteropKt.isNewTestsModeEnabled()
-                                             ? PyUniversalTestsKt.getFactories()
+    final ConfigurationFactory[] factories = PyTestLegacyInteropKt.isNewTestsModeEnabled()
+                                             ? PyTestsSharedKt.getFactories()
                                              : new ConfigurationFactory[]
                                                {LEGACY_UNITTEST_FACTORY, LEGACY_NOSETEST_FACTORY, LEGACY_PYTEST_FACTORY};
     return ObjectArrays.concat(factories, PY_DOCTEST_FACTORY);

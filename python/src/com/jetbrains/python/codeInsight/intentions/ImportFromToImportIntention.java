@@ -240,7 +240,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
         possible_targets.addAll(references.keySet());
         possible_targets.addAll(star_references);
       }
-      final Set<PsiElement> ignored = Sets.<PsiElement>newHashSet(Arrays.asList(info.myFromImportStatement.getImportElements()));
+      final Set<PsiElement> ignored = Sets.newHashSet(Arrays.asList(info.myFromImportStatement.getImportElements()));
       if (top_name != null && showConflicts(project, findDefinitions(top_name, possible_targets, ignored),
                                             top_name, info.myModuleName)) {
         return; // got conflicts

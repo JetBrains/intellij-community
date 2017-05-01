@@ -764,6 +764,9 @@
     <localInspection groupPath="Java" language="JAVA" shortName="UnknownGuard" displayName="Unknown @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.concurrencyAnnotations.UnknownGuardInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="BoxForComparison" displayName="Unnecessary boxing to compare primitives"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.BoxForComparisonInspection" />
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
@@ -815,8 +818,8 @@
     <localInspection language="UAST" shortName="ImplicitSubclassInspection"
                      bundle="messages.InspectionsBundle" key="inspection.implicit.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
-                     groupPath="Uast"
-                     enabledByDefault="true" level="WARNING"
+                     groupPath="Java"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.inheritance.ImplicitSubclassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BlockMarkerComments"
                      groupBundle="messages.InspectionsBundle"
@@ -886,6 +889,11 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection"
                      displayName="Simplify stream API call chains"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SimplifyOptionalCallChains"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.SimplifyOptionalCallChainsInspection"
+                     displayName="Simplify Optional call chains"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyCollector"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
@@ -942,6 +950,10 @@
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
                      bundle="messages.InspectionsBundle" key="inspection.reflection.invocation.name"
                      implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionInvocationInspection"/>
+    <localInspection language="JAVA" shortName="JavaReflectionMemberAccess" enabledByDefault="true" level="WARNING"
+                     groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.reflective.access.issues"
+                     bundle="messages.InspectionsBundle" key="inspection.reflection.member.access.name"
+                     implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Move field assignment to initializer"
@@ -1352,6 +1364,8 @@
     <typedHandler implementation="com.intellij.codeInsight.editorActions.JavadocTypedHandler" id="javadoc"/>
 
     <editorTypedHandler implementationClass="com.intellij.codeInsight.editorActions.AutoFormatTypedHandler"/>
+
+    <editorActionHandler action="EditorLineStart" implementationClass="com.intellij.codeInsight.editorActions.JavadocLineStartHandler"/>
 
     <editorSmartKeysConfigurable instance="com.intellij.application.options.JavadocOptionsProvider"
                                  id="editor.preferences.javadocOptions"
@@ -1938,8 +1952,10 @@
 
     <library.type implementation="com.intellij.jarRepository.RepositoryLibraryType"/>
     <library.dependencyScopeSuggester implementation="com.intellij.jarRepository.RepositoryLibraryDependencyScopeSuggester"/>
-    <applicationService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
+    <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
+    <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <postStartupActivity implementation="com.intellij.jarRepository.RepositoryLibrarySynchronizer"/>
+    <projectConfigurable groupId="build" groupWeight="120" instance="com.intellij.jarRepository.settings.RemoteRepositoriesConfigurable" order="last"/>
 
     <longLineInspectionPolicy implementation="com.intellij.codeInspection.JavaLongLineInspectionPolicy"/>
 

@@ -62,7 +62,7 @@ public abstract class FrameworkDetectionInWizardContext extends FrameworkDetecti
       }
 
       final List<Pair<C, Collection<VirtualFile>>> pairs =
-        detector.createConfigurations(filesByModule.get(module), Collections.<C>emptyList());
+        detector.createConfigurations(filesByModule.get(module), Collections.emptyList());
       for (Pair<C, Collection<VirtualFile>> pair : pairs) {
         result.add(new FacetBasedDetectedFrameworkDescriptionInWizard<>(module, detector, pair.getFirst(),
                                                                         new HashSet<>(pair.getSecond())));

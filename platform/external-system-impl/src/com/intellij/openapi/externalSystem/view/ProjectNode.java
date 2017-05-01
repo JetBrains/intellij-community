@@ -21,7 +21,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,12 +57,7 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   @Override
   protected List<? extends ExternalSystemNode> doBuildChildren() {
     final List<? extends ExternalSystemNode> children = super.doBuildChildren();
-    final List<ExternalSystemNode> visibleChildren = ContainerUtil.filter(children, new Condition<ExternalSystemNode>() {
-      @Override
-      public boolean value(ExternalSystemNode node) {
-        return node.isVisible();
-      }
-    });
+    final List<ExternalSystemNode> visibleChildren = ContainerUtil.filter(children, node -> node.isVisible());
     if (visibleChildren.size() == 1 && visibleChildren.get(0).getName().equals(getName())) {
       singleModuleProject = true;
       //noinspection unchecked

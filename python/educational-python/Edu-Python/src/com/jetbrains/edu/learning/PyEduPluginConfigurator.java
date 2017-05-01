@@ -26,6 +26,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.python.PythonModuleTypeBase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -150,6 +151,11 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
     }
 
     return Collections.singletonList(new File(new File(jarPath, "courses"), COURSE_NAME).getPath());
+  }
+
+  @Override
+  public EduCourseProjectGenerator getEduCourseProjectGenerator() {
+    return new PyStudyDirectoryProjectGenerator();
   }
 
   public ModuleType getModuleType() {

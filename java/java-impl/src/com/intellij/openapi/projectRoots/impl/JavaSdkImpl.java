@@ -403,10 +403,10 @@ public class JavaSdkImpl extends JavaSdk {
       }
     };
 
-    rootContainer.startChange();
-    addClasses(jdkHomeFile, sdkModificator, isJre);
-    addSources(jdkHomeFile, sdkModificator);
-    rootContainer.finishChange();
+    rootContainer.changeRoots(() -> {
+      addClasses(jdkHomeFile, sdkModificator, isJre);
+      addSources(jdkHomeFile, sdkModificator);
+    });
 
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this, homePath, jdkName) {
       @Override
@@ -503,7 +503,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
     };
 
-    ProjectJdkImpl.copyRoots(rootContainer, jdk);
+    jdk.copyRootsFrom(rootContainer);
     return jdk;
   }
 

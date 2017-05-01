@@ -412,8 +412,6 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
 
 
 MAXIMUM_ARRAY_SIZE = 100
-MAX_SLICE_SIZE = 1000
-
 
 def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
     _, type_name, _ = get_type(array)
@@ -511,19 +509,19 @@ def array_to_meta_xml(array, name, format):
 
         if is_row:
             rows = 1
-            cols = min(len(array), MAX_SLICE_SIZE)
+            cols = len(array)
             if cols < len(array):
                 reslice = '[0:%s]' % (cols)
             array = array[0:cols]
         else:
             cols = 1
-            rows = min(len(array), MAX_SLICE_SIZE)
+            rows = len(array)
             if rows < len(array):
                 reslice = '[0:%s]' % (rows)
             array = array[0:rows]
     elif l == 2:
-        rows = min(array.shape[-2], MAX_SLICE_SIZE)
-        cols = min(array.shape[-1], MAX_SLICE_SIZE)
+        rows = array.shape[-2]
+        cols = array.shape[-1]
         if cols < array.shape[-1] or rows < array.shape[-2]:
             reslice = '[0:%s, 0:%s]' % (rows, cols)
         array = array[0:rows, 0:cols]
@@ -561,8 +559,8 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
 
     """
-    num_rows = min(df.shape[0], MAX_SLICE_SIZE)
-    num_cols = min(df.shape[1], MAX_SLICE_SIZE)
+    num_rows = df.shape[0]
+    num_cols = df.shape[1]
     if (num_rows, num_cols) != df.shape:
         df = df.iloc[0:num_rows, 0: num_cols]
         slice = '.iloc[0:%s, 0:%s]' % (num_rows, num_cols)

@@ -369,7 +369,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     public double getZoomFactor() {
       Dimension size = imageComponent.getCanvasSize();
       BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? size.getWidth() / (double)image.getWidth() : 0.0d;
+      return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
     }
 
     public void setZoomFactor(double zoomFactor) {

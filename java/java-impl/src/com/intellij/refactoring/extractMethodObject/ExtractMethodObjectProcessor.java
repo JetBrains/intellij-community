@@ -70,7 +70,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
-  private static final Logger LOG = Logger.getInstance("#" + ExtractMethodObjectProcessor.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExtractMethodObjectProcessor.class);
   @NonNls public static final String REFACTORING_NAME = "Extract Method Object";
 
   private final PsiElementFactory myElementFactory;

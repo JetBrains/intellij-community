@@ -19,7 +19,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -27,7 +27,6 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -359,17 +358,15 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     );
     if (answer != Messages.YES) return null;
     final Ref<IncorrectOperationException> eRef = new Ref<>();
-    final PsiClass newClass = ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>() {
-          public PsiClass compute() {
-            try {
-              return JavaDirectoryService.getInstance().createClass(directory, className);
-            }
-            catch (IncorrectOperationException e) {
-              eRef.set(e);
-              return null;
-            }
-          }
-        });
+    final PsiClass newClass = WriteAction.compute(() -> {
+      try {
+        return JavaDirectoryService.getInstance().createClass(directory, className);
+      }
+      catch (IncorrectOperationException e) {
+        eRef.set(e);
+        return null;
+      }
+    });
     if (!eRef.isNull()) throw eRef.get();
     return newClass;
   }

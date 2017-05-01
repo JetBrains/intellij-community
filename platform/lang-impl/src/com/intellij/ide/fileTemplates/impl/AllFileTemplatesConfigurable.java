@@ -16,6 +16,9 @@
 
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.application.options.schemes.AbstractSchemeActions;
+import com.intellij.application.options.schemes.SchemesModel;
+import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.fileTemplates.*;
@@ -251,7 +254,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     myLeftPanel = new JPanel(new CardLayout());
-    myLeftPanel.setBorder(JBUI.Borders.empty(10, 10, 10, 0));
     for (FileTemplateTab tab : myTabs) {
       myLeftPanel.add(ScrollPaneFactory.createScrollPane(tab.getComponent()), tab.getTitle());
       JPanel fakePanel = new JPanel();
@@ -331,27 +333,25 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
     myToolBar.setBorder(IdeBorderFactory.createEmptyBorder());
 
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(myToolBar, BorderLayout.WEST);
-    JComponent schemaComponent =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultCompactActionGroup(new ChangeSchemaCombo(this)), true)
-        .getComponent();
-    JPanel schemaPanel = new JPanel(new BorderLayout());
-    schemaPanel.add(schemaComponent, BorderLayout.EAST);
-    schemaPanel.add(new JLabel("Schema:"), BorderLayout.WEST);
-    toolbarPanel.add(schemaPanel, BorderLayout.EAST);
+    SchemesPanel schemesPanel = new SchemesPanel();
+    schemesPanel.setBorder(JBUI.Borders.empty(5, 10, 0, 10));
+    schemesPanel.resetSchemes(Arrays.asList(FileTemplatesScheme.DEFAULT, myManager.getProjectScheme()));
 
+    JPanel leftPanelWrapper = new JPanel(new BorderLayout());
+    leftPanelWrapper.setBorder(JBUI.Borders.empty(0, 10, 10, 0));
+    leftPanelWrapper.add(BorderLayout.NORTH, myToolBar);
+    leftPanelWrapper.add(BorderLayout.CENTER, myLeftPanel);
 
     JPanel centerPanel = new JPanel(new BorderLayout());
     centerPanel.add(myTabbedPane.getComponent(), BorderLayout.NORTH);
     Splitter splitter = new Splitter(false, 0.3f);
     splitter.setDividerWidth(JBUI.scale(10));
-    splitter.setFirstComponent(myLeftPanel);
+    splitter.setFirstComponent(leftPanelWrapper);
     splitter.setSecondComponent(myEditorComponent);
     centerPanel.add(splitter, BorderLayout.CENTER);
 
     myMainPanel = new JPanel(new BorderLayout());
-    myMainPanel.add(toolbarPanel, BorderLayout.NORTH);
+    myMainPanel.add(schemesPanel, BorderLayout.NORTH);
     myMainPanel.add(centerPanel, BorderLayout.CENTER);
 
     final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
@@ -722,5 +722,98 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   @TestOnly
   FileTemplateTab[] getTabs() {
     return myTabs;
+  }
+
+  private final class SchemesPanel extends SimpleSchemesPanel<FileTemplatesScheme> implements SchemesModel<FileTemplatesScheme> {
+    @Override
+    protected AbstractSchemeActions<FileTemplatesScheme> createSchemeActions() {
+      return new AbstractSchemeActions<FileTemplatesScheme>(this) {
+        @Override
+        protected void resetScheme(@NotNull FileTemplatesScheme scheme) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        protected void duplicateScheme(@NotNull FileTemplatesScheme scheme, @NotNull String newName) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        protected void onSchemeChanged(@Nullable FileTemplatesScheme scheme) {
+          if (scheme != null) changeScheme(scheme);
+        }
+
+        @Override
+        protected void renameScheme(@NotNull FileTemplatesScheme scheme, @NotNull String newName) {
+          throw new UnsupportedOperationException();
+        }
+
+        @Override
+        protected Class<FileTemplatesScheme> getSchemeType() {
+          return FileTemplatesScheme.class;
+        }
+      };
+    }
+
+    @NotNull
+    @Override
+    public SchemesModel<FileTemplatesScheme> getModel() {
+      return this;
+    }
+
+    @Override
+    protected boolean supportsProjectSchemes() {
+      return false;
+    }
+
+    @Override
+    protected boolean highlightNonDefaultSchemes() {
+      return false;
+    }
+
+    @Override
+    public boolean useBoldForNonRemovableSchemes() {
+      return true;
+    }
+
+    @Override
+    public boolean canDuplicateScheme(@NotNull FileTemplatesScheme scheme) {
+      return false;
+    }
+
+    @Override
+    public boolean canResetScheme(@NotNull FileTemplatesScheme scheme) {
+      return false;
+    }
+
+    @Override
+    public boolean canDeleteScheme(@NotNull FileTemplatesScheme scheme) {
+      return false;
+    }
+
+    @Override
+    public boolean isProjectScheme(@NotNull FileTemplatesScheme scheme) {
+      return false;
+    }
+
+    @Override
+    public boolean canRenameScheme(@NotNull FileTemplatesScheme scheme) {
+      return false;
+    }
+
+    @Override
+    public boolean containsScheme(@NotNull String name, boolean projectScheme) {
+      return false;
+    }
+
+    @Override
+    public boolean differsFromDefault(@NotNull FileTemplatesScheme scheme) {
+      return false;
+    }
+
+    @Override
+    public void removeScheme(@NotNull FileTemplatesScheme scheme) {
+      throw new UnsupportedOperationException();
+    }
   }
 }

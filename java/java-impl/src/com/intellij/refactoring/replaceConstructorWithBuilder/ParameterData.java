@@ -37,7 +37,7 @@ public class ParameterData {
   private String mySetterName;
   private String myDefaultValue;
   private boolean myInsertSetter = true;
-  private static final Logger LOG = Logger.getInstance("#" + ParameterData.class.getName());
+  private static final Logger LOG = Logger.getInstance(ParameterData.class);
 
   public ParameterData(String parameterName, PsiType type) {
     myParameterName = parameterName;

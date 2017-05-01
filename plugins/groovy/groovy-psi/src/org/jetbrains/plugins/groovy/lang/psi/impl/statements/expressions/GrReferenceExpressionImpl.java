@@ -198,12 +198,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   @Nullable
   public PsiType getNominalType() {
-    return getNominalType(false);
-  }
-
-  @Nullable
-  private PsiType getNominalType(boolean forceRValue) {
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(multiResolve(false, forceRValue));
+    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(multiResolve(false, true));
     PsiElement resolved = resolveResult.getElement();
 
     for (GrReferenceTypeEnhancer enhancer : GrReferenceTypeEnhancer.EP_NAME.getExtensions()) {
@@ -359,8 +354,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Nullable
-  private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr, boolean forceRValue) {
-    final GroovyResolveResult[] results = refExpr.multiResolve(false, forceRValue);
+  private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
+    final GroovyResolveResult[] results = refExpr.multiResolve(false, true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
 
@@ -392,7 +387,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
-    final PsiType nominal = refExpr.getNominalType(forceRValue);
+    final PsiType nominal = refExpr.getNominalType();
 
     Boolean reassigned = GrReassignedLocalVarsChecker.isReassignedVar(refExpr);
     if (reassigned != null && reassigned.booleanValue()) {
@@ -445,13 +440,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   @Override
   public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, e -> calculateType(e, false));
-  }
-
-  @Nullable
-  @Override
-  public PsiType getRValueType() {
-    return calculateType(this, true);
+    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, e -> calculateType(e));
   }
 
   @Override

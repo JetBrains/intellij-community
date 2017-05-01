@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.compiler;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.IOUtil;
@@ -50,16 +49,14 @@ public abstract class CopyingCompiler implements PackagingCompiler{
 
   @NotNull
   public final ProcessingItem[] getProcessingItems(final CompileContext context) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<ProcessingItem[]>() {
-      public ProcessingItem[] compute() {
-        final VirtualFile[] filesToCopy = getFilesToCopy(context);
-        final ProcessingItem[] items = new ProcessingItem[filesToCopy.length];
-        for (int idx = 0; idx < filesToCopy.length; idx++) {
-          final VirtualFile file = filesToCopy[idx];
-          items[idx] = new CopyItem(file, getDestinationPath(file));
-        }
-        return items;
+    return ReadAction.compute(() -> {
+      final VirtualFile[] filesToCopy = getFilesToCopy(context);
+      final ProcessingItem[] items = new ProcessingItem[filesToCopy.length];
+      for (int idx = 0; idx < filesToCopy.length; idx++) {
+        final VirtualFile file = filesToCopy[idx];
+        items[idx] = new CopyItem(file, getDestinationPath(file));
       }
+      return items;
     });
   }
 

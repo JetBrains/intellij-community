@@ -88,7 +88,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     }
 
     final Collection<AbstractTreeNode> children = getChildrenImpl();
-    return children != null ? children : Collections.<AbstractTreeNode>emptyList();
+    return children != null ? children : Collections.emptyList();
   }
 
   @Override

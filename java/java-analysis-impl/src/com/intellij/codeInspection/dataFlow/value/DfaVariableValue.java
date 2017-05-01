@@ -28,6 +28,7 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.SpecialField;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
@@ -41,10 +42,10 @@ import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.patterns.PsiJavaPatterns.*;
@@ -273,8 +274,10 @@ public class DfaVariableValue extends DfaValue {
 
   public boolean isFlushableByCalls() {
     if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
-    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL) ||
-        myVariable instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)myVariable)) {
+    boolean finalField = myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL);
+    boolean specialFinalField = myVariable instanceof PsiMethod &&
+                           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isFinal() && sf.isMyMethod((PsiMethod)myVariable));
+    if (finalField || specialFinalField) {
       return myQualifier != null && myQualifier.isFlushableByCalls();
     }
     return true;

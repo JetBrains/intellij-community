@@ -15,14 +15,19 @@
  */
 package com.intellij.application.options.schemes;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.ui.AbstractPainter;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +36,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 
-public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JPanel> {
+public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JPanel> implements Disposable {
   private static final String SHOW_DESCRIPTION_CARD = "show.description.card";
   private static final String EDIT_DESCRIPTION_CARD = "edit.description.card";
   private static final String ERROR_CARD = "error.card";
@@ -43,6 +48,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   private JLabel myWarningLabel;
   private JBTextField myDescriptionTextField;
   private CardLayout myLayout;
+  private AbstractPainter myPainter;
 
   @NotNull
   @Override
@@ -96,13 +102,29 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     panel.add(myWarningLabel, ERROR_CARD);
 
     myLayout.show(panel, ERROR_CARD);
+
+    myPainter = new AbstractPainter() {
+      @Override
+      public boolean needsRepaint() {
+        return true;
+      }
+
+      @Override
+      public void executePaint(Component component, Graphics2D g) {
+        if (myDescriptionTextField.isShowing()) {
+          GraphicsUtil.setupAntialiasing(g);
+          g.setColor(JBColor.GRAY);
+          g.drawString(EditableSchemesCombo.EDITING_HINT, 0, -JBUI.scale(5));
+        }
+      }
+    };
+    IdeGlassPaneUtil.installPainter(panel, myPainter, this);
     return panel;
   }
 
   @Override
   public final void showMessage(@Nullable String message, @NotNull MessageType messageType) {
-    myWarningLabel.setText(message);
-    myWarningLabel.setForeground(messageType.getTitleForeground());
+    showMessage(message, messageType, myWarningLabel);
     myLayout.show(myInfoComponent, ERROR_CARD);
   }
 
@@ -123,6 +145,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     String newDescription = (((DescriptionAwareSchemeActions<T>)getActions()).getDescription(getSelectedScheme()));
     myDescriptionLabel.setAllText(StringUtil.notNullize(newDescription));
     myLayout.show(myInfoComponent, SHOW_DESCRIPTION_CARD);
+    myPainter.setNeedsRepaint(true);
   }
 
   public void editDescription(@Nullable String startValue) {
@@ -131,6 +154,7 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
       IdeFocusManager.getGlobalInstance().requestFocus(myDescriptionTextField, true);
     });
+    myPainter.setNeedsRepaint(true);
   }
 
   @NotNull
@@ -190,5 +214,10 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
         setText(myAllText.substring(0, idx));
       }
     }
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }

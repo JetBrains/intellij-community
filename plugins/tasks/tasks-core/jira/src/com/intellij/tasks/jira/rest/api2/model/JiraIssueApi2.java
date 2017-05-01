@@ -109,7 +109,7 @@ public class JiraIssueApi2 extends JiraIssue {
   @NotNull
   @Override
   public List<JiraComment> getComments() {
-    return fields.comment == null ? ContainerUtil.<JiraComment>emptyList() : fields.comment.getComments();
+    return fields.comment == null ? ContainerUtil.emptyList() : fields.comment.getComments();
   }
 
   @NotNull

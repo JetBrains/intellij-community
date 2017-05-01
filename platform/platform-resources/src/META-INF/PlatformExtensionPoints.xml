@@ -282,5 +282,7 @@
     <extensionPoint name="achromatopsiaSupport" interface="com.intellij.ide.ui.ColorBlindnessSupport"/>
 
     <extensionPoint name="bundledInspectionProfile" beanClass="com.intellij.configurationStore.BundledSchemeEP"/>
+    <extensionPoint name="projectNameProvider" interface="com.intellij.openapi.project.ex.ProjectNameProvider"/>
+    <extensionPoint name="streamProviderFactory" interface="com.intellij.configurationStore.StreamProviderFactory" area="IDEA_PROJECT"/>
   </extensionPoints>
 </idea-plugin>

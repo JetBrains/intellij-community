@@ -83,12 +83,8 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
 
     public void execute(Collection<Change> changes, String commitMessage) {
       if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            Messages
-              .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action"));
-          }
-        }, null, myProject);
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
+          .showErrorDialog(myProject, VcsBundle.message("shelve.changes.only.directories"), VcsBundle.message("shelve.changes.action")), null, myProject);
         return;
       }
       try {
@@ -107,11 +103,8 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
       }
       catch (final Exception ex) {
         LOG.info(ex);
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
-          public void run() {
-            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle());
-          }
-        }, ModalityState.NON_MODAL, myProject);
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(
+          () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.NON_MODAL, myProject);
       }
     }
 

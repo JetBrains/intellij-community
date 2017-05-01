@@ -65,6 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
+  public static final Key<List<Inlay>> COMPLETION_HINTS = Key.create("completion.hints");
   @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
@@ -295,9 +296,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
+    if (methodCall == null) return;
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
-    if (methodCall == null || methodCall.getArgumentList() == null || !"()".equals(methodCall.getArgumentList().getText()) ||
+    PsiExpressionList parameterOwner = methodCall.getArgumentList();
+    if (parameterOwner == null || !"()".equals(parameterOwner.getText()) ||
         parametersCount == 0 ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
         Registry.is("java.completion.argument.live.template") ||
@@ -336,11 +339,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     handler.findElementForParameterInfo(infoContext);
-
-    Disposer.register(new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null, methodCall.getArgumentList(), handler, false, false), () -> {
+    
+    parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
+    Disposer.register(new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
+                                                  parameterOwner, handler, false, false), () -> {
       for (Inlay inlay : addedHints) {
         if (inlay != null) ParameterHintsPresentationManager.getInstance().unpin(inlay);
       }
+      addedHints.clear();
     });
   }
 

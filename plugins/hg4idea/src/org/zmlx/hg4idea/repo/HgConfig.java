@@ -49,7 +49,7 @@ public class HgConfig {
   @NotNull
   public Collection<String> getPaths() {
     Map<String, String> pathOptions = myConfigMap.get("paths");
-    return pathOptions != null ? pathOptions.values() : Collections.<String>emptyList();
+    return pathOptions != null ? pathOptions.values() : Collections.emptyList();
   }
 
   public boolean isMqUsed() {

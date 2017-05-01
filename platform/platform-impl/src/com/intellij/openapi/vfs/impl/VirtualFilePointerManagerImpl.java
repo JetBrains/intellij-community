@@ -326,7 +326,8 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     try {
       for (VirtualFilePointerImpl pointer : pointers) {
         if (!myStoredPointers.contains(pointer)) {
-          pointer.throwDisposalError("Virtual pointer hasn't been disposed: "+pointer);
+          pointer.throwDisposalError("Virtual pointer '" + pointer +
+                                     "' hasn't been disposed: "+pointer.getStackTrace());
         }
       }
     }

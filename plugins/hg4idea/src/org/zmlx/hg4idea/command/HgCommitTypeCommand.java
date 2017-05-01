@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -81,15 +80,10 @@ public abstract class HgCommitTypeCommand {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
     if (myFiles.isEmpty()) {
-      executeChunked(Collections.<List<String>>emptyList());
+      executeChunked(Collections.emptyList());
     }
     else {
-      List<String> relativePaths = ContainerUtil.map2List(myFiles, new Function<HgFile, String>() {
-        @Override
-        public String fun(HgFile file) {
-          return file.getRelativePath();
-        }
-      });
+      List<String> relativePaths = ContainerUtil.map2List(myFiles, file -> file.getRelativePath());
       List<List<String>> chunkedCommits = VcsFileUtil.chunkArguments(relativePaths);
       executeChunked(chunkedCommits);
     }

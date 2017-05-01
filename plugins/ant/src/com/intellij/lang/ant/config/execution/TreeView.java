@@ -27,10 +27,10 @@ import com.intellij.lang.ant.config.AntConfigurationBase;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -421,11 +421,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private static boolean isValid(final VirtualFile file) {
-    return file != null && ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      public Boolean compute() {
-        return file.isValid();
-      }
-    }).booleanValue();
+    return file != null && ReadAction.compute(() -> file.isValid()).booleanValue();
   }
 
   public void finishBuild(String messageText) {

@@ -40,6 +40,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.CollectingContentIterator;
 import com.intellij.openapi.roots.ContentIterator;
@@ -1950,7 +1951,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private void processFilesInReadActionWithYieldingToWriteAction() {
       try {
         while (myVfsEventsMerger.hasChanges()) {
-          ProgressManager.getInstance().runInReadActionWithWriteActionPriority(this::processFilesInReadAction);
+          if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(this::processFilesInReadAction)) {
+            ProgressIndicatorUtils.yieldToPendingWriteActions();
+          }
         }
       }
       finally {

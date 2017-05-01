@@ -17,6 +17,8 @@ package com.intellij.openapi.keymap;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
@@ -198,8 +200,18 @@ public class KeymapUtil {
   }
 
   @NotNull
+  public static ShortcutSet getActiveKeymapShortcuts(@Nullable String actionId) {
+    Application application = ApplicationManager.getApplication();
+    KeymapManager keymapManager = application == null ? null : application.getComponent(KeymapManager.class);
+    if (keymapManager == null || actionId == null) {
+      return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
+    }
+    return new CustomShortcutSet(keymapManager.getActiveKeymap().getShortcuts(actionId));
+  }
+
+  @NotNull
   public static String getFirstKeyboardShortcutText(@NotNull String actionId) {
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(actionId);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(actionId).getShortcuts();
     KeyboardShortcut shortcut = ContainerUtil.findInstance(shortcuts, KeyboardShortcut.class);
     return shortcut == null? "" : getShortcutText(shortcut);
   }

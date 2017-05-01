@@ -32,7 +32,7 @@ import java.util.List;
  * Date: 1/10/13
  */
 public class JavaFxBuiltInAttributeDescriptor extends JavaFxPropertyAttributeDescriptor {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxBuiltInAttributeDescriptor.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxBuiltInAttributeDescriptor.class);
 
   private final String myParentTagName;
 

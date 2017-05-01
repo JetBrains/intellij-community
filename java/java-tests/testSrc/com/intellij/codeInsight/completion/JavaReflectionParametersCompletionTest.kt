@@ -121,7 +121,7 @@ fun lookupFirstItemsTexts(lookupItems: List<LookupElement?>, maxSize: Int): List
       else -> {
         val presentation = LookupElementPresentation()
         it?.renderElement(presentation)
-        presentation.itemText ?: ""
+        (presentation.itemText ?: "") + (presentation.tailText ?: "")
       }
     }
   }

@@ -173,6 +173,9 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() { doTest(); }
   //public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() { doTest(); }
   public void testRecursiveTypeWithCapture() { doTest(); }
+  public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
+
+  public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() throws Exception {
     doTest();

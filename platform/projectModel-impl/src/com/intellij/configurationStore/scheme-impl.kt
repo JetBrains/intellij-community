@@ -61,7 +61,7 @@ abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(pri
                             name: String,
                             attributeProvider: Function<String, String?>,
                             isBundled: Boolean = false): MUTABLE_SCHEME
-  override final fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
+  override fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
 
   open fun isSchemeFile(name: CharSequence) = true
 

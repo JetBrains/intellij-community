@@ -17,7 +17,6 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,6 +52,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
 /**
@@ -112,8 +112,7 @@ public class PropertiesComponent extends JPanel {
     myPopupActionGroup = createPopup();
     PopupHandler.installPopupHandler(myTable, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
     PopupHandler.installPopupHandler(scrollPane, myPopupActionGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB);
-    myCloseAction.registerCustomShortcutSet(new CustomShortcutSet(shortcuts), this);
+    myCloseAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB), this);
     myRefreshAction.registerCustomShortcutSet(CommonShortcuts.getRerun(), this);
   }
 

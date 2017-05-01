@@ -32,6 +32,7 @@ import com.intellij.structuralsearch.impl.matcher.iterators.DocValuesIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.HierarchyNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -469,6 +470,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (templateIsInterface != clazz2.isInterface()) return false;
       if (templateIsInterface && clazz.isAnnotationType() && !clazz2.isAnnotationType()) return false;
       if (clazz.isEnum() && !clazz2.isEnum()) return false;
+      if (clazz instanceof PsiTypeParameter != clazz2 instanceof PsiTypeParameter) return false;
 
       if (!matchInAnyOrder(clazz.getExtendsList(), clazz2.getExtendsList())) {
         return false;
@@ -1408,7 +1410,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(false);
     }
     else {
-      final List<PsiElement> unmatchedElements = new ArrayList<>();
+      final List<PsiElement> unmatchedElements = new SmartList<>();
 
       if (resourceList1 != null) {
         if (resourceList2 == null) {
@@ -1429,7 +1431,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       ContainerUtil.addAll(unmatchedElements, catches2);
       for (PsiCatchSection catchSection : catches1) {
         final MatchingHandler handler = myMatchingVisitor.getMatchContext().getPattern().getHandler(catchSection);
-        final PsiElement pinnedNode = handler.getPinnedNode(null);
+        final PsiElement pinnedNode = handler.getPinnedNode();
 
         if (pinnedNode != null) {
           myMatchingVisitor.setResult(handler.match(catchSection, pinnedNode, myMatchingVisitor.getMatchContext()));
@@ -1663,7 +1665,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitClass(PsiClass clazz) {
-    PsiClass clazz2 = (PsiClass)myMatchingVisitor.getElement();
+    final PsiClass clazz2 = (PsiClass)myMatchingVisitor.getElement();
     if (clazz.hasTypeParameters()) {
       myMatchingVisitor.setResult(myMatchingVisitor.match(clazz.getTypeParameterList(), clazz2.getTypeParameterList()));
       if (!myMatchingVisitor.getResult()) return;
@@ -1675,7 +1677,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (!myMatchingVisitor.getResult()) return;
     }
 
-    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(clazz.getNameIdentifier());
+    final PsiIdentifier identifier = clazz.getNameIdentifier();
+    final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(identifier);
 
     if (clazz.getModifierList().getTextLength() > 0) {
       if (!myMatchingVisitor.match(clazz.getModifierList(), clazz2.getModifierList())) {
@@ -1684,13 +1687,19 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       }
     }
 
-    myMatchingVisitor.setResult((myMatchingVisitor.matchText(clazz.getNameIdentifier(), clazz2.getNameIdentifier()) || isTypedVar) &&
+    myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.matchText(identifier, clazz2.getNameIdentifier())) &&
                                 compareClasses(clazz, clazz2));
 
     if (myMatchingVisitor.getResult() && isTypedVar) {
       PsiElement id = clazz2.getNameIdentifier();
       if (id == null) id = clazz2;
-      myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(clazz.getNameIdentifier(), id));
+      final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
+      if (handler.isSubtype() || handler.isStrictSubtype()) {
+        myMatchingVisitor.setResult(checkMatchWithinHierarchy(id, handler, identifier));
+      }
+      else {
+        myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(identifier, id));
+      }
     }
   }
 

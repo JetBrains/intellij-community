@@ -16,9 +16,11 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -32,13 +34,19 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.View;
 import java.awt.*;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaButtonUI extends BasicButtonUI {
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  private Rectangle viewRect = new Rectangle();
+  private Rectangle textRect = new Rectangle();
+  private Rectangle iconRect = new Rectangle();
+
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaButtonUI();
   }
@@ -49,6 +57,16 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   public static boolean isDefaultButton(JComponent c) {
     return c instanceof JButton && ((JButton)c).isDefaultButton();
+  }
+
+  public static boolean isComboButton(JComponent c) {
+    return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
+  }
+
+  public static boolean isHelpButton(JComponent button) {
+    return (SystemInfo.isMac || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel())
+           && button instanceof JButton
+           && "help".equals(button.getClientProperty("JButton.buttonType"));
   }
 
   /**
@@ -141,6 +159,38 @@ public class DarculaButtonUI extends BasicButtonUI {
                                               textRect.y + metrics.getAscent() + getTextShiftOffset());
   }
 
+  protected void paintContents(Graphics g, AbstractButton b) {
+    FontMetrics fm = SwingUtilities2.getFontMetrics(b, g);
+    boolean isDotButton = isSquare(b) && b.getIcon() == AllIcons.General.Ellipsis;
+    String text = isDotButton ? "..." : b.getText();
+    Icon icon = isDotButton ? null : b.getIcon();
+    text = layout(b, text, icon, fm, b.getWidth(), b.getHeight());
+
+    if (isSquare(b)) {
+      if (b.getIcon() == AllIcons.General.Ellipsis) {
+        UISettings.setupAntialiasing(g);
+        paintText(g, b, textRect, text);
+      } else if (b.getIcon() != null) {
+        paintIcon(g, b, iconRect);
+      }
+    } else {
+      // Paint the Icon
+      if (b.getIcon() != null) {
+        paintIcon(g, b, iconRect);
+      }
+
+      if (text != null && !text.isEmpty()){
+        View v = (View) b.getClientProperty(BasicHTML.propertyKey);
+        if (v != null) {
+          v.paint(g, textRect);
+        } else {
+          UISettings.setupAntialiasing(g);
+          paintText(g, b, textRect, text);
+        }
+      }
+    }
+  }
+
   @Override
   protected void paintIcon(Graphics g, JComponent c, Rectangle iconRect) {
     Border border = c.getBorder();
@@ -174,12 +224,6 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  public static boolean isHelpButton(JComponent button) {
-    return (SystemInfo.isMac || UIUtil.isUnderDarcula() || UIUtil.isUnderWin10LookAndFeel())
-           && button instanceof JButton 
-           && "help".equals(button.getClientProperty("JButton.buttonType"));
-  }
-
   protected Color getButtonColor1() {
     return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color1"), new ColorUIResource(0x555a5c));
   }
@@ -194,5 +238,29 @@ public class DarculaButtonUI extends BasicButtonUI {
 
   protected Color getSelectedButtonColor2() {
     return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color2"), new ColorUIResource(0x233143));
+  }
+
+  protected String layout(AbstractButton b, String text, Icon icon, FontMetrics fm, int width, int height) {
+    Insets i = b.getInsets();
+    viewRect.x = i.left;
+    viewRect.y = i.top;
+    viewRect.width = width - (i.right + viewRect.x);
+    viewRect.height = height - (i.bottom + viewRect.y);
+
+    textRect.x = textRect.y = textRect.width = textRect.height = 0;
+    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+
+    if (isComboButton(b)) {
+      viewRect.x += 6;
+    } else if (b instanceof JBOptionButton) {
+      viewRect.x -= 4;
+    }
+
+    // layout the text and icon
+    return SwingUtilities.layoutCompoundLabel(
+      b, fm, text, icon,
+      b.getVerticalAlignment(), b.getHorizontalAlignment(),
+      b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
+      viewRect, iconRect, textRect, text == null ? 0 : b.getIconTextGap());
   }
 }

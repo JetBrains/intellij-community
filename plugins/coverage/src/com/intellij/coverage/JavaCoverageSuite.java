@@ -15,12 +15,11 @@
  */
 package com.intellij.coverage;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.JavaPsiFacade;
@@ -198,36 +197,34 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   public @NotNull List<PsiPackage> getCurrentSuitePackages(final Project project) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiPackage>>() {
-      public List<PsiPackage> compute() {
-        final List<PsiPackage> packages = new ArrayList<>();
-        final PsiManager psiManager = PsiManager.getInstance(project);
-        final String[] filters = getFilteredPackageNames();
-        if (filters.length == 0) {
-          if (getFilteredClassNames().length > 0) return Collections.emptyList();
+    return ReadAction.compute(() -> {
+      final List<PsiPackage> packages = new ArrayList<>();
+      final PsiManager psiManager = PsiManager.getInstance(project);
+      final String[] filters = getFilteredPackageNames();
+      if (filters.length == 0) {
+        if (getFilteredClassNames().length > 0) return Collections.emptyList();
 
-          final PsiPackage defaultPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
-          if (defaultPackage != null) {
-            packages.add(defaultPackage);
-          }
+        final PsiPackage defaultPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage("");
+        if (defaultPackage != null) {
+          packages.add(defaultPackage);
         }
-        else {
-          final List<String> nonInherited = new ArrayList<>();
-          for (final String filter : filters) {
-            if (!isSubPackage(filters, filter)) {
-              nonInherited.add(filter);
-            }
-          }
-
-          for (String filter : nonInherited) {
-            final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(filter);
-            if (psiPackage != null) {
-              packages.add(psiPackage);
-            }
-          }
-        }
-        return packages;
       }
+      else {
+        final List<String> nonInherited = new ArrayList<>();
+        for (final String filter : filters) {
+          if (!isSubPackage(filters, filter)) {
+            nonInherited.add(filter);
+          }
+        }
+
+        for (String filter : nonInherited) {
+          final PsiPackage psiPackage = JavaPsiFacade.getInstance(psiManager.getProject()).findPackage(filter);
+          if (psiPackage != null) {
+            packages.add(psiPackage);
+          }
+        }
+      }
+      return packages;
     });
   }
 
@@ -246,17 +243,14 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     if (classNames.length > 0) {
       for (final String className : classNames) {
         final PsiClass aClass =
-          ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-            @Nullable
-            public PsiClass compute() {
-              final DumbService dumbService = DumbService.getInstance(project);
-              dumbService.setAlternativeResolveEnabled(true);
-              try {
-                return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
-              }
-              finally {
-                dumbService.setAlternativeResolveEnabled(false);
-              }
+          ReadAction.compute(() -> {
+            final DumbService dumbService = DumbService.getInstance(project);
+            dumbService.setAlternativeResolveEnabled(true);
+            try {
+              return JavaPsiFacade.getInstance(project).findClass(className.replace("$", "."), GlobalSearchScope.allScope(project));
+            }
+            finally {
+              dumbService.setAlternativeResolveEnabled(false);
             }
           });
         if (aClass != null) {

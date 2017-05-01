@@ -47,7 +47,7 @@ import java.util.*;
 import java.util.function.UnaryOperator;
 
 public abstract class InspectionRVContentProvider {
-  private static final Logger LOG = Logger.getInstance("#" + InspectionRVContentProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(InspectionRVContentProvider.class);
   private final Project myProject;
 
   public InspectionRVContentProvider(@NotNull Project project) {

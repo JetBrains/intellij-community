@@ -24,11 +24,11 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootProvider;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -41,7 +41,7 @@ import java.util.List;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
-  final ProjectRootContainerImpl myRootContainer;
+  private final ProjectRootContainerImpl myRootContainer;
   private String myName;
   private String myVersionString;
   private boolean myVersionDefined;
@@ -55,10 +55,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @NonNls public static final String ELEMENT_TYPE = "type";
   @NonNls private static final String ELEMENT_VERSION = "version";
   @NonNls private static final String ELEMENT_ROOTS = "roots";
-  @NonNls private static final String ELEMENT_ROOT = "root";
-  @NonNls private static final String ELEMENT_PROPERTY = "property";
-  @NonNls private static final String VALUE_JDKHOME = "jdkHome";
-  @NonNls private static final String ATTRIBUTE_FILE = "file";
   @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
   @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
 
@@ -134,7 +130,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     readExternal(element, null);
   }
 
-  public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) {
+  public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) throws InvalidDataException {
     myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null ? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
@@ -155,25 +151,14 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
       myVersionDefined = false;
     }
 
-    if (element.getAttribute(ELEMENT_VERSION) == null || !"2".equals(element.getAttributeValue(ELEMENT_VERSION))) {
-      myRootContainer.startChange();
-      myRootContainer.readOldVersion(element.getChild(ELEMENT_ROOTS));
-      final List children = element.getChild(ELEMENT_ROOTS).getChildren(ELEMENT_ROOT);
-      for (final Object aChildren : children) {
-        Element root = (Element)aChildren;
-        for (final Object o : root.getChildren(ELEMENT_PROPERTY)) {
-          Element prop = (Element)o;
-          if (ELEMENT_TYPE.equals(prop.getAttributeValue(ELEMENT_NAME)) && VALUE_JDKHOME.equals(prop.getAttributeValue(ATTRIBUTE_VALUE))) {
-            myHomePath = VirtualFileManager.extractPath(root.getAttributeValue(ATTRIBUTE_FILE));
-          }
-        }
+    myRootContainer.changeRoots(() -> {
+      String versionValue = element.getAttributeValue(ELEMENT_VERSION, "");
+      if (versionValue.isEmpty() || !"2".equals(versionValue)) {
+        throw new InvalidDataException("Too old version is not supported: " + versionValue);
       }
-      myRootContainer.finishChange();
-    }
-    else {
       myHomePath = element.getChild(ELEMENT_HOMEPATH).getAttributeValue(ATTRIBUTE_VALUE);
       myRootContainer.readExternal(element.getChild(ELEMENT_ROOTS));
-    }
+    });
 
     final Element additional = element.getChild(ELEMENT_ADDITIONAL);
     if (additional != null) {
@@ -229,6 +214,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     }
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   @NotNull
   public ProjectJdkImpl clone() {
@@ -243,26 +229,18 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     return myRootProvider;
   }
 
-  void copyTo(ProjectJdkImpl dest) {
+  void copyTo(@NotNull ProjectJdkImpl dest) {
     final String name = getName();
     dest.setName(name);
     dest.setHomePath(getHomePath());
     dest.myVersionDefined = myVersionDefined;
     dest.myVersionString = myVersionString;
     dest.setSdkAdditionalData(getSdkAdditionalData());
-    copyRoots(myRootContainer, dest);
+    dest.copyRootsFrom(myRootContainer);
   }
 
-  static void copyRoots(@NotNull ProjectRootContainerImpl rootContainer, @NotNull ProjectJdkImpl dest) {
-    dest.myRootContainer.startChange();
-    dest.myRootContainer.removeAllRoots();
-    for (OrderRootType rootType : OrderRootType.getAllTypes()) {
-      final ProjectRoot[] newRoots = rootContainer.getRoots(rootType);
-      for (ProjectRoot newRoot : newRoots) {
-        dest.myRootContainer.addRoot(newRoot, rootType);
-      }
-    }
-    dest.myRootContainer.finishChange();
+  void copyRootsFrom(@NotNull ProjectRootContainerImpl rootContainer) {
+    myRootContainer.copyRootsFrom(rootContainer);
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
@@ -318,7 +296,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @Override
   @NotNull
   public SdkModificator getSdkModificator() {
-    ProjectJdkImpl sdk = (ProjectJdkImpl)clone();
+    ProjectJdkImpl sdk = clone();
     sdk.myOrigin = this;
     sdk.myRootContainer.startChange();
     sdk.update();
@@ -328,7 +306,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @Override
   public void commitChanges() {
     LOG.assertTrue(isWritable());
-    myRootContainer.finishChange();
+
     copyTo(myOrigin);
     myOrigin = null;
   }

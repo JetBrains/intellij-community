@@ -84,7 +84,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testOneChainContainsOther2() {
-    assertLookupElementStringEquals(assertOneElement(doCompletion()), "getManager");
+    assertLookupElementStringEquals(assertOneElement(doCompletion()), "psiElement.getManager");
   }
 
   public void testTwoVariablesWithOneTypeOrSuperType() {
@@ -100,7 +100,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testChainsWithIndependentCallings() {
-    assertOneElement(doCompletion());
+    assertSize(2, doCompletion());
   }
 
   public void _testMethodReturnsSubclassOfTargetClassShowed2() {
@@ -177,7 +177,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertLookupElementStringEquals(lookupElements.get(0), "f.createFileFromText");
     assertLookupElementStringEquals(lookupElements.get(1), "getInstance().findFile");
     assertLookupElementStringEquals(lookupElements.get(2), "getInstance().getPsiFile");
-    assertLookupElementStringEquals(lookupElements.get(3), "getContainingClass");
+    assertLookupElementStringEquals(lookupElements.get(3), "psiClass.getContainingClass");
   }
 
   public void testResultRelevance() {
@@ -191,7 +191,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     List<WeightableChainLookupElement> weightableChainLookupElements = doCompletion();
     assertSize(2, weightableChainLookupElements);
     assertEquals("e.getProject1", weightableChainLookupElements.get(0).getLookupString());
-    assertEquals("getProject", weightableChainLookupElements.get(1).getLookupString());
+    assertEquals("psiManager.getProject", weightableChainLookupElements.get(1).getLookupString());
   }
 
   public void testRenderingVariableInContextAndNotInContext() {

@@ -41,12 +41,7 @@ public class ZipAndQueue {
     final int correctedInterval = interval <= 0 ? 300 : interval;
     myZipperUpdater = new ZipperUpdater(correctedInterval, project);
     myQueue = new BackgroundTaskQueue(project, title);
-    myInZipper = new Runnable() {
-      @Override
-      public void run() {
-        myQueue.run(myInvokedOnQueue);
-      }
-    };
+    myInZipper = () -> myQueue.run(myInvokedOnQueue);
     myInvokedOnQueue = new Task.Backgroundable(project, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

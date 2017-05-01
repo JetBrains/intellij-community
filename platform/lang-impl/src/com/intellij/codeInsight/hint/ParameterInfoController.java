@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeTooltip;
@@ -292,6 +293,7 @@ public class ParameterInfoController implements Disposable {
         }
       }
       if (removeHints) {
+        ParameterHintsPassFactory.forceHintsUpdateOnNextPass(myEditor);
         Disposer.dispose(this);
         return;
       }
@@ -586,6 +588,11 @@ public class ParameterInfoController implements Disposable {
     @Override
     public void setHighlightedParameter(final Object method) {
       myComponent.setHighlightedParameter(method);
+    }
+
+    @Override
+    public Object getHighlightedParameter() {
+      return myComponent.getHighlighted();
     }
 
     @Override

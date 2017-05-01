@@ -60,8 +60,8 @@ import java.util.List;
  * @since Jul 5, 2010 10:01:27 AM
  */
 public class SoftWrapApplianceManager implements Dumpable {
-  
-  private static final Logger LOG = Logger.getInstance("#" + SoftWrapApplianceManager.class.getName());
+
+  private static final Logger LOG = Logger.getInstance(SoftWrapApplianceManager.class);
   
   /** Enumerates possible type of soft wrap indents to use. */
   enum IndentType {

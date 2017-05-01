@@ -89,7 +89,7 @@ public abstract class GuiTestBase {
         File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), fileName);
         //noinspection ResultOfMethodCallIgnored
         file.delete();
-        LOG.error(getHierarchy());
+        LOG.error(getHierarchy() + "\n" + "caused by:", e);
         myScreenshotTaker.saveDesktopAsPng(file.getPath());
         LOG.info("Screenshot: " + file);
       }
@@ -99,16 +99,13 @@ public abstract class GuiTestBase {
     }
   };
 
-  @SuppressWarnings("UnusedDeclaration") // This field is set via reflection.
-  private String myTestName;
-
   protected IdeFrameFixture myProjectFrame;
 
   /**
    * @return the name of the test method being executed.
    */
   protected String getTestName() {
-    return myTestName;
+    return this.getClass().getSimpleName();
   }
 
 
@@ -132,14 +129,10 @@ public abstract class GuiTestBase {
 
   @After
   public void tearDown() throws InvocationTargetException, InterruptedException {
-    GuiTestUtil.failIfIdeHasFatalErrors();
+    failIfIdeHasFatalErrors();
     if (myProjectFrame != null) {
-      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(new Runnable() {
-        @Override
-        public void run() {
-          myProjectFrame.waitForBackgroundTasksToFinish();
-        }
-      });
+      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(
+        () -> myProjectFrame.waitForBackgroundTasksToFinish());
       myProjectFrame = null;
     }
     if (myRobot != null) {

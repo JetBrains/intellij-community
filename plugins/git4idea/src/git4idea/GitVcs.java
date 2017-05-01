@@ -358,12 +358,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
         buffer.append(exception.getMessage());
       }
       final String msg = buffer.toString();
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title"));
-        }
-      });
+      UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(myProject, msg, GitBundle.getString("error.dialog.title")));
     }
   }
 
@@ -515,8 +510,8 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   public List<CommitExecutor> getCommitExecutors() {
     return myCommitAndPushExecutor != null
-           ? Collections.<CommitExecutor>singletonList(myCommitAndPushExecutor)
-           : Collections.<CommitExecutor>emptyList();
+           ? Collections.singletonList(myCommitAndPushExecutor)
+           : Collections.emptyList();
   }
 
   @NotNull
@@ -532,11 +527,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-        new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
-      }
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+      new GitIntegrationEnabler(GitVcs.this, myGit).enable(roots);
     });
   }
 

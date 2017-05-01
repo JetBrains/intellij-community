@@ -160,8 +160,9 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
             if (!resolveResult.isValidResult() || resolveResult.getElement() != oldRefMethod) {
               return false;
             }
+            if (callExpression.getParent() instanceof PsiExpressionStatement) return true;
             final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes((PsiCallExpression)callExpression, false);
-            if (expectedTypes.length == 0) return true;
+            if (expectedTypes.length == 0) return false;
             final PsiType expressionType = ((PsiCallExpression)copy).getType();
             if (expressionType == null) return false;
             for (ExpectedTypeInfo expectedType : expectedTypes) {

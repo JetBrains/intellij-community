@@ -92,23 +92,20 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   public static Project processClassNames(final Project project, final GlobalSearchScope scope, final Consumer<String> consumer) {
     final ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
 
-    DumbService.getInstance(project).runReadActionInSmartMode(new Computable<Void>() {
-      @Override
-      public Void compute() {
-        PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
-          int i;
+    DumbService.getInstance(project).runReadActionInSmartMode((Computable<Void>)() -> {
+      PsiShortNamesCache.getInstance(project).processAllClassNames(new Processor<String>() {
+        int i;
 
-          @Override
-          public boolean process(String s) {
-            if (indicator != null && i++ % 512 == 0) {
-              indicator.checkCanceled();
-            }
-            consumer.consume(s);
-            return true;
+        @Override
+        public boolean process(String s) {
+          if (indicator != null && i++ % 512 == 0) {
+            indicator.checkCanceled();
           }
-        }, scope, IdFilter.getProjectIdFilter(project, true));
-        return null;
-      }
+          consumer.consume(s);
+          return true;
+        }
+      }, scope, IdFilter.getProjectIdFilter(project, true));
+      return null;
     });
 
     if (indicator != null) {

@@ -322,7 +322,7 @@ public class MavenModuleImporter {
 
           Library library = myModifiableModelsProvider.getLibraryByName(libraryName);
           if (library == null) {
-            library = myModifiableModelsProvider.createLibrary(libraryName);
+            library = myModifiableModelsProvider.createLibrary(libraryName, MavenRootModelAdapter.getMavenExternalSource());
           }
           libraryModel = myModifiableModelsProvider.getModifiableLibraryModel(library);
 

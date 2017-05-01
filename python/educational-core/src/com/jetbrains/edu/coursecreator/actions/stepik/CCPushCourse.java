@@ -54,7 +54,11 @@ public class CCPushCourse extends DumbAwareAction {
       ProgressManager.getInstance().run(new Task.Modal(project, "Updating Course", true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
+          indicator.setIndeterminate(false);
           for (Lesson lesson : course.getLessons()) {
+            indicator.checkCanceled();
+            indicator.setText2("Publishing lesson " + lesson.getIndex());
+
             if (lesson.getId() > 0) {
               CCStepicConnector.updateLesson(project, lesson);
             }
@@ -63,9 +67,10 @@ public class CCPushCourse extends DumbAwareAction {
               if (lessonId != -1) {
                 final List<Integer> sections = ((RemoteCourse)course).getSections();
                 final Integer sectionId = sections.get(sections.size() - 1);
-                CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId);
+                CCStepicConnector.postUnit(lessonId, lesson.getIndex(), sectionId, project);
               }
             }
+            indicator.setFraction((double)lesson.getIndex()/course.getLessons().size());
           }
         }
       });

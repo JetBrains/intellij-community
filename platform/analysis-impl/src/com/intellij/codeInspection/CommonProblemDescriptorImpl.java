@@ -25,7 +25,7 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
     }
     else {
       // no copy in most cases
-      myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.<QuickFix>id(), QuickFix.EMPTY_ARRAY) : fixes;
+      myFixes = ArrayUtil.contains(null, fixes) ? ContainerUtil.mapNotNull(fixes, FunctionUtil.id(), QuickFix.EMPTY_ARRAY) : fixes;
       if (!(this instanceof ProblemDescriptor)) {
         for (QuickFix fix : fixes) {
           if (fix instanceof LocalQuickFix) {

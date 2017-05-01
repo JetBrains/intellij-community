@@ -31,13 +31,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * ChangeListManager updates scheduler.
@@ -81,12 +82,7 @@ public class UpdateRequestsQueue {
     // not initialized
     myStarted = false;
     myStopped = false;
-    myIsStoppedGetter = new Getter<Boolean>() {
-      @Override
-      public Boolean get() {
-        return isStopped();
-      }
-    };
+    myIsStoppedGetter = () -> isStopped();
   }
 
   public void initialized() {
@@ -204,22 +200,21 @@ public class UpdateRequestsQueue {
       }
     }
 
+    boolean stopped;
     synchronized (myLock) {
-      if (! myStopped) {
+      stopped = myStopped;
+      if (!stopped) {
         myWaitingUpdateCompletionQueue.add(data.getCallback());
         schedule();
       }
     }
-    // do not run under lock; stopped cannot be switched into not stopped - can check without lock
-    if (myStopped) {
+    if (stopped) {
       LOG.debug("invokeAfterUpdate: stopped, invoke right now for project: " + myProject.getName());
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!myProject.isDisposed()) {
-            afterUpdate.run();
-          }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myProject.isDisposed()) {
+          afterUpdate.run();
         }
-      });
+      }, notNull(state, ModalityState.defaultModalityState()));
       return;
     }
     // invoke progress if needed

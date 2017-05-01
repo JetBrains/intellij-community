@@ -50,7 +50,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     }
     final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
     final List<String> paths = configurator.getBundledCoursePaths();
-    if (paths.isEmpty()) {
+    if (!paths.isEmpty()) {
       return;
     }
     Presentation presentation = e.getPresentation();
@@ -76,7 +76,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
-      generator.setSelectedCourse(introCourse);
+      generator.setCourse(introCourse);
 
       callback.consume(step);
     }

@@ -1,4 +1,8 @@
 #!/bin/bash
+
+#immediately exit script with an error if a command fails
+set -euo pipefail
+
 FILENAME=$1
 USERNAME=$2
 PASSWORD=$3

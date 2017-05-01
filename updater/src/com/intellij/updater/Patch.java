@@ -286,7 +286,7 @@ public class Patch {
                result != null &&
                ValidationResult.ALREADY_EXISTS_MESSAGE.equals(result.message) &&
                deletedPaths.contains(mapPath(action.getPath()))) {
-        // create action + the same element was deleted + validated as already exists
+        // do not warn about files which are going to be deleted
         result = null;
       }
 
@@ -316,11 +316,12 @@ public class Patch {
     }
 
     List<PatchAction> appliedActions = new ArrayList<>();
+    List<File> createdDirectories = new ArrayList<>();
+    Set<File> createdOptionalFiles = new HashSet<>();
     boolean shouldRevert = false;
     boolean cancelled = false;
-    try {
-      List<File> createdDirectories = new ArrayList<>();
 
+    try {
       forEach(actionsToProcess, "Applying patch...", ui, true, action -> {
         if (action instanceof CreateAction && !new File(toDir, action.getPath()).getParentFile().exists()) {
           Runner.logger().info("Create action: " + action.getPath() + " skipped. The parent folder is absent.");
@@ -337,16 +338,12 @@ public class Patch {
             if (file.isDirectory()) {
               createdDirectories.add(0, file);
             }
+            else if (action.isOptional()) {
+              createdOptionalFiles.add(file);
+            }
           }
         }
       });
-
-      for (File directory : createdDirectories) {
-        if (Utils.isEmptyDirectory(directory)) {
-          Runner.logger().info("Pruning empty directory: " + directory);
-          Utils.delete(directory);
-        }
-      }
     }
     catch (OperationCancelledException e) {
       Runner.printStackTrace(e);
@@ -366,6 +363,15 @@ public class Patch {
       appliedActions.clear();
 
       if (cancelled) throw new OperationCancelledException();
+    }
+    else {
+      for (File directory : createdDirectories) {
+        File[] children = directory.listFiles();
+        if (children != null && createdOptionalFiles.containsAll(Arrays.asList(children))) {
+          Runner.logger().info("Pruning empty directory: " + directory);
+          Utils.delete(directory);
+        }
+      }
     }
 
     // on OS X we need to update bundle timestamp to reset Info.plist caches.

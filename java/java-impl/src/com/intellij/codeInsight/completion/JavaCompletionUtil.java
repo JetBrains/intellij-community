@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.ui.JBColor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -75,18 +74,15 @@ public class JavaCompletionUtil {
   public static final Key<PairFunction<PsiExpression, CompletionParameters, PsiType>> DYNAMIC_TYPE_EVALUATOR = Key.create("DYNAMIC_TYPE_EVALUATOR");
 
   private static final Key<PsiType> QUALIFIER_TYPE_ATTR = Key.create("qualifierType"); // SmartPsiElementPointer to PsiType of "qualifier"
-  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes", new NullableFunction<CompletionLocation, ExpectedTypeInfo[]>() {
-    @Override
-    @Nullable
-    public ExpectedTypeInfo[] fun(final CompletionLocation location) {
-      if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
-        .accepts(location.getCompletionParameters().getPosition())) {
-        return ExpectedTypeInfo.EMPTY_ARRAY;
-      }
+  static final NullableLazyKey<ExpectedTypeInfo[], CompletionLocation> EXPECTED_TYPES = NullableLazyKey.create("expectedTypes",
+                                                                                                               location -> {
+                                                                                                                 if (PsiJavaPatterns.psiElement().beforeLeaf(PsiJavaPatterns.psiElement().withText("."))
+                                                                                                                   .accepts(location.getCompletionParameters().getPosition())) {
+                                                                                                                   return ExpectedTypeInfo.EMPTY_ARRAY;
+                                                                                                                 }
 
-      return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
-    }
-  });
+                                                                                                                 return JavaSmartCompletionContributor.getExpectedTypes(location.getCompletionParameters());
+                                                                                                               });
 
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");
 
@@ -333,7 +329,7 @@ public class JavaCompletionUtil {
         final StaticMemberProcessor memberProcessor = new JavaStaticMemberProcessor(parameters);
         memberProcessor.processMembersOfRegisteredClasses(matcher, (member, psiClass) -> {
           if (!mentioned.contains(member) && processor.satisfies(member, ResolveState.initial())) {
-            set.add(memberProcessor.createLookupElement(member, psiClass, true));
+            ContainerUtil.addIfNotNull(set, memberProcessor.createLookupElement(member, psiClass, true));
           }
         });
       }

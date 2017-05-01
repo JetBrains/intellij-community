@@ -56,7 +56,7 @@ public class CompositeSoftWrapPainter implements SoftWrapPainter {
    */
   public static final String CUSTOM_AFTER_SOFT_WRAP_SIGN_KEY = "idea.editor.wrap.soft.after.code";
 
-  private static final Logger LOG = Logger.getInstance("#" + CompositeSoftWrapPainter.class.getName());
+  private static final Logger LOG = Logger.getInstance(CompositeSoftWrapPainter.class);
 
   private static final List<Map<SoftWrapDrawingType, Character>> SYMBOLS = new ArrayList<>();
 

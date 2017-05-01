@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 2/17/12
  */
 public class AddTypeArgumentsConditionalFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#" + AddTypeArgumentsConditionalFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(AddTypeArgumentsConditionalFix.class);
 
   private final PsiSubstitutor mySubstitutor;
   private final PsiMethodCallExpression myExpression;

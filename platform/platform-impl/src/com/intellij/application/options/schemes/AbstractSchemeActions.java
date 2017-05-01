@@ -331,7 +331,8 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
    * @see SchemeImporter
    * @see SchemeImporterEP
    */
-  protected abstract void importScheme(@NotNull String importerName);
+  protected void importScheme(@NotNull String importerName) {
+  }
 
   /**
    * Reset scheme's settings to their default values (presets).

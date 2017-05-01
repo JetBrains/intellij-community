@@ -19,6 +19,7 @@ import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigT
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -79,6 +80,8 @@ public class ThreeStateCheckBoxRenderer extends ThreeStateCheckBox implements Ta
     } else {
       setSelected((Boolean) value);
     }
+
+    UIUtil.setCellRolloverState(this, row);
     return this;
   }
 

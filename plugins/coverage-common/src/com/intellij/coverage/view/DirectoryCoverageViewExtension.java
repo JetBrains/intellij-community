@@ -3,9 +3,8 @@ package com.intellij.coverage.view;
 import com.intellij.coverage.CoverageAnnotator;
 import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -81,21 +80,11 @@ public class DirectoryCoverageViewExtension extends CoverageViewExtension {
       final Object val = node.getValue();
       if (val instanceof PsiFile || val == null) return Collections.emptyList();
       final PsiDirectory psiDirectory = (PsiDirectory)val;
-      final PsiDirectory[] subdirectories = ApplicationManager.getApplication().runReadAction(new Computable<PsiDirectory[]>() {
-        @Override
-        public PsiDirectory[] compute() {
-          return psiDirectory.getSubdirectories(); 
-        }
-      });
+      final PsiDirectory[] subdirectories = ReadAction.compute(() -> psiDirectory.getSubdirectories());
       for (PsiDirectory subdirectory : subdirectories) {
         children.add(new CoverageListNode(myProject, subdirectory, mySuitesBundle, myStateBean));
       }
-      final PsiFile[] psiFiles = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
-        @Override
-        public PsiFile[] compute() {
-          return psiDirectory.getFiles();
-        }
-      });
+      final PsiFile[] psiFiles = ReadAction.compute(() -> psiDirectory.getFiles());
       for (PsiFile psiFile : psiFiles) {
         children.add(new CoverageListNode(myProject, psiFile, mySuitesBundle, myStateBean));
       }

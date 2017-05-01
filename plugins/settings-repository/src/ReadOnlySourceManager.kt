@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,8 @@ import gnu.trove.THashSet
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.diff.DiffFormatter
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.io.DisabledOutputStream
-import org.jetbrains.settingsRepository.git.GitRepositoryClientImpl
-import org.jetbrains.settingsRepository.git.Pull
-import org.jetbrains.settingsRepository.git.upstream
-import org.jetbrains.settingsRepository.git.use
+import org.jetbrains.settingsRepository.git.*
 import java.nio.file.Path
 
 class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Path) {
@@ -49,7 +45,7 @@ class ReadOnlySourceManager(private val icsManager: IcsManager, val rootDir: Pat
           val path = source.path ?: return@mapSmartNotNull null
           val dir = rootDir.resolve(path)
           if (dir.exists()) {
-            return@mapSmartNotNull FileRepositoryBuilder().setBare().setGitDir(dir.toFile()).build()
+            return@mapSmartNotNull buildBareRepository(dir)
           }
           else {
             LOG.warn("Skip read-only source ${source.url} because dir doesn't exist")

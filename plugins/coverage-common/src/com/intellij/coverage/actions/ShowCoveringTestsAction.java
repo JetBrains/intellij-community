@@ -55,7 +55,7 @@ import java.io.IOException;
 import java.util.*;
 
 public class ShowCoveringTestsAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#" + ShowCoveringTestsAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(ShowCoveringTestsAction.class);
 
   private final String myClassFQName;
   private final LineData myLineData;

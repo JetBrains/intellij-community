@@ -73,7 +73,7 @@ public class ConvertJavadocInspection extends BaseJavaLocalInspectionTool {
   }
 
   private static class ConvertJavadocQuickfix implements LocalQuickFix {
-    private static final Logger LOG = Logger.getInstance("#" + ConvertJavadocQuickfix.class.getName());
+    private static final Logger LOG = Logger.getInstance(ConvertJavadocQuickfix.class);
 
     @NotNull
     public String getFamilyName() {

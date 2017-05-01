@@ -16,13 +16,21 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.application.options.editor.fonts.AppEditorFontConfigurable;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.ui.HoverHyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -31,30 +39,65 @@ public class FontOptions extends AbstractFontOptionsPanel {
   @NotNull private final ColorAndFontOptions myOptions;
 
   private @Nullable JCheckBox myInheritFontCheckbox;
-  
+
   public FontOptions(@NotNull ColorAndFontOptions options) {
     myOptions = options;
   }
 
   @Nullable
   protected String getInheritFontTitle() {
-    return "Use default font preferences";
+    return "default font";
   }
 
   @Override
   protected void initControls() {
-    myInheritFontCheckbox = getInheritFontTitle() != null ? new JCheckBox(getInheritFontTitle()) : null;
-    if (myInheritFontCheckbox != null) {
-      add(myInheritFontCheckbox, "newline, sx 2");
+    createInheritCheckBox();
+    super.initControls();
+  }
+
+  private void createInheritCheckBox() {
+    if (getInheritFontTitle() != null) {
+      JPanel inheritPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
+      inheritPanel.setBorder(BorderFactory.createEmptyBorder());
+      myInheritFontCheckbox = new JCheckBox();
+      myInheritFontCheckbox.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
       myInheritFontCheckbox.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           setDelegatingPreferences(myInheritFontCheckbox.isSelected());
         }
       });
+      inheritPanel.add(myInheritFontCheckbox);
+      inheritPanel.add(new JLabel("Use "));
+      inheritPanel.add(createHyperlinkLabel());
+
+      add(inheritPanel, "newline, span");
       add(new JSeparator(), "newline, growx, span");
     }
-    super.initControls();
+  }
+
+  @NotNull
+  private JLabel createHyperlinkLabel() {
+    HoverHyperlinkLabel label = new HoverHyperlinkLabel(getInheritFontTitle());
+    label.addHyperlinkListener(new HyperlinkListener() {
+      @Override
+      public void hyperlinkUpdate(HyperlinkEvent e) {
+        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          navigateToParentFontConfigurable();
+        }
+      }
+    });
+    return label;
+  }
+
+  protected void navigateToParentFontConfigurable() {
+    Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext(getPanel()));
+    if (allSettings != null) {
+      final Configurable fontConfigurable = allSettings.find(AppEditorFontConfigurable.ID);
+      if (fontConfigurable != null) {
+        allSettings.select(fontConfigurable);
+      }
+    }
   }
 
   protected void setDelegatingPreferences(boolean isDelegating) {

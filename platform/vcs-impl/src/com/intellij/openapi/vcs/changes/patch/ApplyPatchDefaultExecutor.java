@@ -26,7 +26,6 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
@@ -80,12 +79,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     for (VirtualFile base : patchGroups.keySet()) {
       appliers.add(new PatchApplier<BinaryFilePatch>(myProject, base,
                                                      ContainerUtil
-                                                       .map(patchGroups.get(base), new Function<AbstractFilePatchInProgress, FilePatch>() {
-                                                         @Override
-                                                         public FilePatch fun(AbstractFilePatchInProgress patchInProgress) {
-                                                           return patchInProgress.getPatch();
-                                                         }
-                                                       }), localList, null, commitContext));
+                                                       .map(patchGroups.get(base), patchInProgress -> patchInProgress.getPatch()), localList, null, commitContext));
     }
     return appliers;
   }
@@ -94,23 +88,15 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
   public static void applyAdditionalInfoBefore(final Project project,
                                                @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                                CommitContext commitContext) {
-    applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
-      @Override
-      public void consume(InfoGroup infoGroup) {
-        infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
-      }
-    });
+    applyAdditionalInfoImpl(project, additionalInfo, commitContext,
+                            infoGroup -> infoGroup.myPatchEP.consumeContentBeforePatchApplied(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
   }
 
   private static void applyAdditionalInfo(final Project project,
                                           @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                           CommitContext commitContext) {
-    applyAdditionalInfoImpl(project, additionalInfo, commitContext, new Consumer<InfoGroup>() {
-      @Override
-      public void consume(InfoGroup infoGroup) {
-        infoGroup.myPatchEP.consumeContent(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext);
-      }
-    });
+    applyAdditionalInfoImpl(project, additionalInfo, commitContext,
+                            infoGroup -> infoGroup.myPatchEP.consumeContent(infoGroup.myPath, infoGroup.myContent, infoGroup.myCommitContext));
   }
 
   private static void applyAdditionalInfoImpl(final Project project,

@@ -605,7 +605,10 @@ public class ControlFlowUtils {
         return EquivalenceChecker.getCanonicalPsiEquivalence()
           .expressionsAreEquivalent(returnValue, ((PsiReturnStatement)nextElement).getReturnValue());
       }
-      if(nextElement == null && returnValue == null && cur.getParent() instanceof PsiMethod) {
+      if(returnValue == null &&
+         cur.getParent() instanceof PsiCodeBlock &&
+         cur.getParent().getParent() instanceof PsiMethod &&
+         nextElement instanceof PsiJavaToken && ((PsiJavaToken)nextElement).getTokenType().equals(JavaTokenType.RBRACE)) {
         return true;
       }
     }
@@ -966,11 +969,10 @@ public class ControlFlowUtils {
   }
 
   private static class ReturnFinder extends JavaRecursiveElementWalkingVisitor {
-
-    private boolean m_found;
+    private boolean myFound;
 
     private boolean returnFound() {
-      return m_found;
+      return myFound;
     }
 
     @Override
@@ -984,11 +986,8 @@ public class ControlFlowUtils {
 
     @Override
     public void visitReturnStatement(@NotNull PsiReturnStatement returnStatement) {
-      if (m_found) {
-        return;
-      }
-      super.visitReturnStatement(returnStatement);
-      m_found = true;
+      myFound = true;
+      stopWalking();
     }
   }
 

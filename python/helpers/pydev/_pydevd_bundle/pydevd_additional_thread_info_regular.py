@@ -1,11 +1,46 @@
 import sys
-from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND
+from _pydevd_bundle.pydevd_constants import STATE_RUN, PYTHON_SUSPEND, IS_JYTHON
 # IFDEF CYTHON
 # ELSE
 from _pydevd_bundle.pydevd_frame import PyDBFrame
 # ENDIF
 
-version = 2
+version = 3
+
+if not hasattr(sys, '_current_frames'):
+
+    # Some versions of Jython don't have it (but we can provide a replacement)
+    if IS_JYTHON:
+        from java.lang import NoSuchFieldException
+        from org.python.core import ThreadStateMapping
+        try:
+            cachedThreadState = ThreadStateMapping.getDeclaredField('globalThreadStates') # Dev version
+        except NoSuchFieldException:
+            cachedThreadState = ThreadStateMapping.getDeclaredField('cachedThreadState') # Release Jython 2.7.0
+        cachedThreadState.accessible = True
+        thread_states = cachedThreadState.get(ThreadStateMapping)
+
+        def _current_frames():
+            as_array = thread_states.entrySet().toArray()
+            ret = {}
+            for thread_to_state in as_array:
+                thread = thread_to_state.getKey()
+                if thread is None:
+                    continue
+                thread_state = thread_to_state.getValue()
+                if thread_state is None:
+                    continue
+
+                frame = thread_state.frame
+                if frame is None:
+                    continue
+
+                ret[thread.getId()] = frame
+            return ret
+    else:
+        raise RuntimeError('Unable to proceed (sys._current_frames not available in this Python implementation).')
+else:
+    _current_frames = sys._current_frames
 
 #=======================================================================================================================
 # PyDBAdditionalThreadInfo
@@ -69,7 +104,7 @@ class PyDBAdditionalThreadInfo(object):
 
     def iter_frames(self, t):
         #sys._current_frames(): dictionary with thread id -> topmost frame
-        current_frames = sys._current_frames()
+        current_frames = _current_frames()
         v = current_frames.get(t.ident)
         if v is not None:
             return [v]

@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +35,8 @@ public interface ExternalProjectsManager {
 
   @NotNull
   Project getProject();
+
+  ExternalSystemProjectsWatcher getExternalProjectsWatcher();
 
   void refreshProject(@NotNull String externalProjectPath, @NotNull ImportSpec importSpec);
 

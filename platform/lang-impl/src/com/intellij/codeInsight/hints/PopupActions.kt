@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -195,9 +196,65 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val option = getOptionHintAtOffset(editor, file) ?: return
     option.disable()
+    refreshAllOpenEditors()
   }
 
   override fun startInWriteAction() = false
+}
+
+class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
+
+  companion object {
+    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
+  }
+  
+  private var lastOptionName = ""
+  
+  override fun getText(): String {
+    if (lastOptionName.startsWith("show", ignoreCase = true)) {
+      return lastOptionName.capitalizeFirstLetter()
+    }
+    return CodeInsightBundle.message("inlay.hints.enable.custom.option", lastOptionName)
+  }
+  
+  override fun getFamilyName(): String = presentableFamilyName
+
+  override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
+    if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return false
+    if (editor !is EditorImpl) return false
+    
+    InlayParameterHintsExtension.forLanguage(file.language) ?: return false
+
+    val option = getDisabledOptionInfoAtCaretOffset(editor, file) ?: return false
+    lastOptionName = option.optionName
+
+    return true
+  }
+
+  private fun getDisabledOptionInfoAtCaretOffset(editor: Editor, file: PsiFile): HintInfo.OptionInfo? {
+    val offset = editor.caretModel.offset
+
+    val element = file.findElementAt(offset) ?: return null
+    val provider = InlayParameterHintsExtension.forLanguage(file.language) ?: return null
+
+    val target = PsiTreeUtil.findFirstParent(element, { provider.hasDisabledOptionHintInfo(it) }) ?: return null
+    return provider.getHintInfo(target) as? HintInfo.OptionInfo
+  }
+
+  override fun invoke(project: Project, editor: Editor, file: PsiFile) {
+    val option = getDisabledOptionInfoAtCaretOffset(editor, file) ?: return
+    option.enable()
+    refreshAllOpenEditors()
+  }
+
+  override fun startInWriteAction() = false
+
+}
+
+
+private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiElement): Boolean {
+  val info = getHintInfo(element)
+  return info is HintInfo.OptionInfo && !info.isOptionEnabled()
 }
 
 
@@ -261,6 +318,7 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
 
 
 private fun refreshAllOpenEditors() {
+  ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
   ProjectManager.getInstance().openProjects.forEach {
     val psiManager = PsiManager.getInstance(it)
     val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(it)
@@ -310,3 +368,4 @@ fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joi
 
 
 private fun String.capitalize() = StringUtil.capitalizeWords(this, true)
+private fun String.capitalizeFirstLetter() = StringUtil.capitalize(this)

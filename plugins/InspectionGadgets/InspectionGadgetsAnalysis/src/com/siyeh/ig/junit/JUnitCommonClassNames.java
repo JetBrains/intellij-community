@@ -26,4 +26,16 @@ public class JUnitCommonClassNames {
   public static final String ORG_JUNIT_TEST = "org.junit.Test";
   public static final String ORG_JUNIT_RULE = "org.junit.Rule";
   public static final String ORG_JUNIT_CLASS_RULE = "org.junit.ClassRule";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST = "org.junit.jupiter.params.ParameterizedTest";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE = "org.junit.jupiter.params.provider.MethodSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE = "org.junit.jupiter.params.provider.ValueSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE = "org.junit.jupiter.params.provider.EnumSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS = "org.junit.jupiter.params.provider.Arguments";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE = "org.junit.jupiter.params.provider.CsvSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE = "org.junit.jupiter.params.provider.CsvFileSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE = "org.junit.jupiter.params.provider.ArgumentsSource";
+  public static final String ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH = "org.junit.jupiter.params.converter.ConvertWith";
+  public static final String ORG_JUNIT_JUPITER_API_TEST = "org.junit.jupiter.api.Test";
+  public static final String ORG_JUNIT_JUPITER_API_REPEATED_TEST = "org.junit.jupiter.api.RepeatedTest";
+  public static final String ORG_JUNIT_JUPITER_API_REPETITION_INFO = "org.junit.jupiter.api.RepetitionInfo";
 }

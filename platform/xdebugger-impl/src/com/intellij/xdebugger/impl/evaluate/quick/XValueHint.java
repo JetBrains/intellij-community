@@ -137,18 +137,13 @@ public class XValueHint extends AbstractValueHint {
     if (prev == this) {
       getEditor().putUserData(HINT_KEY, null);
     }
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-      myDisposable = null;
-    }
+    disposeVisibleHint();
   }
 
   @Override
   public void hideHint() {
     super.hideHint();
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-    }
+    disposeVisibleHint();
   }
 
   @Override
@@ -204,6 +199,8 @@ public class XValueHint extends AbstractValueHint {
                               SimpleTextAttributes.GRAYED_ATTRIBUTES);
                 }
 
+                // first remove a shortcut created for any previous presentation (like "Collecting data...")
+                disposeVisibleHint();
                 myDisposable = Disposer.newDisposable();
                 ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
                 new DumbAwareAction() {
@@ -245,6 +242,13 @@ public class XValueHint extends AbstractValueHint {
     }, myExpressionPosition);
   }
 
+  private void disposeVisibleHint() {
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+      myDisposable = null;
+    }
+  }
+
   private void showTree(@NotNull XValue value) {
     if (myCurrentHint != null) {
       myCurrentHint.hide();
@@ -253,5 +257,10 @@ public class XValueHint extends AbstractValueHint {
     XDebuggerTreeCreator creator = new XDebuggerTreeCreator(myDebugSession.getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
                                                             myDebugSession.getCurrentPosition(), valueMarkers);
     showTreePopup(creator, Pair.create(value, myValueName));
+  }
+
+  @Override
+  public String toString() {
+    return myExpression;
   }
 }

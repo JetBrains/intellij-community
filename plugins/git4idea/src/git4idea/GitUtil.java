@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -85,12 +84,7 @@ public class GitUtil {
   public static final String GRAFTED = "grafted";
   public static final String REPLACED = "replaced";
 
-  public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = new Function<GitRepository, VirtualFile>() {
-    @Override
-    public VirtualFile fun(@NotNull GitRepository repository) {
-      return repository.getRoot();
-    }
-  };
+  public static final Function<GitRepository, VirtualFile> REPOSITORY_TO_ROOT = repository -> repository.getRoot();
 
   public static final String HEAD = "HEAD";
   public static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
@@ -576,11 +570,7 @@ public class GitUtil {
     throws VcsException {
     final List<GitCommittedChangeList> rc = new ArrayList<>();
 
-    getLocalCommittedChanges(project, root, parametersSpecifier, new Consumer<GitCommittedChangeList>() {
-      public void consume(GitCommittedChangeList committedChangeList) {
-        rc.add(committedChangeList);
-      }
-    }, false);
+    getLocalCommittedChanges(project, root, parametersSpecifier, committedChangeList -> rc.add(committedChangeList), false);
 
     return rc;
   }
@@ -708,25 +698,15 @@ public class GitUtil {
 
   @Nullable
   public static GitRemote findRemoteByName(Collection<GitRemote> remotes, @NotNull final String name) {
-    return ContainerUtil.find(remotes, new Condition<GitRemote>() {
-      @Override
-      public boolean value(GitRemote remote) {
-        return remote.getName().equals(name);
-      }
-    });
+    return ContainerUtil.find(remotes, remote -> remote.getName().equals(name));
   }
 
   @Nullable
   public static GitRemoteBranch findRemoteBranch(@NotNull GitRepository repository,
                                                          @NotNull final GitRemote remote,
                                                          @NotNull final String nameAtRemote) {
-    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), new Condition<GitRemoteBranch>() {
-      @Override
-      public boolean value(GitRemoteBranch remoteBranch) {
-        return remoteBranch.getRemote().equals(remote) &&
-               remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote));
-      }
-    });
+    return ContainerUtil.find(repository.getBranches().getRemoteBranches(), remoteBranch -> remoteBranch.getRemote().equals(remote) &&
+                                                                                        remoteBranch.getNameForRemoteOperations().equals(GitBranchUtil.stripRefsPrefix(nameAtRemote)));
   }
 
   @NotNull
@@ -814,12 +794,7 @@ public class GitUtil {
 
   @NotNull
   public static String getPrintableRemotes(@NotNull Collection<GitRemote> remotes) {
-    return StringUtil.join(remotes, new Function<GitRemote, String>() {
-      @Override
-      public String fun(GitRemote remote) {
-        return remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]";
-      }
-    }, "\n");
+    return StringUtil.join(remotes, remote -> remote.getName() + ": [" + StringUtil.join(remote.getUrls(), ", ") + "]", "\n");
   }
 
   /**
@@ -841,20 +816,12 @@ public class GitUtil {
           VirtualFile vcsRoot = getGitRoot(file);
           final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local, revertable);
           if (changeList != null) {
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              public void run() {
-                AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList,
-                                                                              GitBundle.message("paths.affected.title", revision));
-              }
-            });
+            UIUtil.invokeLaterIfNeeded(() -> AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList,
+                                                                                                       GitBundle.message("paths.affected.title", revision)));
           }
         }
         catch (final VcsException e) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            public void run() {
-              GitUIUtil.showOperationError(project, e, "git show");
-            }
-          });
+          UIUtil.invokeLaterIfNeeded(() -> GitUIUtil.showOperationError(project, e, "git show"));
         }
       }
     }.queue();
@@ -877,12 +844,7 @@ public class GitUtil {
   public static Collection<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<VirtualFile> files) {
     final GitRepositoryManager manager = getRepositoryManager(project);
     com.google.common.base.Function<VirtualFile,GitRepository> ROOT_TO_REPO =
-      new com.google.common.base.Function<VirtualFile, GitRepository>() {
-        @Override
-        public GitRepository apply(@Nullable VirtualFile root) {
-          return root != null ? manager.getRepositoryForRoot(root) : null;
-        }
-      };
+      root -> root != null ? manager.getRepositoryForRoot(root) : null;
     return Collections2.filter(Collections2.transform(sortFilesByGitRootsIgnoringOthers(files).keySet(), ROOT_TO_REPO),
                                Predicates.notNull());
   }
@@ -937,12 +899,7 @@ public class GitUtil {
 
   @NotNull
   public static Collection<String> toAbsolute(@NotNull final VirtualFile root, @NotNull Collection<String> relativePaths) {
-    return ContainerUtil.map(relativePaths, new Function<String, String>() {
-      @Override
-      public String fun(String s) {
-        return toAbsolute(root, s);
-      }
-    });
+    return ContainerUtil.map(relativePaths, s -> toAbsolute(root, s));
   }
 
   /**
@@ -1015,12 +972,7 @@ public class GitUtil {
 
   @NotNull
   public static String joinToHtml(@NotNull Collection<GitRepository> repositories) {
-    return StringUtil.join(repositories, new Function<GitRepository, String>() {
-      @Override
-      public String fun(GitRepository repository) {
-        return repository.getPresentableUrl();
-      }
-    }, "<br/>");
+    return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), "<br/>");
   }
 
   @NotNull

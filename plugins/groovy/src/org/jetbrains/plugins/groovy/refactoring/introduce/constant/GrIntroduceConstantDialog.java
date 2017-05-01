@@ -212,12 +212,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        updateOkStatus();
-      }
-    });
+    myNameField.addDataChangedListener(() -> updateOkStatus());
   }
 
   @Override

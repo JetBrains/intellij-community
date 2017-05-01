@@ -262,15 +262,12 @@ public class MatcherImpl {
     if (searchScope instanceof GlobalSearchScope) {
       final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
 
-      final ContentIterator ci = new ContentIterator() {
-        @Override
-        public boolean processFile(final VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
-            ++totalFilesToScan;
-            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir));
-          }
-          return true;
+      final ContentIterator ci = fileOrDir -> {
+        if (!fileOrDir.isDirectory() && scope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
+          ++totalFilesToScan;
+          scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir));
         }
+        return true;
       };
 
       ReadAction.run(() -> FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress));
@@ -545,12 +542,7 @@ public class MatcherImpl {
       match(el, language);
     }
     if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-        @Override
-        public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-          match(injectedPsi, language);
-        }
-      });
+      InjectedLanguageUtil.enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
     }
   }
 

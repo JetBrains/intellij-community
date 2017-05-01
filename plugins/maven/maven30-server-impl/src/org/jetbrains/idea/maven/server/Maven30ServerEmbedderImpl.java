@@ -32,7 +32,10 @@ import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryFactory;
 import org.apache.maven.artifact.repository.metadata.RepositoryMetadataManager;
-import org.apache.maven.artifact.resolver.*;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.resolver.ResolutionListener;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.execution.*;
 import org.apache.maven.model.Activation;
@@ -606,7 +609,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                            @NotNull final List<String> inactiveProfiles,
                                                            final List<ResolutionListener> listeners) throws RemoteException {
     final File file = files.size() == 1 ? files.iterator().next() : null;
-    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, Collections.<String>emptyList());
+    final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
 
@@ -797,9 +800,9 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   public MavenExecutionRequest createRequest(@Nullable File file,
-                                             List<String> activeProfiles,
-                                             List<String> inactiveProfiles,
-                                             List<String> goals)
+                                             @Nullable List<String> activeProfiles,
+                                             @Nullable List<String> inactiveProfiles,
+                                             @Nullable List<String> goals)
     throws RemoteException {
     //Properties executionProperties = myMavenSettings.getProperties();
     //if (executionProperties == null) {
@@ -811,7 +814,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     try {
       getComponent(MavenExecutionRequestPopulator.class).populateFromSettings(result, myMavenSettings);
 
-      result.setGoals(goals);
+      result.setGoals(goals == null ? Collections.<String>emptyList() : goals);
 
       result.setPom(file);
 
@@ -819,8 +822,12 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
       result.setSystemProperties(mySystemProperties);
 
-      result.setActiveProfiles(activeProfiles);
-      result.setInactiveProfiles(inactiveProfiles);
+      if (activeProfiles != null) {
+        result.setActiveProfiles(activeProfiles);
+      }
+      if (inactiveProfiles != null) {
+        result.setInactiveProfiles(inactiveProfiles);
+      }
       result.setCacheNotFound(true);
       result.setCacheTransferError(true);
 
@@ -999,7 +1006,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       }
 
       final MavenExecutionRequest request =
-        createRequest(null, Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList());
+        createRequest(null, null, null, null);
 
       DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
       RepositorySystemSession repositorySystemSession = maven.newRepositorySession(request);

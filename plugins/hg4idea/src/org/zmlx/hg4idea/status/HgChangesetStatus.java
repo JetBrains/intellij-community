@@ -26,17 +26,15 @@ public class HgChangesetStatus {
   }
 
   public void setChanges(final int count, final ChangesetWriter formatter) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (count == 0) {
-          numChanges = 0;
-          toolTip = "";
-          return;
-        }
-
-        numChanges = count;
-        toolTip = formatter.asString();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (count == 0) {
+        numChanges = 0;
+        toolTip = "";
+        return;
       }
+
+      numChanges = count;
+      toolTip = formatter.asString();
     });
   }
 

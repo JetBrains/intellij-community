@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.vcs.update.ActionInfo.INTEGRATE;
 
 public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
@@ -237,8 +240,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private void showUpdateTree() {
     RestoreUpdateTree restoreUpdateTree = RestoreUpdateTree.getInstance(myProject);
     // action info is actually NOT used
-    restoreUpdateTree.registerUpdateInformation(myAccumulatedFiles.getUpdatedFiles(), ActionInfo.INTEGRATE);
-    myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), myTitle, ActionInfo.INTEGRATE, false);
+    restoreUpdateTree.registerUpdateInformation(myAccumulatedFiles.getUpdatedFiles(), INTEGRATE);
+    UpdateInfoTree tree = myProjectLevelVcsManager.showUpdateProjectInfo(myAccumulatedFiles.getUpdatedFiles(), myTitle, INTEGRATE, false);
+    if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
   }
 
   private void stepToNextChangeList() {

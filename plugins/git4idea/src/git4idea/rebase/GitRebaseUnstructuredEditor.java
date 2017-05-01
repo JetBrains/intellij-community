@@ -55,7 +55,7 @@ public class GitRebaseUnstructuredEditor extends DialogWrapper {
     myFile = new File(rebaseFilePath);
     String text = FileUtil.loadFile(myFile, myEncoding);
 
-    myTextEditor = CommitMessage.createCommitTextEditor(project, false);
+    myTextEditor = CommitMessage.createCommitTextEditor(project);
     myTextEditor.setText(text);
     myTextEditor.setCaretPosition(0);
     init();

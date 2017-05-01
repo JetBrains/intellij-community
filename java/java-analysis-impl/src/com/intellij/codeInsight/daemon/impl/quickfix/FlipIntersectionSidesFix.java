@@ -33,7 +33,7 @@ import java.util.List;
 * Date: 10/31/13
 */
 public class FlipIntersectionSidesFix implements IntentionAction {
-  private static final Logger LOG = Logger.getInstance("#" + FlipIntersectionSidesFix.class.getName());
+  private static final Logger LOG = Logger.getInstance(FlipIntersectionSidesFix.class);
   private final String myClassName;
   private final List<PsiTypeElement> myConjuncts;
   private final PsiTypeElement myConjunct;

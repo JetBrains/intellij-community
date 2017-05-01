@@ -250,12 +250,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
 
   @NotNull
   private String toReadable(@NotNull Collection<VcsFileRevision> history) {
-    int maxSubjectLength = findMaxLength(history, new Function<VcsFileRevision, String>() {
-      @Override
-      public String fun(VcsFileRevision revision) {
-        return revision.getCommitMessage();
-      }
-    });
+    int maxSubjectLength = findMaxLength(history, revision -> revision.getCommitMessage());
     StringBuilder sb = new StringBuilder();
     for (VcsFileRevision revision : history) {
       GitFileRevision rev = (GitFileRevision)revision;
@@ -266,12 +261,7 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   }
 
   private String toReadable(List<TestCommit> commits) {
-    int maxSubjectLength = findMaxLength(commits, new Function<TestCommit, String>() {
-      @Override
-      public String fun(TestCommit revision) {
-        return revision.getCommitMessage();
-      }
-    });
+    int maxSubjectLength = findMaxLength(commits, revision -> revision.getCommitMessage());
     StringBuilder sb = new StringBuilder();
     for (TestCommit commit : commits) {
       String relPath = FileUtil.getRelativePath(new File(myProjectPath), new File(commit.myPath));
@@ -363,18 +353,8 @@ public class GitHistoryUtilsTest extends GitSingleRepoTest {
   @Test
   public void testAppendableHistory() throws Exception {
     final List<GitFileRevision> revisions = new ArrayList<>(3);
-    Consumer<GitFileRevision> consumer = new Consumer<GitFileRevision>() {
-      @Override
-      public void consume(GitFileRevision gitFileRevision) {
-        revisions.add(gitFileRevision);
-      }
-    };
-    Consumer<VcsException> exceptionConsumer = new Consumer<VcsException>() {
-      @Override
-      public void consume(VcsException exception) {
-        fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
-      }
-    };
+    Consumer<GitFileRevision> consumer = gitFileRevision -> revisions.add(gitFileRevision);
+    Consumer<VcsException> exceptionConsumer = exception -> fail("No exception expected " + ExceptionUtil.getThrowableText(exception));
     GitHistoryUtils.history(myProject, toFilePath(bfile), null, consumer, exceptionConsumer);
     assertHistory(revisions);
   }

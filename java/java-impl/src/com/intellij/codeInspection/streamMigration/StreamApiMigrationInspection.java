@@ -56,7 +56,7 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKN
  * User: anna
  */
 public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance("#" + StreamApiMigrationInspection.class.getName());
+  private static final Logger LOG = Logger.getInstance(StreamApiMigrationInspection.class);
 
   public boolean REPLACE_TRIVIAL_FOREACH;
   public boolean SUGGEST_FOREACH;

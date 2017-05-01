@@ -187,11 +187,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     myNameField = new NameSuggestionsField(myProject);
     myNameSuggestionPanel.setLayout(new BorderLayout());
-    myNameField.addDataChangedListener(new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        updateButtons();
-      }
-    });
+    myNameField.addDataChangedListener(() -> updateButtons());
     myNameSuggestionPanel.add(myNameField.getComponent(), BorderLayout.CENTER);
     myNameSuggestionLabel.setLabelFor(myNameField.getFocusableComponent());
 

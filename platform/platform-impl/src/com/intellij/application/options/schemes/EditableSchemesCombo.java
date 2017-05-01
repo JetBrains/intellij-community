@@ -32,12 +32,14 @@ import java.awt.event.*;
 import java.util.Collection;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
+
 public class EditableSchemesCombo<T extends Scheme> {
   
   // region Message constants
   public static final String EMPTY_NAME_MESSAGE = "The name must not be empty";
   public static final String NAME_ALREADY_EXISTS_MESSAGE = "Name is already in use. Please change to unique name.";
-  private static final String EDITING_HINT = "Enter to save, Esc to cancel";
+  public static final String EDITING_HINT = "Enter to save, Esc to cancel";
   public static final int COMBO_WIDTH = 200;
   // endregion
   
@@ -156,6 +158,11 @@ public class EditableSchemesCombo<T extends Scheme> {
         return mySchemesPanel.getModel().isProjectScheme(scheme);
       }
 
+      @Override
+      protected int getIndent(@NotNull T scheme) {
+        return mySchemesPanel.getModel().getIndent(scheme);
+      }
+
       @NotNull
       @Override
       protected SimpleTextAttributes getSchemeAttributes(T scheme) {
@@ -210,7 +217,7 @@ public class EditableSchemesCombo<T extends Scheme> {
   @Nullable
   private String validateSchemeName(@NotNull String name, boolean isProjectScheme) {
     if (myNameEditData != null && name.equals(myNameEditData.initialName)) return null;
-    if (name.isEmpty()) {
+    if (isEmptyOrSpaces(name)) {
       return EMPTY_NAME_MESSAGE;
     }
     else if (mySchemesPanel.getModel().containsScheme(name, isProjectScheme)) {

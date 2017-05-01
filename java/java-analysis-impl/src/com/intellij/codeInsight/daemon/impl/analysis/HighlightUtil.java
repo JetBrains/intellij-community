@@ -50,6 +50,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -2540,6 +2541,9 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType thenType = thenExpression.getType();
     if (thenType == null || type == null) return null;
     if (conditionalExpression.getType() == null) {
+      if (PsiUtil.isLanguageLevel8OrHigher(conditionalExpression) && PsiPolyExpressionUtil.isPolyExpression(conditionalExpression)) {
+        return null;
+      }
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
       return createIncompatibleTypeHighlightInfo(thenType, type, expression.getTextRange(), 0);

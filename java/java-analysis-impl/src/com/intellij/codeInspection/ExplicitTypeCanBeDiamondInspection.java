@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * Date: 1/28/11
  */
 public class ExplicitTypeCanBeDiamondInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + ExplicitTypeCanBeDiamondInspection.class.getName());
+  public static final Logger LOG = Logger.getInstance(ExplicitTypeCanBeDiamondInspection.class);
 
   @Nls
   @NotNull

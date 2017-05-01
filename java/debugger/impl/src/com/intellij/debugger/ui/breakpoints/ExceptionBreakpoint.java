@@ -179,7 +179,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     catch (AbsentInformationException e) {
       locationFileName = "";
     }
-    final int locationLine = Math.max(0, location.lineNumber());
+    int locationLine = DebuggerUtilsEx.getLineNumber(location, false);
     if (threadName != null) {
       return DebuggerBundle.message(
         "exception.breakpoint.console.message.with.thread.info", 

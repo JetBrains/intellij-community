@@ -60,7 +60,8 @@ public class StaticImportConstantFix extends StaticImportMemberFix<PsiField> {
     String name = element != null ? element.getReferenceName() : null;
     if (name == null) return Collections.emptyList();
     if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element) ||
-        element.getParent() instanceof PsiTypeElement) {
+        element.getParent() instanceof PsiTypeElement ||
+        element.getParent() instanceof PsiAnnotation) {
       return Collections.emptyList();
     }
     final StaticMembersProcessor<PsiField> processor = new StaticMembersProcessor<PsiField>(element) {

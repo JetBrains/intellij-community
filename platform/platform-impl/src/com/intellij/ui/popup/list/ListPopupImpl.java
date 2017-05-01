@@ -441,7 +441,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
         y += swt.getPreferredSize().height - 1;
       }
 
-      myChild.show(container, point.x + container.getWidth() - STEP_X_PADDING, y, true);
+      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
       setIndexForShowingChild(myList.getSelectedIndex());
       return false;
     }

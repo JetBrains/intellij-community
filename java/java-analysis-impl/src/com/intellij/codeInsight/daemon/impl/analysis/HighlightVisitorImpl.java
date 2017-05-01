@@ -793,6 +793,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myHolder.hasErrorResults()) return;
     myHolder.add(HighlightUtil.checkLiteralExpressionParsingError(expression, myLanguageLevel,myFile));
     if (myRefCountHolder != null && !myHolder.hasErrorResults()) registerReferencesFromInjectedFragments(expression);
+
+    if (myRefCountHolder != null && !myHolder.hasErrorResults()) {
+      for (PsiReference reference : expression.getReferences()) {
+        PsiElement resolve = reference.resolve();
+        if (resolve instanceof PsiMember) {
+          myRefCountHolder.registerReference(reference, new CandidateInfo(resolve, PsiSubstitutor.EMPTY));
+        }
+      }
+    };
   }
 
   @Override

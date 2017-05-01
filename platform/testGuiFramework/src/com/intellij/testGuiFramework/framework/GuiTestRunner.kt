@@ -16,6 +16,9 @@
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.openapi.diagnostic.Logger
+import org.junit.runner.Description
+import org.junit.runner.notification.Failure
+import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.BlockJUnit4ClassRunner
 import org.junit.runners.model.FrameworkMethod
@@ -25,9 +28,29 @@ class GuiTestRunner @Throws(InitializationError::class)
 constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
   override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
+    notifier.addListener(object: RunListener() {
+      override fun testFailure(failure: Failure?) {
+        LOG.error("Test failed: '${testClass.name}.${method.name}'")
+        notifier.removeListener(this)
+        super.testFailure(failure)
+      }
+
+      override fun testFinished(description: Description?) {
+        LOG.info("Test finished: '${testClass.name}.${method.name}'")
+        notifier.removeListener(this)
+        super.testFinished(description)
+      }
+
+      override fun testIgnored(description: Description?) {
+        LOG.info("Test ignored: '${testClass.name}.${method.name}'")
+        notifier.removeListener(this)
+        super.testIgnored(description)
+      }
+    })
+    LOG.info("Starting test: '${testClass.name}.${method.name}'")
     if (GuiTestUtil.doesIdeHaveFatalErrors()) {
       notifier.fireTestIgnored(describeChild(method))
-      LOG.error(String.format("Skipping test '%1\$s': a fatal error has occurred in the IDE", method.name))
+      LOG.error("Skipping test '${method.name}': a fatal error has occurred in the IDE" )
       notifier.pleaseStop()
     }
     else {

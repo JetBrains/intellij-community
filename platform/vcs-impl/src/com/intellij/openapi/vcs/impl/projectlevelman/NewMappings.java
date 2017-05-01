@@ -379,11 +379,7 @@ public class NewMappings {
       final List<Pair<VirtualFile, VcsDirectoryMapping>> filteredFiles;
       // todo static
       final Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor =
-        new Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile>() {
-          public VirtualFile convert(Pair<VirtualFile, VcsDirectoryMapping> o) {
-            return o.getFirst();
-          }
-        };
+        o -> o.getFirst();
       if (StringUtil.isEmptyOrSpaces(vcsName)) {
         filteredFiles = AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor);
       }

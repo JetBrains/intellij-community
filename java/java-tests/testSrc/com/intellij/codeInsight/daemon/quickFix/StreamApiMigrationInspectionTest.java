@@ -33,8 +33,8 @@ public class StreamApiMigrationInspectionTest extends LightQuickFixParameterized
   }
 
   @Override
-  protected LanguageLevel getLanguageLevel() {
-    return getTestName(false).contains("Java9") ? LanguageLevel.JDK_1_9 : LanguageLevel.JDK_1_8;
+  protected LanguageLevel getDefaultLanguageLevel() {
+    return LanguageLevel.JDK_1_8;
   }
 
   public void test() throws Exception { doAllTests(); }

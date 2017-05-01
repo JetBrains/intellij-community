@@ -19,7 +19,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.project.rootManager
 import com.intellij.util.SmartList
-import com.intellij.util.containers.computeOrNull
+import com.intellij.util.containers.computeIfAny
 import com.intellij.util.io.exists
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
@@ -133,7 +133,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
   fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
     if (result == null) {
-      result = WebServerRootsProvider.EP_NAME.extensions.computeOrNull { it.getPathInfo(child, project) }
+      result = WebServerRootsProvider.EP_NAME.extensions.computeIfAny { it.getPathInfo(child, project) }
       if (result != null) {
         virtualFileToPathInfo.put(child, result)
       }
@@ -142,7 +142,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
   }
 
   internal fun doFindByRelativePath(path: String, pathQuery: PathQuery): PathInfo? {
-    val result = WebServerRootsProvider.EP_NAME.extensions.computeOrNull { it.resolve(path, project, pathQuery) } ?: return null
+    val result = WebServerRootsProvider.EP_NAME.extensions.computeIfAny { it.resolve(path, project, pathQuery) } ?: return null
     result.file?.let {
       virtualFileToPathInfo.put(it, result)
     }

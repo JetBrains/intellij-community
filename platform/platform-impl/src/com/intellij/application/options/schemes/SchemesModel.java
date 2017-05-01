@@ -54,6 +54,17 @@ public interface SchemesModel<T extends Scheme> {
   boolean isProjectScheme(@NotNull T scheme);
 
   /**
+   * Returns an indent to calculate a left margin for the scheme name in the combo box.
+   * By default, all names are aligned to the left.
+   *
+   * @param scheme The scheme to check.
+   * @return An indent that shows a nesting level for the specified scheme.
+   */
+  default int getIndent(@NotNull T scheme) {
+    return 0;
+  }
+
+  /**
    * @param scheme The scheme to check.
    * @return True if scheme's name can be edited.
    */

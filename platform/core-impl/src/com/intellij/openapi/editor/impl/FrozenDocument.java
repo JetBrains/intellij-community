@@ -198,41 +198,13 @@ public class FrozenDocument implements DocumentEx {
 
   @NotNull
   @Override
-  public RangeMarker createRangeMarker(int startOffset, int endOffset) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
   public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void setReadOnly(boolean isReadOnly) {
     throw new UnsupportedOperationException();
   }
 
   @NotNull
   @Override
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public void removeGuardedBlock(@NotNull RangeMarker block) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Nullable
-  @Override
-  public RangeMarker getOffsetGuard(int offset) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Nullable
-  @Override
-  public RangeMarker getRangeGuard(int start, int end) {
     throw new UnsupportedOperationException();
   }
 
@@ -248,12 +220,6 @@ public class FrozenDocument implements DocumentEx {
 
   @Override
   public void setText(@NotNull CharSequence text) {
-    throw new UnsupportedOperationException();
-  }
-
-  @NotNull
-  @Override
-  public RangeMarker createRangeMarker(@NotNull TextRange textRange) {
     throw new UnsupportedOperationException();
   }
 

@@ -35,7 +35,7 @@ import java.io.StringReader;
 public abstract class AbstractSyntaxAwareReaderTransferableData extends Reader implements RawTextWithMarkup
 {
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractSyntaxAwareReaderTransferableData.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareReaderTransferableData.class);
 
   protected String myRawText;
   @NotNull

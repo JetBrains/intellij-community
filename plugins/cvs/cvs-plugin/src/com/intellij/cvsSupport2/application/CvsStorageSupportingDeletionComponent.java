@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent implements CommandListener {
-  private static final Logger LOG = Logger.getInstance("#" + CvsStorageSupportingDeletionComponent.class.getName());
+  private static final Logger LOG = Logger.getInstance(CvsStorageSupportingDeletionComponent.class);
   private Project myProject;
 
   private DeletedCVSDirectoryStorage myDeletedStorage;

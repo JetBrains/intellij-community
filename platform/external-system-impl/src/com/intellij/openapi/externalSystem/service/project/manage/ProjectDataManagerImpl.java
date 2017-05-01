@@ -53,7 +53,7 @@ import static com.intellij.util.containers.ContainerUtil.map2Array;
  */
 public class ProjectDataManagerImpl implements ProjectDataManager {
 
-  private static final Logger LOG = Logger.getInstance("#" + ProjectDataManagerImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(ProjectDataManagerImpl.class);
   private static final com.intellij.openapi.util.Key<Boolean> DATA_READY =
     com.intellij.openapi.util.Key.create("externalSystem.data.ready");
 

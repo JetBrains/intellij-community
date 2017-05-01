@@ -86,6 +86,7 @@ public class SingleClassesTest {
   @Test public void testJava9StringConcat() { doTest("java9/TestJava9StringConcat"); }
   @Test public void testMethodReferenceSameName() { doTest("pkg/TestMethodReferenceSameName"); }
   @Test public void testMethodReferenceLetterClass() { doTest("pkg/TestMethodReferenceLetterClass"); }
+  @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
   @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
@@ -102,6 +103,22 @@ public class SingleClassesTest {
   @Test public void testAccessReplace() { doTest("pkg/TestAccessReplace"); }
   @Test public void testStringLiterals() { doTest("pkg/TestStringLiterals"); }
   @Test public void testPrimitives() { doTest("pkg/TestPrimitives"); }
+  @Test public void testClashName() { doTest("pkg/TestClashName", "pkg/SharedName1",
+          "pkg/SharedName2", "pkg/SharedName3", "pkg/SharedName4", "pkg/NonSharedName",
+          "pkg/TestClashNameParent", "ext/TestClashNameParent","pkg/TestClashNameIface", "ext/TestClashNameIface"); }
+  @Test public void testSwitchOnEnum() { doTest("pkg/TestSwitchOnEnum");}
+  @Test public void testVarArgCalls() { doTest("pkg/TestVarArgCalls"); }
+  @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
+  @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
+  @Test public void testConstType() { doTest("pkg/TestConstType"); }
+
+  // TODO: fix all below
+  //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
+  //@Test public void testSwitchOnStrings() { doTest("pkg/TestSwitchOnStrings");}
+  //@Test public void testUnionType() { doTest("pkg/TestUnionType"); }
+  //@Test public void testInnerClassConstructor2() { doTest("pkg/TestInner2"); }
+  //@Test public void testInUse() { doTest("pkg/TestInUse"); }
+  //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();

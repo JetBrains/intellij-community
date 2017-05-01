@@ -508,6 +508,7 @@ public class PropertyUtil {
     return suggestPropertyName(field, field.getName());
   }
 
+  @NotNull
   public static String suggestPropertyName(@NotNull PsiField field, @NotNull String fieldName) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(field.getProject());
     VariableKind kind = codeStyleManager.getVariableKind(field);

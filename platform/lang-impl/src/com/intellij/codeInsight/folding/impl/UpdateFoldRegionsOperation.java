@@ -44,8 +44,8 @@ import java.util.*;
  */
 class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
-  
-  private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
+
+  private static final Logger LOG = Logger.getInstance(UpdateFoldRegionsOperation.class);
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed"); 
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   

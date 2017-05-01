@@ -76,6 +76,16 @@
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
+    <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
+
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedParameterized" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.valid.parameterized.configuration.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="JUnit5MalformedRepeated" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.malformed.repeated.test.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
   </extensions>
 
   <extensionPoints>

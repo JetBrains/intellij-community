@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.changeSignature.inCallers;
 
+import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
@@ -27,7 +28,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -93,17 +93,9 @@ public class JavaMethodNode extends MethodNodeBase<PsiMethod> {
     renderer.append(buffer.toString(), attributes);
 
     if (containingClass != null) {
-      final String packageName = getPackageName(containingClass);
+
+      final String packageName = JavaHierarchyUtil.getPackageName(containingClass);
       renderer.append("  (" + packageName + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_ITALIC, JBColor.GRAY));
     }
-  }
-
-  @Nullable
-  private static String getPackageName(final PsiClass aClass) {
-    final PsiFile file = aClass.getContainingFile();
-    if (file instanceof PsiJavaFile) {
-      return ((PsiJavaFile)file).getPackageName();
-    }
-    return null;
   }
 }

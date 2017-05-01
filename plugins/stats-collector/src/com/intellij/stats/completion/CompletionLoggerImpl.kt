@@ -9,7 +9,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.stats.completion.events.*
+import com.intellij.stats.events.completion.*
 import java.util.*
 
 
@@ -200,16 +200,4 @@ class CompletionFileLogger(private val installationUID: String,
         logEvent(event)
     }
 
-}
-
-enum class Action {
-    COMPLETION_STARTED,
-    TYPE,
-    BACKSPACE,
-    UP,
-    DOWN,
-    COMPLETION_CANCELED,
-    EXPLICIT_SELECT,
-    TYPED_SELECT,
-    CUSTOM
 }

@@ -231,7 +231,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
         s += "; still uncommitted";
       }
 
-      Set<Document> uncommitted = project == null || project.isDisposed() ? Collections.<Document>emptySet() :
+      Set<Document> uncommitted = project == null || project.isDisposed() ? Collections.emptySet() :
                                   ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).myUncommittedDocuments;
       if (!uncommitted.isEmpty()) {
         s+= "; uncommitted: "+uncommitted;

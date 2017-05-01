@@ -90,8 +90,7 @@ public class InferenceVariable extends LightTypeParameter {
   }
 
   public boolean addBound(PsiType classType, InferenceBound inferenceBound, @Nullable InferenceIncorporationPhase incorporationPhase) {
-    if (inferenceBound == InferenceBound.EQ &&
-        PsiUtil.resolveClassInClassTypeOnly(classType) == this) {
+    if (PsiUtil.resolveClassInClassTypeOnly(classType) == this) {
       return false;
     }
     List<PsiType> bounds = myBounds.get(inferenceBound);
@@ -116,12 +115,12 @@ public class InferenceVariable extends LightTypeParameter {
 
   public List<PsiType> getBounds(InferenceBound inferenceBound) {
     final List<PsiType> bounds = myBounds.get(inferenceBound);
-    return bounds != null ? new ArrayList<>(bounds) : Collections.<PsiType>emptyList();
+    return bounds != null ? new ArrayList<>(bounds) : Collections.emptyList();
   }
 
   public List<PsiType> getReadOnlyBounds(InferenceBound inferenceBound) {
     final List<PsiType> bounds = myBounds.get(inferenceBound);
-    return bounds != null ? bounds : Collections.<PsiType>emptyList();
+    return bounds != null ? bounds : Collections.emptyList();
   }
 
   public Set<InferenceVariable> getDependencies(InferenceSession session) {

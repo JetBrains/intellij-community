@@ -41,7 +41,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
@@ -231,12 +230,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     TreeUtil.installActions(tree);
 
-    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath o) {
-        return o.getLastPathComponent().toString();
-      }
-    }, true);
+    new TreeSpeedSearch(tree, o -> o.getLastPathComponent().toString(), true);
 
     DefaultActionGroup group = new DefaultActionGroup();
     CommonActionsManager commonActionManager = CommonActionsManager.getInstance();

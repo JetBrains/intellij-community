@@ -61,12 +61,12 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   boolean isBorderNeeded(JComponent c) {
-    return !c.isOpaque() && myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0;
+    return !isOpaque(c) && myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0;
   }
 
   @Override
   boolean isTrackClickable() {
-    return myScrollBar.isOpaque() || (myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0);
+    return isOpaque(myScrollBar) || (myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0);
   }
 
   @Override
@@ -77,7 +77,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void onTrackHover(boolean hover) {
     myTrackHovered = hover;
-    if (myScrollBar != null && myScrollBar.isOpaque()) {
+    if (myScrollBar != null && isOpaque(myScrollBar)) {
       myTrackAnimator.start(hover);
       myThumbAnimator.start(hover);
     }
@@ -100,7 +100,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    if (c.isOpaque()) {
+    if (isOpaque(c)) {
       RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.Mac.DARCULA : ScrollPainter.Thumb.Mac.DEFAULT;
       paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
     }
@@ -112,7 +112,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   void onThumbMove() {
-    if (myScrollBar != null && myScrollBar.isShowing() && !myScrollBar.isOpaque()) {
+    if (myScrollBar != null && myScrollBar.isShowing() && !isOpaque(myScrollBar)) {
       if (!myTrackHovered && myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
       myThumbAnimator.rewind(true);
       myAlarm.cancelAllRequests();

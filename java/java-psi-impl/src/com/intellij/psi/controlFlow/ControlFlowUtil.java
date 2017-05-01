@@ -1689,7 +1689,7 @@ public class ControlFlowUtil {
     }
 
     public CopyOnWriteList() {
-      this(Collections.<VariableInfo>emptyList());
+      this(Collections.emptyList());
     }
 
     public CopyOnWriteList(VariableInfo... infos) {

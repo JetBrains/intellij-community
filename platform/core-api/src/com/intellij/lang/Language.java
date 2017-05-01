@@ -93,7 +93,7 @@ public abstract class Language extends UserDataHolderBase {
       }
       List<Language> languagesByMimeType = ourRegisteredMimeTypes.get(mimeType);
       if (languagesByMimeType == null) {
-        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.<Language>createConcurrentList());
+        languagesByMimeType = ConcurrencyUtil.cacheOrGet(ourRegisteredMimeTypes, mimeType, ContainerUtil.createConcurrentList());
       }
       languagesByMimeType.add(this);
     }
@@ -128,7 +128,7 @@ public abstract class Language extends UserDataHolderBase {
   @NotNull
   public static Collection<Language> findInstancesByMimeType(@Nullable String mimeType) {
     List<Language> result = mimeType == null ? null : ourRegisteredMimeTypes.get(mimeType);
-    return result == null ? Collections.<Language>emptyList() : Collections.unmodifiableCollection(result);
+    return result == null ? Collections.emptyList() : Collections.unmodifiableCollection(result);
   }
 
   @Override

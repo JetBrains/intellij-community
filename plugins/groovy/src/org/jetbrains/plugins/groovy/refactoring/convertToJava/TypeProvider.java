@@ -18,10 +18,8 @@ package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntArrayList;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -137,26 +135,20 @@ public class TypeProvider {
           final GrClosureSignatureUtil.ArgInfo<PsiElement>[] argInfos = GrClosureSignatureUtil.mapParametersToArguments(signature, call);
 
           if (argInfos == null) return true;
-          paramInds.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int i) {
-              PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
-              types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
-              return true;
-            }
+          paramInds.forEach(i -> {
+            PsiType type = GrClosureSignatureUtil.getTypeByArg(argInfos[i], manager, resolveScope);
+            types[i] = TypesUtil.getLeastUpperBoundNullable(type, types[i], manager);
+            return true;
           });
         }
         return true;
       });
     }
-    paramInds.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int i) {
-        if (types[i] == null || types[i] == PsiType.NULL) {
-          types[i] = parameters[i].getType();
-        }
-        return true;
+    paramInds.forEach(i -> {
+      if (types[i] == null || types[i] == PsiType.NULL) {
+        types[i] = parameters[i].getType();
       }
+      return true;
     });
     inferredTypes.put(method, types);
     return types;

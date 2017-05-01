@@ -71,7 +71,8 @@ import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
 import javax.swing.text.*;
-import javax.swing.text.html.*;
+import javax.swing.text.html.HTML;
+import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.ParagraphView;
 import java.awt.*;
 import java.awt.event.*;
@@ -139,12 +140,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      final Runnable runnable = new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          showNotification(notification, project);
-        }
-      };
+      final Runnable runnable = (DumbAwareRunnable)() -> showNotification(notification, project);
       if (project == null) {
         UIUtil.invokeLaterIfNeeded(runnable);
       }

@@ -192,21 +192,14 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
               final FilePath pathBeforeRename = patchContext.getPathBeforeRename(file);
               final String relativePath = patch.getAfterName() == null ? patch.getBeforeName() : patch.getAfterName();
 
-              final Getter<CharSequence> baseContentGetter = new Getter<CharSequence>() {
-                @Override
-                public CharSequence get() {
-                  BaseRevisionTextPatchEP baseRevisionTextPatchEP =
-                    Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
-                  return baseRevisionTextPatchEP.provideContent(relativePath, commitContext);
-                }
+              final Getter<CharSequence> baseContentGetter = () -> {
+                BaseRevisionTextPatchEP baseRevisionTextPatchEP =
+                  Extensions.findExtension(PatchEP.EP_NAME, project, BaseRevisionTextPatchEP.class);
+                return baseRevisionTextPatchEP.provideContent(relativePath, commitContext);
               };
 
-              Getter<ApplyPatchForBaseRevisionTexts> getter = new Getter<ApplyPatchForBaseRevisionTexts>() {
-                @Override
-                public ApplyPatchForBaseRevisionTexts get() {
-                  return ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch, baseContentGetter);
-                }
-              };
+              Getter<ApplyPatchForBaseRevisionTexts> getter =
+                () -> ApplyPatchForBaseRevisionTexts.create(project, file, pathBeforeRename, patch, baseContentGetter);
 
               return PatchDiffRequestFactory.createConflictDiffRequest(project, file, patch, "Shelved Version", getter, getName(), context, indicator);
             }

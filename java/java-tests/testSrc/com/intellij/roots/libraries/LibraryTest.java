@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
@@ -50,8 +49,7 @@ import static com.intellij.testFramework.assertions.Assertions.assertThat;
 public class LibraryTest extends ModuleRootManagerTestCase {
   public void testModification() throws Exception {
     final LibraryTable libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-    final Library library = ApplicationManager.getApplication().runWriteAction(
-      (Computable<Library>)() -> libraryTable.createLibrary("NewLibrary"));
+    final Library library = WriteAction.compute(() -> libraryTable.createLibrary("NewLibrary"));
     final boolean[] listenerNotifiedOnChange = new boolean[1];
     library.getRootProvider().addRootSetChangedListener(wrapper -> listenerNotifiedOnChange[0] = true);
     final Library.ModifiableModel model1 = library.getModifiableModel();
@@ -202,7 +200,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   public void testJarDirectoriesSerialization() {
     LibraryTable table = getLibraryTable();
-    Library library = ApplicationManager.getApplication().runWriteAction((Computable<Library>)() -> table.createLibrary("jarDirs"));
+    Library library = WriteAction.compute(() -> table.createLibrary("jarDirs"));
     Library.ModifiableModel model = library.getModifiableModel();
     model.addJarDirectory("file://jar-dir", false, OrderRootType.CLASSES);
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);

@@ -57,24 +57,21 @@ public class VcsDirtyScopeVfsListener implements BulkFileListener, Disposable {
 
     myLock = new Object();
     myQueue = new ArrayList<>();
-    myDirtReporter = new Runnable() {
-      @Override
-      public void run() {
-        ArrayList<FilesAndDirs> list;
-        synchronized (myLock) {
-          list = new ArrayList<>(myQueue);
-          myQueue.clear();
-        }
+    myDirtReporter = () -> {
+      ArrayList<FilesAndDirs> list;
+      synchronized (myLock) {
+        list = new ArrayList<>(myQueue);
+        myQueue.clear();
+      }
 
-        HashSet<FilePath> dirtyFiles = ContainerUtil.newHashSet();
-        HashSet<FilePath> dirtyDirs = ContainerUtil.newHashSet();
-        for (FilesAndDirs filesAndDirs : list) {
-          dirtyFiles.addAll(filesAndDirs.dirtyFiles);
-          dirtyDirs.addAll(filesAndDirs.dirtyDirs);
-        }
-        if (!dirtyFiles.isEmpty() || !dirtyDirs.isEmpty()) {
-          dirtyScopeManager.filePathsDirty(dirtyFiles, dirtyDirs);
-        }
+      HashSet<FilePath> dirtyFiles = ContainerUtil.newHashSet();
+      HashSet<FilePath> dirtyDirs = ContainerUtil.newHashSet();
+      for (FilesAndDirs filesAndDirs : list) {
+        dirtyFiles.addAll(filesAndDirs.dirtyFiles);
+        dirtyDirs.addAll(filesAndDirs.dirtyDirs);
+      }
+      if (!dirtyFiles.isEmpty() || !dirtyDirs.isEmpty()) {
+        dirtyScopeManager.filePathsDirty(dirtyFiles, dirtyDirs);
       }
     };
     myZipperUpdater = new ZipperUpdater(300, Alarm.ThreadToUse.POOLED_THREAD, this);

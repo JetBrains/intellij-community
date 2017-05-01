@@ -36,7 +36,7 @@ import java.util.Arrays;
  * Date: 1/16/13
  */
 class JavaFxEventHandlerReferenceProvider extends JavaFxControllerBasedReferenceProvider {
-  private static final Logger LOG = Logger.getInstance("#" + JavaFxEventHandlerReferenceProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaFxEventHandlerReferenceProvider.class);
 
   @Override
   protected PsiReference[] getReferencesByElement(@NotNull PsiClass controllerClass,

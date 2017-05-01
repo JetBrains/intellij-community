@@ -17,13 +17,16 @@ package com.intellij.psi.impl.java.stubs.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaParserFacade;
 import com.intellij.psi.impl.PsiElementFactoryImpl;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.source.CharTableImpl;
+import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.reference.SoftReference;
@@ -71,9 +74,24 @@ public class PsiAnnotationStubImpl extends StubBase<PsiAnnotation> implements Ps
       return annotation;
     }
     catch (IncorrectOperationException e) {
-      LOG.error("Bad annotation in repository!", e);
+      LOG.error("Bad annotation in " + fileName(), e);
       return null;
     }
+  }
+
+  private String fileName() {
+    StubElement<?> stub = this;
+    while ((stub = stub.getParentStub()) != null) {
+      if (stub instanceof PsiFileStub) {
+        Object psi = stub.getPsi();
+        if (psi instanceof PsiFile) {
+          VirtualFile file = ((PsiFile)psi).getVirtualFile();
+          return file != null ? file.getUrl() : ((PsiFile)psi).getName();
+        }
+      }
+    }
+
+    return "<unknown file>";
   }
 
   @Override

@@ -237,6 +237,11 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   }
 
   @Override
+  public Library createLibrary(String name, @Nullable ProjectModelExternalSource externalSource) {
+    return getModifiableProjectLibrariesModel().createLibrary(name, null, externalSource);
+  }
+
+  @Override
   public void removeLibrary(Library library) {
     getModifiableProjectLibrariesModel().removeLibrary(library);
   }

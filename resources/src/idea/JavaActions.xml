@@ -58,10 +58,7 @@
     </group>
 
     <group id="RefactoringMenu1">
-      <action id="ChangeTypeSignature"
-              class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"
-              text="T_ype Migration..."
-              description="Change type of the return type of the method, field, parameter, variable or class type arguments and correct all references"/>
+      <action id="ChangeTypeSignature" class="com.intellij.refactoring.typeMigration.actions.ChangeTypeSignatureAction"/>
       <action id="MakeStatic" class="com.intellij.refactoring.actions.MakeStaticAction"/>
       <action id="ConvertToInstanceMethod" class="com.intellij.refactoring.actions.ConvertToInstanceMethodAction"/>
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>

@@ -718,7 +718,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    myTreeUpdater.submit(() -> ReadAction.run(() -> {
+    myTreeUpdater.submit((Runnable)() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (myTreeStructureUpdateLock) {

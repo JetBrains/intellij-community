@@ -246,7 +246,7 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
     }
   }
 
-  private void killDebugProcess() {
+  protected void killDebugProcess() {
     if (myDebugProcess.getProcessHandler() instanceof KillableColoredProcessHandler) {
       KillableColoredProcessHandler h = (KillableColoredProcessHandler)myDebugProcess.getProcessHandler();
 

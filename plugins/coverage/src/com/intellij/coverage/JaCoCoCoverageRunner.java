@@ -31,7 +31,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 public class JaCoCoCoverageRunner extends JavaCoverageRunner {
-  private static final Logger LOG = Logger.getInstance("#" + JaCoCoCoverageRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
 
   @Override
   public ProjectData loadCoverageData(@NotNull File sessionDataFile, @Nullable CoverageSuite baseCoverageSuite) {

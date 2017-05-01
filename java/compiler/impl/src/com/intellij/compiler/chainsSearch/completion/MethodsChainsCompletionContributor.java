@@ -25,7 +25,7 @@ import com.intellij.compiler.chainsSearch.ChainsSearcher;
 import com.intellij.compiler.chainsSearch.MethodsChain;
 import com.intellij.compiler.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.chainsSearch.context.TargetType;
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
@@ -34,11 +34,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PsiJavaPatterns.or;
@@ -65,21 +68,27 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
           if (!Registry.is(REGISTRY_KEY)) return;
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
-          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
+          final Set<PsiMethod> alreadySuggested = new THashSet<>();
           if (!IS_UNIT_TEST_MODE) {
             result.runRemainingContributors(parameters, completionResult -> {
               LookupElement lookupElement = completionResult.getLookupElement();
-              PsiElement lookupElementPsi = lookupElement.getPsiElement();
-              if (lookupElementPsi != null) {
-                for (LookupElement element : elementsFoundByMethodsChainsSearch) {
-                  if (lookupElementPsi.isEquivalentTo(element.getPsiElement())) {
-                    elementsFoundByMethodsChainsSearch.remove(element);
-                    break;
-                  }
-                }
+              PsiElement psi = lookupElement.getPsiElement();
+              if (psi instanceof PsiMethod) {
+                alreadySuggested.add((PsiMethod)psi);
               }
               result.passResult(completionResult);
             });
+          }
+          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
+          if (!IS_UNIT_TEST_MODE) {
+            Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
+            while (it.hasNext()) {
+              LookupElement lookupElement = it.next();
+              PsiElement psi = lookupElement.getPsiElement();
+              if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
+                it.remove();
+              }
+            }
           } else {
             result.stopHere();
           }
@@ -94,7 +103,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
     CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
-    TargetType target = context.getTarget();
+    ChainSearchTarget target = context.getTarget();
     List<MethodsChain> searchResult =
       ChainsSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
                             target,
@@ -145,8 +154,9 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   @Nullable
   private static ChainCompletionContext extractContextFromAssignment(PsiAssignmentExpression assignmentExpression,
                                                                      CompletionParameters parameters) {
-    if (!(assignmentExpression instanceof PsiReferenceExpression)) return null;
-    PsiElement resolved = ((PsiReferenceExpression)assignmentExpression).resolve();
+    PsiExpression lExpr = assignmentExpression.getLExpression();
+    if (!(lExpr instanceof PsiReferenceExpression)) return null;
+    PsiElement resolved = ((PsiReferenceExpression)lExpr).resolve();
     return resolved instanceof PsiVariable
            ? ChainCompletionContext.createContext(((PsiVariable)resolved).getType(), assignmentExpression, suggestIterators(parameters))
            : null;

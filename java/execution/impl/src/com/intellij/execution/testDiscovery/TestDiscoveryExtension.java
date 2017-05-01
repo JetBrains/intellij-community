@@ -51,7 +51,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TestDiscoveryExtension extends RunConfigurationExtension {
-  private static final Logger LOG = Logger.getInstance("#" + TestDiscoveryExtension.class.getName());
+  private static final Logger LOG = Logger.getInstance(TestDiscoveryExtension.class);
 
   @NotNull
   @Override

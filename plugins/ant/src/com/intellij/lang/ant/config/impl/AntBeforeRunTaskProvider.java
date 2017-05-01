@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
     return false;
   }
 
-  public AntBeforeRunTask createTask(RunConfiguration runConfiguration) {
+  public AntBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new AntBeforeRunTask();
   }
 

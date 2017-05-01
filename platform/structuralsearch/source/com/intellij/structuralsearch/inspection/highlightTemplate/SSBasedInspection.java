@@ -60,7 +60,7 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
+    ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.emptyList());
   }
 
   @Override

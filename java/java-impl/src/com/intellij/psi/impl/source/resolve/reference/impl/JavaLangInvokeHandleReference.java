@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -141,9 +142,9 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
       .map(MethodSignatureBackedByPsiMethod::getMethod)
       .filter(filter)
       .sorted(Comparator.comparingInt((PsiMethod method) -> getMethodSortOrder(method)).thenComparing(PsiMethod::getName))
-      .map(method -> withPriority(JavaLookupElementBuilder.forMethod(method, PsiSubstitutor.EMPTY)
-                                    .withInsertHandler(this),
+      .map(method -> withPriority(lookupMethod(method, this),
                                   -getMethodSortOrder(method)))
+      .filter(Objects::nonNull)
       .toArray();
   }
 
@@ -179,12 +180,9 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
   public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
     final Object object = item.getObject();
 
-    if (object instanceof PsiMethod) {
-      final ReflectiveSignature signature = getMethodSignature((PsiMethod)object);
-      if (signature != null) {
-        final String text = ", " + getMethodTypeExpressionText(signature);
-        replaceText(context, text);
-      }
+    if (object instanceof ReflectiveSignature) {
+      final String text = ", " + getMethodTypeExpressionText((ReflectiveSignature)object);
+      replaceText(context, text);
     }
     else if (object instanceof PsiField) {
       final PsiField field = (PsiField)object;

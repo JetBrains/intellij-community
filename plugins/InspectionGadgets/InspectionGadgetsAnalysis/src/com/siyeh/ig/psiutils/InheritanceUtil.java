@@ -81,8 +81,12 @@ public class InheritanceUtil {
   public static boolean hasImplementation(@NotNull PsiClass aClass) {
     final SearchScope scope = GlobalSearchScope.projectScope(aClass.getProject());
     if (aClass.isInterface() && FunctionalExpressionSearch.search(aClass, scope).findFirst() != null) return true;
-    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.EP_NAME.getExtensions()) {
-      if (provider.providesSubclassFor(aClass)) {
+    for (ImplicitSubclassProvider provider : ImplicitSubclassProvider.Companion.getEP_NAME().getExtensions()) {
+      if (!provider.isApplicableTo(aClass)) {
+        continue;
+      }
+      ImplicitSubclassProvider.SubclassingInfo info = provider.getSubclassingInfo(aClass);
+      if (info != null && !info.isAbstract()) {
         return true;
       }
     }

@@ -15,10 +15,9 @@
  */
 package com.intellij.refactoring.introduceVariable;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -67,8 +66,8 @@ public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
   protected PsiVariable createFieldToStartTemplateOn(String[] names, PsiType psiType) {
     PsiVariable variable = introduceVariable();
     if (variable instanceof PsiLocalVariable) {
-      PsiLambdaExpression lambda = ApplicationManager.getApplication().runWriteAction(
-        (Computable<PsiLambdaExpression>)() -> ChainCallExtractor.extractMappingStep(myProject, (PsiLocalVariable)variable));
+      PsiLambdaExpression lambda = WriteAction
+        .compute(() -> ChainCallExtractor.extractMappingStep(myProject, (PsiLocalVariable)variable));
       if (lambda != null) {
         PsiParameter parameter = Objects.requireNonNull(ArrayUtil.getFirstElement(lambda.getParameterList().getParameters()));
         myParameter = parameter;

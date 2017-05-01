@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -136,10 +137,12 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
     }
     if (targetCaretPosition == -1) targetCaretPosition = offset;
     caret.moveToLogicalPosition(editor.offsetToLogicalPosition(targetCaretPosition).leanForward(true));
+    exprList.putUserData(JavaMethodCallElement.COMPLETION_HINTS, addedHints);
     Disposer.register(controller, () -> {
       for (Inlay hint : addedHints) {
         if (hint != null) ParameterHintsPresentationManager.getInstance().unpin(hint);
       }
+      addedHints.clear();
     });
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
