@@ -106,6 +106,44 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
 
+  /**
+   * See https://github.com/JetBrains/teamcity-messages/issues/131
+   */
+  @Test
+  public void testTestNameBeforeTestStarted() throws Exception {
+    runPythonTest(
+      new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/testNameBeforeTestStarted", SdkCreationType.EMPTY_SDK) {
+
+        @NotNull
+        @Override
+        protected PyTestTestProcessRunner createProcessRunner() throws Exception {
+          return new PyTestTestProcessRunner("test_test.py", 0);
+        }
+
+        @Override
+        protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                        @NotNull final String stdout,
+                                        @NotNull final String stderr,
+                                        @NotNull final String all) {
+          Assert.assertEquals("Test name before message broke output",
+                              "Test tree:\n" +
+                              "[root]\n" +
+                              ".test_test\n" +
+                              "..SampleTest1\n" +
+                              "...test_sample_1(+)\n" +
+                              "...test_sample_2(+)\n" +
+                              "...test_sample_3(+)\n" +
+                              "...test_sample_4(+)\n" +
+                              "..SampleTest2\n" +
+                              "...test_sample_5(+)\n" +
+                              "...test_sample_6(+)\n" +
+                              "...test_sample_7(+)\n" +
+                              "...test_sample_8(+)\n", runner.getFormattedTestTree());
+        }
+      });
+  }
+
+
   // Ensure test survives patched strftime
   @Test
   public void testMonkeyPatch() throws Exception {
