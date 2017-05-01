@@ -346,9 +346,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         urlSchemes = ["idea"]
         associateIpr = true
         enableYourkitAgentInEAP = false
-// TODO: In EAP include suffix to have separate icons!
-        bundleIdentifier = "com.jetbrains.intellij.ce"
+        bundleIdentifier = "com.google.android.studio"
         dmgImagePath = "$projectHome/build/conf/mac/communitydmg.png"
+        // For now we have all 3 platform icons checked in and we change
+        // the icons manually. Fix this when the other platforms have the
+        // same mechanisms for our .ico and .svg files
+        icnsPath = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
         icnsPathForEAP = "$projectHome/../adt/idea/adt-branding/src/artwork/AndroidStudio.icns"
       }
 

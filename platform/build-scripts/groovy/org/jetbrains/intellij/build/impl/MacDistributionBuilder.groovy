@@ -132,7 +132,8 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     //todo[nik] improve
     String minor = buildContext.applicationInfo.minorVersion
-    boolean isNotRelease = buildContext.applicationInfo.isEAP && !minor.contains("RC") && !minor.contains("Beta")
+    // Android Studio: We're including Betas too in the EAP packaging; only RC's switch to release mode
+    boolean isNotRelease = buildContext.applicationInfo.isEAP && !minor.contains("RC")
     String version = isNotRelease ? "EAP $buildContext.fullBuildNumber" : "${buildContext.applicationInfo.majorVersion}.${minor}"
     String EAP = isNotRelease ? "-EAP" : ""
 

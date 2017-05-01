@@ -31,7 +31,7 @@
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>@@bundle_name@@@@product_state@@</string>
+    <string>@@bundle_name@@</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleIdentifier</key>
