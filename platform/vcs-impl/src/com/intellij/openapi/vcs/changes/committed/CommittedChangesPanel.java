@@ -104,6 +104,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
     myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
+    // FIXME: take mnemonic from VcsBundle too ???
+    myRegexCheckbox.setMnemonic('g');		// same as in Editor > Find toolbar
     myRegexCheckbox.setSelected(false);
     myRegexCheckbox.getModel().addItemListener(new ItemListener() {
       @Override
