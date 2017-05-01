@@ -9,8 +9,8 @@ public class TestVarArgCalls {
       this.printComplex("Test: %[0]s", new String[]{"abc"});// 10
       this.printComplex("Test: %[0]s - %[0]s", new String[]{"abc"}, new String[]{"DEF"});// 11
       String.format("Test");// 13
-      String.format("Test: %d", Integer.valueOf(123));// 14
-      String.format("Test: %d - %s", Integer.valueOf(123), "DEF");// 15
+      String.format("Test: %d", 123);// 14
+      String.format("Test: %d - %s", 123, "DEF");// 15
       Object[] data = new Object[]{"Hello"};// 17
       String.format("Test: %s", (Object)data);// 18
       String.format("Test: %s", (Object[])data);// 19

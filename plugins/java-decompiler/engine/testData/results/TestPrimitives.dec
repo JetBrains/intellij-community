@@ -10,7 +10,7 @@ public class TestPrimitives {
       this.printFloat(1.23F);// 11
       this.printDouble(1.23D);// 12
       this.printChar('Z');// 13
-      String.format("%b, %d, %d, %d, %c", new Object[]{true, 1, 213, 40000, 'c', 42L});// 15
+      String.format("%b, %d, %d, %d, %c", true, 1, 213, 40000, 'c', 42L);// 15
       System.out.println(String.format("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt()));// 16
    }// 17
 
@@ -63,9 +63,9 @@ public class TestPrimitives {
    }
 
    public void printNarrowed() {
-      this.printByte((byte)this.getInt());// 68
-      this.printShort((short)this.getInt());// 69
-   }// 70
+      this.printByte((byte)this.getInt());// 69
+      this.printShort((short)this.getInt());// 70
+   }// 71
 
    public void constructor() {
       new Byte((byte)1);// 73
@@ -239,8 +239,8 @@ class 'pkg/TestPrimitives' {
    }
 
    method 'constructor ()V' {
-      4      69
-      9      70
+      4      70
+      9      71
    }
 
    method 'compare (C)Z' {
@@ -320,7 +320,7 @@ Lines mapping:
 65 <-> 62
 69 <-> 66
 70 <-> 67
-73 <-> 70
+71 <-> 68
 74 <-> 71
 77 <-> 74
 78 <-> 75

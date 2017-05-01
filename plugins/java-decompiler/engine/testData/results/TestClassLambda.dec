@@ -15,7 +15,7 @@ public class TestClassLambda {
    public int field = 0;
 
    public void testLambda() {
-      List var1 = Arrays.asList(new Integer[]{1, 2, 3, 4, 5, 6, 7});// 29
+      List var1 = Arrays.asList(1, 2, 3, 4, 5, 6, 7);// 29
       int var2 = (int)Math.random();// 30
       var1.forEach((var2x) -> {// 32
          int var3 = 2 * var2x.intValue();// 33
