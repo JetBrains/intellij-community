@@ -51,8 +51,8 @@ public class PausesStat {
 
   public void started() {
     assertEdt();
-    startTimeStamp = System.currentTimeMillis();
     assert !started;
+    startTimeStamp = System.currentTimeMillis();
     started = true;
   }
 
@@ -70,6 +70,7 @@ public class PausesStat {
     if (duration < 0) throw new IllegalStateException("startTimeStamp: " + startTimeStamp + "; finishStamp: " + finishStamp+"; duration: "+duration);
 
     started = false;
+    this.startTimeStamp = 0;
     duration = Math.min(duration, Short.MAX_VALUE);
     if (duration > maxDuration) {
       maxDuration = duration;

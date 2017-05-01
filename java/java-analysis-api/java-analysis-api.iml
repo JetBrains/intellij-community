@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="java-psi-api" />
     <orderEntry type="module" module-name="projectModel-api" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="module" module-name="uast-common" exported="" />
   </component>
 </module>

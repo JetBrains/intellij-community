@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,6 +85,10 @@ public class MemoryViewManager implements ApplicationComponent, PersistentStateC
 
   public boolean isNeedShowTrackedOnly() {
     return myState.isShowTrackedOnly;
+  }
+
+  public boolean isEnabled() {
+    return Registry.get("debugger.enable.memory.view").asBoolean();
   }
 
   public void addMemoryViewManagerListener(MemoryViewManagerListener listener, @NotNull Disposable parentDisposable) {

@@ -61,11 +61,8 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
         final FilePath newFilePath = detectNewFilePathForMovedOrModified();
         myNewContentRevision = new LazyPatchContentRevision(myCurrentBase, newFilePath, myPatch.getAfterVersionId(), myPatch);
         if (myCurrentBase != null) {
-          ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-            public void run() {
-              ((LazyPatchContentRevision)myNewContentRevision).getContent();
-            }
-          });
+          ApplicationManager.getApplication().executeOnPooledThread(
+            (Runnable)() -> ((LazyPatchContentRevision)myNewContentRevision).getContent());
         }
       }
     }
@@ -78,12 +75,7 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
     final PatchChange change = getChange();
     final FilePatch patch = getPatch();
     final String path = patch.getBeforeName() == null ? patch.getAfterName() : patch.getBeforeName();
-    final Getter<CharSequence> baseContentGetter = new Getter<CharSequence>() {
-      @Override
-      public CharSequence get() {
-        return patchReader.getBaseRevision(project, path);
-      }
-    };
+    final Getter<CharSequence> baseContentGetter = () -> patchReader.getBaseRevision(project, path);
     return new DiffRequestProducer() {
       @NotNull
       @Override
@@ -96,12 +88,8 @@ public class TextFilePatchInProgress extends AbstractFilePatchInProgress<TextFil
         if (isConflictingChange()) {
           final VirtualFile file = getCurrentBase();
 
-          Getter<ApplyPatchForBaseRevisionTexts> getter = new Getter<ApplyPatchForBaseRevisionTexts>() {
-            @Override
-            public ApplyPatchForBaseRevisionTexts get() {
-              return ApplyPatchForBaseRevisionTexts.create(project, file, VcsUtil.getFilePath(file), getPatch(), baseContentGetter);
-            }
-          };
+          Getter<ApplyPatchForBaseRevisionTexts> getter =
+            () -> ApplyPatchForBaseRevisionTexts.create(project, file, VcsUtil.getFilePath(file), getPatch(), baseContentGetter);
 
           String afterTitle = getPatch().getAfterVersionId();
           if (afterTitle == null) afterTitle = "Patched Version";

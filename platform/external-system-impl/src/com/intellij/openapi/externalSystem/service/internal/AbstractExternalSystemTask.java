@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class AbstractExternalSystemTask extends UserDataHolderBase implements ExternalSystemTask {
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractExternalSystemTask.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractExternalSystemTask.class);
 
   private final AtomicReference<ExternalSystemTaskState> myState =
     new AtomicReference<>(ExternalSystemTaskState.NOT_STARTED);

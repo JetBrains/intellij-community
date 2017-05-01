@@ -52,6 +52,8 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -59,7 +61,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.util.WaitForProgressToShow.*;
+import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -98,14 +100,14 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("CommittedChangesToolbar");
 
     ActionToolbar toolBar = myBrowser.createGroupFilterToolbar(project, group, extraActions,
-                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.<AnAction>emptyList());
+                                                               auxiliary != null ? auxiliary.getToolbarActions() : Collections.emptyList());
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
     myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
     myRegexCheckbox.setSelected(false);
-    myRegexCheckbox.getModel().addChangeListener(new ChangeListener() {
+    myRegexCheckbox.getModel().addItemListener(new ItemListener() {
       @Override
-      public void stateChanged(ChangeEvent e) {
+      public void itemStateChanged(ItemEvent e) {
         // no need to re-filter if the filter text is empty
         if (!myFilterComponent.getFilter().isEmpty()) {
           myFilterComponent.filter();
@@ -122,17 +124,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
       myBrowser.setTableContextMenu(group, auxiliary.getPopupActions());
     } else {
-      myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
+      myBrowser.setTableContextMenu(group, Collections.emptyList());
     }
 
     EmptyAction.registerWithShortcutSet("CommittedChanges.Refresh", CommonShortcuts.getRerun(), this);
     myBrowser.addFilter(myFilterComponent);
-    myIfNotCachedReloader = myLocation == null ? null : new Consumer<String>() {
-      @Override
-      public void consume(String s) {
-        refreshChanges(false);
-      }
-    };
+    myIfNotCachedReloader = myLocation == null ? null : s -> refreshChanges(false);
   }
 
   public RepositoryLocation getRepositoryLocation() {
@@ -193,11 +190,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         }
         catch (final VcsException e) {
           LOG.info(e);
-          runOrInvokeLaterAboveProgress(new Runnable() {
-            public void run() {
-              Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes");
-            }
-          }, null, myProject);
+          runOrInvokeLaterAboveProgress(
+            () -> Messages.showErrorDialog(myProject, "Error refreshing view: " + StringUtil.join(e.getMessages(), "\n"), "Committed Changes"), null, myProject);
         } finally {
           myInLoad = false;
           myBrowser.setLoading(false);
@@ -208,42 +202,23 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
   public void clearCaches() {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    cache.clearCaches(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            updateFilteredModel(Collections.<CommittedChangeList>emptyList(), true);
-          }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
-      }
-    });
+    cache.clearCaches(
+      () -> ApplicationManager.getApplication().invokeLater(() -> updateFilteredModel(Collections.emptyList(), true), ModalityState.NON_MODAL, myProject.getDisposed()));
   }
 
   private void refreshChangesFromCache(final boolean cacheOnly) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
-      public void consume(final Boolean notEmpty) {
-        if (! notEmpty) {
-          if (cacheOnly) {
-            myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.not.loaded.message"));
-            return;
-          }
-          if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
+    cache.hasCachesForAnyRoot(notEmpty -> {
+      if (! notEmpty) {
+        if (cacheOnly) {
+          myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.not.loaded.message"));
+          return;
         }
-        cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
-                                     new Consumer<List<CommittedChangeList>>() {
-                                       public void consume(final List<CommittedChangeList> committedChangeLists) {
-                                         updateFilteredModel(committedChangeLists, false);
-                                         }
-                                       },
-                                     new Consumer<List<VcsException>>() {
-                                       public void consume(final List<VcsException> vcsExceptions) {
-                                         AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history");
-                                       }
-                                     });
+        if (!CacheSettingsDialog.showSettingsDialog(myProject)) return;
       }
+      cache.getProjectChangesAsync(mySettings, myMaxCount, cacheOnly,
+                                   committedChangeLists -> updateFilteredModel(committedChangeLists, false),
+                                   vcsExceptions -> AbstractVcsHelper.getInstance(myProject).showErrors(vcsExceptions, "Error refreshing VCS history"));
     });
   }
 

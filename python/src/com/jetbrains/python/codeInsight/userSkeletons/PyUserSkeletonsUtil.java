@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.userSkeletons;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
@@ -144,7 +143,7 @@ public class PyUserSkeletonsUtil {
           return (PyFile)fileSkeleton;
         }
       }
-      cache.put(cacheQName, Collections.<PsiElement>emptyList());
+      cache.put(cacheQName, Collections.emptyList());
     }
     return null;
   }
@@ -198,11 +197,9 @@ public class PyUserSkeletonsUtil {
           return null;
         }
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
-        for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-          final QualifiedName restored = provider.getCanonicalPath(qName, null);
-          if (restored != null) {
-            moduleName = restored.toString();
-          }
+        final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
+        if (restored != null) {
+          moduleName = restored.toString();
         }
         final PyFile skeletonFile = getUserSkeletonForModuleQName(moduleName, file);
         file.putUserData(HAS_SKELETON, skeletonFile != null);

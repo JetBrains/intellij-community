@@ -177,12 +177,8 @@ public abstract class TaskRepository {
   @NotNull
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
     //noinspection unchecked
-    return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(), new Function<TaskState, CustomTaskState>() {
-      @Override
-      public CustomTaskState fun(TaskState state) {
-        return CustomTaskState.fromPredefined(state);
-      }
-    });
+    return ContainerUtil.map2Set(getRepositoryType().getPossibleTaskStates(),
+                                 (Function<TaskState, CustomTaskState>)state -> CustomTaskState.fromPredefined(state));
   }
 
   /**

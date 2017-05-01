@@ -61,7 +61,7 @@ class RepositoryContentHandler extends DefaultHandler {
 
   @NotNull
   public List<IdeaPluginDescriptor> getPluginsList() {
-    return plugins != null ? plugins : Collections.<IdeaPluginDescriptor>emptyList();
+    return plugins != null ? plugins : Collections.emptyList();
   }
 
   @Override

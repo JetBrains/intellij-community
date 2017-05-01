@@ -19,7 +19,6 @@ import com.intellij.history.Label;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -47,9 +46,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +68,7 @@ import java.util.List;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private VirtualFile mySelectedFile;
-  private String mySelectedUrl;
+  private FilePath mySelectedUrl;
   private final Tree myTree = new Tree();
   @NotNull private final Project myProject;
   private final UpdatedFiles myUpdatedFiles;
@@ -160,7 +159,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT));
     myCenterPanel.add(CARD_STATUS, scrollPane);
-    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myTreeBrowser = new CommittedChangesTreeBrowser(myProject, Collections.emptyList());
     Disposer.register(this, myTreeBrowser);
     myTreeBrowser.setHelpId(getHelpId());
     myCenterPanel.add(CARD_CHANGES, myTreeBrowser);
@@ -178,9 +177,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         VirtualFilePointer pointer = null;
         if (treeNode instanceof FileTreeNode) {
           pointer = ((FileTreeNode)treeNode).getFilePointer();
+          if (!pointer.isValid()) pointer = null;
         }
         if (pointer != null) {
-          mySelectedUrl = pointer.getUrl();
+          mySelectedUrl = getFilePath(pointer);
           mySelectedFile = pointer.getFile();
         }
         else {
@@ -191,14 +191,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     });
     myTree.setCellRenderer(new UpdateTreeCellRenderer());
     TreeUtil.installActions(myTree);
-    new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
-      public String convert(TreePath path) {
-        Object last = path.getLastPathComponent();
-        if (last instanceof AbstractTreeNode) {
-          return ((AbstractTreeNode)last).getText();
-        }
-        return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
+    new TreeSpeedSearch(myTree, path -> {
+      Object last = path.getLastPathComponent();
+      if (last instanceof AbstractTreeNode) {
+        return ((AbstractTreeNode)last).getText();
       }
+      return TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING.convert(path);
     }, true);
 
     myTree.addMouseListener(new PopupHandler() {
@@ -266,9 +264,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return super.getData(dataId);
   }
 
-  private class MyTreeIterator implements Iterator<Pair<VirtualFilePointer, FileStatus>> {
+  private class MyTreeIterator implements Iterator<Pair<FilePath, FileStatus>> {
     private final Enumeration myEnum;
-    private VirtualFilePointer myNext;
+    private FilePath myNext;
     private FileStatus myStatus;
 
     private MyTreeIterator() {
@@ -280,8 +278,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       return myNext != null;
     }
 
-    public Pair<VirtualFilePointer, FileStatus> next() {
-      final VirtualFilePointer result = myNext;
+    public Pair<FilePath, FileStatus> next() {
+      final FilePath result = myNext;
       final FileStatus status = myStatus;
       step();
       return Pair.create(result, status);
@@ -293,7 +291,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
         final Object o = myEnum.nextElement();
         if (o instanceof FileTreeNode) {
           final FileTreeNode treeNode = (FileTreeNode)o;
-          myNext = treeNode.getFilePointer();
+          VirtualFilePointer filePointer = treeNode.getFilePointer();
+          if (!filePointer.isValid()) continue;
+
+          myNext = getFilePath(filePointer);
           myStatus = FileStatus.MODIFIED;
 
           final GroupTreeNode parent = findParentGroupTreeNode(treeNode.getParent());
@@ -301,7 +302,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
             final String id = parent.getFileGroupId();
             if (FileGroup.CREATED_ID.equals(id)) {
               myStatus = FileStatus.ADDED;
-            } else if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(id)) {
+            }
+            else if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(id)) {
               myStatus = FileStatus.DELETED;
             }
           }
@@ -324,8 +326,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private class MyTreeIterable implements Iterable<Pair<VirtualFilePointer, FileStatus>> {
-    public Iterator<Pair<VirtualFilePointer, FileStatus>> iterator() {
+  private class MyTreeIterable implements Iterable<Pair<FilePath, FileStatus>> {
+    public Iterator<Pair<FilePath, FileStatus>> iterator() {
       return new MyTreeIterator();
     }
   }
@@ -367,25 +369,23 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   public void setChangeLists(final List<CommittedChangeList> receivedChanges) {
     final boolean hasEmptyCaches = CommittedChangesCache.getInstance(myProject).hasEmptyCaches();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myLoadingChangeListsLabel != null) {
-          remove(myLoadingChangeListsLabel);
-          myLoadingChangeListsLabel = null;
-        }
-        myCommittedChangeLists = receivedChanges;
-        myTreeBrowser.setItems(myCommittedChangeLists, CommittedChangesBrowserUseCase.UPDATE);
-        if (hasEmptyCaches) {
-          final StatusText statusText = myTreeBrowser.getEmptyText();
-          statusText.clear();
-          statusText.appendText("Click ")
-            .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
-              public void actionPerformed(final ActionEvent e) {
-                RefreshIncomingChangesAction.doRefresh(myProject);
-              }
-            })
-            .appendText(" to initialize repository changes cache");
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myLoadingChangeListsLabel != null) {
+        remove(myLoadingChangeListsLabel);
+        myLoadingChangeListsLabel = null;
+      }
+      myCommittedChangeLists = receivedChanges;
+      myTreeBrowser.setItems(myCommittedChangeLists, CommittedChangesBrowserUseCase.UPDATE);
+      if (hasEmptyCaches) {
+        final StatusText statusText = myTreeBrowser.getEmptyText();
+        statusText.clear();
+        statusText.appendText("Click ")
+          .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+              RefreshIncomingChangesAction.doRefresh(myProject);
+            }
+          })
+          .appendText(" to initialize repository changes cache");
       }
     }, myProject.getDisposed());
   }
@@ -485,5 +485,10 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList && VcsConfiguration.getInstance(myProject).UPDATE_FILTER_SCOPE_NAME != null);
     }
+  }
+
+  @NotNull
+  private static FilePath getFilePath(@NotNull VirtualFilePointer filePointer) {
+    return VcsUtil.getFilePath(filePointer.getPresentableUrl(), false);
   }
 }

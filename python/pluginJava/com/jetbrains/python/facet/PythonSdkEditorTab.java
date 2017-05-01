@@ -43,17 +43,17 @@ public class PythonSdkEditorTab extends FacetEditorTab {
     myConnection = project.getMessageBus().connect();
     myConnection.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
       @Override
-      public void jdkAdded(Sdk jdk) {
+      public void jdkAdded(@NotNull Sdk jdk) {
         mySdkComboBox.updateSdkList();
       }
 
       @Override
-      public void jdkRemoved(Sdk jdk) {
+      public void jdkRemoved(@NotNull Sdk jdk) {
         mySdkComboBox.updateSdkList();
       }
 
       @Override
-      public void jdkNameChanged(Sdk jdk, String previousName) {
+      public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
         mySdkComboBox.updateSdkList();
       }
     });

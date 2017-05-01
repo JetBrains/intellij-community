@@ -380,8 +380,8 @@ public abstract class InputExpressionDialog<FormType extends InputForm> extends 
     public Context getContext() {
         final HistoryElement context = myModel.getSelectedItem();
         if (context == null || context.expression == null) {
-            final Set<Namespace> cache = myNamespaceCache != null ? myNamespaceCache : Collections.<Namespace>emptySet();
-            return new Context(new HistoryElement(myDocument.getText(), Collections.<Variable>emptySet(), cache), getMode());
+            final Set<Namespace> cache = myNamespaceCache != null ? myNamespaceCache : Collections.emptySet();
+            return new Context(new HistoryElement(myDocument.getText(), Collections.emptySet(), cache), getMode());
         }
 
         final Collection<Namespace> namespaces = myNamespaceCache != null ?

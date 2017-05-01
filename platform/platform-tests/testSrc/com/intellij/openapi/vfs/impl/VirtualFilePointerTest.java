@@ -665,7 +665,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
     assertNotNull(virtualFile);
     assertTrue(virtualFile.isValid());
     final Collection<Job<Void>> reads = ContainerUtil.newConcurrentSet();
-    VirtualFileAdapter listener = new VirtualFileAdapter() {
+    VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
         stressRead(pointer, reads);
@@ -857,7 +857,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
 
     PsiTestUtil.addLibrary(getModule(), dir1.getPath());
 
-    VirtualFileAdapter listener = new VirtualFileAdapter() {
+    VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         ProjectRootManager.getInstance(getProject()).getFileIndex().getModuleForFile(dir1);
@@ -983,7 +983,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
       LOG.info("i = " + i);
       assertTrue(file.createNewFile());
       refreshVFS();
-      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
+      Future<?> future = ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> ReadAction.run(() -> {
         for (int k=0;k<100;k++) {
           vTemp.getChildren();
         }

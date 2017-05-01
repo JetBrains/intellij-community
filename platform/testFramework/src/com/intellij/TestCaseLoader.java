@@ -34,6 +34,8 @@ import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -45,12 +47,9 @@ import java.util.*;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UseOfSystemOutOrSystemErr", "CallToPrintStackTrace", "TestOnlyProblems"})
 public class TestCaseLoader {
-  public static final String TARGET_TEST_GROUP = "idea.test.group";
-  public static final String TARGET_TEST_PATTERNS = "idea.test.patterns";
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
-  public static final String SKIP_COMMUNITY_TESTS = "idea.skip.community.tests";
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -70,7 +69,7 @@ public class TestCaseLoader {
   
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
-    String patterns = System.getProperty(TARGET_TEST_PATTERNS);
+    String patterns = getTestPatterns();
     if (!StringUtil.isEmpty(patterns)) {
       myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
       System.out.println("Using patterns: [" + patterns +"]");
@@ -86,7 +85,7 @@ public class TestCaseLoader {
         }
       }
 
-      List<String> testGroupNames = StringUtil.split(System.getProperty(TARGET_TEST_GROUP, "").trim(), ";");
+      List<String> testGroupNames = getTestGroups();
       MultiMap<String, String> groups = MultiMap.createLinked();
 
       for (URL fileUrl : groupingFileUrls) {
@@ -114,6 +113,16 @@ public class TestCaseLoader {
         myTestClassesFilter = new GroupBasedTestClassFilter(groups, testGroupNames);
       }
     }
+  }
+
+  @Nullable 
+  private static String getTestPatterns() {
+    return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
+  }
+
+  @NotNull
+  private static List<String> getTestGroups() {
+    return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
   }
 
   void addClassIfTestCase(Class testCaseClass, String moduleName) {

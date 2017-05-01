@@ -267,7 +267,7 @@ class FTManager {
     final File[] files = configRoot.listFiles();
 
     final Set<String> allNames = new HashSet<>();
-    final Map<String, File> templatesOnDisk = files != null && files.length > 0 ? new HashMap<>() : Collections.<String, File>emptyMap();
+    final Map<String, File> templatesOnDisk = files != null && files.length > 0 ? new HashMap<>() : Collections.emptyMap();
     if (files != null) {
       for (File file : files) {
         if (!file.isDirectory()) {

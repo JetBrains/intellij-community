@@ -19,33 +19,50 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
 * @author peter
 */
-public class JavaCompletionSession implements Consumer<LookupElement> {
+public class JavaCompletionSession {
   private final Set<String> myAddedClasses = new HashSet<>();
   private Set<String> myKeywords = new HashSet<>();
+  private final MultiMap<CompletionResultSet, LookupElement> myBatchItems = MultiMap.create(); 
   private final CompletionResultSet myResult;
 
   public JavaCompletionSession(CompletionResultSet result) {
     myResult = result;
   }
 
-  @Override
-  public void consume(LookupElement lookupElement) {
+  void registerBatchItems(CompletionResultSet result, Collection<LookupElement> elements) {
+    myBatchItems.putValues(result, elements);
+  }
+
+  void flushBatchItems() {
+    for (Map.Entry<CompletionResultSet, Collection<LookupElement>> entry : myBatchItems.entrySet()) {
+      entry.getKey().addAllElements(entry.getValue());
+    }
+    myBatchItems.clear();
+  }
+
+  public void addClassItem(LookupElement lookupElement) {
     PsiClass psiClass = extractClass(lookupElement);
     if (psiClass != null) {
       registerClass(psiClass);
     }
     myResult.addElement(AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(lookupElement));
+  }
+
+  @NotNull PrefixMatcher getMatcher() {
+    return myResult.getPrefixMatcher();
   }
 
   @Nullable private static PsiClass extractClass(LookupElement lookupElement) {
@@ -83,7 +100,7 @@ public class JavaCompletionSession implements Consumer<LookupElement> {
     return myKeywords.contains(keyword);
   }
 
-  public void registerKeyword(@NotNull String keyword) {
+  void registerKeyword(@NotNull String keyword) {
     myKeywords.add(keyword);
   }
 }

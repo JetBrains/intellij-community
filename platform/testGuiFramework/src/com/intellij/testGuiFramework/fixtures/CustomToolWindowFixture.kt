@@ -37,6 +37,8 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
         val toolbar = findComponentOfType(myContent.component, ActionToolbarImpl::class.java)!!
         return findComponentsOfType(toolbar, ActionButton::class.java)
       }
+
+    fun getContent() = myContent
   }
 
   fun selectedContent() : ContentFixture {

@@ -51,7 +51,7 @@ public class CCShowPreviewTest extends CCTestCase {
     action.actionPerformed(e);
     Editor editor = EditorFactory.getInstance().getAllEditors()[1];
     Pair<Document, List<AnswerPlaceholder>> pair = getPlaceholders(name + CCTestsUtil.AFTER_POSTFIX);
-    assertEquals("Files don't match", editor.getDocument().getText(), pair.getFirst().getText());
+    assertEquals("Files don't match", pair.getFirst().getText(), editor.getDocument().getText());
     for (AnswerPlaceholder placeholder : pair.getSecond()) {
       assertNotNull("No highlighter for placeholder:" + CCTestsUtil.getPlaceholderPresentation(placeholder), getHighlighter(editor.getMarkupModel(), placeholder));
     }

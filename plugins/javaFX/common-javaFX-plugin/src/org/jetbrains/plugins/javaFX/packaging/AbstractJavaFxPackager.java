@@ -37,7 +37,7 @@ import java.util.List;
  * Date: 3/12/13
  */
 public abstract class AbstractJavaFxPackager {
-  private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractJavaFxPackager.class);
   private static final String JB_JFX_JKS = "jb-jfx.jks";
   private static final String NATIVE_BUNDLES = "bundles";
 

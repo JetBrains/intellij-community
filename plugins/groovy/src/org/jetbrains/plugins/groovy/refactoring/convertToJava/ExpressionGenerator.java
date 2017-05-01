@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,6 +80,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.CustomMethodInvocator;
 
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyIndexPropertyUtil.advancedResolve;
+
 /**
  * @author Maxim.Medvedev
  */
@@ -90,19 +92,21 @@ public class ExpressionGenerator extends Generator {
   private final GroovyPsiElementFactory factory;
 
   private final ExpressionContext context;
+  private final @Nullable PsiType expectedType;
 
-  public ExpressionGenerator(StringBuilder builder, ExpressionContext context) {
+  public ExpressionGenerator(StringBuilder builder, ExpressionContext context, @Nullable PsiType expectedType) {
     this.builder = builder;
     this.context = context;
+    this.expectedType = expectedType;
+    this.factory = GroovyPsiElementFactory.getInstance(context.project);
+  }
 
-    factory = GroovyPsiElementFactory.getInstance(context.project);
+  public ExpressionGenerator(StringBuilder builder, ExpressionContext context) {
+    this(builder, context, null);
   }
 
   public ExpressionGenerator(ExpressionContext context) {
-    this.builder = new StringBuilder();
-    this.context = context;
-
-    factory = GroovyPsiElementFactory.getInstance(context.project);
+    this(new StringBuilder(), context);
   }
 
   @Override
@@ -457,7 +461,7 @@ public class ExpressionGenerator extends Generator {
     }
     else if (realLValue instanceof GrIndexProperty) {   //qualifier[args] = rValue
       //write assignment via qualifier.putAt(Args, Value) method
-      final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(((GrIndexProperty)realLValue).multiResolve(false));
+      final GroovyResolveResult result = advancedResolve(((GrIndexProperty)realLValue), false);
       final PsiElement resolved = result.getElement();
       if (resolved instanceof PsiMethod) {
         final GrExpression[] args = ((GrIndexProperty)realLValue).getArgumentList().getExpressionArguments();
@@ -1172,16 +1176,14 @@ public class ExpressionGenerator extends Generator {
       }
       else {
         TypeWriter.writeTypeForNew(builder, type, typeCastExpression);
-
         builder.append('{');
+        final PsiType newExpectedType = expectedType instanceof PsiArrayType ? ((PsiArrayType)expectedType).getComponentType() : null;
+        final ExpressionGenerator childGenerator = new ExpressionGenerator(builder, context, newExpectedType);
         for (GrExpression initializer : initializers) {
-          initializer.accept(this);
+          initializer.accept(childGenerator);
           builder.append(", ");
         }
-        if (initializers.length > 0) {
-          builder.delete(builder.length() - 2, builder.length());
-          //builder.removeFromTheEnd(2);
-        }
+        builder.delete(builder.length() - 2, builder.length());
         builder.append('}');
       }
       return;
@@ -1290,7 +1292,7 @@ public class ExpressionGenerator extends Generator {
     final GrNamedArgument[] namedArgs = argList.getNamedArguments();
 
     if (!PsiImplUtil.isSimpleArrayAccess(thisType, argTypes, expression, PsiUtil.isLValue(expression))) {
-      final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(expression.multiResolve(false));
+      final GroovyResolveResult candidate = advancedResolve(expression);
       PsiElement element = candidate.getElement();
       if (element != null || !PsiUtil.isLValue(expression)) {                     //see the case of l-value in assignment expression
         if (element instanceof GrGdkMethod &&
@@ -1407,8 +1409,7 @@ public class ExpressionGenerator extends Generator {
   public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
     final PsiType type = listOrMap.getType();
 
-    //can be PsiArrayType or GrLiteralClassType
-    LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiArrayType || type instanceof PsiClassType);
+    LOG.assertTrue(type instanceof GrLiteralClassType || type instanceof PsiClassType);
 
     if (listOrMap.isMap()) {
       if (listOrMap.getNamedArguments().length == 0) {
@@ -1448,12 +1449,15 @@ public class ExpressionGenerator extends Generator {
     }
   }
 
-  private static PsiType getTypeToUseByList(GrListOrMap listOrMap, PsiType type) {
+  private PsiType getTypeToUseByList(GrListOrMap listOrMap, PsiType type) {
     if (isImplicitlyCastedToArray(listOrMap)) {
       PsiType iterable = ClosureParameterEnhancer.findTypeForIteration(listOrMap, listOrMap);
       if (iterable != null) {
         return new PsiArrayType(iterable);
       }
+    }
+    else if (expectedType instanceof PsiArrayType) {
+      return expectedType;
     }
     if (type instanceof PsiClassType) {
       PsiClass resolved = ((PsiClassType)type).resolve();

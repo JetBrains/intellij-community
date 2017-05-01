@@ -91,6 +91,10 @@ public class DfaTypeValue extends DfaValue {
     return myNullness;
   }
 
+  public DfaTypeValue withNullness(Nullness nullness) {
+    return nullness == myNullness ? this : myFactory.getTypeFactory().createTypeValue(myType, nullness);
+  }
+
   @NonNls
   public String toString() {
     return myType + ", nullable=" + myNullness;

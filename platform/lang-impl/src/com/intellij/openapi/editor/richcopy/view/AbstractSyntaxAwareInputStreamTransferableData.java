@@ -33,20 +33,18 @@ import java.io.UnsupportedEncodingException;
  * @author Denis Zhdanov
  * @since 3/28/13 1:20 PM
  */
-public abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup
-{
+abstract class AbstractSyntaxAwareInputStreamTransferableData extends InputStream implements RawTextWithMarkup {
+  private static final Logger LOG = Logger.getInstance(AbstractSyntaxAwareInputStreamTransferableData.class);
 
-  private static final Logger LOG = Logger.getInstance("#" + AbstractSyntaxAwareInputStreamTransferableData.class.getName());
-
-  protected String myRawText;
+  String myRawText;
   @NotNull
-  protected final SyntaxInfo mySyntaxInfo;
+  final SyntaxInfo mySyntaxInfo;
   @NotNull
   private final DataFlavor myDataFlavor;
 
   @Nullable private transient InputStream myDelegate;
 
-  public AbstractSyntaxAwareInputStreamTransferableData(@NotNull SyntaxInfo syntaxInfo, @NotNull DataFlavor flavor) {
+  AbstractSyntaxAwareInputStreamTransferableData(@NotNull SyntaxInfo syntaxInfo, @NotNull DataFlavor flavor) {
     mySyntaxInfo = syntaxInfo;
     myDataFlavor = flavor;
   }
@@ -127,4 +125,19 @@ public abstract class AbstractSyntaxAwareInputStreamTransferableData extends Inp
 
   @NotNull
   protected abstract String getCharset();
+
+  @Override
+  public synchronized void mark(int readlimit) {
+    getDelegate().mark(readlimit);
+  }
+
+  @Override
+  public synchronized void reset() throws IOException {
+    getDelegate().reset();
+  }
+
+  @Override
+  public boolean markSupported() {
+    return getDelegate().markSupported();
+  }
 }

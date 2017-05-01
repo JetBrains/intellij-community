@@ -237,17 +237,15 @@ public class Replacer {
 
   private void doReplace(final PsiElement elementToReplace,
                          final ReplacementInfoImpl info) {
-    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(new Runnable() {
-        public void run() {
-          initContextAndHandler(elementToReplace);
+    CodeStyleManager.getInstance(project).performActionWithFormatterDisabled((Runnable)() -> {
+      initContextAndHandler(elementToReplace);
 
-          context.replacementInfo = info;
+      context.replacementInfo = info;
 
-          if (replaceHandler != null) {
-            replaceHandler.replace(info, options);
-          }
-        }
+      if (replaceHandler != null) {
+        replaceHandler.replace(info, options);
       }
+    }
     );
   }
 

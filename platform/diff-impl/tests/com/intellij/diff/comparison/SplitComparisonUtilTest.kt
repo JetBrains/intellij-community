@@ -74,6 +74,23 @@ class SplitComparisonUtilTest : ComparisonUtilTestBase() {
       default(del(0, 0, 1), mod(1, 0, 1, 1), del(2, 1, 1))
       testAll()
     }
+
+    splitter(trim = false) {
+      ("< i" - "<i<_i")
+      default(mod(0, 0, 1, 2))
+      testDefault()
+    }
+    splitter(trim = false) {
+      (".l j" - "U_._l j+")
+      default(ins(0, 0, 2), mod(0, 2, 1, 1))
+      testDefault()
+    }
+
+    splitter {
+      ("      run();" - "      //commentary_      while(run(true));")
+      default(mod(0, 0, 1, 2))
+      testDefault()
+    }
   }
 
   fun testSquash() {

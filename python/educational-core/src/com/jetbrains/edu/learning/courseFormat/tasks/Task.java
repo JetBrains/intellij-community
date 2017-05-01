@@ -2,12 +2,15 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -21,8 +24,13 @@ import java.util.Map;
 
 /**
  * Implementation of task which contains task files, tests, input file for tests
+ *
+ * To implement new task there are 3 steps to be done:
+ * - extend Task class
+ * - go to Lesson and update elementTypes in taskList AbstractCollection. Needed for proper xml serialization
+ * - Update TaskSerializer and TaskDeserializer in StudySerializationUtil to handle json serialization
  */
-public class Task implements StudyItem {
+public abstract class Task implements StudyItem {
   @Expose private String name;
 
   // index is visible to user number of task from 1 to task number
@@ -35,8 +43,10 @@ public class Task implements StudyItem {
   @SerializedName("task_files")
   @Expose public Map<String, TaskFile> taskFiles = new HashMap<>();
 
-  protected Map<String, String> testsText = new HashMap<>();
-  protected Map<String, String> taskTexts = new HashMap<>();
+  @SerializedName("test_files")
+  @Expose protected Map<String, String> testsText = new HashMap<>();
+  @SerializedName("task_texts")
+  @Expose protected Map<String, String> taskTexts = new HashMap<>();
 
   @Transient private Lesson myLesson;
   @Expose @SerializedName("update_date") private Date myUpdateDate;
@@ -105,10 +115,6 @@ public class Task implements StudyItem {
     return name != null ? taskFiles.get(name) : null;
   }
 
-  public boolean isTaskFile(@NotNull final String fileName) {
-    return taskFiles.get(fileName) != null;
-  }
-
   public void addTaskFile(@NotNull final String name, int index) {
     TaskFile taskFile = new TaskFile();
     taskFile.setIndex(index);
@@ -164,9 +170,12 @@ public class Task implements StudyItem {
 
   @NotNull
   public String getTestsText(@NotNull final Project project) {
+    final Course course = getLesson().getCourse();
+    final Language language = course.getLanguageById();
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     final VirtualFile taskDir = getTaskDir(project);
     if (taskDir != null) {
-      final VirtualFile file = taskDir.findChild(EduNames.TESTS_FILE);
+      final VirtualFile file = taskDir.findChild(configurator.getTestFileName());
       if (file == null) return "";
       final Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
@@ -226,7 +235,7 @@ public class Task implements StudyItem {
 
   public Task copy() {
     Element element = XmlSerializer.serialize(this);
-    Task copy = XmlSerializer.deserialize(element, Task.class);
+    Task copy = XmlSerializer.deserialize(element, getClass());
     copy.initTask(null, true);
     return copy;
   }
@@ -260,7 +269,14 @@ public class Task implements StudyItem {
   }
 
   // used in json serialization/deserialization
-  public String getTaskType() {
-    return "pycharm";
+  public abstract String getTaskType();
+
+  public StudyTaskChecker getChecker(@NotNull Project project) {
+    return new StudyTaskChecker<>(this, project);
+  }
+
+  public int getPosition() {
+    final Lesson lesson = getLesson();
+    return lesson.getTaskList().indexOf(this) + 1;
   }
 }

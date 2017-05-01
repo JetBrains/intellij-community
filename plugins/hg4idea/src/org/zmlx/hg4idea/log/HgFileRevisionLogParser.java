@@ -98,7 +98,7 @@ public class HgFileRevisionLogParser extends HgBaseLogParser<HgFileRevision> {
 
   private static Set<String> parseFileList(@Nullable String fileListString, @NotNull String separator) {
     return StringUtil.isEmpty(fileListString)
-           ? Collections.<String>emptySet()
+           ? Collections.emptySet()
            : new HashSet<>(StringUtil.split(fileListString, separator));
   }
 

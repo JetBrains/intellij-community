@@ -1,4 +1,3 @@
 module M {
-    exports my.api;
-    exports my.api to M6, M2, M4;
+    exports my.api;<caret>
 }

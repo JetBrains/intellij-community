@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class HighlightNamesUtil {
-  private static final Logger LOG = Logger.getInstance("#" + HighlightNamesUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(HighlightNamesUtil.class);
 
   @Nullable
   static HighlightInfo highlightMethodName(@NotNull PsiMethod method,

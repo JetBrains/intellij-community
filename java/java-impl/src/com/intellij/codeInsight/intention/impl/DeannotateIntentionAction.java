@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class DeannotateIntentionAction implements IntentionAction, LowPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#" + DeannotateIntentionAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(DeannotateIntentionAction.class);
   private String myAnnotationName;
 
   @Override

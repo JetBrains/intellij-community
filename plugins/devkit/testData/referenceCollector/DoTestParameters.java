@@ -14,4 +14,8 @@ public class ATest extends LightCodeInsightFixtureTestCase {
 
   private void configureByFile(@com.intellij.testFramework.TestDataFile String file) {
   }
+
+  private String getTestName(boolean toUpperCase) {
+    return null;
+  }
 }

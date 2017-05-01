@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
@@ -54,7 +55,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.Consumer;
-import com.intellij.util.ImageLoader;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -98,7 +98,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
     setProject(project);
     setDimensionKey(getPropertiesKey());
-    setImage(ImageLoader.loadFromResource("/diff/Diff.png"));
+    setImages(DiffUtil.DIFF_FRAME_ICONS);
     closeOnEsc();
 
     if (doInit) init();
@@ -280,23 +280,20 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            if (isDisposed() || myProject.isDisposed()) return;
+        invokeAndWait(() -> {
+          if (isDisposed() || myProject.isDisposed()) return;
 
-            isUpdating = false;
-            if (finalApply != null) {
-              try {
-                finalApply.run();
-              }
-              catch (Exception e) {
-                LocalHistoryLog.LOG.error(e);
-              }
+          isUpdating = false;
+          if (finalApply != null) {
+            try {
+              finalApply.run();
             }
-            updateActions();
-            myDiffView.finishUpdating();
+            catch (Exception e) {
+              LocalHistoryLog.LOG.error(e);
+            }
           }
+          updateActions();
+          myDiffView.finishUpdating();
         });
       }
     });

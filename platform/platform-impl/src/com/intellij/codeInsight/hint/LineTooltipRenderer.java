@@ -19,10 +19,8 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -43,6 +41,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 /**
  * @author cdr
@@ -122,9 +122,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     actionRef.set(new AnAction() {
       // an action to expand description when tooltip was shown after mouse move; need to unregister from editor component
       {
-        registerCustomShortcutSet(
-          new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)),
-          contentComponent);
+        registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION), contentComponent);
       }
 
       @Override

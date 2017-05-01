@@ -19,6 +19,7 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,17 +82,16 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     super.setUp();
     Course course = new Course();
     course.setName("test course");
-    course.setCourseDirectory(getProject().getBasePath());
     StudyTaskManager.getInstance(getProject()).setCourse(course);
 
     Lesson lesson = new Lesson();
     lesson.setName("lesson1");
-    Task task = new Task();
+    Task task = new PyCharmTask();
     task.setName("task1");
     task.setIndex(1);
     lesson.addTask(task);
     lesson.setIndex(1);
-    course.getLessons().add(lesson);
+    course.addLesson(lesson);
     course.setCourseMode(CCUtils.COURSE_MODE);
     course.initCourse(false);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -118,6 +118,8 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     taskFile.setTask(task);
     task.getTaskFiles().put(name, taskFile);
     VirtualFile file = copyFileToTask(name);
+
+    taskFile.name = name;
     myFixture.configureFromExistingVirtualFile(file);
     Document document = FileDocumentManager.getInstance().getDocument(file);
     for (AnswerPlaceholder placeholder : getPlaceholders(document, false)) {
@@ -125,7 +127,6 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     }
     taskFile.sortAnswerPlaceholders();
     StudyUtils.drawAllAnswerPlaceholders(myFixture.getEditor(), taskFile);
-    CCUtils.createResourceFile(file, StudyTaskManager.getInstance(getProject()).getCourse(), file.getParent());
     return file;
   }
 
@@ -171,6 +172,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
           }
           document.deleteString(closingMatcher.start(), closingMatcher.end());
           document.deleteString(openingMatcher.start(), openingMatcher.end());
+          FileDocumentManager.getInstance().saveDocument(document);
           placeholders.add(answerPlaceholder);
           pos = answerPlaceholder.getOffset() + answerPlaceholder.getRealLength();
         }

@@ -105,12 +105,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
   private void createNewNameComponent() {
     myNameSuggestionsField = new NameSuggestionsField(new String[] { myTag.getName() }, myProject, FileTypes.PLAIN_TEXT, myEditor);
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      @Override
-      public void dataChanged() {
-        validateButtons();
-      }
-    };
+    myNameChangedListener = () -> validateButtons();
     myNameSuggestionsField.addDataChangedListener(myNameChangedListener);
 
     myNameSuggestionsField.getComponent().registerKeyboardAction(new ActionListener() {

@@ -87,8 +87,8 @@ class MenuFixture {
         previouslyFoundPopups.add((JPopupMenu)root);
       }
       if (i < segmentCount - 1) {
-        myRobot.click(found);
         List<JPopupMenu> showingPopupMenus = findShowingPopupMenus(getCountOfShowing(previouslyFoundPopups) + 1);
+        myRobot.click(found);
         showingPopupMenus.removeAll(previouslyFoundPopups);
         assertThat(showingPopupMenus).hasSize(1);
         root = showingPopupMenus.get(0);

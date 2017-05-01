@@ -371,18 +371,15 @@ public class MergePanel2 implements DiffViewer {
       data.customizeToolbar(myPanel.resetToolbar());
       myPanel.registerToolbarActions();
       if ( data instanceof MergeRequestImpl && myBuilder != null){
-        Convertor<DialogWrapper, Boolean> preOkHook = new Convertor<DialogWrapper, Boolean>() {
-          @Override
-          public Boolean convert(DialogWrapper dialog) {
-            ChangeCounter counter = ChangeCounter.getOrCreate(myMergeList);
-            int changes = counter.getChangeCounter();
-            int conflicts = counter.getConflictCounter();
-            if (changes == 0 && conflicts == 0) return true;
-            return Messages.showYesNoDialog(dialog.getRootPane(),
-                                            DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", changes, conflicts),
-                                            DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                            Messages.getQuestionIcon()) == Messages.YES;
-          }
+        Convertor<DialogWrapper, Boolean> preOkHook = dialog -> {
+          ChangeCounter counter = ChangeCounter.getOrCreate(myMergeList);
+          int changes = counter.getChangeCounter();
+          int conflicts = counter.getConflictCounter();
+          if (changes == 0 && conflicts == 0) return true;
+          return Messages.showYesNoDialog(dialog.getRootPane(),
+                                          DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", changes, conflicts),
+                                          DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
+                                          Messages.getQuestionIcon()) == Messages.YES;
         };
         ((MergeRequestImpl)data).setActions(myBuilder, this, preOkHook);
       }

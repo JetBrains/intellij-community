@@ -19,7 +19,6 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -58,13 +57,10 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
 
       if (s == null || s.length() == 0) {
         if (XsltSupport.isXPathAttribute((XmlAttribute)parent)) {
-          InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-            @Override
-            public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-              if (injectedPsi instanceof XPathFile) {
-                if (injectedPsi.getTextLength() == 0) {
-                  myHolder.createErrorAnnotation(value, "Empty XPath expression");
-                }
+          InjectedLanguageUtil.enumerate(value, (injectedPsi, places) -> {
+            if (injectedPsi instanceof XPathFile) {
+              if (injectedPsi.getTextLength() == 0) {
+                myHolder.createErrorAnnotation(value, "Empty XPath expression");
               }
             }
           });
@@ -73,18 +69,15 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
         final List<Integer> singleBraces = collectClosingBraceOffsets(s);
 
         if (singleBraces != null) {
-          boolean enumerated = InjectedLanguageUtil.enumerate(value, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-            @Override
-            public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-              if (injectedPsi instanceof XPathFile) {
-                for (PsiLanguageInjectionHost.Shred place : places) {
-                  final TextRange range = place.getRangeInsideHost();
+          boolean enumerated = InjectedLanguageUtil.enumerate(value, (injectedPsi, places) -> {
+            if (injectedPsi instanceof XPathFile) {
+              for (PsiLanguageInjectionHost.Shred place : places) {
+                final TextRange range = place.getRangeInsideHost();
 
-                  for (Iterator<Integer> iterator = singleBraces.iterator(); iterator.hasNext(); ) {
-                    final Integer brace = iterator.next();
-                    if (range.contains(brace)) {
-                      iterator.remove();
-                    }
+                for (Iterator<Integer> iterator = singleBraces.iterator(); iterator.hasNext(); ) {
+                  final Integer brace = iterator.next();
+                  if (range.contains(brace)) {
+                    iterator.remove();
                   }
                 }
               }

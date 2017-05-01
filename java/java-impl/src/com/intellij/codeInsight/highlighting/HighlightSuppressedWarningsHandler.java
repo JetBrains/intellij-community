@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.List;
 
 class HighlightSuppressedWarningsHandler extends HighlightUsagesHandlerBase<PsiLiteralExpression> {
-  private static final Logger LOG = Logger.getInstance("#" + HighlightSuppressedWarningsHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(HighlightSuppressedWarningsHandler.class);
 
   private final PsiAnnotation myTarget;
   private final PsiLiteralExpression mySuppressedExpression;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -533,7 +533,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     VfsTestUtil.deleteFile(module2TestOutput);
 
     final List<VirtualFile> created = new ArrayList<>();
-    VirtualFileListener l = new VirtualFileAdapter() {
+    VirtualFileListener l = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
         VirtualFile file = e.getFile();
@@ -569,7 +569,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     boolean created = new File(myModule1Dir.getPath(), "dir/excluded/foo").mkdirs();
     assertTrue(created);
 
-    VirtualFileListener l = new VirtualFileAdapter() {
+    VirtualFileListener l = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent e) {
         assertEquals("dir", e.getFileName());

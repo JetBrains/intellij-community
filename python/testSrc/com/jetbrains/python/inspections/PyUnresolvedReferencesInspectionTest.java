@@ -692,6 +692,12 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
   
+  // PY-22620
+  public void testTupleTypeCommentsUseImportsFromTyping() {
+    myFixture.copyDirectoryToProject("typing", "");
+    doTest();
+  }
+  
   // PY-19084
   public void testPercentStringPositionalListArgument() {
     doTest();
@@ -760,6 +766,16 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23164
   public void testInstanceAttributeCreatedInsideWithStatement() {
+    doTest();
+  }
+
+  // PY-22828
+  public void testNoProtectedBuiltinNames() {
+    doTest();
+  }
+
+  // PY-22741, PY-22808
+  public void testListIndexedByUnknownType() {
     doTest();
   }
 

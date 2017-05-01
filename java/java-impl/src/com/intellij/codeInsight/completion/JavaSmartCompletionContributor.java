@@ -215,7 +215,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   @NotNull
-  static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
+  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
     return lookupElement -> result.addElement(decorate(lookupElement, infos));
   }
 

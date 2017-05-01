@@ -42,7 +42,7 @@ import java.util.*;
  * User: anna
  */
 public class InferenceSession {
-  private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
+  private static final Logger LOG = Logger.getInstance(InferenceSession.class);
   private static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
   private static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
@@ -260,7 +260,8 @@ public class InferenceSession {
             if (isTypeParameterType(owner, paramType)) return false;
           }
         }
-        else if (expectedReturnType != null && parent instanceof PsiLambdaExpression) {
+        else if (expectedReturnType != null && (parent instanceof PsiLambdaExpression ||
+                                                parent instanceof PsiReturnStatement && PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class, true, PsiMethod.class) != null)) {
           if (isTypeParameterType(method, expectedReturnType)) return false;
           paramType = expectedReturnType;
         }
@@ -1146,9 +1147,7 @@ public class InferenceSession {
       }
     }
 
-    if (myContext != null) {
-      myContext.putUserData(ERASED, myErased);
-    }
+    setUncheckedInContext();
 
     final Map<PsiTypeParameter, PsiType> map = substitutor.getSubstitutionMap();
     for (PsiTypeParameter parameter : map.keySet()) {
@@ -1166,6 +1165,12 @@ public class InferenceSession {
         param = parameter;
       }
       mySiteSubstitutor = mySiteSubstitutor.put(param, mapping);
+    }
+  }
+
+  public void setUncheckedInContext() {
+    if (myContext != null) {
+      myContext.putUserData(ERASED, myErased);
     }
   }
 

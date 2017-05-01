@@ -121,6 +121,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       }
       final PsiType operandType = operand.getType();
       if (castType.equals(operandType) || isPrimitiveNumericCastNecessary(expression)) {
+        // equal types is caught by "Redundant type cast" inspection
         return;
       }
       final PsiTypeElement typeElement = expression.getCastType();
@@ -140,7 +141,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       return true;
     }
     final PsiType operandType = operand.getType();
-    if (operandType == null) {
+    if (!(operandType instanceof PsiPrimitiveType)) {
       return true;
     }
     PsiElement parent = expression.getParent();

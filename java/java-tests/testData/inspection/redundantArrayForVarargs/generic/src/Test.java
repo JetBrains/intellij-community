@@ -15,4 +15,8 @@ class Test {
   }
 
   class C<T> {}
+
+  void m() {
+    System.out.println(String.format("%s %s", new Object[] {"Z", "X"}));
+  }
 }

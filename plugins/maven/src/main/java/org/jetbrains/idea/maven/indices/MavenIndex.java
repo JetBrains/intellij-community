@@ -524,16 +524,16 @@ public class MavenIndex {
       public Collection<String> doTask() throws Exception {
         return myData.groupToArtifactMap.getAllDataObjects(null);
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   public synchronized Set<String> getArtifactIds(final String groupId) {
     return doIndexTask(new IndexTask<Set<String>>() {
       public Set<String> doTask() throws Exception {
         Set<String> result = myData.groupToArtifactMap.get(groupId);
-        return result == null ? Collections.<String>emptySet() : result;
+        return result == null ? Collections.emptySet() : result;
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   @TestOnly
@@ -542,18 +542,18 @@ public class MavenIndex {
       public Set<String> doTask() throws Exception {
         System.out.println("BaseFile: " + myData.groupToArtifactMap.getBaseFile());
         System.out.println("All data objects: " + myData.groupToArtifactMap.getAllDataObjects(null));
-        return Collections.<String>emptySet();
+        return Collections.emptySet();
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   public synchronized Set<String> getVersions(final String groupId, final String artifactId) {
     return doIndexTask(new IndexTask<Set<String>>() {
       public Set<String> doTask() throws Exception {
         Set<String> result = myData.groupWithArtifactToVersionMap.get(groupId + ":" + artifactId);
-        return result == null ? Collections.<String>emptySet() : result;
+        return result == null ? Collections.emptySet() : result;
       }
-    }, Collections.<String>emptySet());
+    }, Collections.emptySet());
   }
 
   public synchronized boolean hasGroupId(String groupId) {
@@ -610,7 +610,7 @@ public class MavenIndex {
       public Set<MavenArtifactInfo> doTask() throws Exception {
         return myData.search(query, maxResult);
       }
-    }, Collections.<MavenArtifactInfo>emptySet());
+    }, Collections.emptySet());
   }
 
   private <T> T doIndexTask(IndexTask<T> task, T defaultValue) {

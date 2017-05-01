@@ -18,16 +18,14 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiVariableEx;
@@ -221,46 +219,43 @@ public class JavaSuppressionUtil {
 
   static PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
     if (place instanceof PsiFile) return null;
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Override
-      @Nullable
-      public PsiElement compute() {
-        final PsiElement statement = SuppressionUtil.getStatementToolSuppressedIn(place, toolId, PsiStatement.class);
-        if (statement != null) {
-          return statement;
-        }
-
-        PsiElement up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiJavaDocumentedElement.class);
-        if (up instanceof PsiModifierListOwner && ((PsiModifierListOwner)up).getModifierList() == null) {
-          up = PsiTreeUtil.getParentOfType(up, PsiVariable.class, PsiJavaDocumentedElement.class);
-        }
-        if (up instanceof PsiVariable) {
-          PsiVariable local = (PsiVariable)up;
-          final PsiElement annotation = getAnnotationMemberSuppressedIn(local, toolId);
-          if (annotation != null) {
-            return annotation;
-          }
-        }
-
-        PsiJavaDocumentedElement container = up == null || up instanceof PsiJavaDocumentedElement
-                                       ? (PsiJavaDocumentedElement)up : PsiTreeUtil.getNonStrictParentOfType(up, PsiJavaDocumentedElement.class);
-        while (true) {
-          if (!(container instanceof PsiTypeParameter)) break;
-          container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
-        }
-
-        if (container != null) {
-          PsiElement element = getElementMemberSuppressedIn(container, toolId);
-          if (element != null) return element;
-        }
-        PsiJavaDocumentedElement classContainer = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class, true);
-        if (classContainer != null) {
-          PsiElement element = getElementMemberSuppressedIn(classContainer, toolId);
-          if (element != null) return element;
-        }
-
-        return null;
+    return ReadAction.compute(() -> {
+      final PsiElement statement = SuppressionUtil.getStatementToolSuppressedIn(place, toolId, PsiStatement.class);
+      if (statement != null) {
+        return statement;
       }
+
+      PsiElement up = PsiTreeUtil.getNonStrictParentOfType(place, PsiVariable.class, PsiJavaDocumentedElement.class);
+      if (up instanceof PsiModifierListOwner && ((PsiModifierListOwner)up).getModifierList() == null) {
+        up = PsiTreeUtil.getParentOfType(up, PsiVariable.class, PsiJavaDocumentedElement.class);
+      }
+      if (up instanceof PsiVariable) {
+        PsiVariable local = (PsiVariable)up;
+        final PsiElement annotation = getAnnotationMemberSuppressedIn(local, toolId);
+        if (annotation != null) {
+          return annotation;
+        }
+      }
+
+      PsiJavaDocumentedElement container = up == null || up instanceof PsiJavaDocumentedElement
+                                           ? (PsiJavaDocumentedElement)up
+                                           : PsiTreeUtil.getNonStrictParentOfType(up, PsiJavaDocumentedElement.class);
+      while (true) {
+        if (!(container instanceof PsiTypeParameter)) break;
+        container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
+      }
+
+      if (container != null) {
+        PsiElement element = getElementMemberSuppressedIn(container, toolId);
+        if (element != null) return element;
+      }
+      PsiJavaDocumentedElement classContainer = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class, true);
+      if (classContainer != null) {
+        PsiElement element = getElementMemberSuppressedIn(classContainer, toolId);
+        if (element != null) return element;
+      }
+
+      return null;
     });
   }
 
@@ -330,7 +325,7 @@ public class JavaSuppressionUtil {
   private static JavaSdkVersion getVersion(@NotNull Sdk sdk) {
     String version = sdk.getVersionString();
     if (version == null) return null;
-    return JdkVersionUtil.getVersion(version);
+    return JavaSdkVersion.fromVersionString(version);
   }
 
   @Nullable

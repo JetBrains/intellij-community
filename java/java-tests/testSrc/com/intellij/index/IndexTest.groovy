@@ -506,13 +506,14 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void "test report using index from other index"() throws IOException {
-    def vfile = myFixture.addClass("class Foo { void bar() {} }").getContainingFile().getVirtualFile()
+    def className = "Foo"
+    def vfile = myFixture.addClass("class $className { void bar() {} }").getContainingFile().getVirtualFile()
     def scope = GlobalSearchScope.allScope(project)
     def foundClass = [false]
     def foundMethod = [false]
 
     try {
-      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, "Foo", project, scope,
+      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, className, project, scope,
                                          PsiClass.class,
                                          new Processor<PsiClass>() {
                                            @Override
@@ -536,6 +537,35 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assertTrue(foundClass[0])
     assertTrue(!foundMethod[0])
+
+    def foundClassProcessAll = [false]
+    def foundClassStub = [false]
+
+    try {
+      StubIndex.instance.processAllKeys(JavaStubIndexKeys.CLASS_SHORT_NAMES, project,
+                                        new Processor<String>() {
+                                          @Override
+                                          boolean process(String aClass) {
+                                            if (!className.equals(aClass)) return true;
+                                            foundClassProcessAll[0] = true
+                                            StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_SHORT_NAMES, aClass, project, scope,
+                                                                               PsiClass.class,
+                                                                               new Processor<PsiClass>() {
+                                                                                 @Override
+                                                                                 boolean process(PsiClass clazz) {
+                                                                                   foundClassStub[0] = true
+                                                                                   return true
+                                                                                 }
+                                                                               })
+                                            return true
+                                          }
+                                        })
+    } catch (e) {
+      if (!(e instanceof RuntimeException)) throw e
+    }
+
+    assertTrue(foundClassProcessAll[0])
+    assertTrue(!foundClassStub[0])
 
     def foundId = [false]
     def foundStub = [false]
@@ -666,6 +696,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     assert facade.findClass('A', GlobalSearchScope.moduleScope(anotherModule)) != null
     assert JavaFileElementType.isInSourceContent(myFixture.tempDirFixture.getFile('another/doo/A.java'))
+  }
+
+  void "test requesting nonexisted index fails as expected"() {
+    ID<?, ?> myId = ID.create("my.id")
+    FileBasedIndex.instance.getContainingFiles(myId, "null", GlobalSearchScope.allScope(project))
+    FileBasedIndex.instance.processAllKeys(myId, Processor.TRUE, project)
   }
 
   void "test read-only index access"() {

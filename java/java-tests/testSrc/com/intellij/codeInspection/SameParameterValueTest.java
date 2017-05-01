@@ -2,10 +2,16 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.sameParameterValue.SameParameterValueInspection;
+import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.InspectionTestCase;
 
 public class SameParameterValueTest extends InspectionTestCase {
   private SameParameterValueInspection myTool = new SameParameterValueInspection();
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+  }
 
   @Override
   protected String getTestDataPath() {
@@ -27,7 +33,13 @@ public class SameParameterValueTest extends InspectionTestCase {
   }
 
   public void testWithoutDeadCode() {
-    doTest(getTestDir(), myTool, false, false);
+    String previous = myTool.highestModifier;
+    myTool.highestModifier = PsiModifier.PUBLIC;
+    try {
+      doTest(getTestDir(), myTool, false, false);
+    } finally {
+      myTool.highestModifier = previous;
+    }
   }
 
   public void testVarargs() {
@@ -39,6 +51,16 @@ public class SameParameterValueTest extends InspectionTestCase {
   }
   
   public void testMethodWithSuper() {
-    doTest(getTestDir(), myTool, false, true);
+    String previous = myTool.highestModifier;
+    myTool.highestModifier = PsiModifier.PUBLIC;
+    try {
+      doTest(getTestDir(), myTool, false, true);
+    } finally {
+      myTool.highestModifier = previous;
+    }
+  }
+
+  public void testNotReportedDueToHighVisibility() {
+    doTest(getTestDir(), myTool, false, false);
   }
 }

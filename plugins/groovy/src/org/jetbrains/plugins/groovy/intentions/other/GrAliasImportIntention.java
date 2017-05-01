@@ -20,12 +20,12 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -43,7 +43,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
@@ -156,13 +155,8 @@ public class GrAliasImportIntention extends Intention {
     manager.startTemplate(newEditor, built, new TemplateEditingAdapter() {
       @Override
       public void templateFinished(Template template, boolean brokenOff) {
-        final GrImportStatement importStatement = ApplicationManager.getApplication().runReadAction(new Computable<GrImportStatement>() {
-          @Nullable
-          @Override
-          public GrImportStatement compute() {
-            return PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true);
-          }
-        });
+        final GrImportStatement importStatement = ReadAction
+          .compute(() -> PsiTreeUtil.findElementOfClassAtOffset(file, range.getStartOffset(), GrImportStatement.class, true));
 
         if (brokenOff) {
           if (importStatement != null) {
@@ -189,13 +183,7 @@ public class GrAliasImportIntention extends Intention {
 
     if (updatedImport == null) return;
 
-    final String name = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Nullable
-      @Override
-      public String compute() {
-        return updatedImport.getImportedName();
-      }
-    });
+    final String name = ReadAction.compute(() -> updatedImport.getImportedName());
 
     for (final UsageInfo usage : usages) {
       ApplicationManager.getApplication().runWriteAction(() -> {

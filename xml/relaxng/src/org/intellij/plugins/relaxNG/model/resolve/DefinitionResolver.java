@@ -71,7 +71,7 @@ public class DefinitionResolver extends CommonElement.Visitor implements
 
     final PsiFile value = include.getInclude();
     if (myVisitedFiles.get() == null) {
-      myVisitedFiles.set(ContainerUtil.<PsiFile>newIdentityTroveSet());
+      myVisitedFiles.set(ContainerUtil.newIdentityTroveSet());
     }
     if (value != null && myVisitedFiles.get().add(value)) {
       doVisitRncOrRngFile(value, this);

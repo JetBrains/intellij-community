@@ -60,12 +60,12 @@ final class CommandTestTools {
 
     final Pair<List<String>, Boolean> argument = Pair.create(Collections.singletonList("available_argument"), true);
     options.add(new Option(Pair.create(1, new Argument(new Help("option argument"), argument)), new Help(""),
-                                       Collections.<String>emptyList(),
+                                       Collections.emptyList(),
                                        Collections.singletonList("--available-option")));
 
 
     options.add(new Option(null, new Help(""),
-                           Collections.<String>emptyList(),
+                           Collections.emptyList(),
                            Collections.singletonList("--option-no-argument")));
 
     EasyMock.expect(command.getOptions()).andReturn(options).anyTimes();

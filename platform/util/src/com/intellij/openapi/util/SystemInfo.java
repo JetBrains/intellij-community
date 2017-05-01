@@ -37,7 +37,6 @@ public class SystemInfo extends SystemInfoRt {
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
   public static final boolean isMac = SystemInfoRt.isMac;
-  public static final boolean isOS2 = SystemInfoRt.isOS2;
   public static final boolean isLinux = SystemInfoRt.isLinux;
   public static final boolean isFreeBSD = SystemInfoRt.isFreeBSD;
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
@@ -48,6 +47,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSunJvm = isSunJvm();
   public static final boolean isIbmJvm = isIbmJvm();
   public static final boolean isJetbrainsJvm = isJetbrainsJvm();
+  public static final boolean IS_AT_LEAST_JAVA9 = isJavaVersionAtLeast("9");
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
     return StringUtil.compareVersionNumbers(OS_VERSION, version) >= 0;
@@ -238,5 +238,8 @@ public class SystemInfo extends SystemInfoRt {
   public static String getUnixReleaseVersion() {
     return null;
   }
+
+  /** @deprecated outdated (to be removed in IDEA 2018) */
+  public static final boolean isOS2 = SystemInfoRt.isOS2;
   //</editor-fold>
 }

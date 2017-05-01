@@ -186,7 +186,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       return filterOutAlreadyInsertedConstructors(aClass, constructors);
     }
     final List<GenerationInfo> constructors =
-      Collections.<GenerationInfo>singletonList(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, null, false, fields)));
+      Collections.singletonList(new PsiGenerationInfo<>(generateConstructorPrototype(aClass, null, false, fields)));
     return filterOutAlreadyInsertedConstructors(aClass, constructors);
   }
 

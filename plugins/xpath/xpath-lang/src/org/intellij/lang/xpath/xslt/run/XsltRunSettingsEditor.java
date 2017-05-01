@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.xslt.run;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -119,11 +120,9 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           if (file.isDirectory()) return true;
           if (!super.isFileVisible(file, showHiddenFiles)) return false;
 
-          return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-            public Boolean compute() {
-              final PsiFile psiFile = psiManager.findFile(file);
-              return psiFile != null && XsltSupport.isXsltFile(psiFile);
-            }
+          return ReadAction.compute(() -> {
+            final PsiFile psiFile = psiManager.findFile(file);
+            return psiFile != null && XsltSupport.isXsltFile(psiFile);
           });
         }
       };

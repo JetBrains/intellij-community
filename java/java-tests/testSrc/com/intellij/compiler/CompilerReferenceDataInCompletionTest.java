@@ -23,6 +23,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+@SkipSlowTestLocally
 public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTestBase {
   @Override
   public void setUp() throws Exception {
@@ -50,9 +52,9 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "qwe", "asd(0)", "zxc(0)");
   }
 
-  public void testOverloads() {
-    doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
-  }
+  //public void testOverloads() {
+  //  doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
+  //}
 
   public void testConstructor() {
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "LinkedList", "ArrayList");
@@ -70,6 +72,17 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "AbstractList", "ArrayList");
   }
 
+  public void testHelperMethodIsNotAffected() {
+    doTestStaticMemberCompletionOrdering(new String[] {"Foo.java"}, "someMethod2(1)", "someMethod1(0)", "m(0)", "nonNull(1)");
+  }
+
+  public void testExpectedByTypeAreFirst() {
+    doTestCompletion(new String[] {"Foo.java"}, "String s = ", new String[] {"someMethod2(1)", "someMethod1(0)", "someMethod3(0)", "m(0)", "mm(1)"}, m -> {
+      PsiClass aClass = m.getContainingClass();
+      return aClass != null && "Foo".equals(aClass.getName());
+    });
+  }
+
   private void doTestConstructorCompletionOrdering(@NotNull String[] files,
                                                    @NotNull String phraseToComplete,
                                                    String... expectedOrder) {
@@ -78,6 +91,13 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
 
   private void doTestMemberCompletionOrdering(@NotNull String[] files, String... expectedOrder) {
     doTestCompletion(files, "foo.", expectedOrder, m -> "Foo".equals(m.getContainingClass().getName()));
+  }
+
+  private void doTestStaticMemberCompletionOrdering(@NotNull String[] files, String... expectedOrder) {
+    doTestCompletion(files, "", expectedOrder, (PsiMember m) -> {
+      PsiClass aClass = m.getContainingClass();
+      return aClass != null && "Foo".equals(aClass.getName());
+    });
   }
 
   private void doTestCompletion(@NotNull String[] files,

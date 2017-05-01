@@ -18,11 +18,16 @@ package com.intellij.openapi.options;
 /**
  * Thrown from SchemeImporter when a scheme can't be read for some reason.
  * 
- * @see com.intellij.openapi.options.SchemeImporter
+ * @see SchemeImporter
  * @author Rustam Vishnyakov
  */
 public class SchemeImportException extends Exception {
   boolean myIsWarning;
+
+  public SchemeImportException() {
+    super();
+  }
+
   public SchemeImportException(String message) {
     super(message);
   }

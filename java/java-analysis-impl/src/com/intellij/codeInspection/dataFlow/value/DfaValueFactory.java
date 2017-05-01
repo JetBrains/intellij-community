@@ -24,10 +24,9 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.TransferTarget;
-import com.intellij.codeInspection.dataFlow.Trap;
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -103,6 +102,69 @@ public class DfaValueFactory {
   @Nullable
   public DfaValue createLiteralValue(PsiLiteralExpression literal) {
     return getConstFactory().create(literal);
+  }
+
+  /**
+   * Create condition (suitable to pass into {@link DfaMemoryState#applyCondition(DfaValue)}),
+   * evaluating it statically if possible.
+   *
+   * @param dfaLeft      left operand
+   * @param relationType relation
+   * @param dfaRight     right operand
+   * @return resulting condition: either {@link DfaRelationValue} or {@link DfaConstValue} (true or false) or {@link DfaUnknownValue}.
+   */
+  @NotNull
+  public DfaValue createCondition(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    DfaConstValue value = tryEvaluate(dfaLeft, relationType, dfaRight);
+    if (value != null) return value;
+    DfaRelationValue relation = getRelationFactory().createRelation(dfaLeft, relationType, dfaRight);
+    if (relation != null) return relation;
+    return DfaUnknownValue.getInstance();
+  }
+
+  @Nullable
+  private DfaConstValue tryEvaluate(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
+    if(dfaRight instanceof DfaTypeValue && dfaLeft == getConstFactory().getNull()) {
+      return tryEvaluate(dfaRight, relationType, dfaLeft);
+    }
+    if (dfaLeft instanceof DfaTypeValue && dfaRight == getConstFactory().getNull() && ((DfaTypeValue)dfaLeft).isNotNull()) {
+      if (relationType == RelationType.EQ) {
+        return getConstFactory().getFalse();
+      }
+      if (relationType == RelationType.NE) {
+        return getConstFactory().getTrue();
+      }
+    }
+
+    if(dfaLeft instanceof DfaOptionalValue && dfaRight instanceof DfaOptionalValue) {
+      if(relationType == RelationType.IS) {
+        return getBoolean(dfaLeft == dfaRight);
+      } else if(relationType == RelationType.IS_NOT) {
+        return getBoolean(dfaLeft != dfaRight);
+      }
+    }
+
+    LongRangeSet leftRange = LongRangeSet.fromDfaValue(dfaLeft);
+    LongRangeSet rightRange = LongRangeSet.fromDfaValue(dfaRight);
+    if (leftRange != null && rightRange != null) {
+      LongRangeSet constraint = rightRange.fromRelation(relationType);
+      if (constraint != null && !constraint.intersects(leftRange)) {
+        return getConstFactory().getFalse();
+      }
+      LongRangeSet revConstraint = rightRange.fromRelation(relationType.getNegated());
+      if (revConstraint != null && !revConstraint.intersects(leftRange)) {
+        return getConstFactory().getTrue();
+      }
+    }
+
+    if(dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue &&
+       (relationType == RelationType.EQ || relationType == RelationType.NE)) {
+      return getBoolean(dfaLeft == dfaRight ^
+                        !DfaUtil.isNaN(((DfaConstValue)dfaLeft).getValue()) ^
+                        relationType == RelationType.EQ);
+    }
+
+    return null;
   }
 
   public DfaConstValue getBoolean(boolean value) {

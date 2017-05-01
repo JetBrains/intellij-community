@@ -1,0 +1,10 @@
+package A.B.C
+
+class Foo {
+}
+
+class Bar {
+    public fun getFoo() : A.B.C.Foo {
+        return A.B.C.Foo()
+    }
+}

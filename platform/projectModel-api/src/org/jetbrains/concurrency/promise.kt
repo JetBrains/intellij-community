@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,8 @@ inline fun Promise<*>.rejected(node: Obsolescent, crossinline handler: (Throwabl
   override fun consume(param: Throwable) = handler(param)
 })
 
-fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
+@JvmOverloads
+fun <T> collectResults(promises: List<Promise<T>>, ignoreErrors: Boolean = false): Promise<List<T>> {
   if (promises.isEmpty()) {
     return resolvedPromise(emptyList())
   }
@@ -125,7 +126,7 @@ fun <T> collectResults(promises: List<Promise<T>>): Promise<List<T>> {
   for (promise in promises) {
     promise.done { results.add(it) }
   }
-  return all(promises, results)
+  return all(promises, results, ignoreErrors)
 }
 
 @JvmOverloads
@@ -187,7 +188,8 @@ fun ActionCallback.toPromise(): Promise<Void> {
 
 fun all(promises: Collection<Promise<*>>): Promise<*> = if (promises.size == 1) promises.first() else all(promises, null)
 
-fun <T> all(promises: Collection<Promise<*>>, totalResult: T?): Promise<T> {
+@JvmOverloads
+fun <T> all(promises: Collection<Promise<*>>, totalResult: T?, ignoreErrors: Boolean = false): Promise<T> {
   if (promises.isEmpty()) {
     @Suppress("UNCHECKED_CAST")
     return DONE as Promise<T>
@@ -195,7 +197,7 @@ fun <T> all(promises: Collection<Promise<*>>, totalResult: T?): Promise<T> {
 
   val totalPromise = AsyncPromise<T>()
   val done = CountDownConsumer(promises.size, totalPromise, totalResult)
-  val rejected = Consumer<Throwable> { error -> totalPromise.setError(error) }
+  val rejected = if (ignoreErrors) Consumer<Throwable> { done.consume(null) } else Consumer<Throwable> { totalPromise.setError(it) }
 
   for (promise in promises) {
     promise.done(done)

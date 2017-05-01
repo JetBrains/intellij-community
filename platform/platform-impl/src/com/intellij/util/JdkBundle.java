@@ -20,24 +20,33 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Bitness;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class JdkBundle {
   @NotNull private static final Logger LOG = Logger.getInstance("#com.intellij.util.JdkBundle");
 
   @NotNull
-  private static final Pattern[] VERSION_UPDATE_PATTERNS = {
-    Pattern.compile("^java version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE),
-    Pattern.compile("^openjdk version \"([\\d]+\\.[\\d]+\\.[\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE),
-    Pattern.compile("^[a-zA-Z() \"\\d]*([\\d]+\\.[\\d]+\\.?[\\d]*).*", Pattern.MULTILINE)
-  };
+  private static final Map<Pattern, Function<Matcher, Pair<Version, Integer>>> LINE_TO_VERSION_PATTERNS = ContainerUtil.newLinkedHashMap(
+    Pair.create(Pattern.compile("^java version \"1\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(1, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
+    Pair.create(Pattern.compile("^java version \"9-ea.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
+    Pair.create(Pattern.compile("^openjdk version \"1\\.([\\d]+)\\.([\\d]+)_([\\d]+).*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(1, StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0)), StringUtil.parseInt(matcher.group(3),0))),
+    Pair.create(Pattern.compile("^openjdk version \"9-ea.*\".*", Pattern.MULTILINE), matcher -> Pair.create(new Version(9, 0, 0), 0)),
+    Pair.create(Pattern.compile("^[a-zA-Z() \"\\d]*([\\d]+)\\.([\\d]+)\\.?([\\d]*).*", Pattern.MULTILINE), matcher -> Pair.create(new Version(StringUtil.parseInt(matcher.group(1),0), StringUtil.parseInt(matcher.group(2),0), StringUtil.parseInt(matcher.group(3),0)), 0))
+  );
 
   @NotNull
   private static final Pattern ARCH_64_BIT_PATTERN = Pattern.compile(".*64-Bit.*", Pattern.MULTILINE);
@@ -46,9 +55,9 @@ public class JdkBundle {
 
   private static boolean is64BitRuntime() { return runtimeBitness == Bitness.x64; }
 
-  @NotNull private File myBundleAsFile;
-  @NotNull private String myBundleName;
-  @Nullable private Pair<Version, Integer> myVersionUpdate;
+  @NotNull private final File myBundleAsFile;
+  @NotNull private final String myBundleName;
+  @Nullable private final Pair<Version, Integer> myVersionUpdate;
   private boolean myBoot;
   private boolean myBundled;
   private volatile Bitness bitness;
@@ -81,8 +90,7 @@ public class JdkBundle {
 
     boolean isValidBundle = true;
 
-    String jreCheck = System.getProperty("idea.jre.check");
-    if (jreCheck != null && "true".equals(jreCheck)) {
+    if (SystemProperties.getBooleanProperty("idea.jre.check", false)) {
       isValidBundle = new File(javaHome, "lib" + File.separator + "tools.jar").exists();
     }
 
@@ -115,7 +123,8 @@ public class JdkBundle {
 
   @Nullable
   static JdkBundle createBoot(boolean adjustToMacBundle) {
-    File bootJDK = new File(System.getProperty("java.home")).getParentFile();
+    String javaHome = System.getProperty("java.home");
+    File bootJDK = javaHome.endsWith("jre") ? new File(javaHome).getParentFile() : new File(javaHome);
     JdkBundle bundle;
     if (SystemInfo.isMac && adjustToMacBundle) {
       bootJDK = bootJDK.getParentFile().getParentFile();
@@ -124,9 +133,7 @@ public class JdkBundle {
     else {
       bundle = createBundle(bootJDK, "", true, false, true);
     }
-    if (bundle != null) {
-      if (isBundledJDK(bundle)) bundle.setBundled(true);
-    }
+    if (bundle != null && isBundledJDK(bundle)) bundle.setBundled(true);
     return bundle;
   }
 
@@ -135,7 +142,7 @@ public class JdkBundle {
     return new File(PathManager.getHomePath(), SystemInfo.isMac ? "jdk" : "jre");
   }
 
-  static public boolean isBundledJDK(@NotNull JdkBundle bundle) {
+  private static boolean isBundledJDK(@NotNull JdkBundle bundle) {
     return FileUtil.filesEqual(bundle.getLocation(), getBundledJDKAbsoluteLocation());
   }
 
@@ -147,7 +154,7 @@ public class JdkBundle {
   public String getVisualRepresentation() {
     StringBuilder representation = new StringBuilder(myBundleName);
     if (myVersionUpdate != null) {
-      representation.append(myVersionUpdate.first.toString()).append((myVersionUpdate.second > 0 ? "_" + myVersionUpdate.second : ""));
+      representation.append(myVersionUpdate.first).append(myVersionUpdate.second > 0 ? "_" + myVersionUpdate.second : "");
     }
 
     if (myBoot || myBundled) {
@@ -199,21 +206,19 @@ public class JdkBundle {
 
   @NotNull
   String getNameVersion() {
-    return myBundleName + ((myVersionUpdate != null) ? myVersionUpdate.first.toString() : "");
+    return myBundleName + (myVersionUpdate != null ? myVersionUpdate.first.toString() : "");
   }
 
   private static Pair<Pair<String, Boolean>, Pair<Version, Integer>> getJDKNameArchVersionAndUpdate(File jvm, String homeSubPath) {
     GeneralCommandLine commandLine = new GeneralCommandLine().withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.NONE);
-    File jvmPath = new File(jvm, homeSubPath + File.separator + "jre" + File.separator + "bin" + File.separator + "java");
+    String javaExecutable = "java" + (SystemInfo.isWindows ? ".exe" : "");
+    File jvmPath = new File(jvm, homeSubPath + File.separator + "jre" + File.separator + "bin" + File.separator + javaExecutable);
     if (!jvmPath.exists()) {
-      jvmPath = new File(jvm, homeSubPath + File.separator + "bin" + File.separator + "java");
+      jvmPath = new File(jvm, homeSubPath + File.separator + "bin" + File.separator + javaExecutable);
     }
     commandLine.setExePath(jvmPath.getAbsolutePath());
     commandLine.addParameter("-version");
 
-    String displayVersion;
-    Boolean is64Bit = null;
-    Pair<Version, Integer> versionAndUpdate = null;
     List<String> outputLines = null;
 
     try {
@@ -233,9 +238,12 @@ public class JdkBundle {
       LOG.debug(e);
     }
 
+    Boolean is64Bit = null;
+    String displayVersion;
+    Pair<Version, Integer> versionAndUpdate = null;
     if (outputLines != null && outputLines.size() >= 1) {
       String versionLine = outputLines.get(0);
-      versionAndUpdate = VersionUtil.parseVersionAndUpdate(versionLine, VERSION_UPDATE_PATTERNS);
+      versionAndUpdate = VersionUtil.parseNewVersionAndUpdate(versionLine, LINE_TO_VERSION_PATTERNS);
       displayVersion = versionLine.replaceFirst("\".*\"", "");
       if (outputLines.size() >= 3) {
         is64Bit = is64BitJVM(outputLines.get(2));

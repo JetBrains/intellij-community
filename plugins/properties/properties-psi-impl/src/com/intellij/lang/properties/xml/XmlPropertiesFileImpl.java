@@ -152,8 +152,7 @@ public class XmlPropertiesFileImpl extends XmlPropertiesFile {
     final XmlTag rootTag = myFile.getRootTag();
     final XmlTag entry = createPropertyTag(key, value);
     final XmlTag addedEntry = (XmlTag) (anchorTag == null ? myFile.getRootTag().addSubTag(entry, !addToEnd) : rootTag.addAfter(entry, anchorTag));
-    final XmlProperty property = new XmlProperty(addedEntry, this);
-    return property;
+    return new XmlProperty(addedEntry, this);
   }
 
   @NotNull

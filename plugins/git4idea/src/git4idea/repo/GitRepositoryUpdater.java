@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.Function;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -53,12 +52,7 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
 
   GitRepositoryUpdater(@NotNull GitRepository repository, @NotNull GitRepositoryFiles gitFiles) {
     myRepository = repository;
-    Collection<String> rootPaths = ContainerUtil.map(gitFiles.getRootDirs(), new Function<VirtualFile, String>() {
-      @Override
-      public String fun(VirtualFile file) {
-        return file.getPath();
-      }
-    });
+    Collection<String> rootPaths = ContainerUtil.map(gitFiles.getRootDirs(), file -> file.getPath());
     myWatchRequests = LocalFileSystem.getInstance().addRootsToWatch(rootPaths, true);
 
     myRepositoryFiles = gitFiles;

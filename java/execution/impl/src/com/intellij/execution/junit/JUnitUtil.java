@@ -219,7 +219,7 @@ public class JUnitUtil {
     return false;
   }
 
-  public static boolean isJUnit5TestClass(final PsiClass psiClass, boolean checkAbstract) {
+  public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
     final PsiModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return false;
 

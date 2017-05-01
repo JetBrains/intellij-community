@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -250,7 +249,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     // neighbouring type annotations are logical part of this type element and should be dropped
     PsiImplUtil.markTypeAnnotations(this);
     PsiElement result = super.replace(newElement);
-    PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);
+    if (result instanceof PsiTypeElement) {
+      PsiImplUtil.deleteTypeAnnotations((PsiTypeElement)result);
+    }
     return result;
   }
 

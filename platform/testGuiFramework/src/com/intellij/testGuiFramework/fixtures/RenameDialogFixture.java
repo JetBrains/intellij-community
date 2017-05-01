@@ -62,12 +62,8 @@ public class RenameDialogFixture extends IdeaDialogFixture<RenameDialog> {
   {
     // We use SwingUtilities instead of FEST here because RenameDialog is modal and GuiActionRunner doesn't return until
     //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        handler.invoke(element.getProject(), new PsiElement[] { element }, SimpleDataContext.getProjectContext(element.getProject()));
-      }
-    });
+    SwingUtilities.invokeLater(
+      () -> handler.invoke(element.getProject(), new PsiElement[] { element }, SimpleDataContext.getProjectContext(element.getProject())));
     final Ref<RenameDialog> ref = new Ref<RenameDialog>();
     JDialog dialog = waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override

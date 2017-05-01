@@ -19,12 +19,14 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.CommittedChangesProvider;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesFilterDialog;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesVisibilityPredicate;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -54,14 +56,22 @@ public class BrowseChangesAction extends AnAction implements DumbAware {
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-
-    e.getPresentation().setEnabled(project != null && file != null && isEnabled(project, file));
+    Presentation presentation = e.getPresentation();
+    if (project == null || file == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+    AbstractVcs vcs = getVcsForFile(file, project);
+    if (vcs == null || !CommittedChangesVisibilityPredicate.isCommittedChangesAvailable(vcs)) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+    presentation.setVisible(true);
+    presentation.setEnabled(isEnabled(project, vcs, file));
   }
 
-  private static boolean isEnabled(@NotNull Project project, @NotNull VirtualFile file) {
-    AbstractVcs vcs = getVcsForFile(file, project);
-
-    return vcs != null && vcs.getCommittedChangesProvider() != null && vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(project, file);
+  private static boolean isEnabled(@NotNull Project project, @NotNull AbstractVcs vcs, @NotNull VirtualFile file) {
+    return vcs.allowsRemoteCalls(file) && fileInVcsByFileStatus(project, file);
   }
 
   private static void showChanges(@NotNull AbstractVcs vcs, @NotNull VirtualFile file, @NotNull ChangeBrowserSettings settings) {

@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -74,16 +73,14 @@ public class ApplyPatchForBaseRevisionTexts {
 
     if (provider != null) {
       try {
-        provider.getBaseVersionContent(pathBeforeRename, new Processor<CharSequence>() {
-          public boolean process(final CharSequence text) {
-            final GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
-            if (! applier.execute()) {
-              return true;
-            }
-            myBase = text;
-            setPatched(applier.getAfter());
-            return false;
+        provider.getBaseVersionContent(pathBeforeRename, text -> {
+          final GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+          if (! applier.execute()) {
+            return true;
           }
+          myBase = text;
+          setPatched(applier.getAfter());
+          return false;
         }, myWarnings);
       }
       catch (VcsException e) {

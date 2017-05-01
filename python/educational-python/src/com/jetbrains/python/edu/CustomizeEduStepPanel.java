@@ -2,18 +2,21 @@ package com.jetbrains.python.edu;
 
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.IconLoader;
 import com.jetbrains.edu.learning.StudySettings;
+import icons.PythonEducationalIcons;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
 
   public CustomizeEduStepPanel() {
+    int iconSize = 180;
     final JPanel studentPanel = new JPanel(new VerticalFlowLayout());
-    final JButton student = new JButton(IconLoader.findIcon("/icons/com/jetbrains/edu/student.png"));
+    final JButton student = new JButton(PythonEducationalIcons.Student);
+    student.setPreferredSize(new Dimension(iconSize, iconSize));
     student.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -24,7 +27,8 @@ public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
     studentPanel.add(new JLabel("Student", SwingConstants.CENTER));
     add(studentPanel);
 
-    final JButton teacher = new JButton(IconLoader.findIcon("/icons/com/jetbrains/edu/teacher.png"));
+    final JButton teacher = new JButton(PythonEducationalIcons.Teacher);
+    teacher.setPreferredSize(new Dimension(iconSize, iconSize));
     final JPanel teacherPanel = new JPanel(new VerticalFlowLayout());
     teacherPanel.add(teacher);
     teacherPanel.add(new JLabel("Teacher", SwingConstants.CENTER));

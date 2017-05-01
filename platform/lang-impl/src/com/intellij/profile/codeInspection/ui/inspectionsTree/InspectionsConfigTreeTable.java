@@ -28,6 +28,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -84,7 +85,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   public InspectionsConfigTreeTable(final InspectionsConfigTreeTableModel model) {
     super(model);
 
-    final TableColumn severitiesColumn = getColumnModel().getColumn(SEVERITIES_COLUMN);
+    TableColumn severitiesColumn = getColumnModel().getColumn(SEVERITIES_COLUMN);
     severitiesColumn.setCellRenderer(new IconTableCellRenderer<Icon>() {
 
       @Override
@@ -104,7 +105,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     });
     severitiesColumn.setMaxWidth(JBUI.scale(20));
 
-    final TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
+    TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
     isEnabledColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
     ThreeStateCheckBoxRenderer boxRenderer = new ThreeStateCheckBoxRenderer();
     boxRenderer.setOpaque(true);
@@ -114,31 +115,51 @@ public class InspectionsConfigTreeTable extends TreeTable {
     addMouseMotionListener(new MouseAdapter() {
       @Override
       public void mouseMoved(final MouseEvent e) {
-        final Point point = e.getPoint();
-        final int column = columnAtPoint(point);
-        if (column != SEVERITIES_COLUMN) {
-          return;
-        }
-        final int row = rowAtPoint(point);
-        final Object maybeIcon = getModel().getValueAt(row, column);
-        if (maybeIcon instanceof MultiScopeSeverityIcon) {
-          final MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
-          final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
-            icon.getScopeToAverageSeverityMap();
-          final JComponent component;
-          if (scopeToAverageSeverityMap.size() == 1 &&
-              icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
-            final HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
-            final JLabel label = new JLabel();
-            label.setIcon(level.getIcon());
-            label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
-            component = label;
-          } else {
-            component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
+      Point point = e.getPoint();
+      int column = columnAtPoint(point);
+      int row = rowAtPoint(point);
+
+      UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
+
+      switch (column) {
+        case SEVERITIES_COLUMN:
+          Object maybeIcon = getModel().getValueAt(row, column);
+          if (maybeIcon instanceof MultiScopeSeverityIcon) {
+            MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
+            LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
+              icon.getScopeToAverageSeverityMap();
+            JComponent component;
+            if (scopeToAverageSeverityMap.size() == 1 &&
+                icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
+              HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
+              JLabel label = new JLabel();
+              label.setIcon(level.getIcon());
+              label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
+              component = label;
+            } else {
+              component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
+            }
+            IdeTooltipManager.getInstance().show(
+              new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
           }
-          IdeTooltipManager.getInstance().show(
-            new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
-        }
+          break;
+
+        case IS_ENABLED_COLUMN:
+          if (Registry.is("ide.intellij.laf.win10.ui")) {
+            JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
+            rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", row);
+            ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
+          }
+          break;
+
+        default: break;
+      }
+      }
+    });
+
+    addMouseListener(new MouseAdapter() {
+      @Override public void mouseExited(MouseEvent e) {
+        UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
       }
     });
 

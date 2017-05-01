@@ -16,12 +16,13 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.psi.PsiClass
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
  * @author Pavel.Dolgov
  */
-class JavaReflectionClassNavigationTest : LightCodeInsightFixtureTestCase() {
+class JavaReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase() {
 
   fun testPublicClass() {
     myFixture.addClass("package foo.bar; public class PublicClass {}")
@@ -57,8 +58,19 @@ class JavaReflectionClassNavigationTest : LightCodeInsightFixtureTestCase() {
     myFixture.addClass("package foo.bar; public class PublicClass {}")
     doTest("foo.bar.<caret>PublicClass.PrivateInnerClass", { "Thread.currentThread().getContextClassLoader().loadClass(\"$it\")" })
   }
+}
 
-  private fun doTest(className: String, usageFormatter: (String) -> String = { "Class.forName(\"$it\")" }) {
+class Java9ReflectionClassNavigationTest : JavaReflectionClassNavigationTestBase() {
+  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
+
+  fun testJava9MethodHandlesLookup() {
+    myFixture.addClass("package foo.bar; public class PublicClass {}")
+    doTest("foo.bar.PublicClass", { "java.lang.invoke.MethodHandles.lookup().findClass(\"$it\")" })
+  }
+}
+
+abstract class JavaReflectionClassNavigationTestBase : LightCodeInsightFixtureTestCase() {
+  protected fun doTest(className: String, usageFormatter: (String) -> String = { "Class.forName(\"$it\")" }) {
     val caretPos = className.indexOf("<caret>")
     val atCaret: String
     var expectedName = className

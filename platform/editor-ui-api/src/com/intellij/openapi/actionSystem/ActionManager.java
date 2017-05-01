@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.actionSystem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NonNls;
@@ -35,8 +34,7 @@ import java.awt.event.InputEvent;
  *
  * @see AnAction
  */
-public abstract class ActionManager implements NamedComponent {
-
+public abstract class ActionManager {
   /**
    * Fetches the instance of ActionManager implementation.
    */
@@ -174,4 +172,9 @@ public abstract class ActionManager implements NamedComponent {
 
   @Nullable
   public abstract KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
+
+  @NotNull
+  public String getComponentName() {
+    return "ActionManager";
+  }
 }

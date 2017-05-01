@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * Date: 2/24/12
  */
 public class DumpDirectoryInfoAction extends AnAction {
-  public static final Logger LOG = Logger.getInstance("#" + DumpDirectoryInfoAction.class.getName());
+  public static final Logger LOG = Logger.getInstance(DumpDirectoryInfoAction.class);
 
   public DumpDirectoryInfoAction() {
     super("Dump Directory Info");
@@ -44,14 +44,11 @@ public class DumpDirectoryInfoAction extends AnAction {
     if (project != null) {
       final VirtualFile root = e.getData(CommonDataKeys.VIRTUAL_FILE);
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        final ContentIterator contentIterator = new ContentIterator() {
-          @Override
-          public boolean processFile(VirtualFile fileOrDir) {
-            LOG.info(fileOrDir.getPath());
+        final ContentIterator contentIterator = fileOrDir -> {
+          LOG.info(fileOrDir.getPath());
 
-            LOG.info(index.getInfoForFile(fileOrDir).toString());
-            return true;
-          }
+          LOG.info(index.getInfoForFile(fileOrDir).toString());
+          return true;
         };
         if (root != null) {
           ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(root, contentIterator);

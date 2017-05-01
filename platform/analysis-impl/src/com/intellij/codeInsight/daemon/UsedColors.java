@@ -97,7 +97,7 @@ public class UsedColors {
   }
 
   private static int hashColor(@NotNull String name, int colorsCount) {
-    return Math.abs(StringHash.murmur(name, 0x55AA)) % colorsCount;
+    return Math.abs(StringHash.murmur(name, 0x55AA) % colorsCount);
   }
 
   @Contract(pure = true)

@@ -47,6 +47,7 @@ import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
@@ -68,6 +69,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -582,10 +584,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 }
                 markedQualified = true;
               }
-              else if (isHasCustomMember(refName, type)) {
-                // We have dynamic members
-                return;
-              }
               else {
                 description = PyBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
                 markedQualified = true;
@@ -657,18 +655,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
       final String name = "Install package " + packageName;
       actions.add(new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements));
-    }
-
-    /**
-     * Checks if type  is custom type  and has custom member with certain name
-     * @param refName name to check
-     * @param type type
-     * @return true if has one
-     */
-    private static boolean isHasCustomMember(@NotNull final String refName, @NotNull final PyType type) {
-      // TODO: check
-      return false;
-      /*return (type instanceof PyCustomType) && ((PyCustomType)type).hasMember(refName);*/
     }
 
     /**
@@ -789,7 +775,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
-      if (type instanceof PyClassTypeImpl) {
+      if (type instanceof PyClassType) {
         PyClass cls = ((PyClassType)type).getPyClass();
         if (PyTypeChecker.overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
@@ -804,6 +790,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
         if (hasUnresolvedDynamicMember((PyClassType)type, reference, name, myTypeEvalContext)) return true;
+
+        if (isAwaitOnGeneratorBasedCoroutine(name, reference, cls)) return true;
       }
       if (type instanceof PyFunctionTypeImpl) {
         final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
@@ -851,6 +839,25 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
       }
+      return false;
+    }
+
+    private boolean isAwaitOnGeneratorBasedCoroutine(@NotNull String name, @NotNull PsiReference reference, @NotNull PyClass cls) {
+      if (PyNames.DUNDER_AWAIT.equals(name) &&
+          reference instanceof PyOperatorReference &&
+          PyTypingTypeProvider.GENERATOR.equals(cls.getQualifiedName())) {
+        final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
+
+        if (receiver instanceof PyCallExpression) {
+          final boolean resolvedToGeneratorBasedCoroutine = StreamEx
+            .of(((PyCallExpression)receiver).multiResolveCalleeFunction(getResolveContext()))
+            .select(PyFunction.class)
+            .anyMatch(function -> PyKnownDecoratorUtil.hasGeneratorBasedCoroutineDecorator(function, myTypeEvalContext));
+
+          if (resolvedToGeneratorBasedCoroutine) return true;
+        }
+      }
+
       return false;
     }
 
@@ -1087,7 +1094,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
-          PsiElement importedElement;
+          PsiFileSystemItem importedElement;
           if (unusedImport instanceof PyImportElement) {
             final PyImportElement importElement = (PyImportElement)unusedImport;
             final PsiElement element = importElement.resolve();
@@ -1115,8 +1122,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
-          if (packageQName != null && importedElement instanceof PsiFileSystemItem) {
-            final QualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)importedElement);
+          if (packageQName != null && importedElement != null) {
+            final QualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName(importedElement);
             if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
               continue;
             }

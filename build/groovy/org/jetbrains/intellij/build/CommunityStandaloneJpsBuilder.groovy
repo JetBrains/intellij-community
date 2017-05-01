@@ -110,6 +110,7 @@ class CommunityStandaloneJpsBuilder {
           include(name: "commons-logging-*.jar")
           include(name: "httpclient-*.jar")
           include(name: "httpcore-*.jar")
+          include(name: "slf4j-api-*.jar")
         }
         ant.fileset(dir: "$home/jps/lib") {
           include(name: "optimizedFileManager.jar")

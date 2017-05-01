@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.completion.JavaKeywordCompletion.createKeyword;
+import static com.intellij.codeInsight.completion.BasicExpressionCompletionContributor.createKeywordLookupItem;
 
 class JavaModuleCompletion {
   static boolean isModuleFile(@NotNull PsiFile file) {
@@ -74,30 +74,30 @@ class JavaModuleCompletion {
   private static void addFileHeaderKeywords(PsiElement position, Consumer<LookupElement> result) {
     PsiElement prev = PsiTreeUtil.prevVisibleLeaf(position);
     if (prev == null) {
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.OPEN), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
     else if (PsiUtil.isJavaToken(prev, JavaTokenType.OPEN_KEYWORD)) {
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.MODULE), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
   private static void addModuleStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
-    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
-    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.REQUIRES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.EXPORTS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.OPENS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.USES), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.PROVIDES), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
 
   private static void addProvidesStatementKeywords(PsiElement position, Consumer<LookupElement> result) {
-    result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.WITH), TailType.HUMBLE_SPACE_BEFORE_WORD));
   }
 
   private static void addRequiresStatementKeywords(PsiElement context, PsiElement position, Consumer<LookupElement> result) {
     if (context.getParent() instanceof PsiRequiresStatement) {
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
-      result.consume(new OverrideableSpace(createKeyword(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.TRANSITIVE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      result.consume(new OverrideableSpace(createKeywordLookupItem(position, PsiKeyword.STATIC), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
@@ -110,12 +110,11 @@ class JavaModuleCompletion {
         Project project = context.getProject();
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
-        index.processAllKeys(project, name -> {
+        for (String name : index.getAllKeys(project)) {
           if (!name.equals(hostName) && index.get(name, project, scope).size() == 1) {
             result.consume(new OverrideableSpace(LookupElementBuilder.create(name), TailType.SEMICOLON));
           }
-          return true;
-        });
+        }
       }
     }
   }

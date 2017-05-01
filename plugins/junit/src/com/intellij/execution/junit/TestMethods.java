@@ -89,9 +89,9 @@ public class TestMethods extends TestMethod {
                                                                                                                                : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {
         final String proxyName = testInfo.getName();
-        final String methodName = ((PsiMethod)element).getName();
+        final String methodWithSignaturePresentation = JUnitConfiguration.Data.getMethodPresentation(((PsiMethod)element));
         return JavaExecutionUtil.getRuntimeQualifiedName(containingClass) + "," +
-               (proxyName.contains(methodName) ? proxyName.substring(proxyName.indexOf(methodName)) : methodName);
+               (proxyName.contains(methodWithSignaturePresentation) ? proxyName.substring(proxyName.indexOf(methodWithSignaturePresentation)) : methodWithSignaturePresentation);
       }
     }
     return null;

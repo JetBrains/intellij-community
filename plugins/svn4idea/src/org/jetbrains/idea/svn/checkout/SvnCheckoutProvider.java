@@ -17,13 +17,13 @@ package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
@@ -236,7 +236,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           errorMessage.set("Can not find file: " + targetPath);
         }
         else {
-          final boolean isInContent = getApplication().runReadAction((Computable<Boolean>)() -> facade.isInContent(targetVf));
+          final boolean isInContent = ReadAction.compute(() -> facade.isInContent(targetVf));
           CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
           boolean useFileFilter = !project.isDefault() && isInContent;
           ISVNCommitHandler commitHandler =

@@ -30,7 +30,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -117,14 +116,11 @@ public class PsiPackageFavoriteNodeProvider extends FavoriteNodeProvider {
   public boolean elementContainsFile(final Object element, final VirtualFile vFile) {
     if (element instanceof PackageElement) {
       final Set<Boolean> find = new HashSet<>();
-      final ContentIterator contentIterator = new ContentIterator() {
-        @Override
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
-            find.add(Boolean.TRUE);
-          }
-          return true;
+      final ContentIterator contentIterator = fileOrDir -> {
+        if (fileOrDir != null && fileOrDir.getPath().equals(vFile.getPath())) {
+          find.add(Boolean.TRUE);
         }
+        return true;
       };
       final PackageElement packageElement = (PackageElement)element;
       final PsiPackage aPackage = packageElement.getPackage();

@@ -95,6 +95,11 @@ public class ClassNameCompletionTest extends LightFixtureCompletionTestCase {
     selectItem(myItems[0]);
     assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
     checkResultByFile(path +"/after2.java");
+
+    configureByFile(path + "/before3.java");
+    selectItem(myItems[0]);
+    assert TemplateManagerImpl.getTemplateState(myFixture.getEditor()) == null;
+    checkResultByFile(path +"/after3.java");
   }
 
   private void createClass(String text) {

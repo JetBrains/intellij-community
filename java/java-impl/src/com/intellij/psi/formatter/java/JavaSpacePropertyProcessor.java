@@ -41,6 +41,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.tree.java.IJavaElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,6 +55,9 @@ import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
 
 public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.java.JavaSpacePropertyProcessor");
+
+  private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(
+    JavaTokenType.EXTENDS_KEYWORD, JavaTokenType.IMPLEMENTS_KEYWORD, JavaTokenType.THROWS_KEYWORD, JavaTokenType.WITH_KEYWORD);
 
   private PsiElement myParent;
   private int myRole1;
@@ -869,10 +873,14 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
         myResult = Spacing.createDependentLFSpacing(0, 1, textRange, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_BEFORE_RBRACE);
       }
     }
-    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT
-             && myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT)
-    {
-      myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
+    else if (myChild1.getElementType() == JavaElementType.SWITCH_LABEL_STATEMENT) {
+      if (myChild2.getElementType() == JavaElementType.BLOCK_STATEMENT) {
+        myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
+      }
+      else {
+        int lineFeeds = mySettings.CASE_STATEMENT_ON_NEW_LINE ? 1 : 0;
+        myResult = Spacing.createSpacing(1, 1, lineFeeds, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      }
     }
     else if (lhsStatement && rhsStatement) {
       int minSpaces = 0;
@@ -1301,12 +1309,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
     else if (myRole1 == ChildRole.ARROW) {
       if (myRole2 == ChildRole.LBRACE) {
-        switch (mySettings.BRACE_STYLE) {
+        switch (mySettings.LAMBDA_BRACE_STYLE) {
           case NEXT_LINE:
           case NEXT_LINE_SHIFTED:
           case NEXT_LINE_SHIFTED2:
             int space = spaceAroundArrow ? 1 : 0;
-            myResult = Spacing.createSpacing(space, space, 1, false, 0);
+            myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
             break;
           default:
             createSpaceInCode(spaceAroundArrow);
@@ -1329,7 +1337,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitModuleStatement(PsiElement statement) {
+  public void visitModuleStatement(PsiStatement statement) {
     if (myType1 == JavaElementType.MODULE_REFERENCE) {
       createSpaceInCode(myType2 != JavaTokenType.SEMICOLON && myType2 != JavaTokenType.COMMA);
     }
@@ -1503,11 +1511,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.AMPERSAND_IN_BOUNDS_LIST || myRole2 == ChildRole.AMPERSAND_IN_BOUNDS_LIST) {
       createSpaceInCode(myJavaSettings.SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS);
     }
-    else if (myRole1 == ChildRole.EXTENDS_KEYWORD
-             || myRole2 == ChildRole.EXTENDS_KEYWORD
-             || myRole1 == ChildRole.IMPLEMENTS_KEYWORD
-             || myRole2 == ChildRole.IMPLEMENTS_KEYWORD
-             || myRole1 == ChildRole.THROWS_KEYWORD) {
+    else if (REF_LIST_KEYWORDS.contains(myType1) || REF_LIST_KEYWORDS.contains(myType2)) {
       createSpaceInCode(true);
     }
   }

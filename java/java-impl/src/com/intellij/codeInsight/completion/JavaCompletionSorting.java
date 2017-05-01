@@ -72,13 +72,20 @@ public class JavaCompletionSorting {
       sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
 
+    final PreferMostUsedWeigher preferMostUsedWeigher = PreferMostUsedWeigher.create(position);
     List<LookupElementWeigher> afterStats = ContainerUtil.newArrayList();
     afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
     if (!smart) {
-      ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
+      if (preferMostUsedWeigher == null) {
+        ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
+      }
       if (!afterNew) {
         afterStats.add(new PreferExpected(false, expectedTypes, position));
       }
+    }
+    if (preferMostUsedWeigher != null) {
+      afterStats.add(preferMostUsedWeigher);
+      ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
     }
     ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
     afterStats.add(new PreferSimilarlyEnding(expectedTypes));
@@ -88,10 +95,6 @@ public class JavaCompletionSorting {
     Collections.addAll(afterStats, new PreferAccessible(position), new PreferSimple());
 
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[afterStats.size()]));
-    final PreferMostUsedWeigher preferMostUsedWeigher = PreferMostUsedWeigher.create(position);
-    if (preferMostUsedWeigher != null) {
-      sorter = sorter.weighAfter("stats", preferMostUsedWeigher);
-    }
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[afterProximity.size()]));
     return result.withRelevanceSorter(sorter);
   }

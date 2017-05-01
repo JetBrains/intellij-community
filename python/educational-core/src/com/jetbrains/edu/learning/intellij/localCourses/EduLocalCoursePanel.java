@@ -2,8 +2,8 @@ package com.jetbrains.edu.learning.intellij.localCourses;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ public class EduLocalCoursePanel {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
         String coursePath = myCourseArchivePath.getText();
-        CourseInfo courseInfo = generator.addLocalCourse(coursePath);
+        Course courseInfo = generator.addLocalCourse(coursePath);
         if (courseInfo != null) {
           myBuilder.setSelectedCourse(courseInfo);
           myGenerator.setSelectedCourse(courseInfo);
@@ -45,7 +45,7 @@ public class EduLocalCoursePanel {
   }
 
   private void createUIComponents() {
-    myStudyPanel = new StudyNewProjectPanel(myGenerator);
+    myStudyPanel = new StudyNewProjectPanel(myGenerator, true);
     myInfoPanel = myStudyPanel.getInfoPanel();
   }
 }

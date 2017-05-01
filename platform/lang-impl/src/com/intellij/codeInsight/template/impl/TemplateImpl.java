@@ -23,6 +23,7 @@ import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.SmartList;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +58,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     if (!myString.equals(template.myString)) return false;
     if (myTemplateText != null ? !myTemplateText.equals(template.myTemplateText) : template.myTemplateText != null) return false;
 
-    if (!new HashSet<>(myVariables).equals(new HashSet<>(template.myVariables))) return false;
+    if (!new THashSet<>(myVariables).equals(new THashSet<>(template.myVariables))) return false;
     if (isDeactivated != template.isDeactivated) return false;
 
     return true;
@@ -85,7 +86,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   @NonNls public static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
 
-  public static final Set<String> INTERNAL_VARS_SET = new HashSet<>(Arrays.asList(
+  public static final Set<String> INTERNAL_VARS_SET = new THashSet<>(Arrays.asList(
     END, SELECTION, SELECTION_START, SELECTION_END));
 
   private boolean isDeactivated = false;

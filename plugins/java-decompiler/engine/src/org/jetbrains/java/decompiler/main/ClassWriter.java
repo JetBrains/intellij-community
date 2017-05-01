@@ -98,8 +98,8 @@ public class ClassWriter {
           buffer.append(ExprProcessor.getCastTypeName(new VarType(node.lambdaInformation.content_class_name, true)));
         }
 
-        buffer.append("::");
-        buffer.append(node.lambdaInformation.content_method_name);
+        buffer.append("::")
+          .append(CodeConstants.INIT_NAME.equals(node.lambdaInformation.content_method_name) ? "new" : node.lambdaInformation.content_method_name);
       }
       else {
         // lambda method
@@ -271,7 +271,7 @@ public class ClassWriter {
 
   private static void addTracer(StructClass cls, StructMethod method, BytecodeMappingTracer tracer) {
     StructLineNumberTableAttribute table =
-      (StructLineNumberTableAttribute)method.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
+      (StructLineNumberTableAttribute)method.getAttribute(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
     tracer.setLineNumberTable(table);
     String key = InterpreterUtil.makeUniqueKey(method.getName(), method.getDescriptor());
     DecompilerContext.getBytecodeSourceMapper().addTracer(cls.qualifiedName, key, tracer);
@@ -287,8 +287,8 @@ public class ClassWriter {
     StructClass cl = wrapper.getClassStruct();
 
     int flags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
-    boolean isDeprecated = cl.getAttributes().containsKey("Deprecated");
-    boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || cl.getAttributes().containsKey("Synthetic");
+    boolean isDeprecated = cl.hasAttribute("Deprecated");
+    boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || cl.hasAttribute("Synthetic");
     boolean isEnum = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM) && (flags & CodeConstants.ACC_ENUM) != 0;
     boolean isInterface = (flags & CodeConstants.ACC_INTERFACE) != 0;
     boolean isAnnotation = (flags & CodeConstants.ACC_ANNOTATION) != 0;
@@ -379,7 +379,7 @@ public class ClassWriter {
   private void fieldToJava(ClassWrapper wrapper, StructClass cl, StructField fd, TextBuffer buffer, int indent, BytecodeMappingTracer tracer) {
     int start = buffer.length();
     boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
-    boolean isDeprecated = fd.getAttributes().containsKey("Deprecated");
+    boolean isDeprecated = fd.hasAttribute("Deprecated");
     boolean isEnum = fd.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
     if (isDeprecated) {
@@ -407,7 +407,7 @@ public class ClassWriter {
 
     GenericFieldDescriptor descriptor = null;
     if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)fd.getAttributes().getWithKey("Signature");
+      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)fd.getAttribute("Signature");
       if (attr != null) {
         descriptor = GenericMain.parseFieldSignature(attr.getSignature());
       }
@@ -442,13 +442,18 @@ public class ClassWriter {
       }
       else {
         buffer.append(" = ");
+
+        if (initializer.type == Exprent.EXPRENT_CONST) {
+          ((ConstExprent) initializer).adjustConstType(fieldType);
+        }
+
         // FIXME: special case field initializer. Can map to more than one method (constructor) and bytecode intruction.
         buffer.append(initializer.toJava(indent, tracer));
       }
     }
     else if (fd.hasModifier(CodeConstants.ACC_FINAL) && fd.hasModifier(CodeConstants.ACC_STATIC)) {
       StructConstantValueAttribute attr =
-        (StructConstantValueAttribute)fd.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_CONSTANT_VALUE);
+        (StructConstantValueAttribute)fd.getAttribute(StructGeneralAttribute.ATTRIBUTE_CONSTANT_VALUE);
       if (attr != null) {
         PrimitiveConstant constant = cl.getPool().getPrimitiveConstant(attr.getIndex());
         buffer.append(" = ");
@@ -587,7 +592,7 @@ public class ClassWriter {
       boolean isInterface = cl.hasModifier(CodeConstants.ACC_INTERFACE);
       boolean isAnnotation = cl.hasModifier(CodeConstants.ACC_ANNOTATION);
       boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
-      boolean isDeprecated = mt.getAttributes().containsKey("Deprecated");
+      boolean isDeprecated = mt.hasAttribute("Deprecated");
       boolean clinit = false, init = false, dinit = false;
 
       MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
@@ -609,7 +614,7 @@ public class ClassWriter {
         appendRenameComment(buffer, oldName, MType.METHOD, indent);
       }
 
-      boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || mt.getAttributes().containsKey("Synthetic");
+      boolean isSynthetic = (flags & CodeConstants.ACC_SYNTHETIC) != 0 || mt.hasAttribute("Synthetic");
       boolean isBridge = (flags & CodeConstants.ACC_BRIDGE) != 0;
       if (isSynthetic) {
         appendComment(buffer, "synthetic method", indent);
@@ -624,7 +629,7 @@ public class ClassWriter {
 
       appendModifiers(buffer, flags, METHOD_ALLOWED, isInterface, METHOD_EXCLUDED);
 
-      if (isInterface && mt.containsCode()) {
+      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && mt.containsCode()) {
         // 'default' modifier (Java 8)
         buffer.append("default ");
       }
@@ -647,7 +652,7 @@ public class ClassWriter {
 
       GenericMethodDescriptor descriptor = null;
       if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-        StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)mt.getAttributes().getWithKey("Signature");
+        StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)mt.getAttribute("Signature");
         if (attr != null) {
           descriptor = GenericMain.parseMethodSignature(attr.getSignature());
           if (descriptor != null) {
@@ -771,7 +776,7 @@ public class ClassWriter {
 
         buffer.append(')');
 
-        StructExceptionsAttribute attr = (StructExceptionsAttribute)mt.getAttributes().getWithKey("Exceptions");
+        StructExceptionsAttribute attr = (StructExceptionsAttribute)mt.getAttribute("Exceptions");
         if ((descriptor != null && !descriptor.exceptions.isEmpty()) || attr != null) {
           throwsExceptions = true;
           buffer.append(" throws ");
@@ -796,7 +801,7 @@ public class ClassWriter {
 
       if ((flags & (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_NATIVE)) != 0) { // native or abstract method (explicit or interface)
         if (isAnnotation) {
-          StructAnnDefaultAttribute attr = (StructAnnDefaultAttribute)mt.getAttributes().getWithKey("AnnotationDefault");
+          StructAnnDefaultAttribute attr = (StructAnnDefaultAttribute)mt.getAttribute("AnnotationDefault");
           if (attr != null) {
             buffer.append(" default ");
             buffer.append(attr.getDefaultValue().toJava(0, BytecodeMappingTracer.DUMMY));
@@ -943,7 +948,7 @@ public class ClassWriter {
     Set<String> filter = new HashSet<>();
 
     for (String name : ANNOTATION_ATTRIBUTES) {
-      StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttributes().getWithKey(name);
+      StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttribute(name);
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
           String text = annotation.toJava(indent, BytecodeMappingTracer.DUMMY).toString();
@@ -960,7 +965,7 @@ public class ClassWriter {
     Set<String> filter = new HashSet<>();
 
     for (String name : PARAMETER_ANNOTATION_ATTRIBUTES) {
-      StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttributes().getWithKey(name);
+      StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(name);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
         if (param < annotations.size()) {
@@ -978,7 +983,7 @@ public class ClassWriter {
 
   private static void appendTypeAnnotations(TextBuffer buffer, int indent, StructMember mb, int targetType, int index, Set<String> filter) {
     for (String name : TYPE_ANNOTATION_ATTRIBUTES) {
-      StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)mb.getAttributes().getWithKey(name);
+      StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)mb.getAttribute(name);
       if (attribute != null) {
         for (TypeAnnotation annotation : attribute.getAnnotations()) {
           if (annotation.isTopLevel() && annotation.getTargetType() == targetType && (index < 0 || annotation.getIndex() == index)) {
@@ -1041,7 +1046,7 @@ public class ClassWriter {
 
   public static GenericClassDescriptor getGenericClassDescriptor(StructClass cl) {
     if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
-      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttributes().getWithKey("Signature");
+      StructGenericSignatureAttribute attr = (StructGenericSignatureAttribute)cl.getAttribute("Signature");
       if (attr != null) {
         return GenericMain.parseClassSignature(attr.getSignature());
       }

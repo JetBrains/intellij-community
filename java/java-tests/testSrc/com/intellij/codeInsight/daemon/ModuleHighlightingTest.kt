@@ -55,6 +55,11 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
   }
 
+  fun testFileDuplicateInTestRoot() {
+    addTestFile("module-info.java", """module M.test { }""")
+    highlight("""<error descr="'module-info.java' already exists in the module">module M</error> { }""")
+  }
+
   fun testWrongFileLocation() {
     highlight("pkg/module-info.java", """<warning descr="Module declaration should be located in a module's source root">module M</warning> { }""")
   }
@@ -241,6 +246,80 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         """.trimIndent())
   }
 
+  fun testPackageAccessibilityInNonModularTest() {
+    addFile("module-info.java", "module M { }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
+    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
+    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
+    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
+    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
+    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
+    highlight("test.java", """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import pkg.m2.impl.C2Impl;
+        import pkg.m2.impl.*;
+        import pkg.m4.C4;
+        import pkg.m5.C5;
+        import pkg.m7.C7;
+
+        import pkg.lib1.LC1;
+        import pkg.lib1.impl.LC1Impl;
+        import pkg.lib1.impl.*;
+
+        import pkg.lib2.LC2;
+        import pkg.lib2.impl.LC2Impl;
+
+        import static pkg.m2.impl.C2Impl.make;
+
+        /** See also {@link C2Impl#make} */
+        class C {{
+          C2Impl.make();
+          pkg.m2.impl.C2Impl.make();
+        }}
+        """.trimIndent(), true)
+  }
+
+  fun testPackageAccessibilityInModularTest() {
+    addTestFile("module-info.java", "module M { requires M2; requires M6; requires lib.named; requires lib.auto; }")
+    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static C2 make() {} }", M2)
+    addFile("pkg/m4/C4.java", "package pkg.m4;\npublic class C4 { }", M4)
+    addFile("module-info.java", "module M5 { exports pkg.m5; }", M5)
+    addFile("pkg/m5/C5.java", "package pkg.m5;\npublic class C5 { }", M5)
+    addFile("module-info.java", "module M6 { requires transitive M7; }", M6)
+    addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
+    addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
+    highlight("test.java", """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>;
+        import <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl</error>.*;
+        import <error descr="A named module cannot access packages of an unnamed one">pkg.m4.C4</error>;
+        import <error descr="The module 'M' does not have the module 'M5' in requirements">pkg.m5.C5</error>;
+        import pkg.m7.C7;
+
+        import pkg.lib1.LC1;
+        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl.LC1Impl</error>;
+        import <error descr="The module 'lib.named' does not export the package 'pkg.lib1.impl' to the module 'M'">pkg.lib1.impl</error>.*;
+
+        import pkg.lib2.LC2;
+        import pkg.lib2.impl.LC2Impl;
+
+        import static <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make;
+
+        /** See also {@link C2Impl#make} */
+        class C {{
+          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">C2Impl</error>.make();
+          <error descr="The module 'M2' does not export the package 'pkg.m2.impl' to the module 'M'">pkg.m2.impl.C2Impl</error>.make();
+        }}
+        """.trimIndent(), true)
+  }
+
   fun testLinearModuleGraphBug() {
     addFile("module-info.java", "module M6 { requires M7; }", M6)
     addFile("module-info.java", "module M7 { }", M7)
@@ -303,8 +382,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
-  private fun highlight(path: String, text: String) {
-    myFixture.configureFromExistingVirtualFile(addFile(path, text))
+  private fun highlight(path: String, text: String, isTest: Boolean = false) {
+    myFixture.configureFromExistingVirtualFile(if (isTest) addTestFile(path, text) else addFile(path, text))
     myFixture.checkHighlighting()
   }
 

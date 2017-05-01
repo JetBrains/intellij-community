@@ -30,6 +30,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
+import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel;
 import com.intellij.openapi.roots.ui.componentsList.layout.VerticalStackLayout;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -208,7 +209,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
         for (final ContentEntry contentEntry : contentEntries) {
           addContentEntryPanel(contentEntry.getUrl());
         }
-        selectContentEntry(contentEntries[0].getUrl());
+        selectContentEntry(contentEntries[0].getUrl(), false);
       }
     }
 
@@ -261,8 +262,11 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     };
   }
 
-  void selectContentEntry(final String contentEntryUrl) {
+  void selectContentEntry(final String contentEntryUrl, boolean requestFocus) {
     if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(contentEntryUrl)) {
+      if (requestFocus) {
+        myRootTreeEditor.requestFocus();
+      }
       return;
     }
     try {
@@ -281,7 +285,9 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
           final JComponent scroller = (JComponent)component.getParent();
           SwingUtilities.invokeLater(() -> scroller.scrollRectToVisible(component.getBounds()));
           myRootTreeEditor.setContentEntryEditor(editor);
-          myRootTreeEditor.requestFocus();
+          if (requestFocus) {
+            myRootTreeEditor.requestFocus();
+          }
         }
       }
     }
@@ -346,13 +352,38 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
     myEditorsPanel.revalidate();
     myEditorsPanel.repaint();
-    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1].getUrl());
+    selectContentEntry(contentEntriesArray[contentEntriesArray.length - 1].getUrl(), false);
   }
 
   private final class MyContentEntryEditorListener extends ContentEntryEditorListenerAdapter {
     @Override
+    public void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void folderIncluded(@NotNull ContentEntryEditor editor, String fileUrl) {
+      fireConfigurationChanged();
+    }
+
+    @Override
+    public void sourceRootPropertiesChanged(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder) {
+      fireConfigurationChanged();
+    }
+
+    @Override
     public void editingStarted(@NotNull ContentEntryEditor editor) {
-      selectContentEntry(editor.getContentEntryUrl());
+      selectContentEntry(editor.getContentEntryUrl(), true);
     }
 
     @Override
@@ -363,21 +394,14 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
       }
       final String nextContentEntryUrl = getNextContentEntry(entryUrl);
       removeContentEntryPanel(entryUrl);
-      selectContentEntry(nextContentEntryUrl);
+      selectContentEntry(nextContentEntryUrl, true);
       editor.removeContentEntryEditorListener(this);
     }
 
     @Override
     public void navigationRequested(@NotNull ContentEntryEditor editor, VirtualFile file) {
-      if (mySelectedEntryUrl != null && mySelectedEntryUrl.equals(editor.getContentEntryUrl())) {
-        myRootTreeEditor.requestFocus();
-        myRootTreeEditor.select(file);
-      }
-      else {
-        selectContentEntry(editor.getContentEntryUrl());
-        myRootTreeEditor.requestFocus();
-        myRootTreeEditor.select(file);
-      }
+      selectContentEntry(editor.getContentEntryUrl(), true);
+      myRootTreeEditor.select(file);
     }
 
     private void removeContentEntryPanel(final String contentEntryUrl) {

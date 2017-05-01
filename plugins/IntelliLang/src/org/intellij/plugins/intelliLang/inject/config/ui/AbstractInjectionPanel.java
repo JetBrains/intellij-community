@@ -108,11 +108,7 @@ public abstract class AbstractInjectionPanel<T extends BaseInjection> implements
     for (Field panel : myOtherPanels) {
       getField(panel).reset();
     }
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      public void run() {
-        resetImpl();
-      }
-    });
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> resetImpl());
   }
 
   protected abstract void resetImpl();

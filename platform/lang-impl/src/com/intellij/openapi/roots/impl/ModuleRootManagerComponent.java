@@ -51,14 +51,16 @@ public class ModuleRootManagerComponent extends ModuleRootManagerImpl implements
   @NotNull
   @Override
   public Resolution getResolution(@NotNull Storage storage, @NotNull StateStorageOperation operation) {
-    boolean isDefault = storage.storageClass() == StateStorage.class;
-    boolean isEffectiveStorage = ClassPathStorageUtil.isDefaultStorage(getModule()) == isDefault;
+    boolean isClasspathStorage = storage.storageClass() == ClasspathStorage.class;
+    boolean isEffectiveStorage = ClassPathStorageUtil.isClasspathStorage(getModule()) == isClasspathStorage;
     if (operation == StateStorageOperation.READ) {
       return isEffectiveStorage ? Resolution.DO : Resolution.SKIP;
     }
     else {
       // IDEA-133480 Eclipse integration: .iml content is not reduced on setting Dependencies Storage Format = Eclipse
-      return isEffectiveStorage ? Resolution.DO : (isDefault ? Resolution.CLEAR : Resolution.SKIP);
+      // We clear any storage except eclipse (because we must not clear shared files).
+      // Currently there is only one known non-default storage - ExternalProjectStorage.
+      return isEffectiveStorage ? Resolution.DO : (isClasspathStorage ? Resolution.SKIP : Resolution.CLEAR);
     }
   }
 

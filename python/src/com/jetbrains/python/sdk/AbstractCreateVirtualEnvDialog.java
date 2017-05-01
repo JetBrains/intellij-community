@@ -20,6 +20,7 @@ import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -74,12 +74,7 @@ public abstract class AbstractCreateVirtualEnvDialog extends IdeaDialog {
                                            boolean associateWithProject,
                                            VirtualEnvCallback callback) {
     final VirtualFile sdkHome =
-      ApplicationManager.getApplication().runWriteAction(new Computable<VirtualFile>() {
-        @Nullable
-        public VirtualFile compute() {
-          return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-        }
-      });
+      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(path));
     if (sdkHome != null) {
       final Sdk sdk = SdkConfigurationUtil.createAndAddSDK(FileUtil.toSystemDependentName(sdkHome.getPath()), PythonSdkType.getInstance());
       callback.virtualEnvCreated(sdk, associateWithProject);

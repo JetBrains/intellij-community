@@ -288,7 +288,7 @@ public class ExprProcessor implements CodeConstants {
 
     ConstantPool pool = cl.getPool();
     StructBootstrapMethodsAttribute bootstrap =
-      (StructBootstrapMethodsAttribute)cl.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
+      (StructBootstrapMethodsAttribute)cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_BOOTSTRAP_METHODS);
 
     BasicBlock block = stat.getBlock();
 
@@ -313,16 +313,16 @@ public class ExprProcessor implements CodeConstants {
           break;
         case opc_lconst_0:
         case opc_lconst_1:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_LONG, new Long(instr.opcode - opc_lconst_0), bytecode_offsets));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_LONG, Long.valueOf(instr.opcode - opc_lconst_0), bytecode_offsets));
           break;
         case opc_fconst_0:
         case opc_fconst_1:
         case opc_fconst_2:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_FLOAT, new Float(instr.opcode - opc_fconst_0), bytecode_offsets));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_FLOAT, Float.valueOf(instr.opcode - opc_fconst_0), bytecode_offsets));
           break;
         case opc_dconst_0:
         case opc_dconst_1:
-          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(instr.opcode - opc_dconst_0), bytecode_offsets));
+          pushEx(stack, exprlist, new ConstExprent(VarType.VARTYPE_DOUBLE, Double.valueOf(instr.opcode - opc_dconst_0), bytecode_offsets));
           break;
         case opc_ldc:
         case opc_ldc_w:
@@ -840,13 +840,13 @@ public class ExprProcessor implements CodeConstants {
       defaultVal = new ConstExprent(VarType.VARTYPE_NULL, null, null);
     }
     else if (arrType.type == CodeConstants.TYPE_FLOAT) {
-      defaultVal = new ConstExprent(VarType.VARTYPE_FLOAT, new Float(0), null);
+      defaultVal = new ConstExprent(VarType.VARTYPE_FLOAT, Float.valueOf(0), null);
     }
     else if (arrType.type == CodeConstants.TYPE_LONG) {
-      defaultVal = new ConstExprent(VarType.VARTYPE_LONG, new Long(0), null);
+      defaultVal = new ConstExprent(VarType.VARTYPE_LONG, Long.valueOf(0), null);
     }
     else if (arrType.type == CodeConstants.TYPE_DOUBLE) {
-      defaultVal = new ConstExprent(VarType.VARTYPE_DOUBLE, new Double(0), null);
+      defaultVal = new ConstExprent(VarType.VARTYPE_DOUBLE, Double.valueOf(0), null);
     }
     else { // integer types
       defaultVal = new ConstExprent(0, true, null);
@@ -860,7 +860,7 @@ public class ExprProcessor implements CodeConstants {
                                          int indent,
                                          boolean castNull,
                                          BytecodeMappingTracer tracer) {
-    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, tracer);
+    return getCastedExprent(exprent, leftType, buffer, indent, castNull, false, false, tracer);
   }
 
   public static boolean getCastedExprent(Exprent exprent,
@@ -869,6 +869,7 @@ public class ExprProcessor implements CodeConstants {
                                          int indent,
                                          boolean castNull,
                                          boolean castAlways,
+                                         boolean castNarrowing,
                                          BytecodeMappingTracer tracer) {
     VarType rightType = exprent.getExprType();
 
@@ -876,13 +877,17 @@ public class ExprProcessor implements CodeConstants {
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
-      (isIntConstant(exprent) && rightType.isStrictSuperset(leftType));
+      (castNarrowing && isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
     if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
 
     if (quote) buffer.append('(');
+
+    if (exprent.type == Exprent.EXPRENT_CONST) {
+      ((ConstExprent) exprent).adjustConstType(leftType);
+    }
 
     buffer.append(exprent.toJava(indent, tracer));
 

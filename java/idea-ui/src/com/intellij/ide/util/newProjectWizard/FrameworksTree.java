@@ -18,7 +18,6 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ui.*;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.TestOnly;
 
@@ -82,15 +81,12 @@ public class FrameworksTree extends CheckboxTree {
 
   @Override
   protected void installSpeedSearch() {
-    new TreeSpeedSearch(this, new Convertor<TreePath, String>() {
-      @Override
-      public String convert(TreePath path) {
-        final Object node = path.getLastPathComponent();
-        if (node instanceof FrameworkSupportNodeBase) {
-          return ((FrameworkSupportNodeBase)node).getTitle();
-        }
-        return "";
+    new TreeSpeedSearch(this, path -> {
+      final Object node = path.getLastPathComponent();
+      if (node instanceof FrameworkSupportNodeBase) {
+        return ((FrameworkSupportNodeBase)node).getTitle();
       }
+      return "";
     });
   }
 

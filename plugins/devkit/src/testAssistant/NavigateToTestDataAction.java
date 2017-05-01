@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import com.intellij.testFramework.Parameterized;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -86,15 +87,17 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     if (location instanceof PsiMemberParameterizedLocation) {
       PsiClass containingClass = ((PsiMemberParameterizedLocation)location).getContainingClass();
       if (containingClass == null) {
-        containingClass = PsiTreeUtil.getParentOfType(location.getPsiElement(), PsiClass.class, false);
+        containingClass = UastContextKt.getUastParentOfType(location.getPsiElement(), UClass.class, false);
       }
       if (containingClass != null) {
-        final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH));
+        final UAnnotation annotation =
+          UastContextKt.toUElement(AnnotationUtil.findAnnotationInHierarchy(containingClass, Collections.singleton(JUnitUtil.RUN_WITH)), UAnnotation.class);
         if (annotation != null) {
-          final PsiAnnotationMemberValue memberValue = annotation.findAttributeValue("value");
-          if (memberValue instanceof PsiClassObjectAccessExpression) {
-            final PsiTypeElement operand = ((PsiClassObjectAccessExpression)memberValue).getOperand();
-            if (operand.getType().equalsToText(Parameterized.class.getName())) {
+          UExpression value = annotation.findAttributeValue("value");
+          if (value instanceof UClassLiteralExpression) {
+            UClassLiteralExpression classLiteralExpression = (UClassLiteralExpression)value;
+            PsiType type = classLiteralExpression.getType();
+            if (type != null && type.equalsToText(Parameterized.class.getName())) {
               final String testDataPath = TestDataLineMarkerProvider.getTestDataBasePath(containingClass);
               final String paramSetName = ((PsiMemberParameterizedLocation)location).getParamSetName();
               final String baseFileName = StringUtil.trimEnd(StringUtil.trimStart(paramSetName, "["), "]");
@@ -126,8 +129,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
-      PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-      return PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+      return UastContextKt.findUElementAt(file, editor.getCaretModel().getOffset(), UMethod.class);
     }
 
     return null;

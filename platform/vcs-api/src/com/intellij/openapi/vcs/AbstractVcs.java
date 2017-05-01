@@ -542,14 +542,11 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
   @Nullable
   public CommittedChangeList loadRevisions(final VirtualFile vf, final VcsRevisionNumber number) {
     final CommittedChangeList[] list = new CommittedChangeList[1];
-    final ThrowableRunnable<VcsException> runnable = new ThrowableRunnable<VcsException>() {
-      @Override
-      public void run() throws VcsException {
-        final Pair<CommittedChangeList, FilePath> pair =
-          getCommittedChangesProvider().getOneList(vf, number);
-        if (pair != null) {
-          list[0] = pair.getFirst();
-        }
+    final ThrowableRunnable<VcsException> runnable = () -> {
+      final Pair<CommittedChangeList, FilePath> pair =
+        getCommittedChangesProvider().getOneList(vf, number);
+      if (pair != null) {
+        list[0] = pair.getFirst();
       }
     };
     return VcsSynchronousProgressWrapper.wrap(runnable, getProject(), "Load revision contents") ? list[0] : null;

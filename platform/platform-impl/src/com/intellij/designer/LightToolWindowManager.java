@@ -262,7 +262,7 @@ public abstract class LightToolWindowManager implements ProjectComponent {
   }
 
   @Nullable
-  final ToolWindowAnchor getEditorMode() {
+  public final ToolWindowAnchor getEditorMode() {
     String value = myPropertiesComponent.getValue(myEditorModeKey);
     if (value == null) {
       return getAnchor();

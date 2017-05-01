@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.xmlb.annotations.CollectionBean;
@@ -27,8 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -61,7 +62,12 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
     return ServiceManager.getService(UpdateSettings.class);
   }
 
+  private final boolean myPlatformUpdateEnabled = !SystemProperties.getBooleanProperty("ide.no.platform.update", false);
   private State myState = new State();
+
+  public boolean isPlatformUpdateEnabled() {
+    return myPlatformUpdateEnabled;
+  }
 
   @NotNull
   @Override
@@ -76,7 +82,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   @Nullable
-  public String getLasBuildChecked() {
+  public String getLastBuildChecked() {
     return myState.LAST_BUILD_CHECKED;
   }
 
@@ -137,7 +143,7 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   public List<ChannelStatus> getActiveChannels() {
     UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
     return Stream.of(ChannelStatus.values())
-      .filter((ch) -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
+      .filter(ch -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
       .collect(Collectors.toList());
   }
 
@@ -173,13 +179,13 @@ public class UpdateSettings implements PersistentStateComponent<UpdateSettings.S
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 2018) */
   @SuppressWarnings("unused")
   public String getUpdateChannelType() {
     return myState.UPDATE_CHANNEL_TYPE;
   }
 
-  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 17) */
+  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 2018) */
   @SuppressWarnings("unused")
   public void setUpdateChannelType(@NotNull String value) {
     myState.UPDATE_CHANNEL_TYPE = value;

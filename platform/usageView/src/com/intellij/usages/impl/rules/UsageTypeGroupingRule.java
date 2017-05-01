@@ -23,7 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
-import com.intellij.usages.rules.UsageGroupingRuleEx;
+import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,14 +32,10 @@ import javax.swing.*;
 /**
  * @author max
  */
-public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
+public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule {
+  @Nullable
   @Override
-  public UsageGroup groupUsage(@NotNull Usage usage) {
-    return groupUsage(usage, UsageTarget.EMPTY_ARRAY);
-  }
-
-  @Override
-  public UsageGroup groupUsage(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
+  protected UsageGroup getParentGroupFor(@NotNull Usage usage, @NotNull UsageTarget[] targets) {
     if (usage instanceof PsiElementUsage) {
       PsiElementUsage elementUsage = (PsiElementUsage)usage;
 
@@ -60,7 +56,6 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
 
       return new UsageTypeGroup(UsageType.UNCLASSIFIED);
     }
-
 
     return null;
   }
@@ -141,6 +136,11 @@ public class UsageTypeGroupingRule implements UsageGroupingRuleEx {
 
     public int hashCode() {
       return myUsageType.hashCode();
+    }
+
+    @Override
+    public String toString() {
+      return "Type:" + myUsageType.toString(new UsageViewPresentation());
     }
   }
 }

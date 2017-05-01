@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class ExtractLightMethodObjectHandler {
-  private static final Logger LOG = Logger.getInstance("#" + ExtractLightMethodObjectHandler.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExtractLightMethodObjectHandler.class);
 
   public static class ExtractedData {
     private final String myGeneratedCallText;
@@ -297,7 +297,7 @@ public class ExtractLightMethodObjectHandler {
     @NotNull
     @Override
     public String getVisibility() {
-      return PsiModifier.PUBLIC;
+      return PsiModifier.PACKAGE_LOCAL;
     }
 
     @Override

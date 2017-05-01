@@ -199,8 +199,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       }
 
       SMTestProxy parentSuite = getCurrentSuite();
-      SMTestProxy testProxy = locationUrl != null ? findChildByLocation(parentSuite, locationUrl)
-                                                  : findChildByName(parentSuite, fullName);
+      SMTestProxy testProxy = locationUrl != null ? findChildByLocation(parentSuite, locationUrl, false)
+                                                  : findChildByName(parentSuite, fullName, false);
       if (testProxy == null) {
         // creates test
         testProxy = new SMTestProxy(testName, false, locationUrl);
@@ -240,8 +240,8 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       final String locationUrl = suiteStartedEvent.getLocationUrl();
 
       SMTestProxy parentSuite = getCurrentSuite();
-      SMTestProxy newSuite = locationUrl != null ? findChildByLocation(parentSuite, locationUrl)
-                                                 : findChildByName(parentSuite, suiteName);
+      SMTestProxy newSuite = locationUrl != null ? findChildByLocation(parentSuite, locationUrl, true)
+                                                 : findChildByName(parentSuite, suiteName, true);
       if (newSuite == null) {
         //new suite
         newSuite = new SMTestProxy(suiteName, true, locationUrl, parentSuite.isPreservePresentableName());
@@ -265,21 +265,31 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
     });
   }
 
-  private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName) {
-    return findChild(parentSuite, fullName, SMTestProxy::getName);
+  private SMTestProxy findChildByName(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
+    return findChild(parentSuite, fullName, SMTestProxy::getName, preferSuite);
   }
 
-  private SMTestProxy findChildByLocation(SMTestProxy parentSuite, String fullName) {
-    return findChild(parentSuite, fullName, SMTestProxy::getLocationUrl);
+  private SMTestProxy findChildByLocation(SMTestProxy parentSuite, String fullName, boolean preferSuite) {
+    return findChild(parentSuite, fullName, SMTestProxy::getLocationUrl, preferSuite);
   }
 
-  private SMTestProxy findChild(SMTestProxy parentSuite, String fullName, final Function<SMTestProxy, String> nameFunction) {
+  private SMTestProxy findChild(SMTestProxy parentSuite,
+                                String fullName,
+                                final Function<SMTestProxy, String> nameFunction,
+                                boolean preferSuite) {
     if (myTreeBuildBeforeStart) {
+      Set<SMTestProxy> acceptedProxies = new LinkedHashSet<>();
       final Collection<? extends SMTestProxy> children = myGetChildren ? parentSuite.getChildren() : myCurrentChildren;
       for (SMTestProxy proxy : children) {
         if (fullName.equals(nameFunction.fun(proxy)) && !proxy.isFinal()) {
-          return proxy;
+          acceptedProxies.add(proxy);
         }
+      }
+      if (!acceptedProxies.isEmpty()) {
+        return acceptedProxies.stream()
+          .filter(proxy -> proxy.isSuite() == preferSuite)
+          .findFirst()
+          .orElse(acceptedProxies.iterator().next());
       }
     }
     return null;

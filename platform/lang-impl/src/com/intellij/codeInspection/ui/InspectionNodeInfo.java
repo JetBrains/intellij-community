@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeTable;
@@ -75,7 +76,10 @@ public class InspectionNodeInfo extends JPanel {
     description.setOpaque(false);
     description.setBackground(UIUtil.getLabelBackground());
     description.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    final String toolDescription = DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(toolWrapper.loadDescription());
+    String descriptionText = toolWrapper.loadDescription();
+    LOG.assertTrue(descriptionText != null, "Inspection '" + toolWrapper.getShortName() + "' has no description");
+    final String toolDescription =
+      DefaultInspectionToolPresentation.stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
     SingleInspectionProfilePanel.readHTML(description, SingleInspectionProfilePanel.toHTML(description, toolDescription == null ? "" : toolDescription, false));
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     int maxWidth = getFontMetrics(UIUtil.getLabelFont()).charWidth('f') * 110 - pane.getMinimumSize().width;

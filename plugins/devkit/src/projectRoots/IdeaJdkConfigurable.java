@@ -38,10 +38,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 /**
  * @author anna
@@ -52,8 +49,8 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private final TextFieldWithStoredHistory mySandboxHome = new TextFieldWithStoredHistory(SANDBOX_HISTORY);
 
   private final JLabel myInternalJreLabel = new JLabel("Internal Java Platform:");
-  private final DefaultComboBoxModel myJdksModel = new DefaultComboBoxModel();
-  private final JComboBox myInternalJres = new JComboBox(myJdksModel);
+  private final DefaultComboBoxModel<Sdk> myJdksModel = new DefaultComboBoxModel<>();
+  private final JComboBox<Sdk> myInternalJres = new JComboBox<>(myJdksModel);
 
   private Sdk myIdeaJdk;
 
@@ -62,31 +59,35 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
 
   private final SdkModel mySdkModel;
   private final SdkModificator mySdkModificator;
-  private boolean myFreeze = false;
+  private boolean myFreeze;
   private final SdkModel.Listener myListener;
 
-  public IdeaJdkConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
+  IdeaJdkConfigurable(final SdkModel sdkModel, final SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
     mySdkModificator = sdkModificator;
     myListener = new SdkModel.Listener() {
+      @Override
       public void sdkAdded(Sdk sdk) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
           addJavaSdk(sdk);
         }
       }
 
+      @Override
       public void beforeSdkRemove(Sdk sdk) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
           removeJavaSdk(sdk);
         }
       }
 
+      @Override
       public void sdkChanged(Sdk sdk, String previousName) {
         if (sdk.getSdkType().equals(JavaSdk.getInstance())) {
           updateJavaSdkList(sdk, previousName);
         }
       }
 
+      @Override
       public void sdkHomeSelected(final Sdk sdk, final String newSdkHome) {
         if (sdk.getSdkType() instanceof IdeaJdk) {
           internalJdkUpdate(sdk);
@@ -105,59 +106,57 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     }
   }
 
+  @Override
   public void setSdk(Sdk sdk) {
     myIdeaJdk = sdk;
   }
 
+  @Override
   public JComponent createComponent() {
     mySandboxHome.setHistorySize(5);
     JPanel wholePanel = new JPanel(new GridBagLayout());
     wholePanel.add(mySandboxHomeLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 1.0, GridBagConstraints.WEST,
                                                               GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
-    wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome, new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-        descriptor.setTitle(DevKitBundle.message("sandbox.home"));
-        descriptor.setDescription(DevKitBundle.message("sandbox.purpose"));
-        VirtualFile file = FileChooser.chooseFile(descriptor, mySandboxHome, null, null);
-        if (file != null) {
-          mySandboxHome.setText(FileUtil.toSystemDependentName(file.getPath()));
-        }
-        myModified = true;
+    wholePanel.add(GuiUtils.constructFieldWithBrowseButton(mySandboxHome, e -> {
+      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
+      descriptor.setTitle(DevKitBundle.message("sandbox.home"));
+      descriptor.setDescription(DevKitBundle.message("sandbox.purpose"));
+      VirtualFile file = FileChooser.chooseFile(descriptor, mySandboxHome, null, null);
+      if (file != null) {
+        mySandboxHome.setText(FileUtil.toSystemDependentName(file.getPath()));
       }
+      myModified = true;
     }), new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.EAST,
-                               GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
+                                 GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
 
     wholePanel.add(myInternalJreLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 1, GridBagConstraints.WEST,
                                                               GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
     wholePanel.add(myInternalJres, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1, 1, GridBagConstraints.EAST,
                                                           GridBagConstraints.HORIZONTAL, JBUI.insets(0, 30, 0, 0), 0, 0));
-    myInternalJres.setRenderer(new ListCellRendererWrapper() {
+    myInternalJres.setRenderer(new ListCellRendererWrapper<Sdk>() {
       @Override
-      public void customize(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        if (value instanceof Sdk) {
-          setText(((Sdk)value).getName());
+      public void customize(JList list, Sdk value, int index, boolean selected, boolean hasFocus) {
+        if (value != null) {
+          setText(value.getName());
         }
       }
     });
 
-    myInternalJres.addItemListener(new ItemListener() {
-      public void itemStateChanged(final ItemEvent e) {
-        if (myFreeze) return;
-        final Sdk javaJdk = (Sdk)e.getItem();
-        for (OrderRootType type : OrderRootType.getAllTypes()) {
-          if (!((SdkType) javaJdk.getSdkType()).isRootTypeApplicable(type)) {
-            continue;
-          }
-          final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
-          final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);
-          for (VirtualFile file : internalRoots) {
-            if (e.getStateChange() == ItemEvent.DESELECTED) {
-              mySdkModificator.removeRoot(file, type);
-            } else {
-              if (ArrayUtil.find(configuredRoots, file) == -1) {
-                mySdkModificator.addRoot(file, type);
-              }
+    myInternalJres.addItemListener(e -> {
+      if (myFreeze) return;
+      final Sdk javaJdk = (Sdk)e.getItem();
+      for (OrderRootType type : OrderRootType.getAllTypes()) {
+        if (!((SdkType) javaJdk.getSdkType()).isRootTypeApplicable(type)) {
+          continue;
+        }
+        final VirtualFile[] internalRoots = javaJdk.getSdkModificator().getRoots(type);
+        final VirtualFile[] configuredRoots = mySdkModificator.getRoots(type);
+        for (VirtualFile file : internalRoots) {
+          if (e.getStateChange() == ItemEvent.DESELECTED) {
+            mySdkModificator.removeRoot(file, type);
+          } else {
+            if (ArrayUtil.find(configuredRoots, file) == -1) {
+              mySdkModificator.addRoot(file, type);
             }
           }
         }
@@ -165,15 +164,12 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     });
 
     mySandboxHome.addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         myModified = true;
       }
     });
-    mySandboxHome.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myModified = true;
-      }
-    });
+    mySandboxHome.addActionListener(e -> myModified = true);
     mySandboxHome.setText("");
     myModified = true;
     return wholePanel;
@@ -188,10 +184,12 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     return myModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     /*if (mySandboxHome.getText() == null || mySandboxHome.getText().length() == 0) {
       throw new ConfigurationException(DevKitBundle.message("sandbox.specification"));
@@ -204,11 +202,12 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     Sandbox sandbox = new Sandbox(mySandboxHome.getText(), (Sdk)myInternalJres.getSelectedItem(), myIdeaJdk);
     final SdkModificator modificator = myIdeaJdk.getSdkModificator();
     modificator.setSdkAdditionalData(sandbox);
-    ApplicationManager.getApplication().runWriteAction(() -> modificator.commitChanges());
+    ApplicationManager.getApplication().runWriteAction(modificator::commitChanges);
     ((ProjectJdkImpl) myIdeaJdk).resetVersionString();
     myModified = false;
   }
 
+  @Override
   public void reset() {
     myFreeze = true;
     updateJdkList();
@@ -222,7 +221,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
       final Sdk internalJava = sandbox.getJavaSdk();
       if (internalJava != null) {
         for (int i = 0; i < myJdksModel.getSize(); i++) {
-          if (Comparing.strEqual(((Sdk)myJdksModel.getElementAt(i)).getName(), internalJava.getName())){
+          if (Comparing.strEqual(myJdksModel.getElementAt(i).getName(), internalJava.getName())){
             myInternalJres.setSelectedIndex(i);
             break;
           }
@@ -234,6 +233,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
     }
   }
 
+  @Override
   public void disposeUIResources() {
     mySdkModel.removeListener(myListener);
   }

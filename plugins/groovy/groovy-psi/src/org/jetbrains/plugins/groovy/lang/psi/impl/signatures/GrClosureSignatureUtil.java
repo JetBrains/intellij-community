@@ -347,7 +347,7 @@ public class GrClosureSignatureUtil {
                                                            @NotNull PsiType[] args,
                                                            @NotNull PsiElement context,
                                                            boolean partial) {
-    return mapParametersToArguments(signature, args, FunctionUtil.<PsiType>id(), context, partial);
+    return mapParametersToArguments(signature, args, FunctionUtil.id(), context, partial);
   }
 
   private static class ArgWrapper<Arg> {
@@ -602,7 +602,7 @@ public class GrClosureSignatureUtil {
     }
 
     public ArgInfo(boolean isMultiArg, PsiType type) {
-      this(Collections.<ArgType>emptyList(), isMultiArg, type);
+      this(Collections.emptyList(), isMultiArg, type);
     }
 
     public static <ArgType> ArgInfo<ArgType>[] empty_array() {

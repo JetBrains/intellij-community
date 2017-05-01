@@ -18,7 +18,6 @@ package com.intellij.coverage;
 import com.intellij.psi.PsiClass;
 import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
 import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.List;
@@ -58,12 +57,10 @@ public class SourceLineCounterUtil {
     final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null);
     reader.accept(collector, 0);
     final TIntObjectHashMap lines = collector.getSourceLines();
-    lines.forEachKey(new TIntProcedure() {
-      public boolean execute(int line) {
-        line--;
-        uncoveredLines.add(line);
-        return true;
-      }
+    lines.forEachKey(line -> {
+      line--;
+      uncoveredLines.add(line);
+      return true;
     });
   }
 }

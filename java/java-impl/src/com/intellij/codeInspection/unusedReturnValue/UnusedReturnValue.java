@@ -21,7 +21,9 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PropertyUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -55,6 +57,7 @@ public class UnusedReturnValue extends GlobalJavaBatchInspectionTool{
 
         final boolean isNative = psiMethod.hasModifierProperty(PsiModifier.NATIVE);
         if (refMethod.isExternalOverride() && !isNative) return null;
+        if (RefUtil.isImplicitRead(psiMethod)) return null;
         return new ProblemDescriptor[]{createProblemDescriptor(psiMethod, manager, processor, isNative)};
       }
     }

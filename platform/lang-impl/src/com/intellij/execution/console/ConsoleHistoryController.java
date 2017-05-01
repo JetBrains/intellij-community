@@ -63,6 +63,7 @@ import com.intellij.util.io.SafeFileOutputStream;
 import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xmlpull.v1.XmlPullParserFactory;
@@ -73,13 +74,12 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author gregsh
  */
 public class ConsoleHistoryController {
-
-  private static final Key<ConsoleHistoryController> CONTROLLER_KEY = Key.create("CONTROLLER_KEY");
 
   private static final Logger LOG = Logger.getInstance("com.intellij.execution.console.ConsoleHistoryController");
 
@@ -90,12 +90,13 @@ public class ConsoleHistoryController {
       return ContainerUtil.createConcurrentWeakValueMap();
     }
 
-    @Nullable
     @Override
     protected ConsoleHistoryModel create(String key) {
       return new ConsoleHistoryModel(null);
     }
   };
+  private final static Map<LanguageConsoleView, ConsoleHistoryController> ourControllers =
+    ContainerUtil.createConcurrentWeakMap(ContainerUtil.identityStrategy());
 
   private final LanguageConsoleView myConsole;
   private final AnAction myHistoryNext = new MyAction(true, getKeystrokesUpDown(true));
@@ -120,8 +121,9 @@ public class ConsoleHistoryController {
     myConsole = console;
   }
 
-  public static ConsoleHistoryController getController(LanguageConsoleView console) {
-    return console.getVirtualFile().getUserData(CONTROLLER_KEY);
+  //@Nullable
+  public static ConsoleHistoryController getController(@NotNull LanguageConsoleView console) {
+    return ourControllers.get(console);
   }
 
   public static void addToHistory(@NotNull LanguageConsoleView consoleView, @Nullable String command) {
@@ -177,16 +179,15 @@ public class ConsoleHistoryController {
     ApplicationManager.getApplication().getMessageBus().connect(myConsole).subscribe(ProjectEx.ProjectSaved.TOPIC, listener);
     myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, listener);
 
-    VirtualFile consoleFile = myConsole.getVirtualFile();
-    LOG.assertTrue(consoleFile.getUserData(CONTROLLER_KEY) == null,
-                   "History controller already installed for " + consoleFile.getName());
-    consoleFile.putUserData(CONTROLLER_KEY, this);
+    ConsoleHistoryController original = ourControllers.put(myConsole, this);
+    LOG.assertTrue(original == null,
+                   "History controller already installed for: " + myConsole.getTitle());
     Disposer.register(myConsole, new Disposable() {
       @Override
       public void dispose() {
-        VirtualFile consoleFile = myConsole.getVirtualFile();
-        if (consoleFile.getUserData(CONTROLLER_KEY) == ConsoleHistoryController.this) {
-          consoleFile.putUserData(CONTROLLER_KEY, null);
+        ConsoleHistoryController controller = getController(myConsole);
+        if (controller == ConsoleHistoryController.this) {
+          ourControllers.remove(myConsole);
         }
         saveHistory();
       }

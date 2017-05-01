@@ -53,13 +53,18 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 import static com.intellij.openapi.progress.ProgressManager.progress;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.vcs.VcsBundle.message;
+import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY;
+import static com.intellij.openapi.vcs.VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
+import static com.intellij.openapi.vcs.changes.ChangeListManagerImpl.showRemoveEmptyChangeListsProposal;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.processChangesByVcs;
+import static com.intellij.openapi.vcs.changes.ui.CommitHelper.ChangeListsModificationAfterCommit.*;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.WaitForProgressToShow.runOrInvokeLaterAboveProgress;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 
 public class CommitHelper {
@@ -220,19 +225,9 @@ public class CommitHelper {
       ChangesUtil.processItemsByVcs(myIncludedChanges, change -> myVcs, this::process);
     }
 
-    private void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
-      if (myVcs.getName().equals(vcs.getName())) {
-        CheckinEnvironment environment = vcs.getCheckinEnvironment();
-        if (environment != null) {
-          myPathsToRefresh.addAll(ChangesUtil.getPaths(items));
-
-          List<VcsException> exceptions = environment.commit(items, myCommitMessage, myAdditionalData, myFeedback);
-          if (!isEmpty(exceptions)) {
-            myVcsExceptions.addAll(exceptions);
-            myChangesFailedToCommit.addAll(items);
-          }
-        }
-      }
+    protected void process(@NotNull AbstractVcs vcs, @NotNull List<Change> items) {
+      if (!myVcs.getName().equals(vcs.getName())) return;
+      super.process(vcs, items);
     }
 
     @Override
@@ -256,7 +251,7 @@ public class CommitHelper {
     }
   }
 
-  abstract static class GeneralCommitProcessor {
+  abstract  class GeneralCommitProcessor {
     @NotNull protected final List<FilePath> myPathsToRefresh = newArrayList();
     @NotNull protected final List<VcsException> myVcsExceptions = newArrayList();
     @NotNull protected final List<Change> myChangesFailedToCommit = newArrayList();
@@ -268,6 +263,18 @@ public class CommitHelper {
     public abstract void doBeforeRefresh();
     public abstract void customRefresh();
     public abstract void doPostRefresh();
+
+    protected void process(@NotNull AbstractVcs vcs, @NotNull List<Change> changes) {
+      CheckinEnvironment environment = vcs.getCheckinEnvironment();
+      if (environment != null) {
+        myPathsToRefresh.addAll(ChangesUtil.getPaths(changes));
+        List<VcsException> exceptions = environment.commit(changes, myCommitMessage, myAdditionalData, myFeedback);
+        if (!isEmpty(exceptions)) {
+          myVcsExceptions.addAll(exceptions);
+          myChangesFailedToCommit.addAll(changes);
+        }
+      }
+    }
 
     @NotNull
     public List<FilePath> getPathsToRefresh() {
@@ -285,33 +292,39 @@ public class CommitHelper {
     }
   }
 
-  private enum ChangeListsModificationAfterCommit {
+  enum ChangeListsModificationAfterCommit {
     DELETE_LIST,
     MOVE_OTHERS,
-    NOTHING
+    NOTHING,
+    ASK_BEFORE_DELETE
+  }
+
+  public static ChangeListsModificationAfterCommit getRemoveStrategy(VcsShowConfirmationOption.Value removeEmptyInactive) {
+    if (removeEmptyInactive == DO_ACTION_SILENTLY) return DELETE_LIST;
+    if (removeEmptyInactive == SHOW_CONFIRMATION) return ASK_BEFORE_DELETE;
+    return NOTHING;
   }
 
   private class CommitProcessor extends GeneralCommitProcessor {
-    private boolean myKeepChangeListAfterCommit;
     @NotNull private LocalHistoryAction myAction = LocalHistoryAction.NULL;
-    private ChangeListsModificationAfterCommit myAfterVcsRefreshModification;
+    private ChangeListsModificationAfterCommit myPostRefreshModification;
     private boolean myCommitSuccess;
     @Nullable private final AbstractVcs myVcs;
 
     private CommitProcessor(@Nullable AbstractVcs vcs) {
       myVcs = vcs;
-      myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.NOTHING;
+      myPostRefreshModification = NOTHING;
       if (myChangeList instanceof LocalChangeList) {
         LocalChangeList localList = (LocalChangeList)myChangeList;
         boolean containsAll = newHashSet(myIncludedChanges).containsAll(myChangeList.getChanges());
         if (containsAll && !localList.isDefault() && !localList.isReadOnly()) {
-          myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.DELETE_LIST;
+          myPostRefreshModification = getRemoveStrategy(myConfiguration.REMOVE_EMPTY_INACTIVE_CHANGELISTS);
         }
         else if (myConfiguration.OFFER_MOVE_TO_ANOTHER_CHANGELIST_ON_PARTIAL_COMMIT &&
                  !containsAll &&
                  localList.isDefault() &&
                  myAllOfDefaultChangeListChangesIncluded) {
-          myAfterVcsRefreshModification = ChangeListsModificationAfterCommit.MOVE_OTHERS;
+          myPostRefreshModification = MOVE_OTHERS;
         }
       }
     }
@@ -322,21 +335,6 @@ public class CommitHelper {
         process(myVcs, myIncludedChanges);
       }
       processChangesByVcs(myProject, myIncludedChanges, this::process);
-    }
-
-    private void process(@NotNull AbstractVcs vcs, @NotNull List<Change> changes) {
-      CheckinEnvironment environment = vcs.getCheckinEnvironment();
-      if (environment != null) {
-        myPathsToRefresh.addAll(ChangesUtil.getPaths(changes));
-        if (environment.keepChangeListAfterCommit(myChangeList)) {
-          myKeepChangeListAfterCommit = true;
-        }
-        List<VcsException> exceptions = environment.commit(changes, myCommitMessage, myAdditionalData, myFeedback);
-        if (!isEmpty(exceptions)) {
-          myVcsExceptions.addAll(exceptions);
-          myChangesFailedToCommit.addAll(changes);
-        }
-      }
     }
 
     @Override
@@ -385,12 +383,10 @@ public class CommitHelper {
           () -> {
             if (myCommitSuccess) {
               // do delete/ move of change list if needed
-              if (ChangeListsModificationAfterCommit.DELETE_LIST.equals(myAfterVcsRefreshModification)) {
-                if (!myKeepChangeListAfterCommit) {
-                  clManager.removeChangeList(myChangeList.getName());
-                }
+              if (myPostRefreshModification == DELETE_LIST || shouldDeleteWithConfirmation()) {
+                clManager.removeChangeList(myChangeList.getName());
               }
-              else if (ChangeListsModificationAfterCommit.MOVE_OTHERS.equals(myAfterVcsRefreshModification)) {
+              else if (myPostRefreshModification == MOVE_OTHERS) {
                 ChangelistMoveOfferDialog dialog = new ChangelistMoveOfferDialog(myConfiguration);
                 if (dialog.showAndGet()) {
                   Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
@@ -407,6 +403,11 @@ public class CommitHelper {
 
         LocalHistory.getInstance().putSystemLabel(myProject, myActionName + ": " + myCommitMessage);
       }
+    }
+
+    boolean shouldDeleteWithConfirmation() {
+      return myPostRefreshModification == ASK_BEFORE_DELETE &&
+             showRemoveEmptyChangeListsProposal(myProject, myConfiguration, singleton(myChangeList));
     }
   }
 
@@ -481,7 +482,7 @@ public class CommitHelper {
     if (failedChanges.containsAll(changeList.getChanges())) return;
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
-    if (configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST != VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY) {
+    if (configuration.MOVE_TO_FAILED_COMMIT_CHANGELIST != DO_ACTION_SILENTLY) {
       VcsShowConfirmationOption option = new VcsShowConfirmationOption() {
         @Override
         public Value getValue() {

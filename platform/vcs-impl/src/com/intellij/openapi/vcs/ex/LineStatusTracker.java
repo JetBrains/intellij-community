@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
@@ -94,8 +96,8 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   }
 
   @CalledInAwt
-  public boolean isSilentMode() {
-    return myMode == Mode.SILENT;
+  public boolean isAvailableAt(@NotNull Editor editor) {
+    return myMode != Mode.SILENT && editor.getSettings().isLineMarkerAreaShown() && !DiffUtil.isDiffEditor(editor);
   }
 
   @CalledInAwt

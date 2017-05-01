@@ -133,4 +133,12 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testSpace_in_named_arg_false() throws Throwable { doTest() }
 
   void testAnonymousVsLBraceOnNewLine() { doTest() }
+
+  void testBracesNextLine() { doTest() }
+
+  void testBracesNextLineShifted() { doTest() }
+
+  void testBracesNextLineShifted2() { doTest() }
+
+  void testBracesEndLine() { doTest() }
 }

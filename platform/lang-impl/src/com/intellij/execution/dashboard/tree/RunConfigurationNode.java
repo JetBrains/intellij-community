@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfiguration
   @Override
   protected void update(PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
-    boolean isStored = RunManager.getInstance(getProject()).getAllConfigurationsList().contains(configurationSettings.getConfiguration());
+    boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
     RunDashboardContributor contributor = RunDashboardContributor.getContributor(configurationSettings.getType());

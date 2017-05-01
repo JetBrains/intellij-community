@@ -37,7 +37,7 @@ import java.io.File;
  * Date: 2/14/13
  */
 public class OpenInSceneBuilderAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#" + OpenInSceneBuilderAction.class.getName());
+  private static final Logger LOG = Logger.getInstance(OpenInSceneBuilderAction.class);
   public static final String OLD_LAUNCHER = "scenebuilder-launcher.sh";
 
   @Override

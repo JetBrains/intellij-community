@@ -14,7 +14,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.intellij.generation.EduProjectGenerator;
 import org.jdom.JDOMException;
@@ -27,7 +26,7 @@ import java.io.IOException;
 class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
   private static final Logger LOG = Logger.getInstance(EduCustomCourseModuleBuilder.class);
   private EduProjectGenerator myGenerator = new EduProjectGenerator();
-  private CourseInfo mySelectedCourse;
+  private Course mySelectedCourse;
 
   @Nullable
   @Override
@@ -36,8 +35,7 @@ class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
     if (module == null) {
       return null;
     }
-    String type = mySelectedCourse.getType();
-    String languageName = type.substring("pycharm ".length());
+    String languageName = mySelectedCourse.getLanguageID();
     Language language = Language.findLanguageByID(languageName);
     if (language == null) {
       return module;
@@ -87,7 +85,7 @@ class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
     return ProjectWizardStepFactory.getInstance().createJavaSettingsStep(settingsStep, this, Conditions.alwaysTrue());
   }
 
-  void setSelectedCourse(CourseInfo selectedCourse) {
+  void setSelectedCourse(Course selectedCourse) {
     mySelectedCourse = selectedCourse;
   }
 
@@ -97,8 +95,7 @@ class EduCustomCourseModuleBuilder extends JavaModuleBuilder {
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     Module baseModule = super.createModule(moduleModel);
     if (mySelectedCourse != null) {
-      String type = mySelectedCourse.getType();
-      String languageName = type.substring("pycharm ".length());
+      String languageName = mySelectedCourse.getLanguageID();
       Language language = Language.findLanguageByID(languageName);
       if (language != null) {
         EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);

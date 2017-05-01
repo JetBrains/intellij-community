@@ -17,7 +17,6 @@
 package com.intellij.vcs.log.graph.parser;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.graph.api.EdgeFilter;
@@ -98,13 +97,9 @@ public class LinearGraphParser {
     GraphNode graphNode = new GraphNode(lineNumber, parseGraphNodeType(pair.second));
 
     String[] edges = line.substring(separatorIndex + 2).split("\\s");
-    List<String> normalEdges = ContainerUtil.mapNotNull(edges, new Function<String, String>() {
-      @Nullable
-      @Override
-      public String fun(String s) {
-        if (s.isEmpty()) return null;
-        return s;
-      }
+    List<String> normalEdges = ContainerUtil.mapNotNull(edges, s -> {
+      if (s.isEmpty()) return null;
+      return s;
     });
     return Pair.create(Pair.create(pair.first, graphNode), normalEdges);
   }

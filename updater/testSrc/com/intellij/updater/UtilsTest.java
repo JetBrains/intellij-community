@@ -129,4 +129,17 @@ public class UtilsTest {
     assertFalse(link.exists());
     assertThat(dir.listFiles()).containsExactly(file);
   }
+
+  @Test
+  public void testDeleteDanglingSymlink() throws Exception {
+    assumeTrue(!IS_WINDOWS);
+
+    File dir = tempDir.newFolder("temp_dir");
+    File link = new File(dir, "link");
+    Utils.createLink("dangling", link);
+    assertThat(dir.listFiles()).containsExactly(link);
+
+    Utils.delete(link);
+    assertThat(dir.listFiles()).isEmpty();
+  }
 }

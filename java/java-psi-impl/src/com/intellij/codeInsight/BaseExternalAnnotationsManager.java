@@ -103,7 +103,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   public PsiAnnotation[] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     final List<AnnotationData> result = collectExternalAnnotations(listOwner);
     return result.isEmpty() ? null : ContainerUtil.map2Array(result, PsiAnnotation.EMPTY_ARRAY,
-                                                             data -> data.getAnnotation(BaseExternalAnnotationsManager.this));
+                                                             data -> data.getAnnotation(this));
   }
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<>(1);
@@ -210,7 +210,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null) return null;
-    
+
     final List<PsiFile> files = myExternalAnnotationsCache.get(virtualFile);
     if (files == NULL_LIST) return null;
 

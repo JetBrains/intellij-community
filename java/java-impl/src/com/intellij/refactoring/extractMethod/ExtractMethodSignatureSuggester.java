@@ -56,7 +56,7 @@ import java.util.*;
 import java.util.List;
 
 public class ExtractMethodSignatureSuggester {
-  private static final Logger LOG = Logger.getInstance("#" + ExtractMethodSignatureSuggester.class.getName());
+  private static final Logger LOG = Logger.getInstance(ExtractMethodSignatureSuggester.class);
   private static final TObjectHashingStrategy<PsiExpression> ourEquivalenceStrategy = new TObjectHashingStrategy<PsiExpression>() {
     @Override
     public int computeHashCode(PsiExpression object) {

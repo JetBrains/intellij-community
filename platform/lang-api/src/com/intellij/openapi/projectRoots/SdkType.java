@@ -60,7 +60,7 @@ public abstract class SdkType implements SdkTypeId {
   @NotNull
   public Collection<String> suggestHomePaths() {
     String home = suggestHomePath();
-    return home != null ? Collections.singletonList(home) : Collections.<String>emptyList();
+    return home != null ? Collections.singletonList(home) : Collections.emptyList();
   }
 
   /**

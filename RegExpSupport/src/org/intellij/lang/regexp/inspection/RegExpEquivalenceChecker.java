@@ -118,6 +118,8 @@ class RegExpEquivalenceChecker {
   }
 
   private static boolean arePatternsEquivalent(RegExpPattern pattern1, RegExpPattern pattern2) {
+    if (pattern1 == null) return pattern2 == null;
+    if (pattern2 == null) return false;
     final RegExpBranch[] branches1 = pattern1.getBranches();
     final RegExpBranch[] branches2 = pattern2.getBranches();
     if (branches1.length != branches2.length) {

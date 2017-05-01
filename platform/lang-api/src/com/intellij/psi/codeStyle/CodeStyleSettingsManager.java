@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#" + CodeStyleSettingsManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
 
   public volatile CodeStyleSettings PER_PROJECT_SETTINGS;
   public volatile boolean USE_PER_PROJECT_SETTINGS;

@@ -40,6 +40,7 @@ class CompilationTasksImpl extends CompilationTasks {
       return
     }
 
+    CompilationContextImpl.setupCompilationDependencies(context.gradle)
     ensureKotlinCompilerAddedToClassPath()
 
     context.messages.progress("Compiling project")
@@ -77,21 +78,18 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   private void ensureKotlinCompilerAddedToClassPath() {
-    try {
-      Class.forName("org.jetbrains.kotlin.jps.build.KotlinBuilder")
+    if (getClass().getResource("/org/jetbrains/kotlin/jps/build/KotlinBuilder.class") != null) {
       return
     }
-    catch (ClassNotFoundException ignored) {
-    }
 
-    def kotlinPluginLibPath = "$context.paths.communityHome/build/kotlinc/plugin/Kotlin/lib"
+    def kotlinPluginLibPath = "$context.paths.kotlinHome/lib"
     if (new File(kotlinPluginLibPath).exists()) {
       ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-runtime.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", context.ant)
       }
     }
     else {
-      context.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run download_kotlin.gant script to download them")
+      context.messages.error("Could not find Kotlin JARs at $kotlinPluginLibPath: run `./gradlew setupKotlin` in dependencies module to download Kotlin JARs")
     }
   }
 }

@@ -134,6 +134,15 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   protected void configureRTClasspath(JavaParameters javaParameters) {
     final String path = System.getProperty(DEBUG_RT_PATH);
     javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
+
+    //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
+    javaParameters.getClassPath().add(getJUnit5RtFile());
+  }
+
+  public static File getJUnit5RtFile() {
+    File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
+    String junit5Name = junit4Rt.getName().replace("junit", "junit5");
+    return new File(junit4Rt.getParent(), junit5Name);
   }
 
   @Override
@@ -158,13 +167,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     final Project project = getConfiguration().getProject();
     final SourceScope sourceScope = getSourceScope();
     GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), sourceScope, project);
-    if (JUnitUtil.isJUnit5(globalSearchScope, project)) {
-      javaParameters.getProgramParametersList().add(JUnitStarter.JUNIT5_PARAMETER);
-      //detect junit 5 rt without dependency on junit5_rt module
-      File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
-      String junit5Name = junit4Rt.getName().replace("junit", "junit5");
-      javaParameters.getClassPath().add(new File(junit4Rt.getParent(), junit5Name));
-
+    String preferredRunner = getPreferredRunner(globalSearchScope);
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
       final PathsList classPath = javaParameters.getClassPath();
       File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
       File[] files = lib.listFiles();
@@ -175,6 +179,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
           if (fileName.startsWith("junit-platform-launcher-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope) ||
 
               fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
+
+              fileName.startsWith("junit-platform-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
 
               fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
                                                                hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
@@ -191,8 +197,16 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         }
       }
     }
+    if (preferredRunner != null) {
+      javaParameters.getProgramParametersList().add(preferredRunner);
+    }
     
     return javaParameters;
+  }
+
+  @Nullable
+  protected String getPreferredRunner(GlobalSearchScope globalSearchScope) {
+    return JUnitUtil.isJUnit5(globalSearchScope, getConfiguration().getProject()) ? JUnitStarter.JUNIT5_PARAMETER : null;
   }
 
   private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,

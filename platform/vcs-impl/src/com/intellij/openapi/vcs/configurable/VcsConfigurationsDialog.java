@@ -21,7 +21,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
@@ -107,12 +106,8 @@ public class VcsConfigurationsDialog extends DialogWrapper{
   private void addConfigurationPanelFor(final VcsDescriptor vcs) {
     String name = vcs.getName();
     final JPanel parentPanel = new JPanel();
-    final LazyConfigurable lazyConfigurable = new LazyConfigurable(new Getter<Configurable>() {
-      @Override
-      public Configurable get() {
-        return AllVcses.getInstance(myProject).getByName(vcs.getName()).getConfigurable();
-      }
-    }, parentPanel);
+    final LazyConfigurable lazyConfigurable = new LazyConfigurable(
+      () -> AllVcses.getInstance(myProject).getByName(vcs.getName()).getConfigurable(), parentPanel);
     myVcsNameToConfigurableMap.put(name, lazyConfigurable);
     myVcsConfigurationPanel.add(parentPanel, name);
   }

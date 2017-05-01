@@ -218,13 +218,6 @@
     </intentionAction>
 
     <!-- Imports -->
-
-    <intentionAction>
-      <className>com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.imports</categoryKey>
-    </intentionAction>
-
     <intentionAction>
       <className>com.siyeh.ipp.imports.ReplaceOnDemandImportIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
@@ -521,6 +514,11 @@
       <className>com.siyeh.ipp.opassign.PostfixPrefixIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
+    </intentionAction>
+    <intentionAction>
+      <className>com.siyeh.ipp.functional.ExtractToMethodReferenceIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
   </extensions>
 </idea-plugin>

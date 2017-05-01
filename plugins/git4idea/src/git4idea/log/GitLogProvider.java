@@ -529,6 +529,12 @@ public class GitLogProvider implements VcsLogProvider {
     return currentBranchName;
   }
 
+  @Nullable
+  @Override
+  public VcsLogDiffHandler getDiffHandler() {
+    return new GitLogDiffHandler(myProject);
+  }
+
   @SuppressWarnings("unchecked")
   @Nullable
   @Override

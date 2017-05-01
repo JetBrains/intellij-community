@@ -31,7 +31,6 @@ public final class ValidationInfo {
   @NotNull
   public final String message;
   public final JComponent component;
-  public final int hashCode;
 
   /**
    * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
@@ -43,11 +42,6 @@ public final class ValidationInfo {
   public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
     this.message = message;
     this.component = component;
-
-    int hash = 31;
-    hash = hash * 17 + message.hashCode();
-    hash = hash * 17 + System.identityHashCode(component);
-    this.hashCode = hash;
   }
 
   /**
@@ -66,9 +60,5 @@ public final class ValidationInfo {
     ValidationInfo that = (ValidationInfo)o;
     return StringUtil.equals(this.message, that.message) &&
            this.component == that.component;
-  }
-
-  @Override public int hashCode() {
-    return hashCode;
   }
 }

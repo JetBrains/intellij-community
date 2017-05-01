@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,7 +47,7 @@ public class PackageDirectoryCache {
   @NotNull
   public List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
     PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.<VirtualFile>emptyList() : info.myPackageDirectories;
+    return info == null ? Collections.emptyList() : info.myPackageDirectories;
   }
 
   @Nullable
@@ -70,6 +71,7 @@ public class PackageDirectoryCache {
           }
           if (i < 0) break;
           i = packageName.lastIndexOf('.', i - 1);
+          ProgressManager.checkCanceled();
         }
       }
 
@@ -91,7 +93,7 @@ public class PackageDirectoryCache {
 
   public Set<String> getSubpackageNames(@NotNull final String packageName) {
     final PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
+    return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
   }
 
   private class PackageInfo {

@@ -85,7 +85,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     }
 
     DummyHolderFactory.setFactory(new JavaDummyHolderFactory());
-    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.<PsiElementFinder>emptyList()) {
+    myElementFinders = new SimpleSmartExtensionPoint<PsiElementFinder>(Collections.emptyList()) {
       @NotNull
       @Override
       protected ExtensionPoint<PsiElementFinder> getExtensionPoint() {

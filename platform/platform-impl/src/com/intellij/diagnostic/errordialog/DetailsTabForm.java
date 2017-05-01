@@ -6,11 +6,11 @@ import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ComparatorUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -32,7 +32,7 @@ public class DetailsTabForm {
   public DetailsTabForm(@Nullable Action analyzeAction) {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     myDetailsPane.setBackground(UIUtil.getTextFieldBackground());
-    myDetailsHolder.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, 150));
+    myDetailsHolder.setPreferredSize(JBUI.size(IdeErrorsDialog.COMPONENTS_WIDTH, 150));
     myDetailsHolder.setBorder(IdeBorderFactory.createBorder());
     if (analyzeAction != null) {
       myAnalyzeStacktraceButton.setAction(analyzeAction);

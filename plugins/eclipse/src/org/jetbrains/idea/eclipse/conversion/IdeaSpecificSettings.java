@@ -64,7 +64,7 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @NonNls private static final String SRCROOT_ATTR = "srcroot";
   @NonNls private static final String SRCROOT_BIND_ATTR = "bind";
-  private static final Logger LOG = Logger.getInstance("#" + IdeaSpecificSettings.class.getName());
+  private static final Logger LOG = Logger.getInstance(IdeaSpecificSettings.class);
   @NonNls private static final String JAVADOCROOT_ATTR = "javadocroot_attr";
   public static final String INHERIT_JDK = "inheritJdk";
 

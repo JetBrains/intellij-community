@@ -25,6 +25,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
+import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextUtil
@@ -108,9 +109,10 @@ trait DebuggerMethods extends CompilerMethods {
     semaphore.down()
     def process = debugProcess
     // wait for all events processed
-    process.managerThread.schedule {
-      semaphore.up()
-    }
+    DebuggerCommandImpl cl = {
+                                     semaphore.up()
+                                   }
+    process.managerThread.schedule  cl
     def finished = semaphore.waitFor(ourTimeout)
     assert finished: 'Too long debugger actions'
 

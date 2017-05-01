@@ -161,11 +161,7 @@ public abstract class PyEnvTestCase {
 
   protected void invokeTestRunnable(@NotNull final Runnable runnable) throws Exception {
     if (runInWriteAction()) {
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(runnable);
-        }
-      });
+      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
     }
     else {
       runnable.run();

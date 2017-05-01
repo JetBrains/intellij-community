@@ -248,6 +248,15 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testPreserveStaticMethodConflictsWhenMethodsAreNotHidden() throws Exception {
+    doTest(false);
+  }
+
+  public void testDontSkipInapplicableMethodsDuringSameSignatureCheck() throws Exception {
+    doTest(false);
+  }
+
+
   private void doTest() {
     doTest(true);
   }

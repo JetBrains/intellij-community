@@ -17,7 +17,7 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -116,7 +115,7 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
   protected abstract T instantiateFixture();
 
   Module buildModule() {
-    return ApplicationManager.getApplication().runWriteAction((Computable<Module>)() -> {
+    return WriteAction.compute(() -> {
       Module module = createModule();
       initModule(module);
       return module;
@@ -127,29 +126,35 @@ public abstract class ModuleFixtureBuilderImpl<T extends ModuleFixture> implemen
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     final ModifiableRootModel rootModel = rootManager.getModifiableModel();
 
-    for (String contentRoot : myContentRoots) {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
-      Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
-      final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
+    try {
+      for (String contentRoot : myContentRoots) {
+        final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(contentRoot);
+        Assert.assertNotNull("cannot find content root: " + contentRoot, virtualFile);
+        final ContentEntry contentEntry = rootModel.addContentEntry(virtualFile);
 
-      for (String sourceRoot: mySourceRoots) {
-        String s = contentRoot + "/" + sourceRoot;
-        VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
-        if (vf == null) {
-          final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
-          if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
-        }
-//        assert vf != null : "cannot find source root: " + sourceRoot;
-        if (vf != null) {
-          contentEntry.addSourceFolder(vf, false);
-        }
-        else {
-          // files are not created yet
-          contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+        for (String sourceRoot: mySourceRoots) {
+          String s = contentRoot + "/" + sourceRoot;
+          VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByPath(s);
+          if (vf == null) {
+            final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourceRoot);
+            if (file != null && VfsUtilCore.isAncestor(virtualFile, file, false)) vf = file;
+          }
+  //        assert vf != null : "cannot find source root: " + sourceRoot;
+          if (vf != null) {
+            contentEntry.addSourceFolder(vf, false);
+          }
+          else {
+            // files are not created yet
+            contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(s), false);
+          }
         }
       }
+      setupRootModel(rootModel);
     }
-    setupRootModel(rootModel);
+    catch (Throwable e) {
+      rootModel.dispose();
+      throw e;
+    }
     rootModel.commit();
   }
 

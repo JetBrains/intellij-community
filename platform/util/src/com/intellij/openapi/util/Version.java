@@ -39,12 +39,12 @@ public class Version {
       return null;
     }
 
-    int minor = (versions.length > 1) ? parseNumber(versions[1], -1) : 0;
+    int minor = versions.length > 1 ? parseNumber(versions[1], -1) : 0;
     if (minor < 0) {
       return new Version(major, 0, 0);
     }
 
-    int patch = (versions.length > 2) ? parseNumber(versions[2], -1) : 0;
+    int patch = versions.length > 2 ? parseNumber(versions[2], -1) : 0;
     if (patch < 0) {
       return new Version(major, minor, 0);
     }
@@ -105,9 +105,7 @@ public class Version {
   }
 
   public int compareTo(@Nullable Integer major, @Nullable Integer minor, @Nullable Integer bugfix) {
-    int result;
-
-    result = doCompare(this.major, major);
+    int result = doCompare(this.major, major);
     if (result != 0) return result;
 
     result = doCompare(this.minor, minor);

@@ -18,6 +18,7 @@ package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension;
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
@@ -64,7 +65,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   //private JCheckBox myAntialiasingInEditorCheckBox;
   private JCheckBox myShowCodeLensInEditorCheckBox;
   private JCheckBox myShowVerticalIndentGuidesCheckBox;
-  private JCheckBox myShowBreadcrumbsCheckBox;
 
   private JPanel myParameterHintsSettingsPanel;
   private JBCheckBox myShowParameterNameHints;
@@ -100,6 +100,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
   private void applyNameHintsSettings() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     settings.setShowParameterNameHints(myShowParameterNameHints.isSelected());
+    ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
   }
 
   private void updateWhitespaceCheckboxesState() {
@@ -125,7 +126,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myInnerWhitespacesCheckBox.setSelected(editorSettings.isInnerWhitespacesShown());
     myTrailingWhitespacesCheckBox.setSelected(editorSettings.isTrailingWhitespacesShown());
     myShowVerticalIndentGuidesCheckBox.setSelected(editorSettings.isIndentGuidesShown());
-    myShowBreadcrumbsCheckBox.setSelected(editorSettings.isBreadcrumbsShown());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
     myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowToolWindowsNumbers());
@@ -179,11 +179,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       lafSettingsModified = true;
     }
     
-    if(editorSettings.isBreadcrumbsShown() != myShowBreadcrumbsCheckBox.isSelected()) {
-      editorSettings.setBreadcrumbsShown(myShowBreadcrumbsCheckBox.isSelected());
-      uiSettingsModified = true;
-    }
-
     if (lafSettingsModified) {
       LafManager.getInstance().repaintUI();
     }
@@ -217,7 +212,6 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //isModified |= myAntialiasingInEditorCheckBox.isSelected() != UISettings.getInstance().ANTIALIASING_IN_EDITOR;
     //isModified |= myUseLCDRendering.isSelected() != UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR;
     isModified |= myShowCodeLensInEditorCheckBox.isSelected() != UISettings.getInstance().getShowEditorToolTip();
-    isModified |= myShowBreadcrumbsCheckBox.isSelected() != editorSettings.isBreadcrumbsShown();
     isModified |= myShowParameterNameHints.isSelected() != editorSettings.isShowParameterNameHints();
     
     return isModified;

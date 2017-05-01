@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.impl.search;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -24,7 +24,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
-import com.intellij.openapi.application.ReadActionProcessor;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,29 +33,16 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
-    boolean isAnnotation = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return PsiUtil.isAnnotationMethod(refElement);
-      }
-    });
+    boolean isAnnotation = ReadAction.compute(() -> PsiUtil.isAnnotationMethod(refElement));
     if (isAnnotation) {
       final PsiMethod method = (PsiMethod)refElement;
-      PsiClass containingClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-        @Override
-        public PsiClass compute() {
-          boolean isValueMethod =
-            PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0;
-          return isValueMethod ? method.getContainingClass() : null;
-        }
+      PsiClass containingClass = ReadAction.compute(() -> {
+        boolean isValueMethod =
+          PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0;
+        return isValueMethod ? method.getContainingClass() : null;
       });
       if (containingClass != null) {
-        SearchScope scope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
-          @Override
-          public SearchScope compute() {
-            return p.getEffectiveSearchScope();
-          }
-        });
+        SearchScope scope = ReadAction.compute(() -> p.getEffectiveSearchScope());
         final Query<PsiReference> query = ReferencesSearch.search(containingClass, scope, p.isIgnoreAccessScope());
         return query.forEach(createImplicitDefaultAnnotationMethodConsumer(consumer));
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,12 +104,12 @@ public class Patches {
   public static final boolean JDK_MAC_FONT_STYLE_BUG = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.8.0_60");
 
   /**
-   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK. 
+   * On Mac OS font ligatures are not supported for natively loaded fonts, font needs to be loaded explicitly by JDK.
    */
   public static final boolean JDK_BUG_ID_7162125;
   static {
     boolean value;
-    if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("1.9")) value = false;
+    if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("9")) value = false;
     else if (!SystemInfo.isJetbrainsJvm) value = true;
     else {
       try {

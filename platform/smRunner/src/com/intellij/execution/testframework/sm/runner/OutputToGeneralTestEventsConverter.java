@@ -79,7 +79,16 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   public void process(final String text, final Key outputType) {
-    mySplitter.process(text, outputType);
+    // Test runner may generate message with protocol start inside of line i.e: "test_test.py.. ##teamcity[testStarted ..."
+    // Splitter only supports cases when message starts at the beginning of the line
+    // See https://github.com/JetBrains/teamcity-messages/issues/131
+    final int messageProtocolPosition = text.indexOf(ServiceMessage.SERVICE_MESSAGE_START);
+    if (messageProtocolPosition > 0) {
+      mySplitter.process(text.substring(0, messageProtocolPosition), outputType);
+      mySplitter.process(text.substring(messageProtocolPosition), outputType);
+    } else {
+      mySplitter.process(text, outputType);
+    }
   }
 
   /**

@@ -127,6 +127,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  private int myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   private int myIconsAreaWidth;
   private int myLineNumberAreaWidth;
   private int myAdditionalLineNumberAreaWidth;
@@ -809,7 +810,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
     });
 
-    int minWidth = areIconsShown() ? (int)(START_ICON_AREA_WIDTH * myEditor.getScale()) : 0;
+    int minWidth = areIconsShown() ? scaleWidth(myStartIconAreaWidth) : 0;
     myIconsAreaWidth = canShrink ? minWidth : Math.max(myIconsAreaWidth, minWidth);
 
     processGutterRenderers((line, renderers) -> {
@@ -976,17 +977,29 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     void process(int x, int y, @NotNull GutterMark renderer);
   }
 
-  private Icon scaleIcon(Icon icon) {
-    if (Registry.is("editor.scale.gutter.icons") && icon instanceof ScalableIcon) {
+  private float getEditorScaleFactor() {
+    if (Registry.is("editor.scale.gutter.icons")) {
       float scale = myEditor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
-        if (icon instanceof JBUIScaleTrackable) {
-          ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
-        }
-        return ((ScalableIcon)icon).scale(scale);
+        return scale;
       }
     }
+    return 1f;
+  }
+
+  private Icon scaleIcon(Icon icon) {
+    float scale = getEditorScaleFactor();
+    if (icon instanceof ScalableIcon && scale != 1f) {
+      if (icon instanceof JBUIScaleTrackable) {
+        ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
+      }
+      return ((ScalableIcon)icon).scale(scale);
+    }
     return icon;
+  }
+
+  private int scaleWidth(int width) {
+    return (int) (getEditorScaleFactor() * width);
   }
 
   private void processIconsRow(int line, @NotNull List<GutterMark> row, @NotNull LineGutterIconRendererProcessor processor) {
@@ -1790,6 +1803,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public void setForceShowRightFreePaintersArea(boolean value) {
     myForceRightFreePaintersAreaShown = value;
+  }
+
+  @Override
+  public void setInitialIconAreaWidth(int width) {
+    myStartIconAreaWidth = width;
   }
 
   private void invokePopup(MouseEvent e) {

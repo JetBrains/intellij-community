@@ -29,6 +29,7 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -90,8 +91,8 @@ public class DiffUtil {
 
   public static EditorEx createEditor(Document document, Project project, boolean isViewer, @Nullable FileType fileType) {
     EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
-    editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
+    EditorKind kind = EditorKind.DIFF;
+    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
     editor.getGutterComponentEx().revalidateMarkup();
 
     if (fileType != null && project != null && !project.isDisposed()) {
@@ -153,6 +154,6 @@ public class DiffUtil {
   }
 
   public static boolean isDiffEditor(@NotNull Editor editor) {
-    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+    return editor.getEditorKind() == (EditorKind.DIFF);
   }
 }

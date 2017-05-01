@@ -22,10 +22,12 @@ import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,17 +39,12 @@ public class MergePackageAccessibilityStatementsFix
 
   private static final Logger LOG = Logger.getInstance(MergePackageAccessibilityStatementsFix.class);
   private final String myPackageName;
-  private final List<String> myModuleNames;
   private final Role myRole;
 
-  protected MergePackageAccessibilityStatementsFix(@NotNull PsiPackageAccessibilityStatement thisStatement,
-                                                   @NotNull String packageName,
-                                                   @NotNull List<String> moduleNames,
-                                                   @NotNull PsiPackageAccessibilityStatement otherStatement) {
-    super(thisStatement, otherStatement);
+  protected MergePackageAccessibilityStatementsFix(@NotNull PsiJavaModule javaModule, @NotNull String packageName, @NotNull Role role) {
+    super(javaModule);
     myPackageName = packageName;
-    myModuleNames = moduleNames;
-    myRole = thisStatement.getRole();
+    myRole = role;
   }
 
   @Nls
@@ -66,15 +63,33 @@ public class MergePackageAccessibilityStatementsFix
 
   @NotNull
   @Override
-  protected String getReplacementText(@NotNull PsiPackageAccessibilityStatement otherStatement) {
-    return getKeyword() + " " + myPackageName + " " + PsiKeyword.TO + " " +
-           joinNames(otherStatement.getModuleNames(), myModuleNames) + ";";
+  protected String getReplacementText(@NotNull List<PsiPackageAccessibilityStatement> statementsToMerge) {
+    final List<String> moduleNames = getModuleNames(statementsToMerge);
+    if (!moduleNames.isEmpty()) {
+      return getKeyword() + " " + myPackageName + " " + PsiKeyword.TO + " " + joinUniqueNames(moduleNames) + ";";
+    }
+    return getKeyword() + " " + myPackageName + ";";
+  }
+
+  @NotNull
+  private static List<String> getModuleNames(@NotNull List<PsiPackageAccessibilityStatement> statements) {
+    final List<String> result = new ArrayList<>();
+    for (PsiPackageAccessibilityStatement statement : statements) {
+      final List<String> moduleNames = statement.getModuleNames();
+      if (moduleNames.isEmpty()) {
+        return Collections.emptyList();
+      }
+      result.addAll(moduleNames);
+    }
+    return result;
   }
 
   @NotNull
   @Override
-  protected Iterable<PsiPackageAccessibilityStatement> getStatements(@NotNull PsiJavaModule javaModule) {
-    return getStatements(javaModule, myRole);
+  protected List<PsiPackageAccessibilityStatement> getStatementsToMerge(@NotNull PsiJavaModule javaModule) {
+    return StreamEx.of(getStatements(javaModule, myRole).iterator())
+      .filter(statement -> myPackageName.equals(statement.getPackageName()))
+      .toList();
   }
 
   @Nullable
@@ -82,20 +97,9 @@ public class MergePackageAccessibilityStatementsFix
     if (statement != null) {
       final PsiElement parent = statement.getParent();
       if (parent instanceof PsiJavaModule) {
-        final PsiJavaModule javaModule = (PsiJavaModule)parent;
-
         final String packageName = statement.getPackageName();
         if (packageName != null) {
-          final List<String> moduleNames = statement.getModuleNames();
-          if (!moduleNames.isEmpty()) {
-            for (PsiPackageAccessibilityStatement candidate : getStatements(javaModule, statement.getRole())) {
-              if (candidate != statement &&
-                  packageName.equals(candidate.getPackageName()) &&
-                  candidate.getModuleNames().iterator().hasNext()) {
-                return new MergePackageAccessibilityStatementsFix(statement, packageName, moduleNames, candidate);
-              }
-            }
-          }
+          return new MergePackageAccessibilityStatementsFix((PsiJavaModule)parent, packageName, statement.getRole());
         }
       }
     }

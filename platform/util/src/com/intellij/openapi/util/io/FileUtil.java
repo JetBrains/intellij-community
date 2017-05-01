@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1193,12 +1193,7 @@ public class FileUtil extends FileUtilRt {
   public static String sanitizeFileName(@NotNull String name) {
     return sanitizeFileName(name, true);
   }
-
-  /** @deprecated use {@link #sanitizeFileName(String, boolean)} (to be removed in IDEA 17) */
-  public static String sanitizeName(@NotNull String name) {
-    return sanitizeFileName(name, false);
-  }
-
+  
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
     StringBuilder result = null;
@@ -1210,8 +1205,8 @@ public class FileUtil extends FileUtilRt {
       boolean appendReplacement = true;
       if (c > 0 && c < 255) {
         if (strict
-            ? (Character.isLetterOrDigit(c) || (c == '_'))
-            : (Character.isJavaIdentifierPart(c) || (c == ' ') || (c == '@') || (c == '-'))) {
+            ? Character.isLetterOrDigit(c) || c == '_'
+            : Character.isJavaIdentifierPart(c) || c == ' ' || c == '@' || c == '-') {
           continue;
         }
       }
@@ -1468,16 +1463,16 @@ public class FileUtil extends FileUtilRt {
     return files == null ? defaultFiles : files;
   }
 
-  public static boolean isHashBangLine(CharSequence firstCharsIfText, String marker) {
+  public static boolean isHashBangLine(@Nullable CharSequence firstCharsIfText, @NotNull String marker) {
     if (firstCharsIfText == null) {
       return false;
     }
-    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n');
-    if (lineBreak < 0) {
+    if (!StringUtil.startsWith(firstCharsIfText, "#!")) {
       return false;
     }
-    String firstLine = firstCharsIfText.subSequence(0, lineBreak).toString();
-    return firstLine.startsWith("#!") && firstLine.contains(marker);
+
+    final int lineBreak = StringUtil.indexOf(firstCharsIfText, '\n', 2);
+    return lineBreak >= 0 && StringUtil.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
   }
 
   @NotNull

@@ -20,7 +20,6 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
@@ -86,7 +85,7 @@ public class LightTreeUtil {
       }
     }
 
-    return result != null ? result: Collections.<LighterASTNode>emptyList();
+    return result != null ? result: Collections.emptyList();
   }
 
   @NotNull
@@ -102,7 +101,7 @@ public class LightTreeUtil {
       }
     }
 
-    return result != null ? result: Collections.<LighterASTNode>emptyList();
+    return result != null ? result: Collections.emptyList();
   }
 
   @NotNull

@@ -16,9 +16,7 @@
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.ID;
-import com.intellij.util.indexing.IndexExtension;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -37,12 +35,12 @@ import java.util.List;
 
 public class CompilerIndices {
   //TODO manage version separately
-  public final static int VERSION = 4;
+  public final static int VERSION = 5;
 
-  public final static ID<LightRef, Integer> BACK_USAGES = ID.create("back.refs");
-  public final static ID<LightRef, Collection<LightRef>> BACK_HIERARCHY = ID.create("back.hierarchy");
-  public final static ID<LightRef, Void> BACK_CLASS_DEF = ID.create("back.class.def");
-  public final static ID<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = ID.create("back.member.sign");
+  public final static IndexId<LightRef, Integer> BACK_USAGES = IndexId.create("back.refs");
+  public final static IndexId<LightRef, Collection<LightRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");
+  public final static IndexId<LightRef, Void> BACK_CLASS_DEF = IndexId.create("back.class.def");
+  public final static IndexId<SignatureData, Collection<LightRef>> BACK_MEMBER_SIGN = IndexId.create("back.member.sign");
 
   public static List<IndexExtension<?, ?, CompiledFileData>> getIndices() {
     return Arrays.asList(createBackwardClassDefinitionExtension(),
@@ -59,7 +57,7 @@ public class CompilerIndices {
       }
 
       @NotNull
-      public ID<LightRef, Integer> getName() {
+      public IndexId<LightRef, Integer> getName() {
         return BACK_USAGES;
       }
 
@@ -104,7 +102,7 @@ public class CompilerIndices {
       }
 
       @NotNull
-      public ID<LightRef, Collection<LightRef>> getName() {
+      public IndexId<LightRef, Collection<LightRef>> getName() {
         return BACK_HIERARCHY;
       }
 
@@ -133,7 +131,7 @@ public class CompilerIndices {
       }
 
       @NotNull
-      public ID<LightRef, Void> getName() {
+      public IndexId<LightRef, Void> getName() {
         return BACK_CLASS_DEF;
       }
 
@@ -158,7 +156,7 @@ public class CompilerIndices {
     return new IndexExtension<SignatureData, Collection<LightRef>, CompiledFileData>() {
       @NotNull
       @Override
-      public ID<SignatureData, Collection<LightRef>> getName() {
+      public IndexId<SignatureData, Collection<LightRef>> getName() {
         return BACK_MEMBER_SIGN;
       }
 
@@ -217,12 +215,13 @@ public class CompilerIndices {
       @Override
       public void save(@NotNull DataOutput out, SignatureData value) throws IOException {
         DataInputOutputUtil.writeINT(out, value.getRawReturnType());
+        out.writeByte(value.getIteratorKind());
         out.writeBoolean(value.isStatic());
       }
 
       @Override
       public SignatureData read(@NotNull DataInput in) throws IOException {
-        return new SignatureData(DataInputOutputUtil.readINT(in), in.readBoolean());
+        return new SignatureData(DataInputOutputUtil.readINT(in), in.readByte(), in.readBoolean());
       }
     };
   }

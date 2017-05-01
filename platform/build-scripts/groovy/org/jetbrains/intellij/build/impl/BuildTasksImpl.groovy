@@ -17,11 +17,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildTasks
-import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.ProductModulesLayout
+import org.jetbrains.intellij.build.*
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -258,6 +254,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildDistributions() {
     checkProductProperties()
+    copyDependenciesFile()
 
     def patchedApplicationInfo = patchApplicationInfo()
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo)
@@ -277,7 +274,7 @@ idea.fatal.error.notification=disabled
       if (buildContext.productProperties.scrambleMainJar) {
         scramble()
       }
-
+      buildContext.gradle.run('Setting up JetBrains JREs', 'setupJbre')
       layoutShared()
 
       def propertiesFile = patchIdeaPropertiesFile()
@@ -306,6 +303,14 @@ idea.fatal.error.notification=disabled
           buildContext.messages.info("Skipping building cross-platform distribution because some OS-specific distributions were skipped")
         }
       }
+    }
+  }
+
+  private def copyDependenciesFile() {
+    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
+      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
+      buildContext.notifyArtifactBuilt(outputFile)
     }
   }
 
@@ -343,10 +348,13 @@ idea.fatal.error.notification=disabled
     checkPaths([buildContext.linuxDistributionCustomizer?.iconPngPath], "productProperties.linuxCustomizer.iconPngPath")
 
     def macCustomizer = buildContext.macDistributionCustomizer
-    checkPaths([macCustomizer?.icnsPath], "productProperties.macCustomizer.icnsPath")
-    checkPaths([macCustomizer?.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
-    checkPaths([macCustomizer?.dmgImagePath], "productProperties.macCustomizer.dmgImagePath")
-    checkPaths([macCustomizer?.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+    if (macCustomizer != null) {
+      checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
+      checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
+      checkPaths([macCustomizer.icnsPathForEAP], "productProperties.macCustomizer.icnsPathForEAP")
+      checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
+      checkPaths([macCustomizer.dmgImagePathForEAP], "productProperties.macCustomizer.dmgImagePathForEAP")
+    }
   }
 
   private void checkProductLayout() {
@@ -408,6 +416,16 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  private void checkMandatoryField(String value, String fieldName) {
+    if (value == null) {
+      buildContext.messages.error("Mandatory property '$fieldName' is not specified")
+    }
+  }
+
+  private void checkMandatoryPath(String path, String fieldName) {
+    checkMandatoryField(path, fieldName)
+    checkPaths([path], fieldName)
+  }
 
   @Override
   void compileProjectAndTests(List<String> includingTestsInModules = []) {

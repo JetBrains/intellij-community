@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,19 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
@@ -184,12 +184,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected static boolean isPositionValid(@Nullable final XSourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        return sourcePosition != null && sourcePosition.getFile().isValid();
-      }
-    }).booleanValue();
+    return ReadAction.compute(() -> sourcePosition != null && sourcePosition.getFile().isValid()).booleanValue();
   }
 
   @Nullable
@@ -235,28 +230,10 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   @Override
   public void reload() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    PsiFile psiFile = getPsiFile();
-    if (position != null && psiFile != null) {
-      mySourcePosition = SourcePosition.createFromLine(psiFile, position.getLine());
-      reload(psiFile);
+    mySourcePosition = DebuggerUtilsEx.toSourcePosition(myXBreakpoint.getSourcePosition(), myProject);
+    if (mySourcePosition != null) {
+      reload(mySourcePosition.getFile());
     }
-    else {
-      mySourcePosition = null;
-    }
-  }
-
-  @Nullable
-  public PsiFile getPsiFile() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
-    if (position != null) {
-      VirtualFile file = position.getFile();
-      if (file.isValid()) {
-        return PsiManager.getInstance(myProject).findFile(file);
-      }
-    }
-    return null;
   }
 
   static void createLocationBreakpointRequest(@NotNull FilteredRequestor requestor,
@@ -362,13 +339,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   protected static PsiClass getPsiClassAt(@Nullable final SourcePosition sourcePosition) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Nullable
-      @Override
-      public PsiClass compute() {
-        return JVMNameUtil.getClassAt(sourcePosition);
-      }
-    });
+    return ReadAction.compute(() -> JVMNameUtil.getClassAt(sourcePosition));
   }
 
   @Override
@@ -384,7 +355,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   @Nullable
   public Document getDocument() {
-    PsiFile file = getPsiFile();
+    PsiFile file = DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject);
     if (file != null) {
       return PsiDocumentManager.getInstance(myProject).getDocument(file);
     }
@@ -421,13 +392,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
   }
 
   public String toString() {
-    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
-               + getDescription()
-               + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END;
-      }
-    });
+    return ReadAction.compute(() -> CommonXmlStrings.HTML_START + CommonXmlStrings.BODY_START
+                                    + getDescription()
+                                    + CommonXmlStrings.BODY_END + CommonXmlStrings.HTML_END);
   }
 }

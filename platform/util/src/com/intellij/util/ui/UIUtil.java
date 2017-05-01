@@ -54,6 +54,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -104,6 +105,9 @@ public class UIUtil {
     DEFAULT_HTML_KIT_CSS = kit.getStyleSheet();
     // .. erase global ref to this CSS so no one can alter it
     kit.setStyleSheet(null);
+
+    // Applied to all JLabel instances, including subclasses. Supported in JBSDK only.
+    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
   private static void blockATKWrapper() {
@@ -2520,19 +2524,27 @@ public class UIUtil {
   }
 
   public static class JBHtmlEditorKit extends HTMLEditorKit {
-    private StyleSheet style = new StyleSheet();
+    private StyleSheet style;
 
     public JBHtmlEditorKit() {
       this(true);
     }
 
     public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+      style = createStyleSheet();
       if (noGapsBetweenParagraphs) style.addRule("p { margin-top: 0; }");
     }
 
     @Override
     public StyleSheet getStyleSheet() {
+      return style;
+    }
+
+    public static StyleSheet createStyleSheet() {
+      StyleSheet style = new StyleSheet();
+      style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
+      style.addRule("code { font-size: 100%; }"); // small by Swing's default
+      style.addRule("small { font-size: small; }"); // x-small by Swing's default
       return style;
     }
 
@@ -3997,5 +4009,36 @@ public class UIUtil {
         source.removeKeyListener(keyAdapter);
       }
     });
+  }
+
+  public static void resetEnabledRollOver(JTable table, int column) {
+    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
+
+    JComponent rc = (JComponent)table.getColumnModel().getColumn(column).getCellRenderer();
+    AbstractTableModel tm = (AbstractTableModel)table.getModel();
+    int lastRow = -1;
+
+    //noinspection EmptyCatchBlock
+    try {
+      lastRow = Integer.valueOf(String.valueOf(rc.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow")));
+    } catch (NumberFormatException nfe) {}
+
+    rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", null);
+
+    if (lastRow >= 0) {
+      tm.fireTableCellUpdated(lastRow, column);
+    }
+  }
+
+  public static void setCellRolloverState(AbstractButton cellRenderer, int row) {
+    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
+
+    try {
+      Object cv = cellRenderer.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow");
+      Integer rr = Integer.valueOf(String.valueOf(cv));
+      cellRenderer.getModel().setRollover(rr == row);
+    } catch (NumberFormatException ex) {
+      cellRenderer.getModel().setRollover(false);
+    }
   }
 }

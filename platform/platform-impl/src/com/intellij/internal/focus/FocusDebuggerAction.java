@@ -37,7 +37,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   private FocusDrawer myFocusDrawer;
 
   public FocusDebuggerAction() {
-    if (Boolean.getBoolean("focus.debug")) {
+    if (Boolean.getBoolean("idea.ui.debug.mode")) {
       ApplicationManager.getApplication().invokeLater(() -> actionPerformed(null));
     }
   }

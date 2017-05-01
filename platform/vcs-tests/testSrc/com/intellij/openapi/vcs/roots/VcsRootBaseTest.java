@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.vcs.test.VcsPlatformTest;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,23 +115,25 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
     Collection<String> contentRoots = vcsRootConfiguration.getContentRoots();
     createProjectStructure(myProject, contentRoots);
     if (!contentRoots.isEmpty()) {
-      for (String root : contentRoots) {
-        myProjectRoot.refresh(false, true);
-        VirtualFile f = myProjectRoot.findFileByRelativePath(root);
-        if (f != null) {
-          myRootModel.addContentEntry(f);
+      EdtTestUtil.runInEdtAndWait(() -> {
+        for (String root : contentRoots) {
+          VirtualFile f = myProjectRoot.findFileByRelativePath(root);
+          if (f != null) {
+            myRootModel.addContentEntry(f);
+          }
         }
-      }
+      });
     }
   }
 
-  static void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
+  void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
     for (String path : paths) {
       cd(project.getBaseDir().getPath());
       File f = new File(project.getBaseDir().getPath(), path);
       f.mkdirs();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     }
+    myProjectRoot.refresh(false, true);
   }
 
   private void createDirs(@NotNull Collection<String> mockRoots) throws IOException {

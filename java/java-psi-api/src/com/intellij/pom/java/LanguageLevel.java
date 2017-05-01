@@ -16,6 +16,7 @@
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaCoreBundle;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author dsl
  * @see LanguageLevelProjectExtension
  * @see LanguageLevelModuleExtension
+ * @see JavaSdkVersion
  */
 public enum LanguageLevel {
   JDK_1_3("Java 1.3", JavaCoreBundle.message("jdk.1.3.language.level.description"), "1.3"),
@@ -38,7 +40,7 @@ public enum LanguageLevel {
   JDK_1_6("Java 6", JavaCoreBundle.message("jdk.1.6.language.level.description"), "1.6", "6"),
   JDK_1_7("Java 7", JavaCoreBundle.message("jdk.1.7.language.level.description"), "1.7", "7"),
   JDK_1_8("Java 8", JavaCoreBundle.message("jdk.1.8.language.level.description"), "1.8", "8"),
-  JDK_1_9("Java 9", JavaCoreBundle.message("jdk.1.9.language.level.description"), "9"),
+  JDK_1_9("Java 9", JavaCoreBundle.message("jdk.1.9.language.level.description"), "9", "1.9"),
   JDK_X("Java X", JavaCoreBundle.message("jdk.X.language.level.description"), "");
 
   public static final LanguageLevel HIGHEST = JDK_1_9;

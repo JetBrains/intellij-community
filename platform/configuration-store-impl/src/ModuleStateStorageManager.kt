@@ -27,7 +27,7 @@ import com.intellij.openapi.module.impl.getModuleNameByFilePath
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.jdom.Element
 
-class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
+internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
 
   override fun pathRenamed(oldPath: String, newPath: String, event: VFileEvent?) {

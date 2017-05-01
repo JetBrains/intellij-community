@@ -160,6 +160,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     dimensionsAreValid = scrollBarHeight != 0;
   }
 
+  public void setTrafficLightIconVisible(boolean value) {
+    MyErrorPanel errorPanel = getErrorPanel();
+    if (errorPanel != null && errorPanel.myErrorStripeButton.isVisible() != value) {
+      errorPanel.myErrorStripeButton.setVisible(value);
+      repaint(-1, -1);
+    }
+  }
+
   public void repaintTrafficLightIcon() {
     MyErrorPanel errorPanel = getErrorPanel();
     if (errorPanel != null) {
@@ -475,7 +483,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @NotNull
     @Override
     public Dimension getPreferredSize() {
-      return new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() + getThinGap());
+      return !isPreferredSizeSet()
+             ? isVisible()
+               ? new Dimension(getErrorIconWidth() + getThinGap(), getErrorIconHeight() + getThinGap())
+               : JBUI.emptySize()
+             : super.getPreferredSize();
     }
   }
   

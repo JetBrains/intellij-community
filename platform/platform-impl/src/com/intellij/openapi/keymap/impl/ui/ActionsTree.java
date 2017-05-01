@@ -244,6 +244,7 @@ public class ActionsTree {
     model.nodeStructureChanged(myRoot);
 
     pathsKeeper.restorePaths();
+    getComponent().repaint();
   }
 
   public void filterTree(Shortcut shortcut, QuickList[] currentQuickListIds) {
@@ -519,7 +520,7 @@ public class ActionsTree {
       myHaveLink = false;
       myLink.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       final boolean showIcons = UISettings.getInstance().getShowIconsInMenus();
-      Keymap originalKeymap = myKeymap != null ? myKeymap.getParent() : null;
+      Keymap originalKeymap = myKeymap == null ? null : myKeymap.getParent();
       Icon icon = null;
       String text;
       String actionId = null;

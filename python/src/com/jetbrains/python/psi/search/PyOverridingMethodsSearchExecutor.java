@@ -17,7 +17,7 @@ package com.jetbrains.python.psi.search;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.jetbrains.python.psi.*;
@@ -31,14 +31,7 @@ public class PyOverridingMethodsSearchExecutor implements QueryExecutor<PyFuncti
                          @NotNull final Processor<PyFunction> consumer) {
     final PyFunction baseMethod = queryParameters.getFunction();
 
-    final PyClass containingClass = ApplicationManager.getApplication().runReadAction(
-      new Computable<PyClass>() {
-        @Override
-        public PyClass compute() {
-          return baseMethod.getContainingClass();
-        }
-      }
-    );
+    final PyClass containingClass = ReadAction.compute(() -> baseMethod.getContainingClass());
 
     return PyClassInheritorsSearch.search(containingClass, queryParameters.isCheckDeep()).forEach(pyClass -> {
       final AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();

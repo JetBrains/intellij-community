@@ -276,7 +276,7 @@ public class ModuleScopesTest extends ModuleTestCase {
     final VirtualFile libraryRoot = myFixture.findOrCreateDir("lib");
 
     ModuleRootModificationUtil.addModuleLibrary(m, "l", Collections.singletonList(libraryRoot.getUrl()),
-                                                Collections.<String>emptyList(), scope);
+                                                Collections.emptyList(), scope);
     return libraryRoot;
   }
 

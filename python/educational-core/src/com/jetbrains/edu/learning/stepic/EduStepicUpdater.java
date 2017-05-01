@@ -11,10 +11,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.jetbrains.edu.learning.StudySettings;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
-import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class EduStepicUpdater {
@@ -49,25 +51,29 @@ public class EduStepicUpdater {
   private static ActionCallback updateCourseList() {
     ActionCallback callback = new ActionCallback();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      final List<CourseInfo> courses = EduStepicConnector.getCourses(null);
-      final List<CourseInfo> cachedCourses = StudyProjectGenerator.getCoursesFromCache();
-      StudyProjectGenerator.flushCache(courses);
+      final List<Course> courses = EduStepicConnector.getCourses(null);
       StudySettings.getInstance().setLastTimeChecked(System.currentTimeMillis());
 
-      courses.removeAll(cachedCourses);
-      if (!courses.isEmpty() && !cachedCourses.isEmpty()) {
+      if (!courses.isEmpty()) {
+        List<Course> updated = new ArrayList<>();
+        for (Course course : courses) {
+          if (course instanceof RemoteCourse && ((RemoteCourse)course).getUpdateDate().
+                                                after(new Date(StudySettings.getInstance().getLastTimeChecked()))) {
+            updated.add(course);
+          }
+        }
+        if (updated.isEmpty()) return;
         final String message;
         final String title;
-        if (courses.size() == 1) {
-          message = courses.get(0).getName();
+        if (updated.size() == 1) {
+          message = updated.get(0).getName();
           title = "New course available";
         }
         else {
           title = "New courses available";
-          message = StringUtil.join(courses, CourseInfo::getName, ", ");
+          message = StringUtil.join(updated, Course::getName, ", ");
         }
-        final Notification notification =
-          new Notification("New.course", title, message, NotificationType.INFORMATION);
+        final Notification notification = new Notification("New.course", title, message, NotificationType.INFORMATION);
         notification.notify(null);
       }
     });
@@ -79,8 +85,7 @@ public class EduStepicUpdater {
   }
 
   private static boolean checkNeeded() {
-    final List<CourseInfo> courses = StudyProjectGenerator.getCoursesFromCache();
     long timeToNextCheck = StudySettings.getInstance().getLastTimeChecked() + CHECK_INTERVAL - System.currentTimeMillis();
-    return courses.isEmpty() || timeToNextCheck <= 0;
+    return timeToNextCheck <= 0;
   }
 }

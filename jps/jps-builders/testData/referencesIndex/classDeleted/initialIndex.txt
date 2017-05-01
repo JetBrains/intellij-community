@@ -15,3 +15,5 @@ java.lang.Runnable in Foo occurrences = 1
 Class Definitions:
 Foo in Foo
 Foo$Inner in Foo
+
+Members Signatures:

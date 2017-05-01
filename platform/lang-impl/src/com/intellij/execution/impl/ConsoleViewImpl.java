@@ -92,6 +92,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.*;
 
+import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
@@ -685,7 +687,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         int startIndex = startsWithCR ? 1 : 0;
         for (int i = startIndex; i < deferredTokens.size(); i++) {
           TokenBuffer.TokenInfo deferredToken = deferredTokens.get(i);
-          addedText.append(deferredToken.getText());
+          addedText.append(deferredToken.getText()); // can just append texts because \r inside these tokens were already taken care of
         }
         if (startsWithCR) {
           // remove last line if any
@@ -880,7 +882,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   }
 
   private void registerConsoleEditorActions() {
-    Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_GOTO_DECLARATION);
+    Shortcut[] shortcuts = getActiveKeymapShortcuts(IdeActions.ACTION_GOTO_DECLARATION).getShortcuts();
     CustomShortcutSet shortcutSet = new CustomShortcutSet(ArrayUtil.mergeArrays(shortcuts, CommonShortcuts.ENTER.getShortcuts()));
     new HyperlinkNavigationAction().registerCustomShortcutSet(shortcutSet, myEditor.getContentComponent());
 

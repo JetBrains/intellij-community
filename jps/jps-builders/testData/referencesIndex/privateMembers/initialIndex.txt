@@ -9,3 +9,5 @@ java.lang.Object.<init>(0) in PrivateMembers occurrences = 2
 Class Definitions:
 PrivateMembers in PrivateMembers
 PrivateMembers$PrivateInnerClass in PrivateMembers
+
+Members Signatures:

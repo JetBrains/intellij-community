@@ -18,10 +18,13 @@ package org.jetbrains.jps.incremental.dependencies;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.transfer.TransferCancelledException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
@@ -34,6 +37,8 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryDescription;
+import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService;
 import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
@@ -144,6 +149,9 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               }
             }
           }
+          catch (TransferCancelledException e) {
+            context.checkCanceled();
+          }
           finally {
             guard.finish();
           }
@@ -207,7 +215,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
 
     static void init(CompileContext context) {
-      context.putUserData(CONTEXT_KEY, ContainerUtil.<JpsMavenRepositoryLibraryDescriptor, ResourceGuard>newConcurrentMap());
+      context.putUserData(CONTEXT_KEY, ContainerUtil.newConcurrentMap());
     }
 
     @NotNull
@@ -240,9 +248,20 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static ArtifactRepositoryManager getRepositoryManager(final CompileContext context) {
     ArtifactRepositoryManager manager = MANAGER_KEY.get(context);
     if (manager == null) {
-      manager = new ArtifactRepositoryManager(getLocalRepoDir(context), new ProgressConsumer() {
+
+      final List<RemoteRepository> repositories = new SmartList<>();
+      for (JpsRemoteRepositoryDescription repo : JpsRemoteRepositoryService.getInstance().getOrCreateRemoteRepositoriesConfiguration(context.getProjectDescriptor().getProject())
+          .getRepositories()) {
+        repositories.add(ArtifactRepositoryManager.createRemoteRepository(repo.getId(), repo.getUrl()));
+      }
+      manager = new ArtifactRepositoryManager(getLocalRepoDir(context), repositories, new ProgressConsumer() {
         public void consume(String message) {
           context.processMessage(new ProgressMessage(message));
+        }
+
+        @Override
+        public boolean isCanceled() {
+          return context.getCancelStatus().isCanceled();
         }
       });
       // further init manager here

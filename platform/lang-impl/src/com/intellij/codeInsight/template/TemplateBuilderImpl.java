@@ -55,7 +55,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private RangeMarker mySelection;
   private final Document myDocument;
   private final PsiFile myFile;
-  private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(TemplateBuilderImpl.class);
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
     myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);

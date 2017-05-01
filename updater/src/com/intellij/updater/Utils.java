@@ -73,7 +73,7 @@ public class Utils {
 
   public static void delete(File file) throws IOException {
     Path start = file.toPath();
-    if (Files.exists(start)) {
+    if (Files.exists(start, LinkOption.NOFOLLOW_LINKS)) {
       Files.walkFileTree(start, new SimpleFileVisitor<Path>() {
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -141,14 +141,6 @@ public class Utils {
     Path path = link.toPath();
     Files.deleteIfExists(path);
     Files.createSymbolicLink(path, Paths.get(target));
-  }
-
-  public static boolean isEmptyDirectory(File file) {
-    if (file.isDirectory()) {
-      String[] children = file.list();
-      return children != null && children.length == 0;
-    }
-    return false;
   }
 
   public static void copy(File from, File to) throws IOException {

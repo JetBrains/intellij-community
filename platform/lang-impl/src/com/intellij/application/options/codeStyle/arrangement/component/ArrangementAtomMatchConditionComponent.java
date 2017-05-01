@@ -20,6 +20,7 @@ import com.intellij.application.options.codeStyle.arrangement.action.Arrangement
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
+import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +33,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -145,7 +147,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
     final ArrangementRemoveConditionAction action = new ArrangementRemoveConditionAction();
     Icon buttonIcon = action.getTemplatePresentation().getIcon();
-    Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
     if (closeCallback == null) {
       myCloseButton = null;
       myCloseButtonBounds = null;
@@ -155,7 +156,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
         action,
         action.getTemplatePresentation().clone(),
         ArrangementConstants.MATCHING_RULES_CONTROL_PLACE,
-        buttonSize)
+        JBUI.emptySize())
       {
         @Override
         protected Icon getIcon() {

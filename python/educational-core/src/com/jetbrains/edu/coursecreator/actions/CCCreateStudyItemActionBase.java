@@ -18,15 +18,12 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.coursecreator.ui.CCCreateStudyItemDialog;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.StudyItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
-import java.util.List;
 
 public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
 
@@ -49,7 +46,6 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     }
     createItem(view, project, directory, course);
   }
-
 
   @Override
   public void update(@NotNull AnActionEvent event) {
@@ -81,12 +77,10 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     presentation.setEnabledAndVisible(true);
   }
 
-
   @Nullable
   protected abstract PsiDirectory getParentDir(@NotNull final Project project,
                                                @NotNull final Course course,
                                                @NotNull final PsiDirectory directory);
-
 
   @Nullable
   public PsiDirectory createItem(@Nullable final IdeView view, @NotNull final Project project,
@@ -103,12 +97,11 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
     CCUtils.updateHigherElements(parentDir.getVirtualFile().getChildren(), getStudyOrderable(item),
                                  item.getIndex() - 1, getItemName(), 1);
     addItem(course, item);
-    Collections.sort(getSiblings(course, parentItem), EduUtils.INDEX_COMPARATOR);
+    sortSiblings(course, parentItem);
     return createItemDir(project, item, view, parentDir, course);
   }
 
   protected abstract void addItem(@NotNull final Course course, @NotNull final StudyItem item);
-
 
   protected abstract Function<VirtualFile, ? extends StudyItem> getStudyOrderable(@NotNull final StudyItem item);
 
@@ -168,7 +161,7 @@ public abstract class CCCreateStudyItemActionBase extends DumbAwareAction {
                                            @NotNull final Project project,
                                            @NotNull final Course course);
 
-  protected abstract List<? extends StudyItem> getSiblings(@NotNull final Course course, @Nullable final StudyItem parentItem);
+  protected abstract void sortSiblings(@NotNull final Course course, @Nullable final StudyItem parentItem);
 
   protected abstract String getItemName();
 

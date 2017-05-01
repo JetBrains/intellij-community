@@ -9,7 +9,7 @@ interface PsiClass {}
 
 public class TestCompletion {
   public void method() {
-      PsiMember psiMember = null;
-      PsiClass c = psiMember.getContainingClass()
+      PsiMethod psiMethod = null;
+      PsiClass c = psiMethod.getContainingClass()
   }
 }

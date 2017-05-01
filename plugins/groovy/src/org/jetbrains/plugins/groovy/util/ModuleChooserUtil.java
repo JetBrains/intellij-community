@@ -96,12 +96,7 @@ public class ModuleChooserUtil {
 
     final String lastModuleName = PropertiesComponent.getInstance(project).getValue(GROOVY_LAST_MODULE);
     if (lastModuleName != null) {
-      int defaultOption = ContainerUtil.indexOf(modules, new Condition<Module>() {
-        @Override
-        public boolean value(Module module) {
-          return module.getName().equals(lastModuleName);
-        }
-      });
+      int defaultOption = ContainerUtil.indexOf(modules, (Condition<Module>)module -> module.getName().equals(lastModuleName));
       if (defaultOption >= 0) {
         step.setDefaultOptionIndex(defaultOption);
       }

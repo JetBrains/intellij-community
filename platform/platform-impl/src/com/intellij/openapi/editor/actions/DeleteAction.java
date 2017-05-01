@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,17 +50,11 @@ public class DeleteAction extends EditorAction {
       EditorUIUtil.hideCursorInEditor(editor);
       CommandProcessor.getInstance().setCurrentCommandGroupId(EditorActionUtil.DELETE_COMMAND_GROUP);
       CopyPasteManager.getInstance().stopKillRings();
-      SelectionModel selectionModel = editor.getSelectionModel();
-      if (!selectionModel.hasSelection()) {
-        if (editor.getInlayModel().hasInlineElementAt(editor.getCaretModel().getVisualPosition())) {
-          editor.getCaretModel().moveCaretRelatively(1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
-        }
-        else {
-          deleteCharAtCaret(editor);
-        }
+      if (editor.getInlayModel().hasInlineElementAt(editor.getCaretModel().getVisualPosition())) {
+        editor.getCaretModel().moveCaretRelatively(1, 0, false, false, EditorUtil.isCurrentCaretPrimary(editor));
       }
       else {
-        EditorModificationUtil.deleteSelectedText(editor);
+        deleteCharAtCaret(editor);
       }
     }
   }

@@ -14,8 +14,8 @@ PyFile:NotClosedSlice.py
     PyIfPartIf
       PsiElement(Py:IF_KEYWORD)('if')
       PsiWhiteSpace(' ')
-      PyBoolLiteralExpression
-        PsiElement(Py:TRUE_KEYWORD)('True')
+      PyReferenceExpression: True
+        PsiElement(Py:IDENTIFIER)('True')
       PsiElement(Py:COLON)(':')
       PsiWhiteSpace('\n    ')
       PyStatementList

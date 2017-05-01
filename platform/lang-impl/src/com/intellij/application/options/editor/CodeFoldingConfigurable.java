@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,11 @@ import com.intellij.openapi.options.CompositeConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -77,26 +75,15 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
     EditorSettingsExternalizable.getInstance().setFoldingOutlineShown(myCbFolding.isSelected());
     super.apply();
 
-    final List<Pair<Editor, Project>> toUpdate = new ArrayList<>();
-    for (final Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      final Project project = editor.getProject();
-      if (project != null && !project.isDefault()) {
-        toUpdate.add(Pair.create(editor, project));
-      }
-    }
+    ApplicationManager.getApplication().invokeLater(() -> applyCodeFoldingSettingsChanges(), ModalityState.NON_MODAL);
+  }
 
-    ApplicationManager.getApplication().invokeLater(() -> {
-        for (Pair<Editor, Project> each : toUpdate) {
-            if (each.second == null || each.second.isDisposed()) {
-                continue;
-            }
-            final CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(each.second);
-            if (foldingManager != null) {
-                foldingManager.buildInitialFoldings(each.first);
-            }
-        }
-        EditorOptionsPanel.reinitAllEditors();
-    }, ModalityState.NON_MODAL);
+  public static void applyCodeFoldingSettingsChanges() {
+    EditorOptionsPanel.reinitAllEditors();
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      Project project = editor.getProject();
+      if (project != null) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor);
+    }
   }
 
   @Override

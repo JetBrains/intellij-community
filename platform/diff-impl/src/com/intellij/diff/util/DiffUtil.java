@@ -88,6 +88,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ImageLoader;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -113,12 +114,24 @@ public class DiffUtil {
   @NotNull public static final String DIFF_CONFIG = "diff.xml";
   public static final int TITLE_GAP = JBUI.scale(2);
 
+  public static final List<Image> DIFF_FRAME_ICONS = loadDiffFrameImages();
+
+
+  @NotNull
+  private static List<Image> loadDiffFrameImages() {
+    return ContainerUtil.list(
+      ImageLoader.loadFromResource("/diff_frame32.png"),
+      ImageLoader.loadFromResource("/diff_frame64.png"),
+      ImageLoader.loadFromResource("/diff_frame128.png")
+    );
+  }
+
   //
   // Editor
   //
 
   public static boolean isDiffEditor(@NotNull Editor editor) {
-    return editor.getUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY) != null;
+    return editor.getEditorKind() == EditorKind.DIFF;
   }
 
   @Nullable
@@ -194,9 +207,8 @@ public class DiffUtil {
   @NotNull
   public static EditorEx createEditor(@NotNull Document document, @Nullable Project project, boolean isViewer, boolean enableFolding) {
     EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project) : factory.createEditor(document, project));
-
-    editor.putUserData(DiffManagerImpl.EDITOR_IS_DIFF_KEY, Boolean.TRUE);
+    EditorKind kind = EditorKind.DIFF;
+    EditorEx editor = (EditorEx)(isViewer ? factory.createViewer(document, project, kind) : factory.createEditor(document, project, kind));
 
     editor.getSettings().setShowIntentionBulb(false);
     ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
@@ -1198,6 +1210,7 @@ public class DiffUtil {
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null && file.isValid() && file.isInLocalFileSystem()) {
+      if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
       // decompiled file can be writable, but Document with decompiled content is still read-only
       return !file.isWritable();
     }

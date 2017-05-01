@@ -7,6 +7,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 
 import javax.swing.*;
@@ -78,11 +79,11 @@ public class AttachmentsTabForm {
         if (e.getValueIsAdjusting()) {
           return;
         }
-        LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, true);
+        LabeledTextComponent.setText(myFileTextArea.getTextComponent(), null, false);
         Attachment attachment = myTable.getSelectedObject();
         if (attachment != null) {
           try {
-            LabeledTextComponent.setText(myFileTextArea.getTextComponent(), attachment.getDisplayText(), true);
+            LabeledTextComponent.setText(myFileTextArea.getTextComponent(), attachment.getDisplayText(), false);
           }
           catch (Throwable th) {
             LOG.warn(th);
@@ -107,6 +108,7 @@ public class AttachmentsTabForm {
         myTable.repaint();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
+    myContentPane.setPreferredSize(JBUI.size(200, 210)); // limit growth due to large attachment
   }
 
   public JComponent getPreferredFocusedComponent() {

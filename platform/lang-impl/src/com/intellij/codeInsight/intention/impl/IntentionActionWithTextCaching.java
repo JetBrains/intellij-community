@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     }
     if (other.getAction() instanceof Comparable) {
       //noinspection unchecked
-      return ((Comparable)other.getAction()).compareTo(myAction);
+      return -((Comparable)other.getAction()).compareTo(myAction);
     }
     return Comparing.compare(getText(), other.getText());
   }
@@ -143,7 +143,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
-  private class MyIntentionAction implements IntentionAction,IntentionActionDelegate {
+  private class MyIntentionAction implements IntentionAction, IntentionActionDelegate, Comparable<MyIntentionAction>, ShortcutProvider {
     private final IntentionAction myAction;
     private final BiConsumer<IntentionActionWithTextCaching, IntentionAction> myMarkInvoked;
 
@@ -203,6 +203,25 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     @Override
     public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
       return myAction.getElementToMakeWritable(currentFile);
+    }
+
+    @Nullable
+    @Override
+    public ShortcutSet getShortcut() {
+      return myAction instanceof ShortcutProvider ? ((ShortcutProvider)myAction).getShortcut() : null;
+    }
+
+    @Override
+    public int compareTo(@NotNull final MyIntentionAction other) {
+      if (myAction instanceof Comparable) {
+        //noinspection unchecked
+        return ((Comparable)myAction).compareTo(other.getDelegate());
+      }
+      if (other.getDelegate() instanceof Comparable) {
+        //noinspection unchecked
+        return -((Comparable)other.getDelegate()).compareTo(myAction);
+      }
+      return Comparing.compare(getText(), other.getText());
     }
   }
 }

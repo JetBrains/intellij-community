@@ -19,15 +19,19 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.PyEduPluginConfigurator;
 import com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator;
+import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep;
 import com.jetbrains.python.newProject.steps.PythonGenerateProjectCallback;
 import icons.InteractiveLearningPythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.util.List;
 
 public class PyStudyIntroductionCourseAction extends AnAction {
 
@@ -44,7 +48,9 @@ public class PyStudyIntroductionCourseAction extends AnAction {
     if (projectDir.exists()) {
       return;
     }
-    if (StudyProjectGenerator.getBundledIntro() != null) {
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(PythonLanguage.getInstance());
+    final List<String> paths = configurator.getBundledCoursePaths();
+    if (!paths.isEmpty()) {
       return;
     }
     Presentation presentation = e.getPresentation();
@@ -59,8 +65,10 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       ProjectUtil.openProject(projectDir.getPath(), null, false);
     }
     else {
-      final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator();
-      CourseInfo introCourse = StudyProjectGenerator.getBundledIntro();
+      final PyStudyDirectoryProjectGenerator generator = new PyStudyDirectoryProjectGenerator(true);
+      final EduPluginConfigurator configurator = new PyEduPluginConfigurator();
+      final String bundledCoursePath = configurator.getBundledCoursePaths().get(0);
+      Course introCourse = StudyProjectGenerator.getCourse(bundledCoursePath);
       if (introCourse == null) {
         return;
       }
@@ -68,7 +76,7 @@ public class PyStudyIntroductionCourseAction extends AnAction {
       final ProjectSpecificSettingsStep step = new ProjectSpecificSettingsStep(generator, callback);
       step.createPanel(); // initialize panel to set location
       step.setLocation(projectDir.toString());
-      generator.setSelectedCourse(introCourse);
+      generator.setCourse(introCourse);
 
       callback.consume(step);
     }

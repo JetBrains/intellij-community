@@ -15,8 +15,11 @@
  */
 package com.intellij.refactoring;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -135,7 +138,7 @@ public class IntroduceTargetChooser {
       }
     });
 
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
@@ -152,7 +155,12 @@ public class IntroduceTargetChooser {
           highlighter.getAndSet(null).dropHighlight();
         }
       })
-      .createPopup().showInBestPositionFor(editor);
+      .createPopup();
+    popup.showInBestPositionFor(editor);
+    Project project = editor.getProject();
+    if (project != null) {
+      NavigationUtil.hidePopupIfDumbModeStarts(popup, project);
+    }
   }
 
   private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {

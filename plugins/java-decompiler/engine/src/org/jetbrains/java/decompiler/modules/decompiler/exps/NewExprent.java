@@ -44,6 +44,7 @@ public class NewExprent extends Exprent {
   private List<Exprent> lstDims = new ArrayList<>();
   private List<Exprent> lstArrayElements = new ArrayList<>();
   private boolean directArrayInit;
+  private boolean isVarArgParam;
   private boolean anonymous;
   private boolean lambda;
   private boolean enumConst;
@@ -339,13 +340,37 @@ public class NewExprent extends Exprent {
                 buf.append(", ");
               }
 
-              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, tracer);
+              ExprProcessor.getCastedExprent(expr, leftType, buf, indent, true, false, true, tracer);
 
               firstParam = false;
             }
           }
 
           buf.append(')');
+        }
+      }
+    }
+    else if (isVarArgParam) {
+      // just print the array elements
+      VarType leftType = newType.decreaseArrayDim();
+      for (int i = 0; i < lstArrayElements.size(); i++) {
+        if (i > 0) {
+          buf.append(", ");
+        }
+
+        // new String[][]{{"abc"}, {"DEF"}} => new String[]{"abc"}, new String[]{"DEF"}
+        Exprent element = lstArrayElements.get(i);
+        if (element.type == EXPRENT_NEW) {
+          ((NewExprent) element).setDirectArrayInit(false);
+        }
+        ExprProcessor.getCastedExprent(element, leftType, buf, indent, false, tracer);
+      }
+
+      // if there is just one element of Object[] type it needs to be casted to resolve ambiguity
+      if (lstArrayElements.size() == 1) {
+        VarType elementType = lstArrayElements.get(0).getExprType();
+        if (elementType.type == CodeConstants.TYPE_OBJECT && elementType.value.equals("java/lang/Object") && elementType.arrayDim >= 1) {
+          buf.prepend("(Object)");
         }
       }
     }
@@ -476,6 +501,10 @@ public class NewExprent extends Exprent {
 
   public void setDirectArrayInit(boolean directArrayInit) {
     this.directArrayInit = directArrayInit;
+  }
+
+  public void setVarArgParam(boolean isVarArgParam) {
+    this.isVarArgParam = isVarArgParam;
   }
 
   public boolean isLambda() {

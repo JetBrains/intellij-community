@@ -111,6 +111,13 @@
       <isolated-realm>false</isolated-realm>
     </component>
 
+    <component>
+      <role>org.apache.maven.model.validation.ModelValidator</role>
+      <role-hint>ide</role-hint>
+      <implementation>org.jetbrains.idea.maven.server.embedder.CustomModelValidator</implementation>
+      <description/>
+      <isolated-realm>false</isolated-realm>
+    </component>
 
   </components>
 </component-set>

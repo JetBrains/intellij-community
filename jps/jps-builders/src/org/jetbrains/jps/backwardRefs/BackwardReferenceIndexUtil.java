@@ -76,7 +76,7 @@ public class BackwardReferenceIndexUtil {
           final LightRef ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
           final LightRef.JavaLightClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
           if (ref != null && returnType != null) {
-            final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).isStatic());
+            final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).getIteratorKind(), ((JavacDef.JavacMemberDef)def).isStatic());
             signatureData.computeIfAbsent(data, element -> new SmartList<>()).add(ref);
           }
         }
@@ -89,7 +89,8 @@ public class BackwardReferenceIndexUtil {
         try {
           lightRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
           if (lightRef != null) {
-            convertedRefs.put(lightRef, count);
+            Integer old = convertedRefs.get(lightRef);
+            convertedRefs.put(lightRef, old == null ? count : (old + count));
           }
         }
         catch (IOException e) {

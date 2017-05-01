@@ -39,7 +39,7 @@ import java.io.File;
 
 public class DiffHyperlink implements Printable {
   private static final String NEW_LINE = "\n";
-  private static final Logger LOG = Logger.getInstance("#" + DiffHyperlink.class.getName());
+  private static final Logger LOG = Logger.getInstance(DiffHyperlink.class);
 
   protected final String myExpected;
   protected final String myActual;

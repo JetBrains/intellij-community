@@ -31,7 +31,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import icons.AntIcons;
@@ -109,15 +108,13 @@ public class TargetChooserDialog extends DialogWrapper {
     tree.setShowsRootHandles(true);
     tree.setLineStyleAngled();
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree, new Convertor<TreePath, String>() {
-      public String convert(final TreePath path) {
-        final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
-        if (userObject instanceof AntTargetNodeDescriptor) {
-          final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
-          return target.getDisplayName();
-        }
-        return null;
+    new TreeSpeedSearch(tree, path -> {
+      final Object userObject = ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+      if (userObject instanceof AntTargetNodeDescriptor) {
+        final AntBuildTarget target = ((AntTargetNodeDescriptor)userObject).getAntTarget();
+        return target.getDisplayName();
       }
+      return null;
     });
 
     DefaultMutableTreeNode selectedNode = null;

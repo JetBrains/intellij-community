@@ -32,7 +32,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.util.DetailViewImpl;
@@ -122,10 +122,10 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
     final Point location = DimensionService.getInstance().getLocation(DIMENSION_SERVICE_KEY, project);
     if (location != null) {
-      popup.showInScreenCoordinates(WindowManager.getInstance().getFrame(project), location);
+      popup.showInScreenCoordinates(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), location);
     }
     else {
-      popup.showCenteredInCurrentWindow(project);
+      popup.showInBestPositionFor(e.getDataContext());
     }
 
     list.getEmptyText().setText("No Bookmarks");

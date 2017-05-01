@@ -390,6 +390,7 @@ public class HighlightMethodUtil {
           if (highlightInfo != null) {
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, (MethodCandidateInfo)resolveResult, methodCall);
+            registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, (MethodCandidateInfo)resolveResult, (PsiMethod)resolved, highlightInfo);
           }
         }
       }
@@ -430,6 +431,7 @@ public class HighlightMethodUtil {
           if (highlightInfo != null) {
             registerMethodCallIntentions(highlightInfo, methodCall, list, resolveHelper);
             registerMethodReturnFixAction(highlightInfo, candidateInfo, methodCall);
+            registerTargetTypeFixesBasedOnApplicabilityInference(methodCall, candidateInfo, resolvedMethod, highlightInfo);
           }
         }
         else {
@@ -470,6 +472,36 @@ public class HighlightMethodUtil {
       highlightInfo = GenericsHighlightUtil.checkParameterizedReferenceTypeArguments(resolved, referenceToMethod, substitutor, javaSdkVersion);
     }
     return highlightInfo;
+  }
+
+  private static void registerTargetTypeFixesBasedOnApplicabilityInference(@NotNull PsiMethodCallExpression methodCall,
+                                                                           MethodCandidateInfo resolveResult,
+                                                                           PsiMethod resolved,
+                                                                           HighlightInfo highlightInfo) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+    PsiVariable variable = null;
+    if (parent instanceof PsiVariable) {
+      variable = (PsiVariable)parent;
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
+      PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
+      if (lExpression instanceof PsiReferenceExpression) {
+        PsiElement resolve = ((PsiReferenceExpression)lExpression).resolve();
+        if (resolve instanceof PsiVariable) {
+          variable = (PsiVariable)resolve;
+        }
+      }
+    }
+
+    if (variable != null) {
+      PsiType rType = methodCall.getType();
+      if (rType != null && !variable.getType().isAssignableFrom(rType)) {
+        PsiType expectedTypeByApplicabilityConstraints = resolveResult.getSubstitutor(false).substitute(resolved.getReturnType());
+        if (expectedTypeByApplicabilityConstraints != null && !expectedTypeByApplicabilityConstraints.equals(rType)) {
+          HighlightUtil.registerChangeVariableTypeFixes(variable, expectedTypeByApplicabilityConstraints, methodCall, highlightInfo);
+        }
+      }
+    }
   }
 
   /* see also PsiReferenceExpressionImpl.hasValidQualifier() */
@@ -625,33 +657,32 @@ public class HighlightMethodUtil {
       return null;
     }
     String description;
-    PsiElement elementToHighlight;
+    PsiElement elementToHighlight = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
     if (element != null && !resolveResult.isAccessible()) {
       description = HighlightUtil.buildProblemWithAccessDescription(referenceToMethod, resolveResult);
-      elementToHighlight = referenceToMethod.getReferenceNameElement();
     }
     else if (element != null && !resolveResult.isStaticsScopeCorrect()) {
-      description = null;
-      elementToHighlight = ObjectUtils.notNull(referenceToMethod.getReferenceNameElement(), referenceToMethod);
-
       if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass containingClass = ((PsiMethod)element).getContainingClass();
         if (containingClass != null && containingClass.isInterface()) {
           HighlightInfo info = HighlightUtil.checkFeature(elementToHighlight, HighlightUtil.Feature.STATIC_INTERFACE_CALLS, languageLevel, file);
           if (info != null) return info;
           description = checkStaticInterfaceMethodCallQualifier(referenceToMethod, resolveResult.getCurrentFileResolveScope(), containingClass);
+          if (description != null) {
+            HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(highlightInfoType).range(elementToHighlight).description(description)
+              .escapedToolTip(XmlStringUtil.escapeString(description)).create();
+            QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createAccessStaticViaInstanceFix(referenceToMethod, resolveResult));
+            return highlightInfo;
+          }
         }
       }
 
-      if (description == null) {
-        description = HighlightUtil.buildProblemWithStaticDescription(element);
-      }
+      description = HighlightUtil.buildProblemWithStaticDescription(element);
     }
     else {
       String methodName = referenceToMethod.getReferenceName() + buildArgTypesList(list);
       description = JavaErrorMessages.message("cannot.resolve.method", methodName);
       if (candidates.length == 0) {
-        elementToHighlight = referenceToMethod.getReferenceNameElement();
         highlightInfoType = HighlightInfoType.WRONG_REF;
       }
       else {

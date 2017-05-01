@@ -40,7 +40,7 @@ import java.util.Set;
  * @since 7/18/12 10:37 AM
  */
 public class DefaultArrangementSettingsSerializer implements ArrangementSettingsSerializer {
-  private static final Logger LOG = Logger.getInstance("#" + DefaultArrangementSettingsSerializer.class.getName());
+  private static final Logger LOG = Logger.getInstance(DefaultArrangementSettingsSerializer.class);
 
   @NotNull @NonNls private static final String GROUPS_ELEMENT_NAME     = "groups";
   @NotNull @NonNls private static final String GROUP_ELEMENT_NAME      = "group";
@@ -167,7 +167,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
       assert id != null && name != null : "Can not find id for token: " + token;
       final Element rules = token.getChild(RULES_ELEMENT_NAME);
       final List<StdArrangementMatchRule> tokenRules =
-        rules == null ? ContainerUtil.<StdArrangementMatchRule>emptyList() : deserializeRules(rules, null);
+        rules == null ? ContainerUtil.emptyList() : deserializeRules(rules, null);
       tokenDefinitions.add(new StdArrangementRuleAliasToken(id.getValue(), name.getValue(), tokenRules));
     }
     return tokenDefinitions;
@@ -177,7 +177,7 @@ public class DefaultArrangementSettingsSerializer implements ArrangementSettings
   private List<ArrangementGroupingRule> deserializeGropings(@NotNull Element element, @Nullable ArrangementSettings defaultSettings) {
     Element groups = element.getChild(GROUPS_ELEMENT_NAME);
     if (groups == null) {
-      return defaultSettings == null ? ContainerUtil.<ArrangementGroupingRule>newSmartList() : defaultSettings.getGroupings();
+      return defaultSettings == null ? ContainerUtil.newSmartList() : defaultSettings.getGroupings();
     }
 
     final List<ArrangementGroupingRule> groupings = new ArrayList<>();

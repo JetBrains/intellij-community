@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author Bas Leijdekkers
@@ -228,25 +227,14 @@ public class StringToConstraintsTransformerTest {
     assertEquals(".*(?:comment).*", constraint1.getRegExp());
   }
 
-  @Test
-  public void testInvert() {
-    test("'a:[!read&&write]");
-    assertEquals("$a$", myOptions.getSearchPattern());
-    final MatchVariableConstraint constraint = myOptions.getVariableConstraint("a");
-    assertTrue(constraint.isReadAccess());
-    assertTrue(constraint.isInvertReadAccess());
-    assertTrue(constraint.isWriteAccess());
-    assertFalse(constraint.isInvertWriteAccess());
-  }
-
   @Test(expected = MalformedPatternException.class)
   public void testAmpersandsExpected() {
-    test("'a:[read write]");
+    test("'a:[regex(a) regex(b)]");
   }
 
   @Test(expected = MalformedPatternException.class)
   public void testUnexpectedAmpersands() {
-    test("'a:[&&read]");
+    test("'a:[&&regex(a)]");
   }
 
   @Test(expected = MalformedPatternException.class)

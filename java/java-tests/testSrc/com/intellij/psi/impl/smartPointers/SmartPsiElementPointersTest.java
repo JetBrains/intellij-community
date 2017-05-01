@@ -24,6 +24,7 @@ import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -41,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.impl.source.PsiJavaFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubElement;
@@ -369,7 +371,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     SmartPsiElementPointer classp = createPointer(aClass);
     SmartPsiElementPointer filep = createPointer(aClass.getContainingFile());
 
-    FileContentUtil.reparseFiles(myProject, Collections.<VirtualFile>singleton(vfile), true);
+    FileContentUtil.reparseFiles(myProject, Collections.singleton(vfile), true);
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     assertFalse(aClass.isValid());
 
@@ -971,6 +973,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   }
 
   public void testDoubleRemoveIsAnError() throws Exception {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     SmartPointerEx<PsiFile> pointer = createPointer(createFile("a.java", "class A {}"));
     getPointerManager().removePointer(pointer);
     try {
@@ -980,6 +983,18 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     catch (AssertionError e) {
       assertTrue(e.getMessage(), e.getMessage().contains("Double smart pointer removal"));
     }
+  }
+
+  public void testStubSmartPointersAreCreatedEvenInAstPresence() throws Exception {
+    PsiJavaFileImpl file = (PsiJavaFileImpl)createFile("a.java", "class A {}");
+    assertNotNull(file.getNode());
+    SmartPointerEx<PsiClass> pointer = createPointer(file.getClasses()[0]);
+    
+    PlatformTestUtil.tryGcSoftlyReachableObjects();
+    assertNull(file.getTreeElement());
+
+    assertNotNull(pointer.getElement());
+    assertNull(file.getTreeElement());
   }
 
 }

@@ -106,9 +106,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
       if (callSession != session) {
         session.getInferenceSessionContainer().registerNestedSession(callSession);
         session.propagateVariables(callSession.getInferenceVariables(), callSession.getRestoreNameSubstitution());
-/*        if (callSession.isErased()) {
-          session.setErased();
-        }*/
+        callSession.setUncheckedInContext();
       }
       return true;
     }
@@ -131,6 +129,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
                                                                          PsiExpression expression,
                                                                          PsiType targetType,
                                                                          boolean registerErrorOnFailure) {
+    if (!PsiPolyExpressionUtil.isPolyExpression(expression)) {
+      return session;
+    }
     final PsiExpressionList argumentList = ((PsiCall)expression).getArgumentList();
     if (argumentList != null) {
       final MethodCandidateInfo.CurrentCandidateProperties candidateProperties = MethodCandidateInfo.getCurrentMethod(argumentList);

@@ -637,7 +637,19 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // include our own names
     final int underscores = PyUtil.getInitialUnderscores(element.getName());
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element, e -> {
+      if (builtinCache.isBuiltin(e)) {
+        final String name = e instanceof PyElement ? ((PyElement)e).getName() : null;
+        if (e instanceof PyImportElement) {
+          return false;
+        }
+        if (name != null && PyUtil.getInitialUnderscores(name) == 1) {
+          return false;
+        }
+      }
+      return true;
+    }, null);
     final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
     if (owner != null) {
       PyResolveUtil.scopeCrawlUp(processor, owner, null, null);
@@ -648,7 +660,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     KeywordArgumentCompletionUtil.collectFunctionArgNames(element, ret, TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()));
 
     // include builtin names
-    final PyFile builtinsFile = PyBuiltinCache.getInstance(element).getBuiltinsFile();
+    final PyFile builtinsFile = builtinCache.getBuiltinsFile();
     if (builtinsFile != null) {
       PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null, null);
     }

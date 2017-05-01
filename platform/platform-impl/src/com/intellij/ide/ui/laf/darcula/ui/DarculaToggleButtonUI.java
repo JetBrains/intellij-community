@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 
+@SuppressWarnings("unused")
 public class DarculaToggleButtonUI extends DarculaButtonUI {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(JComponent c) {

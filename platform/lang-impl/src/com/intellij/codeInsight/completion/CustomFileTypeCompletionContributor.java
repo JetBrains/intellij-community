@@ -64,7 +64,7 @@ public class CustomFileTypeCompletionContributor extends CompletionContributor i
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords3());
                addVariants(resultSetWithPrefix, syntaxTable.getKeywords4());
                
-               WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, Collections.<String>emptySet());
+               WordCompletionContributor.addWordCompletionVariants(resultSetWithPrefix, parameters, Collections.emptySet());
              }
            });
   }

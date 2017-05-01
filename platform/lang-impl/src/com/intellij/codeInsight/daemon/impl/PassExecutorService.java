@@ -522,9 +522,7 @@ class PassExecutorService implements Disposable {
         throw new RuntimeException(message, e);
       }
       if (threadsToStartCountdown.decrementAndGet() == 0) {
-        if (pass instanceof ProgressableTextEditorHighlightingPass) {
-          ((ProgressableTextEditorHighlightingPass)pass).waitForHighlightInfosApplied();
-        }
+        HighlightingSessionImpl.waitForAllSessionsHighlightInfosApplied(updateProgress);
         log(updateProgress, pass, "Stopping ");
         updateProgress.stopIfRunning();
       }

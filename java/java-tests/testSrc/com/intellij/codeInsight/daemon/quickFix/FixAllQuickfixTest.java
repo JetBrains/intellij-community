@@ -7,8 +7,10 @@ package com.intellij.codeInsight.daemon.quickFix;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +19,8 @@ public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[] {
-      new DataFlowInspection()
+      new DataFlowInspection(),
+      new UnnecessaryFullyQualifiedNameInspection()
     };
   }
 
@@ -33,5 +36,11 @@ public class FixAllQuickfixTest extends LightQuickFixParameterizedTestCase {
   @NonNls
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/fixAll";
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    // jdk 1.7 needed because it contains java.sql.Date for FullyQualifiedName test
+    return IdeaTestUtil.getMockJdk17();
   }
 }

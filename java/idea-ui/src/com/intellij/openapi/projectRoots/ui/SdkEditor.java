@@ -290,9 +290,9 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private void setHomePathValue(String absolutePath) {
     myHomeComponent.setText(absolutePath);
     final Color fg;
-    if (absolutePath != null && !absolutePath.isEmpty()) {
+    if (absolutePath != null && !absolutePath.isEmpty() && mySdk != null && mySdk.getSdkType().isLocalSdk(mySdk)) {
       final File homeDir = new File(absolutePath);
-      boolean homeMustBeDirectory = mySdk == null || ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
+      boolean homeMustBeDirectory = ((SdkType)mySdk.getSdkType()).getHomeChooserDescriptor().isChooseFolders();
       fg = homeDir.exists() && homeDir.isDirectory() == homeMustBeDirectory
            ? UIUtil.getFieldForegroundColor()
            : PathEditor.INVALID_COLOR;

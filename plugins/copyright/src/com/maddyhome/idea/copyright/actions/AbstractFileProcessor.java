@@ -27,7 +27,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -225,17 +224,14 @@ public abstract class AbstractFileProcessor {
 
     for (final VirtualFile root : roots) {
       ApplicationManager.getApplication().runReadAction(() -> {
-        idx.iterateContentUnderDirectory(root, new ContentIterator() {
-          @Override
-          public boolean processFile(final VirtualFile dir) {
-            if (dir.isDirectory()) {
-              final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
-              if (psiDir != null) {
-                findFiles(files, psiDir, false);
-              }
+        idx.iterateContentUnderDirectory(root, dir -> {
+          if (dir.isDirectory()) {
+            final PsiDirectory psiDir = PsiManager.getInstance(module.getProject()).findDirectory(dir);
+            if (psiDir != null) {
+              findFiles(files, psiDir, false);
             }
-            return true;
           }
+          return true;
         });
       });
     }

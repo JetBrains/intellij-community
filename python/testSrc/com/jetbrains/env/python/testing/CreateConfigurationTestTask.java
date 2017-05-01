@@ -20,16 +20,20 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
+import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdkTools.SdkCreationType;
+import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.TestRunnerService;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestConfiguration;
-import com.jetbrains.python.testing.universalTests.PyUniversalTestFactory;
-import com.jetbrains.python.testing.universalTests.TestTargetType;
+import com.jetbrains.python.testing.PyAbstractTestConfiguration;
+import com.jetbrains.python.testing.PyAbstractTestFactory;
+import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,12 +50,12 @@ import java.util.Optional;
  *
  * @author Ilya.Kazakevich
  */
-abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends PyExecutionFixtureTestTask {
+public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRunConfiguration<?>> extends PyExecutionFixtureTestTask {
 
   @Nullable
   private final String myTestRunnerName;
   @NotNull
-  private final Class<? extends RunConfiguration> myExpectedConfigurationType;
+  private final Class<T> myExpectedConfigurationType;
 
   /**
    * @param testRunnerName            test runner name (to set as default to make sure producer launched)
@@ -77,37 +81,63 @@ abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends P
       for (final PsiElement elementToRightClickOn : getPsiElementsToRightClickOn()) {
 
 
-        final List<ConfigurationFromContext> configurationsFromContext =
-          new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
-        Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
-
-
-        final Optional<ConfigurationFromContext> maybeConfig = configurationsFromContext.stream()
-          .filter(o -> myExpectedConfigurationType.isAssignableFrom(o.getConfiguration().getClass()))
-          .findFirst();
-        Assert.assertTrue("No configuration of expected type created", maybeConfig.isPresent());
-        RunnerAndConfigurationSettings runnerAndConfigurationSettings = maybeConfig.get().getConfigurationSettings();
-
-
-        Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
-        final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
-        Assert.assertNotNull("No real configuration created", configuration);
-        Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
-        Assert.assertThat("Bad configuration type in " + elementToRightClickOn, configuration,
-                          Matchers.is(Matchers.instanceOf(myExpectedConfigurationType)));
-
-        RunManager.getInstance(getProject()).addConfiguration(runnerAndConfigurationSettings, false);
-
         @SuppressWarnings("unchecked") // Checked one line above
-        final T typedConfiguration = (T)configuration;
+        final T typedConfiguration = createConfigurationByElement(elementToRightClickOn, myExpectedConfigurationType);
         checkConfiguration(typedConfiguration, elementToRightClickOn);
       }
     }), ModalityState.NON_MODAL);
   }
 
+  /**
+   * @return default (template) configuration
+   */
+  @NotNull
+  protected T getTemplateConfiguration(@NotNull final PythonConfigurationFactoryBase factory) {
+    final RunnerAndConfigurationSettingsImpl settings =
+      RunManagerImpl.getInstanceImpl(myFixture.getProject()).getConfigurationTemplate(factory);
+    final RunConfiguration configuration = settings.getConfiguration();
+    assert myExpectedConfigurationType.isAssignableFrom(configuration.getClass()): "Wrong configuration created. Wrong factory?";
+    @SuppressWarnings("unchecked") //Checked one line above
+    final T typedConfig = (T)configuration;
+    return typedConfig;
+  }
+
+  /**
+   * Emulates right click and create configurwation
+   */
+  @NotNull
+  public static <T extends RunConfiguration> T createConfigurationByElement(@NotNull final PsiElement elementToRightClickOn,
+                                                                            @NotNull Class<T> expectedConfigurationType) {
+    final List<ConfigurationFromContext> configurationsFromContext =
+      new ConfigurationContext(elementToRightClickOn).getConfigurationsFromContext();
+    Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, configurationsFromContext);
+
+
+    Assert.assertEquals("One and only one configuration should be produced", 1, configurationsFromContext.size());
+
+    final ConfigurationFromContext configurationFromContext = configurationsFromContext.get(0);
+    Assert.assertThat("Bad configuration type", configurationFromContext.getConfiguration(),
+                      Matchers.instanceOf(expectedConfigurationType));
+
+    final RunnerAndConfigurationSettings runnerAndConfigurationSettings = configurationFromContext.getConfigurationSettings();
+
+
+    Assert.assertNotNull("Producers were not able to create any configuration in " + elementToRightClickOn, runnerAndConfigurationSettings);
+    final RunConfiguration configuration = runnerAndConfigurationSettings.getConfiguration();
+    Assert.assertNotNull("No real configuration created", configuration);
+    Assert.assertThat("No name for configuration", configuration.getName(), Matchers.not(Matchers.isEmptyOrNullString()));
+    Assert.assertThat("Bad configuration type in " + elementToRightClickOn, configuration,
+                      Matchers.is(Matchers.instanceOf(expectedConfigurationType)));
+
+    RunManager.getInstance(elementToRightClickOn.getProject()).addConfiguration(runnerAndConfigurationSettings, false);
+
+    @SuppressWarnings("unchecked") // Checked one line above
+    final T typedConfiguration = (T)configuration;
+    return typedConfiguration;
+  }
+
   @NotNull
   protected abstract List<PsiElement> getPsiElementsToRightClickOn();
-
 
 
   protected void checkConfiguration(@NotNull final T configuration, @NotNull final PsiElement elementToRightClickOn) {
@@ -118,7 +148,7 @@ abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends P
   /**
    * Task to create configuration
    */
-  abstract static class PyConfigurationCreationTask<T extends PyUniversalTestConfiguration> extends PyExecutionFixtureTestTask {
+  abstract static class PyConfigurationCreationTask<T extends PyAbstractTestConfiguration> extends PyExecutionFixtureTestTask {
     private volatile T myConfiguration;
 
 
@@ -136,7 +166,7 @@ abstract class CreateConfigurationTestTask<T extends RunConfiguration> extends P
     }
 
     @NotNull
-    protected abstract PyUniversalTestFactory<T> createFactory();
+    protected abstract PyAbstractTestFactory<T> createFactory();
 
     @NotNull
     T getConfiguration() {

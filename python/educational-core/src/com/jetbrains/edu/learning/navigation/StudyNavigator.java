@@ -1,6 +1,7 @@
 package com.jetbrains.edu.learning.navigation;
 
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -41,7 +42,15 @@ public class StudyNavigator {
     if (nextLesson == null) {
       return null;
     }
-    return StudyUtils.getFirst(nextLesson.getTaskList());
+    List<Task> nextLessonTaskList = nextLesson.getTaskList();
+    while (nextLessonTaskList.isEmpty()) {
+      nextLesson = nextLesson(nextLesson);
+      if (nextLesson == null) {
+        return null;
+      }
+      nextLessonTaskList = nextLesson.getTaskList();
+    }
+    return StudyUtils.getFirst(nextLessonTaskList);
   }
 
   public static Task previousTask(@NotNull final Task task) {
@@ -55,7 +64,15 @@ public class StudyNavigator {
       return null;
     }
     //getting last task in previous lesson
-    return prevLesson.getTaskList().get(prevLesson.getTaskList().size() - 1);
+    List<Task> prevLessonTaskList = prevLesson.getTaskList();
+    while (prevLessonTaskList.isEmpty()) {
+      prevLesson = previousLesson(prevLesson);
+      if (prevLesson == null) {
+        return null;
+      }
+      prevLessonTaskList = prevLesson.getTaskList();
+    }
+    return prevLessonTaskList.get(prevLessonTaskList.size() - 1);
   }
 
   public static Lesson nextLesson(@NotNull final Lesson lesson) {
@@ -64,11 +81,7 @@ public class StudyNavigator {
     if (nextLessonIndex >= lessons.size()) {
       return null;
     }
-    final Lesson nextLesson = lessons.get(nextLessonIndex);
-    if (EduNames.PYCHARM_ADDITIONAL.equals(nextLesson.getName())) {
-      return null;
-    }
-    return nextLesson;
+    return lessons.get(nextLessonIndex);
   }
 
   public static Lesson previousLesson(@NotNull final Lesson lesson) {
@@ -178,7 +191,11 @@ public class StudyNavigator {
   }
 
   private static void updateProjectView(@NotNull Project project, @NotNull VirtualFile fileToActivate) {
-    JTree tree = ProjectView.getInstance(project).getCurrentProjectViewPane().getTree();
+    AbstractProjectViewPane viewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
+    if (viewPane == null) {
+      return;
+    }
+    JTree tree = viewPane.getTree();
     ProjectView.getInstance(project).selectCB(fileToActivate, fileToActivate, false).doWhenDone(() -> {
       List<TreePath> paths = TreeUtil.collectExpandedPaths(tree);
       List<TreePath> toCollapse = new ArrayList<>();

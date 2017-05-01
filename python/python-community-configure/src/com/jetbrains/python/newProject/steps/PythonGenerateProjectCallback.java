@@ -18,7 +18,7 @@ package com.jetbrains.python.newProject.steps;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,6 @@ import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -95,7 +94,8 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
     final String name = sdk.getName();
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(name));
+    VirtualFile sdkHome =
+      WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(name));
     sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
     if (sdk != null) {
       PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
@@ -116,7 +116,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   private static Project generateProject(@NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final String location = FileUtil.expandUserHome(settings.getProjectLocation());
-    return AbstractNewProjectStep.doGenerateProject(ProjectManager.getInstance().getDefaultProject(), location, generator,
+    return AbstractNewProjectStep.doGenerateProject(null, location, generator,
                                                     file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
   }
 

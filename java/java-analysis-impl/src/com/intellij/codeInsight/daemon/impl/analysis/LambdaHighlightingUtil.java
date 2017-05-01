@@ -34,7 +34,7 @@ import java.util.Set;
  * User: anna
  */
 public class LambdaHighlightingUtil {
-  private static final Logger LOG = Logger.getInstance("#" + LambdaHighlightingUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
 
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {

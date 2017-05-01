@@ -125,3 +125,9 @@ fun Element.addOptionTag(name: String, value: String) {
   element.setAttribute("value", value)
   addContent(element)
 }
+
+fun Parent.toBufferExposingByteArray(lineSeparator: String = "\n"): BufferExposingByteArrayOutputStream {
+  val out = BufferExposingByteArrayOutputStream(512)
+  JDOMUtil.write(this, out, lineSeparator)
+  return out
+}

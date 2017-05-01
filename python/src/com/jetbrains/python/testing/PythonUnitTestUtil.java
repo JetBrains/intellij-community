@@ -50,6 +50,35 @@ public class PythonUnitTestUtil {
   private static final Pattern TEST_MATCH_PATTERN = Pattern.compile("(?:^|[\b_\\.%s-])[Tt]est");
   private static final String TESTCASE_METHOD_PREFIX = "test";
 
+
+  public static boolean isTestFunction(PyFunction pyFunction) {
+    String name = pyFunction.getName();
+    if (name != null && name.startsWith("test")) {
+      return true;
+    }
+    return false;
+  }
+
+  public static boolean isTestClass(final PyClass pyClass, @Nullable final TypeEvalContext context) {
+    final TypeEvalContext contextToUse = (context != null ? context : TypeEvalContext.codeInsightFallback(pyClass.getProject()));
+    for (PyClassLikeType type : pyClass.getAncestorTypes(contextToUse)) {
+      if (type != null && PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
+        return true;
+      }
+    }
+    final String className = pyClass.getName();
+    if (className == null) return false;
+    final String name = className.toLowerCase();
+    if (name.startsWith("test")) {
+      for (PyFunction cls : pyClass.getMethods()) {
+        if (isTestFunction(cls)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private PythonUnitTestUtil() {
   }
 

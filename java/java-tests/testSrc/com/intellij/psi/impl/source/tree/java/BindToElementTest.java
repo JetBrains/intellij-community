@@ -41,14 +41,9 @@ public class BindToElementTest extends CodeInsightTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    VirtualFile root = WriteCommandAction.runWriteCommandAction(null, new Computable<VirtualFile>() {
-      @Override
-      public VirtualFile compute() {
-        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
-          new File(new File(TEST_ROOT), "prj")
-        );
-      }
-    });
+    VirtualFile root = WriteCommandAction.runWriteCommandAction(null, (Computable<VirtualFile>)() -> LocalFileSystem.getInstance().refreshAndFindFileByIoFile(
+      new File(new File(TEST_ROOT), "prj")
+    ));
     assertNotNull(root);
     PsiTestUtil.addSourceRoot(myModule, root);
   }

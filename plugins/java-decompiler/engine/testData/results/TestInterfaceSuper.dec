@@ -1,0 +1,30 @@
+package pkg;
+
+public interface TestInterfaceSuper {
+   default void defaultMethod() {
+   }// 4
+
+   public static class Impl implements TestInterfaceSuper {
+      public void defaultMethod() {
+         TestInterfaceSuper.super.defaultMethod();// 8
+      }// 9
+   }
+}
+
+class 'pkg/TestInterfaceSuper' {
+   method 'defaultMethod ()V' {
+      0      4
+   }
+}
+
+class 'pkg/TestInterfaceSuper$Impl' {
+   method 'defaultMethod ()V' {
+      1      8
+      4      9
+   }
+}
+
+Lines mapping:
+4 <-> 5
+8 <-> 9
+9 <-> 10

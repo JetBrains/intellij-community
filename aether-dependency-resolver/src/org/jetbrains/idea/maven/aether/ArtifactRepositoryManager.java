@@ -14,6 +14,7 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.*;
 import org.eclipse.aether.spi.connector.RepositoryConnectorFactory;
 import org.eclipse.aether.spi.connector.transport.TransporterFactory;
+import org.eclipse.aether.transfer.TransferCancelledException;
 import org.eclipse.aether.transfer.TransferEvent;
 import org.eclipse.aether.transfer.TransferListener;
 import org.eclipse.aether.transport.file.FileTransporterFactory;
@@ -87,11 +88,16 @@ public class ArtifactRepositoryManager {
     if (progressConsumer != ProgressConsumer.DEAF) {
       session.setTransferListener((TransferListener)Proxy
         .newProxyInstance(session.getClass().getClassLoader(), new Class[]{TransferListener.class}, new InvocationHandler() {
+          private final EnumSet<TransferEvent.EventType> checkCancelEvents = EnumSet.of(TransferEvent.EventType.INITIATED, TransferEvent.EventType.STARTED, TransferEvent.EventType.PROGRESSED);
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
           final Object event = args[0];
           if (event instanceof TransferEvent) {
+            final TransferEvent.EventType type = ((TransferEvent)event).getType();
+            if (checkCancelEvents.contains(type) && progressConsumer.isCanceled()) {
+              throw new TransferCancelledException();
+            }
             progressConsumer.consume(event.toString());
-            //if (((TransferEvent)event).getType() != TransferEvent.EventType.PROGRESSED) {
+            //if (type != TransferEvent.EventType.PROGRESSED) {
             //  progressConsumer.consume(event.toString());
             //}
           }

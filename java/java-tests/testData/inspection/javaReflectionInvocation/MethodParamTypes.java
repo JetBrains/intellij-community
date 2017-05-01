@@ -1,3 +1,4 @@
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.*;
 
@@ -33,9 +34,9 @@ class MethodParamTypes {
     m2.invoke(obj, new Object[] {"abc", Integer.valueOf(42)});
     m3.invoke(obj, new Object[] {new int[]{42, 23}, Arrays.asList("x", "y")});
 
-    m1.invoke(obj, <warning descr="Array item 0 is not assignable to 'int'"><warning descr="Array item 1 is not assignable to 'java.lang.String'">a2</warning></warning>);
-    m2.invoke(obj, <warning descr="Array item 0 is not assignable to 'java.lang.String'"><warning descr="Array item 1 is not assignable to 'java.lang.Integer'">a3</warning></warning>);
-    m3.invoke(obj, <warning descr="Array item 0 is not assignable to 'int[]'"><warning descr="Array item 1 is not assignable to 'java.util.List'">a1</warning></warning>);
+    m1.invoke(obj, <warning descr="Array items have incompatible types">a2</warning>);
+    m2.invoke(obj, <warning descr="Array items have incompatible types">a3</warning>);
+    m3.invoke(obj, <warning descr="Array items have incompatible types">a1</warning>);
 
     m1.invoke(obj, new Object[]{<warning descr="Array item is not assignable to 'int'">"42"</warning>, "abc"});
     m2.invoke(obj, new Object[]{<warning descr="Array item is not assignable to 'java.lang.String'">42</warning>, 23});
@@ -47,9 +48,18 @@ class MethodParamTypes {
 
     cls.getMethod("str", String[].class).invoke(null, (Object)new String[] {"abc"});
     cls.getMethod("str", String[].class).invoke(null, new String[] {<warning descr="Array item is not assignable to 'java.lang.String[]'">"abc"</warning>});
+
+    Method m4 = cls.getMethod("obj", Cloneable.class);
+    Method m5 = cls.getMethod("obj", Serializable.class);
+
+    m4.invoke(obj, new C());
+    m5.invoke(obj, new S());
+
+    m4.invoke(obj, <warning descr="Argument is not assignable to 'java.lang.Cloneable'">new S()</warning>);
+    m5.invoke(obj, <warning descr="Argument is not assignable to 'java.io.Serializable'">new C()</warning>);
   }
 
-  void arraySignatutre() throws Exception {
+  void arraySignature() throws Exception {
     Class<?> cls = Test.class;
     Object obj = new Test();
 
@@ -75,9 +85,9 @@ class MethodParamTypes {
     m2.invoke(obj, new Object[] {"abc", Integer.valueOf(42)});
     m3.invoke(obj, new Object[] {new int[]{42, 23}, Arrays.asList("x", "y")});
 
-    m1.invoke(obj, <warning descr="Array item 0 is not assignable to 'int'"><warning descr="Array item 1 is not assignable to 'java.lang.String'">a2</warning></warning>);
-    m2.invoke(obj, <warning descr="Array item 0 is not assignable to 'java.lang.String'"><warning descr="Array item 1 is not assignable to 'java.lang.Integer'">a3</warning></warning>);
-    m3.invoke(obj, <warning descr="Array item 0 is not assignable to 'int[]'"><warning descr="Array item 1 is not assignable to 'java.util.List'">a1</warning></warning>);
+    m1.invoke(obj, <warning descr="Array items have incompatible types">a2</warning>);
+    m2.invoke(obj, <warning descr="Array items have incompatible types">a3</warning>);
+    m3.invoke(obj, <warning descr="Array items have incompatible types">a1</warning>);
 
     m1.invoke(obj, new Object[]{<warning descr="Array item is not assignable to 'int'">"42"</warning>, "abc"});
     m2.invoke(obj, new Object[]{<warning descr="Array item is not assignable to 'java.lang.String'">42</warning>, 23});
@@ -89,6 +99,15 @@ class MethodParamTypes {
 
     cls.getMethod("str", new Class[]{String[].class}).invoke(null, (Object)new String[] {"abc"});
     cls.getMethod("str", new Class[]{String[].class}).invoke(null, new String[] {<warning descr="Array item is not assignable to 'java.lang.String[]'">"abc"</warning>});
+
+    Method m4 = cls.getMethod("obj", new Class[]{Cloneable.class});
+    Method m5 = cls.getMethod("obj", new Class[]{Serializable.class});
+
+    m4.invoke(obj, new C());
+    m5.invoke(obj, new S());
+
+    m4.invoke(obj, <warning descr="Argument is not assignable to 'java.lang.Cloneable'">new S()</warning>);
+    m5.invoke(obj, <warning descr="Argument is not assignable to 'java.io.Serializable'">new C()</warning>);
   }
 
   void manyArguments() throws Exception {
@@ -110,11 +129,39 @@ class MethodParamTypes {
     Object[] a5 = {0, (short)0, 0, 0.0f, "abc"};
 
     m0.invoke(obj, a0);
-    m1.invoke(obj, <warning descr="Array item 0 is not assignable to 'int'">a1</warning>);
-    m2.invoke(obj, <warning descr="Array item 1 is not assignable to 'short'">a2</warning>);
-    m3.invoke(obj, <warning descr="Array item 2 is not assignable to 'long'">a3</warning>);
-    m4.invoke(obj, <warning descr="Array item 3 is not assignable to 'float'">a4</warning>);
-    m5.invoke(obj, <warning descr="Array item 4 is not assignable to 'double'">a5</warning>);
+    m1.invoke(obj, <warning descr="Array item has incompatible type">a1</warning>);
+    m2.invoke(obj, <warning descr="Array items have incompatible types">a2</warning>);
+    m3.invoke(obj, <warning descr="Array items have incompatible types">a3</warning>);
+    m4.invoke(obj, <warning descr="Array items have incompatible types">a4</warning>);
+    m5.invoke(obj, <warning descr="Array items have incompatible types">a5</warning>);
+  }
+
+  void arrayArguments() throws Exception {
+    Class<?> cls = Test.class;
+    Object obj = new Test();
+
+    Method m1 = cls.getMethod("obj", Object.class);
+    Method m2 = cls.getMethod("obj", Cloneable.class);
+    Method m3 = cls.getMethod("obj", Serializable.class);
+
+    m1.invoke(obj, (Object) new String[0]);
+    m2.invoke(obj, (Object) new String[0]);
+    m3.invoke(obj, (Object) new String[0]);
+
+    m1.invoke(obj, (Object) new String[][]{ new String[0] });
+    m2.invoke(obj, (Object) new String[][]{ new String[0] });
+    m3.invoke(obj, (Object) new String[][]{ new String[0] });
+
+    Method m4 = cls.getMethod("array", Object[].class);
+    Method m5 = cls.getMethod("array", String[].class);
+
+    m4.invoke(null, (Object) new String[0]);
+    m4.invoke(null, (Object) new String[][]{ new String[0] });
+
+    m5.invoke(null, (Object) new String[0]);
+    m5.invoke(null, (Object) <warning descr="Argument is not assignable to 'java.lang.String[]'">new String[][]{ new String[0] }</warning>);
+    m5.invoke(null, <warning descr="Argument is not assignable to 'java.lang.String[]'">"abc"</warning>);
+    m5.invoke(null, <warning descr="Argument is not assignable to 'java.lang.String[]'">obj</warning>);
   }
 
   static class Test {
@@ -123,6 +170,13 @@ class MethodParamTypes {
     public void bar(int[] n, List<String> s) {}
 
     public static void str(String[] s) {}
+
+    public void obj(Object o) {}
+    public void obj(Cloneable c) {}
+    public void obj(Serializable s) {}
+
+    public static void array(Object[] a) {}
+    public static void array(String[] a) {}
   }
 
   class M {
@@ -131,5 +185,11 @@ class MethodParamTypes {
     public String m3(int a1, short a2, long a3) {return "";}
     public String m4(int a1, short a2, long a3, float a4) {return "";}
     public String m5(int a1, short a2, long a3, float a4, double a5) {return "";}
+  }
+
+  static class S implements Serializable {
+  }
+
+  static class C implements Cloneable {
   }
 }

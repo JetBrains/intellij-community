@@ -176,6 +176,6 @@ public class ExternalModuleStructureExtension extends ModuleStructureExtension {
   private static void unlinkProject(@NotNull Project project, ProjectSystemId systemId, String rootProjectPath) {
     ExternalSystemApiUtil.getLocalSettings(project, systemId).forgetExternalProjects(Collections.singleton(rootProjectPath));
     ExternalSystemApiUtil.getSettings(project, systemId).unlinkExternalProject(rootProjectPath);
-    ExternalProjectsManager.getInstance(project).forgetExternalProjectData(systemId, rootProjectPath);
+    ExternalProjectsManagerImpl.getInstance(project).forgetExternalProjectData(systemId, rootProjectPath);
   }
 }

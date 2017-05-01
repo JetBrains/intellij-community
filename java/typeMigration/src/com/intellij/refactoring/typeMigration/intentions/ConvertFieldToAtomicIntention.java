@@ -40,7 +40,7 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
  * @since 26-Aug-2009
  */
 public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction implements LowPriorityAction {
-  private static final Logger LOG = Logger.getInstance("#" + ConvertFieldToAtomicIntention.class.getName());
+  private static final Logger LOG = Logger.getInstance(ConvertFieldToAtomicIntention.class);
 
   private final Map<PsiType, String> myFromToMap = ContainerUtil.newHashMap();
   {

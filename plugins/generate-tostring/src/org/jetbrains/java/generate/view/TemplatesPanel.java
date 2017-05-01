@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
-import com.intellij.psi.PsiType;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -70,11 +69,8 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         }
     };
 
-    private static final Equality<TemplateResource> COMPARER = new Equality<TemplateResource>() {
-        public boolean equals(TemplateResource o1, TemplateResource o2) {
-            return Comparing.equal(o1.getTemplate(), o2.getTemplate()) && Comparing.equal(o1.getFileName(), o2.getFileName());
-        }
-    };
+    private static final Equality<TemplateResource> COMPARER =
+      (o1, o2) -> Comparing.equal(o1.getTemplate(), o2.getTemplate()) && Comparing.equal(o1.getFileName(), o2.getFileName());
   private final Project myProject;
   private final TemplatesManager myTemplatesManager;
   private String myHint;
@@ -124,7 +120,7 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
 
     protected UnnamedConfigurable createConfigurable(TemplateResource item) {
       final GenerateTemplateConfigurable configurable =
-        new GenerateTemplateConfigurable(item, Collections.<String, PsiType>emptyMap(), myProject, onMultipleFields());
+        new GenerateTemplateConfigurable(item, Collections.emptyMap(), myProject, onMultipleFields());
       configurable.setHint(myHint);
       return configurable;
     }

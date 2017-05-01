@@ -40,6 +40,7 @@ public class PyQuickFixTest extends PyTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
+    myFixture.setCaresAboutInjection(false);
   }
 
   @Override

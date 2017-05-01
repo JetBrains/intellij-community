@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
@@ -60,6 +59,9 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.MouseEvent.MOUSE_PRESSED;
 
 /**
  * @author Vladimir Kondratyev
@@ -348,8 +350,6 @@ public class IdeEventQueue extends EventQueue {
       return;
     }
 
-    e = fixNonEnglishKeyboardLayouts(e);
-
     e = mapEvent(e);
     if (Registry.is("keymap.windows.as.meta")) {
       e = mapMetaState(e);
@@ -426,9 +426,6 @@ public class IdeEventQueue extends EventQueue {
   @NotNull
   private static AWTEvent fixNonEnglishKeyboardLayouts(@NotNull AWTEvent e) {
     if (!(e instanceof KeyEvent)) return e;
-
-    KeyboardSettingsExternalizable externalizable = KeyboardSettingsExternalizable.getInstance();
-    if (!Registry.is("ide.non.english.keyboard.layout.fix") || externalizable == null || !externalizable.isNonEnglishKeyboardSupportEnabled()) return e;
 
     KeyEvent ke = (KeyEvent)e;
 
@@ -640,6 +637,12 @@ public class IdeEventQueue extends EventQueue {
     }
     else if (e instanceof MouseEvent) {
       MouseEvent me = (MouseEvent)e;
+      if (me.getID() == MOUSE_PRESSED && me.getModifiers() > 0 && me.getModifiersEx() == 0 ) {
+        // In case of these modifiers java.awt.Container#LightweightDispatcher.processMouseEvent() uses a recent 'active' component
+        // from inner WeakReference (see mouseEventTarget field) even if the component has been already removed from component hierarchy.
+        // So we have to reset this WeakReference with synthetic event just before processing of actual event
+        super.dispatchEvent(new MouseEvent(me.getComponent(), MOUSE_MOVED, me.getWhen(), 0, me.getX(), me.getY(), 0, false, 0));
+      }
       if (IdeMouseEventDispatcher.patchClickCount(me) && me.getID() == MouseEvent.MOUSE_CLICKED) {
         final MouseEvent toDispatch =
           new MouseEvent(me.getComponent(), me.getID(), System.currentTimeMillis(), me.getModifiers(), me.getX(), me.getY(), 1,

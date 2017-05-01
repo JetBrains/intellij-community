@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @since 2017.1
  */
-public interface PsiPackageAccessibilityStatement extends PsiElement {
+public interface PsiPackageAccessibilityStatement extends PsiStatement {
   PsiPackageAccessibilityStatement[] EMPTY_ARRAY = new PsiPackageAccessibilityStatement[0];
 
   enum Role {EXPORTS, OPENS}

@@ -96,7 +96,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   private final HgCheckinEnvironment checkinEnvironment;
   private final HgAnnotationProvider annotationProvider;
   private final HgUpdateEnvironment updateEnvironment;
-  private final HgCachingCommittedChangesProvider committedChangesProvider;
+  private final HgCommittedChangesProvider committedChangesProvider;
   private MessageBusConnection messageBusConnection;
   @NotNull private final HgGlobalSettings globalSettings;
   @NotNull private final HgProjectSettings projectSettings;
@@ -132,7 +132,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     checkinEnvironment = new HgCheckinEnvironment(project);
     annotationProvider = new HgAnnotationProvider(project);
     updateEnvironment = new HgUpdateEnvironment(project);
-    committedChangesProvider = new HgCachingCommittedChangesProvider(project, this);
+    committedChangesProvider = new HgCommittedChangesProvider(project, this);
     myMergeProvider = new HgMergeProvider(myProject);
     myCommitAndPushExecutor = new HgCommitAndPushExecutor(checkinEnvironment);
     myMqNewExecutor = new HgMQNewExecutor(checkinEnvironment);
@@ -284,12 +284,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     myIncomingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, true);
     myOutgoingWidget = new HgIncomingOutgoingWidget(this, getProject(), projectSettings, false);
 
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        myIncomingWidget.activate();
-        myOutgoingWidget.activate();
-      }
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myIncomingWidget.activate();
+      myOutgoingWidget.activate();
     }, ModalityState.NON_MODAL);
 
     // updaters and listeners
@@ -305,11 +302,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     final String ignoredPattern = FileTypeManager.getInstance().getIgnoredFilesList();
     if (!ignoredPattern.contains(ORIG_FILE_PATTERN)) {
       final String newPattern = ignoredPattern + (ignoredPattern.endsWith(";") ? "" : ";") + ORIG_FILE_PATTERN;
-      HgUtil.runWriteActionLater(new Runnable() {
-        public void run() {
-          FileTypeManager.getInstance().setIgnoredFilesList(newPattern);
-        }
-      });
+      HgUtil.runWriteActionLater(() -> FileTypeManager.getInstance().setIgnoredFilesList(newPattern));
     }
   }
 
@@ -408,11 +401,9 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    HgUtil.executeOnPooledThread(new Runnable() {
-      public void run() {
-        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-        new HgIntegrationEnabler(HgVcs.this).enable(roots);
-      }
+    HgUtil.executeOnPooledThread(() -> {
+      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+      new HgIntegrationEnabler(HgVcs.this).enable(roots);
     }, myProject);
   }
 

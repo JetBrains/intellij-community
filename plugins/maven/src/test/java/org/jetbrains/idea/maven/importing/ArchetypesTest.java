@@ -37,7 +37,7 @@ public class ArchetypesTest extends MavenTestCase {
 
     MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(),
                                                              Arrays.asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
-                                                             Collections.<String>emptyList());
+                                                             Collections.emptyList());
 
     MavenRunnerSettings settings = new MavenRunnerSettings();
     Map<String, String> props = new THashMap<>();

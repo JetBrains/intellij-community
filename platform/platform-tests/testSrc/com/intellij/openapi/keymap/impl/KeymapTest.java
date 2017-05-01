@@ -52,6 +52,7 @@ public class KeymapTest extends PlatformTestCase {
     myParent.addShortcut(ACTION_2, shortcut2);
 
     myChild = myParent.deriveKeymap("Child");
+    myChild.setCanModify(false);
     assertThat(myParent).isSameAs(myChild.getParent());
 
     myChild.addShortcut(ACTION_1, shortcutA);

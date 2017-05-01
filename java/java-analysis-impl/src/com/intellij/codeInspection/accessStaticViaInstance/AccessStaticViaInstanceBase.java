@@ -84,6 +84,10 @@ public class AccessStaticViaInstanceBase extends BaseJavaBatchLocalInspectionToo
     }
     if (!((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC)) return;
 
+    //don't report warnings on compilation errors
+    PsiClass containingClass = ((PsiMember)resolved).getContainingClass();
+    if (containingClass != null && containingClass.isInterface()) return;
+
     String description = JavaErrorMessages.message("static.member.accessed.via.instance.reference",
                                                    JavaHighlightUtil.formatType(qualifierExpression.getType()),
                                                    HighlightMessageUtil.getSymbolName(resolved, result.getSubstitutor()));

@@ -21,8 +21,11 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
+ * @deprecated use {@link ImplicitSubclassProvider} (to remove in 2018.1)
  */
+@Deprecated
 public abstract class ImplementedAtRuntimeCondition {
+
   public static final ExtensionPointName<ImplementedAtRuntimeCondition> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.implementedAtRuntime");
 
   public abstract boolean isImplementedAtRuntime(@NotNull PsiClass psiClass);

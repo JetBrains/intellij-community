@@ -31,6 +31,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
@@ -42,7 +43,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -56,10 +56,13 @@ import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext {
-  private static final Logger LOG = Logger.getInstance("#" + GlobalJavaInspectionContextImpl.class.getName());
+  private static final Logger LOG = Logger.getInstance(GlobalJavaInspectionContextImpl.class);
 
   private Map<SmartPsiElementPointer, List<DerivedMethodsProcessor>> myDerivedMethodsRequests;
   private Map<SmartPsiElementPointer, List<DerivedClassesProcessor>> myDerivedClassesRequests;
@@ -303,24 +306,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
   }
 
   private String getClassPresentableName(final PsiClass psiClass) {
-    return ApplicationManager.getApplication().runReadAction(
-      new Computable<String>() {
-        @Override
-        public String compute() {
-          final String qualifiedName = psiClass.getQualifiedName();
-          return qualifiedName != null ? qualifiedName : psiClass.getName();
-        }
-      }
-    );
+    return ReadAction.compute(() -> {
+      final String qualifiedName = psiClass.getQualifiedName();
+      return qualifiedName != null ? qualifiedName : psiClass.getName();
+    });
   }
 
   private static PsiElement dereferenceInReadAction(final SmartPsiElementPointer sortedID) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
-      @Override
-      public PsiElement compute() {
-        return sortedID.getElement();
-      }
-    });
+    return ReadAction.compute(() -> sortedID.getElement());
   }
 
   private static <Member extends PsiMember, P extends Processor<Member>> PsiElementProcessorAdapter<Member> createMembersProcessor(final List<P> processors,

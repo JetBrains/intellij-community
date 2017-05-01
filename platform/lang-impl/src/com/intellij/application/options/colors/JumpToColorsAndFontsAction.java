@@ -36,16 +36,13 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
-import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.ColorSettingsPages;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,6 +62,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.application.options.colors.ColorAndFontOptions.getColorSelector;
 import static com.intellij.ui.SimpleTextAttributes.*;
 
 /**
@@ -189,13 +187,9 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
   private static boolean openSettingsAndSelectKey(@NotNull Project project, @NotNull ColorSettingsPage page, @NotNull AttributesDescriptor descriptor) {
     SettingsDialog dialog = (SettingsDialog)ShowSettingsUtilImpl.getDialog(
       project, ShowSettingsUtilImpl.getConfigurableGroups(project, true), null);
-    Settings settings = Settings.KEY.getData(dialog);
-    ColorAndFontOptions configurable0 = settings == null ? null : settings.find(ColorAndFontOptions.class);
-    SearchableConfigurable configurable = configurable0 == null ? null : configurable0.findSubConfigurable(page.getDisplayName());
-    if (configurable == null) return false;
-    Runnable runnable = configurable.enableSearch(descriptor.getDisplayName());
-    ActionCallback callback = settings.select(configurable);
-    if (runnable != null) callback.doWhenDone(runnable);
+    Runnable selector = getColorSelector(dialog, descriptor.getDisplayName(), page.getDisplayName());
+    if (selector == null) return false;
+    selector.run();
     dialog.show();
     return true;
   }

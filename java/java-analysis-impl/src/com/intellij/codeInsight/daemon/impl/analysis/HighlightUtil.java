@@ -50,6 +50,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -200,6 +201,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   /**
    * make element protected/package-private/public suggestion
+   * for private method in the interface it should add default modifier as well
    */
   static void registerAccessQuickFixAction(@NotNull PsiMember refElement,
                                            @NotNull PsiJavaCodeReferenceElement place,
@@ -236,6 +238,10 @@ public class HighlightUtil extends HighlightUtilBase {
         minModifier = PsiModifier.PROTECTED;
       }
       if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
+        minModifier = PsiModifier.PUBLIC;
+      }
+      PsiClass containingClass = refElement.getContainingClass();
+      if (containingClass != null && containingClass.isInterface()) {
         minModifier = PsiModifier.PUBLIC;
       }
       String[] modifiers = {PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC,};
@@ -967,7 +973,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
       if (PsiModifier.PRIVATE.equals(modifier)) {
         isAllowed &= modifierOwnerParent instanceof PsiClass &&
-                     (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner));
+                     (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel9OrHigher(modifierOwner) && !((PsiClass)modifierOwnerParent).isAnnotationType());
       }
       else if (PsiModifier.STRICTFP.equals(modifier)) {
         isAllowed &= modifierOwnerParent instanceof PsiClass && (!((PsiClass)modifierOwnerParent).isInterface() || PsiUtil.isLanguageLevel8OrHigher(modifierOwner));
@@ -1793,13 +1799,7 @@ public class HighlightUtil extends HighlightUtilBase {
         PsiModifierList modifierList = variable.getModifierList();
         if (modifierList != null && modifierList.hasModifierProperty(PsiModifier.FINAL)) return null;
 
-        PsiElement scope = null;
-        if (variable instanceof PsiParameter) scope = ((PsiParameter)variable).getDeclarationScope();
-        else if (variable instanceof PsiResourceVariable) scope = variable.getParent().getParent();
-        else if (variable instanceof PsiLocalVariable) scope = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
-        if (scope != null) {
-          if (HighlightControlFlowUtil.isEffectivelyFinal(variable, scope, null)) return null;
-        }
+        if (!(variable instanceof PsiField) && HighlightControlFlowUtil.isEffectivelyFinal(variable, resource, (PsiJavaCodeReferenceElement)expression)) return null;
       }
 
       String text = JavaErrorMessages.message("resource.variable.must.be.final");
@@ -2541,6 +2541,9 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiType thenType = thenExpression.getType();
     if (thenType == null || type == null) return null;
     if (conditionalExpression.getType() == null) {
+      if (PsiUtil.isLanguageLevel8OrHigher(conditionalExpression) && PsiPolyExpressionUtil.isPolyExpression(conditionalExpression)) {
+        return null;
+      }
       // cannot derive type of conditional expression
       // elseType will never be cast-able to thenType, so no quick fix here
       return createIncompatibleTypeHighlightInfo(thenType, type, expression.getTextRange(), 0);

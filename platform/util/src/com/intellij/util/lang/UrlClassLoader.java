@@ -30,15 +30,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 
 /**
  * A class loader that allows for various customizations, e.g. not locking jars or using a special cache to speed up class loading.
@@ -47,32 +43,30 @@ import java.util.List;
 public class UrlClassLoader extends ClassLoader {
   public static final String CLASS_EXTENSION = ".class";
 
-  private static final boolean HAS_PARALLEL_LOADERS = SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm &&
-                                                      SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
-
+  private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
-    if (HAS_PARALLEL_LOADERS) {
+    boolean capable =
+      SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm && SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
+    if (capable) {
+      ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<Class<?>>());
       try {
         //todo Patches.USE_REFLECTION_TO_ACCESS_JDK7
         Method registerAsParallelCapable = ClassLoader.class.getDeclaredMethod("registerAsParallelCapable");
         registerAsParallelCapable.setAccessible(true);
-        registerAsParallelCapable.invoke(null);
+        if (Boolean.TRUE.equals(registerAsParallelCapable.invoke(null))) {
+          ourParallelCapableLoaders.add(UrlClassLoader.class);
+        }
       }
       catch (Exception ignored) { }
     }
+    else {
+      ourParallelCapableLoaders = null;
+    }
   }
 
-  public static boolean isRegisteredAsParallelCapable(@NotNull ClassLoader loader) {
-    if (!HAS_PARALLEL_LOADERS) return false;
-    try {
-      //todo Patches.USE_REFLECTION_TO_ACCESS_JDK7
-      Field parallelLockMap = ClassLoader.class.getDeclaredField("parallelLockMap");
-      parallelLockMap.setAccessible(true);
-      return parallelLockMap.get(loader) != null;
-    }
-    catch (Exception e) {
-      throw new AssertionError("Internal error: ClassLoader implementation has been altered");
-    }
+  protected static void markParallelCapable(Class<? extends UrlClassLoader> loaderClass) {
+    assert ourParallelCapableLoaders != null;
+    ourParallelCapableLoaders.add(loaderClass);
   }
 
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
@@ -126,21 +120,21 @@ public class UrlClassLoader extends ClassLoader {
 
     /**
      * Requests the class loader being built to use cache and, if possible, retrieve and store the cached data from a special cache pool
-     * that can be shared between several loaders.  
+     * that can be shared between several loaders.
 
      * @param pool cache pool
      * @param condition a custom policy to provide a possibility to prohibit caching for some URLs.
      * @return this instance
-     * 
-     * @see #createCachePool() 
+     *
+     * @see #createCachePool()
      */
-    public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) { 
+    public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
       myUseCache = true;
       myCachePool = (CachePoolImpl)pool;
-      myCachingCondition = condition; 
-      return this; 
+      myCachingCondition = condition;
+      return this;
     }
-    
+
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
@@ -178,7 +172,7 @@ public class UrlClassLoader extends ClassLoader {
     });
     myClassPath = createClassPath(builder);
     myAllowBootstrapResources = builder.myAllowBootstrapResources;
-    myClassNameInterner = isRegisteredAsParallelCapable(this) ? new WeakStringInterner() : null;
+    myClassNameInterner = ourParallelCapableLoaders != null && ourParallelCapableLoaders.contains(getClass()) ? new WeakStringInterner() : null;
   }
 
   @NotNull
@@ -293,7 +287,7 @@ public class UrlClassLoader extends ClassLoader {
   private Resource _getResource(final String name) {
     String n = FileUtil.toCanonicalUriPath(name);
     Resource resource = getClassPath().getResource(n, true);
-    if (resource == null && n.startsWith("/")) { // compatibility with existing code, nonstd classloader behavior
+    if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
       resource = getClassPath().getResource(n.substring(1), true);
     }
     return resource;
@@ -321,19 +315,17 @@ public class UrlClassLoader extends ClassLoader {
 
   public static void loadPlatformLibrary(@NotNull String libName) {
     String libFileName = mapLibraryName(libName);
-    String libPath = PathManager.getBinPath() + "/" + libFileName;
 
-    if (!new File(libPath).exists()) {
-      String platform = getPlatformName();
-      if (!new File(libPath = PathManager.getHomePath() + "/ultimate/community/bin/" + platform + libFileName).exists()) {
-        if (!new File(libPath = PathManager.getHomePath() + "/community/bin/" + platform + libFileName).exists()) {
-          if (!new File(libPath = PathManager.getHomePath() + "/bin/" + platform + libFileName).exists()) {
-            if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
-              File libDir = new File(PathManager.getBinPath());
-              throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
-            }
-          }
-        }
+    final String libPath;
+    final File libFile = PathManager.findBinFile(libFileName);
+
+    if (libFile != null) {
+      libPath = libFile.getAbsolutePath();
+    }
+    else {
+      if (!new File(libPath = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libFileName).exists()) {
+        File libDir = new File(PathManager.getBinPath());
+        throw new UnsatisfiedLinkError("'" + libFileName + "' not found in '" + libDir + "' among " + Arrays.toString(libDir.list()));
       }
     }
 
@@ -352,13 +344,6 @@ public class UrlClassLoader extends ClassLoader {
     return fileName;
   }
 
-  private static String getPlatformName() {
-    if (SystemInfo.isWindows) return "win/";
-    else if (SystemInfo.isMac) return "mac/";
-    else if (SystemInfo.isLinux) return "linux/";
-    else return "";
-  }
-
   // called by a parent class on Java 7+
   @SuppressWarnings("unused")
   protected Object getClassLoadingLock(String className) {
@@ -368,11 +353,11 @@ public class UrlClassLoader extends ClassLoader {
   /**
    * An interface for a pool to store internal class loader caches, that can be shared between several different class loaders,
    * if they contain the same URLs in their class paths.<p/>
-   * 
+   *
    * The implementation is subject to change so one shouldn't rely on it.
-   * 
+   *
    * @see #createCachePool()
-   * @see Builder#useCache(CachePool, CachingCondition) 
+   * @see Builder#useCache(CachePool, CachingCondition)
    */
   public interface CachePool { }
 
@@ -394,7 +379,7 @@ public class UrlClassLoader extends ClassLoader {
    * @return a new pool to be able to share internal class loader caches between several different class loaders, if they contain the same URLs
    * in their class paths.
    */
-  @NotNull 
+  @NotNull
   public static CachePool createCachePool() {
     return new CachePoolImpl();
   }

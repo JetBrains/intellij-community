@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,8 @@ public interface TemplateOptionalProcessor {
    * Change whether this processor is enabled for a given template. It's invoked, for example, when a user changes the value of
    * the corresponding checkbox in Live template settings.
    */
-  void setEnabled(Template template, boolean value);
+  default void setEnabled(Template template, boolean value) {
+  }
 
   /**
    * @return whether a checkbox for this template should be shown in the configuration dialog, with the given template context.

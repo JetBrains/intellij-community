@@ -306,29 +306,14 @@ abstract class ComponentStoreImpl : IComponentStore {
 
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     if (loadPolicy == StateLoadPolicy.LOAD) {
-      val storageSpecs = getStorageSpecs(component, stateSpec, StateStorageOperation.READ)
       val storageChooser = component as? StateStorageChooserEx
-      for (storageSpec in storageSpecs) {
+      for (storageSpec in getStorageSpecs(component, stateSpec, StateStorageOperation.READ)) {
         if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
           continue
         }
 
         val storage = storageManager.getStateStorage(storageSpec)
-        // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
-        // todo fix FacetManager
-        // use.loaded.state.as.existing used in upsource
-        val stateGetter = if (isUseLoadedStateAsExisting(storage) &&
-          name != "AntConfiguration" &&
-          name != "ProjectModuleManager" &&
-          name != "FacetManager" &&
-          name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
-          name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
-          SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)) {
-          (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass)
-        }
-        else {
-          null
-        }
+        val stateGetter = if (isUseLoadedStateAsExisting(storage, name)) (storage as? StorageBaseEx<*>)?.createGetSession(component, name, stateClass) else null
         var state = if (stateGetter == null) storage.getState(component, name, stateClass, defaultState, reloadData) else stateGetter.getState(defaultState)
         if (state == null) {
           if (changedStorages != null && changedStorages.contains(storage)) {
@@ -361,6 +346,19 @@ abstract class ComponentStoreImpl : IComponentStore {
     return true
   }
 
+  // todo "ProjectModuleManager" investigate why after loadState we get empty state on getState, test CMakeWorkspaceContentRootsTest
+  // todo fix FacetManager
+  // use.loaded.state.as.existing used in upsource
+  private fun isUseLoadedStateAsExisting(storage: StateStorage, name: String): Boolean {
+    return isUseLoadedStateAsExisting(storage) &&
+           name != "AntConfiguration" &&
+           name != "ProjectModuleManager" &&
+           name != "FacetManager" &&
+           name != "NewModuleRootManager" /* will be changed only on actual user change, so, to speed up module loading, skip it */ &&
+           name != "DeprecatedModuleOptionManager" /* doesn't make sense to check it */ &&
+           SystemPropertyUtil.getBoolean("use.loaded.state.as.existing", true)
+  }
+
   protected open fun isUseLoadedStateAsExisting(storage: StateStorage): Boolean = (storage as? XmlElementStorage)?.roamingType != RoamingType.DISABLED
 
   protected open fun getPathMacroManagerForDefaults(): PathMacroManager? = null
@@ -377,15 +375,15 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  protected open fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.size == 1 || component is StateStorageChooserEx) {
-      return storages
+      return storages.toList()
     }
 
     if (storages.isEmpty()) {
       if (stateSpec.defaultStateAsResource) {
-        return storages
+        return emptyList()
       }
 
       throw AssertionError("No storage specified")
@@ -515,26 +513,26 @@ enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
 }
 
-internal fun Array<Storage>.sortByDeprecated(): Array<out Storage> {
-  if (isEmpty()) {
-    return this
+internal fun Array<out Storage>.sortByDeprecated(): List<Storage> {
+  if (size < 2) {
+    return toList()
   }
 
-  if (!this[0].deprecated) {
+  if (!first().deprecated) {
     var othersAreDeprecated = true
     for (i in 1..size - 1) {
-      if (!this[i].deprecated) {
+      if (!get(i).deprecated) {
         othersAreDeprecated = false
         break
       }
     }
 
     if (othersAreDeprecated) {
-      return this
+      return toList()
     }
   }
 
-  return sortedArrayWith(deprecatedComparator)
+  return sortedWith(deprecatedComparator)
 }
 
 private fun notifyUnknownMacros(store: IComponentStore, project: Project, componentName: String) {

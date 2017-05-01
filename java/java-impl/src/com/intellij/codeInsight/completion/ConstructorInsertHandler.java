@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Contract;
@@ -303,7 +304,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     final PsiReferenceParameterList parameterList = parent.getBaseClassReference().getParameterList();
     final PsiTypeElement[] parameters = parameterList != null ? parameterList.getTypeParameterElements() : null;
-    if (shouldStartTypeTemplate(parameters)) {
+    final PsiElement newExpr = parent.getParent();
+    if (newExpr != null && PsiTypesUtil.getExpectedTypeByParent(newExpr) == null && shouldStartTypeTemplate(parameters)) {
       startTemplate(parent, editor, createOverrideRunnable(editor, file, project), parameters);
       return null;
     }

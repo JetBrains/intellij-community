@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,52 +52,37 @@ public class ImportIntoShelfAction extends DumbAwareAction {
     final Project project = e.getProject();
     if (project == null) return;
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, false, false, false, true);
-    FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
-      @Override
-      public void consume(final List<VirtualFile> files) {
-        //gatherPatchFiles
-        final ProgressManager pm = ProgressManager.getInstance();
-        final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
+    FileChooser.chooseFiles(descriptor, project, null, files -> {
+      //gatherPatchFiles
+      final ProgressManager pm = ProgressManager.getInstance();
+      final ShelveChangesManager shelveChangesManager = ShelveChangesManager.getInstance(project);
 
-        final List<VirtualFile> patchTypeFiles = new ArrayList<>();
-        final boolean filesFound = pm.runProcessWithProgressSynchronously(new Runnable() {
-          @Override
-          public void run() {
-            patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files));
-          }
-        }, "Looking for patch files...", true, project);
-        if (!filesFound || patchTypeFiles.isEmpty()) return;
-        if (!patchTypeFiles.equals(files)) {
-          final String message = "Found " + (patchTypeFiles.size() == 1 ?
-                                             "one patch file (" + patchTypeFiles.get(0).getPath() + ")." :
-                                             (patchTypeFiles.size() + " patch files.")) +
-                                 "\nContinue with import?";
-          final int toImport = Messages.showYesNoDialog(project, message, "Import Patches", Messages.getQuestionIcon());
-          if (Messages.NO == toImport) return;
-        }
-        pm.runProcessWithProgressSynchronously(new Runnable() {
-          @Override
-          public void run() {
-            final List<VcsException> exceptions = new ArrayList<>();
-            final List<ShelvedChangeList> lists =
-              shelveChangesManager.importChangeLists(patchTypeFiles, new Consumer<VcsException>() {
-                @Override
-                public void consume(VcsException e) {
-                  exceptions.add(e);
-                }
-              });
-            if (!lists.isEmpty()) {
-              ShelvedChangesViewManager.getInstance(project).activateView(lists.get(lists.size() - 1));
-            }
-            if (!exceptions.isEmpty()) {
-              AbstractVcsHelper.getInstance(project).showErrors(exceptions, "Import patches into shelf");
-            }
-            if (lists.isEmpty() && exceptions.isEmpty()) {
-              VcsBalloonProblemNotifier.showOverChangesView(project, "No patches found", MessageType.WARNING);
-            }
-          }
-        }, "Import patches into shelf", true, project);
+      final List<VirtualFile> patchTypeFiles = new ArrayList<>();
+      final boolean filesFound = pm.runProcessWithProgressSynchronously(
+        (Runnable)() -> patchTypeFiles.addAll(shelveChangesManager.gatherPatchFiles(files)), "Looking for patch files...", true, project);
+      if (!filesFound || patchTypeFiles.isEmpty()) return;
+      if (!patchTypeFiles.equals(files)) {
+        final String message = "Found " + (patchTypeFiles.size() == 1 ?
+                                           "one patch file (" + patchTypeFiles.get(0).getPath() + ")." :
+                                           (patchTypeFiles.size() + " patch files.")) +
+                               "\nContinue with import?";
+        final int toImport = Messages.showYesNoDialog(project, message, "Import Patches", Messages.getQuestionIcon());
+        if (Messages.NO == toImport) return;
       }
+      pm.runProcessWithProgressSynchronously(() -> {
+        final List<VcsException> exceptions = new ArrayList<>();
+        final List<ShelvedChangeList> lists =
+          shelveChangesManager.importChangeLists(patchTypeFiles, e1 -> exceptions.add(e1));
+        if (!lists.isEmpty()) {
+          ShelvedChangesViewManager.getInstance(project).activateView(lists.get(lists.size() - 1));
+        }
+        if (!exceptions.isEmpty()) {
+          AbstractVcsHelper.getInstance(project).showErrors(exceptions, "Import patches into shelf");
+        }
+        if (lists.isEmpty() && exceptions.isEmpty()) {
+          VcsBalloonProblemNotifier.showOverChangesView(project, "No patches found", MessageType.WARNING);
+        }
+      }, "Import patches into shelf", true, project);
     });
   }
 }

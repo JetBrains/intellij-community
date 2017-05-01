@@ -19,6 +19,7 @@ import com.intellij.testFramework.assertConcurrent
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -48,7 +49,7 @@ class AsyncPromiseTest {
 
     val numThreads = 30
     assertConcurrent(*Array(numThreads, {
-      if (it and 1 === 0) r else s
+      if ((it and 1) == 0) r else s
     }))
 
     assertThat(count.get()).isEqualTo(numThreads / 2)
@@ -67,6 +68,13 @@ class AsyncPromiseTest {
           Thread.sleep(100)
           promise.setResult("test")
         })
+  }
+
+  @Test
+  fun `ignoreErrors`() {
+    val a = resolvedPromise("foo")
+    val b = rejectedPromise<String>()
+    assertThat(collectResults(listOf(a, b), ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
   }
 
   @Test

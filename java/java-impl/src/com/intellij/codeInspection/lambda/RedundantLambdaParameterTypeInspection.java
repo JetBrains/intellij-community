@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  */
 public class RedundantLambdaParameterTypeInspection extends BaseJavaBatchLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + RedundantLambdaParameterTypeInspection.class.getName());
+  public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
 
   @NotNull
   @Override

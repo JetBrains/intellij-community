@@ -35,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.LightColors;
 import org.gradle.util.GUtil;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
@@ -61,7 +62,7 @@ import java.util.regex.Pattern;
 public class UseDistributionWithSourcesNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> implements
                                                                                                                           DumbAware {
   public static final Pattern GRADLE_SRC_DISTRIBUTION_PATTERN;
-  private static final Logger LOG = Logger.getInstance("#" + UseDistributionWithSourcesNotificationProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(UseDistributionWithSourcesNotificationProvider.class);
   private static final Key<EditorNotificationPanel> KEY = Key.create("gradle.notifications.use.distribution.with.sources");
   private static final String ALL_ZIP_DISTRIBUTION_URI_SUFFIX = "-all.zip";
   private final Project myProject;
@@ -101,7 +102,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
         if (settings.isDisableWrapperSourceDistributionNotification()) return null;
         if (!showUseDistributionWithSourcesTip(rootProjectPath)) return null;
 
-        final EditorNotificationPanel panel = new EditorNotificationPanel();
+        final EditorNotificationPanel panel = new EditorNotificationPanel(LightColors.SLIGHTLY_GREEN);
         panel.setText(GradleBundle.message("gradle.notifications.use.distribution.with.sources"));
         panel.createActionLabel(GradleBundle.message("gradle.notifications.hide.tip"), () -> {
           settings.setDisableWrapperSourceDistributionNotification(true);

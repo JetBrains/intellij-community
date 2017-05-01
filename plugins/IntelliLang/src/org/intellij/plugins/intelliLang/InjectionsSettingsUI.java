@@ -47,7 +47,6 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import gnu.trove.THashSet;
@@ -740,11 +739,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       }
       final CfgInfo info = getDefaultCfgInfo();
       final Map<String,Set<InjInfo>> currentMap =
-        ContainerUtil.classify(info.injectionInfos.iterator(), new Convertor<InjInfo, String>() {
-          public String convert(final InjInfo o) {
-            return o.injection.getSupportId();
-          }
-        });
+        ContainerUtil.classify(info.injectionInfos.iterator(), o -> o.injection.getSupportId());
       final List<BaseInjection> originalInjections = new ArrayList<>();
       final List<BaseInjection> newInjections = new ArrayList<>();
       //// remove duplicates
@@ -759,7 +754,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       //myInjections.addAll(newInjections);
 
       for (String supportId : InjectorUtils.getActiveInjectionSupportIds()) {
-        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.<InjInfo>emptyList()));
+        ArrayList<InjInfo> list = new ArrayList<>(ObjectUtils.notNull(currentMap.get(supportId), Collections.emptyList()));
         final List<BaseInjection> currentInjections = getInjectionList(list);
         final List<BaseInjection> importingInjections = cfg.getInjections(supportId);
         if (currentInjections == null) {
@@ -882,12 +877,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   }
 
   private static List<InjInfo> getInjInfoList(final CfgInfo[] infos) {
-    return ContainerUtil.concat(infos, new Function<CfgInfo, Collection<? extends InjInfo>>() {
-      @Override
-      public Collection<InjInfo> fun(final CfgInfo cfgInfo) {
-        return cfgInfo.injectionInfos;
-      }
-    });
+    return ContainerUtil.concat(infos, cfgInfo -> cfgInfo.injectionInfos);
   }
 
   private static List<BaseInjection> getInjectionList(final List<InjInfo> list) {

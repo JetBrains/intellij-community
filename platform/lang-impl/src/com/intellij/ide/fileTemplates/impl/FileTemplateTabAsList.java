@@ -47,14 +47,11 @@ abstract class FileTemplateTabAsList extends FileTemplateTab {
         onTemplateSelected();
       }
     });
-    new ListSpeedSearch(myList, new Function<Object, String>() {
-      @Override
-      public String fun(final Object o) {
-        if (o instanceof FileTemplate) {
-          return ((FileTemplate)o).getName();
-        }
-        return null;
+    new ListSpeedSearch(myList, (Function<Object, String>)o -> {
+      if (o instanceof FileTemplate) {
+        return ((FileTemplate)o).getName();
       }
+      return null;
     });
   }
 

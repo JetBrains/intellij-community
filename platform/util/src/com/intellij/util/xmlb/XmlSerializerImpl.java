@@ -62,12 +62,6 @@ public final class XmlSerializerImpl {
       return getBinding(typeToClass(type), type, accessor);
     }
 
-    @NotNull
-    @Override
-    public final Binding getClassBinding(@NotNull Class<?> aClass, @NotNull Type originalType) {
-      return getClassBinding(aClass, originalType, null);
-    }
-
     @Override
     public final Binding getClassBinding(@NotNull Class<?> aClass) {
       return getClassBinding(aClass, aClass, null);

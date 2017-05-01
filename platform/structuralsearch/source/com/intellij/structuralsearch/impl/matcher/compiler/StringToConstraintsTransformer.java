@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,16 +25,12 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Created by IntelliJ IDEA.
- * User: maxim
+ * @author maxim
  * Date: 17.11.2004
  * Time: 19:29:05
- * To change this template use File | Settings | File Templates.
  */
 class StringToConstraintsTransformer {
   @NonNls private static final String REF = "ref";
-  @NonNls private static final String READ = "read";
-  @NonNls private static final String WRITE = "write";
   @NonNls private static final String REGEX = "regex";
   @NonNls private static final String REGEXW = "regexw";
   @NonNls private static final String EXPRTYPE = "exprtype";
@@ -387,16 +398,6 @@ class StringToConstraintsTransformer {
         throw new MalformedPatternException(SSRBundle.message("error.reference.variable.name.expected", option));
       constraint.setNameOfReferenceVar(argument.substring(1));
     }
-    else if (option.equalsIgnoreCase(READ)) {
-      if (argument.length() != 0) throw new MalformedPatternException(SSRBundle.message("error.no.argument.expected", option));
-      constraint.setReadAccess(true);
-      constraint.setInvertReadAccess(invert);
-    }
-    else if (option.equalsIgnoreCase(WRITE)) {
-      if (argument.length() != 0) throw new MalformedPatternException(SSRBundle.message("error.no.argument.expected", option));
-      constraint.setWriteAccess(true);
-      constraint.setInvertWriteAccess(invert);
-    }
     else if (option.equalsIgnoreCase(REGEX) || option.equalsIgnoreCase(REGEXW)) {
       if (argument.length() == 0)
         throw new MalformedPatternException(SSRBundle.message("error.regular.expression.argument.expected", option));
@@ -457,6 +458,7 @@ class StringToConstraintsTransformer {
 
   private static void checkRegex(@NotNull String regex) {
     try {
+      //noinspection ResultOfMethodCallIgnored
       Pattern.compile(regex);
     }
     catch (PatternSyntaxException e) {

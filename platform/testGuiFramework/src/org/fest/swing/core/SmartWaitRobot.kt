@@ -17,12 +17,16 @@ package org.fest.swing.core
 
 import com.intellij.util.ui.EdtInvocationManager
 import org.fest.swing.awt.AWT
+import org.fest.swing.edt.GuiActionRunner
+import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
 import org.fest.swing.timing.Pause
 import org.fest.util.Preconditions
 import java.awt.Component
 import java.awt.MouseInfo
 import java.awt.Point
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import javax.swing.SwingUtilities
 
 /**
@@ -30,11 +34,20 @@ import javax.swing.SwingUtilities
  */
 class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
+  init {
+    settings().delayBetweenEvents(10)
+  }
+
   val waitConst = 30L
+  var myAwareClick: Boolean = false
 
   override fun waitForIdle() {
-    Pause.pause(waitConst)
-    if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+    if (myAwareClick) {
+      Thread.sleep(50)
+    } else {
+      Pause.pause(waitConst)
+      if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
+    }
   }
 
   //smooth mouse move
@@ -47,7 +60,7 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     val dt = t / n.toDouble()
     for (step in 1..n) {
       try {
-        Pause.pause(1L)
+        Pause.pause(10L)
       }
       catch (e: InterruptedException) {
         e.printStackTrace()
@@ -63,19 +76,76 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   //smooth mouse move to component
   override fun moveMouse(c: Component, x: Int, y: Int) {
-    val p = Preconditions.checkNotNull(AWT.translate(c, x, y)) as Point
-    moveMouse(p.x, p.y);
+    waitFor{ c.isShowing }
+    val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
+    moveMouse(p.x, p.y)
+    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
+    val mouseLocation = MouseInfo.getPointerInfo().location
+    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouse(c, x, y)
   }
 
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
     moveMouse(c, where.x, where.y)
-    super.click(c, where, button, times)
+    myEdtAwareClick(button, times)
   }
 
+
+  //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
     moveMouse(where.x, where.y)
-    super.click(where, button, times)
+    myEdtAwareClick(button, times)
+  }
+
+  private fun myInnerClick(button: MouseButton, times: Int) {
+    val robot = java.awt.Robot()
+    robot.autoDelay = 50
+    for (i in 1..times) {
+      robot.mousePress(button.mask)
+      robot.mouseRelease(button.mask)
+    }
+  }
+
+  private fun waitFor(condition: () -> Boolean) {
+    val timeout = 5000 //5 sec
+    val cdl = CountDownLatch(1)
+    val timeStart = System.currentTimeMillis()
+    invokeWithCondition(timeStart, timeout, cdl, condition)
+    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
+  }
+
+  private fun invokeWithCondition(timeStart: Long, timeout: Int, cdl: CountDownLatch, condition: () -> Boolean) {
+    EdtInvocationManager.getInstance().invokeLater{ if (condition.invoke()) {
+      cdl.countDown()
+    } else {
+      if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
+    }}
+  }
+
+  private fun myEdtAwareClick(button: MouseButton, times: Int) {
+    awareClick {
+      performOnEdt {
+        myInnerClick(button, times)
+      }
+    }
+    waitForIdle()
+  }
+
+  private fun performOnEdt(body: () -> Unit) {
+    if (!EdtInvocationManager.getInstance().isEventDispatchThread)
+      GuiActionRunner.execute(object : GuiTask() {
+        override fun executeInEDT() {
+          body.invoke()
+        }
+      })
+    else
+      body.invoke()
+  }
+
+  private fun awareClick(body: () -> Unit) {
+    myAwareClick = true
+    body.invoke()
+    myAwareClick = false
   }
 
 }

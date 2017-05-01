@@ -327,7 +327,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           if (oldModule != null) {
             //Map<String, VirtualFilePointer> track1 = ContentEntryImpl.track;
             //VirtualFilePointer pointer = track1.get(url);
-            LOG.error("duplicated content url: " + url);
+            LOG.error("Module '" + module.getName() + "' and module '" + oldModule.getName() + "' have the same content root: " + url);
           }
         }
       }

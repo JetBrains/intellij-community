@@ -125,6 +125,9 @@ public class MavenProject {
     MavenModel model = readerResult.mavenModel;
 
     newState.myMavenId = model.getMavenId();
+    if (model.getParent() != null) {
+      newState.myParentId = model.getParent().getMavenId();
+    }
 
     newState.myPackaging = model.getPackaging();
     newState.myName = model.getName();
@@ -144,14 +147,6 @@ public class MavenProject {
     doSetResolvedAttributes(newState, readerResult, resetArtifacts);
 
     MavenModelPropertiesPatcher.patch(newState.myProperties, newState.myPlugins);
-    if (model.getParent() != null) {
-      MavenId parentId = model.getParent().getMavenId();
-      newState.myParentId = new MavenId(
-        MavenUtil.expandProperties(parentId.getGroupId(), newState.myProperties),
-        MavenUtil.expandProperties(parentId.getArtifactId(), newState.myProperties),
-        MavenUtil.expandProperties(parentId.getVersion(), newState.myProperties)
-      );
-    }
 
     newState.myModulesPathsAndNames = collectModulePathsAndNames(model, getDirectory());
     Collection<String> newProfiles = collectProfilesIds(model.getProfiles());

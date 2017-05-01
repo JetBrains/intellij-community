@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, V> first, @NotNull Pair<K, V>... entries) {
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
     return ContainerUtilRt.newLinkedHashMap(first, entries);
   }
 
@@ -898,17 +898,17 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+  public static <T, K, V> Map<K, V> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<K, V>> mapper) {
     return map2Map(Arrays.asList(collection), mapper);
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<? extends T> collection,
-                                                        @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
-    final Map<KEY, VALUE> set = new THashMap<KEY, VALUE>(collection.size());
+  public static <T, K, V> Map<K, V> map2Map(@NotNull Collection<? extends T> collection,
+                                            @NotNull Function<T, Pair<K, V>> mapper) {
+    final Map<K, V> set = new THashMap<K, V>(collection.size());
     for (T t : collection) {
-      Pair<KEY, VALUE> pair = mapper.fun(t);
+      Pair<K, V> pair = mapper.fun(t);
       set.put(pair.first, pair.second);
     }
     return set;
@@ -916,18 +916,18 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2MapNotNull(@NotNull T[] collection,
-                                                               @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
+  public static <T, K, V> Map<K, V> map2MapNotNull(@NotNull T[] collection,
+                                                   @NotNull Function<T, Pair<K, V>> mapper) {
     return map2MapNotNull(Arrays.asList(collection), mapper);
   }
 
   @NotNull
   @Contract(pure = true)
-  public static <T, KEY, VALUE> Map<KEY, VALUE> map2MapNotNull(@NotNull Collection<? extends T> collection,
-                                                               @NotNull Function<T, Pair<KEY, VALUE>> mapper) {
-    final Map<KEY, VALUE> set = new THashMap<KEY, VALUE>(collection.size());
+  public static <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
+                                                   @NotNull Function<T, Pair<K, V>> mapper) {
+    final Map<K, V> set = new THashMap<K, V>(collection.size());
     for (T t : collection) {
-      Pair<KEY, VALUE> pair = mapper.fun(t);
+      Pair<K, V> pair = mapper.fun(t);
       if (pair != null) {
         set.put(pair.first, pair.second);
       }
@@ -937,9 +937,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <KEY, VALUE> Map<KEY, VALUE> map2Map(@NotNull Collection<Pair<KEY, VALUE>> collection) {
-    final Map<KEY, VALUE> result = new THashMap<KEY, VALUE>(collection.size());
-    for (Pair<KEY, VALUE> pair : collection) {
+  public static <K, V> Map<K, V> map2Map(@NotNull Collection<Pair<K, V>> collection) {
+    final Map<K, V> result = new THashMap<K, V>(collection.size());
+    for (Pair<K, V> pair : collection) {
       result.put(pair.first, pair.second);
     }
     return result;
@@ -1224,6 +1224,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T, E> Iterable<Pair<T, E>> zip(@NotNull final Iterable<T> iterable1, @NotNull final Iterable<E> iterable2) {
     return new Iterable<Pair<T, E>>() {
+      @NotNull
       @Override
       public Iterator<Pair<T, E>> iterator() {
         return new Iterator<Pair<T, E>>() {
@@ -1558,6 +1559,14 @@ public class ContainerUtil extends ContainerUtilRt {
       }
     }
     return result.isEmpty() ? ContainerUtil.<T>emptyList() : result;
+  }
+
+  @NotNull
+  @Contract(pure=true)
+  public static <E extends Enum<E>> EnumSet<E> intersection(@NotNull EnumSet<E> collection1, @NotNull EnumSet<E> collection2) {
+    EnumSet<E> result = EnumSet.copyOf(collection1);
+    result.retainAll(collection2);
+    return result;
   }
 
   @Nullable

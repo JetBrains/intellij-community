@@ -13,7 +13,7 @@ import com.intellij.psi.*;
 */
 public class FinalListener {
   private final Editor myEditor;
-  private static final Logger LOG = Logger.getInstance("#" + FinalListener.class.getName());
+  private static final Logger LOG = Logger.getInstance(FinalListener.class);
 
   public FinalListener(Editor editor) {
     myEditor = editor;

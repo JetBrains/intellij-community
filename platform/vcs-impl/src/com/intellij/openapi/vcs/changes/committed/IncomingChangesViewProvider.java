@@ -18,7 +18,6 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -52,27 +51,19 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   public IncomingChangesViewProvider(final Project project, final MessageBus bus) {
     myProject = project;
     myBus = bus;
-    myListConsumer = new Consumer<List<CommittedChangeList>>() {
-      @Override
-      public void consume(final List<CommittedChangeList> lists) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
-            myBrowser.setItems(lists, CommittedChangesBrowserUseCase.INCOMING);
-          }
-        });
-      }
-    };
+    myListConsumer = lists -> UIUtil.invokeLaterIfNeeded(() -> {
+      myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+      myBrowser.setItems(lists, CommittedChangesBrowserUseCase.INCOMING);
+    });
   }
 
   public JComponent initContent() {
-    myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.<CommittedChangeList>emptyList());
+    myBrowser = new CommittedChangesTreeBrowser(myProject, Collections.emptyList());
     myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.not.loaded.message"));
     ActionGroup group = (ActionGroup) ActionManager.getInstance().getAction("IncomingChangesToolbar");
-    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null, Collections.<AnAction>emptyList());
+    final ActionToolbar toolbar = myBrowser.createGroupFilterToolbar(myProject, group, null, Collections.emptyList());
     myBrowser.setToolBar(toolbar.getComponent());
-    myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
+    myBrowser.setTableContextMenu(group, Collections.emptyList());
     myConnection = myBus.connect();
     myConnection.subscribe(CommittedChangesCache.COMMITTED_TOPIC, new MyCommittedChangesListener());
     loadChangesToBrowser(false, true);
@@ -87,31 +78,27 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
   }
 
   private void updateModel(final boolean inBackground, final boolean refresh) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        if (myProject.isDisposed()) return;
-        if (myBrowser != null) {
-          loadChangesToBrowser(inBackground, refresh);
-        }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (myProject.isDisposed()) return;
+      if (myBrowser != null) {
+        loadChangesToBrowser(inBackground, refresh);
       }
     });
   }
 
   private void loadChangesToBrowser(final boolean inBackground, final boolean refresh) {
     final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
-    cache.hasCachesForAnyRoot(new Consumer<Boolean>() {
-      public void consume(final Boolean notEmpty) {
-        if (Boolean.TRUE.equals(notEmpty)) {
-          final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
-          if (list != null) {
-            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
-            myBrowser.setItems(list, CommittedChangesBrowserUseCase.INCOMING);
-          } else if (refresh) {
-            cache.loadIncomingChangesAsync(myListConsumer, inBackground);
-          } else {
-            myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
-            myBrowser.setItems(Collections.<CommittedChangeList>emptyList(), CommittedChangesBrowserUseCase.INCOMING);
-          }
+    cache.hasCachesForAnyRoot(notEmpty -> {
+      if (Boolean.TRUE.equals(notEmpty)) {
+        final List<CommittedChangeList> list = cache.getCachedIncomingChanges();
+        if (list != null) {
+          myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+          myBrowser.setItems(list, CommittedChangesBrowserUseCase.INCOMING);
+        } else if (refresh) {
+          cache.loadIncomingChangesAsync(myListConsumer, inBackground);
+        } else {
+          myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
+          myBrowser.setItems(Collections.emptyList(), CommittedChangesBrowserUseCase.INCOMING);
         }
       }
     });
@@ -134,7 +121,7 @@ public class IncomingChangesViewProvider implements ChangesViewContentProvider {
     @Override
     public void changesCleared() {
       myBrowser.getEmptyText().setText(VcsBundle.message("incoming.changes.empty.message"));
-      myBrowser.setItems(Collections.<CommittedChangeList>emptyList(), CommittedChangesBrowserUseCase.INCOMING);
+      myBrowser.setItems(Collections.emptyList(), CommittedChangesBrowserUseCase.INCOMING);
     }
 
     public void refreshErrorStatusChanged(@Nullable final VcsException lastError) {

@@ -151,7 +151,7 @@ class MethodRepr extends ProtoMember {
     super(accessFlags, signature, name, TypeRepr.getType(context, Type.getReturnType(descriptor)), annotations, defaultValue);
     myParameterAnnotations = parameterAnnotations;
     Set<TypeRepr.AbstractType> typeCollection =
-      exceptions != null ? new THashSet<>(exceptions.length) : Collections.<TypeRepr.AbstractType>emptySet();
+      exceptions != null ? new THashSet<>(exceptions.length) : Collections.emptySet();
     myExceptions = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, exceptions, typeCollection);
     myArgumentTypes = TypeRepr.getType(context, Type.getArgumentTypes(descriptor));
   }

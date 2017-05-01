@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
  * To change this template use File | Settings | File Templates.
  */
 public class TypeConversionDescriptor extends TypeConversionDescriptorBase {
-  private static final Logger LOG = Logger.getInstance("#" + TypeConversionDescriptor.class.getName());
+  private static final Logger LOG = Logger.getInstance(TypeConversionDescriptor.class);
 
   private String myStringToReplace = null;
   private String myReplaceByString = "$";

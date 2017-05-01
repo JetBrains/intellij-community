@@ -1,0 +1,144 @@
+import org.jetbrains.intellij.build.DependenciesBuildUtils
+
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
+cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
+
+def checkoutDir = DependenciesBuildUtils.intellijProjectDir(file('.'))
+def jdkDir = "$checkoutDir/build/jdk"
+
+project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "$jdkDir/1.8")}"
+project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
+
+task downloadJdk18 {
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  def arch = !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
+  def platform = currentPlatformName()
+
+  def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
+  def outputFile = "$project.buildDir/jbsdk/${artifactName}"
+
+  inputs.property('build', jdkBuild)
+  outputs.file(outputFile)
+  doLast {
+    logger.info("Downloading up JDK 1.8 to compile (using $DependenciesBuildUtils.jdkRepo repo)")
+    download {
+      src "$DependenciesBuildUtils.jdkRepo/${artifactName}"
+      dest outputFile
+      onlyIfNewer true
+    }
+  }
+}
+
+task setupJdk18(dependsOn: downloadJdk18) {
+  def outputDir = jdk18OutputDir
+  def downloadOutputs = downloadJdk18.outputs.files
+
+  inputs.files(downloadOutputs)
+  inputs.property("jdk18OutputDir", outputDir)
+  outputs.dir(outputDir)
+  doLast {
+    logger.info("Setting up JDK 1.8 to compile")
+    unpackJdk(downloadOutputs.singleFile, outputDir)
+  }
+}
+
+def unpackJdk(jdkArchive, outputDir) {
+  logger.info("Unpacking $jdkArchive to ${outputDir}")
+  file(outputDir).deleteDir()
+  def currentOs = org.gradle.internal.os.OperatingSystem.current()
+  if (currentOs.isWindows()) {
+    copy {
+      from tarTree(jdkArchive)
+      into outputDir
+    }
+  }
+  else {
+    exec { commandLine 'mkdir', '-p', outputDir }
+    exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
+    def jdkContents = file("${outputDir}/jdk/Contents")
+    if (currentOs.isMacOsX() && jdkContents.exists()) {
+      jdkContents.listFiles().each { file ->
+        exec { commandLine 'mv', "$file.absolutePath", outputDir }
+      }
+    }
+  }
+}
+
+static def currentPlatformName() {
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  if (os.isWindows()) {
+    "windows"
+  }
+  else if (os.isMacOsX()) {
+    "osx"
+  }
+  else {
+    "linux"
+  }
+}
+
+// JDK 1.6
+repositories {
+  maven {
+    url 'http://repo.labs.intellij.net/java'
+  }
+}
+
+configurations {
+  jdk16
+}
+
+dependencies {
+  jdk16 "jetbrains:jre:${jdk16Version()}@tar.gz"
+}
+
+task setupJdk16(dependsOn: configurations.jdk16) {
+  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork }
+  def jdkArchive = { configurations.jdk16.singleFile }
+  def outputDir = "$jdkDir/1.6"
+  inputs.file(jdkArchive)
+  outputs.dir(outputDir)
+
+  doLast {
+    logger.info("Setting up JDK 1.6 to compile")
+    unpackJdk(jdkArchive.call(), outputDir)
+    deleteBrokenSymlink(outputDir)
+  }
+}
+
+// Gradle dies on tring to process broken links: https://issues.gradle.org/browse/GRADLE-1843
+private void deleteBrokenSymlink(def outputDir) {
+  if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+    def pluginJar = file("$outputDir/Home/lib/plugin.jar")
+    if (!pluginJar.exists()) {
+      pluginJar.delete()
+    }
+  }
+}
+
+static def jdk16Version() {
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  if (os.isWindows()) {
+    def suffix = System.getenv("ProgramFiles(x86)") != null ? "x64" : "i586"
+    return "6.45:windows_$suffix"
+  }
+  else if (os.isMacOsX()) {
+    return '6.65:macosx_x64'
+  }
+  return '6.45:linux_x64'
+}

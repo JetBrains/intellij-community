@@ -24,6 +24,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
+import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.StoreUtil
@@ -32,6 +33,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
+import com.intellij.openapi.project.ex.ProjectNameProvider
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectManagerImpl.UnableToSaveProjectNotification
 import com.intellij.openapi.project.impl.ProjectStoreClassProvider
@@ -47,9 +49,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.attribute
+import com.intellij.util.containers.computeIfAny
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.*
+import com.intellij.util.isEmpty
 import com.intellij.util.lang.CompoundRuntimeException
 import com.intellij.util.text.nullize
 import gnu.trove.THashSet
@@ -104,34 +108,9 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
     LOG.catchAndLog {
-      removeWorkspaceComponentConfiguration(defaultProject, element)
-    }
-
-    if (isDirectoryBased) {
-      LOG.catchAndLog {
-        for (component in element.getChildren("component")) {
-          when (component.getAttributeValue("name")) {
-            "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true)
-            "CopyrightManager" -> convertProfiles(component.getChildren("copyright").iterator(), false)
-          }
-        }
-      }
+      normalizeDefaultProjectElement(defaultProject, element, if (isDirectoryBased) Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)) else null)
     }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
-  }
-
-  fun convertProfiles(profileIterator: MutableIterator<Element>, isInspection: Boolean) {
-    for (profile in profileIterator) {
-      val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue(
-          "value") ?: continue
-
-      profileIterator.remove()
-      val wrapper = Element("component").attribute("name", if (isInspection) "InspectionProjectProfileManager" else "CopyrightManager")
-      wrapper.addContent(profile)
-      val path = Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR), if (isInspection) "inspectionProfiles" else "copyright",
-          "${FileUtil.sanitizeFileName(schemeName, true)}.xml")
-      JDOMUtil.write(wrapper, path.outputStream(), "\n")
-    }
   }
 
   override final fun getProjectBasePath(): String {
@@ -198,10 +177,10 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     }
   }
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): Array<out Storage> {
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val storages = stateSpec.storages
     if (storages.isEmpty()) {
-      return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+      return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
     }
 
     if (isDirectoryBased) {
@@ -217,14 +196,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
       }
 
       if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
         result!!.sortWith(deprecatedComparator)
         // if we create project from default, component state written not to own storage file, but to project file,
         // we don't have time to fix it properly, so, ancient hack restored
         result.add(DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION)
-        return result.toTypedArray()
+        return result
       }
     }
     else {
@@ -244,14 +223,14 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
         }
       }
       if (result.isNullOrEmpty()) {
-        return arrayOf(PROJECT_FILE_STORAGE_ANNOTATION)
+        return listOf(PROJECT_FILE_STORAGE_ANNOTATION)
       }
       else {
         if (hasOnlyDeprecatedStorages) {
           result!!.add(PROJECT_FILE_STORAGE_ANNOTATION)
         }
         result!!.sortWith(deprecatedComparator)
-        return result.toTypedArray()
+        return result
       }
     }
   }
@@ -291,25 +270,24 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
   }
 
   override fun getProjectName(): String {
-    if (isDirectoryBased) {
-      val baseDir = projectBasePath
-      val nameFile = nameFile
-      if (nameFile.exists()) {
-        try {
-          nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
-            lastSavedProjectName = it
-            return it
-          }
-        }
-        catch (ignored: IOException) {
-        }
-      }
-
-      return PathUtilRt.getFileName(baseDir).replace(":", "")
-    }
-    else {
+    if (!isDirectoryBased) {
       return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
+
+    val baseDir = projectBasePath
+    val nameFile = nameFile
+    if (nameFile.exists()) {
+      LOG.catchAndLog {
+        nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
+          lastSavedProjectName = it
+          return it
+        }
+      }
+    }
+
+    return ProjectNameProvider.EP_NAME.extensions.computeIfAny {
+      LOG.catchAndLog { it.getDefaultName(project) }
+    } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
 
   private fun saveProjectName() {
@@ -438,8 +416,7 @@ private fun useOldWorkspaceContent(filePath: String, ws: File) {
   }
 }
 
-// public only to test
-fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element) {
+private fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Element) {
   val componentElements = element.getChildren("component")
   if (componentElements.isEmpty()) {
     return
@@ -449,25 +426,90 @@ fun removeWorkspaceComponentConfiguration(defaultProject: Project, element: Elem
   @Suppress("DEPRECATION")
   val projectComponents = defaultProject.getComponents(PersistentStateComponent::class.java)
   projectComponents.forEachGuaranteed {
-    val stateAnnotation = StoreUtil.getStateSpec(it.javaClass)
-    if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
-      return@forEachGuaranteed
+    getNameIfWorkspaceStorage(it.javaClass)?.let {
+      workspaceComponentNames.add(it)
     }
+  }
 
-    val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@forEachGuaranteed
-    if (storage.path != StoragePathMacros.WORKSPACE_FILE) {
-      return@forEachGuaranteed
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, pluginDescriptor ->
+    getNameIfWorkspaceStorage(aClass)?.let {
+      workspaceComponentNames.add(it)
     }
-
-    workspaceComponentNames.add(stateAnnotation.name)
+    true
   }
 
   val iterator = componentElements.iterator()
   for (componentElement in iterator) {
-    val name = componentElement.getAttributeValue("name")
-    if (name != null && workspaceComponentNames.contains(name)) {
+    val name = componentElement.getAttributeValue("name") ?: continue
+    if (workspaceComponentNames.contains(name)) {
       iterator.remove()
     }
   }
   return
+}
+
+// public only to test
+fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path?) {
+  LOG.catchAndLog {
+    removeWorkspaceComponentConfiguration(defaultProject, element)
+  }
+
+  if (projectConfigDir == null) {
+    return
+  }
+
+  LOG.catchAndLog {
+    val iterator = element.getChildren("component").iterator()
+    for (component in iterator) {
+      val componentName = component.getAttributeValue("name")
+
+      fun writeProfileSettings(schemeDir: Path) {
+        component.removeAttribute("name")
+        if (!component.isEmpty()) {
+          val wrapper = Element("component").attribute("name", componentName)
+          component.name = "settings"
+          wrapper.addContent(component)
+          JDOMUtil.write(wrapper, schemeDir.resolve("profiles_settings.xml").outputStream(), "\n")
+        }
+      }
+
+      when (componentName) {
+        "InspectionProjectProfileManager" -> {
+          iterator.remove()
+          val schemeDir = projectConfigDir.resolve("inspectionProfiles")
+          convertProfiles(component.getChildren("profile").iterator(), componentName, schemeDir)
+          component.removeChild("version")
+          writeProfileSettings(schemeDir)
+        }
+        "CopyrightManager" -> {
+          iterator.remove()
+          val schemeDir = projectConfigDir.resolve("copyright")
+          convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
+          writeProfileSettings(schemeDir)
+        }
+      }
+    }
+  }
+}
+
+private fun convertProfiles(profileIterator: MutableIterator<Element>, componentName: String, schemeDir: Path) {
+  for (profile in profileIterator) {
+    val schemeName = profile.getChildren("option").find { it.getAttributeValue("name") == "myName" }?.getAttributeValue("value") ?: continue
+
+    profileIterator.remove()
+    val wrapper = Element("component").attribute("name", componentName)
+    wrapper.addContent(profile)
+    val path = schemeDir.resolve("${FileUtil.sanitizeFileName(schemeName, true)}.xml")
+    JDOMUtil.write(wrapper, path.outputStream(), "\n")
+  }
+}
+
+private fun getNameIfWorkspaceStorage(aClass: Class<*>): String? {
+  val stateAnnotation = StoreUtil.getStateSpec(aClass)
+  if (stateAnnotation == null || stateAnnotation.name.isNullOrEmpty()) {
+    return null
+  }
+
+  val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return null
+  return if (storage.path == StoragePathMacros.WORKSPACE_FILE) stateAnnotation.name else null
 }

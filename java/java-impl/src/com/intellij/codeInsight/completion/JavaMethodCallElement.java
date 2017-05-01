@@ -21,6 +21,10 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hint.ShowParameterInfoContext;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
+import com.intellij.codeInsight.hints.HintInfo;
+import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
+import com.intellij.codeInsight.hints.ParameterHintsPassFactory;
+import com.intellij.codeInsight.hints.filtering.Matcher;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
 import com.intellij.codeInsight.template.*;
@@ -29,6 +33,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -60,6 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class JavaMethodCallElement extends LookupItem<PsiMethod> implements TypedLookupItem, StaticallyImportable {
   public static final ClassConditionKey<JavaMethodCallElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaMethodCallElement.class);
+  public static final Key<List<Inlay>> COMPLETION_HINTS = Key.create("completion.hints");
   @Nullable private final PsiClass myContainingClass;
   private final PsiMethod myMethod;
   private final MemberLookupHelper myHelper;
@@ -290,14 +296,25 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
+    if (methodCall == null) return;
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
-    if (methodCall == null || methodCall.getArgumentList() == null || !"()".equals(methodCall.getArgumentList().getText()) ||
+    PsiExpressionList parameterOwner = methodCall.getArgumentList();
+    if (parameterOwner == null || !"()".equals(parameterOwner.getText()) ||
         parametersCount == 0 ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR || context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR ||
         Registry.is("java.completion.argument.live.template") ||
         !Registry.is("java.completion.argument.hints")) {
       return;
+    }
+
+    boolean showHints = true;
+    if (parametersCount == 1) {
+      HintInfo.MethodInfo methodInfo = JavaInlayParameterHintsProvider.Companion.getInstance().getMethodInfo(method);
+      if (methodInfo != null) {
+        List<Matcher> matchers = ParameterHintsPassFactory.getBlackListMatchers(JavaLanguage.INSTANCE);
+        showHints = matchers.stream().noneMatch(m -> m.isMatching(methodInfo.getFullyQualifiedName(), methodInfo.getParamNames()));
+      }
     }
 
     Editor editor = context.getEditor();
@@ -306,12 +323,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     caretModel.moveToOffset(offset - 1); // avoid caret impact on hints location
     editor.getDocument().insertString(offset, StringUtil.repeat(", ", parametersCount - 1));
     List<Inlay> addedHints = new ArrayList<>(parametersCount);
-    for (PsiParameter parameter : parameterList.getParameters()) {
-      String name = parameter.getName();
-      if (name != null) {
-        addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
+    if (showHints) {
+      for (PsiParameter parameter : parameterList.getParameters()) {
+        String name = parameter.getName();
+        if (name != null) {
+          addedHints.add(ParameterHintsPresentationManager.getInstance().addHint(editor, offset, name + ":", false, true));
+        }
+        offset += 2;
       }
-      offset += 2;
     }
     int braceOffset = caretModel.getOffset();
     caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(braceOffset + 1).leanForward(true));
@@ -320,11 +339,14 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     handler.findElementForParameterInfo(infoContext);
-
-    Disposer.register(new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null, methodCall.getArgumentList(), handler, false, false), () -> {
+    
+    parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
+    Disposer.register(new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
+                                                  parameterOwner, handler, false, false), () -> {
       for (Inlay inlay : addedHints) {
         if (inlay != null) ParameterHintsPresentationManager.getInstance().unpin(inlay);
       }
+      addedHints.clear();
     });
   }
 

@@ -22,49 +22,45 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 /**
  * @author max
  */
 public class ExternalClasspathClassLoader {
 
-  private static String[] parseUrls(String classpathFilePath) {
-    Collection<String> roots = new LinkedHashSet<>();
+  private static List<File> loadFilesPaths(String classpathFilePath) {
+    Set<File> roots = new LinkedHashSet<>();
     File file = new File(classpathFilePath);
     try {
       final BufferedReader reader = new BufferedReader(new FileReader(file));
       try {
         while (reader.ready()) {
-          roots.add(reader.readLine());
+          roots.add(new File(reader.readLine()));
         }
       }
       finally {
         reader.close();
       }
-
-      //noinspection SSBasedInspection
-      return roots.toArray(new String[roots.size()]);
+      return new ArrayList<>(roots);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  public static String[] getRoots() {
+  public static List<File> getRoots() {
     final String classPathFilePath = System.getProperty("classpath.file");
-    return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
+    return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
   }
 
-  public static String[] getExcludeRoots() {
+  public static List<File> getExcludeRoots() {
     try {
       final String classPathFilePath = System.getProperty("exclude.tests.roots.file");
-      return classPathFilePath != null ? parseUrls(classPathFilePath) : null;
+      return classPathFilePath != null ? loadFilesPaths(classPathFilePath) : null;
     }
     catch (Exception e) {
-      //noinspection SSBasedInspection
-      return new String[0];
+      return Collections.emptyList();
     }
   }
 
@@ -94,12 +90,12 @@ public class ExternalClasspathClassLoader {
 
   private static URL[] parseUrls() {
     try {
-      String[] roots = getRoots();
+      List<File> roots = getRoots();
       if (roots == null) return null;
 
-      URL[] urls = new URL[roots.length];
+      URL[] urls = new URL[roots.size()];
       for (int i = 0; i < urls.length; i++) {
-        urls[i] = new File(roots[i]).toURI().toURL();
+        urls[i] = roots.get(i).toURI().toURL();
       }
       return urls;
     }

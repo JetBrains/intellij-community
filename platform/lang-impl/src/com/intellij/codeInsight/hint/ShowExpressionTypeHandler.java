@@ -28,12 +28,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
-import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -102,12 +100,8 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
 
   @NotNull
   public static Set<ExpressionTypeProvider> getHandlers(final Project project, Language... languages) {
-    return JBIterable.of(languages).flatten(new Function<Language, Iterable<ExpressionTypeProvider>>() {
-      @Override
-      public Iterable<ExpressionTypeProvider> fun(Language language) {
-        return DumbService.getInstance(project).filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language));
-      }
-    }).addAllTo(ContainerUtil.<ExpressionTypeProvider>newLinkedHashSet());
+    return JBIterable.of(languages).flatten(
+      language -> DumbService.getInstance(project).filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(ContainerUtil.newLinkedHashSet());
   }
 
 }

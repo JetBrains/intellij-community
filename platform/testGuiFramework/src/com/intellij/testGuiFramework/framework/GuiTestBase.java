@@ -19,6 +19,7 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,9 +31,12 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture;
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture;
+import org.fest.swing.core.BasicComponentPrinter;
+import org.fest.swing.core.ComponentPrinter;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.image.ScreenshotTaker;
 import org.fest.swing.timing.Condition;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -41,13 +45,17 @@ import org.jdom.xpath.XPath;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.After;
-import org.junit.Assume;
 import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -56,7 +64,6 @@ import static com.intellij.openapi.util.io.FileUtil.copyDir;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.io.FileUtilRt.delete;
 import static com.intellij.openapi.vfs.VfsUtil.findFileByIoFile;
-import static com.intellij.testGuiFramework.framework.GuiTestRunner.canRunGuiTests;
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
@@ -68,8 +75,29 @@ import static org.junit.Assert.*;
 public abstract class GuiTestBase {
   protected Robot myRobot;
 
-  @SuppressWarnings("UnusedDeclaration") // This field is set via reflection.
-  private String myTestName;
+  private final Logger LOG = Logger.getInstance(GuiTestBase.class);
+
+  private ScreenshotTaker myScreenshotTaker = new ScreenshotTaker();
+
+  @Rule public final TestWatcher myWatcher = new TestWatcher() {
+
+    @Override
+    protected void failed(Throwable e, Description description) {
+      String fileName = description.getTestClass().getSimpleName() + "." + description.getMethodName() + ".png";
+
+      try {
+        File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), fileName);
+        //noinspection ResultOfMethodCallIgnored
+        file.delete();
+        LOG.error(getHierarchy() + "\n" + "caused by:", e);
+        myScreenshotTaker.saveDesktopAsPng(file.getPath());
+        LOG.info("Screenshot: " + file);
+      }
+      catch (Throwable t) {
+        LOG.error("Screenshot failed. " + t.getMessage());
+      }
+    }
+  };
 
   protected IdeFrameFixture myProjectFrame;
 
@@ -77,7 +105,7 @@ public abstract class GuiTestBase {
    * @return the name of the test method being executed.
    */
   protected String getTestName() {
-    return myTestName;
+    return this.getClass().getSimpleName();
   }
 
 
@@ -95,22 +123,16 @@ public abstract class GuiTestBase {
 
   @Before
   public void setUp() throws Exception {
-    Assume.assumeTrue(canRunGuiTests());
-
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
-
   }
 
   @After
   public void tearDown() throws InvocationTargetException, InterruptedException {
+    failIfIdeHasFatalErrors();
     if (myProjectFrame != null) {
-      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(new Runnable() {
-        @Override
-        public void run() {
-          myProjectFrame.waitForBackgroundTasksToFinish();
-        }
-      });
+      DumbService.getInstance(myProjectFrame.getProject()).repeatUntilPassesInSmartMode(
+        () -> myProjectFrame.waitForBackgroundTasksToFinish());
       myProjectFrame = null;
     }
     if (myRobot != null) {
@@ -119,8 +141,8 @@ public abstract class GuiTestBase {
       for (Window window : Window.getWindows()) {
         if (window.isShowing() && window instanceof Dialog) {
           if (((Dialog)window).getModalityType() == Dialog.ModalityType.APPLICATION_MODAL) {
-            fail("Modal dialog still active: " + window);
             myRobot.close(window);
+            fail("Modal dialog still active: " + window);
           }
         }
       }
@@ -294,7 +316,8 @@ public abstract class GuiTestBase {
           List<Element> modules = xpath.selectNodes(document);
           int urlPrefixSize = "file://$PROJECT_DIR$/".length();
           for (Element module : modules) {
-            String fileUrl = module.getAttributeValue("fileurl");
+            String fileUrl = module.getAttributeValue("" +
+                                                      "fileurl");
             if (!StringUtil.isEmpty(fileUrl)) {
               String relativePath = toSystemDependentName(fileUrl.substring(urlPrefixSize));
               File imlFilePath = new File(projectPath, relativePath);
@@ -317,6 +340,15 @@ public abstract class GuiTestBase {
     }
   }
 
+  public static String getHierarchy() {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    PrintStream printStream = new PrintStream(out, true);
+    ComponentPrinter componentPrinter = BasicComponentPrinter.printerWithCurrentAwtHierarchy();
+    componentPrinter.printComponents(printStream);
+    printStream.flush();
+    return new String(out.toByteArray());
+  }
+
   @NotNull
   protected IdeFrameFixture findIdeFrame(@NotNull File projectPath) {
     return IdeFrameFixture.find(myRobot, projectPath, null);
@@ -326,7 +358,6 @@ public abstract class GuiTestBase {
   protected IdeFrameFixture findIdeFrame(){
     return IdeFrameFixture.find(myRobot, null, null);
   }
-
 
 
 }

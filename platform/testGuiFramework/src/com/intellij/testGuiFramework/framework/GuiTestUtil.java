@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
+import com.intellij.testGuiFramework.impl.FirstStart;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
@@ -113,11 +114,10 @@ GuiTestUtil {
 
   public static final String JDK_HOME_FOR_TESTS = "JDK_HOME_FOR_TESTS";
   public static final String TEST_DATA_DIR = "GUI_TEST_DATA_DIR";
+  public static final String FIRST_START = "GUI_FIRST_START";
   private static final EventQueue SYSTEM_EVENT_QUEUE = Toolkit.getDefaultToolkit().getSystemEventQueue();
   private static final File TMP_PROJECT_ROOT = createTempProjectCreationDir();
 
-  // Called by MethodInvoker via reflection
-  @SuppressWarnings("unused")
   public static void failIfIdeHasFatalErrors() {
     final MessagePool messagePool = MessagePool.getInstance();
     List<AbstractMessage> fatalErrors = messagePool.getFatalErrors(true, true);
@@ -187,7 +187,7 @@ GuiTestUtil {
         return path;
       }
     }
-    System.out.println("Please specify " + description + ", using system property " + quote(propertyName));
+    LOG.warn("Please specify " + description + ", using system property " + quote(propertyName));
     return null;
   }
 
@@ -198,6 +198,8 @@ GuiTestUtil {
   // Called by IdeTestApplication via reflection.
   @SuppressWarnings("UnusedDeclaration")
   public static void waitForIdeToStart() {
+    String firstStart = getSystemPropertyOrEnvironmentVariable(FIRST_START);
+    boolean isFirstStart = firstStart != null && firstStart.toLowerCase().equals("true");
     GuiActionRunner.executeInEDT(false);
     Robot robot = null;
     try {
@@ -206,6 +208,8 @@ GuiTestUtil {
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
+
+      if(isFirstStart) (new FirstStart(robot)).completeBefore();
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -220,6 +224,8 @@ GuiTestUtil {
           return false;
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
+
+      if(isFirstStart) (new FirstStart(robot)).completeAfter();
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
@@ -292,12 +298,7 @@ GuiTestUtil {
       execute(new GuiTask() {
         @Override
         protected void executeInEDT() throws Throwable {
-          EdtInvocationManager.getInstance().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              acceptButton.doClick();
-            }
-          });
+          EdtInvocationManager.getInstance().invokeLater(() -> acceptButton.doClick());
         }
       });
     }
@@ -328,7 +329,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -342,7 +343,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Evaluate for free for 30 days").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -356,7 +357,7 @@ GuiTestUtil {
       completeInstallationDialog.button("Skip All and Set Defaults").click();
     }
     catch (WaitTimedOutError we) {
-      System.out.println("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
+      LOG.error("Timed out waiting for \"" + dialogName + "\" JDialog. Continue...");
     }
   }
 
@@ -660,7 +661,7 @@ GuiTestUtil {
   }
 
   public static void skip(@NotNull String testName) {
-    System.out.println("Skipping test '" + testName + "'");
+    LOG.info("Skipping test '" + testName + "'");
   }
 
   /**

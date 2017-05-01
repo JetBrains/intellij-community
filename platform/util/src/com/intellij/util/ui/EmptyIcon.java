@@ -17,6 +17,7 @@
 package com.intellij.util.ui;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
@@ -115,7 +116,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   @Override
   public EmptyIcon withJBUIPreScaled(boolean preScaled) {
     if (myUseCache && isJBUIPreScaled() != preScaled) {
-      Integer key = key(width, height, isJBUIPreScaled());
+      Integer key = key(width, height);
       if (key != null) cache.remove(key); // rather useless to keep it in cache
       return create(width, height, preScaled);
     }
@@ -123,7 +124,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   }
 
   private static EmptyIcon create(int width, int height, boolean preScaled) {
-    Integer key = key(width, height, preScaled);
+    Integer key = key(width, height);
     EmptyIcon icon = key != null ? cache.get(key) : null;
     if (icon == null) {
       icon = new EmptyIcon(width, height, true);
@@ -133,8 +134,9 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
     return icon;
   }
 
-  private static Integer key(int width, int height, boolean preScaled) {
-    return width == height && width < 129 ? preScaled ? width : JBUI.scale(width) : null;
+  @Nullable
+  private static Integer key(int width, int height) {
+    return width == height && width < 129 ? width : null;
   }
 
   @Override

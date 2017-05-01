@@ -519,6 +519,48 @@ public class Py3TypeTest extends PyTestCase {
            "    print(expr)");
   }
 
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithAsyncioCoroutine() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+                                                              "import asyncio\n" +
+                                                              "@asyncio.coroutine\n" +
+                                                              "def foo():\n" +
+                                                              "    yield from asyncio.sleep(1)\n" +
+                                                              "    return 3\n" +
+                                                              "async def bar():\n" +
+                                                              "    expr = await foo()\n" +
+                                                              "    return expr"));
+  }
+
+  // PY-21655
+  public void testUsageOfFunctionDecoratedWithTypesCoroutine() {
+    myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest("int",
+                                                              "import asyncio\n" +
+                                                              "import types\n" +
+                                                              "@types.coroutine\n" +
+                                                              "def foo():\n" +
+                                                              "    yield from asyncio.sleep(1)\n" +
+                                                              "    return 3\n" +
+                                                              "async def bar():\n" +
+                                                              "    expr = await foo()\n" +
+                                                              "    return expr"));
+  }
+
+  // PY-22513
+  public void testGenericKwargs() {
+    doTest("Dict[str, Union[int, str]]",
+           "from typing import Any, Dict, TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "def generic_kwargs(**kwargs: T) -> Dict[str, T]:\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = generic_kwargs(a=1, b='foo')\n");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

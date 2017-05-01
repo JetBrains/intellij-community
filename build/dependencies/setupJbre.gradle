@@ -1,0 +1,116 @@
+buildscript {
+  repositories {
+    maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
+  dependencies {
+    classpath "de.undercouch:gradle-download-task:3.2.0"
+  }
+}
+apply plugin: "de.undercouch.download"
+
+import de.undercouch.gradle.tasks.download.Download
+import org.jetbrains.intellij.build.DependenciesBuildUtils
+
+task setupJbre {}
+
+jrePlatformsToDownload(targetOs).each { platform ->
+  archToDownload(platform).each { arch ->
+    def jbrexArtifactName = "jbrex8${jdkBuild}_${platform}_$arch"
+    def jbreArtifactName = "jbre8${jdkBuild}_${platform}_$arch"
+
+    task("downloadJbrex_${platform}_$arch", type: Download, group: 'jbre') {
+      inputs.property('build', jdkBuild)
+      src "$DependenciesBuildUtils.jdkRepo/${jbrexArtifactName}.tar.gz"
+      dest "$buildDir/jbre/${jbrexArtifactName}_origin.tar.gz"
+      onlyIfNewer true
+    }
+    cleanSetupJbre.dependsOn("cleanDownloadJbrex_${platform}_$arch")
+
+    if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+      task("untarJbrex_${platform}_$arch", type: Copy, dependsOn: "downloadJbrex_${platform}_$arch", group: 'jbre') {
+        def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
+        from tarTree(downloadOutputs.singleFile), {
+          exclude 'lib/tools.jar'
+        }
+        from tarTree(downloadOutputs.singleFile), {
+          include 'lib/tools.jar'
+          into 'jre'
+        }
+        into { "${downloadOutputs.singleFile.parent}/${downloadOutputs.singleFile.name - '.tar.gz'}/" }
+        includeEmptyDirs = false
+      }
+    }
+    else {
+      task("untarJbrex_${platform}_$arch", type: Exec, dependsOn: "downloadJbrex_${platform}_$arch", group: 'jbre') {
+        def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
+        def outputDir = "${downloadOutputs.singleFile.absolutePath - '.tar.gz'}"
+        inputs.file(downloadOutputs.singleFile)
+        outputs.dir(outputDir)
+        doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
+        commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
+        if (platform != 'osx') {
+          doLast {
+            exec {
+              commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
+              ignoreExitValue = true
+            }
+          }
+        }
+      }
+    }
+    cleanSetupJbre.dependsOn("cleanUntarJbrex_${platform}_$arch")
+
+    createTarJbreTask("tarJbrex_${platform}_$arch", "untarJbrex_${platform}_$arch", platform, jbrexArtifactName, true)
+    createTarJbreTask("tarJbre_${platform}_$arch", "untarJbrex_${platform}_$arch", platform, jbreArtifactName, false)
+
+    setupJbre.dependsOn("tarJbre_${platform}_$arch", "tarJbrex_${platform}_$arch")
+    cleanSetupJbre.dependsOn("cleanTarJbre_${platform}_$arch", "cleanTarJbrex_${platform}_$arch")
+  }
+}
+
+def createTarJbreTask(String taskName, String untarTaskName, String platform, String archiveName, boolean includeToolsJar) {
+  def dirToTar = platform == 'osx' ? 'jdk' : 'jre'
+
+  if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
+    task(taskName, type: Tar, group: 'jbre') {
+      def untarOutputs = tasks[untarTaskName].outputs.files
+      inputs.file(untarOutputs)
+      from "$untarOutputs.singleFile/$dirToTar"
+      if (!includeToolsJar) {
+        exclude "**/tools.jar"
+      }
+      into dirToTar
+      compression = Compression.GZIP
+      setArchiveName("${archiveName}.tar.gz")
+      destinationDir = untarOutputs.singleFile.parentFile
+    }
+  }
+  else {
+    task(taskName, type: Exec, group: 'jbre') {
+      def untarOutputs = tasks[untarTaskName].outputs.files
+      def outputFile = "${untarOutputs.singleFile.parentFile}/${archiveName}.tar.gz"
+      inputs.files(untarOutputs)
+      outputs.file(outputFile)
+      def arguments = ['tar', '-czf', outputFile, '-C', untarOutputs.singleFile.absolutePath]
+      if (!includeToolsJar) {
+        arguments += ['--exclude', "**/tools.jar"]
+      }
+      arguments += [dirToTar]
+      commandLine arguments
+    }
+  }
+}
+
+// see org.jetbrains.intellij.build.BuildOptions.targetOS
+static def jrePlatformsToDownload(targetOs) {
+  def jrePlatformToDownload = new HashSet<String>()
+  if (targetOs == 'all' || targetOs == 'linux') jrePlatformToDownload.add('linux')
+  if (targetOs == 'all' || targetOs == 'windows') jrePlatformToDownload.add('windows')
+  if (targetOs == 'all' || targetOs == 'mac') jrePlatformToDownload.add('osx')
+  jrePlatformToDownload
+}
+
+static def archToDownload(targetOs) {
+  targetOs == 'windows' ? ['x86', 'x64'] : ['x64']
+}

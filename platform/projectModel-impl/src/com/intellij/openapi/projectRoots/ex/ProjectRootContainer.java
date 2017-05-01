@@ -33,8 +33,8 @@ public interface ProjectRootContainer {
   VirtualFile[] getRootFiles(@NotNull OrderRootType type);
   @NotNull ProjectRoot[] getRoots(@NotNull OrderRootType type);
 
-  void startChange();
-  void finishChange();
+  // must execute modifications inside this method only
+  void changeRoots(@NotNull Runnable change);
 
   @NotNull 
   ProjectRoot addRoot(@NotNull VirtualFile virtualFile, @NotNull OrderRootType type);

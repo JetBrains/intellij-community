@@ -17,7 +17,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.*;
 import com.intellij.ui.LoadingNode;
 import com.intellij.util.Time;
@@ -25,7 +24,6 @@ import com.intellij.util.WaitFor;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -144,12 +142,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     };
 
-    invokeLaterIfNeeded(() -> getBuilder().batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicatorRef.set(indicator);
-        expandNext(toExpand, 0, indicator, done);
-      }
+    invokeLaterIfNeeded(() -> getBuilder().batch(indicator -> {
+      indicatorRef.set(indicator);
+      expandNext(toExpand, 0, indicator, done);
     }).notify(done));
 
     waitBuilderToCome(o -> done.isProcessed());
@@ -390,12 +385,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     final ActionCallback done = new ActionCallback();
     final Ref<ProgressIndicator> indicatorRef = new Ref<>();
 
-    invokeLaterIfNeeded(() -> getBuilder().batch(new Progressive() {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        indicatorRef.set(indicator);
-        expandNext(toExpand, 0, indicator, done);
-      }
+    invokeLaterIfNeeded(() -> getBuilder().batch(indicator -> {
+      indicatorRef.set(indicator);
+      expandNext(toExpand, 0, indicator, done);
     }).notify(done));
 
     waitBuilderToCome(o -> done.isProcessed() || myCancelRequest != null);
@@ -1382,23 +1374,20 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                              final int end,
                              @Nullable final Runnable eachRunnable,
                              @Nullable final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        for (int i = start; i <= end; i++) {
-          Node eachFile = node.addChild("File " + i);
-          myAutoExpand.add(eachFile.getElement());
-          eachFile.addChild("message 1 for " + i);
-          eachFile.addChild("message 2 for " + i);
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      for (int i = start; i <= end; i++) {
+        Node eachFile = node.addChild("File " + i);
+        myAutoExpand.add(eachFile.getElement());
+        eachFile.addChild("message 1 for " + i);
+        eachFile.addChild("message 2 for " + i);
 
-          if (eachRunnable != null) {
-            eachRunnable.run();
-          }
+        if (eachRunnable != null) {
+          eachRunnable.run();
         }
+      }
 
-        if (endRunnable != null) {
-          endRunnable.run();
-        }
+      if (endRunnable != null) {
+        endRunnable.run();
       }
     });
   }

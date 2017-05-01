@@ -67,7 +67,7 @@ public class JavaSdkImpl extends JavaSdk {
   public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
 
-    fileManager.addVirtualFileListener(new VirtualFileAdapter() {
+    fileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         updateCache(event);
@@ -340,13 +340,13 @@ public class JavaSdkImpl extends JavaSdk {
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
     String version = sdk.getVersionString();
     if (version == null) return null;
-    return JdkVersionUtil.getVersion(version);
+    return JavaSdkVersion.fromVersionString(version);
   }
 
   @Override
   @Nullable
   public JavaSdkVersion getVersion(@NotNull String versionString) {
-    return JdkVersionUtil.getVersion(versionString);
+    return JavaSdkVersion.fromVersionString(versionString);
   }
 
   @Override
@@ -403,10 +403,10 @@ public class JavaSdkImpl extends JavaSdk {
       }
     };
 
-    rootContainer.startChange();
-    addClasses(jdkHomeFile, sdkModificator, isJre);
-    addSources(jdkHomeFile, sdkModificator);
-    rootContainer.finishChange();
+    rootContainer.changeRoots(() -> {
+      addClasses(jdkHomeFile, sdkModificator, isJre);
+      addSources(jdkHomeFile, sdkModificator);
+    });
 
     ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this, homePath, jdkName) {
       @Override
@@ -503,7 +503,7 @@ public class JavaSdkImpl extends JavaSdk {
       }
     };
 
-    ProjectJdkImpl.copyRoots(rootContainer, jdk);
+    jdk.copyRootsFrom(rootContainer);
     return jdk;
   }
 

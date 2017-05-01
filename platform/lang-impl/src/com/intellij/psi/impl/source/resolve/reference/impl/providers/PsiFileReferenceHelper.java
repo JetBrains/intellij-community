@@ -139,6 +139,6 @@ public class PsiFileReferenceHelper extends FileReferenceHelper {
       if (psiDirectory != null) result.add(psiDirectory);
     }
 
-    return result != null ? result:Collections.<PsiFileSystemItem>emptyList();
+    return result != null ? result:Collections.emptyList();
   }
 }

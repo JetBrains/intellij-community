@@ -38,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class DotProjectFileHelper {
-  private static final Logger LOG = Logger.getInstance("#" + DotProjectFileHelper.class.getName());
+  private static final Logger LOG = Logger.getInstance(DotProjectFileHelper.class);
 
   private DotProjectFileHelper() {
   }

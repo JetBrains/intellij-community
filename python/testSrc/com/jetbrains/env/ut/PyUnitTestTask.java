@@ -122,31 +122,28 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
   @Override
   public void tearDown() throws Exception {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                                   @Override
-                                   public void run() {
-                                     try {
-                                       if (mySetUp) {
-                                         if (myConsoleView != null) {
-                                           Disposer.dispose(myConsoleView);
-                                           myConsoleView = null;
-                                         }
-                                         if (myDescriptor != null) {
-                                           Disposer.dispose(myDescriptor);
-                                           myDescriptor = null;
-                                         }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        if (mySetUp) {
+          if (myConsoleView != null) {
+            Disposer.dispose(myConsoleView);
+            myConsoleView = null;
+          }
+          if (myDescriptor != null) {
+            Disposer.dispose(myDescriptor);
+            myDescriptor = null;
+          }
 
 
-                                         PyUnitTestTask.super.tearDown();
+          PyUnitTestTask.super.tearDown();
 
-                                         mySetUp = false;
-                                       }
-                                     }
-                                     catch (Exception e) {
-                                       throw new RuntimeException(e);
-                                     }
-                                   }
-                                 }
+          mySetUp = false;
+        }
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     );
   }
@@ -173,7 +170,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
 
     if (sdk instanceof JythonSdkFlavor) {
-      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.<String>newArrayList(myFixture.getTempDirPath())));
+      config.setInterpreterOptions(JythonSdkFlavor.getPythonPathCmdLineArgument(Lists.newArrayList(myFixture.getTempDirPath())));
     }
     else {
       PythonEnvUtil.addToPythonPath(config.getEnvs(), myFixture.getTempDirPath());
@@ -222,35 +219,32 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     myOutput = new StringBuilder();
 
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          environment.getRunner().execute(environment, new ProgramRunner.Callback() {
-            @Override
-            public void processStarted(RunContentDescriptor descriptor) {
-              myDescriptor = descriptor;
-              myProcessHandler = myDescriptor.getProcessHandler();
-              myProcessHandler.addProcessListener(new ProcessAdapter() {
-                @Override
-                public void onTextAvailable(ProcessEvent event, Key outputType) {
-                  myOutput.append(event.getText());
-                }
-              });
-              myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
-              myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
-              myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
-                @Override
-                public void onTestingFinished(TestResultsViewer sender) {
-                  s.up();
-                }
-              });
-            }
-          });
-        }
-        catch (Exception e) {
-          throw new RuntimeException(e);
-        }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      try {
+        environment.getRunner().execute(environment, new ProgramRunner.Callback() {
+          @Override
+          public void processStarted(RunContentDescriptor descriptor) {
+            myDescriptor = descriptor;
+            myProcessHandler = myDescriptor.getProcessHandler();
+            myProcessHandler.addProcessListener(new ProcessAdapter() {
+              @Override
+              public void onTextAvailable(ProcessEvent event, Key outputType) {
+                myOutput.append(event.getText());
+              }
+            });
+            myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
+            myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
+            myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
+              @Override
+              public void onTestingFinished(TestResultsViewer sender) {
+                s.up();
+              }
+            });
+          }
+        });
+      }
+      catch (Exception e) {
+        throw new RuntimeException(e);
       }
     });
 
@@ -318,22 +312,19 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     final Editor editor = consoleView.getEditor();
     final List<String> resultStrings = new ArrayList<>();
     final List<Pair<Integer, Integer>> resultRanges = new ArrayList<>();
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        /**
-         * To fetch data from console we need to flush it first.
-         * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
-         * So, we flush it explicitly to make test run on TC.
-         */
-        consoleView.flushDeferredText();
-        for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-          if (highlighter instanceof RangeHighlighterEx) {
-            final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
-            final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
-            resultRanges.add(Pair.create(start, end));
-            resultStrings.add(editor.getDocument().getText().substring(start, end));
-          }
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      /**
+       * To fetch data from console we need to flush it first.
+       * It works locally, but does not work on TC (reasons are not clear yet and need to be investigated).
+       * So, we flush it explicitly to make test run on TC.
+       */
+      consoleView.flushDeferredText();
+      for (final RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
+        if (highlighter instanceof RangeHighlighterEx) {
+          final int start = ((RangeHighlighterEx)highlighter).getAffectedAreaStartOffset();
+          final int end = ((RangeHighlighterEx)highlighter).getAffectedAreaEndOffset();
+          resultRanges.add(Pair.create(start, end));
+          resultStrings.add(editor.getDocument().getText().substring(start, end));
         }
       }
     });

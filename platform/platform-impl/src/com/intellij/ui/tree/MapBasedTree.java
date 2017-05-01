@@ -247,11 +247,16 @@ public final class MapBasedTree<K, N> {
       return children == null ? 0 : children.size();
     }
 
-    public N getChild(int index) {
+    public Entry<N> getChildEntry(int index) {
       if (children != null && 0 <= index && index < children.size()) {
-        return children.get(index).getNode();
+        return children.get(index);
       }
       return null;
+    }
+
+    public N getChild(int index) {
+      Entry<N> entry = getChildEntry(index);
+      return entry == null ? null : entry.getNode();
     }
 
     public int getIndexOf(N child) {

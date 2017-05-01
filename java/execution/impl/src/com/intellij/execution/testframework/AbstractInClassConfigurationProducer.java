@@ -130,7 +130,6 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     if (!isTestClass(psiClass)) return false;
 
     PsiElement psiElement = psiClass;
-    final Project project = context.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
     setupConfigurationModule(context, configuration);
     final Module originalModule = configuration.getConfigurationModule().getModule();

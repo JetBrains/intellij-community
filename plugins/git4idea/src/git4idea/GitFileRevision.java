@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsFileRevisionDvcsSpecific;
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,7 +34,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision>, VcsFileRevisionDvcsSpecific {
+public class GitFileRevision extends VcsFileRevisionEx implements Comparable<VcsFileRevision> {
 
   @NotNull private final Project myProject;
   @NotNull private final FilePath myPath;
@@ -48,7 +47,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @Nullable private final VirtualFile myRoot;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
-    this(project, null, path, revision, null, null, null, null, Collections.<String>emptyList());
+    this(project, null, path, revision, null, null, null, null, Collections.emptyList());
   }
 
   public GitFileRevision(@NotNull Project project, @Nullable VirtualFile root, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
@@ -87,8 +86,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   }
 
   @Nullable
-  @Override
-  public Date getDateForRevisionsOrdering() {
+  public Date getAuthorDate() {
     return myAuthorTime;
   }
 
@@ -169,5 +167,4 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   public String getHash() {
     return myRevision.getRev();
   }
-
 }

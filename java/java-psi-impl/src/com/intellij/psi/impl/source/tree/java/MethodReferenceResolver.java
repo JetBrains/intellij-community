@@ -41,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
-  private static final Logger LOG = Logger.getInstance("#" + MethodReferenceResolver.class.getName());
+  private static final Logger LOG = Logger.getInstance(MethodReferenceResolver.class);
 
   @NotNull
   @Override

@@ -39,6 +39,7 @@ import java.util.*;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.containers.ContainerUtil.newHashMap;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 public class GeneralCommandLineTest {
@@ -101,6 +102,20 @@ public class GeneralCommandLineTest {
     "\\?",
     "\"?\"",
     "*.???", // ^ the Xmas tree above is to catch at least one file matching those globs
+    "stash@{1}",
+    "{}",
+    "{1}",
+    "{1,2}{a,b}",
+    "test[Src][Src][Src]",
+    "[t]estData",
+    "~",
+    "'~'",
+    "'single-quoted'",
+    "''",
+    "C:\\cygwin*",
+    "C:\\cygwin{,64}",
+    "C:\\cygwin{,64}\\printf.e[x]e",
+    "\\\\dos\\path\\{1,2}{a,b}",
   };
 
   @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_RU = "Юникоде";
@@ -121,6 +136,15 @@ public class GeneralCommandLineTest {
 
   protected GeneralCommandLine createCommandLine(String... command) {
     return new GeneralCommandLine(command);
+  }
+
+  @NotNull
+  protected GeneralCommandLine postProcessCommandLine(@NotNull GeneralCommandLine commandLine) {
+    return commandLine;
+  }
+
+  protected void assumeCanTestWindowsShell() {
+    assumeTrue("Windows-only test", SystemInfo.isWindows);
   }
 
   @NotNull
@@ -197,7 +221,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String javaPath = command.first.getExePath();
@@ -209,7 +233,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughNestedWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, ARGUMENTS);
     String javaPath = command.first.getExePath();
@@ -224,7 +248,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
@@ -241,7 +265,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToJavaAppThroughCmdScriptAndNestedWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG);
     File script = ExecUtil.createTempExecutableScript("my script ", ".cmd", "@" + command.first.getCommandLineString() + " %*");
@@ -261,13 +285,27 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void passingArgumentsToEchoThroughWinShell() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     for (String argument : ARGUMENTS) {
       if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
-      GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
+      GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
       String output = execAndGetOutput(commandLine);
-      assertEquals(commandLine.getPreparedCommandLine(), argument + "\n", output);
+      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput(argument) + "\n", output);
+    }
+  }
+
+  @Test(timeout = 60000)
+  public void passingArgumentsToCygwinPrintf() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    File cygwinPrintf = FileUtil.findFirstThatExist("C:\\cygwin\\bin\\printf.exe",
+                                                    "C:\\cygwin64\\bin\\printf.exe");
+    assumeNotNull(cygwinPrintf);
+
+    for (String argument : ARGUMENTS) {
+      GeneralCommandLine commandLine = createCommandLine(cygwinPrintf.getPath(), "[%s]\\\\n", argument);
+      String output = execAndGetOutput(commandLine);
+      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput("[" + argument + "]") + "\n", output);
     }
   }
 
@@ -283,7 +321,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellCommand() {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     String string = "http://localhost/wtf?a=b&c=d";
     String echo = ExecUtil.execAndReadLine(createCommandLine(ExecUtil.getWindowsShellName(), "/c", "echo", string));
@@ -292,7 +330,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellScriptQuoting() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     String scriptPrefix = "my_script";
     for (String scriptExt : new String[]{".cmd", ".bat"}) {
@@ -312,7 +350,7 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void winShellQuotingWithExtraSwitch() throws Exception {
-    assumeTrue(SystemInfo.isWindows);
+    assumeCanTestWindowsShell();
 
     String param = "a&b";
     GeneralCommandLine commandLine = createCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", param);
@@ -390,16 +428,15 @@ public class GeneralCommandLineTest {
     checkEnvPassing(command, env, expected, false);
   }
 
-
-  private static String execAndGetOutput(GeneralCommandLine commandLine) throws ExecutionException {
-    ProcessOutput output = ExecUtil.execAndGetOutput(commandLine);
+  @NotNull
+  private String execAndGetOutput(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
+    ProcessOutput output = ExecUtil.execAndGetOutput(postProcessCommandLine(commandLine));
     int ec = output.getExitCode();
-    if (ec != 0) {
+    if (ec != 0 || !output.getStderr().isEmpty()) {
       fail("Command:\n" + commandLine.getPreparedCommandLine() +
            "\nStdOut:\n" + output.getStdout() +
            "\nStdErr:\n" + output.getStderr());
     }
-    assertTrue(output.getStderr(), output.getStderr().isEmpty());
     return output.getStdout();
   }
 
@@ -443,7 +480,7 @@ public class GeneralCommandLineTest {
     return pair(commandLine, out);
   }
 
-  private static String execHelper(Pair<GeneralCommandLine, File> pair) throws IOException, ExecutionException {
+  private String execHelper(Pair<GeneralCommandLine, File> pair) throws IOException, ExecutionException {
     try {
       execAndGetOutput(pair.first);
       return FileUtil.loadFile(pair.second, CommandTestHelper.ENC);
@@ -457,16 +494,16 @@ public class GeneralCommandLineTest {
     assertEquals(StringUtil.join(expected, "\n") + "\n", StringUtil.convertLineSeparators(output));
   }
 
-  private static void checkEnvPassing(Pair<GeneralCommandLine, File> command,
-                                      Map<String, String> testEnv,
-                                      boolean passParentEnv) throws ExecutionException, IOException {
+  private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
+                               Map<String, String> testEnv,
+                               boolean passParentEnv) throws ExecutionException, IOException {
     checkEnvPassing(command, testEnv, testEnv, passParentEnv);
   }
 
-  private static void checkEnvPassing(Pair<GeneralCommandLine, File> command,
-                                      Map<String, String> testEnv,
-                                      Map<String, String> expectedOutputEnv,
-                                      boolean passParentEnv) throws ExecutionException, IOException {
+  private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
+                               Map<String, String> testEnv,
+                               Map<String, String> expectedOutputEnv,
+                               boolean passParentEnv) throws ExecutionException, IOException {
     command.first.withEnvironment(testEnv);
     command.first.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     String output = execHelper(command);

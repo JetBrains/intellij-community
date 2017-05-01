@@ -19,7 +19,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.EmptyIterator;
-import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.IndexId;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IdSet;
@@ -80,7 +80,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return myInputIdMapping != null ? myInputIdMapping instanceof THashMap ? ((THashMap)myInputIdMapping).size(): 1 : 0;
   }
 
-  static final ThreadLocal<ID> ourDebugIndexInfo = new ThreadLocal<ID>();
+  static final ThreadLocal<IndexId> ourDebugIndexInfo = new ThreadLocal<IndexId>();
 
   @Override
   public void removeAssociatedValue(int inputId) {

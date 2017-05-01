@@ -99,7 +99,7 @@ import java.util.stream.Collectors;
  */
 public final class PythonSdkType extends SdkType {
   public static final String REMOTE_SOURCES_DIR_NAME = "remote_sources";
-  private static final Logger LOG = Logger.getInstance("#" + PythonSdkType.class.getName());
+  private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
   private static final String[] WINDOWS_EXECUTABLE_SUFFIXES = new String[]{"cmd", "exe", "bat", "com"};
 
   static final int MINUTE = 60 * 1000; // 60 seconds, used with script timeouts
@@ -375,7 +375,7 @@ public final class PythonSdkType extends SdkType {
    */
   @Nullable
   public static File findExecutableFile(File parent, String name) {
-    if (SystemInfo.isWindows || SystemInfo.isOS2) {
+    if (SystemInfo.isWindows) {
       for (String suffix : WINDOWS_EXECUTABLE_SUFFIXES) {
         File file = new File(parent, name + "." + suffix);
         if (file.exists()) return file;
@@ -924,6 +924,11 @@ public final class PythonSdkType extends SdkType {
   @Nullable
   public static Sdk findSdkByKey(@NotNull String key) {
     return ProjectJdkTable.getInstance().findJdk(key);
+  }
+
+  @Override
+  public boolean isLocalSdk(@NotNull Sdk sdk) {
+    return !isRemote(sdk);
   }
 }
 

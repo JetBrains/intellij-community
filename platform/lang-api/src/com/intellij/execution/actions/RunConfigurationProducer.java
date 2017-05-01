@@ -40,7 +40,7 @@ import java.util.List;
  */
 public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   public static final ExtensionPointName<RunConfigurationProducer> EP_NAME = ExtensionPointName.create("com.intellij.runConfigurationProducer");
-  private static final Logger LOG = Logger.getInstance("#" + RunConfigurationProducer.class.getName());
+  private static final Logger LOG = Logger.getInstance(RunConfigurationProducer.class);
 
   @NotNull
   public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {

@@ -17,7 +17,6 @@ package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,7 +34,7 @@ import java.util.*;
  */
 public class GenericsUtil {
 
-  private static final Logger LOG = Logger.getInstance("#" + GenericsUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(GenericsUtil.class);
 
   private GenericsUtil() {}
 
@@ -117,7 +116,7 @@ public class GenericsUtil {
         PsiSubstitutor subst2 = TypeConversionUtil.getSuperClassSubstitutor(aSuper, bClass, classResolveResult2.getSubstitutor());
         PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
 
-        final Couple<PsiType> types = Couple.<PsiType>of(elementFactory.createType(aSuper, subst1), elementFactory.createType(aSuper, subst2));
+        final Couple<PsiType> types = Couple.of(elementFactory.createType(aSuper, subst1), elementFactory.createType(aSuper, subst2));
 
         for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable(aSuper)) {
           PsiType mapping1 = subst1.substitute(parameter);

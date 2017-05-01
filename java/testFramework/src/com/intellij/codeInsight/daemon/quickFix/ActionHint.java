@@ -68,7 +68,8 @@ public class ActionHint {
    * @return true if this ActionHint checks that some action should be present
    * or false if it checks that some action should be absent
    */
-  boolean shouldPresent() {
+  @SuppressWarnings("WeakerAccess") // used in kotlin
+  public boolean shouldPresent() {
     return myShouldPresent;
   }
 

@@ -33,7 +33,6 @@ import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -252,15 +251,12 @@ public final class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<K
       stream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(newFileWithCaches)));
       DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
       final DataOutputStream finalStream = stream;
-      savedSuccessfully = hashMaskSet.forEach(new TIntProcedure() {
-        @Override
-        public boolean execute(int value) {
-          try {
-            DataInputOutputUtil.writeINT(finalStream, value);
-            return true;
-          } catch (IOException ex) {
-            return false;
-          }
+      savedSuccessfully = hashMaskSet.forEach(value -> {
+        try {
+          DataInputOutputUtil.writeINT(finalStream, value);
+          return true;
+        } catch (IOException ex) {
+          return false;
         }
       });
     }

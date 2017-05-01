@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -108,7 +109,10 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     public MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
       myList = list;
       mySearch = search;
-      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL));
+      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL);
+      if (action != null) {
+        copyShortcutFrom(action);
+      }
       setEnabledInModalContext(true);
     }
 

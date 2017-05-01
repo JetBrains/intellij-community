@@ -18,12 +18,13 @@ package com.intellij.compiler.chainsSearch;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
-import com.intellij.compiler.chainsSearch.context.TargetType;
+import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -39,24 +40,32 @@ public class ChainsSearcher {
 
   @NotNull
   public static List<MethodsChain> search(int pathMaximalLength,
-                                          TargetType targetType,
+                                          ChainSearchTarget searchTarget,
                                           int maxResultSize,
                                           ChainCompletionContext context,
                                           CompilerReferenceServiceEx compilerReferenceServiceEx) {
-    SearchInitializer initializer = createInitializer(targetType, compilerReferenceServiceEx, context);
+    SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx,
                   initializer,
                   pathMaximalLength,
                   maxResultSize,
-                  targetType.getClassQName(),
                   context);
   }
 
   @NotNull
-  private static SearchInitializer createInitializer(TargetType target,
+  private static SearchInitializer createInitializer(ChainSearchTarget target,
                                                      CompilerReferenceServiceEx compilerReferenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName());
+    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = null;
+    for (byte kind : target.getArrayKind()) {
+      SortedSet<OccurrencesAware<MethodIncompleteSignature>> currentMethods =
+        compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind);
+      if (methods == null) {
+        methods = currentMethods;
+      } else {
+        methods.addAll(currentMethods);
+      }
+    }
     return new SearchInitializer(methods, context);
   }
 
@@ -65,7 +74,6 @@ public class ChainsSearcher {
                                            SearchInitializer initializer,
                                            int pathMaximalLength,
                                            int maxResultSize,
-                                           String targetQName,
                                            ChainCompletionContext context) {
     SearchInitializer.InitResult initResult = initializer.init(Collections.emptySet());
 
@@ -80,7 +88,7 @@ public class ChainsSearcher {
       .filter(Objects::nonNull)
       .collect(Collectors.toCollection(LinkedList::new));
 
-    ResultHolder result = new ResultHolder(context.getPsiManager());
+    ResultHolder result = new ResultHolder();
     while (!q.isEmpty()) {
       ProgressManager.checkCanceled();
       OccurrencesAware<MethodsChain> currentVertex = q.poll();
@@ -96,9 +104,10 @@ public class ChainsSearcher {
         continue;
       }
       String currentReturnType = headSignature.getOwner();
-      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethodReferenceOccurrences(currentReturnType);
+      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethodReferenceOccurrences(currentReturnType, SignatureData.ZERO_DIM);
       MaxSizeTreeSet<OccurrencesAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<>(maxResultSize);
+      String targetQName = context.getTarget().getClassQName();
       for (OccurrencesAware<MethodIncompleteSignature> indexValue : nextMethods) {
         MethodIncompleteSignature vertex = indexValue.getUnderlying();
         int occurrences = indexValue.getOccurrences();
@@ -109,7 +118,7 @@ public class ChainsSearcher {
             if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrences() < vertexDistance) {
               if (currentVertexMethodsChain.size() < pathMaximalLength - 1) {
                 MethodsChain newBestMethodsChain =
-                  currentVertexMethodsChain.continuation(indexValue.getUnderlying(), indexValue.getOccurrences(), context);
+                  currentVertexMethodsChain.continuation(indexValue.getUnderlying(), vertexDistance, context);
                 if (newBestMethodsChain != null) {
                   currentSignatures
                     .add(new OccurrencesAware<>(indexValue.getUnderlying(), vertexDistance));
@@ -128,7 +137,7 @@ public class ChainsSearcher {
         boolean isBreak = false;
         for (OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
           if (!isBreak) {
-            if (indexReader.mayHappen(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.CORRELATION)) {
+            if (indexReader.mayHappen(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;
@@ -171,10 +180,8 @@ public class ChainsSearcher {
 
   private static class ResultHolder {
     private final List<MethodsChain> myResult;
-    private final PsiManager myContext;
 
-    private ResultHolder(PsiManager psiManager) {
-      myContext = psiManager;
+    private ResultHolder() {
       myResult = new ArrayList<>();
     }
 
@@ -214,14 +221,14 @@ public class ChainsSearcher {
     }
 
     public List<MethodsChain> getResult() {
-      return findSimilar(reduceChainsSize(myResult, PsiManager.getInstance(myContext.getProject())), myContext);
+      return findSimilar(reduceChainsSize(myResult));
     }
 
     public int size() {
       return myResult.size();
     }
 
-    private static List<MethodsChain> reduceChainsSize(List<MethodsChain> chains, PsiManager psiManager) {
+    private static List<MethodsChain> reduceChainsSize(List<MethodsChain> chains) {
       return ContainerUtil.map(chains, chain -> {
         Iterator<PsiMethod[]> chainIterator = chain.iterator();
         if (!chainIterator.hasNext()) {
@@ -245,11 +252,11 @@ public class ChainsSearcher {
               PsiMethod[] fSupers = f.findDeepestSuperMethods();
               PsiMethod fSuper = fSupers.length == 0 ? first[0] : fSupers[0];
               for (PsiMethod currentMethod : currentMethods) {
-                if (psiManager.areElementsEquivalent(currentMethod, fSuper)) {
+                if (currentMethod == fSuper) {
                   return createChainFromFirstElement(chain, currentMethod.getContainingClass());
                 }
                 for (PsiMethod method : currentMethod.findDeepestSuperMethods()) {
-                  if (psiManager.areElementsEquivalent(method, fSuper)) {
+                  if (method == fSuper) {
                     return createChainFromFirstElement(chain, method.getContainingClass());
                   }
                 }
@@ -261,8 +268,8 @@ public class ChainsSearcher {
       });
     }
 
-    private static List<MethodsChain> findSimilar(List<MethodsChain> chains, PsiManager psiManager) {
-      ResultHolder resultHolder = new ResultHolder(psiManager);
+    private static List<MethodsChain> findSimilar(List<MethodsChain> chains) {
+      ResultHolder resultHolder = new ResultHolder();
       for (MethodsChain chain : chains) {
         resultHolder.add(chain);
       }

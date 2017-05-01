@@ -28,7 +28,7 @@ public class Lesson implements StudyItem {
   @Expose
   @SerializedName("task_list")
   @AbstractCollection(elementTypes = {
-    Task.class,
+    PyCharmTask.class,
     ChoiceTask.class,
     TheoryTask.class,
     CodeTask.class,
@@ -135,6 +135,10 @@ public class Lesson implements StudyItem {
 
   public void setUpdateDate(Date updateDate) {
     myUpdateDate = updateDate;
+  }
+
+  public void setPublic(boolean isPublic) {
+    this.is_public = isPublic;
   }
 
   public boolean isUpToDate() {

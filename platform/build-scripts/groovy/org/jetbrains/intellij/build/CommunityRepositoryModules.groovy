@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ class CommunityRepositoryModules {
     "xml-analysis-api",
     "xml-openapi",
     "xml-psi-api",
-    "xml-structure-view-api"
+    "xml-structure-view-api",
+    "uast-common",
   ]
 
   static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
@@ -237,18 +238,26 @@ class CommunityRepositoryModules {
   ]
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
-    plugin("android") {
+    plugin("android-plugin") {
+      mainJarName = "android.jar"
+      directoryName = "android"
+      withModule("android", "android.jar")
+      withModule("observable", "android.jar")
+      withModule("wizard", "android.jar")
+      withModule("sdk-updates", "android.jar")
+      withModule("designer", "android.jar")
+      withModule("manifest-merger")
+      withModule("repository")
+      withModule("common", "android-base-common.jar")
       withModule("android-common", "android-common.jar", false)
       withModule("android-rt", "android-rt.jar", false)
       withModule("android-annotations", "androidAnnotations.jar")
-      withModule("common")
       withModule("sdklib", "sdklib.jar")
       withModule("sdk-common", "sdk-common.jar")
       withModule("layoutlib-api", "layoutlib-api.jar")
       withModule("layoutlib", "layoutlib-loader.jar")
-      withModule("manifest-merger")
       withModule("adt-ui", "adt-ui.jar")
-      withModule("repository")
+      withModule("adt-ui-model", "adt-ui.jar")
       withModule("sherpa-ui", "constraint-layout.jar")
       withModule("pixelprobe", "pixalprobe.jar")
       withModule("manifest-merger", "manifest-merger.jar")
@@ -260,7 +269,6 @@ class CommunityRepositoryModules {
       withModule("lint-checks", "sdk-tools.jar")
       withModule("ninepatch", "sdk-tools.jar")
       withModule("perflib", "sdk-tools.jar")
-      withModule("rpclib", "sdk-tools.jar")
       withModule("builder-model", "sdk-tools.jar")
       withModule("builder-test-api", "sdk-tools.jar")
       withModule("instant-run-common", "sdk-tools.jar")
@@ -269,37 +277,37 @@ class CommunityRepositoryModules {
       withModule("android-gradle-jps", "jps/android-gradle-jps.jar", false)
       withModule("android-jps-plugin", "jps/android-jps-plugin.jar", false)
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
-      withProjectLibrary("builder-model") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx-3.4.0.1") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
       withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
-      withResource("device-art-resources", "lib/device-art-resources")
+      withResource("../android/device-art-resources", "lib/device-art-resources")
       withResourceFromModule("layoutlib-resources", ".", "lib/layoutlib")
       withResourceFromModule("sdklib", "../templates", "lib/templates")
-      withResourceArchive("annotations", "lib/androidAnnotations.jar")
-      withResource("lib/antlr4-runtime-4.5.3.jar", "lib")
-      withResource("lib/asm-5.0.3.jar", "lib")
-      withResource("lib/asm-analysis-5.0.3.jar", "lib")
-      withResource("lib/asm-tree-5.0.3.jar", "lib")
-      withResource("lib/commons-io-2.4.jar", "lib")
-      withResource("lib/commons-compress-1.8.1.jar", "lib")
-      withResource("lib/javawriter-2.2.1.jar", "lib")
-      withResource("lib/juniversalchardet-1.0.3.jar", "lib")
-      withResource("lib/layoutlib.jar", "lib")
-      withResource("lib/gluegen-rt.jar", "lib")
-      withResource("lib/gluegen-rt-natives-linux-amd64.jar", "lib")
-      withResource("lib/gluegen-rt-natives-linux-i586.jar", "lib")
-      withResource("lib/gluegen-rt-natives-macosx-universal.jar", "lib")
-      withResource("lib/gluegen-rt-natives-windows-amd64.jar", "lib")
-      withResource("lib/gluegen-rt-natives-windows-i586.jar", "lib")
+      withResourceArchive("../android/annotations", "lib/androidAnnotations.jar")
+      withResource("../android/lib/antlr4-runtime-4.5.3.jar", "lib")
+      withResource("../android/lib/asm-5.0.3.jar", "lib")
+      withResource("../android/lib/asm-analysis-5.0.3.jar", "lib")
+      withResource("../android/lib/asm-tree-5.0.3.jar", "lib")
+      withResource("../android/lib/commons-io-2.4.jar", "lib")
+      withResource("../android/lib/commons-compress-1.8.1.jar", "lib")
+      withResource("../android/lib/javawriter-2.2.1.jar", "lib")
+      withResource("../android/lib/juniversalchardet-1.0.3.jar", "lib")
+      withResource("../android/lib/layoutlib.jar", "lib")
+      withResource("../android/lib/google-analytics-library.jar", "lib")
+      withResource("../android/lib/gluegen-rt.jar", "lib")
+      withResource("../android/lib/gluegen-rt-natives-linux-amd64.jar", "lib")
+      withResource("../android/lib/gluegen-rt-natives-linux-i586.jar", "lib")
+      withResource("../android/lib/gluegen-rt-natives-macosx-universal.jar", "lib")
+      withResource("../android/lib/gluegen-rt-natives-windows-amd64.jar", "lib")
+      withResource("../android/lib/gluegen-rt-natives-windows-i586.jar", "lib")
       withProjectLibrary("jogl-all") //todo[nik] move to module libraries
-      withResource("lib/jogl-all-natives-linux-amd64.jar", "lib")
-      withResource("lib/jogl-all-natives-linux-i586.jar", "lib")
-      withResource("lib/jogl-all-natives-macosx-universal.jar", "lib")
-      withResource("lib/jogl-all-natives-windows-amd64.jar", "lib")
-      withResource("lib/jogl-all-natives-windows-i586.jar", "lib")
-      withResource("lib/androidWidgets", "lib/androidWidgets")
+      withResource("../android/lib/jogl-all-natives-linux-amd64.jar", "lib")
+      withResource("../android/lib/jogl-all-natives-linux-i586.jar", "lib")
+      withResource("../android/lib/jogl-all-natives-macosx-universal.jar", "lib")
+      withResource("../android/lib/jogl-all-natives-windows-amd64.jar", "lib")
+      withResource("../android/lib/jogl-all-natives-windows-i586.jar", "lib")
+      withResource("../android/lib/androidWidgets", "lib/androidWidgets")
       additionalModulesToJars.entrySet().each {
         withModule(it.key, it.value)
       }

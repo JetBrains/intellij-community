@@ -47,7 +47,7 @@ public class CloudGitChooseAccountStepBase extends ModuleWizardStep {
     myContext = context;
     ServerType cloudType = deploymentDetector.getCloudType();
     myTitleLabel.setText(CloudBundle.getText("choose.account.title", cloudType.getPresentableName()));
-    myEditor = new CloudAccountSelectionEditor(Collections.<ServerType<?>>singletonList(cloudType));
+    myEditor = new CloudAccountSelectionEditor(Collections.singletonList(cloudType));
     myAccountSelectionPanelPlaceHolder.add(myEditor.getMainPanel());
   }
 

@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.quickFix
 
 import com.intellij.JavaTestUtil.getRelativeJavaTestDataPath
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 
@@ -30,6 +29,7 @@ class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase
 
   fun testExports1() = doTest("exports", "my.api")
   fun testExports2() = doTest("exports", "my.api")
+  fun testExports3() = doTest("exports", "my.api")
 
   fun testProvides1() = doTest("provides", "my.api.MyService")
   fun testProvides2() = doTest("provides", "my.api.MyService")
@@ -37,6 +37,7 @@ class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase
 
   fun testOpens1() = doTest("opens", "my.api")
   fun testOpens2() = doTest("opens", "my.api")
+  fun testOpens3() = doTest("opens", "my.api")
 
 
   override fun setUp() {
@@ -51,22 +52,23 @@ class MergeModuleStatementsFixTest : LightJava9ModulesCodeInsightFixtureTestCase
     addFile("my/impl/MyServiceImpl2.java", "package my.impl; public class MyServiceImpl2 extends my.api.MyService {}")
   }
 
-  private fun doTest(type: String, name: String) {
+  private fun doTest(type: String, name: String, expected: Boolean = true) {
     val testName = getTestName(false)
     val virtualFile = myFixture.copyFileToProject("${testName}.java", "module-info.java")
     myFixture.configureFromExistingVirtualFile(virtualFile)
 
-    val action = findActionWithText(QuickFixBundle.message("java.9.merge.module.statements.fix.name", type, name))
+    myFixture.doHighlighting()
+    val actions = LightQuickFixTestCase.getAvailableActions(editor, file)
+    val actionText = QuickFixBundle.message("java.9.merge.module.statements.fix.name", type, name)
+    val action = LightQuickFixTestCase.findActionWithText(actions, actionText)
+
+    if (!expected) {
+      assertNull("Action \"$actionText\" is not expected", action)
+      return
+    }
+
+    assertNotNull("No action \"$actionText\" in ${actions.map { it.text }}", action)
     myFixture.launchAction(action)
     myFixture.checkResultByFile("${testName}_after.java")
-  }
-
-  private fun findActionWithText(actionText: String): IntentionAction {
-    myFixture.doHighlighting()
-
-    val actions = LightQuickFixTestCase.getAvailableActions(editor, file)
-    val action = LightQuickFixTestCase.findActionWithText(actions, actionText)
-    assertNotNull("No action [$actionText] in ${actions.map { it.text }}", action)
-    return action
   }
 }

@@ -3,13 +3,9 @@ package com.jetbrains.edu.learning.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.jetbrains.edu.learning.StudyState;
 import com.jetbrains.edu.learning.StudySubtaskUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
@@ -17,8 +13,8 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,24 +37,12 @@ public class StudyRefreshAnswerPlaceholder extends DumbAwareAction {
       return;
     }
     StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
-    final StudyState studyState = new StudyState(studyEditor);
-    if (answerPlaceholder.getTaskFile().getTask() instanceof TaskWithSubtasks) {
-      StudySubtaskUtils.refreshPlaceholder(studyState.getEditor(), answerPlaceholder);
-      return;
+    if (studyEditor != null) {
+      StudySubtaskUtils.refreshPlaceholder(studyEditor.getEditor(), answerPlaceholder);
+      final StudyTaskManager taskManager = StudyTaskManager.getInstance(project);
+      answerPlaceholder.reset();
+      taskManager.setStatus(answerPlaceholder, StudyStatus.Unchecked);
     }
-    Document patternDocument = StudyUtils.getPatternDocument(answerPlaceholder.getTaskFile(), studyState.getVirtualFile().getName());
-    if (patternDocument == null) {
-      return;
-    }
-    AnswerPlaceholder.MyInitialState initialState = answerPlaceholder.getInitialState();
-    int startOffset = initialState.getOffset();
-    final String text = patternDocument.getText(new TextRange(startOffset, startOffset + initialState.getLength()));
-    CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> {
-      Document document = studyState.getEditor().getDocument();
-      int offset = answerPlaceholder.getOffset();
-      document.deleteString(offset, offset + answerPlaceholder.getRealLength());
-      document.insertString(offset, text);
-    }), NAME, null);
   }
 
   @Override

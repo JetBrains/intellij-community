@@ -2,28 +2,25 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudyUtils;
-import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
-import org.apache.commons.codec.binary.Base64;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -72,38 +69,13 @@ public class StepicWrappers {
         ApplicationManager.getApplication().runWriteAction(() -> {
           final VirtualFile taskDir = task.getTaskDir(project);
           assert taskDir != null;
-          VirtualFile ideaDir = project.getBaseDir().findChild(Project.DIRECTORY_STORE_FOLDER);
-          assert ideaDir != null;
-          String stepic = "stepic";
-          VirtualFile stepicDir = ideaDir.findChild(stepic);
-          if (stepicDir == null) {
-            try {
-              stepicDir = ideaDir.createChildDirectory(StepicWrappers.class, stepic);
-            }
-            catch (IOException e) {
-              LOG.info("Failed to create idea/stepic directory", e);
-            }
-          }
-          if (stepicDir == null) {
-            return;
-          }
           String name = entry.getKey();
           VirtualFile answerFile = taskDir.findFileByRelativePath(name);
-          Pair<VirtualFile, TaskFile> pair = EduUtils.createStudentFile(StepicWrappers.class, project, answerFile, stepicDir, null, 0);
-          if (pair == null) {
+          TaskFile studentTaskFile = EduUtils.createStudentFile(project, answerFile, null, 0);
+          if (studentTaskFile == null) {
             return;
           }
-          VirtualFile virtualFile = pair.getFirst();
-          TaskFile taskFile = pair.getSecond();
-          try {
-            InputStream stream = virtualFile.getInputStream();
-            taskFile.text =
-              EduUtils.isImage(name) ? Base64.encodeBase64URLSafeString(FileUtil.loadBytes(stream)) : FileUtil.loadTextAndClose(stream);
-          }
-          catch (IOException e) {
-            LOG.error("Can't find file " + virtualFile.getPath());
-          }
-          source.files.add(taskFile);
+          source.files.add(studentTaskFile);
         });
       }
       return source;
@@ -150,13 +122,16 @@ public class StepicWrappers {
   }
 
   private static List<VirtualFile> getTestFiles(@NotNull Task task, @NotNull Project project) {
+    final Course course = task.getLesson().getCourse();
+    final Language language = course.getLanguageById();
+    final EduPluginConfigurator configurator = EduPluginConfigurator.INSTANCE.forLanguage(language);
     List<VirtualFile> testFiles = new ArrayList<>();
     VirtualFile taskDir = task.getTaskDir(project);
     if (taskDir == null) {
       return testFiles;
     }
     if (!(task instanceof TaskWithSubtasks)) {
-      VirtualFile testFile = taskDir.findChild(EduNames.TESTS_FILE);
+      VirtualFile testFile = taskDir.findChild(configurator.getTestFileName());
       testFiles.add(testFile);
       return testFiles;
     }
@@ -185,7 +160,7 @@ public class StepicWrappers {
   }
 
   public static class CoursesContainer {
-    public List<CourseInfo> courses;
+    public List<RemoteCourse> courses;
     public Map meta;
   }
 
@@ -199,11 +174,12 @@ public class StepicWrappers {
   }
 
   public static class CourseWrapper {
-    CourseInfo course;
+    RemoteCourse course;
 
     public CourseWrapper(Course course) {
-      this.course = new CourseInfo();
+      this.course = new RemoteCourse();
       this.course.setName(course.getName());
+      this.course.setLanguage(course.getLanguageID());
       this.course.setDescription(course.getDescription());
       this.course.setAuthors(course.getAuthors());
     }
@@ -217,6 +193,7 @@ public class StepicWrappers {
       this.lesson.setName(lesson.getName());
       this.lesson.setId(lesson.getId());
       this.lesson.steps = new ArrayList<>();
+      this.lesson.setPublic(true);
     }
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,13 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.evaluation.UEvaluationContextKt;
+import org.jetbrains.uast.values.UConstant;
+import org.jetbrains.uast.values.UValue;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -55,53 +60,54 @@ public class JavaColorProvider implements ElementColorProvider {
 
   @Nullable
   public static Color getJavaColorFromExpression(@Nullable PsiElement element) {
-    if (element instanceof PsiNewExpression) {
-      final PsiNewExpression expr = (PsiNewExpression)element;
-      if (isColorType(expr.getType())) {
-        return getColor(expr.getArgumentList());
-      }
+    UCallExpression newExpression = UastContextKt.toUElement(element, UCallExpression.class);
+    if (newExpression != null && newExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL &&
+        isColorType(newExpression.getReturnType())) {
+      return getColor(newExpression.getValueArguments());
     } else if (isIntLiteralInsideNewJBColorExpression(element)) {
       final String text = element.getText();
       boolean hasAlpha = text != null && StringUtil.startsWithIgnoreCase(text, "0x") && text.length() > 8;
-      return new Color(getInt((PsiExpression)element), hasAlpha);
+      return new Color(getInt(UastContextKt.toUElement(element, ULiteralExpression.class)), hasAlpha);
     }
     return null;
   }
 
   private static boolean isIntLiteralInsideNewJBColorExpression(PsiElement element) {
-    if (element instanceof PsiLiteralExpression && PsiType.INT.equals(((PsiLiteralExpression)element).getType())) {
-      PsiElement parent = element.getParent();
+    ULiteralExpression literalExpression = UastContextKt.toUElement(element, ULiteralExpression.class);
+    if (literalExpression != null && PsiType.INT.equals(literalExpression.getExpressionType())) {
+      UElement parent = literalExpression.getUastParent();
       if (parent != null) {
-        return isNewJBColorExpression(parent.getParent());
+        return isNewJBColorExpression(parent);
       }
     }
     return false;
   }
 
-  private static boolean isNewJBColorExpression(PsiElement element) {
-    if (element instanceof PsiNewExpression) {
-      final PsiClass psiClass = PsiTypesUtil.getPsiClass(((PsiNewExpression)element).getType());
-      if (psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName())) {
-        return true;
+  private static boolean isNewJBColorExpression(UElement element) {
+    if (element instanceof UCallExpression) {
+      UCallExpression callExpression = (UCallExpression)element;
+      if (callExpression.getKind() == UastCallKind.CONSTRUCTOR_CALL) {
+        final PsiClass psiClass = PsiTypesUtil.getPsiClass(callExpression.getReturnType());
+        if (psiClass != null && JBColor.class.getName().equals(psiClass.getQualifiedName())) {
+          return true;
+        }
       }
     }
     return false;
   }
 
   @Nullable
-  private static Color getColor(PsiExpressionList list) {
+  private static Color getColor(List<UExpression> args) {
     try {
-      final PsiExpression[] args = list.getExpressions();
-      final PsiType[] types = list.getExpressionTypes();
-      ColorConstructors type = getConstructorType(types);
+      ColorConstructors type = args.isEmpty() ? null : getConstructorType(args.size(), args.get(0).getExpressionType());
       if (type != null) {
         switch (type) {
-          case INT:      return new Color(  getInt(args[0]));
-          case INT_BOOL: return new Color(  getInt(args[0]), getBoolean(args[1]));
-          case INT_x3:   return new Color(  getInt(args[0]),     getInt(args[1]),   getInt(args[2]));
-          case INT_x4:   return new Color(  getInt(args[0]),     getInt(args[1]),   getInt(args[2]),   getInt(args[3]));
-          case FLOAT_x3: return new Color(getFloat(args[0]),   getFloat(args[1]), getFloat(args[2]));
-          case FLOAT_x4: return new Color(getFloat(args[0]),   getFloat(args[1]), getFloat(args[2]), getFloat(args[3]));
+          case INT:      return new Color(  getInt(args.get(0)));
+          case INT_BOOL: return new Color(  getInt(args.get(0)),   getBoolean(args.get(1)));
+          case INT_x3:   return new Color(  getInt(args.get(0)),   getInt(args.get(1)),   getInt(args.get(2)));
+          case INT_x4:   return new Color(  getInt(args.get(0)),   getInt(args.get(1)),   getInt(args.get(2)), getInt(args.get(3)));
+          case FLOAT_x3: return new Color(getFloat(args.get(0)), getFloat(args.get(1)), getFloat(args.get(2)));
+          case FLOAT_x4: return new Color(getFloat(args.get(0)), getFloat(args.get(1)), getFloat(args.get(2)), getFloat(args.get(3)));
         }
       }
     }
@@ -111,18 +117,23 @@ public class JavaColorProvider implements ElementColorProvider {
   }
 
   @Nullable
-  private static ColorConstructors getConstructorType(PsiType[] types) {
-    int len = types.length;
-    if (len == 0) return null;
-
-    switch (len) {
+  private static ColorConstructors getConstructorType(int paramCount, PsiType paramType) {
+    switch (paramCount) {
       case 1: return ColorConstructors.INT;
       case 2: return ColorConstructors.INT_BOOL;
-      case 3: return PsiType.INT.equals(types[0]) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
-      case 4: return PsiType.INT.equals(types[0]) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
+      case 3: return PsiType.INT.equals(paramType) ? ColorConstructors.INT_x3 : ColorConstructors.FLOAT_x3;
+      case 4: return PsiType.INT.equals(paramType) ? ColorConstructors.INT_x4 : ColorConstructors.FLOAT_x4;
     }
 
     return null;
+  }
+
+  public static int getInt(UExpression expr) {
+    return ((Integer)getObject(expr)).intValue();
+  }
+
+  public static float getFloat(UExpression expr) {
+    return ((Float)getObject(expr)).floatValue();
   }
 
   public static int getInt(PsiExpression expr) {
@@ -133,12 +144,24 @@ public class JavaColorProvider implements ElementColorProvider {
     return ((Float)getObject(expr)).floatValue();
   }
 
-  public static boolean getBoolean(PsiExpression expr) {
+  public static boolean getBoolean(UExpression expr) {
     return ((Boolean)getObject(expr)).booleanValue();
   }
 
   private static Object getObject(PsiExpression expr) {
     return JavaConstantExpressionEvaluator.computeConstantExpression(expr, true);
+  }
+
+  private static Object getObject(UExpression expr) {
+    UValue value = UEvaluationContextKt.uValueOf(expr);
+    if (value == null) {
+      return null;
+    }
+    UConstant constant = value.toConstant();
+    if (constant == null) {
+      return null;
+    }
+    return constant.getValue();
   }
 
   @Override
@@ -153,7 +176,8 @@ public class JavaColorProvider implements ElementColorProvider {
       assert argumentList != null;
 
       PsiExpression[] expr = argumentList.getExpressions();
-      ColorConstructors type = getConstructorType(argumentList.getExpressionTypes());
+      PsiType[] expressionTypes = argumentList.getExpressionTypes();
+      ColorConstructors type = expressionTypes.length == 0 ? null : getConstructorType(expressionTypes.length, expressionTypes[0]);
 
       assert type != null;
       command = () -> {
@@ -226,7 +250,7 @@ public class JavaColorProvider implements ElementColorProvider {
       expr.replace(factory.createExpressionFromText(String.valueOf(newValue) + "f", null));
     }
   }
-  
+
   private enum ColorConstructors {
     INT, INT_BOOL, INT_x3, INT_x4, FLOAT_x3, FLOAT_x4
   }

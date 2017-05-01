@@ -44,7 +44,7 @@ import java.io.StringWriter;
 public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
 
-  private static final Logger LOG = Logger.getInstance("#" + ByteCodeViewerManager.class.getName());
+  private static final Logger LOG = Logger.getInstance(ByteCodeViewerManager.class);
 
   private static final String TOOLWINDOW_ID = "Byte Code Viewer";
   private static final String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";

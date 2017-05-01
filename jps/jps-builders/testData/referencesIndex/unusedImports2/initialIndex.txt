@@ -37,3 +37,5 @@ com.ru.Some2 in Some2
 com.ru.Some2$I1 in Some2
 com.ru.Some2$I1$I2 in Some2
 com.ru.Some3 in Some3
+
+Members Signatures:

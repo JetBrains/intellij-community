@@ -75,6 +75,6 @@ public class Utils {
   @NotNull
   public static List<Shortcut> shortcutsOf(@NotNull String actionId) {
     AnAction action = ActionManager.getInstance().getAction(actionId);
-    return action == null ? ContainerUtil.<Shortcut>emptyList() : ContainerUtil.immutableList(action.getShortcutSet().getShortcuts());
+    return action == null ? ContainerUtil.emptyList() : ContainerUtil.immutableList(action.getShortcutSet().getShortcuts());
   }
 }

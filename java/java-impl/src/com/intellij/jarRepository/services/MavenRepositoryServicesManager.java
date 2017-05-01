@@ -24,6 +24,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,15 +48,21 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   private static final Logger LOG = Logger.getInstance("#com.intellij.repository.services.MavenRepositoryServicesManager");
   private final List<String> myUrls = new ArrayList<>();
 
+  public static final List<String> DEFAULT_SERVICES = Collections.unmodifiableList(Arrays.asList(
+    "https://oss.sonatype.org/service/local/",
+    "http://repo.jfrog.org/artifactory/api/",
+    "https://repository.jboss.org/nexus/service/local/"
+  ));
+
   public MavenRepositoryServicesManager() {
-    myUrls.add("https://oss.sonatype.org/service/local/");
-    myUrls.add("http://repo.jfrog.org/artifactory/api/");
-    myUrls.add("https://repository.jboss.org/nexus/service/local/");
+    for (String s : DEFAULT_SERVICES) {
+      myUrls.add(s);
+    }
   }
 
   @NotNull
-  public static MavenRepositoryServicesManager getInstance() {
-    return ServiceManager.getService(MavenRepositoryServicesManager.class);
+  public static MavenRepositoryServicesManager getInstance(Project project) {
+    return ServiceManager.getService(project, MavenRepositoryServicesManager.class);
   }
 
   @NotNull
@@ -61,8 +70,8 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
     return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService()};
   }
 
-  public static String[] getServiceUrls() {
-    return ArrayUtil.toStringArray(getInstance().getUrls());
+  public static String[] getServiceUrls(final Project project) {
+    return ArrayUtil.toStringArray(getInstance(project).getUrls());
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,5 +254,11 @@ public class DfaUtil {
     catch (IncorrectOperationException e) {
       return concatenation.getHead();
     }
+  }
+
+  public static boolean isNaN(Object value) {
+    if (value instanceof Double && ((Double)value).isNaN()) return true;
+    if (value instanceof Float && ((Float)value).isNaN()) return true;
+    return false;
   }
 }

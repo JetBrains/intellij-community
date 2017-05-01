@@ -2,19 +2,20 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.core.EduNames;
-import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.CourseInfo;
-import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.*;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.apache.http.HttpEntity;
@@ -35,14 +36,15 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.PYCHARM_PREFIX;
+
 public class EduStepicConnector {
   private static final Logger LOG = Logger.getInstance(EduStepicConnector.class.getName());
 
   public static final int CURRENT_VERSION = 2;
   //this prefix indicates that course can be opened by educational plugin
-  public static final String PYCHARM_PREFIX = "pycharm";
   private static final String ADAPTIVE_NOTE =
-    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it become!";
+    "\n\nInitially, the adaptive system may behave somewhat randomly, but the more problems you solve, the smarter it becomes!";
 
   private EduStepicConnector() {
   }
@@ -65,9 +67,9 @@ public class EduStepicConnector {
   }
 
   @NotNull
-  public static List<CourseInfo> getCourses(@Nullable StepicUser user) {
+  public static List<Course> getCourses(@Nullable StepicUser user) {
     try {
-      List<CourseInfo> result = new ArrayList<>();
+      List<Course> result = new ArrayList<>();
       int pageNumber = 1;
       while (addCoursesFromStepic(user, result, pageNumber)) {
         pageNumber += 1;
@@ -77,13 +79,13 @@ public class EduStepicConnector {
     catch (IOException e) {
       LOG.warn("Cannot load course list " + e.getMessage());
     }
-    return Collections.singletonList(CourseInfo.INVALID_COURSE);
+    return Collections.emptyList();
   }
 
   public static Date getCourseUpdateDate(final int courseId) {
     final String url = EduStepicNames.COURSES + "/" + courseId;
     try {
-      final List<CourseInfo> courses = EduStepicClient.getFromStepic(url, StepicWrappers.CoursesContainer.class).courses;
+      final List<RemoteCourse> courses = EduStepicClient.getFromStepic(url, StepicWrappers.CoursesContainer.class).courses;
       if (!courses.isEmpty()) {
         return courses.get(0).getUpdateDate();
       }
@@ -125,7 +127,18 @@ public class EduStepicConnector {
     return null;
   }
 
-  private static boolean addCoursesFromStepic(@Nullable StepicUser user, List<CourseInfo> result, int pageNumber) throws IOException {
+  private static StepicWrappers.CoursesContainer getCoursesFromStepik(@Nullable StepicUser user, URI url) throws IOException {
+    final StepicWrappers.CoursesContainer coursesContainer;
+    if (user != null) {
+      coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
+    }
+    else {
+      coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
+    }
+    return coursesContainer;
+  }
+
+  private static boolean addCoursesFromStepic(@Nullable StepicUser user, List<Course> result, int pageNumber) throws IOException {
     final URI url;
     try {
       url = new URIBuilder(EduStepicNames.COURSES).addParameter("is_idea_compatible", "true").
@@ -135,44 +148,82 @@ public class EduStepicConnector {
       LOG.error(e.getMessage());
       return false;
     }
-    final StepicWrappers.CoursesContainer coursesContainer;
-    if (user != null) {
-      coursesContainer = EduStepicAuthorizedClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class, user);
-    }
-    else {
-      coursesContainer = EduStepicClient.getFromStepic(url.toString(), StepicWrappers.CoursesContainer.class);
-    }
+    final StepicWrappers.CoursesContainer coursesContainer = getCoursesFromStepik(user, url);
     addAvailableCourses(result, coursesContainer);
     return coursesContainer.meta.containsKey("has_next") && coursesContainer.meta.get("has_next") == Boolean.TRUE;
   }
 
-  static void addAvailableCourses(List<CourseInfo> result, StepicWrappers.CoursesContainer coursesContainer) throws IOException {
-    final List<CourseInfo> courseInfos = coursesContainer.courses;
-    for (CourseInfo info : courseInfos) {
+  @Nullable
+  public static Course getCourseFromStepik(@Nullable StepicUser user, int courseId) throws IOException {
+    final URI url;
+    try {
+      url = new URIBuilder(EduStepicNames.COURSES + "/" + courseId).addParameter("is_idea_compatible", "true")
+        .build();
+    }
+    catch (URISyntaxException e) {
+      LOG.error(e.getMessage());
+      return null;
+    }
+    final StepicWrappers.CoursesContainer coursesContainer = getCoursesFromStepik(user, url);
+
+    if (coursesContainer != null && !coursesContainer.courses.isEmpty()) {
+      return coursesContainer.courses.get(0);
+    } else {
+      return null;
+    }
+  }
+
+  static void addAvailableCourses(List<Course> result, StepicWrappers.CoursesContainer coursesContainer) throws IOException {
+    final List<RemoteCourse> courses = coursesContainer.courses;
+    for (RemoteCourse info : courses) {
       if (!info.isAdaptive() && StringUtil.isEmptyOrSpaces(info.getType())) continue;
+      setCourseLanguage(info);
+
       if (canBeOpened(info)) {
+        final ArrayList<StepicUser> authors = new ArrayList<>();
         for (Integer instructor : info.getInstructors()) {
-          final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor), 
+          final StepicUser author = EduStepicClient.getFromStepic(EduStepicNames.USERS + String.valueOf(instructor),
                                                                   StepicWrappers.AuthorWrapper.class).users.get(0);
-          info.addAuthor(author);
+          authors.add(author);
         }
+        info.setAuthors(authors);
 
         if (info.isAdaptive()) {
           info.setDescription("This is a Stepik Adaptive course.\n\n" + info.getDescription() + ADAPTIVE_NOTE);
         }
-
         result.add(info);
       }
     }
   }
 
-  static boolean canBeOpened(CourseInfo courseInfo) {
-    if (courseInfo.isAdaptive()) {
-      return true;
+  private static void setCourseLanguage(RemoteCourse info) {
+    if (info.isAdaptive()) {
+      info.setLanguage("Python"); // adaptive courses available only in PyCharm now
+      return;
     }
+    String courseType = info.getType();
+    final int separator = courseType.indexOf(" ");
+    assert separator != -1;
+    final String language = courseType.substring(separator + 1);
+    info.setLanguage(language);
+  }
+
+  static boolean canBeOpened(RemoteCourse courseInfo) {
+    final ArrayList<String> supportedLanguages = new ArrayList<>();
+    final LanguageExtensionPoint[] extensions = Extensions.getExtensions(EduPluginConfigurator.EP_NAME, null);
+    for (LanguageExtensionPoint extension : extensions) {
+      String languageId = extension.getKey();
+      supportedLanguages.add(languageId);
+    }
+
+    if (courseInfo.isAdaptive()) {
+      return supportedLanguages.contains(courseInfo.getLanguageID());
+    }
+
     String courseType = courseInfo.getType();
     final List<String> typeLanguage = StringUtil.split(courseType, " ");
     String prefix = typeLanguage.get(0);
+    if (!supportedLanguages.contains(courseInfo.getLanguageID())) return false;
     if (typeLanguage.size() < 2 || !prefix.startsWith(PYCHARM_PREFIX)) {
       return false;
     }
@@ -190,26 +241,15 @@ public class EduStepicConnector {
     }
   }
 
-  public static Course getCourse(@NotNull final Project project, @NotNull final CourseInfo info) {
-    final Course course = new Course();
-    course.setAuthors(info.getAuthors());
-    course.setDescription(info.getDescription());
-    course.setAdaptive(info.isAdaptive());
-    course.setId(info.getId());
-    course.setUpdateDate(getCourseUpdateDate(info.getId()));
-
-    if (!course.isAdaptive()) {
-      String courseType = info.getType();
-      course.setName(info.getName());
-      final int separator = courseType.indexOf(" ");
-      assert separator != -1;
-      final String language = courseType.substring(separator + 1);
-      course.setLanguage(language);
+  public static RemoteCourse getCourse(@NotNull final Project project, @NotNull final RemoteCourse remoteCourse) {
+    final List<Lesson> lessons = remoteCourse.getLessons(true);
+    if (!lessons.isEmpty()) return remoteCourse;
+    if (!remoteCourse.isAdaptive()) {
       try {
-        for (Integer section : info.getSections()) {
-          course.addLessons(getLessons(section));
+        for (Integer section : remoteCourse.getSections()) {
+          remoteCourse.addLessons(getLessons(section));
         }
-        return course;
+        return remoteCourse;
       }
       catch (IOException e) {
         LOG.error("IOException " + e.getMessage());
@@ -218,31 +258,30 @@ public class EduStepicConnector {
     else {
       final Lesson lesson = new Lesson();
       lesson.setName("Adaptive");
-      course.addLesson(lesson);
-      course.setName(info.getName());
+      remoteCourse.addLesson(lesson);
       //TODO: more specific name?
-      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, course);
+      final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, remoteCourse);
       if (recommendation != null) {
         lesson.addTask(recommendation);
       }
-      return course;
+      return remoteCourse;
     }
     return null;
   }
 
   public static List<Lesson> getLessons(int sectionId) throws IOException {
     final StepicWrappers.SectionContainer
-      sectionContainer = getFromStepic(EduStepicNames.SECTIONS + String.valueOf(sectionId),
-                                                       StepicWrappers.SectionContainer.class);
+      sectionContainer = getFromStepik(EduStepicNames.SECTIONS + String.valueOf(sectionId),
+                                       StepicWrappers.SectionContainer.class);
     List<Integer> unitIds = sectionContainer.sections.get(0).units;
     final List<Lesson> lessons = new ArrayList<>();
     for (Integer unitId : unitIds) {
       StepicWrappers.UnitContainer
-        unit = getFromStepic(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
+        unit = getFromStepik(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class);
       int lessonID = unit.units.get(0).lesson;
       StepicWrappers.LessonContainer
-        lessonContainer = getFromStepic(EduStepicNames.LESSONS + String.valueOf(lessonID),
-                                                        StepicWrappers.LessonContainer.class);
+        lessonContainer = getFromStepik(EduStepicNames.LESSONS + String.valueOf(lessonID),
+                                        StepicWrappers.LessonContainer.class);
       Lesson lesson = lessonContainer.lessons.get(0);
       lesson.taskList = new ArrayList<>();
       for (int stepId : lesson.steps) {
@@ -259,7 +298,7 @@ public class EduStepicConnector {
     return lessons;
   }
 
-  private static <T> T getFromStepic(String link, final Class<T> container) throws IOException{
+  private static <T> T getFromStepik(String link, final Class<T> container) throws IOException {
     final StepicUser user = StudySettings.getInstance().getUser();
     final boolean isAuthorized = user != null;
     if (isAuthorized) {
@@ -277,7 +316,7 @@ public class EduStepicConnector {
       return null;
     }
     final int lastSubtaskIndex = block.options.lastSubtaskIndex;
-    Task task = new Task();
+    Task task = new PyCharmTask();
     if (lastSubtaskIndex != 0) {
       task = createTaskWithSubtasks(lastSubtaskIndex);
     }
@@ -299,10 +338,27 @@ public class EduStepicConnector {
     task.taskFiles = new HashMap<>();      // TODO: it looks like we don't need taskFiles as map anymore
     if (block.options.files != null) {
       for (TaskFile taskFile : block.options.files) {
+        addPlaceholdersTexts(taskFile);
         task.taskFiles.put(taskFile.name, taskFile);
       }
     }
     return task;
+  }
+
+  private static void addPlaceholdersTexts(TaskFile file) {
+    final String fileText = file.text;
+    final List<AnswerPlaceholder> placeholders = file.getAnswerPlaceholders();
+    for (AnswerPlaceholder placeholder : placeholders) {
+      final AnswerPlaceholderSubtaskInfo info = placeholder.getActiveSubtaskInfo();
+      if (info == null) {
+        continue;
+      }
+      final int offset = placeholder.getOffset();
+      final int length = placeholder.getLength();
+      if (fileText.length() > offset + length) {
+        info.setPlaceholderText(fileText.substring(offset, offset + length));
+      }
+    }
   }
 
   @NotNull
@@ -313,15 +369,15 @@ public class EduStepicConnector {
   }
 
   public static StepicWrappers.StepSource getStep(int step) throws IOException {
-    return getFromStepic(EduStepicNames.STEPS + String.valueOf(step),
-                                                     StepicWrappers.StepContainer.class).steps.get(0);
+    return getFromStepik(EduStepicNames.STEPS + String.valueOf(step),
+                         StepicWrappers.StepContainer.class).steps.get(0);
   }
 
   public static void postSolution(@NotNull final Task task, boolean passed, @NotNull final Project project) {
     if (task.getStepId() <= 0) {
       return;
     }
-    
+
     try {
       final String response = postAttempt(task.getStepId());
       if (response.isEmpty()) return;
@@ -346,7 +402,7 @@ public class EduStepicConnector {
           });
         }
       }
-      
+
       postSubmission(passed, attempt, files);
     }
     catch (IOException e) {

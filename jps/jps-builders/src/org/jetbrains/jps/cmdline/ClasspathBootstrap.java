@@ -80,13 +80,15 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(ArtifactRepositoryManager.class));  // aether-dependency-resolver
     final String aetherPath = getResourcePath(Artifact.class); // aether-1.1.0-all.jar
     cp.add(aetherPath);
-    cp.add(FileUtil.toSystemIndependentName(new File(new File(aetherPath).getParentFile(), "maven-aether-provider-3.3.9-all.jar").getAbsolutePath()));  // aether-1.1.0-all.jar
+    cp.add(FileUtil.toSystemIndependentName(new File(new File(aetherPath).getParentFile(), "maven-aether-provider-3.3.9-all.jar").getAbsolutePath())); 
     cp.add(getResourcePath(HttpClient.class));  // httpclient
     cp.add(getResourcePath(HttpConnection.class));  // httpcore
     //noinspection UnnecessaryFullyQualifiedName
     cp.add(getResourcePath(org.apache.commons.codec.binary.Base64.class));  // commons-codec
     //noinspection UnnecessaryFullyQualifiedName
     cp.add(getResourcePath(org.apache.commons.logging.LogFactory.class));  // commons-logging
+    //noinspection UnnecessaryFullyQualifiedName
+    cp.add(getResourcePath(org.slf4j.Marker.class));  // slf4j
 
     cp.addAll(getJavac8RefScannerClasspath());
     //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly

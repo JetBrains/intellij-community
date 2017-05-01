@@ -47,6 +47,7 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
     return findJdk(name);
   }
 
+  @NotNull
   @Override
   public Sdk[] getAllJdks() {
     synchronized (mySdks) {
@@ -54,8 +55,9 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
     }
   }
 
+  @NotNull
   @Override
-  public List<Sdk> getSdksOfType(SdkTypeId type) {
+  public List<Sdk> getSdksOfType(@NotNull SdkTypeId type) {
     List<Sdk> result = new ArrayList<>();
     synchronized (mySdks) {
       for (Sdk sdk : mySdks) {
@@ -68,44 +70,47 @@ public class CoreProjectJdkTable extends ProjectJdkTable {
   }
 
   @Override
-  public void addJdk(Sdk jdk) {
+  public void addJdk(@NotNull Sdk jdk) {
     synchronized (mySdks) {
       mySdks.add(jdk);
     }
   }
 
   @Override
-  public void removeJdk(Sdk jdk) {
+  public void removeJdk(@NotNull Sdk jdk) {
     synchronized (mySdks) {
       mySdks.remove(jdk);
     }
   }
 
   @Override
-  public void updateJdk(Sdk originalJdk, Sdk modifiedJdk) {
+  public void updateJdk(@NotNull Sdk originalJdk, @NotNull Sdk modifiedJdk) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void addListener(Listener listener) {
+  public void addListener(@NotNull Listener listener) {
   }
 
   @Override
-  public void removeListener(Listener listener) {
+  public void removeListener(@NotNull Listener listener) {
   }
 
   @Override
+  @NotNull
   public SdkTypeId getDefaultSdkType() {
     return CoreSdkType.INSTANCE;
   }
 
   @Override
+  @NotNull
   public SdkTypeId getSdkTypeByName(@NotNull String name) {
     return CoreSdkType.INSTANCE;
   }
 
+  @NotNull
   @Override
-  public Sdk createSdk(String name, SdkTypeId sdkType) {
+  public Sdk createSdk(@NotNull String name, @NotNull SdkTypeId sdkType) {
     throw new UnsupportedOperationException();
   }
 }

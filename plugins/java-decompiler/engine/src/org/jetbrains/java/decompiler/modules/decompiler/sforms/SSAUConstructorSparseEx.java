@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -501,10 +501,10 @@ public class SSAUConstructorSparseEx {
     Integer nextver = lastversion.get(var);
 
     if (nextver == null) {
-      nextver = new Integer(1);
+      nextver = 1;
     }
     else {
-      nextver = new Integer(nextver.intValue() + 1);
+      nextver++;
     }
     lastversion.put(var, nextver);
 

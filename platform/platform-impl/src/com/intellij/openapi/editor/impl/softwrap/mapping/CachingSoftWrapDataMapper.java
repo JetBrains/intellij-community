@@ -31,8 +31,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingListener, Dumpable {
-  
-  private static final Logger LOG = Logger.getInstance("#" + CachingSoftWrapDataMapper.class.getName());
+
+  private static final Logger LOG = Logger.getInstance(CachingSoftWrapDataMapper.class);
   
   private final List<SoftWrapImpl>             myAffectedByUpdateSoftWraps           = new ArrayList<>();
 

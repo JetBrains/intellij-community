@@ -93,14 +93,10 @@ public class LongLineInspection extends LocalInspectionTool {
     }
     final List<ProblemDescriptor> descriptors = new SmartList<>();
     for (int idx = 0; idx < document.getLineCount(); idx++) {
-      final int startOffset = document.getLineStartOffset(idx);
-      final int endOffset = document.getLineEndOffset(idx);
-      if (endOffset - startOffset > codeStyleRightMargin && !ignoreFor(findElementInRange(file,
-                                                                                          startOffset + codeStyleRightMargin - 1,
-                                                                                          endOffset - 1))) {
-        final int maxOffset = startOffset + codeStyleRightMargin;
+      TextRange exceedingRange = getExceedingRange(document, idx, codeStyleRightMargin);
+      if (!exceedingRange.isEmpty() && !ignoreFor(findElementInRange(file, exceedingRange.shiftRight(-1)))) {
         descriptors.add(
-          manager.createProblemDescriptor(file, new TextRange(maxOffset, endOffset),
+          manager.createProblemDescriptor(file, exceedingRange,
                                           String.format("Line is longer than allowed by code style (> %s columns)", codeStyleRightMargin),
                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                           isOnTheFly));
@@ -109,11 +105,19 @@ public class LongLineInspection extends LocalInspectionTool {
     return descriptors.isEmpty() ? null : descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
+  @NotNull
+  public static TextRange getExceedingRange(@NotNull Document document, int line, int rightMargin) {
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
+
+    return end > start + rightMargin ? new TextRange(start + rightMargin, end) : TextRange.EMPTY_RANGE;
+  }
+
   @Nullable
-  private static PsiElement findElementInRange(@NotNull PsiFile file, int leftOffset, int rightOffset) {
-    PsiElement leftElement = file.findElementAt(leftOffset);
+  private static PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
+    PsiElement leftElement = file.findElementAt(range.getStartOffset());
     if (leftElement == null) return null;
-    PsiElement rightElement = file.findElementAt(rightOffset);
+    PsiElement rightElement = file.findElementAt(range.getEndOffset());
     if (rightElement == null) return null;
     return PsiTreeUtil.findCommonParent(leftElement, rightElement);
   }

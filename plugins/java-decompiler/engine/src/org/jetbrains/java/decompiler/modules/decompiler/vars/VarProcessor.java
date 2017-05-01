@@ -74,7 +74,7 @@ public class VarProcessor {
       }
 
       Integer counter = mapNames.get(name);
-      mapNames.put(name, counter == null ? counter = new Integer(0) : ++counter);
+      mapNames.put(name, counter == null ? counter = 0 : ++counter);
 
       if (counter > 0) {
         name += String.valueOf(counter);
@@ -113,6 +113,10 @@ public class VarProcessor {
 
   public void setVarName(VarVersionPair pair, String name) {
     mapVarNames.put(pair, name);
+  }
+
+  public Collection<String> getVarNames() {
+    return mapVarNames != null ? mapVarNames.values() : Collections.emptySet();
   }
 
   public int getVarFinal(VarVersionPair pair) {

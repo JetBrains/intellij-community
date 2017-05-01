@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -126,44 +125,49 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       doneMarker.clean();
     }
   });
-  private static final ArrayFactory<IElementType> myElementTypeArrayFactory =
-    count -> count == 0 ? IElementType.EMPTY_ARRAY : new IElementType[count];
 
   public static void registerWhitespaceToken(@NotNull IElementType type) {
     ourAnyLanguageWhitespaceTokens = TokenSet.orSet(ourAnyLanguageWhitespaceTokens, TokenSet.create(type));
   }
 
-  @TestOnly
-  public PsiBuilderImpl(@NotNull Project project,
-                        PsiFile containingFile,
+  public PsiBuilderImpl(@Nullable Project project,
+                        @Nullable PsiFile containingFile,
                         @NotNull ParserDefinition parserDefinition,
                         @NotNull Lexer lexer,
-                        CharTable charTable,
+                        @Nullable CharTable charTable,
                         @NotNull final CharSequence text,
                         @Nullable ASTNode originalTree,
                         @Nullable MyTreeStructure parentLightTree) {
-    this(project, containingFile, parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer, charTable, text,
-         originalTree, originalTree == null ? null : originalTree.getText(), parentLightTree, null);
+    this(project, containingFile, parserDefinition, lexer, charTable, text, originalTree,
+         originalTree == null ? null : originalTree.getText(), parentLightTree, null);
   }
 
-  public PsiBuilderImpl(Project project,
-                        PsiFile containingFile,
-                        @NotNull TokenSet whiteSpaces,
-                        @NotNull TokenSet comments,
+  public PsiBuilderImpl(@NotNull Project project,
+                        @NotNull ParserDefinition parserDefinition,
                         @NotNull Lexer lexer,
-                        CharTable charTable,
-                        @NotNull final CharSequence text,
-                        @Nullable ASTNode originalTree,
-                        @Nullable MyTreeStructure parentLightTree) {
-    this(project, containingFile, whiteSpaces, comments, lexer, charTable, text, originalTree, originalTree == null ? null : originalTree.getText(), parentLightTree, null);
+                        @NotNull ASTNode chameleon,
+                        @NotNull CharSequence text) {
+    this(project, SharedImplUtil.getContainingFile(chameleon), parserDefinition, lexer,
+         SharedImplUtil.findCharTableByTree(chameleon), text,
+         Pair.getFirst(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
+         Pair.getSecond(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
+         null, chameleon);
   }
 
-  private PsiBuilderImpl(Project project,
-                         PsiFile containingFile,
-                         @NotNull TokenSet whiteSpaces,
-                         @NotNull TokenSet comments,
+  public PsiBuilderImpl(@NotNull Project project,
+                        @NotNull ParserDefinition parserDefinition,
+                        @NotNull Lexer lexer,
+                        @NotNull LighterLazyParseableNode chameleon,
+                        @NotNull CharSequence text) {
+    this(project, chameleon.getContainingFile(), parserDefinition, lexer,
+         chameleon.getCharTable(), text, null, null, ((LazyParseableToken)chameleon).myParentStructure, chameleon);
+  }
+
+  private PsiBuilderImpl(@Nullable Project project,
+                         @Nullable PsiFile containingFile,
+                         @NotNull ParserDefinition parserDefinition,
                          @NotNull Lexer lexer,
-                         CharTable charTable,
+                         @Nullable CharTable charTable,
                          @NotNull CharSequence text,
                          @Nullable ASTNode originalTree,
                          @Nullable CharSequence lastCommittedText,
@@ -176,8 +180,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myTextArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     myLexer = lexer;
 
-    myWhitespaces = whiteSpaces;
-    myComments = comments;
+    myWhitespaces = parserDefinition.getWhitespaceTokens();
+    myComments = parserDefinition.getCommentTokens();
     myCharTable = charTable;
     myOriginalTree = originalTree;
     myLastCommittedText = lastCommittedText;
@@ -189,26 +193,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myOffset = parentCachingNode instanceof LazyParseableToken ? ((LazyParseableToken)parentCachingNode).getStartOffset() : 0;
 
     cacheLexemes(parentCachingNode);
-  }
-
-  public PsiBuilderImpl(@NotNull final Project project,
-                        @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final Lexer lexer,
-                        @NotNull final ASTNode chameleon,
-                        @NotNull final CharSequence text) {
-    this(project, SharedImplUtil.getContainingFile(chameleon), parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(),
-         lexer, SharedImplUtil.findCharTableByTree(chameleon), text,
-         Pair.getFirst(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)), Pair.getSecond(chameleon.getUserData(BlockSupport.TREE_TO_BE_REPARSED)),
-         null, chameleon);
-  }
-
-  public PsiBuilderImpl(@NotNull final Project project,
-                        @NotNull final ParserDefinition parserDefinition,
-                        @NotNull final Lexer lexer,
-                        @NotNull final LighterLazyParseableNode chameleon,
-                        @NotNull final CharSequence text) {
-    this(project, chameleon.getContainingFile(), parserDefinition.getWhitespaceTokens(), parserDefinition.getCommentTokens(), lexer,
-         chameleon.getCharTable(), text, null, null, ((LazyParseableToken)chameleon).myParentStructure, chameleon);
   }
 
   private void cacheLexemes(@Nullable Object parentCachingNode) {
@@ -266,9 +250,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     int i = 0;
     int offset = 0;
     while (true) {
-      ProgressIndicatorProvider.checkCanceled();
       IElementType type = myLexer.getTokenType();
       if (type == null) break;
+      
+      if (i % 20 == 0) ProgressIndicatorProvider.checkCanceled();
 
       if (i >= myLexTypes.length - 1) {
         resizeLexemes(i * 3 / 2);
@@ -619,11 +604,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
                    StartMarker parent,
                    int start,
                    int end) {
-      this.myParentNode = parent;
-      this.myBuilder = builder;
-      this.myTokenType = type;
-      this.myTokenStart = start;
-      this.myTokenEnd = end;
+      myParentNode = parent;
+      myBuilder = builder;
+      myTokenType = type;
+      myTokenStart = start;
+      myTokenEnd = end;
     }
   }
 
@@ -682,11 +667,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private StartMarker myStart;
     private boolean myCollapse;
 
-    public DoneMarker() {
+    DoneMarker() {
       myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
-    public DoneMarker(final StartMarker marker, final int currentLexeme) {
+    DoneMarker(final StartMarker marker, final int currentLexeme) {
       this();
       myLexemeIndex = currentLexeme;
       myStart = marker;
@@ -740,7 +725,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private final PsiBuilderImpl myBuilder;
     private String myMessage;
 
-    public ErrorItem(final PsiBuilderImpl builder, final String message, final int idx) {
+    ErrorItem(final PsiBuilderImpl builder, final String message, final int idx) {
       myBuilder = builder;
       myMessage = message;
       myLexemeIndex = idx;
@@ -918,7 +903,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private void resizeLexemes(final int newSize) {
     myLexStarts = ArrayUtil.realloc(myLexStarts, newSize+1);
-    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, myElementTypeArrayFactory);
+    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, IElementType.ARRAY_FACTORY);
     clearCachedTokenType();
   }
 
@@ -1922,7 +1907,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final int[] myLexStarts;
     final IElementType[] myLexTypes;
 
-    public LazyParseableTokensCache(int[] lexStarts, IElementType[] lexTypes) {
+    LazyParseableTokensCache(int[] lexStarts, IElementType[] lexTypes) {
       myLexStarts = lexStarts;
       myLexTypes = lexTypes;
     }

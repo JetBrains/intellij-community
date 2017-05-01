@@ -52,5 +52,12 @@ public enum ElemType {
    *
    * @since 1.8
    */
-  TYPE_USE
+  TYPE_USE,
+
+  /**
+   * Module declaration.
+   *
+   * @since 9
+   */
+  MODULE
 }

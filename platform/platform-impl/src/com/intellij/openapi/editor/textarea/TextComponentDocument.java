@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.editor.textarea;
 
-import com.intellij.openapi.editor.BaseDocumentAdapter;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.BadLocationException;
@@ -26,7 +27,7 @@ import javax.swing.text.JTextComponent;
 /**
  * @author yole
  */
-public class TextComponentDocument extends BaseDocumentAdapter {
+public class TextComponentDocument extends UserDataHolderBase implements com.intellij.openapi.editor.Document {
   private final JTextComponent myTextComponent;
 
   public TextComponentDocument(final JTextComponent textComponent) {
@@ -123,5 +124,22 @@ public class TextComponentDocument extends BaseDocumentAdapter {
   @Override
   public boolean isWritable() {
     return true;
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @NotNull
+  @Override
+  public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public void setText(@NotNull CharSequence text) {
+    throw new UnsupportedOperationException("Not implemented");
   }
 }

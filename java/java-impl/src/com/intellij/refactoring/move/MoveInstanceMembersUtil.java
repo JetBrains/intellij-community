@@ -33,7 +33,7 @@ import java.util.Set;
  * @author ven
  */
 public class MoveInstanceMembersUtil {
-  private static final Logger LOG = Logger.getInstance("#" + MoveInstanceMembersUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(MoveInstanceMembersUtil.class);
 
   /**
    * @param member  nonstatic class member to search for class references in

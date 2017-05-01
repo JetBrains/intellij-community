@@ -140,6 +140,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     return new TextComponentInlayModel();
   }
 
+  @NotNull
+  @Override
+  public EditorKind getEditorKind() {
+    return EditorKind.UNTYPED;
+  }
+
   @Override
   @NotNull
   public EditorSettings getSettings() {

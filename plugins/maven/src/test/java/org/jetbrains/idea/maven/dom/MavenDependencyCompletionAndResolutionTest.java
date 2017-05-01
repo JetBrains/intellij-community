@@ -713,7 +713,12 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     String libPath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.jar");
     final VirtualFile libFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(libPath);
 
-    ((ChooseFileIntentionAction)((IntentionActionDelegate)action).getDelegate()).setFileChooser(() -> new VirtualFile[]{libFile});
+    IntentionAction intentionAction = action;
+    while (intentionAction instanceof IntentionActionDelegate) {
+      intentionAction = ((IntentionActionDelegate)intentionAction).getDelegate();
+    }
+
+    ((ChooseFileIntentionAction)intentionAction).setFileChooser(() -> new VirtualFile[]{libFile});
     XmlCodeStyleSettings xmlSettings =
       CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getCustomSettings(XmlCodeStyleSettings.class);
 
@@ -725,7 +730,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
     }
     finally {
       xmlSettings.XML_TEXT_WRAP = prevValue;
-      ((ChooseFileIntentionAction)((IntentionActionDelegate)action).getDelegate()).setFileChooser(null);
+      ((ChooseFileIntentionAction)intentionAction).setFileChooser(null);
     }
 
     MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, myProjectPom);

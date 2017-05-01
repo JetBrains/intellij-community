@@ -20,17 +20,15 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.execution.configurations.ConfigurationUtil;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.ide.util.ClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -55,19 +53,18 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   public Project getProject() { return myProject; }
 
   public boolean isAccepted(final PsiClass aClass) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (aClass.getQualifiedName() != null  &&
-            (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) || JUnitUtil.isTestClass(aClass))) {
-          final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
-          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
-          if (virtualFile == null) return false;
-          return !compilerConfiguration.isExcludedFromCompilation(virtualFile) &&
-                 !ProjectRootManager.getInstance(myProject).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES);
-        }
-        return false;
+    return ReadAction.compute(() -> {
+      if (aClass.getQualifiedName() != null &&
+          (myBase != null && aClass.isInheritor(myBase, true) && ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) ||
+           JUnitUtil.isTestClass(aClass))) {
+        final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(getProject());
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(aClass);
+        if (virtualFile == null) return false;
+        return !compilerConfiguration.isExcludedFromCompilation(virtualFile) &&
+               !ProjectRootManager.getInstance(myProject).getFileIndex()
+                 .isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.RESOURCES);
       }
+      return false;
     });
   }
 
@@ -83,19 +80,16 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
   private static PsiClass getTestCase(final SourceScope sourceScope, final Module module) throws JUnitUtil.NoJUnitException {
     if (sourceScope == null) throw new JUnitUtil.NoJUnitException();
     final JUnitUtil.NoJUnitException[] ex = new JUnitUtil.NoJUnitException[1];
-    final PsiClass testCase = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
-      @Override
-      public PsiClass compute() {
-        if (TestObject.isJUnit5(module, sourceScope, sourceScope.getProject())) {
-          return null;
-        }
-        try {
-          return module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
-        }
-        catch (JUnitUtil.NoJUnitException e) {
-          ex[0] = e;
-          return null;
-        }
+    final PsiClass testCase = ReadAction.compute(() -> {
+      if (TestObject.isJUnit5(module, sourceScope, sourceScope.getProject())) {
+        return null;
+      }
+      try {
+        return module == null ? JUnitUtil.getTestCaseClass(sourceScope) : JUnitUtil.getTestCaseClass(module);
+      }
+      catch (JUnitUtil.NoJUnitException e) {
+        ex[0] = e;
+        return null;
       }
     });
     if (ex[0] != null) throw ex[0];
@@ -116,12 +110,7 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
       @Override
       public boolean isAccepted(final PsiClass aClass) {
         if (super.isAccepted(aClass)) {
-          final String qualifiedName = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            @Override
-            public String compute() {
-              return aClass.getQualifiedName();
-            }
-          });
+          final String qualifiedName = ReadAction.compute(() -> aClass.getQualifiedName());
           for (Pattern compilePattern : compilePatterns) {
             if (compilePattern.matcher(qualifiedName).matches()) {
               return true;

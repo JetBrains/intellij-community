@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
@@ -31,18 +31,8 @@ public class TempFileSystemTest extends LightPlatformCodeInsightFixtureTestCase 
     VirtualFile sourceRoot = rootManager.getContentSourceRoots()[0];
     PsiManager psiManager = PsiManager.getInstance(getProject());
     PsiDirectory psiSourceRoot = psiManager.findDirectory(sourceRoot);
-    PsiFile psiFile = ApplicationManager.getApplication().runWriteAction(new Computable<PsiFile>() {
-      @Override
-      public PsiFile compute() {
-        return psiSourceRoot.createFile("TestDocument.xml");
-      }
-    });
-    PsiDirectory subdirectory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
-      @Override
-      public PsiDirectory compute() {
-        return psiSourceRoot.createSubdirectory("com");
-      }
-    });
+    PsiFile psiFile = WriteAction.compute(() -> psiSourceRoot.createFile("TestDocument.xml"));
+    PsiDirectory subdirectory = WriteAction.compute(() -> psiSourceRoot.createSubdirectory("com"));
     PlatformTestCase.move(psiFile.getVirtualFile(), subdirectory.getVirtualFile());
     assertTrue(psiFile.isValid());
     ApplicationManager.getApplication().runWriteAction(() -> psiFile.delete());

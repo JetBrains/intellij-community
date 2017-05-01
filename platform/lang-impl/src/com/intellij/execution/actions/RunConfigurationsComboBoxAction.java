@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,12 +30,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +42,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -156,8 +154,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         allActionsGroup.addSeparator();
       }
 
-      final ConfigurationType[] types = runManager.getConfigurationFactories();
-      for (ConfigurationType type : types) {
+      for (ConfigurationType type : runManager.getConfigurationFactories()) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
         Map<String,List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
         for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
@@ -228,8 +225,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
         return selectedConfiguration;
       }
-      Iterator<RunnerAndConfigurationSettings> iterator = RunManager.getInstance(project).getTempConfigurationsList().iterator();
-      return iterator.hasNext() ? iterator.next() : null;
+      return ContainerUtil.getFirstItem(RunManager.getInstance(project).getTempConfigurationsList());
     }
   }
 
@@ -273,7 +269,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       myConfiguration = configuration;
       myProject = project;
       String name = configuration.getName();
-      if (name == null || name.length() == 0) {
+      if (name.isEmpty()) {
         name = " ";
       }
       final Presentation presentation = getTemplatePresentation();

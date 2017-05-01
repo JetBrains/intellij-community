@@ -15,7 +15,11 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -25,6 +29,7 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +39,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public boolean ignoreIntegerCharCasts = false;
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -51,7 +57,10 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiType operandType = (PsiType)infos[0];
-    return InspectionGadgetsBundle.message("cast.that.loses.precision.problem.descriptor", operandType.getPresentableText());
+    boolean negativeOnly = (boolean)infos[1];
+    return InspectionGadgetsBundle
+      .message(negativeOnly ? "cast.that.loses.precision.negative.problem.descriptor" : "cast.that.loses.precision.problem.descriptor",
+               operandType.getPresentableText());
   }
 
   @Override
@@ -106,7 +115,46 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
       if (castTypeElement == null) {
         return;
       }
-      registerError(castTypeElement, operandType);
+      LongRangeSet targetRange = LongRangeSet.fromType(castType);
+      LongRangeSet lostRange = LongRangeSet.all();
+      if (targetRange != null && LongRangeSet.fromType(operandType) != null) {
+        LongRangeSet valueRange = getValueRange(operand);
+        lostRange = valueRange.subtract(targetRange);
+        if (lostRange.isEmpty()) return;
+      }
+      registerError(castTypeElement, operandType, lostRange.max() < 0);
+    }
+
+    private LongRangeSet getValueRange(@NotNull PsiExpression operand) {
+      PsiElement parent = PsiTreeUtil.getParentOfType(operand, PsiMethod.class, PsiLambdaExpression.class, PsiClass.class);
+      if (parent instanceof PsiMethod) {
+        parent = ((PsiMethod)parent).getBody();
+      }
+      else if (parent instanceof PsiLambdaExpression) {
+        parent = ((PsiLambdaExpression)parent).getBody();
+      }
+      else {
+        parent = null;
+      }
+      if (parent == null) return LongRangeSet.all();
+      Ref<LongRangeSet> range = Ref.create(LongRangeSet.empty());
+      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, false);
+      RunnerResult runnerResult = runner.analyzeMethod(parent, new StandardInstructionVisitor() {
+        @Override
+        public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+          if (instruction.getMethodType() == MethodCallInstruction.MethodType.CAST && instruction.getContext() == operand) {
+            LongRangeSet curRange = memState.getRange(memState.peek());
+            if (curRange == null) {
+              range.set(LongRangeSet.all());
+            }
+            else {
+              range.set(range.get().union(curRange));
+            }
+          }
+          return super.visitMethodCall(instruction, runner, memState);
+        }
+      });
+      return runnerResult == RunnerResult.OK ? range.get() : LongRangeSet.all();
     }
 
     private boolean valueIsContainableInType(Number value, PsiType type) {
@@ -137,10 +185,7 @@ public class CastThatLosesPrecisionInspection extends BaseInspection {
                doubleValue <= (double)Integer.MAX_VALUE;
       }
       else if (PsiType.LONG.equals(type)) {
-        return longValue >= Long.MIN_VALUE &&
-               longValue <= Long.MAX_VALUE &&
-               doubleValue >= (double)Long.MIN_VALUE &&
-               doubleValue <= (double)Long.MAX_VALUE;
+        return doubleValue >= (double)Long.MIN_VALUE && doubleValue <= (double)Long.MAX_VALUE;
       }
       else if (PsiType.FLOAT.equals(type)) {
         return doubleValue == value.floatValue();

@@ -1,8 +1,5 @@
 <component name="DefaultColorSchemesManager">
   <scheme name="Default" default_scheme="true" version="1">
-    <option name="LINE_SPACING" value="1.0"/>
-    <option name="EDITOR_FONT_SIZE" value="12"/>
-    <option name="EDITOR_FONT_NAME" value="Monospaced" mac="Menlo" linux="DejaVu Sans Mono"/>
     <colors>
 
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
@@ -1039,34 +1036,23 @@
       
         <option name="BREADCRUMBS_DEFAULT">
            <value>
-             <option name="FOREGROUND" value="323232"/>
-             <option name="BACKGROUND" value="f5f5f5"/>
-             <option name="EFFECT_COLOR" value="aaaaaa"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
         <option name="BREADCRUMBS_HOVERED">
            <value>
-             <option name="FOREGROUND" value="323232"/>
-             <option name="BACKGROUND" value="dcdcdc"/>
-             <option name="EFFECT_COLOR" value="aaaaaa"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
+             <option name="BACKGROUND" value="dedede"/>
            </value>
         </option>
         <option name="BREADCRUMBS_CURRENT">
            <value>
-             <option name="FOREGROUND" value="323232"/>
-             <option name="BACKGROUND" value="fafadc"/>
-             <option name="EFFECT_COLOR" value="aaaaaa"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
         <option name="BREADCRUMBS_INACTIVE">
            <value>
-             <option name="FOREGROUND" value="aaaaaa"/>
-             <option name="BACKGROUND" value="fdfdfd"/>
-             <option name="EFFECT_COLOR" value="c8c8c8"/>
-             <option name="EFFECT_TYPE" value="0"/>
+             <option name="FOREGROUND" value="585858"/>
            </value>
         </option>
     </attributes>
@@ -1074,9 +1060,6 @@
   </scheme>
 
   <scheme name="Darcula" version="1" parent_scheme="Default" default_scheme="true">
-    <option name="LINE_SPACING" value="1.0" />
-    <option name="EDITOR_FONT_SIZE" value="12" linux="14"/>
-    <option name="EDITOR_FONT_NAME" value="Monospaced" mac="Menlo" linux="Source Code Pro"/>
     <colors>
       <option name="ADDED_LINES_COLOR" value="384C38" deuteranopia="355237" protanopia="355237"/>
       <option name="MODIFIED_LINES_COLOR" value="374752" deuteranopia="345a67" protanopia="345a67"/>
@@ -2158,33 +2141,22 @@
       <option name="BREADCRUMBS_DEFAULT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="65686a"/>
-           <option name="EFFECT_COLOR" value="323232"/>
-           <option name="EFFECT_TYPE" value="0"/>
          </value>
       </option>
       <option name="BREADCRUMBS_HOVERED">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="797d7f"/>
-           <option name="EFFECT_COLOR" value="323232"/>
-           <option name="EFFECT_TYPE" value="0"/>
+           <option name="BACKGROUND" value="44474a"/>
          </value>
       </option>
       <option name="BREADCRUMBS_CURRENT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="61614b"/>
-           <option name="EFFECT_COLOR" value="323232"/>
-           <option name="EFFECT_TYPE" value="0"/>
          </value>
       </option>
       <option name="BREADCRUMBS_INACTIVE">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="828282"/>
-           <option name="EFFECT_COLOR" value="464646"/>
-           <option name="EFFECT_TYPE" value="0"/>
          </value>
       </option>
     </attributes>

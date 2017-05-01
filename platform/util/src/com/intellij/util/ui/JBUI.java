@@ -152,6 +152,8 @@ public class JBUI {
 
   static {
     setUserScaleFactor(UIUtil.isJreHiDPIEnabled() ? 1f : SYSTEM_SCALE_FACTOR);
+    LOG.info("System scale factor: " + SYSTEM_SCALE_FACTOR + " (" +
+             (UIUtil.isJreHiDPIEnabled() ? "JRE-managed" : "IDE-managed") + " HiDPI)");
   }
 
   /**
@@ -216,12 +218,12 @@ public class JBUI {
    */
   public static float sysScale(@Nullable GraphicsConfiguration gc) {
     if (UIUtil.isJreHiDPIEnabled() && gc != null) {
-      if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
-        if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+      if (gc.getDevice().getType() == GraphicsDevice.TYPE_RASTER_SCREEN) {
+        if (SystemInfo.isMac && UIUtil.isJreHiDPI_earlierVersion()) {
           return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(gc.getDevice()) ? 2f : 1f;
         }
+        return (float)gc.getDefaultTransform().getScaleX();
       }
-      return (float)gc.getDefaultTransform().getScaleX();
     }
     return sysScale();
   }
@@ -234,7 +236,10 @@ public class JBUI {
   public static float sysScale(@Nullable Graphics2D g) {
     if (UIUtil.isJreHiDPIEnabled() && g != null) {
       GraphicsConfiguration gc = g.getDeviceConfiguration();
-      if (gc == null || gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER) {
+      if (gc == null ||
+          gc.getDevice().getType() == GraphicsDevice.TYPE_IMAGE_BUFFER ||
+          gc.getDevice().getType() == GraphicsDevice.TYPE_PRINTER)
+      {
         // in this case gc doesn't provide a valid scale
         return (float)g.getTransform().getScaleX();
       }
@@ -308,7 +313,7 @@ public class JBUI {
 
   private static void setUserScaleFactorProperty(float scale) {
     PCS.firePropertyChange(USER_SCALE_FACTOR_PROPERTY, userScaleFactor, userScaleFactor = scale);
-    LOG.info("UI scale factor: " + userScaleFactor);
+    LOG.info("User scale factor: " + userScaleFactor);
   }
 
   /**

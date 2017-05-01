@@ -2,12 +2,15 @@ package com.jetbrains.edu.learning.courseFormat.tasks;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.intellij.openapi.project.Project;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
+import com.jetbrains.edu.learning.checker.TaskWithSubtasksChecker;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
 import com.jetbrains.edu.learning.courseFormat.StudyStatus;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
 import org.jetbrains.annotations.NotNull;
 
-public class TaskWithSubtasks extends Task {
+public class TaskWithSubtasks extends PyCharmTask {
   private int myActiveSubtaskIndex = 0;
   @SerializedName("last_subtask_index")
   @Expose private int myLastSubtaskIndex = 0;
@@ -57,5 +60,10 @@ public class TaskWithSubtasks extends Task {
 
   public String getTaskType() {
     return "subtasks";
+  }
+
+  @Override
+  public StudyTaskChecker getChecker(@NotNull Project project) {
+    return new TaskWithSubtasksChecker(this, project);
   }
 }

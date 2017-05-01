@@ -28,7 +28,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.Function;
+import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,6 +54,10 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
   protected void addCompletions(@NotNull CompletionParameters parameters,
                                 ProcessingContext context,
                                 @NotNull CompletionResultSet result) {
+    addSignatureItems(parameters, result);
+  }
+
+  void addSignatureItems(@NotNull CompletionParameters parameters, @NotNull Consumer<LookupElement> result) {
     final PsiCall methodCall = PsiTreeUtil.getParentOfType(parameters.getPosition(), PsiCall.class);
     assert methodCall != null;
     Set<Pair<PsiMethod, PsiSubstitutor>> candidates = getCallCandidates(methodCall);
@@ -64,7 +68,7 @@ class SameSignatureCallParametersProvider extends CompletionProvider<CompletionP
         if (container.getParameterList().getParametersCount() > 1 && candidate.first.getParameterList().getParametersCount() > 1) {
           PsiMethod from = getMethodToTakeParametersFrom(container, candidate.first, candidate.second);
           if (from != null) {
-            result.addElement(createParametersLookupElement(from, methodCall, candidate.first));
+            result.consume(createParametersLookupElement(from, methodCall, candidate.first));
           }
         }
       }

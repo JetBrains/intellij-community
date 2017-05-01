@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,10 +73,6 @@ public abstract class LocatableConfigurationBase extends RunConfigurationBase im
     if (!isNewSerializationUsed() && myNameIsGenerated && suggestedName() != null) {
       element.setAttribute(ATTR_NAME_IS_GENERATED, "true");
     }
-  }
-
-  @Override
-  public void checkConfiguration() throws RuntimeConfigurationException {
   }
 
   /**

@@ -70,7 +70,7 @@ import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVers
  * Date: 4/15/11 5:38 PM
  */
 public class PySkeletonRefresher {
-  private static final Logger LOG = Logger.getInstance("#" + PySkeletonRefresher.class.getName());
+  private static final Logger LOG = Logger.getInstance(PySkeletonRefresher.class);
 
 
   @Nullable private Project myProject;

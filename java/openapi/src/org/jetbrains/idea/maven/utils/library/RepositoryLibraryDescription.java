@@ -15,18 +15,16 @@
  */
 package org.jetbrains.idea.maven.utils.library;
 
-import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.containers.HashMap;
+import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import javax.swing.*;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
@@ -43,7 +41,7 @@ public class RepositoryLibraryDescription {
   @NotNull
   public static final String SnapshotVersionSuffix = "-SNAPSHOT";
 
-  public static final Icon DEFAULT_ICON = IconLoader.getIcon("/icons/repositoryLibraryLogo.png");
+  public static final Icon DEFAULT_ICON = OpenapiIcons.RepositoryLibraryLogo;
   
   private static volatile Map<String, RepositoryLibraryDescription> ourStaticallyDefinedLibraries;
   
@@ -105,11 +103,6 @@ public class RepositoryLibraryDescription {
   @Nullable
   public DependencyScope getSuggestedScope() {
     return null;
-  }
-
-  @NotNull
-  public List<RemoteRepositoryDescription> getRemoteRepositories() {
-    return RemoteRepositoryDescription.DEFAULT_REPOSITORIES;
   }
 
   // One library could have more then one description - for ex. in different plugins

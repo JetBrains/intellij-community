@@ -25,7 +25,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.StringLenComparator;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -188,11 +187,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
     myFieldNamePanel.setLayout(new BorderLayout());
 
     myNameField = new NameSuggestionsField(myProject);
-    myNameChangedListener = new NameSuggestionsField.DataChanged() {
-      public void dataChanged() {
-        updateOkStatus();
-      }
-    };
+    myNameChangedListener = () -> updateOkStatus();
     myNameField.addDataChangedListener(myNameChangedListener);
     myNameField.setSuggestions(getSuggestions());
 

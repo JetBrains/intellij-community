@@ -1,6 +1,5 @@
 package com.jetbrains.edu.coursecreator;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -32,12 +31,7 @@ public class CCTestsUtil {
   }
 
   public static String getPlaceholdersPresentation(List<AnswerPlaceholder> placeholders) {
-    Collection<String> transformed = Collections2.transform(placeholders, new Function<AnswerPlaceholder, String>() {
-      @Override
-      public String apply(AnswerPlaceholder placeholder) {
-        return getPlaceholderPresentation(placeholder);
-      }
-    });
+    Collection<String> transformed = Collections2.transform(placeholders, placeholder -> getPlaceholderPresentation(placeholder));
     return "[" + StringUtil.join(transformed, ",") + "]";
   }
 }

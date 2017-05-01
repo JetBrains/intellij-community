@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,10 @@ import java.util.*;
  */
 class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
-  
-  private static final Logger LOG = Logger.getInstance("#" + UpdateFoldRegionsOperation.class.getName());
+
+  private static final Logger LOG = Logger.getInstance(UpdateFoldRegionsOperation.class);
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed"); 
+  static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   
   private final Project myProject;
   private final Editor myEditor;
@@ -116,8 +117,9 @@ class UpdateFoldRegionsOperation implements Runnable {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
     for (PsiElement element : elementsToFold.keySet()) {
       ProgressManager.checkCanceled();
-      final Collection<FoldingDescriptor> descriptors = elementsToFold.get(element);
-      for (FoldingDescriptor descriptor : descriptors) {
+      final Collection<FoldingUpdate.RegionInfo> descriptors = elementsToFold.get(element);
+      for (FoldingUpdate.RegionInfo regionInfo : descriptors) {
+        FoldingDescriptor descriptor = regionInfo.descriptor;
         FoldingGroup group = descriptor.getGroup();
         TextRange range = descriptor.getRange();
         String placeholder = null;
@@ -145,11 +147,13 @@ class UpdateFoldRegionsOperation implements Runnable {
         }
         
         if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
+        region.putUserData(COLLAPSED_BY_DEFAULT, regionInfo.collapsedByDefault);
 
         info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
         newRegions.add(region);
 
-        boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(element, range, rangeToExpandStatusMap);
+        boolean expandStatus = !descriptor.isNonExpandable() && shouldExpandNewRegion(range, rangeToExpandStatusMap, 
+                                                                                      regionInfo.collapsedByDefault);
         if (group == null) {
           shouldExpand.put(region, expandStatus);
         }
@@ -163,7 +167,9 @@ class UpdateFoldRegionsOperation implements Runnable {
     return newRegions;
   }
 
-  private boolean shouldExpandNewRegion(PsiElement element, TextRange range, Map<TextRange, Boolean> rangeToExpandStatusMap) {
+  private boolean shouldExpandNewRegion(TextRange range,
+                                        Map<TextRange, Boolean> rangeToExpandStatusMap,
+                                        boolean collapsedByDefault) {
     if (myApplyDefaultState != ApplyDefaultStateMode.NO) {
       // Considering that this code is executed only on initial fold regions construction on editor opening.
       if (myApplyDefaultState == ApplyDefaultStateMode.EXCEPT_CARET_REGION) {
@@ -172,7 +178,7 @@ class UpdateFoldRegionsOperation implements Runnable {
           return true;
         }
       }
-      return !FoldingPolicy.isCollapseByDefault(element);
+      return !collapsedByDefault;
     }
 
     final Boolean oldStatus = rangeToExpandStatusMap.get(range);
@@ -185,41 +191,48 @@ class UpdateFoldRegionsOperation implements Runnable {
     List<FoldRegion> toRemove = new ArrayList<>();
     InjectedLanguageManager injectedManager = InjectedLanguageManager.getInstance(myProject);
     for (FoldRegion region : foldingModel.getAllFoldRegions()) {
-      if (myKeepCollapsedRegions && !region.isExpanded() && !regionOrGroupCanBeRemovedWhenCollapsed(region)) continue;
-      
+      boolean forceKeepRegion = myKeepCollapsedRegions && region.isValid() && !region.isExpanded() && 
+                                !regionOrGroupCanBeRemovedWhenCollapsed(region);
+      Boolean storedCollapsedByDefault = region.getUserData(COLLAPSED_BY_DEFAULT);
       PsiElement element = info.getPsiElement(region);
       if (element != null) {
         PsiFile containingFile = element.getContainingFile();
         boolean isInjected = injectedManager.isInjectedFragment(containingFile);
         if (isInjected != myForInjected) continue;
       }
-      final Collection<FoldingDescriptor> descriptors;
-      if (element != null && !(descriptors = elementsToFold.get(element)).isEmpty()) {
+      final Collection<FoldingUpdate.RegionInfo> regionInfos;
+      if (element != null && !(regionInfos = elementsToFold.get(element)).isEmpty()) {
         boolean matchingDescriptorFound = false;
-        FoldingDescriptor[] array = descriptors.toArray(new FoldingDescriptor[descriptors.size()]);
-        for (FoldingDescriptor descriptor : array) {
+        FoldingUpdate.RegionInfo[] array = regionInfos.toArray(new FoldingUpdate.RegionInfo[regionInfos.size()]);
+        for (FoldingUpdate.RegionInfo regionInfo : array) {
+          FoldingDescriptor descriptor = regionInfo.descriptor;
           TextRange range = descriptor.getRange();
           if (TextRange.areSegmentsEqual(region, range)) {
             matchingDescriptorFound = true;
-            if (!region.isValid() ||
+            if (!forceKeepRegion && (!region.isValid() ||
                 region.getGroup() != null ||
                 descriptor.getGroup() != null ||
                 !region.getPlaceholderText().equals(descriptor.getPlaceholderText()) ||
-                range.getLength() < 2
+                range.getLength() < 2)
               ) {
               rangeToExpandStatusMap.put(range, region.isExpanded());
               toRemove.add(region);
               break;
             }
+            else if (storedCollapsedByDefault != null && storedCollapsedByDefault != regionInfo.collapsedByDefault) {
+              rangeToExpandStatusMap.put(range, !regionInfo.collapsedByDefault);
+              toRemove.add(region);
+              break;
+            }
             else {
-              elementsToFold.remove(element, descriptor);
+              elementsToFold.remove(element, regionInfo);
             }
           }
         }
-        if (!matchingDescriptorFound) {
+        if (!matchingDescriptorFound && !forceKeepRegion) {
           if (Registry.is("editor.durable.folding.state")) {
-            for (FoldingDescriptor descriptor : descriptors) {
-              rangeToExpandStatusMap.put(descriptor.getRange(), region.isExpanded());
+            for (FoldingUpdate.RegionInfo regionInfo : regionInfos) {
+              rangeToExpandStatusMap.put(regionInfo.descriptor.getRange(), region.isExpanded());
             }
           }
           toRemove.add(region);
@@ -229,7 +242,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         boolean isExpanded = region.isExpanded();
         rangeToExpandStatusMap.put(TextRange.create(region), isExpanded);
       }
-      else {
+      else if (!forceKeepRegion) {
         toRemove.add(region);
       }
     }

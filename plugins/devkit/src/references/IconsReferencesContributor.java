@@ -18,13 +18,13 @@ package org.jetbrains.idea.devkit.references;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,7 +43,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
@@ -293,12 +292,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement file = queryParameters.getElementToSearch();
     if (file instanceof PsiBinaryFile) {
-      final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
-        @Override
-        public Module compute() {
-          return ModuleUtilCore.findModuleForPsiElement(file);
-        }
-      });
+      final Module module = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(file));
 
       final VirtualFile image = ((PsiBinaryFile)file).getVirtualFile();
       if (isImage(image) && isIconsModule(module)) {

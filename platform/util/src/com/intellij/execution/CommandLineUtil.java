@@ -32,8 +32,8 @@ public class CommandLineUtil {
   private static final char INESCAPABLE_QUOTE = '\uEFEF';  // a random char, which is unlikely to encounter in an argument
 
   private static final Pattern WIN_BACKSLASHES_PRECEDING_QUOTE = Pattern.compile("(\\\\+)(?=\"|$)");
-  private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|]");
-  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?]");
+  private static final Pattern WIN_CARET_SPECIAL = Pattern.compile("[&<>()@^|!%]");
+  private static final Pattern WIN_QUOTE_SPECIAL = Pattern.compile("[ \t\"*?\\[{}~()\']");  // + glob [*?] + Cygwin glob [*?\[{}~] + [()']
   private static final Pattern WIN_QUIET_COMMAND = Pattern.compile("((?:@\\s*)++)(.*)", Pattern.CASE_INSENSITIVE);
 
   private static final char Q = '\"';
@@ -100,10 +100,29 @@ public class CommandLineUtil {
    *                   -> ["C:\Program Files\\" "\"backslash quote\\\""]
    *
    *
+   *   *** Besides the rules above, double quotes escaping is also used to prevent CRT from glob-expanding the arguments
+   *       containing the [*?] special chars.
+   *
+   *       Cygwin note:
+   *
+   *           Additionally, we also use double quotes to escape POSIX glob special chars that otherwise are processed
+   *           by Cygwin CRT. These chars [*?\[{}~] and [()'] enable extended POSIX globbing unless the CYGWIN=noglob
+   *           variable is set, which we can't rely upon anyway because the behavior of 'noglob' doesn't conform to the
+   *           standard command line quoting rules (for example, it expands [\\\"] to [\\\] instead of the expected [\"]).
+   *
+   *           This is enabled unconditionally on Windows, that is, no attempt is made to detect that we indeed run under
+   *           Cygwin. Although it might be checked as well (yet in some clumsy way, for example, by looking up cygwin-1.dll
+   *           in PATH), it doesn't make much sense since such check wouldn't be a 100% reliable solution anyway
+   *           (the executable may still run without linking to Cygwin CRT, even if the latter is in PATH).
+   *
+   *           Anyway, escaping yet another set of special chars is harmless as long as the executable uses the standard
+   *           Windows CRT parameter quoting conventions, which is almost always the case.
+   *
+   *
    *   *** In case a command line is wrapped using CMD.EXE call (that is, `cmd /d /c call executable args...`, which
    *       is quite common), additional escaping rules apply.
    *
-   *       CMD.EXE treat few chars in a special way (piping, command chaining, etc.), these are: [&<>()@|^].
+   *       CMD.EXE treats few chars in a special way (piping, command chaining, etc.), these are: [&<>()@|^].
    *       The CMD.EXE command line parser has two means of escaping these special chars: quote flag and caret-escaping.
    *       The main rules in a nutshell are:
    *
@@ -193,6 +212,7 @@ public class CommandLineUtil {
    *
    *   * https://ss64.com/nt/syntax-esc.html  Syntax : Escape Characters, Delimiters and Quotes
    *   * http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
+   *   * https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
 
   private static void addToWindowsCommandLine(@NotNull List<String> parameters,

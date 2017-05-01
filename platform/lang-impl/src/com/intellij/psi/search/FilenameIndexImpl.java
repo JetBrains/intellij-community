@@ -16,7 +16,6 @@
 
 package com.intellij.psi.search;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -56,12 +55,7 @@ public class FilenameIndexImpl extends ScalarIndexExtension<String> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.InputFilter() {
-      @Override
-      public boolean acceptInput(@NotNull final VirtualFile file) {
-        return file instanceof VirtualFileSystemEntry;
-      }
-    };
+    return file -> file instanceof VirtualFileSystemEntry;
   }
 
   @Override

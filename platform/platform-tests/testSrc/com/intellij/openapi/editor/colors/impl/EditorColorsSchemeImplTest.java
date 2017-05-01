@@ -17,13 +17,16 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.editor.EditorColorSchemeTestCase;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -44,13 +47,50 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     super.tearDown();
   }
 
+  public void testAppLevelEditorFontDefaults() {
+    ModifiableFontPreferences appFontPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
+    FontPreferences stored = new FontPreferencesImpl();
+    appFontPrefs.copyTo(stored);
+    try {
+      String appFontName = appFontPrefs.getFontFamily();
+      int appFontSize = appFontPrefs.getSize(appFontName);
+      assertEquals(FontPreferences.DEFAULT_FONT_NAME, appFontName);
+      assertEditorFontsEqual(appFontName, appFontSize);
+      appFontPrefs.setFontSize(FontPreferences.DEFAULT_FONT_NAME, 8);
+      assertEditorFontsEqual(appFontName, 8);
+    }
+    finally {
+      stored.copyTo(appFontPrefs);
+    }
+  }
+
+  /**
+   * TODO<rv> FIX PROPERLY
+   * This is a hack: since font name is taken from default scheme (why?) where it is explicitly defined as "Dejavu Sans", font names
+   * do not match because default font name on linux in headless environment falls back to WINDOWS_DEFAULT_FONT_FAMILY (why?)
+   */
+  private static String substLinuxFontName(@NotNull String fontName) {
+    return SystemInfo.isLinux && GraphicsEnvironment.isHeadless() && FontPreferences.LINUX_DEFAULT_FONT_FAMILY.equals(fontName)?
+           FontPreferences.WINDOWS_DEFAULT_FONT_FAMILY :
+           fontName;
+  }
+
+  private void assertEditorFontsEqual(@NotNull String fontName, int fontSize) {
+    assertEquals(fontName, substLinuxFontName(myScheme.getEditorFontName()));
+    assertEquals(fontSize, myScheme.getEditorFontSize());
+    assertEquals(fontName, substLinuxFontName(myScheme.getConsoleFontName()));
+    assertEquals(fontSize, myScheme.getConsoleFontSize());
+  }
+
   public void testDefaults() {
+    myScheme.setFontPreferences(new FontPreferencesImpl());
     checkState(myScheme.getFontPreferences(),
                Collections.emptyList(),
                Collections.emptyList(),
                FontPreferences.DEFAULT_FONT_NAME,
                FontPreferences.DEFAULT_FONT_NAME, null);
-    assertEquals(FontPreferences.DEFAULT_FONT_NAME, myScheme.getEditorFontName());
+    String expectedName = FontPreferences.DEFAULT_FONT_NAME;
+    assertEquals(expectedName, myScheme.getEditorFontName());
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
                Collections.emptyList(),
@@ -64,6 +104,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   public void testSetFontPreferences() throws Exception {
     String fontName1 = getExistingNonDefaultFontName();
     String fontName2 = getAnotherExistingNonDefaultFontName();
+    myScheme.setEditorFontName(fontName1);
     FontPreferences fontPreferences = myScheme.getFontPreferences();
     assertInstanceOf(fontPreferences, ModifiableFontPreferences.class);
     ((ModifiableFontPreferences)fontPreferences).register(fontName1, 25);
@@ -108,21 +149,22 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     String fontName2 = getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     myScheme.setConsoleFontName(fontName2);
+    int scaledSize = UISettings.restoreFontSize(FontPreferences.DEFAULT_FONT_SIZE, 1.0f);
 
     checkState(myScheme.getFontPreferences(),
                singletonList(fontName1),
                singletonList(fontName1),
                fontName1,
-               fontName1, FontPreferences.DEFAULT_FONT_SIZE);
+               fontName1, scaledSize);
     assertEquals(fontName1, myScheme.getEditorFontName());
-    assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getEditorFontSize());
+    assertEquals(scaledSize, myScheme.getEditorFontSize());
     checkState(myScheme.getConsoleFontPreferences(),
                singletonList(fontName2),
                singletonList(fontName2),
                fontName2,
-               fontName2, FontPreferences.DEFAULT_FONT_SIZE);
+               fontName2, scaledSize);
     assertEquals(fontName2, myScheme.getConsoleFontName());
-    assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
+    assertEquals(scaledSize, myScheme.getConsoleFontSize());
   }
 
   public void testSetSize() throws Exception {

@@ -56,12 +56,16 @@ class CompilerReferenceReader {
 
   @Nullable
   TIntHashSet findReferentFileIds(@NotNull LightRef ref, boolean checkBaseClassAmbiguity) throws StorageException {
-    LightRef.LightClassHierarchyElementDef hierarchyElement = ref instanceof LightRef.LightClassHierarchyElementDef ?
-                                                              (LightRef.LightClassHierarchyElementDef)ref :
-                                                              ((LightRef.LightMember)ref).getOwner();
-    TIntHashSet set = new TIntHashSet();
-    final LightRef.NamedLightRef[] hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity);
+    LightRef.NamedLightRef[] hierarchy;
+    if (ref instanceof LightRef.LightClassHierarchyElementDef) {
+      hierarchy = new LightRef.NamedLightRef[]{(LightRef.NamedLightRef)ref};
+    }
+    else {
+      LightRef.LightClassHierarchyElementDef hierarchyElement = ((LightRef.LightMember)ref).getOwner();
+      hierarchy = getWholeHierarchy(hierarchyElement, checkBaseClassAmbiguity, -1);
+    }
     if (hierarchy == null) return null;
+    TIntHashSet set = new TIntHashSet();
     for (LightRef.NamedLightRef aClass : hierarchy) {
       final LightRef overriderUsage = ref.override(aClass.getName());
       addUsages(overriderUsage, set);
@@ -218,30 +222,37 @@ class CompilerReferenceReader {
   }
 
   @Nullable("return null if the class hierarchy contains ambiguous qualified names")
-  private LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity)
-    throws StorageException {
-    Set<LightRef.NamedLightRef> result = new THashSet<>();
-    Queue<LightRef.NamedLightRef> q = new Queue<>(10);
-    q.addLast(hierarchyElement);
-    while (!q.isEmpty()) {
-      LightRef.NamedLightRef curClass = q.pullFirst();
-      if (result.add(curClass)) {
-        if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
-          if (hasMultipleDefinitions(curClass)) {
-            return null;
-          }
+  LightRef.NamedLightRef[] getWholeHierarchy(LightRef.LightClassHierarchyElementDef hierarchyElement, boolean checkBaseClassAmbiguity, int interruptNumber) {
+    try {
+      Set<LightRef.NamedLightRef> result = new THashSet<>();
+      Queue<LightRef.NamedLightRef> q = new Queue<>(10);
+      q.addLast(hierarchyElement);
+      while (!q.isEmpty()) {
+        LightRef.NamedLightRef curClass = q.pullFirst();
+        if (interruptNumber != -1 && result.size() > interruptNumber) {
+          break;
         }
-        myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
-          for (LightRef child : children) {
-            if (child instanceof LightRef.LightClassHierarchyElementDef) {
-              q.addLast((LightRef.LightClassHierarchyElementDef) child);
+        if (result.add(curClass)) {
+          if (checkBaseClassAmbiguity || curClass != hierarchyElement) {
+            if (hasMultipleDefinitions(curClass)) {
+              return null;
             }
           }
-          return true;
-        });
+          myIndex.get(CompilerIndices.BACK_HIERARCHY).getData(curClass).forEach((id, children) -> {
+            for (LightRef child : children) {
+              if (child instanceof LightRef.LightClassHierarchyElementDef && !(child instanceof LightRef.LightAnonymousClassDef)) {
+                q.addLast((LightRef.LightClassHierarchyElementDef)child);
+              }
+            }
+            return true;
+          });
+        }
       }
+      return result.toArray(LightRef.NamedLightRef.EMPTY_ARRAY);
     }
-    return result.toArray(new LightRef.NamedLightRef[result.size()]);
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private enum DefCount { NONE, ONE, MANY}

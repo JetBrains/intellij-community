@@ -16,14 +16,12 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -158,12 +156,7 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   protected <T extends OrderedOption>List<T> sortOptions(Collection<T> options) {
-    Set<String> names = new THashSet<>(ContainerUtil.map(options, new Function<OrderedOption, String>() {
-      @Override
-      public String fun(OrderedOption option) {
-        return option.getOptionName();
-      }
-    }));
+    Set<String> names = new THashSet<>(ContainerUtil.map(options, (Function<OrderedOption, String>)option -> option.getOptionName()));
 
     List<T> order = new ArrayList<>(options.size());
     MultiMap<String, T> afters = new MultiMap<>();

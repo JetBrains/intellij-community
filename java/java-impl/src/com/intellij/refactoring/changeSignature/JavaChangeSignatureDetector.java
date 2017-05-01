@@ -37,7 +37,7 @@ import java.util.List;
  * Date: Sep 6, 2010
  */
 public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetector<DetectedJavaChangeInfo> {
-  private static final Logger LOG = Logger.getInstance("#" + JavaChangeSignatureDetector.class.getName());
+  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureDetector.class);
 
   @NotNull
   @Override

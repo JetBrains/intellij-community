@@ -116,7 +116,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
 
-    assert doc == "Bar\n java.util.List&lt;java.lang.String&gt; foo(java.lang.String param)"
+    assert doc == "Bar\n List&lt;String&gt; foo(String param)"
   }
 
   void testGenericField() {
@@ -130,7 +130,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
     def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
 
-    assert doc == "Bar\n java.lang.Integer field"
+    assert doc == "Bar\n Integer field"
   }
 
   void testMethodInAnonymousClass() {

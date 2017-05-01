@@ -19,27 +19,23 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.IdeFrame
 
-/**
- * @author Alexander Lobas
- */
-
-abstract class NotificationAction : AnAction() {
+abstract class CloseNotificationAction : AnAction() {
   override fun update(e: AnActionEvent) {
     val layout = getBalloonLayout(e)
     e.presentation.isEnabled = layout != null && layout.balloonCount > 0
   }
-
-  protected fun getBalloonLayout(e: AnActionEvent) = e.getData(IdeFrame.KEY)?.balloonLayout as BalloonLayoutImpl?
 }
 
-class CloseFirstNotificationAction : NotificationAction() {
+class CloseFirstNotificationAction : CloseNotificationAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    getBalloonLayout(e)?.closeFirst()
+    getBalloonLayout(e)!!.closeFirst()
   }
 }
 
-class CloseAllNotificationsAction : NotificationAction() {
+class CloseAllNotificationsAction : CloseNotificationAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    getBalloonLayout(e)?.closeAll()
+    getBalloonLayout(e)!!.closeAll()
   }
 }
+
+private fun getBalloonLayout(e: AnActionEvent) = e.getData(IdeFrame.KEY)?.balloonLayout as BalloonLayoutImpl?

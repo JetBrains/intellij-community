@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,12 +14,11 @@ import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
-import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.TaskFile;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +26,7 @@ import java.util.Map;
 
 public class CCProjectComponent extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance(CCProjectComponent.class);
-  private final CCVirtualFileListener myTaskFileLifeListener = new CCVirtualFileListener();
+  private CCVirtualFileListener myTaskFileLifeListener;
   private final Project myProject;
 
   protected CCProjectComponent(Project project) {
@@ -47,9 +45,6 @@ public class CCProjectComponent extends AbstractProjectComponent {
       CCProjectService.getInstance(myProject).setCourse(null);
       oldCourse.initCourse(true);
       oldCourse.setCourseMode(CCUtils.COURSE_MODE);
-      File coursesDir = new File(PathManager.getConfigPath(), "courses");
-      File courseDir = new File(coursesDir, oldCourse.getName() + "-" + myProject.getName());
-      oldCourse.setCourseDirectory(courseDir.getPath());
       StudyUtils.registerStudyToolWindow(oldCourse, myProject);
       transformFiles(oldCourse, myProject);
     }
@@ -110,11 +105,22 @@ public class CCProjectComponent extends AbstractProjectComponent {
 
   public void projectOpened() {
     migrateIfNeeded();
-    VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
-    EduUsagesCollector.projectTypeOpened(CCUtils.COURSE_MODE);
+    if (CCUtils.isCourseCreator(myProject)) {
+      registerListener();
+      EduUsagesCollector.projectTypeOpened(CCUtils.COURSE_MODE);
+    }
+  }
+
+  public void registerListener() {
+    if (myTaskFileLifeListener == null) {
+      myTaskFileLifeListener = new CCVirtualFileListener(myProject);
+      VirtualFileManager.getInstance().addVirtualFileListener(myTaskFileLifeListener);
+    }
   }
 
   public void projectClosed() {
-    VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
+    if (myTaskFileLifeListener != null) {
+      VirtualFileManager.getInstance().removeVirtualFileListener(myTaskFileLifeListener);
+    }
   }
 }

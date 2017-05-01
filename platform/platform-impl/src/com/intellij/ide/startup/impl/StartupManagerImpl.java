@@ -203,7 +203,10 @@ public class StartupManagerImpl extends StartupManagerEx {
           dumbService.runWhenSmart(this);
         }
         else {
-          myPostStartupActivitiesPassed = true;
+          //noinspection SynchronizeOnThis
+          synchronized (this) {
+            myPostStartupActivitiesPassed = true;
+          }
         }
       }
     });
@@ -362,28 +365,23 @@ public class StartupManagerImpl extends StartupManagerEx {
     final Application application = ApplicationManager.getApplication();
     if (application == null) return;
 
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      // in tests which simulate project opening, post-startup activities could have been run already.
-      // Then we should act as if the project was initialized
-      boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
-      if (!initialized) {
-        registerPostStartupActivity(action);
-        return;
-      }
-    }
-
     Runnable runnable = () -> {
-      if (!myProject.isDisposed()) {
-        action.run();
+      if (myProject.isDisposed()) return;
+      
+      //noinspection SynchronizeOnThis
+      synchronized (this) {
+        // in tests which simulate project opening, post-startup activities could have been run already.
+        // Then we should act as if the project was initialized
+        boolean initialized = myProject.isInitialized() || myProject.isDefault() || application.isUnitTestMode() && myPostStartupActivitiesPassed;
+        if (!initialized) {
+          registerPostStartupActivity(action);
+          return;
+        }
       }
+
+      action.run();
     };
-    if (application.isDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      application.invokeLater(runnable, ModalityState.NON_MODAL);
-    }
+    GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.defaultModalityState());
   }
 
   @TestOnly

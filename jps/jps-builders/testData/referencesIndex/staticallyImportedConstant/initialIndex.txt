@@ -15,3 +15,5 @@ pack.Foo.CONST in Bar Foo occurrences = 2
 Class Definitions:
 pack.Bar in Bar
 pack.Foo in Foo
+
+Members Signatures:

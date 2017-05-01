@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
@@ -31,7 +30,6 @@ import com.jetbrains.python.psi.stubs.PyStarImportElementStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -71,12 +69,9 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
 
   @NotNull
   private static Iterable<PyElement> filterStarImportableNames(@NotNull Iterable<PyElement> declaredNames, @NotNull final PyFile file) {
-    return Iterables.filter(declaredNames, new Predicate<PyElement>() {
-      @Override
-      public boolean apply(@Nullable PyElement input) {
-        final String name = input != null ? input.getName() : null;
-        return name != null && PyUtil.isStarImportableFrom(name, file);
-      }
+    return Iterables.filter(declaredNames, input -> {
+      final String name = input != null ? input.getName() : null;
+      return name != null && PyUtil.isStarImportableFrom(name, file);
     });
   }
 

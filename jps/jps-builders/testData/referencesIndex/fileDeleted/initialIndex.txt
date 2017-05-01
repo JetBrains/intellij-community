@@ -13,3 +13,5 @@ java.lang.Object.<init>(0) in Bar Foo occurrences = 2
 Class Definitions:
 Bar in Bar
 Foo in Foo
+
+Members Signatures:

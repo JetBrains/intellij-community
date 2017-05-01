@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,10 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -104,7 +107,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       }
     });
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileAdapter() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull final VirtualFileEvent event) {
         myModificationTracker.incModificationCount();
@@ -151,14 +154,11 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
               final List<VirtualFile> files = new ArrayList<>();
 
               if (file.isDirectory()) {
-                ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, new ContentIterator() {
-                  @Override
-                  public boolean processFile(VirtualFile fileOrDir) {
-                    if (!fileOrDir.isDirectory() && framework.isToReformatOnCreation(fileOrDir)) {
-                      files.add(file);
-                    }
-                    return true;
+                ModuleRootManager.getInstance(module).getFileIndex().iterateContentUnderDirectory(file, fileOrDir -> {
+                  if (!fileOrDir.isDirectory() && framework.isToReformatOnCreation(fileOrDir)) {
+                    files.add(file);
                   }
+                  return true;
                 });
               }
               else {
@@ -245,12 +245,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       myOrders.add(Pair.create(on, action));
     }
     if (shouldSchedule) {
-      StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-        @Override
-        public void run() {
-          scheduleRunActions();
-        }
-      });
+      StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> scheduleRunActions());
     }
   }
 
@@ -272,7 +267,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       public Continuation performInReadAction(@NotNull final ProgressIndicator indicator) throws ProcessCanceledException {
         final Set<Trinity<Module, SyncAction, MvcFramework>> actions = isUpToDate() ? computeRawActions(orderSnapshot)
-                                                                                    : Collections.<Trinity<Module, SyncAction, MvcFramework>>emptySet();
+                                                                                    : Collections.emptySet();
         return new Continuation(() -> {
           if (isUpToDate()) {
             runActions(actions);
@@ -443,36 +438,32 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
   private void updateProjectViewVisibility() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          if (myProject.isDisposed()) return;
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+      (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
 
-          for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
-            if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
-              MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
-              String id = descriptor.getToolWindowId();
-              boolean shouldShow = descriptor.value(myProject);
+        for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
+          if (MvcToolWindowDescriptor.class.isAssignableFrom(ep.getFactoryClass())) {
+            MvcToolWindowDescriptor descriptor = (MvcToolWindowDescriptor)ep.getToolWindowFactory();
+            String id = descriptor.getToolWindowId();
+            boolean shouldShow = descriptor.value(myProject);
 
-              ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+            ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
 
-              ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
+            ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
 
-              if (shouldShow && toolWindow == null) {
-                toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
-                toolWindow.setIcon(descriptor.getFramework().getToolWindowIcon());
-                descriptor.createToolWindowContent(myProject, toolWindow);
-              }
-              else if (!shouldShow && toolWindow != null) {
-                toolWindowManager.unregisterToolWindow(id);
-                Disposer.dispose(toolWindow.getContentManager());
-              }
+            if (shouldShow && toolWindow == null) {
+              toolWindow = toolWindowManager.registerToolWindow(id, true, ToolWindowAnchor.LEFT, myProject, true);
+              toolWindow.setIcon(descriptor.getFramework().getToolWindowIcon());
+              descriptor.createToolWindowContent(myProject, toolWindow);
+            }
+            else if (!shouldShow && toolWindow != null) {
+              toolWindowManager.unregisterToolWindow(id);
+              Disposer.dispose(toolWindow.getContentManager());
             }
           }
-        });
-      }
-    });
+        }
+      }));
   }
 
 }

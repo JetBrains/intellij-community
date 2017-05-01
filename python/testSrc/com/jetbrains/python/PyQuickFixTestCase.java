@@ -29,6 +29,12 @@ import java.util.Arrays;
  */
 public abstract class PyQuickFixTestCase extends PyTestCase {
   @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myFixture.setCaresAboutInjection(false);
+  }
+
+  @Override
   @NonNls
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath() + "/quickFixes/" + getClass().getSimpleName();

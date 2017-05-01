@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,10 +265,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     public void clear() {
     }
 
-    @Override
-    public void checkConfiguration() throws RuntimeConfigurationException {
-    }
-
     ///////////////////////////////////Delegates
     @Override
     public void readExternal(final Element element) throws InvalidDataException {
@@ -317,8 +313,9 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.getOptionsForPredefinedLogFile(predefinedLogFile);
     }
 
+    @NotNull
     @Override
-    public ArrayList<PredefinedLogFile> getPredefinedLogFiles() {
+    public List<PredefinedLogFile> getPredefinedLogFiles() {
       return myConfiguration.getPredefinedLogFiles();
     }
 
@@ -328,8 +325,9 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.getAllLogFiles();
     }
 
+    @NotNull
     @Override
-    public ArrayList<LogFileOptions> getLogFiles() {
+    public List<LogFileOptions> getLogFiles() {
       return myConfiguration.getLogFiles();
     }
   }

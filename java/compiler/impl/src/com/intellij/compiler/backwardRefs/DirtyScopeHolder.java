@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,20 +212,20 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   void installVFSListener() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
+        fileChanged(event.getFile());
       }
 
       @Override
       public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-        processChange(event.getFile());
+        fileChanged(event.getFile());
       }
 
       @Override
       public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-        processChange(event.getFile());
+        fileChanged(event.getFile());
       }
 
       @Override
@@ -243,27 +243,23 @@ public class DirtyScopeHolder extends UserDataHolderBase {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName()) || VirtualFile.PROP_SYMLINK_TARGET.equals(event.getPropertyName())) {
-          processChange(event.getFile());
+          fileChanged(event.getFile());
         }
       }
 
       @Override
       public void beforeContentsChange(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
+        fileChanged(event.getFile());
       }
 
       @Override
       public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        processChange(event.getFile());
+        fileChanged(event.getFile());
       }
 
       @Override
       public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
-        processChange(event.getFile());
-      }
-
-      private void processChange(VirtualFile file) {
-        fileChanged(file);
+        fileChanged(event.getFile());
       }
 
       private void fileChanged(VirtualFile file) {

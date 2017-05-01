@@ -38,7 +38,7 @@ public class VcsPushAction extends DumbAwareAction {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     VcsRepositoryManager manager = VcsRepositoryManager.getInstance(project);
     Collection<Repository> repositories = e.getData(CommonDataKeys.EDITOR) != null
-                                          ? ContainerUtil.<Repository>emptyList()
+                                          ? ContainerUtil.emptyList()
                                           : collectRepositories(manager, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
     VirtualFile selectedFile = DvcsUtil.getSelectedFile(project);
     new VcsPushDialog(project, DvcsUtil.sortRepositories(repositories),

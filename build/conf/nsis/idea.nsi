@@ -1110,6 +1110,7 @@ custom:
 complete:
   FileClose $3
   ${UnStrRep} $2 $2 "/" "\"
+  DetailPrint "path to config/system: $2"
 FunctionEnd
 
 Function un.isIDEInUse

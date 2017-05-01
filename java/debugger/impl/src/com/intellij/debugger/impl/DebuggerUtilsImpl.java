@@ -36,7 +36,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -261,9 +261,10 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx{
     }
     Ref<T> res = Ref.create();
     while (true) {
-      if (ProgressManager.getInstance().runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
+      if (ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(() -> res.set(action.compute()))) {
         return res.get();
       }
+      ProgressIndicatorUtils.yieldToPendingWriteActions();
     }
   }
 }

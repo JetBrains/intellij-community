@@ -24,8 +24,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -136,20 +134,12 @@ public class GitChangeProvider implements ChangeProvider {
     }
     inputColl.addAll(existingInScope);
     if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
-    FileUtil.removeAncestors(inputColl, new Convertor<VirtualFile, String>() {
-                               @Override
-                               public String convert(VirtualFile o) {
-                                 return o.getPath();
+    FileUtil.removeAncestors(inputColl, o -> o.getPath(), (parent, child) -> {
+                               if (! existingInScope.contains(child) && existingInScope.contains(parent)) {
+                                 LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
+                                 ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
                                }
-                             }, new PairProcessor<VirtualFile, VirtualFile>() {
-                               @Override
-                               public boolean process(VirtualFile parent, VirtualFile child) {
-                                 if (! existingInScope.contains(child) && existingInScope.contains(parent)) {
-                                   LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
-                                   ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
-                                 }
-                                 return true;
-                               }
+                               return true;
                              }
     );
   }

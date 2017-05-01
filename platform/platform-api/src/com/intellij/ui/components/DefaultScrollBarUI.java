@@ -80,11 +80,18 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   int getThickness() {
-    return scale(myScrollBar == null || myScrollBar.isOpaque() ? myThickness : myThicknessMax);
+    return scale(myScrollBar == null || isOpaque(myScrollBar) ? myThickness : myThicknessMax);
   }
 
   int getMinimalThickness() {
     return scale(myThicknessMin);
+  }
+
+  static boolean isOpaque(JComponent c) {
+    if (c.isOpaque()) return true;
+    Container parent = c.getParent();
+    // do not allow non-opaque scroll bars, because default layout does not support them
+    return parent instanceof JScrollPane && parent.getLayout() instanceof ScrollPaneLayout.UIResource;
   }
 
   boolean isAbsolutePositioning(MouseEvent event) {
@@ -96,7 +103,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isTrackClickable() {
-    return myScrollBar.isOpaque() || myTrackAnimator.myValue > 0;
+    return isOpaque(myScrollBar) || myTrackAnimator.myValue > 0;
   }
 
   boolean isTrackExpandable() {
@@ -133,7 +140,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
-    if (!c.isOpaque()) {
+    if (!isOpaque(c)) {
       Alignment alignment = Alignment.get(c);
       if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
         int offset = getTrackOffset(width - getMinimalThickness());
@@ -233,7 +240,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
     Alignment alignment = Alignment.get(c);
     if (alignment != null && g instanceof Graphics2D) {
       Container parent = c.getParent();
-      Color background = !c.isOpaque() ? null : c.getBackground();
+      Color background = !isOpaque(c) ? null : c.getBackground();
       if (background != null) {
         g.setColor(background);
         g.fillRect(0, 0, c.getWidth(), c.getHeight());
@@ -266,7 +273,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
           }
         }
       }
-      if (!c.isOpaque() && myTrackAnimator.myValue > 0) {
+      if (!isOpaque(c) && myTrackAnimator.myValue > 0) {
         paintTrack((Graphics2D)g, bounds.x, bounds.y, bounds.width, bounds.height, c);
       }
       // process a square area before the track
@@ -397,6 +404,11 @@ class DefaultScrollBarUI extends ScrollBarUI {
         }
       }
       return true;
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent e) {
+      if (myScrollBar != null && myScrollBar.isEnabled()) redispatchIfTrackNotClickable(e);
     }
 
     @Override

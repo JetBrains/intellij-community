@@ -17,14 +17,19 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 
 
 fun getHintProviders(): List<Pair<Language, InlayParameterHintsProvider>> {
-  return Language.getRegisteredLanguages()
-    .filter { it.baseLanguage == null }
+  val name = ExtensionPointName<LanguageExtensionPoint<InlayParameterHintsProvider>>("com.intellij.codeInsight.parameterNameHints")
+  val languages = Extensions.getExtensions(name).map { it.language }
+  return languages
+    .mapNotNull { Language.findLanguageByID(it) }
     .map { it to InlayParameterHintsExtension.forLanguage(it) }
-    .filter { it.second != null }
 }
 
 

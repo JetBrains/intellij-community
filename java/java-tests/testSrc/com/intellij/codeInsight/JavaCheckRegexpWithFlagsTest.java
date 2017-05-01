@@ -30,7 +30,6 @@ import org.intellij.lang.regexp.RegExpParserDefinition;
 import org.intellij.lang.regexp.intention.CheckRegExpForm;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class JavaCheckRegexpWithFlagsTest extends CodeInsightTestCase {
@@ -77,10 +76,7 @@ public class JavaCheckRegexpWithFlagsTest extends CodeInsightTestCase {
 
     final PsiLanguageInjectionHost elementWithInjection = ((PsiLanguageInjectionHost)stringLiteralLeaf.getParent());
 
-    InjectedLanguageUtil.enumerate(elementWithInjection, file, false, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
-      @Override
-      public void visit(@NotNull final PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {
-      }
+    InjectedLanguageUtil.enumerate(elementWithInjection, file, false, (injectedPsi, places) -> {
     });
 
     assertTrue(InjectedLanguageUtil.hasInjections(elementWithInjection));

@@ -44,6 +44,7 @@ import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.Splash;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import net.miginfocom.layout.PlatformDefaults;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,7 @@ public class IdeaApplication {
   }
 
   private final String[] myArgs;
-  private boolean myPerformProjectLoad = true;
+  private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
   private volatile boolean myLoaded = false;
 
@@ -173,6 +174,9 @@ public class IdeaApplication {
       }
     }
 
+    //IDEA-170295
+    PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE);
+
     IconLoader.activate();
 
     new JFrame().pack(); // this peer will prevent shutting down our application
@@ -223,7 +227,7 @@ public class IdeaApplication {
     catch (ClassNotFoundException ignored) { }
   }
 
-  protected class IdeStarter extends ApplicationStarterEx {
+  public static class IdeStarter extends ApplicationStarterEx {
     private Splash mySplash;
 
     @Override
@@ -309,6 +313,15 @@ public class IdeaApplication {
       }
     }
 
+    private Project loadProjectFromExternalCommandLine(String[] args) {
+      Project project = null;
+      if (args != null && args.length > 0 && args[0] != null) {
+        LOG.info("IdeaApplication.loadProject");
+        project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(args), null);
+      }
+      return project;
+    }
+
     @Override
     public void main(String[] args) {
       SystemDock.updateMenu();
@@ -346,7 +359,7 @@ public class IdeaApplication {
       }, ModalityState.any());
 
       TransactionGuard.submitTransaction(app, () -> {
-        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine() : null;
+        Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine(args) : null;
         app.getMessageBus().syncPublisher(AppLifecycleListener.TOPIC).appStarting(projectFromCommandLine);
 
         //noinspection SSBasedInspection
@@ -356,15 +369,7 @@ public class IdeaApplication {
         UsageTrigger.trigger(app.getName() + "app.started");
       });
     }
-  }
 
-  private Project loadProjectFromExternalCommandLine() {
-    Project project = null;
-    if (myArgs != null && myArgs.length > 0 && myArgs[0] != null) {
-      LOG.info("IdeaApplication.loadProject");
-      project = CommandLineProcessor.processExternalCommandLine(Arrays.asList(myArgs), null);
-    }
-    return project;
   }
 
   /**

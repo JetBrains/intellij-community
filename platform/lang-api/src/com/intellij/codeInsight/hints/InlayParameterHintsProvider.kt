@@ -67,6 +67,9 @@ sealed class HintInfo {
     }
     
     open val optionName = option.name
+
+    fun isOptionEnabled(): Boolean = option.isEnabled()
+
   }
 
 }
@@ -74,6 +77,8 @@ sealed class HintInfo {
 data class Option(val id: String,
                   val name: String,
                   val defaultValue: Boolean) {
+
+  fun isEnabled() = get()
 
   fun get(): Boolean {
     return ParameterNameHintsSettings.getInstance().getOption(id) ?: defaultValue

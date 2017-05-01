@@ -946,7 +946,7 @@ public final class TreeUtil {
   }
 
   @Nullable
-  public static TreePath getSelectedPathIfOne(JTree tree) {
+  public static TreePath getSelectedPathIfOne(@NotNull JTree tree) {
     TreePath[] paths = tree.getSelectionPaths();
     return paths != null && paths.length == 1 ? paths[0] : null;
   }

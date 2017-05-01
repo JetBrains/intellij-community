@@ -395,8 +395,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(refElement);
   }
 
-  public void visitModuleStatement(PsiElement statement) {
-    visitElement(statement);
+  public void visitModuleStatement(PsiStatement statement) {
+    visitStatement(statement);
   }
 
   public void visitRequiresStatement(PsiRequiresStatement statement) {

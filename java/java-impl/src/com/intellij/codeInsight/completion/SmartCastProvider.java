@@ -54,10 +54,10 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
 
   @Override
   protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
-    addCastVariants(parameters, result.getPrefixMatcher(), result);
+    addCastVariants(parameters, result.getPrefixMatcher(), result, false);
   }
 
-  static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<LookupElement> result) {
+  static void addCastVariants(@NotNull CompletionParameters parameters, PrefixMatcher matcher, @NotNull Consumer<LookupElement> result, boolean quick) {
     if (!shouldSuggestCast(parameters)) return;
 
     PsiElement position = parameters.getPosition();
@@ -74,7 +74,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
         }
         ExpectedTypeInfo info = getParenthesizedCastExpectationByOperandType(position);
         if (info != null) {
-          addHierarchyTypes(parameters, matcher, info, type -> result.consume(PsiTypeLookupItem.createLookupItem(type, parent)));
+          addHierarchyTypes(parameters, matcher, info, type -> result.consume(PsiTypeLookupItem.createLookupItem(type, parent)), quick);
         }
         return;
       }
@@ -119,7 +119,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
            new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE, null, () -> null);
   }
 
-  private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<PsiType> result) {
+  private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<PsiType> result, boolean quick) {
     PsiType infoType = info.getType();
     PsiClass infoClass = PsiUtil.resolveClassInClassTypeOnly(infoType);
     if (info.getKind() == ExpectedTypeInfo.TYPE_OR_SUPERTYPE) {
@@ -129,7 +129,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
         }
         return true;
       });
-    } else if (infoType instanceof PsiClassType) {
+    } else if (infoType instanceof PsiClassType && !quick) {
       JavaInheritorsGetter.processInheritors(parameters, Collections.singleton((PsiClassType)infoType), matcher, type -> {
         if (!infoType.equals(type)) {
           result.consume(type);

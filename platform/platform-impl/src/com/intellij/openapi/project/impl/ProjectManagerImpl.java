@@ -62,7 +62,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -485,13 +484,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @Override
   @Nullable
   public Project convertAndLoadProject(@NotNull String filePath) throws IOException {
-    final String fp = toCanonicalName(filePath);
-    final ConversionResult conversionResult = ConversionService.getInstance().convert(fp);
+    final String canonicalFilePath = toCanonicalName(filePath);
+    final ConversionResult conversionResult = ConversionService.getInstance().convert(canonicalFilePath);
     if (conversionResult.openingIsCanceled()) {
       return null;
     }
 
-    ProjectImpl project = createProject(null, toCanonicalName(filePath), false);
+    ProjectImpl project = createProject(null, canonicalFilePath, false);
     if (!loadProjectWithProgress(project)) return null;
     if (!conversionResult.conversionNotNeeded()) {
       StartupManager.getInstance(project).registerPostStartupActivity(() -> conversionResult.postStartupActivity(project));

@@ -7,29 +7,41 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.util.DirectoryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.PathUtil;
 import com.jetbrains.edu.coursecreator.settings.CCSettings;
-import com.jetbrains.edu.learning.actions.StudyCheckAction;
+import com.jetbrains.edu.learning.checker.PyStudyTaskChecker;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.tasks.PyCharmTask;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
+import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
+import com.jetbrains.python.PythonModuleTypeBase;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 public class PyEduPluginConfigurator implements EduPluginConfigurator {
   public static final String PYTHON_3 = "3.x";
   public static final String PYTHON_2 = "2.x";
   private static final String TESTS_PY = "tests.py";
   private static final Logger LOG = Logger.getInstance(PyEduPluginConfigurator.class);
+  private static final String COURSE_NAME = "Introduction to Python.zip";
 
   @NotNull
   @Override
@@ -65,18 +77,17 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public boolean excludeFromArchive(@NotNull File pathname) {
-    String name = pathname.getName();
-    return name.contains("__pycache__") || name.contains(".pyc");
+  public boolean excludeFromArchive(@NotNull String path) {
+    return path.contains("__pycache__") || path.endsWith(".pyc");
   }
 
   @Override
   public boolean isTestFile(VirtualFile file) {
     String name = file.getName();
-    if (EduNames.TESTS_FILE.equals(name)) {
+    if (TESTS_PY.equals(name)) {
       return true;
     }
-    return name.contains(FileUtil.getNameWithoutExtension(EduNames.TESTS_FILE)) && name.contains(EduNames.SUBTASK_MARKER);
+    return name.contains(FileUtil.getNameWithoutExtension(TESTS_PY)) && name.contains(EduNames.SUBTASK_MARKER);
   }
 
   @Override
@@ -90,7 +101,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try {
         PsiDirectory taskPsiDir = PsiManager.getInstance(project).findDirectory(taskDir);
-        FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate(EduNames.TESTS_FILE);
+        FileTemplate testsTemplate = FileTemplateManager.getInstance(project).getInternalTemplate(TESTS_PY);
         if (taskPsiDir == null || testsTemplate == null) {
           return;
         }
@@ -104,10 +115,10 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
 
   @NotNull
   public static String getSubtaskTestsFileName(int index) {
-    return index == 0 ? EduNames.TESTS_FILE : FileUtil.getNameWithoutExtension(EduNames.TESTS_FILE) +
+    return index == 0 ? TESTS_PY : FileUtil.getNameWithoutExtension(TESTS_PY) +
                                               EduNames.SUBTASK_MARKER +
                                               index + "." +
-                                              FileUtilRt.getExtension(EduNames.TESTS_FILE);
+                                              FileUtilRt.getExtension(TESTS_PY);
   }
 
   @NotNull
@@ -123,7 +134,50 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   }
 
   @Override
-  public StudyCheckAction getCheckAction() {
-    return new PyStudyCheckAction();
+  @NotNull
+  public StudyTaskChecker<PyCharmTask> getPyCharmTaskChecker(@NotNull PyCharmTask task, @NotNull Project project) {
+    return new PyStudyTaskChecker(task, project);
+  }
+
+  @Override
+  public List<String> getBundledCoursePaths() {
+    @NonNls String jarPath = PathUtil.getJarPathForClass(PyEduPluginConfigurator.class);
+
+    if (jarPath.endsWith(".jar")) {
+      final File jarFile = new File(jarPath);
+
+      File pluginBaseDir = jarFile.getParentFile();
+      return Collections.singletonList(new File(new File(pluginBaseDir, "courses"), COURSE_NAME).getPath());
+    }
+
+    return Collections.singletonList(new File(new File(jarPath, "courses"), COURSE_NAME).getPath());
+  }
+
+  @Override
+  public EduCourseProjectGenerator getEduCourseProjectGenerator() {
+    return new PyStudyDirectoryProjectGenerator();
+  }
+
+  public ModuleType getModuleType() {
+    return PythonModuleTypeBase.getInstance();
+  }
+
+  @Override
+  public void configureModule(@NotNull Module module) {
+    final Project project = module.getProject();
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+      final VirtualFile baseDir = project.getBaseDir();
+      final String testHelper = EduNames.TEST_HELPER;
+      if (baseDir.findChild(testHelper) != null) return;
+      final FileTemplate template = FileTemplateManager.getInstance(project).getInternalTemplate("test_helper");
+      final PsiDirectory projectDir = PsiManager.getInstance(project).findDirectory(baseDir);
+      if (projectDir == null) return;
+      try {
+        FileTemplateUtil.createFromTemplate(template, testHelper, null, projectDir);
+      }
+      catch (Exception exception) {
+        LOG.error("Can't copy test_helper.py " + exception.getMessage());
+      }
+    });
   }
 }

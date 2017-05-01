@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,21 +56,21 @@ public class ConstantPool implements NewClassNameBuilder {
           break;
 
         case CodeConstants.CONSTANT_Integer:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Integer, new Integer(in.readInt())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Integer, Integer.valueOf(in.readInt())));
           break;
 
         case CodeConstants.CONSTANT_Float:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Float, new Float(in.readFloat())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Float, Float.valueOf(in.readFloat())));
           break;
 
         case CodeConstants.CONSTANT_Long:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Long, new Long(in.readLong())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Long, Long.valueOf(in.readLong())));
           pool.add(null);
           i++;
           break;
 
         case CodeConstants.CONSTANT_Double:
-          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Double, new Double(in.readDouble())));
+          pool.add(new PrimitiveConstant(CodeConstants.CONSTANT_Double, Double.valueOf(in.readDouble())));
           pool.add(null);
           i++;
           break;

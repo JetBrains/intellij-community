@@ -60,7 +60,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Date: Apr 24, 2009 3:17:59 AM
  */
 public class AddImportHelper {
-  private static final Logger LOG = Logger.getInstance("#" + AddImportHelper.class.getName());
+  private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
 
   // normal imports go first, then "from" imports
   private static final Comparator<PyImportStatementBase> IMPORT_TYPE_COMPARATOR = (import1, import2) -> {

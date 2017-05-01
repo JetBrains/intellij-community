@@ -1,3 +1,5 @@
+build/dependencies/.gradle
+build/dependencies/build
 /android
 /config
 /system
@@ -7,3 +9,5 @@
 /test-system
 /test-config
 *.pyc
+.idea/libraries/Gradle__*.xml
+.idea/gradle_extensions.xml

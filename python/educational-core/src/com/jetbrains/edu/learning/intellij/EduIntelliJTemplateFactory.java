@@ -5,10 +5,16 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
+import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.intellij.stepik.EduRemoteCourseTemplate;
+import com.jetbrains.edu.learning.stepic.EduCourseUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @SuppressWarnings("unused") //used in other educational plugins that are stored in separate repository
 public class EduIntelliJTemplateFactory extends ProjectTemplatesFactory {
@@ -23,7 +29,13 @@ public class EduIntelliJTemplateFactory extends ProjectTemplatesFactory {
   @NotNull
   @Override
   public ProjectTemplate[] createTemplates(@Nullable String group, WizardContext context) {
-    return ApplicationManager.getApplication().getExtensions(EduIntelliJProjectTemplate.EP_NAME);
+    final ArrayList<EduIntelliJProjectTemplate> templates = new ArrayList<>();
+    final List<Course> courses = EduCourseUpdater.getInstance().getRemoteCourses();
+    for (Course course : courses) {
+      templates.add(new EduRemoteCourseTemplate(course));
+    }
+    Collections.addAll(templates, ApplicationManager.getApplication().getExtensions(EduIntelliJProjectTemplate.EP_NAME));
+    return templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
   @Override

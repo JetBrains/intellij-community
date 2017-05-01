@@ -41,7 +41,7 @@ import java.util.Set;
 
 public class PackagePatternProvider extends PatternDialectProvider {
   @NonNls public static final String PACKAGES = "package";
-  private static final Logger LOG = Logger.getInstance("#" + PackagePatternProvider.class.getName());
+  private static final Logger LOG = Logger.getInstance(PackagePatternProvider.class);
 
   @Nullable
   private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {

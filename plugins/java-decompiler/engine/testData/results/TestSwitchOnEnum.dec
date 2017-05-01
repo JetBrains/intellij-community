@@ -1,0 +1,36 @@
+package pkg;
+
+import java.util.concurrent.TimeUnit;
+
+public class TestSwitchOnEnum {
+   int myInt;
+
+   public int testSOE(TimeUnit t) {
+      switch(t) {// 14
+      case MICROSECONDS:
+         return 2;// 16
+      case SECONDS:
+         return 1;// 18
+      default:
+         return 0;// 20
+      }
+   }
+}
+
+class 'pkg/TestSwitchOnEnum' {
+   method 'testSOE (Ljava/util/concurrent/TimeUnit;)I' {
+      8      8
+      24      10
+      25      10
+      26      12
+      27      12
+      28      14
+      29      14
+   }
+}
+
+Lines mapping:
+14 <-> 9
+16 <-> 11
+18 <-> 13
+20 <-> 15

@@ -56,7 +56,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private List<RefElement> myOutReferences;
   private List<RefElement> myInReferences;
 
-  private String[] mySuppressions = null;
+  private String[] mySuppressions;
 
   private boolean myIsDeleted ;
   protected static final int IS_REACHABLE_MASK = 0x40;

@@ -112,7 +112,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         BuildNumber currentBuild = ApplicationInfo.getInstance().getBuild();
-        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLasBuildChecked());
+        BuildNumber lastBuildChecked = BuildNumber.fromString(mySettings.getLastBuildChecked());
         long timeSinceLastCheck = max(System.currentTimeMillis() - mySettings.getLastTimeChecked(), 0);
 
         if (lastBuildChecked == null || currentBuild.compareTo(lastBuildChecked) > 0 || timeSinceLastCheck >= CHECK_INTERVAL) {

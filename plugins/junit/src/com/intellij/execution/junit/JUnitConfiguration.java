@@ -656,7 +656,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         String fqName = myPattern.iterator().next();
         String firstName =
           fqName.contains("*") ? fqName
-                               : StringUtil.getShortName(fqName.contains(",") ? StringUtil.getPackageName(fqName, ',') : fqName);
+                               : StringUtil.getShortName(fqName.contains("(") ? StringUtil.getPackageName(fqName, '(') : fqName);
         return firstName + (size > 1 ? " and " + (size - 1) + " more" : "");
       }
       if (TEST_CATEGORY.equals(TEST_OBJECT)) {

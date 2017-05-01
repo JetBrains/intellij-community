@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public class PsiMethodReferenceUtil {
-  private static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceUtil.class.getName());
+  private static final Logger LOG = Logger.getInstance(PsiMethodReferenceUtil.class);
 
   public static boolean isSecondSearchPossible(PsiType[] parameterTypes,
                                                QualifierResolveResult qualifierResolveResult,

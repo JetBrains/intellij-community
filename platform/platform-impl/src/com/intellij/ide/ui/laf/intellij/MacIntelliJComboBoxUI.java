@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -170,7 +171,7 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
             @Override
             public Color getBackground() {
-              if (!isEnabled()) {
+              if (!comboBox.isEnabled()) {
                 return UIManager.getColor("ComboBox.disabledBackground");
               }
               return super.getBackground();
@@ -368,11 +369,26 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
     Rectangle bounds = rectangleForCurrentValue();
 
     if ( !comboBox.isEditable() ) {
+      listBox.setForeground(comboBox.isEnabled() ? UIManager.getColor("Label.foreground") : UIManager.getColor("Label.disabledForeground"));
       paintCurrentValue(g, bounds, comboBox.isPopupVisible());
     }
   }
 
   @Nullable Rectangle getArrowButtonBounds() {
     return arrowButton != null ? arrowButton.getBounds() : null;
+  }
+
+  @Override
+  protected void configureEditor() {
+    super.configureEditor();
+    if (Registry.is("ide.ui.composite.editor.for.combobox")) {
+      // BasicComboboxUI sets focusability depending on the combobox focusability.
+      // JPanel usually is unfocusable and uneditable.
+      // It could be set as an editor when people want to have a composite component as an editor.
+      // In such cases we should restore unfocusable state for panels.
+      if (editor instanceof JPanel) {
+        editor.setFocusable(false);
+      }
+    }
   }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
@@ -54,8 +55,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class PyDataViewerPanel extends JPanel {
-  private final static int COLUMNS_IN_DEFAULT_VIEW = 1000;
-  private final static int ROWS_IN_DEFAULT_VIEW = 1000;
   private static final Logger LOG = Logger.getInstance(PyDataViewerPanel.class);
   private final Project myProject;
   @NotNull private final PyFrameAccessor myFrameAccessor;
@@ -64,6 +63,7 @@ public class PyDataViewerPanel extends JPanel {
   private EditorTextField myFormatTextField;
   private JPanel myMainPanel;
   private JBLabel myErrorLabel;
+  @SuppressWarnings("unused") private JBScrollPane myScrollPane;
   private boolean myColored;
   List<Listener> myListeners;
 
@@ -126,6 +126,7 @@ public class PyDataViewerPanel extends JPanel {
     addCompletion();
 
     myTable = new JBTableWithRowHeaders();
+    myScrollPane = myTable.getScrollPane();
   }
 
   private void addCompletion() {
@@ -178,8 +179,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   private void updateUI(@NotNull ArrayChunk chunk, @NotNull PyDebugValue debugValue, @NotNull DataViewStrategy strategy) {
-    AsyncArrayTableModel model = strategy.createTableModel(Math.min(chunk.getRows(), ROWS_IN_DEFAULT_VIEW),
-                                                           Math.min(chunk.getColumns(), COLUMNS_IN_DEFAULT_VIEW), this, debugValue);
+    AsyncArrayTableModel model = strategy.createTableModel(chunk.getRows(), chunk.getColumns(), this, debugValue);
     model.addToCache(chunk);
 
     UIUtil.invokeLaterIfNeeded(() -> {
