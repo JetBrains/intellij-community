@@ -160,7 +160,7 @@ public class EditableSchemesCombo<T extends Scheme> {
 
       @Override
       protected int getIndent(@NotNull T scheme) {
-        return mySchemesPanel.getModel().getIndent(scheme);
+        return mySchemesPanel.getIndent(scheme);
       }
 
       @NotNull
