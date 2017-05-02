@@ -43,6 +43,7 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
   protected void setUp() throws Exception {
     super.setUp();
     HgVcs hgVcs = ObjectUtils.assertNotNull(HgVcs.getInstance(myProject));
+    hgVcs.getProjectSettings().setCheckIncomingOutgoing(false);
     hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
   }
 
