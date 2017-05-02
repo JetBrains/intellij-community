@@ -12,7 +12,7 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.WeigherExtensionPoint
-import com.jetbrains.completion.ranker.features.CompletionState
+import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
@@ -140,7 +140,7 @@ class X {
         val lookupElements = lookup.getRelevanceObjects(items, false)
 
         lookupElements.forEach { element, relevance ->
-            val weights = relevance.associate { it.first to it.second }
+            val weights: Map<String, Any?> = relevance.associate { it.first to it.second }
             val ml_rank = weights["ml_rank"]?.toString()
             if (ml_rank == "UNDEFINED") {
                 throw UnsupportedOperationException("Ranking failed")
@@ -148,10 +148,10 @@ class X {
             
             val old_order = weights["before_rerank_order"].toString().toInt()
 
-            val state = CompletionState(old_order, prefixLength, element.lookupString.length)
+            val state = LookupElementInfo(old_order, prefixLength, element.lookupString.length)
             
             //todo check this shit
-            val calculated_ml_rank = ranker.rank(state, relevance)
+            val calculated_ml_rank = ranker.rank(state, weights)
             
             TestCase.assertTrue(
                     "Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}", 

@@ -6,7 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.Pair
-import com.jetbrains.completion.ranker.features.CompletionState
+import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.jetbrains.completion.ranker.features.FeatureUtils
 
 class MLSorterFactory : CompletionFinalSorter.Factory {
@@ -27,7 +27,7 @@ class MLSorter : CompletionFinalSorter() {
         if (hasUnknownFeatures) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
         }
-        
+
         return items.associate {
             val result = mutableListOf<Pair<String, Any>>()
             val cached = cachedScore[it]
@@ -43,7 +43,7 @@ class MLSorter : CompletionFinalSorter() {
         if (!isMlSortingEnabled()) return items
 
         val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
-        val relevanceObjects = lookup.getRelevanceObjects(items, false)
+        val relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>> = lookup.getRelevanceObjects(items, false)
 
         val startTime = System.currentTimeMillis()
         val sorted = sortByMLRanking(items, lookup, relevanceObjects) ?: return items
@@ -60,12 +60,12 @@ class MLSorter : CompletionFinalSorter() {
      */
     private fun sortByMLRanking(items: MutableIterable<LookupElement>,
                                 lookup: LookupImpl,
-                                relevanceObjects: Map<LookupElement, List<Pair<String, Any>>>): Iterable<LookupElement>?
+                                relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
-                    val rank = calculateElementRank(lookup, lookupElement, index, relevance) ?: return null
+                    val rank: Double = calculateElementRank(lookup, lookupElement, index, relevance) ?: return null
                     lookupElement to rank
                 }
                 .sortedByDescending { it.second }
@@ -88,7 +88,7 @@ class MLSorter : CompletionFinalSorter() {
     private fun calculateElementRank(lookup: LookupImpl, 
                                      element: LookupElement, 
                                      position: Int, 
-                                     relevance: List<Pair<String, Any>>): Double? 
+                                     relevance: List<Pair<String, Any?>>): Double?
     {
         val cachedWeight = getCachedRankInfo(lookup, element)
         if (cachedWeight != null) {
@@ -98,15 +98,10 @@ class MLSorter : CompletionFinalSorter() {
         val prefixLength = lookup.getPrefixLength(element)
         val elementLength = element.lookupString.length
 
-        val state = CompletionState(position, query_length = prefixLength, result_length = elementLength)
+        val state = LookupElementInfo(position, query_length = prefixLength, result_length = elementLength)
 
-        //TODO remove toMutableMap
-        val mutableRelevanceMap = relevance
-                .filter { it.second != null }
-                .associate { it.first to it.second }
-                .toMutableMap()
-
-        val mlRank = ranker.rank(state, mutableRelevanceMap) ?: return null
+        val relevanceMap = relevance.associate { it.first to it.second }
+        val mlRank = ranker.rank(state, relevanceMap) ?: return null
 
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info

@@ -19,7 +19,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.openapi.components.ServiceManager
 import com.jetbrains.completion.ranker.CompletionRanker
-import com.jetbrains.completion.ranker.features.CompletionState
+import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.jetbrains.completion.ranker.features.FeatureReader.binaryFactors
 import com.jetbrains.completion.ranker.features.FeatureReader.categoricalFactors
 import com.jetbrains.completion.ranker.features.FeatureReader.completionFactors
@@ -34,8 +34,10 @@ interface Ranker {
 
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
+     * @param state
+     * @param relevance map from LookupArranger.getRelevanceObjects
      */
-    fun rank(state: CompletionState, lookupRelevance: MutableMap<String, Any>): Double?
+    fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double?
 
     companion object {
         fun getInstance(): Ranker = ServiceManager.getService(Ranker::class.java)
@@ -75,14 +77,14 @@ class MLRanker(val provider: FeatureTransformerProvider): Ranker {
     private val featureTransformer = provider.featureTransformer
     private val ranker = CompletionRanker()
     
-    override fun rank(state: CompletionState, lookupRelevance: MutableMap<String, Any>): Double? {
-        val featureArray = featureTransformer.featureArray(state, lookupRelevance)
+    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double? {
+        val featureArray = featureTransformer.featureArray(state, relevance)
         if (featureArray != null) {
             return ranker.rank(featureArray)
         }
         return null
     }
-    
+
 }
 
 fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.enabled", true)
