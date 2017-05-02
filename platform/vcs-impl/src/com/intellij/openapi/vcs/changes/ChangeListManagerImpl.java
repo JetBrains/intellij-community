@@ -1270,9 +1270,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       worker = myWorker.copy();
     }
     ChangeListManagerSerialization.writeExternal(element, ignoredFilesComponent, worker);
-    if (myExcludedConvertedToIgnored) {
-      JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, String.valueOf(true));
-    }
+    JDOMExternalizerUtil.writeField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION, Boolean.toString(myExcludedConvertedToIgnored), Boolean.toString(false));
     myConflictTracker.saveState(element);
     return element;
   }
