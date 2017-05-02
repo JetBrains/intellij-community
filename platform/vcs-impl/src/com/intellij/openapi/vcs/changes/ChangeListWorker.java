@@ -126,7 +126,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     for (FilePath filePath : moves.keySet()) {
       final List<Pair<Change, String>> copies = (List<Pair<Change, String>>)moves.get(filePath);
       if (copies.size() == 1) continue;
-      copies.sort(MyChangesAfterRevisionComparator.getInstance());
+      copies.sort(CHANGES_AFTER_REVISION_COMPARATOR);
       for (int i = 0; i < (copies.size() - 1); i++) {
         somethingChanged = true;
         final Pair<Change, String> item = copies.get(i);
@@ -749,20 +749,11 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     }
   }
 
-  // assumes after revisions are all not null
-  private static class MyChangesAfterRevisionComparator implements Comparator<Pair<Change, String>> {
-    private static final MyChangesAfterRevisionComparator ourInstance = new MyChangesAfterRevisionComparator();
-
-    public static MyChangesAfterRevisionComparator getInstance() {
-      return ourInstance;
-    }
-
-    public int compare(final Pair<Change, String> o1, final Pair<Change, String> o2) {
-      final String s1 = o1.getFirst().getAfterRevision().getFile().getPresentableUrl();
-      final String s2 = o2.getFirst().getAfterRevision().getFile().getPresentableUrl();
-      return SystemInfo.isFileSystemCaseSensitive ? s1.compareTo(s2) : s1.compareToIgnoreCase(s2);
-    }
-  }
+  private final Comparator<Pair<Change, String>> CHANGES_AFTER_REVISION_COMPARATOR = (o1, o2) -> {
+    String s1 = o1.getFirst().getAfterRevision().getFile().getPresentableUrl();
+    String s2 = o2.getFirst().getAfterRevision().getFile().getPresentableUrl();
+    return SystemInfo.isFileSystemCaseSensitive ? s1.compareTo(s2) : s1.compareToIgnoreCase(s2);
+  };
 
   @Override
   public String toString() {
