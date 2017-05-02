@@ -10,6 +10,8 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.WeigherExtensionPoint
+import com.intellij.stats.completion.ResponseData
+import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import org.assertj.core.api.Assertions
 
@@ -28,6 +30,18 @@ class CompletionOrderWithFakeRankerTest : LightFixtureCompletionTestCase() {
         val name = ExtensionPointName<WeigherExtensionPoint>("com.intellij.weigher")
         point = Extensions.getRootArea().getExtensionPoint(name)
         point.registerExtension(fakeWeigherExt, LoadingOrder.before("templates"))
+
+        DumbRequestService.onAnyRequestReturn = ResponseData(200, """{
+  "status" : "ok",
+  "salt":"a777b8ad",
+  "experimentVersion":2,
+  "url": "http://test.jetstat-resty.aws.intellij.net/uploadstats",
+  "urlForZipBase64Content": "http://test.jetstat-resty.aws.intellij.net/uploadstats/compressed",
+  "performExperiment": true
+}
+""")
+
+        WebServiceStatus.getInstance().updateStatus()
     }
 
     override fun tearDown() {

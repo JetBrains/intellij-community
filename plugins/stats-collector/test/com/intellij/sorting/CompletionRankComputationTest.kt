@@ -7,6 +7,8 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.sorting.Samples.classNameCompletion
 import com.intellij.sorting.Samples.classText
 import com.intellij.sorting.Samples.methodCompletion
+import com.intellij.stats.completion.ResponseData
+import com.intellij.stats.completion.experiment.WebServiceStatus
 import org.assertj.core.api.Assertions.assertThat
 
 
@@ -17,6 +19,18 @@ class CompletionOrderTest : LightFixtureCompletionTestCase() {
     override fun setUp() {
         super.setUp()
         ranker = Ranker.getInstance()
+
+        DumbRequestService.onAnyRequestReturn = ResponseData(200, """{
+  "status" : "ok",
+  "salt":"a777b8ad",
+  "experimentVersion":2,
+  "url": "http://test.jetstat-resty.aws.intellij.net/uploadstats",
+  "urlForZipBase64Content": "http://test.jetstat-resty.aws.intellij.net/uploadstats/compressed",
+  "performExperiment": true
+}
+""")
+
+        WebServiceStatus.getInstance().updateStatus()
     }
 
     fun `test class name completion reranking`() {

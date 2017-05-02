@@ -4,6 +4,8 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.stats.completion.ResponseData
+import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import org.assertj.core.api.Assertions.assertThat
@@ -43,6 +45,17 @@ class CompletionRerankingTest : LightFixtureCompletionTestCase() {
         
         myFixture.addClass(testInterface)
         myFixture.configureByText(JavaFileType.INSTANCE, text)
+
+        DumbRequestService.onAnyRequestReturn = ResponseData(200, """{
+  "status" : "ok",
+  "salt":"a777b8ad",
+  "experimentVersion":2,
+  "url": "http://test.jetstat-resty.aws.intellij.net/uploadstats",
+  "urlForZipBase64Content": "http://test.jetstat-resty.aws.intellij.net/uploadstats/compressed",
+  "performExperiment": true
+}
+""")
+        WebServiceStatus.getInstance().updateStatus()
     }
 
     override fun tearDown() {

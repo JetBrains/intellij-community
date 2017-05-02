@@ -5,9 +5,12 @@ import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.psi.PsiMethod
+import com.intellij.stats.completion.RequestService
+import com.intellij.stats.completion.ResponseData
 import com.intellij.stats.completion.experiment.ExperimentDecision
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import org.assertj.core.api.Assertions
+import java.io.File
 
 
 internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
@@ -17,7 +20,7 @@ internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
     lookupElements.forEach { element, relevance ->
         val weights: Map<String, Any?> = relevance.associate { it.first to it.second }
         val ml_rank = weights["ml_rank"]?.toString()
-        if (ml_rank == "UNDEFINED") {
+        if (ml_rank == "UNDEFINED" || weights["before_rerank_order"] == null) {
             throw UnsupportedOperationException("Ranking failed")
         }
 
@@ -52,6 +55,19 @@ internal class TestExperimentDecision: ExperimentDecision {
         var isPerformExperiment = true
     }
     override fun isPerformExperiment(salt: String) = isPerformExperiment
+}
+
+internal class DumbRequestService : RequestService() {
+
+    companion object {
+        var onAnyRequestReturn: ResponseData? = null
+    }
+
+    override fun post(url: String, params: Map<String, String>) = onAnyRequestReturn
+    override fun post(url: String, file: File) = onAnyRequestReturn
+    override fun postZipped(url: String, file: File) = onAnyRequestReturn
+    override fun get(url: String) = onAnyRequestReturn
+
 }
 
 
