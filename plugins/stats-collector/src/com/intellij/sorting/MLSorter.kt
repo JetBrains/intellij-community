@@ -5,12 +5,17 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
 import com.intellij.plugin.isMlSortingEnabledByForce
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 
+@Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
     override fun newSorter() = MLSorter()
 }
@@ -22,12 +27,11 @@ class MLSorter : CompletionFinalSorter() {
     private val cachedScore = mutableMapOf<LookupElement, ItemRankInfo>()
 
     override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
-        if (!shouldSortByMlRank()) {
+        if (cachedScore.isEmpty()) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.NONE as Any)) }
         }
-        
-        val hasUnknownFeatures = items.find { cachedScore[it] == null } != null
-        if (hasUnknownFeatures) {
+
+        if (hasUnknownFeatures(items)) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
         }
 
@@ -42,11 +46,16 @@ class MLSorter : CompletionFinalSorter() {
         }
     }
 
+    private fun hasUnknownFeatures(items: Iterable<LookupElement>) = items.any {
+        val score = cachedScore[it]
+        score == null || score.mlRank == null
+    }
+
     override fun sort(items: MutableIterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
-        if (!shouldSortByMlRank()) return items
+        if (!shouldSortByMlRank(parameters)) return items
 
         val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
-        val relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>> = lookup.getRelevanceObjects(items, false)
+        val relevanceObjects = lookup.getRelevanceObjects(items, false)
 
         val startTime = System.currentTimeMillis()
         val sorted = sortByMLRanking(items, lookup, relevanceObjects) ?: return items
@@ -58,12 +67,22 @@ class MLSorter : CompletionFinalSorter() {
         return sorted
     }
 
-    private fun shouldSortByMlRank(): Boolean {
-        if (isMlSortingEnabledByForce()) {
-            return true
+    private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
+        val language = parameters.language() ?: return false
+        val buildNumber = PluginManager.BUILD_NUMBER
+
+        if (ApplicationManager.getApplication().isUnitTestMode) return true
+        if (isMlSortingEnabledByForce()) return true
+
+        if (is171Branch(buildNumber) && isJava(language)) {
+            return statusInfoProvider.isPerformExperiment()
         }
-        return statusInfoProvider.isPerformExperiment()
+        return false
     }
+
+    private fun isJava(language: Language) = "Java".equals(language.displayName, ignoreCase = true)
+
+    private fun is171Branch(buildNumber: String) = buildNumber.contains("-171.")
 
     /**
      * Null means we encountered unknown features and are unable to sort them
@@ -111,19 +130,23 @@ class MLSorter : CompletionFinalSorter() {
         val state = LookupElementInfo(position, query_length = prefixLength, result_length = elementLength)
 
         val relevanceMap = relevance.associate { it.first to it.second }
-        val mlRank = ranker.rank(state, relevanceMap) ?: return null
-
+        val mlRank: Double? = ranker.rank(state, relevanceMap)
         val info = ItemRankInfo(position, mlRank, prefixLength)
         cachedScore[element] = info
+
         return info.mlRank
     }
-
-
 
 
 }
 
 
-private class ItemRankInfo(val positionBefore: Int, val mlRank: Double, val prefixLength: Int)
+private class ItemRankInfo(val positionBefore: Int, val mlRank: Double?, val prefixLength: Int)
+
 
 typealias WeightedElement = Pair<LookupElement, Double>
+
+private fun CompletionParameters.language(): Language? {
+    val offset = editor.caretModel.offset
+    return  PsiUtilCore.getLanguageAtOffset(originalFile, offset)
+}

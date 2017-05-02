@@ -5,10 +5,8 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
 import com.intellij.openapi.application.PermanentInstallationID
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.events.*
 import java.util.*
@@ -93,7 +91,7 @@ class CompletionFileLogger(private val installationUID: String,
             LookupEntryInfo(id, it.lookupString.length, relevanceMap)
         }
 
-        val language = getLanguage(lookup)
+        val language = lookup.language()
 
         val ideVersion = PluginManager.BUILD_NUMBER ?: "ideVersion"
         val pluginVersion = calcPluginVersion() ?: "pluginVersion"
@@ -116,12 +114,6 @@ class CompletionFileLogger(private val installationUID: String,
         val id = PluginManager.getPluginByClassName(className)
         val plugin = PluginManager.getPlugin(id)
         return plugin?.version
-    }
-    
-    private fun getLanguage(lookup: LookupImpl): Language? {
-        val file = lookup.psiFile ?: return null
-        val offset = lookup.editor.caretModel.offset
-        return  PsiUtilCore.getLanguageAtOffset(file, offset)
     }
 
     override fun customMessage(message: String) {
@@ -200,6 +192,13 @@ class CompletionFileLogger(private val installationUID: String,
     }
 
 }
+
+fun LookupImpl.language(): Language? {
+    val file = psiFile ?: return null
+    val offset = editor.caretModel.offset
+    return  PsiUtilCore.getLanguageAtOffset(file, offset)
+}
+
 
 enum class Action {
     COMPLETION_STARTED,
