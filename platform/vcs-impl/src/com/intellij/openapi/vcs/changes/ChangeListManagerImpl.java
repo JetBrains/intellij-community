@@ -208,7 +208,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     else {
       question = String.format("<html>Empty changelists<br/>%s are no longer active.<br>Do you want to remove them?</html>",
-                               StringUtil.join(lists, (Function<ChangeList, String>)list -> StringUtil.first(list.getName(), 30, true), "<br/>"));
+                               StringUtil.join(lists, list -> StringUtil.first(list.getName(), 30, true), "<br/>"));
     }
 
     VcsConfirmationDialog dialog = new VcsConfirmationDialog(project, "Remove Empty Changelist", "Remove", "Cancel", new VcsShowConfirmationOption() {
