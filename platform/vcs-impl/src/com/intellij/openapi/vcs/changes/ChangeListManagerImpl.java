@@ -679,14 +679,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
-        try {
-          builder.setCurrent(scope);
-          changeProvider.getChanges(scope, builder, indicator, gate);
-        }
-        catch (final VcsException e) {
-          handleUpdateException(e);
-        }
+        builder.setCurrent(scope);
+        changeProvider.getChanges(scope, builder, indicator, gate);
       }
+    }
+    catch (VcsException e) {
+      handleUpdateException(e);
     }
     catch (ProcessCanceledException e) {
       throw e;
