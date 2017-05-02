@@ -86,7 +86,3 @@ class MLRanker(val provider: FeatureTransformerProvider): Ranker {
     }
 
 }
-
-fun isMlSortingEnabled(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.enabled", true)
-
-fun setMlSortingEnabled(value: Boolean) = PropertiesComponent.getInstance().setValue("ml.sorting.enabled", value, true)

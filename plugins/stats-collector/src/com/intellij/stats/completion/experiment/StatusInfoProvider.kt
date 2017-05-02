@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.PermanentInstallationID
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.assertNotEDT
@@ -12,11 +13,11 @@ class StatusInfoProvider(private val requestSender: RequestService) {
 
     companion object {
         private val gson = Gson()
-
         private val statusUrl = "https://www.jetbrains.com/config/features-service-status.json"
-
         private val salt = "completion.stats.experiment.salt"
         private val experimentVersionString = "completion.stats.experiment.version"
+
+        fun getInstance(): StatusInfoProvider = ServiceManager.getService(StatusInfoProvider::class.java)
     }
 
     @Volatile private var statusInfo = loadInfo()

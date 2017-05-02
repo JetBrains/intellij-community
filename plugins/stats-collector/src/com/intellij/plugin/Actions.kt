@@ -3,13 +3,12 @@ package com.intellij.plugin
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.sorting.isMlSortingEnabled
-import com.intellij.sorting.setMlSortingEnabled
 
 class ToggleMlSorting: AnAction() {
 
@@ -21,12 +20,12 @@ class ToggleMlSorting: AnAction() {
     }
     
     override fun update(e: AnActionEvent) {
-        e.presentation.text = if (isMlSortingEnabled()) enableText else disableText
+        e.presentation.text = if (isMlSortingEnabledByForce()) enableText else disableText
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val before = isMlSortingEnabled()
-        setMlSortingEnabled(!before)
+        val before = isMlSortingEnabledByForce()
+        setMlSortingEnabledByForce(!before)
         
         val editor = CommonDataKeys.EDITOR.getData(e.dataContext)
         val project = CommonDataKeys.PROJECT.getData(e.dataContext)
@@ -44,3 +43,8 @@ class ToggleMlSorting: AnAction() {
     }
     
 }
+
+
+fun isMlSortingEnabledByForce(): Boolean = PropertiesComponent.getInstance().getBoolean("ml.sorting.forced", false)
+
+fun setMlSortingEnabledByForce(value: Boolean) = PropertiesComponent.getInstance().setValue("ml.sorting.forced", value, false)

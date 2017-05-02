@@ -6,8 +6,10 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.Pair
-import com.jetbrains.completion.ranker.features.LookupElementInfo
+import com.intellij.plugin.isMlSortingEnabledByForce
+import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.jetbrains.completion.ranker.features.FeatureUtils
+import com.jetbrains.completion.ranker.features.LookupElementInfo
 
 class MLSorterFactory : CompletionFinalSorter.Factory {
     override fun newSorter() = MLSorter()
@@ -15,11 +17,12 @@ class MLSorterFactory : CompletionFinalSorter.Factory {
 
 class MLSorter : CompletionFinalSorter() {
 
+    private val statusInfoProvider = StatusInfoProvider.getInstance()
     private val ranker = Ranker.getInstance()
     private val cachedScore = mutableMapOf<LookupElement, ItemRankInfo>()
 
     override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
-        if (!isMlSortingEnabled()) {
+        if (!shouldSortByMlRank()) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.NONE as Any)) }
         }
         
@@ -40,7 +43,7 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     override fun sort(items: MutableIterable<LookupElement>, parameters: CompletionParameters): Iterable<LookupElement> {
-        if (!isMlSortingEnabled()) return items
+        if (!shouldSortByMlRank()) return items
 
         val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl ?: return items
         val relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>> = lookup.getRelevanceObjects(items, false)
@@ -53,6 +56,13 @@ class MLSorter : CompletionFinalSorter() {
         SortingTimeStatistics.registerSortTiming(elementsSorted, timeSpent)
         
         return sorted
+    }
+
+    private fun shouldSortByMlRank(): Boolean {
+        if (isMlSortingEnabledByForce()) {
+            return true
+        }
+        return statusInfoProvider.isPerformExperiment()
     }
 
     /**
@@ -107,6 +117,8 @@ class MLSorter : CompletionFinalSorter() {
         cachedScore[element] = info
         return info.mlRank
     }
+
+
 
 
 }
