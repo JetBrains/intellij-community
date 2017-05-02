@@ -340,6 +340,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private static class FakeGate implements ChangeListManagerGate {
+    @NotNull
     @Override
     public List<LocalChangeList> getListsCopy() {
       throw new UnsupportedOperationException();
@@ -351,33 +352,35 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       throw new UnsupportedOperationException();
     }
 
+    @NotNull
     @Override
-    public LocalChangeList addChangeList(String name, String comment) {
+    public LocalChangeList addChangeList(@NotNull String name, String comment) {
+      throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public LocalChangeList findOrCreateList(@NotNull String name, String comment) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public LocalChangeList findOrCreateList(String name, String comment) {
+    public void editComment(@NotNull String name, String comment) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void editComment(String name, String comment) {
+    public void editName(@NotNull String oldName, @NotNull String newName) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void editName(String oldName, String newName) {
+    public void setListsToDisappear(@NotNull Collection<String> names) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setListsToDisappear(Collection<String> names) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public FileStatus getStatus(VirtualFile file) {
+    public FileStatus getStatus(@NotNull VirtualFile file) {
       throw new UnsupportedOperationException();
     }
 
@@ -388,7 +391,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     }
 
     @Override
-    public FileStatus getStatus(File file) {
+    public FileStatus getStatus(@NotNull File file) {
       throw new UnsupportedOperationException();
     }
 

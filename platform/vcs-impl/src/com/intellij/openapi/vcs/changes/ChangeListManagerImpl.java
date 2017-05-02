@@ -117,7 +117,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myDirtyScopeManager = dirtyScopeManager;
   }
 
-  public ChangeListManagerImpl(Project project, final VcsConfiguration config) {
+  public ChangeListManagerImpl(@NotNull Project project, VcsConfiguration config) {
     myProject = project;
     myConfig = config;
     myChangesViewManager = myProject.isDefault() ? new DummyChangesView(myProject) : ChangesViewManager.getInstance(myProject);
@@ -577,7 +577,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                              List<VcsDirtyScope> scopes,
                              boolean wasEverythingDirty,
                              @NotNull ProgressIndicator indicator) {
-    final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
+    final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createGate();
     // do actual requests about file statuses
     Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.isStopped();
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
