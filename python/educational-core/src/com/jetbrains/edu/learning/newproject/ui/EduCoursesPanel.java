@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning.newproject.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.LabeledComponent;
@@ -16,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.courseFormat.Course;
+import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
@@ -83,8 +85,18 @@ public class EduCoursesPanel extends JPanel {
         setText(value.getName());
         DirectoryProjectGenerator generator = getGenerator(value);
         if (generator != null) {
-          setIcon(generator.getLogo());
+          boolean isPrivate = value instanceof RemoteCourse && !((RemoteCourse)value).isPublic();
+          setIcon(isPrivate ? getPrivateCourseIcon(generator.getLogo()) : generator.getLogo());
+          setToolTipText(isPrivate ? "Private course" : "");
         }
+      }
+
+      @NotNull
+      public LayeredIcon getPrivateCourseIcon(@Nullable Icon languageLogo) {
+        LayeredIcon icon = new LayeredIcon(2);
+        icon.setIcon(languageLogo, 0, 0, 0);
+        icon.setIcon(AllIcons.Ide.Readonly, 1, JBUI.scale(7), JBUI.scale(7));
+        return icon;
       }
     };
     myCoursesList.setCellRenderer(new DefaultListCellRenderer() {
