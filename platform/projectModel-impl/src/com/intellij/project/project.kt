@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.exists
 import java.nio.file.InvalidPathException
@@ -120,4 +121,11 @@ fun Project.guessProjectDir() : VirtualFile {
     }
   }
   return this.baseDir!!
+}
+
+// Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
+@JvmOverloads
+fun Project.getSystemCacheFileName(forceNameUse: Boolean = false, hashSeparator: String = "-"): String {
+  val name = if (!forceNameUse && isDirectoryBased) FileUtil.sanitizeFileName(PathUtilRt.getFileName(basePath), false) else name
+  return "$name$hashSeparator$locationHash"
 }
