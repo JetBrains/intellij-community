@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -137,6 +138,7 @@ public class EduCoursesPanel extends JPanel {
     if (!isLoggedIn()) {
       myErrorLabel.setVisible(true);
       myErrorLabel.setText(UIUtil.toHtml("<u>Log in</u> to see more courses"));
+      myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
       myErrorLabel.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
