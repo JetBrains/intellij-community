@@ -25,6 +25,8 @@ import java.awt.*;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
   public static final int NO_GRAPHICS = 1;
@@ -46,6 +48,8 @@ public class Main {
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean hasGraphics = true;
+  private static final List<String> HEADLESS_COMMANDS = Arrays.asList("ant", "duplocate", "traverseUI", "buildAppcodeCache", "format",
+                                                                     "keymap", "update", "inspections", "intentions");
 
   private Main() { }
 
@@ -107,15 +111,8 @@ public class Main {
     }
 
     String firstArg = args[0];
-    return Comparing.strEqual(firstArg, "ant") ||
-           Comparing.strEqual(firstArg, "duplocate") ||
-           Comparing.strEqual(firstArg, "traverseUI") ||
-           Comparing.strEqual(firstArg, "buildAppcodeCache") ||
-           Comparing.strEqual(firstArg, "format") ||
-           Comparing.strEqual(firstArg, "keymap") ||
-           Comparing.strEqual(firstArg, "inspections") ||
-           Comparing.strEqual(firstArg, "intentions") ||
-           firstArg.length() < 20 && firstArg.endsWith("inspect");
+    return HEADLESS_COMMANDS.contains(firstArg)
+           || firstArg.length() < 20 && firstArg.endsWith("inspect");
   }
 
   private static boolean isCommandLine(String[] args) {
