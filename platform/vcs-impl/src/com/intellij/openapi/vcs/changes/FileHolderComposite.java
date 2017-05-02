@@ -25,7 +25,7 @@ import java.util.Map;
 public class FileHolderComposite implements FileHolder {
   private final Map<HolderType, FileHolder> myHolders;
 
-  public FileHolderComposite(final Project project) {
+  public FileHolderComposite(Project project) {
     myHolders = new HashMap<>();
     add(new VirtualFileHolder(project, HolderType.UNVERSIONED));
     add(new SwitchedFileHolder(project, HolderType.ROOT_SWITCH));
@@ -37,7 +37,7 @@ public class FileHolderComposite implements FileHolder {
     add(new DeletedFilesHolder());
   }
 
-  public FileHolderComposite(final FileHolderComposite holder) {
+  public FileHolderComposite(FileHolderComposite holder) {
     myHolders = new HashMap<>();
     for (FileHolder fileHolder : holder.myHolders.values()) {
       addCopy(fileHolder);
@@ -53,28 +53,31 @@ public class FileHolderComposite implements FileHolder {
   }
 
 
+  @Override
   public void cleanAll() {
     for (FileHolder holder : myHolders.values()) {
       holder.cleanAll();
     }
   }
 
-  public void cleanAndAdjustScope(final VcsModifiableDirtyScope scope) {
+  @Override
+  public void cleanAndAdjustScope(VcsModifiableDirtyScope scope) {
     for (FileHolder holder : myHolders.values()) {
       holder.cleanAndAdjustScope(scope);
     }
   }
 
 
+  @Override
   public FileHolder copy() {
     return new FileHolderComposite(this);
   }
 
-  public FileHolder get(final HolderType type) {
+  public FileHolder get(HolderType type) {
     return myHolders.get(type);
   }
 
-  public VirtualFileHolder getVFHolder(final HolderType type) {
+  public VirtualFileHolder getVFHolder(HolderType type) {
     return (VirtualFileHolder)myHolders.get(type);
   }
 
@@ -123,10 +126,12 @@ public class FileHolderComposite implements FileHolder {
     return myHolders != null ? myHolders.hashCode() : 0;
   }
 
+  @Override
   public HolderType getType() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void notifyVcsStarted(AbstractVcs vcs) {
     for (FileHolder fileHolder : myHolders.values()) {
       fileHolder.notifyVcsStarted(vcs);
