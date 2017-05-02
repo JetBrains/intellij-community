@@ -1131,7 +1131,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       invokeAfterUpdate(() -> {
         ApplicationManager.getApplication().runReadAction(() -> {
           synchronized (myDataLock) {
-            List<Change> newChanges = findChanges(allProcessedFiles);
+            List<Change> newChanges = ContainerUtil.filter(getDefaultChangeList().getChanges(), change -> {
+              FilePath path = ChangesUtil.getAfterPath(change);
+              return path != null && allProcessedFiles.contains(path.getVirtualFile());
+            });
             foundChanges.set(newChanges);
 
             if (moveRequired && !newChanges.isEmpty()) {
@@ -1152,23 +1155,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     return exceptions;
-  }
-
-  @NotNull
-  private List<Change> findChanges(@NotNull Collection<VirtualFile> files) {
-    List<Change> result = ContainerUtil.newArrayList();
-
-    for (Change change : getDefaultChangeList().getChanges()) {
-      ContentRevision afterRevision = change.getAfterRevision();
-      if (afterRevision != null) {
-        VirtualFile file = afterRevision.getFile().getVirtualFile();
-        if (files.contains(file)) {
-          result.add(change);
-        }
-      }
-    }
-
-    return result;
   }
 
   @NotNull
