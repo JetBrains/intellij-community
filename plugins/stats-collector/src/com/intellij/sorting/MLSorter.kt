@@ -68,11 +68,10 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
+        if (isMlSortingEnabledByForce()) return true
+
         val language = parameters.language() ?: return false
         val buildNumber = PluginManager.BUILD_NUMBER
-
-        if (ApplicationManager.getApplication().isUnitTestMode) return true
-        if (isMlSortingEnabledByForce()) return true
 
         if (is171BranchOrInUnitTestMode(buildNumber) && isJava(language)) {
             return webServiceStatus.isPerformExperiment()
