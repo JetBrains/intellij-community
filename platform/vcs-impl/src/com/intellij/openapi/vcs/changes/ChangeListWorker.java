@@ -107,12 +107,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   private boolean checkForMultipleCopiesNotMove() {
     boolean somethingChanged = false;
-    final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
-      @NotNull
-      protected Collection<Pair<Change, String>> createCollection() {
-        return new LinkedList<>();
-      }
-    };
+    final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<>();
 
     for (LocalChangeList changeList : myMap.values()) {
       final Collection<Change> changes = changeList.getChanges();
