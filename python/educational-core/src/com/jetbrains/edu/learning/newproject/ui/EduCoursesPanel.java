@@ -14,9 +14,12 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
+import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +28,8 @@ import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +46,8 @@ public class EduCoursesPanel extends JPanel {
   private JBLabel myCourseNameLabel;
   private JPanel myTagsPanel;
   private JBScrollPane myInfoScroll;
+  private JBLabel myErrorLabel;
+  private JSplitPane mySplitPane;
   private JBList<Course> myCoursesList;
   private LabeledComponent<TextFieldWithBrowseButton> myLocationField;
   private List<Course> myCourses;
@@ -54,6 +61,7 @@ public class EduCoursesPanel extends JPanel {
 
   private void initUI() {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myMainPanel, true);
+    mySplitPane.setDividerLocation(0.4);
     myCourseNameLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 5, 10));
     Font labelFont = UIUtil.getLabelFont();
     myCourseNameLabel.setFont(new Font(labelFont.getName(), Font.BOLD, JBUI.scaleFontSize(18.0f)));
@@ -64,8 +72,10 @@ public class EduCoursesPanel extends JPanel {
     myDescriptionTextArea.setPreferredSize(JBUI.size(myCoursePanel.getPreferredSize()));
     myInfoScroll.setBorder(null);
     myCoursesList = new JBList<>();
-    myCourses = new StudyProjectGenerator().getCoursesUnderProgress(true, "Getting Available Courses", null);
+    myCourses = getCourses();
     updateModel(myCourses);
+    myErrorLabel.setVisible(false);
+    myErrorLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 0, 0));
 
     ListCellRendererWrapper<Course> renderer = new ListCellRendererWrapper<Course>() {
       @Override
@@ -112,6 +122,47 @@ public class EduCoursesPanel extends JPanel {
     UIUtil.setBackgroundRecursively(myCoursesList, LIST_COLOR);
     myDescriptionTextArea.setBackground(UIUtil.getPanelBackground());
     myAdvancedSettingsPlaceholder.setVisible(false);
+    if (!isLoggedIn()) {
+      myErrorLabel.setVisible(true);
+      myErrorLabel.setText(UIUtil.toHtml("<u>Log in</u> to see more courses"));
+      myErrorLabel.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          if (!isLoggedIn()) {
+            StepicUser user = EduStepicAuthorizedClient.showLoginDialog();
+            if (user != null) {
+              StudySettings.getInstance().setUser(user);
+              myCourses = getCourses();
+              updateModel(myCourses);
+              myErrorLabel.setVisible(false);
+            }
+          }
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+          if (!isLoggedIn()) {
+            e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          }
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+          if (!isLoggedIn()) {
+            e.getComponent().setCursor(Cursor.getDefaultCursor());
+          }
+        }
+      });
+    }
+  }
+
+  @NotNull
+  private static List<Course> getCourses() {
+    return new StudyProjectGenerator().getCoursesUnderProgress(true, "Getting Available Courses", null);
+  }
+
+  private static boolean isLoggedIn() {
+    return StudySettings.getInstance().getUser() != null;
   }
 
   private void updateAdvancedSettings(Course selectedCourse) {
