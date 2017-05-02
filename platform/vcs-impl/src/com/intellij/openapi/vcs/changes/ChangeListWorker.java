@@ -431,7 +431,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
                                         @NotNull List<Change> addedChanges) {
     OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
     Set<Change> changes = list.getChanges();
-    boolean changesDetected = (changes.size() != changesBeforeUpdate.size());
 
     for (Change newChange : changes) {
       Change oldChange = findOldChange(changesBeforeUpdate, newChange);
@@ -439,14 +438,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         addedChanges.add(newChange);
       }
     }
-    changesDetected |= (!addedChanges.isEmpty());
-    final List<Change> removed = new ArrayList<>(changesBeforeUpdate);
-    // since there are SAME objects...
-    removed.removeAll(changes);
-    removedChanges.addAll(removed);
-    changesDetected = changesDetected || (!removedChanges.isEmpty());
 
-    return changesDetected;
+    removedChanges.addAll(changesBeforeUpdate);
+    removedChanges.removeAll(changes);
+
+    return changes.size() != changesBeforeUpdate.size() ||
+           !addedChanges.isEmpty() ||
+           !removedChanges.isEmpty();
   }
 
   @Nullable
