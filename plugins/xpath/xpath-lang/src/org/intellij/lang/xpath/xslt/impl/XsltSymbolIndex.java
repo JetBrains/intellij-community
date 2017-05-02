@@ -213,7 +213,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         }
 
         @Override
-        public boolean process(VirtualFile file, Kind kind) {
+        public boolean process(@NotNull VirtualFile file, Kind kind) {
             if (myScope.contains(file)) {
                 final PsiFile psiFile = myMgr.findFile(file);
                 if (psiFile != null && XsltSupport.isXsltFile(psiFile)) {

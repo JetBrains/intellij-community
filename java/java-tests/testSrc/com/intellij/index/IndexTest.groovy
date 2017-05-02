@@ -574,7 +574,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       FileBasedIndex.instance.
         processValues(IdIndex.NAME, new IdIndexEntry("Foo", true), null, new FileBasedIndex.ValueProcessor<Integer>() {
           @Override
-          boolean process(VirtualFile file, Integer value) {
+          boolean process(@NotNull VirtualFile file, Integer value) {
             foundId[0] = true
             FileBasedIndex.instance.processValues(
               StubUpdatingIndex.INDEX_ID,
@@ -582,7 +582,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
               null,
               new FileBasedIndex.ValueProcessor<SerializedStubTree>() {
                 @Override
-                boolean process(VirtualFile file2, SerializedStubTree value2) {
+                boolean process(@NotNull VirtualFile file2, SerializedStubTree value2) {
                   foundStub[0] = true
                   return true
                 }
