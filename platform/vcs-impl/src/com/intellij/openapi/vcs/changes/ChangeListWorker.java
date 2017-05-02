@@ -49,7 +49,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   private final Map<String, LocalChangeListImpl> myMap;
   private LocalChangeListImpl myDefault;
 
-  private ChangeListsIndexes myIdx;
+  private final ChangeListsIndexes myIdx;
   private final ChangesDelta myDelta;
   private final Set<String> myListsToDisappear;
 
