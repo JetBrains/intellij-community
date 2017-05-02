@@ -101,7 +101,11 @@ class MLSorter : CompletionFinalSorter() {
         val state = CompletionState(position, query_length = prefixLength, result_length = elementLength)
 
         //TODO remove toMutableMap
-        val mutableRelevanceMap = relevance.associate { it.first to it.second }.toMutableMap()
+        val mutableRelevanceMap = relevance
+                .filter { it.second != null }
+                .associate { it.first to it.second }
+                .toMutableMap()
+
         val mlRank = ranker.rank(state, mutableRelevanceMap) ?: return null
 
         val info = ItemRankInfo(position, mlRank, prefixLength)
