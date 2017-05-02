@@ -812,14 +812,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   Map<VirtualFile, LogicalLock> getLogicallyLockedFolders() {
     synchronized (myDataLock) {
-      return new HashMap<>(
-        ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).getMap());
+      return new HashMap<>(myComposite.getLogicallyLockedFileHolder().getMap());
     }
   }
 
   public boolean isLogicallyLocked(final VirtualFile file) {
     synchronized (myDataLock) {
-      return ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).containsKey(file);
+      return myComposite.getLogicallyLockedFileHolder().containsKey(file);
     }
   }
 
@@ -844,7 +843,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   Map<VirtualFile, String> getSwitchedRoots() {
     synchronized (myDataLock) {
-      return ((SwitchedFileHolder)myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).getFilesMapCopy();
+      return myComposite.getRootSwitchFileHolder().getFilesMapCopy();
     }
   }
 
@@ -1425,7 +1424,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     synchronized (myDataLock) {
       final VirtualFileHolder unversionedHolder = myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED);
-      final IgnoredFilesHolder ignoredHolder = (IgnoredFilesHolder)myComposite.get(FileHolder.HolderType.IGNORED);
+      final IgnoredFilesHolder ignoredHolder = myComposite.getIgnoredFileHolder();
 
       scheduler.accept(unversionedHolder.getFiles());
       scheduler.accept(ignoredHolder.values());

@@ -189,7 +189,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      ((LogicallyLockedHolder)myComposite.get(FileHolder.HolderType.LOGICALLY_LOCKED)).add(file, logicalLock);
+      myComposite.getLogicallyLockedFileHolder().add(file, logicalLock);
     }
   }
 
@@ -206,7 +206,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
     if (file == null) return;
     checkIfDisposed();
     if (myScope.belongsTo(VcsUtil.getFilePath(file))) {
-      ((SwitchedFileHolder)myComposite.get(FileHolder.HolderType.ROOT_SWITCH)).addFile(file, branch, false);
+      myComposite.getRootSwitchFileHolder().addFile(file, branch, false);
     }
   }
 

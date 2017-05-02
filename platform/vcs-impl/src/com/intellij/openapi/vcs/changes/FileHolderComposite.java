@@ -69,8 +69,21 @@ public class FileHolderComposite implements FileHolder {
   }
 
   public VirtualFileHolder getVFHolder(final HolderType type) {
-    return (VirtualFileHolder) myHolders.get(type);
+    return (VirtualFileHolder)myHolders.get(type);
   }
+
+  public IgnoredFilesCompositeHolder getIgnoredFileHolder() {
+    return (IgnoredFilesCompositeHolder)myHolders.get(HolderType.IGNORED);
+  }
+
+  public LogicallyLockedHolder getLogicallyLockedFileHolder() {
+    return (LogicallyLockedHolder)myHolders.get(HolderType.LOGICALLY_LOCKED);
+  }
+
+  public SwitchedFileHolder getRootSwitchFileHolder() {
+    return (SwitchedFileHolder)myHolders.get(HolderType.ROOT_SWITCH);
+  }
+
 
   @Override
   public boolean equals(final Object o) {
@@ -98,10 +111,6 @@ public class FileHolderComposite implements FileHolder {
 
   public HolderType getType() {
     throw new UnsupportedOperationException();
-  }
-
-  public IgnoredFilesCompositeHolder getIgnoredFileHolder() {
-    return (IgnoredFilesCompositeHolder) myHolders.get(HolderType.IGNORED);
   }
 
   public void notifyVcsStarted(AbstractVcs vcs) {
