@@ -28,7 +28,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.colors.*;
@@ -41,6 +40,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
@@ -75,6 +75,9 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+
+import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
+import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
 public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
@@ -1417,23 +1420,53 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  public static Runnable getColorSelector(DataProvider provider, String search, String name) {
-    return getSelector(Settings.KEY.getData(provider), search, options -> options.findSubConfigurable(name));
+  public static boolean selectOrEditColor(DataContext context, String search, String name) {
+    return selectOrEdit(context, search, options -> options.findSubConfigurable(name));
   }
 
-  public static Runnable getColorSelector(DataContext context, String search, Class<?> type) {
-    return getSelector(Settings.KEY.getData(context), search, options -> options.findSubConfigurable(type));
+  public static boolean selectOrEditColor(DataContext context, String search, Class<?> type) {
+    return selectOrEdit(context, search, options -> options.findSubConfigurable(type));
   }
 
-  private static Runnable getSelector(Settings settings, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
-    if (settings == null) return null;
+  private static boolean selectOrEdit(DataContext context, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+    return select(context, search, function) || edit(context, search, function);
+  }
+
+  private static boolean select(DataContext context, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+    Settings settings = Settings.KEY.getData(context);
+    if (settings == null) return false;
 
     ColorAndFontOptions options = settings.find(ColorAndFontOptions.class);
-    if (options == null) return null;
+    if (options == null) return false;
 
     SearchableConfigurable page = function.apply(options);
-    if (page == null) return null;
+    if (page == null) return false;
 
-    return () -> settings.select(page, search);
+    settings.select(page, search);
+    return true;
+  }
+
+  private static boolean edit(DataContext context, String search, Function<ColorAndFontOptions, SearchableConfigurable> function) {
+    ColorAndFontOptions options = new ColorAndFontOptions();
+    SearchableConfigurable page = function.apply(options);
+
+    Configurable[] configurables = options.getConfigurables();
+    try {
+      if (page != null) {
+        Runnable runnable = search == null ? null : page.enableSearch(search);
+        Window window = UIUtil.getWindow(CONTEXT_COMPONENT.getData(context));
+        if (window != null) {
+          ShowSettingsUtil.getInstance().editConfigurable(window, page, runnable);
+        }
+        else {
+          ShowSettingsUtil.getInstance().editConfigurable(PROJECT.getData(context), page, runnable);
+        }
+      }
+    }
+    finally {
+      for (Configurable configurable : configurables) configurable.disposeUIResources();
+      options.disposeUIResources();
+    }
+    return page != null;
   }
 }
