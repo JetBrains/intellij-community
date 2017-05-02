@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
 import com.intellij.plugin.isMlSortingEnabledByForce
 import com.intellij.psi.util.PsiUtilCore
-import com.intellij.stats.completion.experiment.StatusInfoProvider
+import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 
@@ -22,7 +22,7 @@ class MLSorterFactory : CompletionFinalSorter.Factory {
 
 class MLSorter : CompletionFinalSorter() {
 
-    private val statusInfoProvider = StatusInfoProvider.getInstance()
+    private val webServiceStatus = WebServiceStatus.getInstance()
     private val ranker = Ranker.getInstance()
     private val cachedScore = mutableMapOf<LookupElement, ItemRankInfo>()
 
@@ -74,15 +74,18 @@ class MLSorter : CompletionFinalSorter() {
         if (ApplicationManager.getApplication().isUnitTestMode) return true
         if (isMlSortingEnabledByForce()) return true
 
-        if (is171Branch(buildNumber) && isJava(language)) {
-            return statusInfoProvider.isPerformExperiment()
+        if (is171BranchOrInUnitTestMode(buildNumber) && isJava(language)) {
+            return webServiceStatus.isPerformExperiment()
         }
+
         return false
     }
 
     private fun isJava(language: Language) = "Java".equals(language.displayName, ignoreCase = true)
 
-    private fun is171Branch(buildNumber: String) = buildNumber.contains("-171.")
+    private fun is171BranchOrInUnitTestMode(buildNumber: String): Boolean {
+        return buildNumber.contains("-171.") || ApplicationManager.getApplication().isUnitTestMode
+    }
 
     /**
      * Null means we encountered unknown features and are unable to sort them

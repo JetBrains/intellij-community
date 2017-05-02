@@ -12,11 +12,11 @@ import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.stats.completion.experiment.StatusInfoProvider
+import com.intellij.stats.completion.experiment.WebServiceStatus
 import java.beans.PropertyChangeListener
 
 
-class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInfoProvider): AbstractProjectComponent(project) {
+class CompletionTrackerInitializer(project: Project, serviceStatus: WebServiceStatus): AbstractProjectComponent(project) {
     private val lookupActionsTracker = LookupActionsListener()
     
     private val lookupTrackerInitializer = PropertyChangeListener {
@@ -26,7 +26,7 @@ class CompletionTrackerInitializer(project: Project, experimentHelper: StatusInf
         }
         else if (lookup is LookupImpl) {
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
-            val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
+            val tracker = CompletionActionsTracker(lookup, logger, serviceStatus)
             lookupActionsTracker.listener = tracker
             lookup.addLookupListener(tracker)
             lookup.setPrefixChangeListener(tracker)
@@ -129,7 +129,7 @@ class LookupActionsListener : AnActionListener.Adapter() {
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger,
-                               private val experimentHelper: StatusInfoProvider) 
+                               private val serviceStatus: WebServiceStatus)
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {
@@ -186,8 +186,8 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         completionStarted = true
         lastAction = {
-            val isPerformExperiment = experimentHelper.isPerformExperiment()
-            val experimentVersion = experimentHelper.getExperimentVersion()
+            val isPerformExperiment = serviceStatus.isPerformExperiment()
+            val experimentVersion = serviceStatus.experimentVersion()
             logger.completionStarted(lookup, isPerformExperiment, experimentVersion)
         }
     }

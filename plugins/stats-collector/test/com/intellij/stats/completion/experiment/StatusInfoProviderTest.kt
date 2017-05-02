@@ -26,9 +26,9 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
 
         infoProvider.updateStatus()
 
-        assertThat(infoProvider.getDataServerUrl()).isEqualTo("http://test.jetstat-resty.aws.intellij.net/uploadstats")
+        assertThat(infoProvider.dataServerUrl()).isEqualTo("http://test.jetstat-resty.aws.intellij.net/uploadstats")
         assertThat(infoProvider.isServerOk()).isEqualTo(true)
-        assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
+        assertThat(infoProvider.experimentVersion()).isEqualTo(2)
     }
 
     fun `test server is not ok`() {
@@ -38,28 +38,31 @@ class StatusInfoProviderTest : LightIdeaTestCase() {
         infoProvider.updateStatus()
 
         assertThat(infoProvider.isServerOk()).isEqualTo(false)
-        assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
-        assertThat(infoProvider.getDataServerUrl()).isEqualTo("http://xxx.xxx")
+        assertThat(infoProvider.experimentVersion()).isEqualTo(2)
+        assertThat(infoProvider.dataServerUrl()).isEqualTo("http://xxx.xxx")
     }
 
     fun `test round to Int`() {
         var response = newResponse("maintance", "sdfs", "2.9", "http://xxx.xxx")
         var infoProvider = getProvider(response)
         infoProvider.updateStatus()
-        assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
+        assertThat(infoProvider.experimentVersion()).isEqualTo(2)
         
         response = newResponse("maintance", "sdfs", "2.1", "http://xxx.xxx")
         infoProvider = getProvider(response)
         infoProvider.updateStatus()
-        assertThat(infoProvider.getExperimentVersion()).isEqualTo(2)
+        assertThat(infoProvider.experimentVersion()).isEqualTo(2)
     }
 
 
-    private fun getProvider(response: String): StatusInfoProvider {
+    private fun getProvider(response: String): WebServiceStatus {
         val requestSender = mock<RequestService> {
             on { get(ArgumentMatchers.anyString()) }.doReturn(ResponseData(200, response))
         }
-        return StatusInfoProvider(requestSender)
+        val experimentDecision = mock<ExperimentDecision> {
+            on { isPerformExperiment(ArgumentMatchers.anyString()) }.thenThrow(IllegalArgumentException("DO NOT CALL ME"))
+        }
+        return StatusInfoProvider(requestSender, experimentDecision)
     }
 
 }

@@ -21,8 +21,25 @@ class PermanentInstallationIDBasedDecision : ExperimentDecision {
 }
 
 
-class StatusInfoProvider(private val requestSender: RequestService,
-                         private val experimentDecision: ExperimentDecision) {
+interface WebServiceStatus {
+    fun isServerOk(): Boolean
+    fun dataServerUrl(): String
+
+    fun isPerformExperiment(): Boolean
+    fun experimentVersion(): Int
+
+    fun updateStatus()
+
+    companion object {
+        fun getInstance(): WebServiceStatus = ServiceManager.getService(WebServiceStatus::class.java)
+    }
+}
+
+
+class StatusInfoProvider(
+        private val requestSender: RequestService,
+        private val experimentDecision: ExperimentDecision
+): WebServiceStatus {
 
     companion object {
         private val GSON = Gson()
@@ -31,28 +48,26 @@ class StatusInfoProvider(private val requestSender: RequestService,
         private val SALT = "completion.stats.experiment.salt"
         private val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
         private val PERFORM_EXPERIMENT_KEY = "completion.ml.perform.experiment"
-
-        fun getInstance(): StatusInfoProvider = ServiceManager.getService(StatusInfoProvider::class.java)
     }
 
     @Volatile private var info: ExperimentInfo = loadInfo()
     @Volatile private var serverStatus = ""
     @Volatile private var dataServerUrl = ""
 
-    fun getExperimentVersion() = info.experimentVersion
+    override fun experimentVersion(): Int = info.experimentVersion
     
-    fun getDataServerUrl(): String = dataServerUrl
+    override fun dataServerUrl(): String = dataServerUrl
     
-    fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
+    override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
-    fun isPerformExperiment(): Boolean {
+    override fun isPerformExperiment(): Boolean {
         if (!info.performExperiment) {
             return false
         }
         return experimentDecision.isPerformExperiment(info.salt)
     }
     
-    fun updateStatus() {
+    override fun updateStatus() {
         serverStatus = ""
         dataServerUrl = ""
         

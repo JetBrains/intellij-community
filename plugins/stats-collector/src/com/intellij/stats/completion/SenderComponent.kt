@@ -3,10 +3,9 @@ package com.intellij.stats.completion
 import com.google.common.net.HttpHeaders
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ApplicationComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.stats.completion.experiment.StatusInfoProvider
+import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.util.Alarm
 import com.intellij.util.Time
 import org.apache.commons.codec.binary.Base64OutputStream
@@ -27,7 +26,10 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatisticSender, val statusHelper: StatusInfoProvider) : ApplicationComponent.Adapter() {
+class SenderComponent(val sender: StatisticSender,
+                      val statusHelper: WebServiceStatus
+) : ApplicationComponent.Adapter() {
+
     private val LOG = Logger.getInstance(SenderComponent::class.java)
     private val disposable = Disposer.newDisposable()
     private val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
@@ -40,7 +42,7 @@ class SenderComponent(val sender: StatisticSender, val statusHelper: StatusInfoP
             ApplicationManager.getApplication().executeOnPooledThread {
                 statusHelper.updateStatus()
                 if (statusHelper.isServerOk()) {
-                    val dataServerUrl = statusHelper.getDataServerUrl()
+                    val dataServerUrl = statusHelper.dataServerUrl()
                     sender.sendStatsData(dataServerUrl)
                 }
             }

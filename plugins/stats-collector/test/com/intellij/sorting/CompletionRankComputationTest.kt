@@ -17,6 +17,7 @@ import com.intellij.sorting.Samples.callCompletionOnClass
 import com.intellij.sorting.Samples.classNameCompletion
 import com.intellij.sorting.Samples.classText
 import com.intellij.sorting.Samples.methodCompletion
+import com.intellij.stats.completion.experiment.ExperimentDecision
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import org.assertj.core.api.Assertions.assertThat
@@ -40,7 +41,7 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
         myFixture.configureByText(JavaFileType.INSTANCE, classNameCompletion)
         myFixture.complete(CompletionType.BASIC, 2)
 
-        checkMlRanking(prefixLength = 1)
+        checkMlRanking(prefix_length = 1)
     }
 
     fun `test normal completion reranking`() {
@@ -49,16 +50,16 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
         myFixture.configureByText(JavaFileType.INSTANCE, methodCompletion)
         myFixture.completeBasic()
         
-        checkMlRanking(prefixLength = 0)
+        checkMlRanking(prefix_length = 0)
         
         myFixture.type('t')
         checkMlRanking(1)
         
         myFixture.type('e')
-        checkMlRanking(prefixLength = 2)
+        checkMlRanking(prefix_length = 2)
         
         myFixture.type('s')
-        checkMlRanking(prefixLength = 3)
+        checkMlRanking(prefix_length = 3)
     }
 
 
@@ -73,10 +74,31 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
         
         try {
             myFixture.configureByText(JavaFileType.INSTANCE, methodCompletion)
+            myFixture.completeBasic()
             assertNormalCompletionSortingOrder()
         }
         finally {
             point.unregisterExtension(fakeWeigherExt)
+        }
+    }
+
+
+    fun `test do not rank if decision says do not rank`() {
+        myFixture.addClass(callCompletionOnClass)
+
+        myFixture.configureByText(JavaFileType.INSTANCE, methodCompletion)
+        myFixture.completeBasic()
+        checkMlRanking(0)
+        myFixture.type('\b')
+
+        try {
+            TestExperimentDecision.isPerformExperiment = false
+            myFixture.type('.')
+            myFixture.completeBasic()
+            assertNormalCompletionSortingOrder()
+        }
+        finally {
+            TestExperimentDecision.isPerformExperiment = true
         }
     }
 
@@ -110,7 +132,6 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
 
 
     private fun assertNormalCompletionSortingOrder() {
-        myFixture.completeBasic()
         val lookup = myFixture.lookup as LookupImpl
         val objects: Map<LookupElement, List<Pair<String, Any>>> = lookup.getRelevanceObjects(lookup.items, false)
         val ranks = objects
@@ -126,7 +147,7 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
     }
 
 
-    private fun checkMlRanking(prefixLength: Int) {
+    private fun checkMlRanking(prefix_length: Int) {
         val lookup = myFixture.lookup as LookupImpl
         assertThat(lookup.items.size > 0)
 
@@ -142,7 +163,7 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
             
             val old_order = weights["before_rerank_order"].toString().toInt()
 
-            val state = LookupElementInfo(old_order, prefixLength, element.lookupString.length)
+            val state = LookupElementInfo(old_order, prefix_length, element.lookupString.length)
             
             val calculated_ml_rank = ranker.rank(state, weights)
             assertThat(calculated_ml_rank).isEqualTo(ml_rank?.toDouble())
@@ -165,6 +186,14 @@ class FakeWeighter : CompletionWeigher() {
         return psiElement.name.length - psiElement.parameterList.parametersCount
     }
 
+}
+
+
+class TestExperimentDecision: ExperimentDecision {
+    companion object {
+        var isPerformExperiment = true
+    }
+    override fun isPerformExperiment(salt: String) = isPerformExperiment
 }
 
 
