@@ -656,14 +656,10 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     List<Change> changes = new ArrayList<>();
     for (ChangeList list : myMap.values()) {
       for (Change change : list.getChanges()) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null && afterRevision.getFile().isUnder(dirPath, false)) {
-          changes.add(change);
-          continue;
-        }
-
-        final ContentRevision beforeRevision = change.getBeforeRevision();
-        if (beforeRevision != null && beforeRevision.getFile().isUnder(dirPath, false)) {
+        ContentRevision after = change.getAfterRevision();
+        ContentRevision before = change.getBeforeRevision();
+        if (after != null && after.getFile().isUnder(dirPath, false) ||
+            before != null && before.getFile().isUnder(dirPath, false)) {
           changes.add(change);
         }
       }
