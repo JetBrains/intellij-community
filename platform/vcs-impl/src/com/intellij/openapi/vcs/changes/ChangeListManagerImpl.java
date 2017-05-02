@@ -1011,13 +1011,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       if (myComposite.getVFHolder(FileHolder.HolderType.MODIFIED_WITHOUT_EDITING).containsFile(file)) return FileStatus.HIJACKED;
       if (myComposite.getIgnoredFileHolder().containsFile(file)) return FileStatus.IGNORED;
 
-      final boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
-      final FileStatus status = myWorker.getStatus(file);
-      if (status != null) {
-        return FileStatus.NOT_CHANGED.equals(status) && switched ? FileStatus.SWITCHED : status;
+      final FileStatus status = ObjectUtils.notNull(myWorker.getStatus(file), FileStatus.NOT_CHANGED);
+
+      if (FileStatus.NOT_CHANGED.equals(status)) {
+        boolean switched = myComposite.getSwitchedFileHolder().containsFile(file);
+        if (switched) return FileStatus.SWITCHED;
       }
-      if (switched) return FileStatus.SWITCHED;
-      return FileStatus.NOT_CHANGED;
+
+      return status;
     }
   }
 
