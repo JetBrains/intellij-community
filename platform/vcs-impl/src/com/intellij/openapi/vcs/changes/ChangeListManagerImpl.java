@@ -557,12 +557,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
     if (invalidated == null) return true;
-    if (invalidated.isEmpty() && invalidated.isEverythingDirty()) {
-      // a hack here; but otherwise everything here should be refactored ;)
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      return true;
-    }
-
     if (invalidated.isEverythingDirty()) return false;
     if (invalidated.isEmpty()) return true;
 
