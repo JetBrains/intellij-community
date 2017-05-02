@@ -17,7 +17,7 @@ package com.intellij.codeInspection.inheritance
 
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
-import com.intellij.codeInsight.intention.JvmCommonCodeModifications
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.*
 import com.intellij.openapi.application.ApplicationManager
@@ -58,13 +58,13 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
     val smartPointerManager = SmartPointerManager.getInstance(aClass.project)
 
-    val commonModifications = JvmCommonCodeModifications.forLanguage(aClass.language)
+    val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(aClass.language)
 
     for ((method, description) in methodsToOverride) {
       if (method.isFinal || method.isStatic || method.hasModifierProperty(PsiModifier.PRIVATE)) {
         methodsToAttachToClassFix?.add(smartPointerManager.createSmartPsiElementPointer(method, method.containingFile))
 
-        val methodFixes = createFixesIfApplicable(commonModifications, method, method.name)
+        val methodFixes = createFixesIfApplicable(actionsFactory, method, method.name)
         problemTargets(method, methodHighlightableModifiersSet).forEach {
           problems.add(manager.createProblemDescriptor(
             it, description, isOnTheFly,
@@ -81,7 +81,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
           problems.add(manager.createProblemDescriptor(
             it, classReasonToBeSubclassed ?: InspectionsBundle.message("inspection.implicit.subclass.display.forClass", aClass.name),
             isOnTheFly,
-            createFixesIfApplicable(commonModifications, aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
+            createFixesIfApplicable(actionsFactory, aClass, aClass.name ?: "class", methodsToAttachToClassFix ?: emptyList()),
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           )
         }
@@ -91,12 +91,12 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     return problems.toTypedArray()
   }
 
-  private fun createFixesIfApplicable(commonModifications: JvmCommonCodeModifications?,
+  private fun createFixesIfApplicable(actionsFactory: JvmCommonIntentionActionsFactory?,
                                       aClass: UDeclaration,
                                       hintTargetName: String,
                                       methodsToAttachToClassFix: List<SmartPsiElementPointer<UDeclaration>> = emptyList()): Array<LocalQuickFix> {
-    if (commonModifications == null) return emptyArray()
-    val fix = MakeExtendableFix(aClass, hintTargetName, commonModifications, methodsToAttachToClassFix)
+    if (actionsFactory == null) return emptyArray()
+    val fix = MakeExtendableFix(aClass, hintTargetName, actionsFactory, methodsToAttachToClassFix)
     if (!fix.hasActionsToPerform) return emptyArray()
     return arrayOf(fix)
   }
@@ -120,7 +120,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,
-                                  val changeModifiers: JvmCommonCodeModifications,
+                                  val actionsFactory: JvmCommonIntentionActionsFactory,
                                   val siblings: List<SmartPsiElementPointer<UDeclaration>> = emptyList())
     : LocalQuickFixOnPsiElement(uDeclaration) {
 
@@ -185,7 +185,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
                                 shouldPresent: Boolean,
                                 actionsList: SmartList<IntentionAction>) {
       if (declaration.modifierList?.hasModifierProperty(name) != shouldPresent) {
-        (changeModifiers.createChangeModifierAction(declaration, name, shouldPresent))?.let {
+        (actionsFactory.createChangeModifierAction(declaration, name, shouldPresent))?.let {
           actionsList.add(it)
         }
       }
@@ -196,7 +196,7 @@ class ImplicitSubclassInspection : AbstractBaseUastLocalInspectionTool() {
     private val text = when (uDeclaration) {
       is UClass ->
         if (actionsToPerform.size <= MAX_MESSAGES_TO_COMBINE)
-          actionsToPerform.map { it.text }.joinToString()
+          actionsToPerform.joinToString { it.text }
         else InspectionsBundle.message("inspection.implicit.subclass.make.class.extendable",
                                        hintTargetName,
                                        siblings.size,

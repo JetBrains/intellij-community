@@ -721,7 +721,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String in = "class D<T> {}\n" +
                       "class T {}";
-    assertEquals("search for class should not find type parameters", 1, findMatchesCount(in, "class T {}"));
+    assertEquals("search for class should not find type parameters", 2, findMatchesCount(in, "class 'A {}"));
   }
 
   public void testParameterlessConstructorSearch() {

@@ -18,10 +18,10 @@ package com.intellij.codeInsight.intention.impl
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.IntentionAction
 import org.jetbrains.uast.UDeclaration
-import com.intellij.codeInsight.intention.JvmCommonCodeModifications
+import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 
 
-class JavaCommonCodeModifications : JvmCommonCodeModifications() {
+class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
 
   override fun createChangeModifierAction(declaration: UDeclaration, modifier: String, shouldPresent: Boolean): IntentionAction {
     return ModifierFix(declaration.modifierList, modifier, shouldPresent, false)

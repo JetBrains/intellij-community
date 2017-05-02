@@ -31,6 +31,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectNameProvider
@@ -431,7 +432,7 @@ private fun removeWorkspaceComponentConfiguration(defaultProject: Project, eleme
     }
   }
 
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, pluginDescriptor ->
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, _ ->
     getNameIfWorkspaceStorage(aClass)?.let {
       workspaceComponentNames.add(it)
     }
@@ -481,11 +482,16 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
           component.removeChild("version")
           writeProfileSettings(schemeDir)
         }
+
         "CopyrightManager" -> {
           iterator.remove()
           val schemeDir = projectConfigDir.resolve("copyright")
           convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
           writeProfileSettings(schemeDir)
+        }
+
+        ModuleManagerImpl.COMPONENT_NAME -> {
+          iterator.remove()
         }
       }
     }

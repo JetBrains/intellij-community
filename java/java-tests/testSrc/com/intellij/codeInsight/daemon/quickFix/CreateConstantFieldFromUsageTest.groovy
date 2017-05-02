@@ -103,5 +103,36 @@ class Test {
 }
 '''
   }
-  
+
+  void "test overload methods with single suggestion"() {
+    TemplateManagerImpl.setTemplateTesting(project, myFixture.testRootDisposable)
+    myFixture.configureByText "a.java", '''
+class Foo {}
+class Test {
+    {
+        foo(new Foo(), <caret>BAR);
+    }
+
+    void foo(Foo f, String d) {}
+    void foo(Foo f, String d, String d2) {}
+
+}
+'''
+    myFixture.launchAction(myFixture.findSingleIntention("Create constant field"))
+    myFixture.checkResult '''
+class Foo {}
+class Test {
+    private static final String BAR = ;
+
+    {
+        foo(new Foo(), BAR);
+    }
+
+    void foo(Foo f, String d) {}
+    void foo(Foo f, String d, String d2) {}
+
+}
+'''
+  }
+
 }

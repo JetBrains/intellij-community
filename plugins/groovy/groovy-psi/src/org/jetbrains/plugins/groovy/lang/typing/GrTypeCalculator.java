@@ -24,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 
 /**
  * This API provides ability to plug into expression type calculation in Groovy.
- * Each expression has it's default implementation which is executed last.
+ * Each expression has its default implementation which is executed last.
  * <p>
  * The API is experimental at least until 2017.3.
  *

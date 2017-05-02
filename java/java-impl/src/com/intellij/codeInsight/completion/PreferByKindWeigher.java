@@ -278,7 +278,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     return psiElement().inside(PsiReferenceParameterList.class).accepts(position);
   }
 
-  private static boolean isOnTopLevelInVoidMethod(PsiStatement statement) {
+  private static boolean isOnTopLevelInVoidMethod(@NotNull PsiStatement statement) {
     if (!(statement.getParent() instanceof PsiCodeBlock)) return false;
 
     PsiElement parent = statement.getParent().getParent();
@@ -302,7 +302,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   }
 
   private static boolean isLastStatement(PsiStatement statement) {
-    if (statement == null || !(statement.getParent() instanceof PsiCodeBlock)) {
+    if (statement == null) {
+      return false;
+    }
+    if (!(statement.getParent() instanceof PsiCodeBlock)) {
       return true;
     }
     PsiStatement[] siblings = ((PsiCodeBlock)statement.getParent()).getStatements();

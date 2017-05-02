@@ -16,7 +16,9 @@
 package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
@@ -33,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool() {
 
@@ -84,8 +87,8 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
           if (valuesSource == null && enumSource == null && noMultiArgsProvider) {
             holder.registerProblem(parameterizedAnnotation, "No sources are provided, the suite would be empty")
           }
-          else if (method.parameterList.parametersCount > 1 && noMultiArgsProvider) {
-            holder.registerProblem(valuesSource ?: enumSource!!, "Multiple parameters are not supported by this source")
+          else if (noMultiArgsProvider && hasMultipleParameters(method)) {
+              holder.registerProblem(valuesSource ?: enumSource!!, "Multiple parameters are not supported by this source")
           }
         }
       }
@@ -126,8 +129,15 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
             if (reference is MethodSourceReference) {
               val resolve = reference.resolve()
               if (resolve !is PsiMethod) {
+                val containingClass = method.containingClass
+                var createFix : CreateMethodQuickFix? = null
+                if (containingClass != null && holder.isOnTheFly)
+                  createFix = CreateMethodQuickFix.createFix(containingClass,
+                                                             "static Object[][] " + reference.value + "()",
+                                                             "return new Object[][] {};")
                 holder.registerProblem(attributeValue,
-                                       "Cannot resolve target method source: \'" + reference.value + "\'")
+                                       "Cannot resolve target method source: \'" + reference.value + "\'",
+                                       createFix)
               }
               else {
                 val sourceProvider : PsiMethod = resolve
@@ -147,7 +157,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                     holder.registerProblem(attributeValue,
                                            "Method source \'$providerName\' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]")
                   }
-                  else if (method.parameterList.parametersCount > 1 && !isArgumentsInheritor(componentType)) {
+                  else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType)) {
                     holder.registerProblem(attributeValue, "Multiple parameters have to be wrapped in Arguments")
                   }
                 }
@@ -213,5 +223,15 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
         return PsiUtil.substituteTypeParameter(returnType, CommonClassNames.JAVA_UTIL_ITERATOR, 0, false)
       }
     }
+  }
+
+  private fun hasMultipleParameters(method: PsiMethod): Boolean {
+    return method.parameterList.parameters
+             .filter { it ->
+               !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INFO) &&
+               !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_REPORTER)
+             }
+             .count() > 1 && !MetaAnnotationUtil.isMetaAnnotated(method, Collections.singleton(
+      JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
   }
 }

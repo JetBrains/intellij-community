@@ -35,7 +35,6 @@ import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
@@ -545,18 +544,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   protected void setupBorder(@NotNull EditorEx editor) {
     if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
-      editor.setBorder(UIUtil.isUnderDefaultMacTheme() ? new DarculaUIUtil.EditorTextFieldBorder(this) : new DarculaEditorTextFieldBorder());
-      editor.addFocusListener(new FocusChangeListener() {
-        @Override
-        public void focusGained(Editor editor) {
-          repaint();
-        }
+      if (UIUtil.isUnderDefaultMacTheme()) {
+        editor.setBorder(new DarculaUIUtil.MacEditorTextFieldBorder(this, editor));
+      } else if (UIUtil.isUnderWin10LookAndFeel()) {
+        editor.setBorder(new DarculaUIUtil.WinEditorTextFieldBorder(this, editor));
+      } else {
+        editor.setBorder(new DarculaEditorTextFieldBorder(this, editor));
+      }
 
-        @Override
-        public void focusLost(Editor editor) {
-          repaint();
-        }
-      });
     }
     else if (UIUtil.isUnderAlloyLookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
       editor.setBorder(BorderFactory.createCompoundBorder(UIUtil.getTextFieldBorder(), BorderFactory.createEmptyBorder(1, 1, 1, 1)));

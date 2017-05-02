@@ -107,7 +107,8 @@ object UpdateChecker {
     })
   }
 
-  private fun doUpdateAndShowResult(project: Project?,
+  @JvmStatic
+  fun doUpdateAndShowResult(project: Project?,
                                     fromSettings: Boolean,
                                     manualCheck: Boolean,
                                     updateSettings: UpdateSettings,
@@ -193,7 +194,8 @@ object UpdateChecker {
     return strategy.checkForUpdates()
   }
 
-  private fun checkPluginsUpdate(updateSettings: UpdateSettings,
+  @JvmStatic
+  fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
                                  buildNumber: BuildNumber?): Collection<PluginDownloader>? {

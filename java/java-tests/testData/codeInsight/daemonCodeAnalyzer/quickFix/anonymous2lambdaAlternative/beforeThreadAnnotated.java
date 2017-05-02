@@ -1,4 +1,4 @@
-// "Replace with new Thread() with lambda argument" "false"
+// "Replace with new Thread(() -> {…})" "false"
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 

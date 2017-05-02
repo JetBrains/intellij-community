@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -225,6 +226,19 @@ public class StringToConstraintsTransformerTest {
     assertEquals("// $Comment$", myOptions.getSearchPattern());
     final MatchVariableConstraint constraint1 = myOptions.getVariableConstraint("Comment");
     assertEquals(".*(?:comment).*", constraint1.getRegExp());
+  }
+
+  @Test
+  public void testInvert() {
+    test("'a:[!regexw(a)&&formal(*List)]");
+    assertEquals("$a$", myOptions.getSearchPattern());
+    final MatchVariableConstraint constraint = myOptions.getVariableConstraint("a");
+    assertTrue(constraint.isWholeWordsOnly());
+    assertEquals("a", constraint.getRegExp());
+    assertTrue(constraint.isInvertRegExp());
+    assertTrue(constraint.isFormalArgTypeWithinHierarchy());
+    assertFalse(constraint.isInvertFormalType());
+    assertEquals("List", constraint.getNameOfFormalArgType());
   }
 
   @Test(expected = MalformedPatternException.class)

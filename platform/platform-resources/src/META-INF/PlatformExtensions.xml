@@ -4,6 +4,7 @@
     <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
     <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
     <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
+    <appStarter implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
     <appStarter implementation="com.intellij.help.impl.IntentionDump"/>
     <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
