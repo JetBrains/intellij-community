@@ -1284,7 +1284,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     final boolean savedOption = readonlyStatusHandler.getState().SHOW_DIALOG;
     readonlyStatusHandler.getState().SHOW_DIALOG = false;
     try {
-      readonlyStatusHandler.ensureFilesWritable(collectFiles(paths));
+      readonlyStatusHandler.ensureFilesWritable(ContainerUtil.mapNotNull(paths, FilePath::getVirtualFile));
     }
     finally {
       readonlyStatusHandler.getState().SHOW_DIALOG = savedOption;
@@ -1405,17 +1405,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     synchronized (myDataLock) {
       return myWorker.getDefaultListName();
     }
-  }
-
-  private static VirtualFile[] collectFiles(final List<FilePath> paths) {
-    final ArrayList<VirtualFile> result = new ArrayList<>();
-    for (FilePath path : paths) {
-      if (path.getVirtualFile() != null) {
-        result.add(path.getVirtualFile());
-      }
-    }
-
-    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
