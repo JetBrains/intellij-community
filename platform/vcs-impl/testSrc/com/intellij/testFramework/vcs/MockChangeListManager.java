@@ -142,6 +142,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public LocalChangeList getDefaultChangeList() {
     return myActiveChangeList;
@@ -294,6 +295,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
   @Override
   public String getDefaultListName() {
     throw new UnsupportedOperationException();

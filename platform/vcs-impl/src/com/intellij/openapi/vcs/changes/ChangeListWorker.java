@@ -61,6 +61,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     myDelta = new ChangesDelta(deltaListener);
     myListsToDisappear = ContainerUtil.newLinkedHashSet();
+
+    ensureDefaultListExists();
   }
 
   private ChangeListWorker(ChangeListWorker worker) {
@@ -70,30 +72,30 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myDelta = worker.myDelta;
     myListsToDisappear = ContainerUtil.newLinkedHashSet(worker.myListsToDisappear);
 
-    LocalChangeListImpl defaultList = null;
-    for (LocalChangeListImpl changeList : worker.myMap.values()) {
-      final LocalChangeListImpl copy = changeList.copy();
-      final String changeListName = copy.getName();
-      myMap.put(changeListName, copy);
+    for (LocalChangeListImpl list : worker.myMap.values()) {
+      LocalChangeListImpl copy = list.copy();
+      myMap.put(copy.getName(), copy);
       if (copy.isDefault()) {
-        defaultList = copy;
+        if (myDefault != null) LOG.error("multiple default lists found when copy");
+        myDefault = copy;
       }
-    }
-    if (defaultList == null) {
-      LOG.info("default list not found when copy");
-      defaultList = myMap.get(worker.getDefaultListName());
     }
 
-    if (defaultList == null) {
-      LOG.info("default list not found when copy in original object too");
-      if (!myMap.isEmpty()) {
-        defaultList = myMap.values().iterator().next();
-      } else {
-        // can be when there's no vcs configured
-        ///LOG.error("no changelists at all");
-      }
+    ensureDefaultListExists();
+  }
+
+  private void ensureDefaultListExists() {
+    if (myDefault != null) return;
+
+    if (!myMap.isEmpty()) {
+      myDefault = myMap.values().iterator().next();
+      myDefault.setDefault(true);
     }
-    myDefault = defaultList;
+    else {
+      myDefault = LocalChangeListImpl.createEmptyChangeListImpl(myProject, LocalChangeList.DEFAULT_NAME, null);
+      myDefault.setDefault(true);
+      myMap.put(myDefault.getName(), myDefault);
+    }
   }
 
   public void onAfterWorkerSwitch(@NotNull final ChangeListWorker previous) {
@@ -163,20 +165,18 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   /**
-   * @return if list with name exists, return previous default list name or null of there wasn't previous
+   * @return previous default list name or null if nothing was done
    */
   @Nullable
   public String setDefault(String name) {
-    final LocalChangeListImpl newDefault = myMap.get(name);
+    LocalChangeListImpl newDefault = myMap.get(name);
     if (newDefault == null) {
       return null;
     }
-    String previousName = null;
-    if (myDefault != null) {
-      myDefault.setDefault(false);
-      previousName = myDefault.getName();
-    }
 
+    String previousName = myDefault.getName();
+
+    myDefault.setDefault(false);
     newDefault.setDefault(true);
     myDefault = newDefault;
 
@@ -193,29 +193,46 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @NotNull
   public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable Object data) {
-    return addChangeList(null, name, comment, false, data);
+    return addChangeList(name, comment, false, data);
   }
 
   @NotNull
-  LocalChangeList addChangeList(@Nullable String id, @NotNull String name, @Nullable String description, boolean inUpdate,
-                                @Nullable Object data) {
+  private LocalChangeList addChangeList(@NotNull String name, @Nullable String description, boolean inUpdate,
+                                        @Nullable Object data) {
     if (myMap.containsKey(name)) {
       LOG.error("Attempt to create duplicate changelist " + name);
       return myMap.get(name).copy();
     }
 
-    LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, id);
+    LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, null);
+    newList.setComment(description);
     newList.setData(data);
-
-    if (description != null) {
-      newList.setComment(description);
-    }
 
     myMap.put(name, newList);
     if (inUpdate) {
       startProcessingChanges(newList); // this is executed only when use through GATE
     }
     return newList.copy();
+  }
+
+  void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
+    myDefault = null;
+    myMap.clear();
+    myIdx.clear();
+
+    for (LocalChangeListImpl list : lists) {
+      myMap.put(list.getName(), list);
+      if (list.isDefault()) {
+        if (myDefault != null) LOG.error("multiple default lists found when copy");
+        myDefault = list;
+      }
+
+      for (Change change : list.getChanges()) {
+        myIdx.changeAdded(change, null);
+      }
+    }
+
+    ensureDefaultListExists();
   }
 
   private void addChangeToList(@NotNull LocalChangeListImpl list, @NotNull Change change, VcsKey vcsKey) {
@@ -235,7 +252,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   public void addChangeToCorrespondingList(@NotNull Change change, VcsKey vcsKey) {
     final String path = ChangesUtil.getFilePath(change).getPath();
     LOG.debug("[addChangeToCorrespondingList] for change " + path  + " type: " + change.getType() + " have before revision: " + (change.getBeforeRevision() != null));
-    assert myDefault != null;
     for (LocalChangeListImpl list : myMap.values()) {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
       if (changesBeforeUpdate.contains(change)) {
@@ -318,9 +334,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myMap.isEmpty();
   }
 
-  @Nullable
+  @NotNull
   public LocalChangeList getDefaultListCopy() {
-    return myDefault == null ? null : myDefault.copy();
+    return myDefault.copy();
   }
 
   @NotNull
@@ -482,8 +498,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return result;
   }
 
+  @NotNull
   public String getDefaultListName() {
-    return myDefault == null ? null : myDefault.getName();
+    return myDefault.getName();
   }
 
   @NotNull
@@ -704,7 +721,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     @NotNull
     @Override
     public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-      return myWorker.addChangeList(null, name, comment, true, null);
+      return myWorker.addChangeList(name, comment, true, null);
     }
 
     @NotNull

@@ -170,6 +170,10 @@ public class ChangeListsIndexes {
     return result;
   }
 
+  public void clear() {
+    myMap.clear();
+  }
+
   @NotNull
   public NavigableSet<FilePath> getAffectedPaths() {
     return Sets.unmodifiableNavigableSet(myMap.navigableKeySet());

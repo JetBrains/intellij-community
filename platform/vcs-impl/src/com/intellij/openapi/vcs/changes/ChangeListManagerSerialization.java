@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 class ChangeListManagerSerialization {
   @NonNls private static final String ATT_ID = "id";
@@ -66,9 +63,11 @@ class ChangeListManagerSerialization {
   }
 
   public static void readExternal(@NotNull Element element, @NotNull IgnoredFilesComponent ignoredIdeaLevel, @NotNull ChangeListWorker worker) {
+    List<LocalChangeListImpl> lists = new ArrayList<>();
     for (Element listNode : element.getChildren(NODE_LIST)) {
-      readChangeList(listNode, worker);
+      lists.add(readChangeList(listNode, worker.getProject()));
     }
+    worker.setChangeLists(removeDuplicatedLists(lists));
 
     ignoredIdeaLevel.clear();
     for (Element ignoredNode : element.getChildren(NODE_IGNORED)) {
@@ -83,6 +82,35 @@ class ChangeListManagerSerialization {
       }
     }
     ignoredIdeaLevel.setDirectoriesManuallyRemovedFromIgnored(manuallyRemovedFromIgnoredPaths);
+  }
+
+  @NotNull
+  private static Collection<LocalChangeListImpl> removeDuplicatedLists(@NotNull List<LocalChangeListImpl> lists) {
+    // workaround for loading incorrect settings (with duplicate changelist names)
+
+    boolean hasDefault = false;
+    Map<String, LocalChangeListImpl> map = new HashMap<>();
+    for (LocalChangeListImpl list : lists) {
+      if (list.isDefault()) {
+        if (hasDefault) {
+          list.setDefault(false);
+        }
+        hasDefault = true;
+      }
+
+      LocalChangeListImpl otherList = map.get(list.getName());
+      if (otherList == null) {
+        map.put(list.getName(), list);
+      }
+      else {
+        for (Change change : list.getChanges()) {
+          otherList.addChange(change);
+        }
+
+        if (list.isDefault()) otherList.setDefault(true);
+      }
+    }
+    return map.values();
   }
 
   @NotNull
@@ -107,27 +135,27 @@ class ChangeListManagerSerialization {
     return listNode;
   }
 
-  private static void readChangeList(@NotNull Element listNode, @NotNull ChangeListWorker worker) {
+  @NotNull
+  private static LocalChangeListImpl readChangeList(@NotNull Element listNode, @NotNull Project project) {
     String id = listNode.getAttributeValue(ATT_ID);
     String name = listNode.getAttributeValue(ATT_NAME);
     String comment = listNode.getAttributeValue(ATT_COMMENT);
 
-    // workaround for loading incorrect settings (with duplicate changelist names)
-    LocalChangeList list = worker.getCopyByName(name);
-    if (list == null) {
-      list = worker.addChangeList(id, name, comment, false, null);
-    }
+    LocalChangeListImpl list = LocalChangeListImpl.createEmptyChangeListImpl(project, name, id);
+    list.setComment(comment);
 
     for (Element changeNode : listNode.getChildren(NODE_CHANGE)) {
-      worker.addChangeToList(name, readChange(changeNode), null);
+      list.addChange(readChange(changeNode));
     }
 
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
-      worker.setDefault(list.getName());
+      list.setDefault(true);
     }
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
       list.setReadOnly(true);
     }
+
+    return list;
   }
 
   @NotNull

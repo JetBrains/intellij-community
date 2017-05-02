@@ -282,9 +282,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @CalledInAwt
   private void initializeForNewProject() {
     synchronized (myDataLock) {
-      if (myWorker.isEmpty()) {
-        setDefaultChangeList(myWorker.addChangeList(LocalChangeList.DEFAULT_NAME, null, null));
-      }
       if (!Registry.is("ide.hide.excluded.files") && !myExcludedConvertedToIgnored) {
         convertExcludedToIgnored();
         myExcludedConvertedToIgnored = true;
@@ -918,8 +915,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     myChangesViewManager.scheduleRefresh();
   }
 
+  @NotNull
   @Override
-  @Nullable
   public LocalChangeList getDefaultChangeList() {
     synchronized (myDataLock) {
       return myWorker.getDefaultListCopy();
@@ -1246,9 +1243,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     synchronized (myDataLock) {
       ChangeListManagerSerialization.readExternal(element, myIgnoredIdeaLevel, myWorker);
-      if (!myWorker.isEmpty() && myWorker.getDefaultListCopy() == null) {
-        myWorker.setDefault(myWorker.getListsCopy().get(0).getName());
-      }
     }
     myExcludedConvertedToIgnored = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, EXCLUDED_CONVERTED_TO_IGNORED_OPTION));
     myConflictTracker.loadState(element);
@@ -1397,6 +1391,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
+  @NotNull
   @Override
   public String getDefaultListName() {
     synchronized (myDataLock) {
