@@ -67,7 +67,7 @@ public class KeywordArgumentCompletionUtil {
 
         final PyNamedTupleType namedTupleType = PyUtil.as(calleeType, PyNamedTupleType.class);
         if (namedTupleType != null) {
-          for (String name : namedTupleType.getElementNames()) {
+          for (String name : namedTupleType.getFields().keySet()) {
             ret.add(
               PyUtil.createNamedParameterLookup(name, element.getProject())
             );

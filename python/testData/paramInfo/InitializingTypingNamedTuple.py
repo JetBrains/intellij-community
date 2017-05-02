@@ -1,4 +1,5 @@
 import typing
+from typing import List
 
 
 MyTup2 = typing.NamedTuple("MyTup2", bar=int, baz=str)
@@ -22,8 +23,12 @@ class MyTup6(typing.NamedTuple):
     foo: int
 
 
+MyTup7 = typing.NamedTuple("MyTup7", names=List[str], ages=List[int])
+
+
 MyTup2(<arg1>)
 MyTup3(<arg2>)
 MyTup4(<arg3>)
 MyTup5(<arg4>)
 MyTup6(<arg5>)
+MyTup7(<arg6>)
