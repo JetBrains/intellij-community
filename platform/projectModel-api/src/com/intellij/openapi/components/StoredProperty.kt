@@ -192,7 +192,7 @@ private class StringStoredProperty(override val defaultValue: String?) : ReadWri
     }
   }
 
-  override fun equals(other: Any?) = this === other || (other is ObjectStoredProperty<*> && value == other.value)
+  override fun equals(other: Any?) = this === other || (other is StringStoredProperty && value == other.value)
 
   override fun hashCode() = value?.hashCode() ?: 0
 
