@@ -67,7 +67,22 @@ public class ChangeListsIndexes {
   }
 
   public void changeAdded(@NotNull Change change, VcsKey key) {
-    addChangeToIdx(change, key);
+    ContentRevision afterRevision = change.getAfterRevision();
+    ContentRevision beforeRevision = change.getBeforeRevision();
+
+    if (beforeRevision != null && afterRevision != null) {
+      add(afterRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+
+      if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
+        add(beforeRevision.getFile(), FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
+      }
+    }
+    else if (afterRevision != null) {
+      add(afterRevision.getFile(), change.getFileStatus(), key, VcsRevisionNumber.NULL);
+    }
+    else if (beforeRevision != null) {
+      add(beforeRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
+    }
   }
 
   public void changeRemoved(@NotNull Change change) {
@@ -96,23 +111,6 @@ public class ChangeListsIndexes {
       return data != null ? data.vcsKey : null;
     }
     return null;
-  }
-
-  private void addChangeToIdx(final Change change, final VcsKey key) {
-    final ContentRevision afterRevision = change.getAfterRevision();
-    final ContentRevision beforeRevision = change.getBeforeRevision();
-    if (afterRevision != null) {
-      add(afterRevision.getFile(), change.getFileStatus(), key, beforeRevision == null ? VcsRevisionNumber.NULL : beforeRevision.getRevisionNumber());
-    }
-    if (beforeRevision != null) {
-      if (afterRevision != null) {
-        if (!Comparing.equal(beforeRevision.getFile(), afterRevision.getFile())) {
-          add(beforeRevision.getFile(), FileStatus.DELETED, key, beforeRevision.getRevisionNumber());
-        }
-      } else {
-        add(beforeRevision.getFile(), change.getFileStatus(), key, beforeRevision.getRevisionNumber());
-      }
-    }
   }
 
   /**
