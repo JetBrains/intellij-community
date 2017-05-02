@@ -268,6 +268,9 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return true;
   }
 
+  /**
+   * @return moved changes and their old changelist
+   */
   @Nullable
   public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
     final LocalChangeListImpl changeList = myMap.get(name);
@@ -290,27 +293,28 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public boolean editName(@NotNull String fromName, @NotNull String toName) {
     if (fromName.equals(toName)) return false;
+    if (myMap.containsKey(toName)) return false;
+
     final LocalChangeListImpl list = myMap.get(fromName);
-    final boolean canEdit = list != null && (!list.isReadOnly());
-    if (canEdit) {
-      list.setName(toName);
-      myMap.remove(fromName);
-      myMap.put(toName, list);
-    }
-    return canEdit;
+    if (list == null || list.isReadOnly()) return false;
+
+    list.setName(toName);
+    myMap.remove(fromName);
+    myMap.put(toName, list);
+
+    return true;
   }
 
   @Nullable
-  public String editComment(@NotNull String fromName, @Nullable String newComment) {
-    final LocalChangeListImpl list = myMap.get(fromName);
-    if (list != null) {
-      final String oldComment = list.getComment();
-      if (!Comparing.equal(oldComment, newComment)) {
-        list.setComment(newComment);
-      }
-      return oldComment;
+  public String editComment(@NotNull String name, @Nullable String newComment) {
+    final LocalChangeListImpl list = myMap.get(name);
+    if (list == null) return null;
+
+    final String oldComment = list.getComment();
+    if (!Comparing.equal(oldComment, newComment)) {
+      list.setComment(newComment);
     }
-    return null;
+    return oldComment;
   }
 
   public boolean isEmpty() {
