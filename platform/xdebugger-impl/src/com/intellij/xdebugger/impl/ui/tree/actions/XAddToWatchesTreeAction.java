@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * This action works only in the variables view
  * @see com.intellij.xdebugger.impl.actions.AddToWatchesAction
  */
-class XAddToWatchesAction extends XDebuggerTreeActionBase {
+public class XAddToWatchesTreeAction extends XDebuggerTreeActionBase {
   @Override
   protected boolean isEnabled(@NotNull final XValueNodeImpl node, @NotNull AnActionEvent e) {
     return super.isEnabled(node, e) && DebuggerUIUtil.hasEvaluationExpression(node.getValueContainer()) && getWatchesView(e) != null;
