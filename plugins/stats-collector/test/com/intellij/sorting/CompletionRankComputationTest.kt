@@ -13,15 +13,60 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.WeigherExtensionPoint
+import com.intellij.sorting.Samples.callCompletionOnClass
+import com.intellij.sorting.Samples.classNameCompletion
+import com.intellij.sorting.Samples.classText
+import com.intellij.sorting.Samples.methodCompletion
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import org.assertj.core.api.Assertions.assertThat
 
 
+object Samples {
+
+    val callCompletionOnClass = """
+    public class Test {
+        public void test(int a, int b) {}
+        public void runq(int c) {}
+        public void qqqq() {}
+        public void qwrt(int a, int b, int c) {}
+    }
+    """
+
+    val methodCompletion = """
+    class X {
+        public void t() {
+            Test test = new Test();
+            test.<caret>
+        }
+    }
+    """
+
+    val classNameCompletion = """
+    class Test {
+      public void run() {
+        F<caret>
+      }
+    }
+    """
+
+    val classText = """
+public class Test {
+    public void test() {}
+    public void run() {}
+    public void testMore() {}
+    public void check() {}
+}
+"""
+
+
+}
+
+
 class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
 
     lateinit var ranker: Ranker
-    
+
     override fun setUp() {
         super.setUp()
         ranker = Ranker.getInstance()
@@ -32,41 +77,17 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
         myFixture.addClass("public interface Fowo {}")
         myFixture.addClass("package com; public interface Foao {}")
         myFixture.addClass("package com.intellij; public interface Fobo {}")
-        
-        
-        val text = """
-class Test {
-  public void run() {
-    F<caret>
-  }
-}
-"""
-        myFixture.configureByText(JavaFileType.INSTANCE, text)
+
+        myFixture.configureByText(JavaFileType.INSTANCE, classNameCompletion)
         myFixture.complete(CompletionType.BASIC, 2)
 
         checkMlRanking(1)
     }
 
     fun `test normal completion reranking`() {
-        val classText = """
-public class Test {
-    public void test() {}
-    public void run() {}
-    public void testMore() {}
-    public void check() {}
-}
-"""
         myFixture.addClass(classText)
 
-        val text = """
-class X {
-    public void t() {
-        Test test = new Test();
-        test.<caret>
-    }
-}
-"""
-        myFixture.configureByText(JavaFileType.INSTANCE, text)
+        myFixture.configureByText(JavaFileType.INSTANCE, methodCompletion)
         myFixture.completeBasic()
         
         checkMlRanking(prefixLength = 0)
@@ -83,40 +104,51 @@ class X {
 
 
     fun `test do not rerank if encountered unknown features`() {
-        myFixture.addClass("""
-public class Test {
-    public void test(int a, int b) {}
-    public void runq(int c) {}
-    public void qqqq() {}
-    public void qwrt(int a, int b, int c) {}
-}
-""")
+        myFixture.addClass(callCompletionOnClass)
 
-        val fakeWeigherExt = WeigherExtensionPoint().apply { 
-            id = "fake"
-            key = "completion"
-            implementationClass = "com.intellij.sorting.FakeWeighter"
-        }
+        val fakeWeigherExt = fakeWeigher()
         
         val name = ExtensionPointName<WeigherExtensionPoint>("com.intellij.weigher")
         val point = Extensions.getRootArea().getExtensionPoint(name)
         point.registerExtension(fakeWeigherExt, LoadingOrder.before("templates"))
         
         try {
-            myFixture.configureByText(JavaFileType.INSTANCE, """
-class X {
-    public void t() {
-        Test test = new Test();
-        test.<caret>
-    }
-}
-""")
+            myFixture.configureByText(JavaFileType.INSTANCE, methodCompletion)
             assertNormalCompletionSortingOrder()
         }
         finally {
             point.unregisterExtension(fakeWeigherExt)
         }
     }
+
+
+    fun `test features with null values are ignored even if unknown`() {
+        myFixture.addClass(callCompletionOnClass)
+
+        val nullFakeWeigher = fakeWeigher()
+        FakeWeighter.isReturnNull = true
+        val name = ExtensionPointName<WeigherExtensionPoint>("com.intellij.weigher")
+        val point = Extensions.getRootArea().getExtensionPoint(name)
+        point.registerExtension(nullFakeWeigher, LoadingOrder.before("templates"))
+
+
+        try {
+            myFixture.configureByText(JavaFileType.INSTANCE, methodCompletion)
+            myFixture.completeBasic()
+            checkMlRanking(0)
+        }
+        finally {
+            FakeWeighter.isReturnNull = false
+            point.unregisterExtension(nullFakeWeigher)
+        }
+    }
+
+    private fun fakeWeigher() = WeigherExtensionPoint().apply {
+        id = "fake"
+        key = "completion"
+        implementationClass = "com.intellij.sorting.FakeWeighter"
+    }
+
 
     private fun assertNormalCompletionSortingOrder() {
         myFixture.completeBasic()
@@ -127,8 +159,8 @@ class X {
                 .map { it.second }
                 .toSet()
 
-        assert(ranks.size == 1)
-        assert(ranks.first() == FeatureUtils.UNDEFINED)
+        assertThat(ranks.size).withFailMessage("Ranks size: ${ranks.size} expected: 1\nRanks $ranks").isEqualTo(1)
+        assertThat(ranks.first()).isEqualTo(FeatureUtils.UNDEFINED)
 
         val items = lookup.items.map { it.lookupString }
         assertThat(items).isEqualTo(listOf("qqqq", "runq", "test", "qwrt"))
@@ -164,7 +196,12 @@ class X {
 @Suppress("unused")
 class FakeWeighter : CompletionWeigher() {
 
-    override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing> {
+    companion object {
+        var isReturnNull = false
+    }
+
+    override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {
+        if (isReturnNull) return null
         val psiElement = element.psiElement as? PsiMethod ?: return 0
         return psiElement.name.length - psiElement.parameterList.parametersCount
     }
