@@ -1083,9 +1083,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     ChangesUtil.processVirtualFilesByVcs(myProject, files, (vcs, items) -> {
       final CheckinEnvironment environment = vcs.getCheckinEnvironment();
       if (environment != null) {
-        final Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
-        Set<VirtualFile> parents =
-          vcs.areDirectoriesVersionedItems() ? getUnversionedParents(items, statusChecker) : Collections.emptySet();
+        Set<VirtualFile> descendants = getUnversionedDescendantsRecursively(items, statusChecker);
+        Set<VirtualFile> parents = getUnversionedParents(vcs, items, statusChecker);
 
         // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
         // (inside the method) - so common add logic just needs to refresh statuses of parents
@@ -1196,7 +1195,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   }
 
   @NotNull
-  private Set<VirtualFile> getUnversionedParents(@NotNull Collection<VirtualFile> items, @NotNull Condition<FileStatus> condition) {
+  private Set<VirtualFile> getUnversionedParents(@NotNull AbstractVcs vcs,
+                                                 @NotNull Collection<VirtualFile> items,
+                                                 @NotNull Condition<FileStatus> condition) {
+    if (!vcs.areDirectoriesVersionedItems()) return Collections.emptySet();
+
     HashSet<VirtualFile> result = ContainerUtil.newHashSet();
 
     for (VirtualFile item : items) {
