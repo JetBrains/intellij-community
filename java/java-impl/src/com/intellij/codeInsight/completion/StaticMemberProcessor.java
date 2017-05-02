@@ -132,6 +132,10 @@ public abstract class StaticMemberProcessor {
     return member.hasModifierProperty(PsiModifier.STATIC) && isAccessible(member) && !StaticImportMemberFix.isExcluded(member);
   }
 
+  public PsiElement getPosition() {
+    return myPosition;
+  }
+
   protected boolean isAccessible(PsiMember member) {
     return myResolveHelper.isAccessible(member, myPosition, null);
   }
