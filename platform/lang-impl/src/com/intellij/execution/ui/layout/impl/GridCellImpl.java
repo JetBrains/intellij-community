@@ -457,6 +457,7 @@ public class GridCellImpl implements GridCell {
     for (final Content each : contents) {
       myMinimizedContents.add(each);
       remove(each);
+      saveState(each, true);
       boolean isShowing = myTabs.getComponent().getRootPane() != null;
       myContainer.minimize(each, new CellTransform.Restore() {
         @Override
