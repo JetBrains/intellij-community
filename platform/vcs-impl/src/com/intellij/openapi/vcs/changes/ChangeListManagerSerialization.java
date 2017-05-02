@@ -16,16 +16,15 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 class ChangeListManagerSerialization {
@@ -48,16 +47,15 @@ class ChangeListManagerSerialization {
 
   public static void readExternal(@NotNull Element element, @NotNull IgnoredFilesComponent ignoredIdeaLevel, @NotNull ChangeListWorker worker) {
 
-    final List<Element> listNodes = element.getChildren(NODE_LIST);
-    for (Element listNode : listNodes) {
+    for (Element listNode : element.getChildren(NODE_LIST)) {
       readChangeList(listNode, worker);
     }
 
     ignoredIdeaLevel.clear();
-    final List<Element> ignoredNodes = element.getChildren(NODE_IGNORED);
-    for (Element ignoredNode : ignoredNodes) {
+    for (Element ignoredNode : element.getChildren(NODE_IGNORED)) {
       readFileToIgnore(ignoredNode, ignoredIdeaLevel, worker);
     }
+
     Element manuallyRemovedFromIgnoredTag = element.getChild(MANUALLY_REMOVED_FROM_IGNORED);
     Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<>();
     if (manuallyRemovedFromIgnoredTag != null) {
@@ -69,17 +67,18 @@ class ChangeListManagerSerialization {
   }
 
   private static void readChangeList(@NotNull Element listNode, @NotNull ChangeListWorker worker) {
+    String id = listNode.getAttributeValue(ATT_ID);
+    String name = listNode.getAttributeValue(ATT_NAME);
+    String comment = listNode.getAttributeValue(ATT_COMMENT);
+
     // workaround for loading incorrect settings (with duplicate changelist names)
-    final String changeListName = listNode.getAttributeValue(ATT_NAME);
-    LocalChangeList list = worker.getCopyByName(changeListName);
+    LocalChangeList list = worker.getCopyByName(name);
     if (list == null) {
-      list = worker.addChangeList(listNode.getAttributeValue(ATT_ID), changeListName, listNode.getAttributeValue(ATT_COMMENT), false,
-                                    null);
+      list = worker.addChangeList(id, name, comment, false, null);
     }
-    //noinspection unchecked
-    final List<Element> changeNodes = listNode.getChildren(NODE_CHANGE);
-    for (Element changeNode : changeNodes) {
-      worker.addChangeToList(changeListName, readChange(changeNode), null);
+
+    for (Element changeNode : listNode.getChildren(NODE_CHANGE)) {
+      worker.addChangeToList(name, readChange(changeNode), null);
     }
 
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
@@ -94,15 +93,13 @@ class ChangeListManagerSerialization {
     String path = ignoredNode.getAttributeValue(ATT_PATH);
     if (path != null) {
       Project project = worker.getProject();
-      final IgnoredFileBean bean = path.endsWith("/") || path.endsWith(File.separator)
-                                   ? IgnoredBeanFactory.ignoreUnderDirectory(path, project)
-                                   : IgnoredBeanFactory.ignoreFile(path, project);
-      ignoredFilesComponent.add(bean);
+      ignoredFilesComponent.add(path.endsWith("/") || path.endsWith(File.separator)
+                                ? IgnoredBeanFactory.ignoreUnderDirectory(path, project)
+                                : IgnoredBeanFactory.ignoreFile(path, project));
     }
     String mask = ignoredNode.getAttributeValue(ATT_MASK);
     if (mask != null) {
-      final IgnoredFileBean bean = IgnoredBeanFactory.withMask(mask);
-      ignoredFilesComponent.add(bean);
+      ignoredFilesComponent.add(IgnoredBeanFactory.withMask(mask));
     }
   }
 
@@ -123,10 +120,9 @@ class ChangeListManagerSerialization {
       if (comment != null) {
         listNode.setAttribute(ATT_COMMENT, comment);
       }
-      List<Change> changes = new ArrayList<>(list.getChanges());
-      changes.sort((o1, o2) -> Comparing.compare(o1.toString(), o2.toString()));
-      for (Change change : changes) {
-        writeChange(listNode, change);
+
+      for (Change change : ContainerUtil.sorted(list.getChanges(), Comparator.comparing(Change::toString))) {
+        listNode.addContent(writeChange(change));
       }
     }
 
@@ -153,9 +149,9 @@ class ChangeListManagerSerialization {
     }
   }
 
-  private static void writeChange(@NotNull Element listNode, @NotNull Change change) {
+  @NotNull
+  private static Element writeChange(@NotNull Change change) {
     Element changeNode = new Element(NODE_CHANGE);
-    listNode.addContent(changeNode);
     changeNode.setAttribute(ATT_CHANGE_TYPE, change.getType().name());
 
     final ContentRevision bRev = change.getBeforeRevision();
@@ -163,6 +159,7 @@ class ChangeListManagerSerialization {
 
     changeNode.setAttribute(ATT_CHANGE_BEFORE_PATH, bRev != null ? bRev.getFile().getPath() : "");
     changeNode.setAttribute(ATT_CHANGE_AFTER_PATH, aRev != null ? aRev.getFile().getPath() : "");
+    return changeNode;
   }
 
   private static Change readChange(@NotNull Element changeNode) {
