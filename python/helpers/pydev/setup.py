@@ -86,6 +86,7 @@ args = dict(
         '_pydev_runfiles',
         '_pydevd_bundle',
         'pydev_ipython',
+        '_pydevd_frame_eval',
 
         # 'pydev_sitecustomize', -- Not actually a package (not added)
 
