@@ -325,6 +325,10 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     return ArrayUtil.toObjectArray(elements);
   }
 
+  public void onLibraryRenamed() {
+    updateModificationOfImportedModelWarning();
+  }
+
   @Nullable
   private static Object getPathElement(final TreePath selectionPath) {
     if (selectionPath == null) {
@@ -496,9 +500,14 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     for (Runnable listener : myListeners) {
       listener.run();
     }
-    ProjectModelExternalSource externalSource = getLibraryEditor().getExternalSource();
+    updateModificationOfImportedModelWarning();
+  }
+
+  private void updateModificationOfImportedModelWarning() {
+    LibraryEditor libraryEditor = getLibraryEditor();
+    ProjectModelExternalSource externalSource = libraryEditor.getExternalSource();
     if (externalSource != null && hasChanges()) {
-      String name = getLibraryEditor().getName();
+      String name = libraryEditor instanceof ExistingLibraryEditor ? ((ExistingLibraryEditor)libraryEditor).getLibrary().getName() : libraryEditor.getName();
       myModificationOfImportedModelWarningComponent.showWarning(name != null ? "Library '" + name + "'" : "Library", externalSource);
     }
     else {

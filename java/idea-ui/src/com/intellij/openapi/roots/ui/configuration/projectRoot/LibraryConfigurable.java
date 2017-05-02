@@ -101,6 +101,9 @@ public class LibraryConfigurable extends ProjectStructureElementConfigurable<Lib
   public void setDisplayName(final String name) {
     if (!myUpdatingName) {
       getLibraryEditor().setName(name);
+      if (myLibraryEditorComponent != null) {
+        myLibraryEditorComponent.onLibraryRenamed();
+      }
       myContext.getDaemonAnalyzer().queueUpdateForAllElementsWithErrors();
     }
   }
