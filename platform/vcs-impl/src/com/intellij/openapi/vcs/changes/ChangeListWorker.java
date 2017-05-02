@@ -98,10 +98,16 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public void onAfterWorkerSwitch(@NotNull final ChangeListWorker previous) {
-    checkForMultipleCopiesNotMove(myDelta.step(previous.myIdx, myIdx));
+    boolean somethingChanged = myDelta.step(previous.myIdx, myIdx);
+    somethingChanged |= checkForMultipleCopiesNotMove();
+
+    if (somethingChanged) {
+      FileStatusManager.getInstance(myProject).fileStatusesChanged();
+    }
   }
 
-  private void checkForMultipleCopiesNotMove(boolean somethingChanged) {
+  private boolean checkForMultipleCopiesNotMove() {
+    boolean somethingChanged = false;
     final MultiMap<FilePath, Pair<Change, String>> moves = new MultiMap<FilePath, Pair<Change, String>>() {
       @NotNull
       protected Collection<Pair<Change, String>> createCollection() {
@@ -136,9 +142,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
         myIdx.changeAdded(newChange, key);
       }
     }
-    if (somethingChanged) {
-      FileStatusManager.getInstance(myProject).fileStatusesChanged();
-    }
+    return somethingChanged;
   }
 
   public ChangeListWorker copy() {
