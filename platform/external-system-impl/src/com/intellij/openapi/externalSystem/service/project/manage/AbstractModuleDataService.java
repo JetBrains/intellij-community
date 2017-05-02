@@ -79,7 +79,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
       return;
     }
 
-    final Collection<DataNode<E>> toCreate = filterExistingModules(toImport, modelsProvider, project);
+    final Collection<DataNode<E>> toCreate = filterExistingModules(toImport, modelsProvider);
     if (!toCreate.isEmpty()) {
       createModules(toCreate, modelsProvider, project);
     }
@@ -145,8 +145,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
   @NotNull
   private Collection<DataNode<E>> filterExistingModules(@NotNull Collection<DataNode<E>> modules,
-                                                        @NotNull IdeModifiableModelsProvider modelsProvider,
-                                                        @NotNull Project project) {
+                                                        @NotNull IdeModifiableModelsProvider modelsProvider) {
     Collection<DataNode<E>> result = ContainerUtilRt.newArrayList();
     for (DataNode<E> node : modules) {
       ModuleData moduleData = node.getData();
@@ -257,7 +256,6 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             init();
           }
 
-          @Nullable
           @Override
           protected JComponent createCenterPanel() {
             return new JBScrollPane(content);
@@ -381,7 +379,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
 
     if (LOG.isDebugEnabled()) {
-      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, (Comparator<OrderEntry>)(o1, o2) -> o1.compareTo(o2));
+      final boolean changed = !ArrayUtil.equals(orderEntries, newOrder, Comparator.naturalOrder());
       LOG.debug(String.format("rearrange status (%s): %s", modifiableRootModel.getModule(), changed ? "modified" : "not modified"));
     }
     modifiableRootModel.rearrangeOrderEntries(newOrder);
@@ -398,7 +396,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         idx--;
       }
     }
-    return idx == -1 ? -1 : idx;
+    return idx;
   }
 
   private void setLanguageLevel(@NotNull ModifiableRootModel modifiableRootModel, E data) {

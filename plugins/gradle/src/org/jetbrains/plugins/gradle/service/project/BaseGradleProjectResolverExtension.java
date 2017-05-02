@@ -473,7 +473,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     if (dependencies == null) return;
 
     List<String> orphanModules = ContainerUtil.newArrayList();
-    for (IdeaDependency dependency : dependencies) {
+    for (int i = 0; i < dependencies.size(); i++) {
+      IdeaDependency dependency = dependencies.get(i);
       if (dependency == null) {
         continue;
       }
@@ -485,6 +486,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         if (scope != null) {
           d.setScope(scope);
         }
+        d.setOrder(i);
         ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, d);
         ModuleData targetModule = d.getTarget();
         if (targetModule.getId().isEmpty() && targetModule.getLinkedExternalProjectPath().isEmpty()) {
@@ -497,6 +499,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
         if (scope != null) {
           d.setScope(scope);
         }
+        d.setOrder(i);
         ideModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, d);
       }
     }
