@@ -592,7 +592,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       scope.setWasEverythingDirty(wasEverythingDirty);
 
       myChangesViewManager.setBusy(true);
-      dataHolder.notifyStartProcessingChanges((VcsModifiableDirtyScope)scope);
 
       actualUpdate(builder, scope, vcs, dataHolder, gate, indicator);
 
@@ -676,6 +675,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                             @NotNull DataHolder dataHolder,
                             @NotNull ChangeListManagerGate gate,
                             @NotNull ProgressIndicator indicator) {
+    dataHolder.notifyStartProcessingChanges((VcsModifiableDirtyScope)scope);
     try {
       final ChangeProvider changeProvider = vcs.getChangeProvider();
       if (changeProvider != null) {
