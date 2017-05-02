@@ -68,8 +68,9 @@ public class SerializedStubTree {
       out.write(myBytes, 0, myLength);
       DataInputOutputUtil.writeLONG(out, myByteContentLength);
       DataInputOutputUtil.writeINT(out, myCharContentLength);
-    } else {
-      CompressionUtil.writeCompressed(out, myBytes, myLength);
+    }
+    else {
+      CompressionUtil.writeCompressed(out, myBytes, 0, myLength);
       out.writeLong(myByteContentLength);
       out.writeInt(myCharContentLength);
     }

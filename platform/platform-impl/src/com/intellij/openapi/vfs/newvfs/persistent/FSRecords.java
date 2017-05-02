@@ -1728,7 +1728,8 @@ public class FSRecords {
           if (page > 0) return;
           page = -page;
           fixedSize = true;
-        } else {
+        }
+        else {
           incModCount(myFileId);
           page = getContentRecordId(myFileId);
           if (page == 0 || contentStorage.getRefCount(page) > 1) {
@@ -1741,19 +1742,16 @@ public class FSRecords {
         if (useSnappyForCompression) {
           BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
           DataOutputStream outputStream = new DataOutputStream(out);
-          byte[] rawBytes = bytes.getBytes();
-          if (bytes.getOffset() != 0) {
-            rawBytes = new byte[bytes.getLength()];
-            System.arraycopy(bytes.getBytes(), bytes.getOffset(), rawBytes, 0, bytes.getLength());
-          }
-          CompressionUtil.writeCompressed(outputStream, rawBytes, bytes.getLength());
+          CompressionUtil.writeCompressed(outputStream, bytes.getBytes(), bytes.getOffset(), bytes.getLength());
           outputStream.close();
           bytes = new ByteSequence(out.getInternalBuffer(), 0, out.size());
         }
         contentStorage.writeBytes(page, bytes, fixedSize);
-      } catch (Throwable e) {
+      }
+      catch (Throwable e) {
         DbConnection.handleError(e);
-      } finally {
+      }
+      finally {
         w.unlock();
       }
     }
