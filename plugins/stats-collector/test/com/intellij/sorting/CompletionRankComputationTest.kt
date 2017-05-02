@@ -10,11 +10,11 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.WeigherExtensionPoint
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.jetbrains.completion.ranker.features.FeatureUtils
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
 
@@ -27,7 +27,7 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
         ranker = Ranker.getInstance()
     }
 
-    fun `test class name completion ranking`() {
+    fun `test class name completion reranking`() {
         myFixture.addClass("public interface Foo {}")
         myFixture.addClass("public interface Fowo {}")
         myFixture.addClass("package com; public interface Foao {}")
@@ -47,7 +47,7 @@ class Test {
         checkMlRanking(1)
     }
 
-    fun `test normal completion`() {
+    fun `test normal completion reranking`() {
         val classText = """
 public class Test {
     public void test() {}
@@ -69,16 +69,16 @@ class X {
         myFixture.configureByText(JavaFileType.INSTANCE, text)
         myFixture.completeBasic()
         
-        checkMlRanking(0)
+        checkMlRanking(prefixLength = 0)
         
         myFixture.type('t')
         checkMlRanking(1)
         
         myFixture.type('e')
-        checkMlRanking(2)
+        checkMlRanking(prefixLength = 2)
         
         myFixture.type('s')
-        checkMlRanking(3)
+        checkMlRanking(prefixLength = 3)
     }
 
 
@@ -111,18 +111,21 @@ class X {
     }
 }
 """)
-            checkNormalCompletionOrder()
+            assertNormalCompletionSortingOrder()
         }
         finally {
             point.unregisterExtension(fakeWeigherExt)
         }
     }
 
-    private fun checkNormalCompletionOrder() {
+    private fun assertNormalCompletionSortingOrder() {
         myFixture.completeBasic()
         val lookup = myFixture.lookup as LookupImpl
-        val objects = lookup.getRelevanceObjects(lookup.items, false)
-        val ranks = objects.map { it.value.find { it.first == FeatureUtils.ML_RANK }!!.second }.toSet()
+        val objects: Map<LookupElement, List<Pair<String, Any>>> = lookup.getRelevanceObjects(lookup.items, false)
+        val ranks = objects
+                .mapNotNull { it.value.find { it.first == FeatureUtils.ML_RANK } }
+                .map { it.second }
+                .toSet()
 
         assert(ranks.size == 1)
         assert(ranks.first() == FeatureUtils.UNDEFINED)
@@ -150,12 +153,9 @@ class X {
 
             val state = LookupElementInfo(old_order, prefixLength, element.lookupString.length)
             
-            //todo check this shit
             val calculated_ml_rank = ranker.rank(state, weights)
-            
-            TestCase.assertTrue(
-                    "Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}", 
-                    calculated_ml_rank == ml_rank?.toDouble())
+            assertThat(calculated_ml_rank).isEqualTo(ml_rank?.toDouble())
+                    .withFailMessage("Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}")
         }
     }
 }

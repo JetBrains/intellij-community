@@ -80,7 +80,7 @@ class FakeRanker: Ranker {
     /**
      * Items are sorted by descending order, so item with the highest rank will be on top
      */
-    override fun rank(state: LookupElementInfo, lookupRelevance: Map<String, Any?>): Double? {
+    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double? {
         val lookupElementLength = state.result_length!!.toDouble()
         return if (isShortFirst) -lookupElementLength else lookupElementLength
     }
