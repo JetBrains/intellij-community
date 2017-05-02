@@ -186,8 +186,6 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         completionStarted = true
         lastAction = {
-            //this is not robust -> since at the moment of completion here could be another values
-            //real approach would be to somehow detect if completion list is reordered 
             val isPerformExperiment = experimentHelper.isPerformExperiment()
             val experimentVersion = experimentHelper.getExperimentVersion()
             logger.completionStarted(lookup, isPerformExperiment, experimentVersion)

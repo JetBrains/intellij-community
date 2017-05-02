@@ -64,9 +64,9 @@
 
   </extensions>
 
-  <actions>
-    <action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>
-  </actions>
+  <!--<actions>-->
+    <!--<action class="com.intellij.plugin.ToggleMlSorting" id="ToggleMlSorting"/>-->
+  <!--</actions>-->
 
   <project-components>
     <component>

@@ -3,6 +3,7 @@ package com.intellij.stats.completion.experiment
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.assertNotEDT
@@ -29,7 +30,7 @@ class StatusInfoProvider(private val requestSender: RequestService) {
     fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
     fun isPerformExperiment(): Boolean {
-        val uid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance())
+        val uid = PermanentInstallationID.get()
         val hash = (uid + statusInfo.salt).hashCode()
         return hash % 2 == 0
     }
