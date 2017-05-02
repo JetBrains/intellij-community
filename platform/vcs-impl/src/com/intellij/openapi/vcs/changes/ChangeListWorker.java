@@ -513,30 +513,44 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @Nullable
-  public LocalChangeList getListCopy(@NotNull final VirtualFile file) {
+  public LocalChangeList getListCopy(@NotNull VirtualFile file) {
     FilePath filePath = VcsUtil.getFilePath(file);
-    for (LocalChangeList list : myMap.values()) {
-      for (Change change : list.getChanges()) {
-        if (change.getAfterRevision() != null && Comparing.equal(change.getAfterRevision().getFile(), filePath) ||
-            change.getBeforeRevision() != null && Comparing.equal(change.getBeforeRevision().getFile(), filePath)) {
-          return list.copy();
-        }
-      }
-    }
-    return null;
+
+    Pair<LocalChangeListImpl, Change> pair = getChangeAndListByPath(filePath);
+    if (pair == null) return null;
+
+    return pair.first.copy();
+  }
+
+  public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
+    myIdx.remove(filePath);
+
+    Pair<LocalChangeListImpl, Change> pair = getChangeAndListByPath(filePath);
+    if (pair == null) return;
+
+    LocalChangeListImpl list = pair.first;
+    Change change = pair.second;
+    list.removeChange(change);
   }
 
   @Nullable
-  public Change getChangeForPath(final FilePath file) {
-    for (LocalChangeList list : myMap.values()) {
+  public Change getChangeForPath(@Nullable FilePath filePath) {
+    Pair<LocalChangeListImpl, Change> pair = getChangeAndListByPath(filePath);
+    if (pair == null) return null;
+
+    return pair.second;
+  }
+
+  @Nullable
+  private Pair<LocalChangeListImpl, Change> getChangeAndListByPath(@Nullable FilePath filePath) {
+    if (filePath == null) return null;
+    for (LocalChangeListImpl list : myMap.values()) {
       for (Change change : list.getChanges()) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null && afterRevision.getFile().equals(file)) {
-          return change;
-        }
-        final ContentRevision beforeRevision = change.getBeforeRevision();
-        if (beforeRevision != null && beforeRevision.getFile().equals(file)) {
-          return change;
+        ContentRevision before = change.getBeforeRevision();
+        ContentRevision after = change.getAfterRevision();
+        if (before != null && before.getFile().equals(filePath) ||
+            after != null && after.getFile().equals(filePath)) {
+          return Pair.create(list, change);
         }
       }
     }
@@ -727,25 +741,6 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     @Override
     public void setDefaultChangeList(@NotNull String list) {
       myWorker.setDefault(list);
-    }
-  }
-
-  public void removeRegisteredChangeFor(FilePath path) {
-    myIdx.remove(path);
-
-    for (LocalChangeListImpl list : myMap.values()) {
-      for (Change change : list.getChanges()) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null && afterRevision.getFile().equals(path)) {
-          list.removeChange(change);
-          return;
-        }
-        final ContentRevision beforeRevision = change.getBeforeRevision();
-        if (beforeRevision != null && beforeRevision.getFile().equals(path)) {
-          list.removeChange(change);
-          return;
-        }
-      }
     }
   }
 
