@@ -431,7 +431,7 @@ private fun removeWorkspaceComponentConfiguration(defaultProject: Project, eleme
     }
   }
 
-  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, pluginDescriptor ->
+  ServiceManagerImpl.processAllImplementationClasses(defaultProject as ProjectImpl) { aClass, _ ->
     getNameIfWorkspaceStorage(aClass)?.let {
       workspaceComponentNames.add(it)
     }
