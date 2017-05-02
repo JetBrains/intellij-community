@@ -558,25 +558,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
   }
 
-  private boolean checkScopeIsAllIgnored(VcsInvalidated invalidated) {
-    if (!invalidated.isEverythingDirty()) {
-      filterOutIgnoredFiles(invalidated.getScopes());
-      if (invalidated.isEmpty()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private boolean checkScopeIsEmpty(VcsInvalidated invalidated) {
-    if (invalidated == null || invalidated.isEmpty()) {
+    if (invalidated == null) return true;
+    if (invalidated.isEmpty() && invalidated.isEverythingDirty()) {
       // a hack here; but otherwise everything here should be refactored ;)
-      if (invalidated != null && invalidated.isEmpty() && invalidated.isEverythingDirty()) {
-        VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      }
+      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
       return true;
     }
-    return checkScopeIsAllIgnored(invalidated);
+
+    if (invalidated.isEverythingDirty()) return false;
+    if (invalidated.isEmpty()) return true;
+
+    filterOutIgnoredFiles(invalidated.getScopes());
+    return invalidated.isEmpty();
   }
 
   private void iterateScopes(DataHolder dataHolder,
