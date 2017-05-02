@@ -30,6 +30,7 @@ import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.impl.ProjectImpl
@@ -109,10 +110,12 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
 
     if (isDirectoryBased) {
       LOG.catchAndLog {
-        for (component in element.getChildren("component")) {
+        val iterator = element.getChildren("component").iterator()
+        for (component in iterator) {
           when (component.getAttributeValue("name")) {
             "InspectionProjectProfileManager" -> convertProfiles(component.getChildren("profile").iterator(), true)
             "CopyrightManager" -> convertProfiles(component.getChildren("copyright").iterator(), false)
+            ModuleManagerImpl.COMPONENT_NAME -> iterator.remove()
           }
         }
       }
