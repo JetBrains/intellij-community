@@ -399,10 +399,12 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
     final Collection<Change> result = new ArrayList<>();
     for (Change oldBoy : changesBeforeUpdate) {
-      final ContentRevision before = oldBoy.getBeforeRevision();
-      final ContentRevision after = oldBoy.getAfterRevision();
-      if (scope == null || before != null && scope.belongsTo(before.getFile()) || after != null && scope.belongsTo(after.getFile())
-          || isIgnoredChange(oldBoy, myProject)) {
+      ContentRevision before = oldBoy.getBeforeRevision();
+      ContentRevision after = oldBoy.getAfterRevision();
+      if (scope == null ||
+          before != null && scope.belongsTo(before.getFile()) ||
+          after != null && scope.belongsTo(after.getFile()) ||
+          isIgnoredChange(before, after, myProject)) {
         result.add(oldBoy);
         list.removeChange(oldBoy);
       }
@@ -410,17 +412,14 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return result;
   }
 
-  private static boolean isIgnoredChange(@NotNull Change change, @NotNull Project project) {
-    boolean beforeRevIgnored = change.getBeforeRevision() == null || isIgnoredRevision(change.getBeforeRevision(), project);
-    boolean afterRevIgnored = change.getAfterRevision() == null || isIgnoredRevision(change.getAfterRevision(), project);
-    return beforeRevIgnored && afterRevIgnored;
+  private static boolean isIgnoredChange(@Nullable ContentRevision before, @Nullable ContentRevision after, @NotNull Project project) {
+    return isIgnoredRevision(before, project) && isIgnoredRevision(after, project);
   }
 
-  private static boolean isIgnoredRevision(final @NotNull ContentRevision revision, final @NotNull Project project) {
+  private static boolean isIgnoredRevision(@Nullable ContentRevision revision, final @NotNull Project project) {
+    if (revision == null) return true;
     return ReadAction.compute(() -> {
-      if (project.isDisposed()) {
-        return false;
-      }
+      if (project.isDisposed()) return false;
       VirtualFile vFile = revision.getFile().getVirtualFile();
       return vFile != null && ProjectLevelVcsManager.getInstance(project).isIgnored(vFile);
     });
