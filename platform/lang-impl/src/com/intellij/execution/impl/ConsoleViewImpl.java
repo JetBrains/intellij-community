@@ -517,14 +517,20 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   public void waitAllRequests() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      try {
-        myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-        myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-        myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-        myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
-      }
-      catch (InterruptedException | ExecutionException | TimeoutException e) {
-        throw new RuntimeException(e);
+      while (true) {
+        try {
+          myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          myFlushUserInputAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
+          return;
+        }
+        catch (CancellationException e) {
+          //try again
+        }
+        catch (InterruptedException | ExecutionException | TimeoutException e) {
+          throw new RuntimeException(e);
+        }
       }
     });
     try {
