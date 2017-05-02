@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
@@ -50,7 +50,7 @@ public class DetectedFrameworksData {
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<>();
-    File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + FileUtil.sanitizeFileName(project.getName(), false) + "." + project.getLocationHash() +
+    File file = new File(FrameworkDetectorRegistryImpl.getDetectionDirPath() + File.separator + ProjectKt.getSystemCacheFileName(project, true, ".") +
                          File.separator + "files");
     myNewFiles = new TIntObjectHashMap<>();
     try {

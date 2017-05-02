@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,6 +91,7 @@ public class CompilerPaths {
   }
 
   public static String getCompilerSystemDirectoryName(Project project) {
+    // todo: use ProjectKt.getSystemCacheFileName()
     return ProjectUtilCore.getPresentableName(project) + "." + project.getLocationHash();
   }
 

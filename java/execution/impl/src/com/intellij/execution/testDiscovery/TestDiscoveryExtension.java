@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.project.ProjectKt;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -144,7 +145,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @NotNull
   public static String baseTestDiscoveryPathForProject(Project project) {
-    return PathManager.getSystemPath() + File.separator + "testDiscovery" + File.separator + project.getName() + "." + project.getLocationHash();
+    return PathManager.getSystemPath() + File.separator + "testDiscovery" + File.separator + ProjectKt.getSystemCacheFileName(project, true, ".");
   }
 
   private static final Object ourTracesLock = new Object();
