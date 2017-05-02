@@ -36,9 +36,14 @@ public class Runner {
 
   private static Logger logger = null;
   private static boolean ourCaseSensitiveFs;
+  private static boolean jrePresent = false;
 
   public static Logger logger() {
     return logger;
+  }
+
+  public static boolean isJrePresent() {
+    return jrePresent;
   }
 
   public static boolean isCaseSensitiveFs() {
@@ -105,6 +110,10 @@ public class Runner {
 
       initLogger();
       logger().info("destFolder: " + destFolder + ", case-sensitive: " + ourCaseSensitiveFs);
+      if (new File (destFolder + "/jre").exists()) {
+        jrePresent = true;
+        logger().info("jre is present");
+      }
 
       if ("install".equals(args[0])) {
         install(jarFile, destFolder);
