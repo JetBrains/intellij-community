@@ -228,14 +228,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myIdx.changeAdded(change, vcsKey);
   }
 
-  public boolean addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
+  public void addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
     LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
               (vcsKey == null ? null : vcsKey.getName()));
     final LocalChangeListImpl changeList = myMap.get(name);
-    if (changeList != null) {
-      addChangeToList(changeList, change, vcsKey);
-    }
-    return changeList != null;
+    if (changeList == null) return;
+
+    addChangeToList(changeList, change, vcsKey);
   }
 
   public void addChangeToCorrespondingList(@NotNull Change change, VcsKey vcsKey) {
