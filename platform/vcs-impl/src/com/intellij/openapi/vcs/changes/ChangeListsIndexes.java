@@ -36,41 +36,43 @@ public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
   private final TreeMap<FilePath, Data> myMap;
 
-  ChangeListsIndexes() {
+  public ChangeListsIndexes() {
     myMap = new TreeMap<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
   }
 
-  ChangeListsIndexes(final ChangeListsIndexes idx) {
+  public ChangeListsIndexes(@NotNull ChangeListsIndexes idx) {
     myMap = new TreeMap<>(idx.myMap);
   }
 
-  void add(final FilePath file, final FileStatus status, final VcsKey key, VcsRevisionNumber number) {
+  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, key, number));
     if (LOG.isDebugEnabled()) {
       LOG.debug("Set status " + status + " for " + file);
     }
   }
 
-  void remove(final FilePath file) {
+  public void remove(final FilePath file) {
     myMap.remove(file);
   }
 
+  @Nullable
   public FileStatus getStatus(@NotNull VirtualFile file) {
     return getStatus(VcsUtil.getFilePath(file));
   }
 
+  @Nullable
   public FileStatus getStatus(@NotNull FilePath file) {
     Data data = myMap.get(file);
     return data != null ? data.status : null;
   }
 
-  public void changeAdded(final Change change, final VcsKey key) {
+  public void changeAdded(@NotNull Change change, VcsKey key) {
     addChangeToIdx(change, key);
   }
 
-  public void changeRemoved(final Change change) {
-    final ContentRevision afterRevision = change.getAfterRevision();
-    final ContentRevision beforeRevision = change.getBeforeRevision();
+  public void changeRemoved(@NotNull Change change) {
+    ContentRevision afterRevision = change.getAfterRevision();
+    ContentRevision beforeRevision = change.getBeforeRevision();
 
     if (afterRevision != null) {
       remove(afterRevision.getFile());
@@ -120,7 +122,7 @@ public class ChangeListsIndexes {
    * - paths that were and are changed, but base revision has changed (ex. external update)
    * (for RemoteRevisionsCache and annotation listener)
    */
-  public void getDelta(final ChangeListsIndexes newIndexes,
+  public void getDelta(ChangeListsIndexes newIndexes,
                        Set<BaseRevision> toRemove,
                        Set<BaseRevision> toAdd,
                        Set<BeforeAfter<BaseRevision>> toModify) {
@@ -156,7 +158,7 @@ public class ChangeListsIndexes {
     }
   }
 
-  private static BaseRevision createBaseRevision(FilePath path, Data data) {
+  private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
     return new BaseRevision(data.vcsKey, data.revision, path);
   }
 
@@ -175,11 +177,11 @@ public class ChangeListsIndexes {
   }
 
   private static class Data {
-    public final FileStatus status;
+    @NotNull public final FileStatus status;
     public final VcsKey vcsKey;
-    public final VcsRevisionNumber revision;
+    @NotNull public final VcsRevisionNumber revision;
 
-    public Data(FileStatus status, VcsKey vcsKey, VcsRevisionNumber revision) {
+    public Data(@NotNull FileStatus status, VcsKey vcsKey, @NotNull VcsRevisionNumber revision) {
       this.status = status;
       this.vcsKey = vcsKey;
       this.revision = revision;
