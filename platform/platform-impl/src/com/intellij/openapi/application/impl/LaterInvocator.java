@@ -394,15 +394,8 @@ public class LaterInvocator {
     @Override
     public void run() {
       FLUSHER_SCHEDULED.set(false);
-      long startTime = System.currentTimeMillis();
-      while (true) {
-        if (!runNextEvent()) {
-          return;
-        }
-        if (System.currentTimeMillis() - startTime > 5) {
-          requestFlush();
-          return;
-        }
+      if (runNextEvent()) {
+        requestFlush();
       }
     }
 
