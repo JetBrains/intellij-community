@@ -61,7 +61,7 @@ public class Modifier implements ChangeListsWriteOperations {
   }
 
   @Override
-  public MultiMap<LocalChangeList, Change> moveChangesTo(String name, Change[] changes) {
+  public MultiMap<LocalChangeList, Change> moveChangesTo(String name, @NotNull Change[] changes) {
     MoveChanges command = new MoveChanges(name, changes);
     impl(command);
     return command.getMovedFrom();
