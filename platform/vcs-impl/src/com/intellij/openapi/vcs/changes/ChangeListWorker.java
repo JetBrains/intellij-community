@@ -27,7 +27,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -252,19 +251,18 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   public boolean removeChangeList(@NotNull String name) {
     final LocalChangeList list = myMap.get(name);
-    if (list == null) {
+    if (list == null) return false;
+
+    if (list.isDefault()) {
+      LOG.error("Cannot remove default changelist");
       return false;
     }
-    if (list.isDefault()) {
-      throw new RuntimeException(new IncorrectOperationException("Cannot remove default changelist"));
-    }
-    final String listName = list.getName();
 
     for (Change change : list.getChanges()) {
       myDefault.addChange(change);
     }
 
-    myMap.remove(listName);
+    myMap.remove(name);
     return true;
   }
 
