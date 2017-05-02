@@ -1090,7 +1090,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         // it is assumed that not-added parents of files passed to scheduleUnversionedFilesForAddition() will also be added to vcs
         // (inside the method) - so common add logic just needs to refresh statuses of parents
         final List<VcsException> result = ContainerUtil.newArrayList();
-        ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding files to VCS...", true) {
+        ProgressManager.getInstance().run(new Task.Modal(myProject, "Adding Files to VCS...", true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             indicator.setIndeterminate(true);
