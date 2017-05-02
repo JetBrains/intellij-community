@@ -15,6 +15,10 @@
  */
 package com.intellij.remote;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialAttributesKt;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -25,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  * @author michael.golubev
  */
 public class RemoteCredentialsHolder implements MutableRemoteCredentials {
+  private static final String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
 
   public static final String HOST = "HOST";
   public static final String PORT = "PORT";
@@ -32,10 +37,12 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String USERNAME = "USERNAME";
   public static final String PASSWORD = "PASSWORD";
   public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
+  public static final String STORE_PASSWORD = "STORE_PASSWORD";
+  public static final String STORE_PASSPHRASE = "STORE_PASSPHRASE";
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
-  
+
   public static final String SSH_PREFIX = "ssh://";
 
   private String myHost;
@@ -181,16 +188,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  @NotNull
-  public String getSerializedPassword() {
-    if (myStorePassword) {
-      return PasswordUtil.encodePassword(myPassword);
-    }
-    else {
-      return "";
-    }
-  }
-
   public void setSerializedPassword(String serializedPassword) {
     if (!StringUtil.isEmpty(serializedPassword)) {
       myPassword = PasswordUtil.decodePassword(serializedPassword);
@@ -198,16 +195,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
     else {
       myPassword = null;
-    }
-  }
-
-  @NotNull
-  public String getSerializedPassphrase() {
-    if (myStorePassphrase) {
-      return PasswordUtil.encodePassword(myPassphrase);
-    }
-    else {
-      return "";
     }
   }
 
@@ -247,26 +234,60 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setLiteralPort(element.getAttributeValue(PORT));
     setSerializedUserName(element.getAttributeValue(USERNAME));
     setSerializedPassword(element.getAttributeValue(PASSWORD));
+    setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
+    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
+    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
+    setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
+
+    if (!isStorePassword()) {
+      setStorePassword(StringUtil.parseBoolean(element.getAttributeValue(STORE_PASSWORD), false));
+    }
+
+    if (!isStorePassphrase()) {
+      setStorePassphrase(StringUtil.parseBoolean(element.getAttributeValue(STORE_PASSPHRASE), false));
+    }
+
+    boolean memoryOnly = isUseKeyPair() ? !isStorePassphrase() : !isStorePassword();
+    final Credentials credentials = PasswordSafe.getInstance().get(createAttributes(memoryOnly));
+    if (isUseKeyPair()) {
+      if (credentials != null) {
+        setPassphrase(credentials.getPasswordAsString());
+      }
+      setStorePassphrase(getPassphrase() != null);
+    }
+    else {
+      if (credentials != null) {
+        setPassword(credentials.getPasswordAsString());
+      }
+      setStorePassword(getPassword() != null);
+    }
+
     boolean isAnonymous = StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false);
     if (isAnonymous) {
       setSerializedUserName("anonymous");
       setSerializedPassword("user@example.com");
     }
-    setPrivateKeyFile(StringUtil.nullize(element.getAttributeValue(PRIVATE_KEY_FILE)));
-    setKnownHostsFile(StringUtil.nullize(element.getAttributeValue(KNOWN_HOSTS_FILE)));
-    setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
-    setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
   }
 
   public void save(Element rootElement) {
     rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
     rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
     rootElement.setAttribute(USERNAME, getSerializedUserName());
-    rootElement.setAttribute(PASSWORD, getSerializedPassword());
     rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
     rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
-    rootElement.setAttribute(PASSPHRASE, getSerializedPassphrase());
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
+    rootElement.setAttribute(STORE_PASSWORD, Boolean.toString(isStorePassword()));
+    rootElement.setAttribute(STORE_PASSPHRASE, Boolean.toString(isStorePassphrase()));
+
+    boolean memoryOnly = isUseKeyPair() ? !isStorePassphrase() : !isStorePassword();
+    final String password = isUseKeyPair() ? getPassphrase() : getPassword();
+    PasswordSafe.getInstance().set(createAttributes(memoryOnly), new Credentials(getUserName(), password));
+  }
+
+  @NotNull
+  private CredentialAttributes createAttributes(boolean memoryOnly) {
+    final String serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + ":" + String.valueOf(isUseKeyPair());
+    return new CredentialAttributes(serviceName, getUserName(), null, memoryOnly);
   }
 
   @Override
