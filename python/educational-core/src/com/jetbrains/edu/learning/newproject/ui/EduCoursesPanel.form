@@ -34,7 +34,7 @@
                 </constraints>
                 <properties>
                   <minimumSize width="50" height="50"/>
-                  <preferredSize width="300" height="200"/>
+                  <preferredSize width="-1" height="-1"/>
                 </properties>
                 <border type="none">
                   <size top="2" left="4" bottom="2" right="4"/>

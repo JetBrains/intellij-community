@@ -54,7 +54,9 @@ public class EduCoursesPanel extends JPanel {
 
   private void initUI() {
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myMainPanel, true);
-    myCourseNameLabel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, -10, 10));
+    myCourseNameLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 5, 10));
+    Font labelFont = UIUtil.getLabelFont();
+    myCourseNameLabel.setFont(new Font(labelFont.getName(), Font.BOLD, JBUI.scaleFontSize(18.0f)));
     myTagsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 10));
     myDescriptionTextArea.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 10, 10));
     myDescriptionTextArea.setEditorKit(UIUtil.getHTMLEditorKit());
@@ -75,8 +77,16 @@ public class EduCoursesPanel extends JPanel {
         }
       }
     };
-    myCoursesList.setCellRenderer(renderer);
-    myCoursesList.setFixedCellHeight(30);
+    myCoursesList.setCellRenderer(new DefaultListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        Component component = renderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (component instanceof JLabel) {
+          ((JLabel)component).setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 0));
+        }
+        return component;
+      }
+    });
     myLocationField = createLocationComponent();
     myCoursesList.addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -130,7 +140,7 @@ public class EduCoursesPanel extends JPanel {
   private void updateCourseInfoPanel(Course selectedCourse) {
     String courseName = selectedCourse.getName();
     String description = selectedCourse.getDescription();
-    myCourseNameLabel.setText(UIUtil.toHtml("<h1>" + courseName + "</h1>"));
+    myCourseNameLabel.setText(courseName);
     myTagsPanel.removeAll();
     addTags(myTagsPanel, selectedCourse);
     myTagsPanel.revalidate();
@@ -209,5 +219,10 @@ public class EduCoursesPanel extends JPanel {
 
   public String getLocationString() {
     return myLocationField.getComponent().getText();
+  }
+
+  @Override
+  public Dimension getPreferredSize() {
+    return JBUI.size(600, 400);
   }
 }
