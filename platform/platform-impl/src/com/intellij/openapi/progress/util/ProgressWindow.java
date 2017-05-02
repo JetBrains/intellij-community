@@ -18,6 +18,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -62,6 +63,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private String myProcessId = "<unknown>";
   @Nullable private volatile Runnable myBackgroundHandler;
   protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  private boolean myModalityEntered;
 
   @FunctionalInterface
   public interface Listener {
@@ -179,6 +181,20 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }, getModalityState()));
     timer.setRepeats(false);
     timer.start();
+  }
+
+  final void enterModality() {
+    if (myModalityProgress == this && !myModalityEntered) {
+      LaterInvocator.enterModal(this);
+      myModalityEntered = true;
+    }
+  }
+
+  final void exitModality() {
+    if (myModalityProgress == this && myModalityEntered) {
+      myModalityEntered = false;
+      LaterInvocator.leaveModal(this);
+    }
   }
 
   @Override
