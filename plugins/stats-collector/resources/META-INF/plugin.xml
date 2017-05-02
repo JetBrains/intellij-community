@@ -49,6 +49,10 @@
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
     </applicationService>
 
+    <applicationService serviceInterface="com.intellij.stats.completion.experiment.ExperimentDecision"
+                        serviceImplementation="com.intellij.stats.completion.experiment.PermanentInstallationIDBasedDecision">
+    </applicationService>
+
     <applicationService serviceInterface="com.intellij.sorting.Ranker"
                         serviceImplementation="com.intellij.sorting.MLRanker">
     </applicationService>

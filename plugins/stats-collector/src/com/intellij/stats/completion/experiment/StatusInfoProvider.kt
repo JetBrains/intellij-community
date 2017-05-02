@@ -8,7 +8,21 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.assertNotEDT
 
-class StatusInfoProvider(private val requestSender: RequestService) {
+interface ExperimentDecision {
+    fun isPerformExperiment(salt: String): Boolean
+}
+
+class PermanentInstallationIDBasedDecision : ExperimentDecision {
+    override fun isPerformExperiment(salt: String): Boolean {
+        val uid = PermanentInstallationID.get()
+        val hash = (uid + salt).hashCode()
+        return hash % 2 == 0
+    }
+}
+
+
+class StatusInfoProvider(private val requestSender: RequestService,
+                         private val experimentDecision: ExperimentDecision) {
 
     companion object {
         private val GSON = Gson()
@@ -21,22 +35,21 @@ class StatusInfoProvider(private val requestSender: RequestService) {
         fun getInstance(): StatusInfoProvider = ServiceManager.getService(StatusInfoProvider::class.java)
     }
 
-    @Volatile private var statusInfo: ExperimentInfo = loadInfo()
+    @Volatile private var info: ExperimentInfo = loadInfo()
     @Volatile private var serverStatus = ""
     @Volatile private var dataServerUrl = ""
 
-    fun getExperimentVersion() = statusInfo.experimentVersion
+    fun getExperimentVersion() = info.experimentVersion
     
     fun getDataServerUrl(): String = dataServerUrl
     
     fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
     fun isPerformExperiment(): Boolean {
-        if (!statusInfo.performExperiment) return false
-
-        val uid = PermanentInstallationID.get()
-        val hash = (uid + statusInfo.salt).hashCode()
-        return hash % 2 == 0
+        if (!info.performExperiment) {
+            return false
+        }
+        return experimentDecision.isPerformExperiment(info.salt)
     }
     
     fun updateStatus() {
@@ -55,8 +68,8 @@ class StatusInfoProvider(private val requestSender: RequestService) {
             if (salt != null && experimentVersion != null) {
                 //should be Int always
                 val floatVersion = experimentVersion.toFloat()
-                statusInfo = ExperimentInfo(floatVersion.toInt(), salt, performExperiment.toBoolean())
-                saveInfo(statusInfo)
+                info = ExperimentInfo(floatVersion.toInt(), salt, performExperiment.toBoolean())
+                saveInfo(info)
             }
             
             serverStatus = map["status"]?.toString() ?: ""
