@@ -223,13 +223,17 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return newList.copy();
   }
 
+  private void addChangeToList(@NotNull LocalChangeListImpl list, @NotNull Change change, VcsKey vcsKey) {
+    list.addChange(change);
+    myIdx.changeAdded(change, vcsKey);
+  }
+
   public boolean addChangeToList(@NotNull String name, @NotNull Change change, VcsKey vcsKey) {
     LOG.debug("[addChangeToList] name: " + name + " change: " + ChangesUtil.getFilePath(change).getPath() + " vcs: " +
               (vcsKey == null ? null : vcsKey.getName()));
     final LocalChangeListImpl changeList = myMap.get(name);
     if (changeList != null) {
-      changeList.addChange(change);
-      myIdx.changeAdded(change, vcsKey);
+      addChangeToList(changeList, change, vcsKey);
     }
     return changeList != null;
   }
@@ -242,14 +246,12 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
       OpenTHashSet<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list);
       if (changesBeforeUpdate.contains(change)) {
         LOG.debug("[addChangeToCorrespondingList] matched: " + list.getName());
-        list.addChange(change);
-        myIdx.changeAdded(change, vcsKey);
+        addChangeToList(list, change, vcsKey);
         return;
       }
     }
     LOG.debug("[addChangeToCorrespondingList] added to default list");
-    myDefault.addChange(change);
-    myIdx.changeAdded(change, vcsKey);
+    addChangeToList(myDefault, change, vcsKey);
   }
 
   public boolean removeChangeList(@NotNull String name) {
