@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +29,6 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
   private JCheckBox myScrollExecutionPointToCheckBox;
   private JRadioButton myClickRadioButton;
   private JRadioButton myDragToTheEditorRadioButton;
-  private JBCheckBox myEnableMemoryView;
 
   @Override
   public void reset(@NotNull XDebuggerGeneralSettings settings) {
@@ -40,7 +38,6 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     myScrollExecutionPointToCheckBox.setSelected(settings.isScrollToCenter());
     myClickRadioButton.setSelected(!Registry.is("debugger.click.disable.breakpoints"));
     myDragToTheEditorRadioButton.setSelected(Registry.is("debugger.click.disable.breakpoints"));
-    myEnableMemoryView.setSelected(Registry.is("debugger.enable.memory.view"));
   }
 
   @Override
@@ -49,8 +46,7 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
            hideDebugWindowCheckBox.isSelected() != settings.isHideDebuggerOnProcessTermination() ||
            myShowDebugWindowOnCheckBox.isSelected() != settings.isShowDebuggerOnBreakpoint() ||
            myScrollExecutionPointToCheckBox.isSelected() != settings.isScrollToCenter() ||
-           myDragToTheEditorRadioButton.isSelected() != Registry.is("debugger.click.disable.breakpoints") ||
-           myEnableMemoryView.isSelected() != Registry.is("debugger.enable.memory.view");
+           myDragToTheEditorRadioButton.isSelected() != Registry.is("debugger.click.disable.breakpoints");
   }
 
   @Override
@@ -60,7 +56,6 @@ class GeneralConfigurableUi implements ConfigurableUi<XDebuggerGeneralSettings> 
     settings.setShowDebuggerOnBreakpoint(myShowDebugWindowOnCheckBox.isSelected());
     settings.setScrollToCenter(myScrollExecutionPointToCheckBox.isSelected());
     Registry.get("debugger.click.disable.breakpoints").setValue(myDragToTheEditorRadioButton.isSelected());
-    Registry.get("debugger.enable.memory.view").setValue(myEnableMemoryView.isSelected());
   }
 
   @NotNull
