@@ -19,7 +19,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +32,7 @@ public class ShelvedBinaryContentRevision extends SimpleBinaryContentRevision {
     myShelvedContentPath = shelvedContentPath;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public byte[] getBinaryContent() throws VcsException {
     try {
