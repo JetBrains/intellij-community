@@ -1142,6 +1142,19 @@ FunctionEnd
 
 
 Section "Uninstall"
+  StrCpy $0 $baseRegKey
+  StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
+  StrCpy $2 "InstallLocation"
+  Call un.OMReadRegStr
+  StrCmp $INSTDIR "$3\bin" check_if_IDE_in_use invalid_installation_dir
+invalid_installation_dir:
+  ;check if uninstaller runs from not installation folder
+  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" check_if_IDE_in_use 0
+  goto end_of_uninstall
+check_if_IDE_in_use:
   ;check if the uninstalled application is running
   Call un.checkIfIDEInUse
   ; Uninstaller is in the \bin directory, we need upper level dir
