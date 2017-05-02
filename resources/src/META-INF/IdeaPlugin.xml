@@ -325,8 +325,8 @@
 
     <extensionPoint name="repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"/>
 
-    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonCodeModifications" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonCodeModifications"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
     </extensionPoint>
 
   </extensionPoints>
@@ -1967,7 +1967,7 @@
     <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
-    <codeInsight.intention.jvmCommonCodeModifications language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonCodeModifications"/>
+    <codeInsight.intention.jvmCommonIntentionActionsFactory language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

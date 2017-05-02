@@ -26,7 +26,7 @@ import org.jetbrains.uast.UDeclaration
 /**
  * Extension Point provides language-abstracted code modifications for JVM-based languages.
  *
- * Each method should return nullable code modification (preferable [IntentionAction] as most generic).
+ * Each method should return nullable code modification ([IntentionAction]).
  * If method returns `null` this means that operation on given elements is not supported or not yet implemented for a language.
  *
  * Every new added method should return `null` by default and then be overridden in implementations for each language if it is possible.
@@ -34,12 +34,12 @@ import org.jetbrains.uast.UDeclaration
  * @since 2017.2
  */
 @ApiStatus.Experimental
-abstract class JvmCommonCodeModifications {
+abstract class JvmCommonIntentionActionsFactory {
 
   open fun createChangeModifierAction(declaration: UDeclaration, @PsiModifier.ModifierConstant @NonNls modifier: String, shouldPresent: Boolean): IntentionAction? = null
 
-  open fun createAddMethodAction(u: UClass, methodName: String, returnType: PsiType, vararg arguments: PsiType): IntentionAction? = null
+  open fun createAddMethodAction(u: UClass, methodName: String, returnType: PsiType, vararg parameters: PsiType): IntentionAction? = null
 
-  companion object : LanguageExtension<JvmCommonCodeModifications>("com.intellij.codeInsight.intention.jvmCommonCodeModifications")
+  companion object : LanguageExtension<JvmCommonIntentionActionsFactory>("com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory")
 }
 
