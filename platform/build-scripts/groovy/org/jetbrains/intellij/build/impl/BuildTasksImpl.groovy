@@ -88,7 +88,10 @@ class BuildTasksImpl extends BuildTasks {
     }
   }
 
-  void buildSearchableOptions(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
+  /**
+   * Build index which is used to search options in the Settings dialog.
+   */
+  void buildSearchableOptionsIndex(File targetDirectory, List<String> modulesToIndex, List<String> pathsToLicenses) {
     buildContext.executeStep("Build searchable options index", BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP, {
       def javaRuntimeClasses = "${buildContext.projectBuilder.moduleOutput(buildContext.findModule("java-runtime"))}"
       if (!new File(javaRuntimeClasses).exists()) {
@@ -115,6 +118,8 @@ class BuildTasksImpl extends BuildTasks {
       String classpathFile = "$tempDir/classpath.txt"
       new File(classpathFile).text = ideClasspath.join("\n")
 
+      //Start the product in headless mode using com.intellij.ide.ui.search.TraverseUIStarter. It'll process all UI elements in Settings dialog
+      // and build index for them.
       buildContext.ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
         jvmarg(line: "-ea -Xmx500m")
         jvmarg(value: "-Xbootclasspath/a:${buildContext.projectBuilder.moduleOutput(buildContext.findModule("boot"))}")
