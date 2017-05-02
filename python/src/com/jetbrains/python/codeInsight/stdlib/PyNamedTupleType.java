@@ -31,10 +31,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author yole
@@ -48,7 +45,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   private final String myName;
 
   @NotNull
-  private final List<String> myFields;
+  private final Map<String, Optional<PyType>> myFields;
 
   @NotNull
   private final DefinitionLevel myDefinitionLevel;
@@ -56,11 +53,11 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   public PyNamedTupleType(@NotNull PyClass tupleClass,
                           @NotNull PsiElement declaration,
                           @NotNull String name,
-                          @NotNull List<String> fields,
+                          @NotNull Map<String, Optional<PyType>> fields,
                           @NotNull DefinitionLevel definitionLevel) {
     super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
     myDeclaration = declaration;
-    myFields = fields;
+    myFields = Collections.unmodifiableMap(fields);
     myName = name;
     myDefinitionLevel = definitionLevel;
   }
@@ -76,7 +73,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     if (classMembers != null && !classMembers.isEmpty()) {
       return classMembers;
     }
-    if (myFields.contains(name)) {
+    if (myFields.containsKey(name)) {
       // It's important to make a copy of declaration otherwise members will have the same type as their class
       return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_HIGH, new PyElementImpl(myDeclaration.getNode())));
     }
@@ -87,7 +84,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
     final List<Object> result = new ArrayList<>();
     Collections.addAll(result, super.getCompletionVariants(completionPrefix, location, context));
-    for (String field : myFields) {
+    for (String field : myFields.keySet()) {
       result.add(LookupElementBuilder.create(field));
     }
     return ArrayUtil.toObjectArray(result);
@@ -142,7 +139,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public Set<String> getMemberNames(boolean inherited, @NotNull TypeEvalContext context) {
     final Set<String> result = super.getMemberNames(inherited, context);
-    result.addAll(myFields);
+    result.addAll(myFields.keySet());
 
     return result;
   }
@@ -152,8 +149,8 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @NotNull
-  public List<String> getElementNames() {
-    return Collections.unmodifiableList(myFields);
+  public Map<String, Optional<PyType>> getFields() {
+    return myFields;
   }
 
   @Override
@@ -164,7 +161,9 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    return isCallable() ? ContainerUtil.map(myFields, field -> new PyCallableParameterImpl(field, null)) : null;
+    return isCallable()
+           ? ContainerUtil.map(myFields.entrySet(), field -> new PyCallableParameterImpl(field.getKey(), field.getValue().orElse(null)))
+           : null;
   }
 
   public enum DefinitionLevel {

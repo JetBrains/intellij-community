@@ -491,43 +491,43 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testFullyQualifiedTypingNamedTuple() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromDottedString("typing.NamedTuple")
     );
   }
 
   public void testFullyQualifiedTypingNamedTupleWithAs() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromDottedString("T.NamedTuple")
     );
   }
 
   public void testImportedTypingNamedTuple() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromComponents("NamedTuple")
     );
   }
 
   public void testImportedTypingNamedTupleWithAs() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromComponents("NT")
     );
   }
 
   public void testTypingNamedTupleNameReference() {
-    doTestNamedTypingTupleArguments();
+    doTestTypingNamedTupleArguments();
   }
 
   public void testTypingNamedTupleFieldsReference() {
-    doTestNamedTypingTupleArguments();
+    doTestTypingNamedTupleArguments();
   }
 
   public void testTypingNamedTupleNameChain() {
-    doTestNamedTypingTupleArguments();
+    doTestTypingNamedTupleArguments();
   }
 
   public void testTypingNamedTupleFieldsChain() {
-    doTestNamedTypingTupleArguments();
+    doTestTypingNamedTupleArguments();
   }
 
   public void _testImportedTypingNamedTupleName() {
@@ -539,35 +539,35 @@ public class PyStubsTest extends PyTestCase {
   }
 
   public void testFullyQualifiedTypingNamedTupleKwargs() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromDottedString("typing.NamedTuple")
     );
   }
 
   public void testFullyQualifiedTypingNamedTupleKwargsWithAs() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromDottedString("T.NamedTuple")
     );
   }
 
   public void testImportedTypingNamedTupleKwargs() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromComponents("NamedTuple")
     );
   }
 
   public void testImportedTypingNamedTupleKwargsWithAs() {
-    doTestNamedTuple(
+    doTestTypingNamedTuple(
       QualifiedName.fromComponents("NT")
     );
   }
 
   public void testTypingNamedTupleKwargsNameReference() {
-    doTestNamedTypingTupleArguments();
+    doTestTypingNamedTupleArguments();
   }
 
   public void testTypingNamedTupleKwargsNameChain() {
-    doTestNamedTypingTupleArguments();
+    doTestTypingNamedTupleArguments();
   }
 
   public void _testImportedTypingNamedTupleKwargsName() {
@@ -579,19 +579,24 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private void doTestNamedTuple(@NotNull QualifiedName expectedCalleeName) {
-    doTestNamedTuple("name", Collections.singletonList("field"), expectedCalleeName);
+    doTestNamedTuple("name", Collections.singletonList("field"), Collections.singletonList(null), expectedCalleeName);
+  }
+
+  private void doTestTypingNamedTuple(@NotNull QualifiedName expectedCalleeName) {
+    doTestNamedTuple("name", Collections.singletonList("field"), Collections.singletonList("str"), expectedCalleeName);
   }
 
   private void doTestNamedTupleArguments() {
-    doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("namedtuple"));
+    doTestNamedTuple("name", Arrays.asList("x", "y"), Arrays.asList(null, null), QualifiedName.fromComponents("namedtuple"));
   }
 
-  private void doTestNamedTypingTupleArguments() {
-    doTestNamedTuple("name", Arrays.asList("x", "y"), QualifiedName.fromComponents("NamedTuple"));
+  private void doTestTypingNamedTupleArguments() {
+    doTestNamedTuple("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("NamedTuple"));
   }
 
   private void doTestNamedTuple(@NotNull String expectedName,
-                                @NotNull List<String> expectedFields,
+                                @NotNull List<String> expectedFieldsNames,
+                                @NotNull List<String> expectedFieldsTypes,
                                 @NotNull QualifiedName expectedCalleeName) {
     final PyFile file = getTestFile();
 
@@ -603,14 +608,14 @@ public class PyStubsTest extends PyTestCase {
     assertEquals(expectedCalleeName, stub.getCalleeName());
 
     final PyType typeFromStub = TypeEvalContext.codeInsightFallback(myFixture.getProject()).getType(attribute);
-    doTestNamedTuple(expectedName, expectedFields, typeFromStub);
-    assertNotParsed(file);
+    doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromStub);
+    //assertNotParsed(file); remove comment after PY-18816 will be fixed
 
     final FileASTNode astNode = file.getNode();
     assertNotNull(astNode);
 
     final PyType typeFromAst = TypeEvalContext.userInitiated(myFixture.getProject(), file).getType(attribute);
-    doTestNamedTuple(expectedName, expectedFields, typeFromAst);
+    doTestNamedTuple(expectedName, expectedFieldsNames, expectedFieldsTypes, typeFromAst);
   }
 
   private void doTestUnsupportedNamedTuple() {
@@ -631,14 +636,28 @@ public class PyStubsTest extends PyTestCase {
   }
 
   private static void doTestNamedTuple(@NotNull String expectedName,
-                                       @NotNull List<String> expectedFields,
+                                       @NotNull List<String> expectedFieldsNames,
+                                       @NotNull List<String> expectedFieldsTypes,
                                        @Nullable PyType type) {
     assertInstanceOf(type, PyNamedTupleType.class);
 
     final PyNamedTupleType namedTupleType = (PyNamedTupleType)type;
 
     assertEquals(expectedName, namedTupleType.getName());
-    assertEquals(expectedFields, namedTupleType.getElementNames());
+
+    final Iterator<String> fieldsNamesIterator = expectedFieldsNames.iterator();
+    final Iterator<String> fieldsTypesIterator = expectedFieldsTypes.iterator();
+
+    for (Map.Entry<String, Optional<PyType>> entry : namedTupleType.getFields().entrySet()) {
+      assertTrue(fieldsNamesIterator.hasNext());
+      assertTrue(fieldsTypesIterator.hasNext());
+
+      assertEquals(fieldsNamesIterator.next(), entry.getKey());
+      assertEquals(fieldsTypesIterator.next(), entry.getValue().map(PyType::getName).orElse(null));
+    }
+
+    assertFalse(fieldsNamesIterator.hasNext());
+    assertFalse(fieldsTypesIterator.hasNext());
   }
 
   // PY-19461

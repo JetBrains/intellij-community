@@ -48,7 +48,7 @@ import java.util.List;
  * @author yole
  */
 public class PyFileElementType extends IStubFileElementType<PyFileStub> {
-  public static PyFileElementType INSTANCE = new PyFileElementType(PythonLanguage.getInstance());
+  public static final PyFileElementType INSTANCE = new PyFileElementType(PythonLanguage.getInstance());
 
   protected PyFileElementType(Language language) {
     super(language);
@@ -62,7 +62,7 @@ public class PyFileElementType extends IStubFileElementType<PyFileStub> {
   @Override
   public int getStubVersion() {
     // Don't forget to update versions of indexes that use the updated stub-based elements
-    return 59;
+    return 60;
   }
 
   @Nullable

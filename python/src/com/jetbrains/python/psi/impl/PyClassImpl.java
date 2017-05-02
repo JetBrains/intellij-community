@@ -61,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -170,10 +172,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             }
           );
 
+          final Collector<PyTargetExpression, ?, LinkedHashMap<String, Optional<PyType>>> toTypedFields =
+            Collectors.toMap(PyTargetExpression::getName,
+                             field -> Optional.ofNullable(context.getType(field)),
+                             (v1, v2) -> v2,
+                             LinkedHashMap::new);
+
           return new PyNamedTupleType(tupleClass,
                                       this,
                                       name,
-                                      ContainerUtil.map(fields, PyTargetExpression::getName),
+                                      fields.stream().collect(toTypedFields),
                                       PyNamedTupleType.DefinitionLevel.NEW_TYPE);
         }
       }
