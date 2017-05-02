@@ -87,10 +87,6 @@ public class MemoryViewManager implements ApplicationComponent, PersistentStateC
     return myState.isShowTrackedOnly;
   }
 
-  public boolean isEnabled() {
-    return Registry.get("debugger.enable.memory.view").asBoolean();
-  }
-
   public void addMemoryViewManagerListener(MemoryViewManagerListener listener, @NotNull Disposable parentDisposable) {
     myDispatcher.addListener(listener, parentDisposable);
   }
