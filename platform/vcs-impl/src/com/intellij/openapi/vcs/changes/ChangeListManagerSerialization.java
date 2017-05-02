@@ -29,22 +29,22 @@ import java.util.List;
 import java.util.Set;
 
 class ChangeListManagerSerialization {
-  @NonNls static final String ATT_ID = "id";
-  @NonNls static final String ATT_NAME = "name";
-  @NonNls static final String ATT_COMMENT = "comment";
-  @NonNls static final String ATT_DEFAULT = "default";
-  @NonNls static final String ATT_READONLY = "readonly";
-  @NonNls static final String ATT_VALUE_TRUE = "true";
-  @NonNls static final String ATT_CHANGE_TYPE = "type";
-  @NonNls static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
-  @NonNls static final String ATT_CHANGE_AFTER_PATH = "afterPath";
-  @NonNls static final String ATT_PATH = "path";
-  @NonNls static final String ATT_MASK = "mask";
-  @NonNls static final String NODE_LIST = "list";
-  @NonNls static final String NODE_IGNORED = "ignored";
-  @NonNls static final String NODE_CHANGE = "change";
-  @NonNls static final String MANUALLY_REMOVED_FROM_IGNORED = "manually-removed-from-ignored";
-  @NonNls static final String DIRECTORY_TAG = "directory";
+  @NonNls private static final String ATT_ID = "id";
+  @NonNls private static final String ATT_NAME = "name";
+  @NonNls private static final String ATT_COMMENT = "comment";
+  @NonNls private static final String ATT_DEFAULT = "default";
+  @NonNls private static final String ATT_READONLY = "readonly";
+  @NonNls private static final String ATT_VALUE_TRUE = "true";
+  @NonNls private static final String ATT_CHANGE_TYPE = "type";
+  @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
+  @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
+  @NonNls private static final String ATT_PATH = "path";
+  @NonNls private static final String ATT_MASK = "mask";
+  @NonNls private static final String NODE_LIST = "list";
+  @NonNls private static final String NODE_IGNORED = "ignored";
+  @NonNls private static final String NODE_CHANGE = "change";
+  @NonNls private static final String MANUALLY_REMOVED_FROM_IGNORED = "manually-removed-from-ignored";
+  @NonNls private static final String DIRECTORY_TAG = "directory";
 
   private final IgnoredFilesComponent myIgnoredIdeaLevel;
   private final ChangeListWorker myWorker;
