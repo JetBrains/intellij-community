@@ -275,7 +275,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
             UIUtil.resetEnabledRollOver(NotificationsTreeTable.this, LOG_COLUMN);
             if (column == LOG_COLUMN) {
               JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
-              rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", row);
+              rc.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, row);
               ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
             }
           }

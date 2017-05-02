@@ -126,4 +126,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       g2.dispose();
     }
   }
+
+  @Override
+  protected Insets getInsets() {
+    return JBUI.insets(4, 5).asUIResource();
+  }
 }

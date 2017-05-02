@@ -16,38 +16,75 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
+import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
+  public static final String HOVER_PROPERTY = "JTextField.hover";
+
   public WinIntelliJTextFieldUI(JTextField textField) {
     super(textField);
   }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
+    c.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        JComponent c = (JComponent)e.getComponent();
+        c.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
+        c.repaint();
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        JComponent c = (JComponent)e.getComponent();
+        c.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
+        c.repaint();
+      }
+    });
+
     return new WinIntelliJTextFieldUI((JTextField)c);
   }
 
   @Override
-  protected void paintBackground(Graphics graphics) {
-    super.paintBackground(graphics);
+  protected void paintBackground(Graphics g) {
+    Graphics2D g2 = (Graphics2D)g.create();
+    try {
+      JTextComponent c = getComponent();
+      Container parent = c.getParent();
+
+      if (c.isOpaque() && parent != null) {
+        g2.setColor(parent.getBackground());
+        g2.fillRect(0, 0, c.getWidth(), c.getHeight());
+      }
+
+      if (isSearchField(c)) {
+        Rectangle r = getDrawingRect();
+        paintSearchField(g2, c, r);
+      } else {
+        g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
+
+        int bw = JBUI.scale(1);
+        g2.fillRect(bw, bw, c.getWidth() - bw*2, c.getHeight() - bw*2);
+      }
+    } finally {
+      g2.dispose();
+    }
   }
 
-  @Override
-  protected void paintDarculaBackground(Graphics2D g, JTextComponent c, Border border) {
-    super.paintDarculaBackground(g, c, border);
-  }
-
-  @Override
-  protected void paintSearchField(Graphics2D g, JTextComponent c, Rectangle r) {
-    super.paintSearchField(g, c, r);
+  @Override public Dimension getPreferredSize(JComponent c) {
+    Dimension size = super.getPreferredSize(c);
+    size.height = isSearchField(c) ? size.height : JBUI.scale(22);
+    return size;
   }
 }

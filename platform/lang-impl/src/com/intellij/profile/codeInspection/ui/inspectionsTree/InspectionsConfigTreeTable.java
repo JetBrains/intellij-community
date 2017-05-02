@@ -147,7 +147,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
         case IS_ENABLED_COLUMN:
           if (Registry.is("ide.intellij.laf.win10.ui")) {
             JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
-            rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", row);
+            rc.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, row);
             ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
           }
           break;
