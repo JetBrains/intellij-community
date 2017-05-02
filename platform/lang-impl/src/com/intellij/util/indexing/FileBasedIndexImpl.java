@@ -2025,70 +2025,72 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
     @Override
     public boolean processFile(@NotNull final VirtualFile file) {
-      if (!file.isValid()) {
-        return true;
-      }
-      if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
-        return true;
-      }
+      try (AccessToken ignore = ReadAction.start()) {
+        if (!file.isValid()) {
+          return true;
+        }
+        if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
+          return true;
+        }
 
-      if (!(file instanceof VirtualFileWithId)) {
-        return true;
-      }
-      myFileTypeManager.freezeFileTypeTemporarilyIn(file, () -> {
-        boolean oldStuff = true;
-        if (file.isDirectory() || !isTooLarge(file)) {
-          final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
-            final ID<?, ?> indexId = affectedIndexCandidates.get(i);
-            try {
-              if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
-                if (myDoTraceForFilesToBeIndexed) {
-                  LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+        if (!(file instanceof VirtualFileWithId)) {
+          return true;
+        }
+        myFileTypeManager.freezeFileTypeTemporarilyIn(file, () -> {
+          boolean oldStuff = true;
+          if (file.isDirectory() || !isTooLarge(file)) {
+            final List<ID<?, ?>> affectedIndexCandidates = getAffectedIndexCandidates(file);
+            //noinspection ForLoopReplaceableByForEach
+            for (int i = 0, size = affectedIndexCandidates.size(); i < size; ++i) {
+              final ID<?, ?> indexId = affectedIndexCandidates.get(i);
+              try {
+                if (needsFileContentLoading(indexId) && shouldIndexFile(file, indexId)) {
+                  if (myDoTraceForFilesToBeIndexed) {
+                    LOG.info("Scheduling indexing of " + file + " by request of index " + indexId);
+                  }
+                  synchronized (myFiles) {
+                    myFiles.add(file);
+                  }
+                  oldStuff = false;
+                  break;
                 }
-                synchronized (myFiles) {
-                  myFiles.add(file);
+              }
+              catch (RuntimeException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof IOException || cause instanceof StorageException) {
+                  LOG.info(e);
+                  requestRebuild(indexId);
                 }
-                oldStuff = false;
-                break;
-              }
-            }
-            catch (RuntimeException e) {
-              final Throwable cause = e.getCause();
-              if (cause instanceof IOException || cause instanceof StorageException) {
-                LOG.info(e);
-                requestRebuild(indexId);
-              }
-              else {
-                throw e;
+                else {
+                  throw e;
+                }
               }
             }
           }
-        }
-        FileContent fileContent = null;
-        int inputId = Math.abs(getIdMaskingNonIdBasedFile(file));
-        for (ID<?, ?> indexId : myNotRequiringContentIndices) {
-          if (shouldIndexFile(file, indexId)) {
-            oldStuff = false;
-            if (fileContent == null) {
-              fileContent = new FileContentImpl(file);
+          FileContent fileContent = null;
+          int inputId = Math.abs(getIdMaskingNonIdBasedFile(file));
+          for (ID<?, ?> indexId : myNotRequiringContentIndices) {
+            if (shouldIndexFile(file, indexId)) {
+              oldStuff = false;
+              if (fileContent == null) {
+                fileContent = new FileContentImpl(file);
+              }
+              updateSingleIndex(indexId, file, inputId, fileContent);
             }
-            updateSingleIndex(indexId, file, inputId, fileContent);
           }
-        }
-        IndexingStamp.flushCache(inputId);
+          IndexingStamp.flushCache(inputId);
 
-        if (oldStuff && file instanceof VirtualFileSystemEntry) {
-          ((VirtualFileSystemEntry)file).setFileIndexed(true);
-        }
-      });
+          if (oldStuff && file instanceof VirtualFileSystemEntry) {
+            ((VirtualFileSystemEntry)file).setFileIndexed(true);
+          }
+        });
 
-      if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
-        myProgressIndicator.checkCanceled();
-        myProgressIndicator.setText("Scanning files to index");
+        if (myProgressIndicator != null && file.isDirectory()) { // once for dir is cheap enough
+          myProgressIndicator.checkCanceled();
+          myProgressIndicator.setText("Scanning files to index");
+        }
+        return true;
       }
-      return true;
     }
   }
 
