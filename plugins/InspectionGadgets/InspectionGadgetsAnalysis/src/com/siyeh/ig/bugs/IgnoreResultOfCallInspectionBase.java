@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -228,7 +229,16 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
           if (aPackage == null) {
             return null;
           }
-          return AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          if(annotation != null) {
+            // Check that annotation actually belongs to the same library/source root
+            // which could be important in case of split-packages
+            PsiFile file = PsiTreeUtil.getParentOfType(annotation, PsiFile.class);
+            if(file != null && file.getParent() != classOwner.getParent()) {
+              return null;
+            }
+          }
+          return annotation;
         }
 
         element = element.getContext();
