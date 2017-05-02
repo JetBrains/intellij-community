@@ -22,47 +22,6 @@ import com.jetbrains.completion.ranker.features.FeatureUtils
 import org.assertj.core.api.Assertions.assertThat
 
 
-object Samples {
-
-    val callCompletionOnClass = """
-    public class Test {
-        public void test(int a, int b) {}
-        public void runq(int c) {}
-        public void qqqq() {}
-        public void qwrt(int a, int b, int c) {}
-    }
-    """
-
-    val methodCompletion = """
-    class X {
-        public void t() {
-            Test test = new Test();
-            test.<caret>
-        }
-    }
-    """
-
-    val classNameCompletion = """
-    class Test {
-      public void run() {
-        F<caret>
-      }
-    }
-    """
-
-    val classText = """
-public class Test {
-    public void test() {}
-    public void run() {}
-    public void testMore() {}
-    public void check() {}
-}
-"""
-
-
-}
-
-
 class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
 
     lateinit var ranker: Ranker
@@ -81,7 +40,7 @@ class CompletionRankComputationTest : LightFixtureCompletionTestCase() {
         myFixture.configureByText(JavaFileType.INSTANCE, classNameCompletion)
         myFixture.complete(CompletionType.BASIC, 2)
 
-        checkMlRanking(1)
+        checkMlRanking(prefixLength = 1)
     }
 
     fun `test normal completion reranking`() {
@@ -208,3 +167,43 @@ class FakeWeighter : CompletionWeigher() {
 
 }
 
+
+object Samples {
+
+    val callCompletionOnClass = """
+    public class Test {
+        public void test(int a, int b) {}
+        public void runq(int c) {}
+        public void qqqq() {}
+        public void qwrt(int a, int b, int c) {}
+    }
+    """
+
+    val methodCompletion = """
+    class X {
+        public void t() {
+            Test test = new Test();
+            test.<caret>
+        }
+    }
+    """
+
+    val classNameCompletion = """
+    class Test {
+      public void run() {
+        F<caret>
+      }
+    }
+    """
+
+    val classText = """
+public class Test {
+    public void test() {}
+    public void run() {}
+    public void testMore() {}
+    public void check() {}
+}
+"""
+
+
+}
