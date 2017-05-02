@@ -591,7 +591,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
                              @NotNull ProgressIndicator indicator) {
     final ChangeListManagerGate gate = dataHolder.getChangeListWorker().createSelfGate();
     // do actual requests about file statuses
-    Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.getIsStoppedGetter().get();
+    Getter<Boolean> disposedGetter = () -> myProject.isDisposed() || myUpdater.isStopped();
     final UpdatingChangeListBuilder builder = new UpdatingChangeListBuilder(dataHolder.getChangeListWorker(),
                                                                             dataHolder.getComposite(), disposedGetter, this,
                                                                             gate);

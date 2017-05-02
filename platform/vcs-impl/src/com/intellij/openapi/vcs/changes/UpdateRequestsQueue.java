@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Semaphore;
@@ -62,7 +61,6 @@ public class UpdateRequestsQueue {
   //private final ScheduledSlowlyClosingAlarm mySharedExecutor;
   private final StartupManager myStartupManager;
   private final boolean myTrackHeavyLatch;
-  private final Getter<Boolean> myIsStoppedGetter;
 
   public UpdateRequestsQueue(final Project project, @NotNull ChangeListManagerImpl.Scheduler scheduler, final Runnable delegate) {
     myProject = project;
@@ -77,16 +75,11 @@ public class UpdateRequestsQueue {
     // not initialized
     myStarted = false;
     myStopped = false;
-    myIsStoppedGetter = () -> isStopped();
   }
 
   public void initialized() {
     LOG.debug("Initialized for project: " + myProject.getName());
     myStarted = true;
-  }
-
-  public Getter<Boolean> getIsStoppedGetter() {
-    return myIsStoppedGetter;
   }
 
   public boolean isStopped() {
