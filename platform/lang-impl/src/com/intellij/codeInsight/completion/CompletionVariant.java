@@ -190,7 +190,8 @@ public class CompletionVariant {
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString(){
-    return "completion variant at " + myPosition.toString() + " completions: " + myCompletionsList;
+    return "completion variant " + (myPosition == null ? "without position" : "at " + myPosition)
+           + ", completions: " + myCompletionsList;
   }
 
   public void setCaseInsensitive(boolean caseInsensitive) {
