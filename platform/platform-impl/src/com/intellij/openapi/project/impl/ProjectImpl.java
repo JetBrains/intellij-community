@@ -103,7 +103,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     myProjectManager = projectManager;
 
-    myName = projectName == null ? getStateStore().getProjectName() : projectName;
+    myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state 
     myLight = ApplicationManager.getApplication().isUnitTestMode() && filePath.contains(LIGHT_PROJECT_NAME);
   }
@@ -243,13 +243,16 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @NotNull
   @Override
   public String getName() {
+    if (myName == null) {
+      return getStateStore().getProjectName();
+    }
     return myName;
   }
 
   @NonNls
   @Override
   public String getPresentableUrl() {
-    if (myName == null || isDefault()) {
+    if (isDefault()) {
       // not yet initialized
       return null;
     }
@@ -294,6 +297,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     if (!isDefault() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       distributeProgress();
+    }
+    if (myName == null) {
+      myName = getStateStore().getProjectName();
     }
     ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
@@ -416,10 +422,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
-  public String getDefaultName() {
-    return isDefault() ? myName : getStateStore().getProjectName();
-  }
-
   private class MyProjectManagerListener extends ProjectManagerAdapter {
     @Override
     public void projectOpened(Project project) {
@@ -454,7 +456,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
            (isDisposed() ? " (Disposed" + (temporarilyDisposed ? " temporarily" : "") + ")"
                          : isDefault() ? "" : " '" + getPresentableUrl() + "'") +
            (isDefault() ? " (Default)" : "") +
-           " " + myName;
+           " " + getName();
   }
 
   @Override
