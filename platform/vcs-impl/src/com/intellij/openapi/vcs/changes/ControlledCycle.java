@@ -30,15 +30,13 @@ public class ControlledCycle {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ControlledCycle");
 
   private final Alarm mySimpleAlarm;
-  // this interval is also to check for not initialized paths, so it is rather small
-  private static final int ourRefreshInterval = 10000;
   private final int myRefreshInterval;
   private final Runnable myRunnable;
 
   private final AtomicBoolean myActive;
 
   public ControlledCycle(@NotNull Project project, final Getter<Boolean> callback, @NotNull final String name, final int refreshInterval) {
-    myRefreshInterval = (refreshInterval <= 0) ? ourRefreshInterval : refreshInterval;
+    myRefreshInterval = refreshInterval;
     myActive = new AtomicBoolean(false);
     myRunnable = new Runnable() {
       boolean shouldBeContinued = true;
