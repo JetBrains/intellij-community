@@ -63,6 +63,10 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl getOrCreateTab(final int index) {
+    if (index < 0) {
+      return createNewTab();
+    }
+
     TabImpl tab = findTab(index);
     if (tab != null) return tab;
 
@@ -266,7 +270,7 @@ public class RunnerLayout  {
   }
 
   /**
-   *   States of contents marked as "lightweight" won't be persisted
+   * States of contents marked as "lightweight" won't be persisted
    */
   public void setLightWeight(Content content) {
     if (myLightWeightIds == null) {
