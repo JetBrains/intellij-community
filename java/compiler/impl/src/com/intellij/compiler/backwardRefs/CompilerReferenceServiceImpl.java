@@ -53,6 +53,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -235,7 +236,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
           .map(r -> (LightRef.JavaLightMethodRef) r)
           .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
+            LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
             return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
           })
           .distinct()
@@ -278,7 +279,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         return false;
       }
       catch (Exception e) {
-        onException(e, "correlation");
+        onException(e, "conditional probability");
         return false;
       }
     } finally {
@@ -293,6 +294,58 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     try {
       if (myReader == null) throw new ReferenceIndexUnavailableException();
       return myReader.getNameEnumerator().getName(idx);
+    } catch (Exception e) {
+        onException(e, "find methods");
+        throw new ReferenceIndexUnavailableException();
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      int id;
+      try {
+        id = myReader.getNameEnumerator().tryEnumerate(name);
+      }
+      catch (Exception e) {
+        onException(e, "get name-id");
+        throw new ReferenceIndexUnavailableException();
+      }
+      return id;
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public LightRef.LightClassHierarchyElementDef[] getDirectInheritors(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      return myReader.getDirectInheritors(baseClass);
+    } catch (Exception e) {
+      onException(e, "find methods");
+      throw new ReferenceIndexUnavailableException();
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public int getInheritorCount(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      LightRef.NamedLightRef[] hierarchy = ObjectUtils.notNull(myReader.getHierarchy(baseClass, false, true, -1));
+      return hierarchy.length;
+    } catch (Exception e) {
+      onException(e, "inheritor count");
+      throw new ReferenceIndexUnavailableException();
     } finally {
       myReadDataLock.unlock();
     }
