@@ -5,22 +5,23 @@ import com.google.gson.internal.LinkedTreeMap
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.assertNotEDT
 
 class StatusInfoProvider(private val requestSender: RequestService) {
 
     companion object {
-        private val gson = Gson()
-        private val statusUrl = "https://www.jetbrains.com/config/features-service-status.json"
-        private val salt = "completion.stats.experiment.salt"
-        private val experimentVersionString = "completion.stats.experiment.version"
+        private val GSON = Gson()
+        private val STATUS_URL = "https://www.jetbrains.com/config/features-service-status.json"
+
+        private val SALT = "completion.stats.experiment.salt"
+        private val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
+        private val PERFORM_EXPERIMENT_KEY = "completion.ml.perform.experiment"
 
         fun getInstance(): StatusInfoProvider = ServiceManager.getService(StatusInfoProvider::class.java)
     }
 
-    @Volatile private var statusInfo = loadInfo()
+    @Volatile private var statusInfo: ExperimentInfo = loadInfo()
     @Volatile private var serverStatus = ""
     @Volatile private var dataServerUrl = ""
 
@@ -31,6 +32,8 @@ class StatusInfoProvider(private val requestSender: RequestService) {
     fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
     fun isPerformExperiment(): Boolean {
+        if (!statusInfo.performExperiment) return false
+
         val uid = PermanentInstallationID.get()
         val hash = (uid + statusInfo.salt).hashCode()
         return hash % 2 == 0
@@ -41,16 +44,18 @@ class StatusInfoProvider(private val requestSender: RequestService) {
         dataServerUrl = ""
         
         assertNotEDT()
-        val response = requestSender.get(statusUrl)
+        val response = requestSender.get(STATUS_URL)
         if (response != null && response.isOK()) {
-            val map = gson.fromJson(response.text, LinkedTreeMap::class.java)
+            val map = GSON.fromJson(response.text, LinkedTreeMap::class.java)
             
             val salt = map["salt"]?.toString()
             val experimentVersion = map["experimentVersion"]?.toString()
+            val performExperiment = map["performExperiment"]?.toString() ?: "false"
+
             if (salt != null && experimentVersion != null) {
                 //should be Int always
                 val floatVersion = experimentVersion.toFloat()
-                statusInfo = ExperimentInfo(floatVersion.toInt(), salt)
+                statusInfo = ExperimentInfo(floatVersion.toInt(), salt, performExperiment.toBoolean())
                 saveInfo(statusInfo)
             }
             
@@ -60,20 +65,24 @@ class StatusInfoProvider(private val requestSender: RequestService) {
     }
 
     private fun loadInfo(): ExperimentInfo {
-        val component = PropertiesComponent.getInstance()
-        val salt = component.getValue(salt) ?: ""
-        val experimentVersion = component.getInt(experimentVersionString, 0)
-        return ExperimentInfo(experimentVersion, salt)
+        return with (PropertiesComponent.getInstance()) {
+            val salt = getValue(SALT, "")
+            val experimentVersion = getInt(EXPERIMENT_VERSION_KEY, 0)
+            val performExperiment = getBoolean(PERFORM_EXPERIMENT_KEY, false)
+            ExperimentInfo(experimentVersion, salt, performExperiment)
+        }
     }
 
     private fun saveInfo(info: ExperimentInfo) {
-        val component = PropertiesComponent.getInstance()
-        component.setValue(salt, info.salt)
-        component.setValue(experimentVersionString, info.experimentVersion.toString())
+        with (PropertiesComponent.getInstance()) {
+            setValue(SALT, info.salt)
+            setValue(EXPERIMENT_VERSION_KEY, info.experimentVersion.toString())
+            setValue(PERFORM_EXPERIMENT_KEY, info.performExperiment)
+        }
     }
 
 }
 
-data class ExperimentInfo(var experimentVersion: Int, var salt: String) {
-    constructor() : this(0, "")
+data class ExperimentInfo(var experimentVersion: Int, var salt: String, var performExperiment: Boolean) {
+    constructor() : this(0, "", false)
 }
