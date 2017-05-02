@@ -216,7 +216,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myMap.put(name, newList);
     if (inUpdate) {
       // scope is not important: nothing had been added jet, nothing to move to "old state" members
-      startProcessingChanges(newList, null); // this is executed only when use through GATE
+      startProcessingChanges(newList); // this is executed only when use through GATE
     }
     return newList.copy();
   }
@@ -327,32 +327,30 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return myProject;
   }
 
-  // called NOT under ChangeListManagerImpl lock
+  /**
+   * called NOT under ChangeListManagerImpl lock
+   */
   public void notifyStartProcessingChanges(@Nullable VcsModifiableDirtyScope scope) {
-    final Collection<Change> oldChanges = new ArrayList<>();
+    List<Change> removedChanges = new ArrayList<>();
     for (LocalChangeListImpl list : myMap.values()) {
-      final Collection<Change> affectedChanges = startProcessingChanges(list, scope);
-      if (!affectedChanges.isEmpty()) {
-        oldChanges.addAll(affectedChanges);
-      }
+      startProcessingChanges(list);
+      removedChanges.addAll(removeChangesUnderScope(list, scope));
     }
-    for (Change change : oldChanges) {
-      myIdx.changeRemoved(change);
-    }
+
     // scope should be modified for correct moves tracking
-    correctScopeForMoves(scope, oldChanges);
-  }
-
-  private static void correctScopeForMoves(@Nullable VcsModifiableDirtyScope scope, @NotNull Collection<Change> changes) {
-    if (scope == null) return;
-    for (Change change : changes) {
-      if (change.isMoved() || change.isRenamed()) {
-        scope.addDirtyFile(change.getBeforeRevision().getFile());
-        scope.addDirtyFile(change.getAfterRevision().getFile());
+    if (scope != null) {
+      for (Change change : removedChanges) {
+        if (change.isMoved() || change.isRenamed()) {
+          scope.addDirtyFile(change.getBeforeRevision().getFile());
+          scope.addDirtyFile(change.getAfterRevision().getFile());
+        }
       }
     }
   }
 
+  /**
+   * called NOT under ChangeListManagerImpl lock
+   */
   public void notifyDoneProcessingChanges(final ChangeListListener dispatcher) {
     List<ChangeList> changedLists = new ArrayList<>();
     final Map<LocalChangeListImpl, List<Change>> removedChanges = new HashMap<>();
@@ -392,24 +390,29 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     myChangesBeforeUpdateMap.clear();
   }
 
-  @NotNull
-  private Collection<Change> startProcessingChanges(@NotNull LocalChangeListImpl list, @Nullable VcsDirtyScope scope) {
+  private void startProcessingChanges(@NotNull LocalChangeListImpl list) {
     OpenTHashSet<Change> changesBeforeUpdate = new OpenTHashSet<>(list.getChanges());
     myChangesBeforeUpdateMap.put(list, changesBeforeUpdate);
+  }
 
-    final Collection<Change> result = new ArrayList<>();
-    for (Change oldBoy : changesBeforeUpdate) {
-      ContentRevision before = oldBoy.getBeforeRevision();
-      ContentRevision after = oldBoy.getAfterRevision();
-      if (scope == null ||
-          before != null && scope.belongsTo(before.getFile()) ||
-          after != null && scope.belongsTo(after.getFile()) ||
-          isIgnoredChange(before, after, myProject)) {
-        result.add(oldBoy);
-        list.removeChange(oldBoy);
+  @NotNull
+  private List<Change> removeChangesUnderScope(@NotNull LocalChangeListImpl list, @Nullable VcsModifiableDirtyScope scope) {
+    List<Change> removed = new ArrayList<>();
+    for (Change change : list.getChanges()) {
+      ContentRevision before = change.getBeforeRevision();
+      ContentRevision after = change.getAfterRevision();
+      boolean isUnderScope = scope == null ||
+                             before != null && scope.belongsTo(before.getFile()) ||
+                             after != null && scope.belongsTo(after.getFile()) ||
+                             isIgnoredChange(before, after, myProject);
+      if (isUnderScope) {
+        list.removeChange(change);
+        myIdx.changeRemoved(change);
+
+        removed.add(change);
       }
     }
-    return result;
+    return removed;
   }
 
   private static boolean isIgnoredChange(@Nullable ContentRevision before, @Nullable ContentRevision after, @NotNull Project project) {
