@@ -496,7 +496,8 @@ public class EditorWindow {
     else {
       EditorWithProviderComposite editor = getSelectedEditor();
       JComponent preferred = editor == null ? null : editor.getPreferredFocusedComponent();
-      IdeFocusManager.findInstanceByComponent(preferred == null ? myPanel : preferred).requestFocus(myPanel, forced);
+      if (preferred == null) preferred = myPanel;
+      IdeFocusManager.findInstanceByComponent(preferred).requestFocus(preferred, forced);
     }
   }
 
