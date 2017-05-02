@@ -97,7 +97,8 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl createNewTab() {
-    return createNewTab(myTabs.size());
+    final int index = myTabs.stream().mapToInt(x -> x.getIndex()).max().orElse(-1) + 1;
+    return createNewTab(index);
   }
 
   private boolean isUsed(@NotNull TabImpl tab) {
