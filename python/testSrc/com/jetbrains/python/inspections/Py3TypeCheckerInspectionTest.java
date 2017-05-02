@@ -245,4 +245,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testEllipsisInFunctionWithSpecifiedReturnType() {
     doTest();
   }
+
+  // PY-23239, PY-23253
+  public void testInitializingTypingNamedTuple() {
+    doTest();
+  }
 }

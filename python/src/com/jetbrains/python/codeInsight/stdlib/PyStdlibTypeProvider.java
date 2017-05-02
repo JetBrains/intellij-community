@@ -27,10 +27,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
-import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
-import com.jetbrains.python.psi.impl.PyTypeProvider;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
@@ -341,7 +338,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       final PyTargetExpressionStub stub = target.getStub();
 
       if (stub != null) {
-        return getNamedTupleTypeFromStub(target, stub.getCustomStub(PyNamedTupleStub.class), PyNamedTupleType.DefinitionLevel.NEW_TYPE);
+        return getNamedTupleTypeFromStub(target,
+                                         stub.getCustomStub(PyNamedTupleStub.class),
+                                         context,
+                                         PyNamedTupleType.DefinitionLevel.NEW_TYPE);
       }
       else {
         return getNamedTupleTypeFromAST(target, context, PyNamedTupleType.DefinitionLevel.NEW_TYPE);
@@ -387,6 +387,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   @Nullable
   private static PyType getNamedTupleTypeFromStub(@NotNull PsiElement referenceTarget,
                                                   @Nullable PyNamedTupleStub stub,
+                                                  @NotNull TypeEvalContext context,
                                                   @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (stub == null) {
       return null;
@@ -400,7 +401,11 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       return null;
     }
 
-    return new PyNamedTupleType(tupleClass, referenceTarget, stub.getName(), stub.getFields(), definitionLevel);
+    return new PyNamedTupleType(tupleClass,
+                                referenceTarget,
+                                stub.getName(),
+                                parseNamedTupleFieldsTypes(referenceTarget, stub.getFields(), context),
+                                definitionLevel);
   }
 
   @Nullable
@@ -408,7 +413,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                                  @NotNull TypeEvalContext context,
                                                  @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (context.maySwitchToAST(expression)) {
-      return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
+      return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), context, definitionLevel);
     }
 
     return null;
@@ -419,7 +424,34 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                                                  @NotNull TypeEvalContext context,
                                                  @NotNull PyNamedTupleType.DefinitionLevel definitionLevel) {
     if (context.maySwitchToAST(expression)) {
-      return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), definitionLevel);
+      return getNamedTupleTypeFromStub(expression, PyNamedTupleStubImpl.create(expression), context, definitionLevel);
+    }
+
+    return null;
+  }
+
+  @NotNull
+  private static LinkedHashMap<String, Optional<PyType>> parseNamedTupleFieldsTypes(@NotNull PsiElement anchor,
+                                                                                    @NotNull Map<String, Optional<String>> fields,
+                                                                                    @NotNull TypeEvalContext context) {
+    final LinkedHashMap<String, Optional<PyType>> result = new LinkedHashMap<>();
+
+    for (Map.Entry<String, Optional<String>> entry : fields.entrySet()) {
+      result.put(entry.getKey(), entry.getValue().map(type -> parseNamedTupleFieldType(anchor, type, context)));
+    }
+
+    return result;
+  }
+
+  @Nullable
+  private static PyType parseNamedTupleFieldType(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
+    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", type, false);
+    codeFragment.setContext(anchor.getContainingFile());
+
+    final PsiElement element = codeFragment.getFirstChild();
+    if (element instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)element).getExpression();
+      return Ref.deref(PyTypingTypeProvider.getType(expression, context));
     }
 
     return null;

@@ -672,19 +672,22 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
-        final Map<String, PsiElement> test = loadTest(5);
+        final Map<String, PsiElement> test = loadTest(6);
 
         for (int offset : StreamEx.of(1, 2, 3, 4).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
-          final List<String> texts = Collections.singletonList("bar, baz");
-          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+          final List<String> texts = Collections.singletonList("bar: int, baz: str");
+          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar: int, "});
 
           feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
         }
 
-        final List<String> texts = Collections.singletonList("bar, baz, foo");
-        final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+        final List<String> texts1 = Collections.singletonList("bar: int, baz: str, foo: int");
+        final List<String[]> highlighted1 = Collections.singletonList(new String[]{"bar: int, "});
+        feignCtrlP(test.get("<arg5>").getTextOffset()).check(texts1, highlighted1, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
 
-        feignCtrlP(test.get("<arg5>").getTextOffset()).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+        final List<String> texts2 = Collections.singletonList("names: List[str], ages: List[int]");
+        final List<String[]> highlighted2 = Collections.singletonList(new String[]{"names: List[str], "});
+        feignCtrlP(test.get("<arg6>").getTextOffset()).check(texts2, highlighted2, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
       }
     );
   }
