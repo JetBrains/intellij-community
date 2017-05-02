@@ -405,33 +405,20 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         for (Iterator<VcsDirtyScope> iterator = scopes.iterator(); iterator.hasNext(); ) {
           final VcsModifiableDirtyScope scope = (VcsModifiableDirtyScope)iterator.next();
           final VcsDirtyScopeModifier modifier = scope.getModifier();
-          if (modifier != null) {
-            fileHolder.notifyVcsStarted(scope.getVcs());
-            final Iterator<FilePath> filesIterator = modifier.getDirtyFilesIterator();
-            while (filesIterator.hasNext()) {
-              final FilePath dirtyFile = filesIterator.next();
-              if (dirtyFile.getVirtualFile() != null && isIgnoredFile(dirtyFile.getVirtualFile())) {
-                filesIterator.remove();
-                fileHolder.addFile(dirtyFile.getVirtualFile());
-                refreshFiles.add(dirtyFile.getVirtualFile());
-              }
-            }
-            final Collection<VirtualFile> roots = modifier.getAffectedVcsRoots();
-            for (VirtualFile root : roots) {
-              final Iterator<FilePath> dirIterator = modifier.getDirtyDirectoriesIterator(root);
-              while (dirIterator.hasNext()) {
-                final FilePath dir = dirIterator.next();
-                if (dir.getVirtualFile() != null && isIgnoredFile(dir.getVirtualFile())) {
-                  dirIterator.remove();
-                  fileHolder.addFile(dir.getVirtualFile());
-                  refreshFiles.add(dir.getVirtualFile());
-                }
-              }
-            }
-            modifier.recheckDirtyKeys();
-            if (scope.isEmpty()) {
-              iterator.remove();
-            }
+          if (modifier == null) continue;
+
+          fileHolder.notifyVcsStarted(scope.getVcs());
+
+          filterOutIgnoredFiles(modifier.getDirtyFilesIterator(), fileHolder, refreshFiles);
+
+          for (VirtualFile root : modifier.getAffectedVcsRoots()) {
+            filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(root), fileHolder, refreshFiles);
+          }
+
+          modifier.recheckDirtyKeys();
+
+          if (scope.isEmpty()) {
+            iterator.remove();
           }
         }
       }
@@ -441,6 +428,19 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
     for (VirtualFile file : refreshFiles) {
       myFileStatusManager.fileStatusChanged(file);
+    }
+  }
+
+  private void filterOutIgnoredFiles(Iterator<FilePath> iterator,
+                                     IgnoredFilesCompositeHolder fileHolder,
+                                     Set<VirtualFile> refreshFiles) {
+    while (iterator.hasNext()) {
+      VirtualFile file = iterator.next().getVirtualFile();
+      if (file != null && isIgnoredFile(file)) {
+        iterator.remove();
+        fileHolder.addFile(file);
+        refreshFiles.add(file);
+      }
     }
   }
 
