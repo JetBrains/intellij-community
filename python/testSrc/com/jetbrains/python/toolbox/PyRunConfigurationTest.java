@@ -21,10 +21,13 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
@@ -47,14 +50,20 @@ public class PyRunConfigurationTest extends PyTestCase {
     final PythonRunConfiguration configuration = (PythonRunConfiguration)settings.getConfiguration();
     configuration.setAddSourceRoots(true);
 
-    Collection<String> path = PythonCommandLineState.collectPythonPath(myFixture.getProject(), configuration, false);
+    Collection<String> path = collectProjectPythonPathEntries(configuration);
     assertContainsOrdered(path, "/src", "/src/src1", "/src/src2");
 
     PsiTestUtil.removeSourceRoot(module, sourceRoot1);
     PsiTestUtil.addSourceRoot(module, sourceRoot1);
 
-    path = PythonCommandLineState.collectPythonPath(myFixture.getProject(), configuration, false);
+    path = collectProjectPythonPathEntries(configuration);
     assertContainsOrdered(path, "/src", "/src/src2", "/src/src1");
+  }
+
+  @NotNull
+  private Collection<String> collectProjectPythonPathEntries(@NotNull PythonRunConfiguration configuration) {
+    final Collection<String> roots = PythonCommandLineState.collectPythonPath(myFixture.getProject(), configuration, false);
+    return ContainerUtil.map(roots, PathUtil::toSystemIndependentName);
   }
 
   @Override
