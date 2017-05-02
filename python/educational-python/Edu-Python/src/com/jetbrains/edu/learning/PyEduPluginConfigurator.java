@@ -42,6 +42,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
   private static final String TESTS_PY = "tests.py";
   private static final Logger LOG = Logger.getInstance(PyEduPluginConfigurator.class);
   private static final String COURSE_NAME = "Introduction to Python.zip";
+  private PyStudyDirectoryProjectGenerator myGenerator = new PyStudyDirectoryProjectGenerator();
 
   @NotNull
   @Override
@@ -155,7 +156,7 @@ public class PyEduPluginConfigurator implements EduPluginConfigurator {
 
   @Override
   public EduCourseProjectGenerator getEduCourseProjectGenerator() {
-    return new PyStudyDirectoryProjectGenerator();
+    return myGenerator;
   }
 
   public ModuleType getModuleType() {

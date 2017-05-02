@@ -22,7 +22,9 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.psi.PsiDirectory;
@@ -46,9 +48,7 @@ import com.jetbrains.python.newProject.steps.PythonSdkChooserCombo;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.remote.PyProjectSynchronizer;
-import com.jetbrains.python.sdk.AbstractCreateVirtualEnvDialog;
-import com.jetbrains.python.sdk.PyDetectedSdk;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
+import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
 import org.jetbrains.annotations.Nls;
@@ -70,6 +70,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   private static final String NO_PYTHON_INTERPRETER = "<html><u>Add</u> python interpreter.</html>";
   private final boolean isLocal;
   public ValidationResult myValidationResult = new ValidationResult("selected course is not valid");
+  private PyNewProjectSettings mySettings = (PyNewProjectSettings)getProjectSettings();
 
   @SuppressWarnings("unused") // used on startup
   public PyStudyDirectoryProjectGenerator() {
@@ -163,15 +164,36 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
 
   @Override
   public void afterProjectGenerated(@NotNull Project project) {
-    PyNewProjectSettings settings = (PyNewProjectSettings)getProjectSettings();
-    Sdk sdk = settings.getSdk();
+    Sdk sdk = mySettings.getSdk();
 
     if (sdk == null) {
-      createAndAddVirtualEnv(project, settings);
-      sdk = settings.getSdk();
+      createAndAddVirtualEnv(project, mySettings);
+      sdk = mySettings.getSdk();
+    }
+    if (sdk instanceof PyDetectedSdk) {
+      sdk = addDetectedSdk(sdk, project);
+    }
+    SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
+  }
+
+  private static Sdk addDetectedSdk(@NotNull Sdk sdk, @NotNull Project project) {
+    final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
+    final String name = sdk.getName();
+    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> LocalFileSystem
+      .getInstance().refreshAndFindFileByPath(name));
+    sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
+    if (sdk != null) {
+      PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
     }
 
-    SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk);
+    model.addSdk(sdk);
+    try {
+      model.apply();
+    }
+    catch (ConfigurationException exception) {
+      LOG.error("Error adding detected python interpreter " + exception.getMessage());
+    }
+    return sdk;
   }
 
   @Nullable
@@ -186,6 +208,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       combo.putClientProperty("JButton.buttonType", null);
     }
     combo.setButtonIcon(PythonIcons.Python.InterpreterGear);
+    combo.addChangedListener(e -> mySettings.setSdk(((Sdk)combo.getComboBox().getSelectedItem())));
     return LabeledComponent.create(combo, "Interpreter", BorderLayout.WEST);
   }
 
