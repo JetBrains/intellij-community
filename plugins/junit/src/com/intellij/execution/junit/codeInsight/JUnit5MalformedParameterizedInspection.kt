@@ -18,6 +18,7 @@ package com.intellij.execution.junit.codeInsight
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
@@ -128,8 +129,15 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
             if (reference is MethodSourceReference) {
               val resolve = reference.resolve()
               if (resolve !is PsiMethod) {
+                val containingClass = method.containingClass
+                var createFix : CreateMethodQuickFix? = null
+                if (containingClass != null && holder.isOnTheFly)
+                  createFix = CreateMethodQuickFix.createFix(containingClass,
+                                                             "static Object[][] " + reference.value + "()",
+                                                             "return new Object[][] {};")
                 holder.registerProblem(attributeValue,
-                                       "Cannot resolve target method source: \'" + reference.value + "\'")
+                                       "Cannot resolve target method source: \'" + reference.value + "\'",
+                                       createFix)
               }
               else {
                 val sourceProvider : PsiMethod = resolve
