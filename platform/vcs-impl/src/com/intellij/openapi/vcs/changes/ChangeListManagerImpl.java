@@ -1245,8 +1245,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     synchronized (myDataLock) {
-      myIgnoredIdeaLevel.clear();
-      new ChangeListManagerSerialization(myIgnoredIdeaLevel, myWorker).readExternal(element);
+      ChangeListManagerSerialization.readExternal(element, myIgnoredIdeaLevel, myWorker);
       if (!myWorker.isEmpty() && myWorker.getDefaultListCopy() == null) {
         myWorker.setDefault(myWorker.getListsCopy().get(0).getName());
       }

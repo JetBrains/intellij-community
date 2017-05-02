@@ -46,23 +46,17 @@ class ChangeListManagerSerialization {
   @NonNls private static final String MANUALLY_REMOVED_FROM_IGNORED = "manually-removed-from-ignored";
   @NonNls private static final String DIRECTORY_TAG = "directory";
 
-  private final IgnoredFilesComponent myIgnoredIdeaLevel;
-  private final ChangeListWorker myWorker;
+  public static void readExternal(@NotNull Element element, @NotNull IgnoredFilesComponent ignoredIdeaLevel, @NotNull ChangeListWorker worker) {
 
-  ChangeListManagerSerialization(final IgnoredFilesComponent ignoredIdeaLevel, final ChangeListWorker worker) {
-    myIgnoredIdeaLevel = ignoredIdeaLevel;
-    myWorker = worker;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  public void readExternal(final Element element) {
     final List<Element> listNodes = element.getChildren(NODE_LIST);
     for (Element listNode : listNodes) {
-      readChangeList(listNode);
+      readChangeList(listNode, worker);
     }
+
+    ignoredIdeaLevel.clear();
     final List<Element> ignoredNodes = element.getChildren(NODE_IGNORED);
     for (Element ignoredNode : ignoredNodes) {
-      readFileToIgnore(ignoredNode);
+      readFileToIgnore(ignoredNode, ignoredIdeaLevel, worker);
     }
     Element manuallyRemovedFromIgnoredTag = element.getChild(MANUALLY_REMOVED_FROM_IGNORED);
     Set<String> manuallyRemovedFromIgnoredPaths = new HashSet<>();
@@ -71,44 +65,44 @@ class ChangeListManagerSerialization {
         manuallyRemovedFromIgnoredPaths.add(tag.getAttributeValue(ATT_PATH));
       }
     }
-    myIgnoredIdeaLevel.setDirectoriesManuallyRemovedFromIgnored(manuallyRemovedFromIgnoredPaths);
+    ignoredIdeaLevel.setDirectoriesManuallyRemovedFromIgnored(manuallyRemovedFromIgnoredPaths);
   }
 
-  private void readChangeList(final Element listNode) {
+  private static void readChangeList(@NotNull Element listNode, @NotNull ChangeListWorker worker) {
     // workaround for loading incorrect settings (with duplicate changelist names)
     final String changeListName = listNode.getAttributeValue(ATT_NAME);
-    LocalChangeList list = myWorker.getCopyByName(changeListName);
+    LocalChangeList list = worker.getCopyByName(changeListName);
     if (list == null) {
-      list = myWorker.addChangeList(listNode.getAttributeValue(ATT_ID), changeListName, listNode.getAttributeValue(ATT_COMMENT), false,
+      list = worker.addChangeList(listNode.getAttributeValue(ATT_ID), changeListName, listNode.getAttributeValue(ATT_COMMENT), false,
                                     null);
     }
     //noinspection unchecked
     final List<Element> changeNodes = listNode.getChildren(NODE_CHANGE);
     for (Element changeNode : changeNodes) {
-      myWorker.addChangeToList(changeListName, readChange(changeNode), null);
+      worker.addChangeToList(changeListName, readChange(changeNode), null);
     }
 
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT))) {
-      myWorker.setDefault(list.getName());
+      worker.setDefault(list.getName());
     }
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
       list.setReadOnly(true);
     }
   }
 
-  private void readFileToIgnore(final Element ignoredNode) {
+  private static void readFileToIgnore(@NotNull Element ignoredNode, @NotNull IgnoredFilesComponent ignoredFilesComponent, @NotNull ChangeListWorker worker) {
     String path = ignoredNode.getAttributeValue(ATT_PATH);
     if (path != null) {
-      Project project = myWorker.getProject();
+      Project project = worker.getProject();
       final IgnoredFileBean bean = path.endsWith("/") || path.endsWith(File.separator)
                                    ? IgnoredBeanFactory.ignoreUnderDirectory(path, project)
                                    : IgnoredBeanFactory.ignoreFile(path, project);
-      myIgnoredIdeaLevel.add(bean);
+      ignoredFilesComponent.add(bean);
     }
     String mask = ignoredNode.getAttributeValue(ATT_MASK);
     if (mask != null) {
       final IgnoredFileBean bean = IgnoredBeanFactory.withMask(mask);
-      myIgnoredIdeaLevel.add(bean);
+      ignoredFilesComponent.add(bean);
     }
   }
 
@@ -159,7 +153,7 @@ class ChangeListManagerSerialization {
     }
   }
 
-  private static void writeChange(final Element listNode, final Change change) {
+  private static void writeChange(@NotNull Element listNode, @NotNull Change change) {
     Element changeNode = new Element(NODE_CHANGE);
     listNode.addContent(changeNode);
     changeNode.setAttribute(ATT_CHANGE_TYPE, change.getType().name());
@@ -171,7 +165,7 @@ class ChangeListManagerSerialization {
     changeNode.setAttribute(ATT_CHANGE_AFTER_PATH, aRev != null ? aRev.getFile().getPath() : "");
   }
 
-  private static Change readChange(Element changeNode) {
+  private static Change readChange(@NotNull Element changeNode) {
     String bRev = changeNode.getAttributeValue(ATT_CHANGE_BEFORE_PATH);
     String aRev = changeNode.getAttributeValue(ATT_CHANGE_AFTER_PATH);
     return new Change(StringUtil.isEmpty(bRev) ? null : new FakeRevision(bRev), StringUtil.isEmpty(aRev) ? null : new FakeRevision(aRev));
