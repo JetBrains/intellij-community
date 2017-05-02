@@ -204,17 +204,20 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   @NotNull
   LocalChangeList addChangeList(@Nullable String id, @NotNull String name, @Nullable String description, boolean inUpdate,
                                 @Nullable Object data) {
-    final boolean contains = myMap.containsKey(name);
-    LOG.assertTrue(!contains, "Attempt to create duplicate changelist " + name);
-    final LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, id);
+    if (myMap.containsKey(name)) {
+      LOG.error("Attempt to create duplicate changelist " + name);
+      return myMap.get(name).copy();
+    }
+
+    LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, id);
     newList.setData(data);
 
     if (description != null) {
       newList.setComment(description);
     }
+
     myMap.put(name, newList);
     if (inUpdate) {
-      // scope is not important: nothing had been added jet, nothing to move to "old state" members
       startProcessingChanges(newList); // this is executed only when use through GATE
     }
     return newList.copy();
