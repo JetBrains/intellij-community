@@ -160,6 +160,7 @@ public class ChangeListsIndexes {
     return new BaseRevision(data.vcsKey, data.revision, path);
   }
 
+  @NotNull
   public List<BaseRevision> getAffectedFilesUnderVcs() {
     final List<BaseRevision> result = new ArrayList<>();
     for (Map.Entry<FilePath, Data> entry : myMap.entrySet()) {
