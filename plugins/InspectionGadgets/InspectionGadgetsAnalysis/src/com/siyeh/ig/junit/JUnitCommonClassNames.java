@@ -38,4 +38,7 @@ public class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_API_TEST = "org.junit.jupiter.api.Test";
   public static final String ORG_JUNIT_JUPITER_API_REPEATED_TEST = "org.junit.jupiter.api.RepeatedTest";
   public static final String ORG_JUNIT_JUPITER_API_REPETITION_INFO = "org.junit.jupiter.api.RepetitionInfo";
+  public static final String ORG_JUNIT_JUPITER_API_TEST_INFO = "org.junit.jupiter.api.TestInfo";
+  public static final String ORG_JUNIT_JUPITER_API_TEST_REPORTER = "org.junit.jupiter.api.TestReporter";
+  public static final String ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH = "org.junit.jupiter.api.extension.ExtendWith";
 }
