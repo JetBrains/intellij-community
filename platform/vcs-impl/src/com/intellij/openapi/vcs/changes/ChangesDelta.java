@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.util.BeforeAfter;
 import com.intellij.openapi.vcs.changes.ui.PlusMinusModify;
+import com.intellij.util.BeforeAfter;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -32,7 +32,7 @@ public class ChangesDelta {
   }
 
   // true -> something changed
-  public boolean step(final ChangeListsIndexes was, final ChangeListsIndexes became) {
+  public boolean notifyPathsChanged(final ChangeListsIndexes was, final ChangeListsIndexes became) {
     List<BaseRevision> wasAffected = was.getAffectedFilesUnderVcs();
     if (! myInitialized) {
       sendPlus(wasAffected);

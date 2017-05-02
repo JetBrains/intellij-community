@@ -97,7 +97,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   public void onAfterWorkerSwitch(@NotNull final ChangeListWorker previous) {
-    boolean somethingChanged = myDelta.step(previous.myIdx, myIdx);
+    boolean somethingChanged = myDelta.notifyPathsChanged(previous.myIdx, myIdx);
     somethingChanged |= checkForMultipleCopiesNotMove();
 
     if (somethingChanged) {
