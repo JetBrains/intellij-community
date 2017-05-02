@@ -414,7 +414,15 @@ public class GridCellImpl implements GridCell {
     View state = myContext.getStateFor(content);
     state.setMinimizedInGrid(minimized);
     state.setPlaceInGrid(myPlaceInGrid);
-    state.assignTab(myContainer.getTabIndex());
+    final List<Content> contents = myContainer.getContents();
+    final Tab tab = myContainer.getTabIndex();
+    if (minimized && contents.size() == 1 && contents.get(0).equals(content)) {
+      state.setTabIndex(-1);
+      if (tab instanceof TabImpl) {
+        ((TabImpl)tab).setIndex(-1);
+      }
+    }
+    state.assignTab(tab);
     state.setWindow(myContext.getWindow());
   }
 
