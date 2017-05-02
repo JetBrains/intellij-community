@@ -177,8 +177,8 @@ public class DfaExpressionFactory {
         }
       }
       for (SpecialField sf : SpecialField.values()) {
-        if (sf.isMyMethod(method)) {
-          return sf.getCanonicalMethod(((PsiMethod)target).getContainingClass());
+        if (sf.isMyAccessor(method)) {
+          return sf.getCanonicalOwner(null, ((PsiMethod)target).getContainingClass());
         }
       }
       if (AnnotationUtil.findAnnotation(method.getContainingClass(), "javax.annotation.concurrent.Immutable") != null) {

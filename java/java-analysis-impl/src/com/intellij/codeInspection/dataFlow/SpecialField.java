@@ -34,6 +34,23 @@ import java.util.List;
  * @author Tagir Valeev
  */
 public enum SpecialField {
+  ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
+    @Override
+    public boolean isMyAccessor(PsiModifierListOwner accessor) {
+      return accessor instanceof PsiField && "length".equals(((PsiField)accessor).getName()) &&
+             JavaPsiFacade.getElementFactory(accessor.getProject()).getArrayClass(PsiUtil.getLanguageLevel(accessor)) ==
+             ((PsiField)accessor).getContainingClass();
+    }
+
+    @Nullable
+    @Override
+    public PsiModifierListOwner getCanonicalOwner(@Nullable PsiModifierListOwner qualifier, @Nullable PsiClass psiClass) {
+      if (qualifier == null) return null;
+      PsiClass arrayClass = JavaPsiFacade.getElementFactory(qualifier.getProject())
+        .getArrayClass(PsiUtil.getLanguageLevel(qualifier));
+      return arrayClass.findFieldByName("length", false);
+    }
+  },
   STRING_LENGTH(CommonClassNames.JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
     @Override
     public DfaValue createFromConstant(DfaValueFactory factory, @NotNull Object obj) {
@@ -68,24 +85,24 @@ public enum SpecialField {
   }
 
   /**
-   * Checks whether supplied method is represented by this special field
+   * Checks whether supplied accessor (field or method) can be used to read this special field
    *
-   * @param method method to test
-   * @return true if supplied method is represented by this special field
+   * @param accessor accessor to test to test
+   * @return true if supplied accessor can be used to read this special field
    */
-  public boolean isMyMethod(PsiMethod method) {
-    return MethodUtils.methodMatches(method, myClassName, null, myMethodName);
+  public boolean isMyAccessor(PsiModifierListOwner accessor) {
+    return accessor instanceof PsiMethod && MethodUtils.methodMatches((PsiMethod)accessor, myClassName, null, myMethodName);
   }
 
   /**
-   * Returns a canonical method representing this special field
+   * Returns a canonical accessor which can be used to read this special field
    *
+   * @param qualifier a qualifier accessor (if known)
    * @param psiClass a class for which the canonical method should be resolved
-   * @return a canonical method representing this special field (located either in supplied class or superclass) or null
-   * if invalid class is supplied.
+   * @return a canonical accessor representing this special field or null if cannot be determined.
    */
   @Nullable
-  public PsiMethod getCanonicalMethod(@Nullable PsiClass psiClass) {
+  public PsiModifierListOwner getCanonicalOwner(@Nullable PsiModifierListOwner qualifier, @Nullable PsiClass psiClass) {
     if (psiClass == null) return null;
     if (!myClassName.equals(psiClass.getQualifiedName())) {
       PsiClass myClass = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(myClassName, psiClass.getResolveScope());
@@ -96,12 +113,20 @@ public enum SpecialField {
     return methods.length == 1 ? methods[0] : null;
   }
 
+  /**
+   * Returns a DfaValue which represents this special field
+   *
+   * @param factory a factory to create new values if necessary
+   * @param qualifier a known qualifier value
+   * @return a DfaValue which represents this special field
+   */
   public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier) {
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
-      PsiMethod method = getCanonicalMethod(PsiUtil.resolveClassInClassTypeOnly(variableValue.getVariableType()));
-      if (method != null) {
-        return factory.getVarFactory().createVariableValue(method, PsiType.INT, false, variableValue);
+      PsiModifierListOwner owner =
+        getCanonicalOwner(variableValue.getPsiVariable(), PsiUtil.resolveClassInClassTypeOnly(variableValue.getVariableType()));
+      if (owner != null) {
+        return factory.getVarFactory().createVariableValue(owner, PsiType.INT, false, variableValue);
       }
     }
     if(qualifier instanceof DfaConstValue) {

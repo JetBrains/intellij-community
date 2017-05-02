@@ -146,7 +146,7 @@ public class MethodCallInstruction extends Instruction {
   private boolean isPureCall() {
     if (myTargetMethod == null) return false;
     return ControlFlowAnalyzer.isPure(myTargetMethod) ||
-           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isMyMethod(myTargetMethod));
+           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(myTargetMethod));
   }
 
   @Nullable

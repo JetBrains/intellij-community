@@ -276,7 +276,7 @@ public class DfaVariableValue extends DfaValue {
     if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
     boolean finalField = myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL);
     boolean specialFinalField = myVariable instanceof PsiMethod &&
-                           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isFinal() && sf.isMyMethod((PsiMethod)myVariable));
+                           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isFinal() && sf.isMyAccessor(myVariable));
     if (finalField || specialFinalField) {
       return myQualifier != null && myQualifier.isFlushableByCalls();
     }

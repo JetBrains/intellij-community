@@ -41,6 +41,21 @@ import static com.intellij.codeInspection.dataFlow.StandardMethodContract.create
 public class HardcodedContracts {
   private static final Pattern FIRST_OR_LAST = Pattern.compile("first|last");
   private static final Pattern CONTAINS_KEY_VALUE = Pattern.compile("containsKey|containsValue");
+  // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
+  // thus ARRAY_RANGE_CONTRACTS are applicable to them
+  private static final Pattern ARRAY_RANGED_METHODS =
+    Pattern.compile("binarySearch|fill|parallelPrefix|parallelSort|sort|spliterator|stream");
+
+  private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
+    nonnegativeArgumentContract(1),
+    nonnegativeArgumentContract(2),
+    MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
+                                           ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), THROW_EXCEPTION),
+    MethodContract.singleConditionContract(ContractValue.argument(2), RelationType.GT,
+                                           ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), THROW_EXCEPTION),
+    MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
+                                           ContractValue.argument(2), THROW_EXCEPTION)
+  );
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -130,6 +145,10 @@ public class HardcodedContracts {
       return Collections.singletonList(MethodContract.singleConditionContract(
         ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.NE,
         ContractValue.argument(0).specialField(SpecialField.MAP_SIZE), FALSE_VALUE));
+    }
+    else if (MethodUtils.methodMatches(method, CommonClassNames.JAVA_UTIL_ARRAYS, null, ARRAY_RANGED_METHODS, (PsiType[])null) &&
+      paramCount >= 3) {
+      return ARRAY_RANGE_CONTRACTS;
     }
     else if ("org.apache.commons.lang.Validate".equals(className) ||
              "org.apache.commons.lang3.Validate".equals(className) ||

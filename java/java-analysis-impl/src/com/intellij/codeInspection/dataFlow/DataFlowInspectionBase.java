@@ -65,6 +65,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 @SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
 public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
@@ -359,6 +360,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportMethodReferenceProblems(holder, visitor);
 
+    reportArrayAccessProblems(holder, visitor);
+
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
@@ -366,6 +369,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull()) {
       reportAlwaysReturnsNotNull(holder, scope);
     }
+  }
+
+  private static void reportArrayAccessProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
+    visitor.outOfBoundsArrayAccesses().forEach(access -> {
+      PsiExpression indexExpression = access.getIndexExpression();
+      if (indexExpression != null) {
+        holder.registerProblem(indexExpression, InspectionsBundle.message("dataflow.message.array.index.out.of.bounds"));
+      }
+    });
   }
 
   private void reportMethodReferenceProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
@@ -989,6 +1001,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
     private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
+    private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
     private boolean myAlwaysReturnsNotNull = true;
 
@@ -1017,6 +1030,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     Map<PsiMethodReferenceExpression, DfaValue> getMethodReferenceResults() {
       return myMethodReferenceResults;
+    }
+
+    Stream<PsiArrayAccessExpression> outOfBoundsArrayAccesses() {
+      return StreamEx.ofKeys(myOutOfBoundsArrayAccesses, ThreeState.YES::equals);
     }
 
     List<PsiExpression> getOptionalQualifiers() {
@@ -1082,6 +1099,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
         myBooleanCalls.merge(call, state, ThreeState::merge);
       }
+    }
+
+    @Override
+    protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
+      myOutOfBoundsArrayAccesses.merge(expression, ThreeState.fromBoolean(alwaysOutOfBounds), ThreeState::merge);
     }
 
     @Override
