@@ -29,6 +29,8 @@ public interface ResolvedTracingResult {
   @NotNull
   List<ResolvedTrace> getResolvedTraces();
 
+  boolean isException();
+
   @Nullable
   Value getResult();
 }

@@ -107,6 +107,11 @@ public class TracingResultImpl implements TracingResult {
       return Collections.unmodifiableList(myTrace);
     }
 
+    @Override
+    public boolean isException() {
+      return myIsResultException;
+    }
+
     @Nullable
     @Override
     public Value getResult() {
