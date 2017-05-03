@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,9 +38,9 @@ public class PrintStreamLogger extends IFernflowerLogger {
   }
 
   @Override
-  public void writeMessage(String message, Throwable t) {
-    if (accepts(Severity.ERROR)) {
-      writeMessage(message, Severity.ERROR);
+  public void writeMessage(String message, Severity severity, Throwable t) {
+    if (accepts(severity)) {
+      writeMessage(message, severity);
       t.printStackTrace(stream);
     }
   }
