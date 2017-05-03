@@ -59,8 +59,11 @@ public class DuplicateAlternationBranchInspection extends LocalInspectionTool {
 
     @Override
     public void visitRegExpPattern(RegExpPattern pattern) {
-      final Set<RegExpBranch> reported = new HashSet<>(2);
       final RegExpBranch[] branches = pattern.getBranches();
+      if (branches.length < 2) {
+        return;
+      }
+      final Set<RegExpBranch> reported = new HashSet<>(2);
       for (int i = 0; i < branches.length - 1; i++) {
         final RegExpBranch branch1 = branches[i];
         if (branch1.getAtoms().length == 0) {
