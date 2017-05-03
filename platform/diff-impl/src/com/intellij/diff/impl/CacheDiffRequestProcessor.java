@@ -153,6 +153,10 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
     myRequestCache.clear();
   }
 
+  protected void dropCaches() {
+    myRequestCache.clear();
+  }
+
   //
   // Actions
   //
