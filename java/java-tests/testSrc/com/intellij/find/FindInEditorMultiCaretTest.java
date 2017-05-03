@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,14 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
     checkResultByText("To be or not to <selection>be<caret></selection>?");
   }
 
+  public void testSelectAllDuringReplace() throws Exception {
+    init("some text");
+    initReplace();
+    setTextToFind("e");
+    allOccurrences();
+    checkResultByText("som<selection>e<caret></selection> t<selection>e<caret></selection>xt");
+  }
+
   private void setTextToFind(String text) {
     EditorSearchSession editorSearchSession = getEditorSearchComponent();
     assertNotNull(editorSearchSession);
@@ -206,11 +214,19 @@ public class FindInEditorMultiCaretTest extends LightPlatformCodeInsightFixtureT
 
   private void executeHeaderAction(AnAction action) {
     DataContext context = new DataManagerImpl.MyDataContext(getEditorSearchComponent().getComponent());
-    action.actionPerformed(AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_TOOLBAR, null, context));
+    AnActionEvent e = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_TOOLBAR, null, context);
+    action.beforeActionPerformedUpdate(e);
+    if (e.getPresentation().isEnabled() && e.getPresentation().isVisible()) {
+      action.actionPerformed(e);
+    }
   }
 
   private void initFind() {
     myFixture.performEditorAction(IdeActions.ACTION_FIND);
+  }
+
+  private void initReplace() {
+    myFixture.performEditorAction(IdeActions.ACTION_REPLACE);
   }
 
   private EditorSearchSession getEditorSearchComponent() {
