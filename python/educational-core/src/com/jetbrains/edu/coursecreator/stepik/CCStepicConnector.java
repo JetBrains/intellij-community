@@ -1,8 +1,9 @@
 package com.jetbrains.edu.coursecreator.stepik;
 
-import com.google.gson.*;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -150,22 +151,6 @@ public class CCStepicConnector {
       return false;
     }
     return true;
-  }
-
-  private static void showStepicNotification(@NotNull Project project,
-                                             @NotNull NotificationType notificationType, @NotNull String failedActionName) {
-    String text = "Authorize on Stepik to " + failedActionName;
-    Notification notification = new Notification("Stepik", "Failed to " + failedActionName, text, notificationType);
-    notification.addAction(new AnAction("Authorize") {
-
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        EduStepicConnector.doAuthorize(() -> showOAuthDialog());
-        notification.expire();
-      }
-    });
-
-    notification.notify(project);
   }
 
   private static void postAdditionalFiles(Course course, @NotNull final Project project, int id) {
@@ -341,6 +326,22 @@ public class CCStepicConnector {
   private static void showNotification(@NotNull Project project, String message) {
     final Notification notification =
       new Notification("Push.course", message, message, NotificationType.INFORMATION);
+    notification.notify(project);
+  }
+
+  private static void showStepicNotification(@NotNull Project project,
+                                             @NotNull NotificationType notificationType, @NotNull String failedActionName) {
+    String text = "Authorize on Stepik to " + failedActionName;
+    Notification notification = new Notification("Stepik", "Failed to " + failedActionName, text, notificationType);
+    notification.addAction(new AnAction("Authorize") {
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        EduStepicConnector.doAuthorize(() -> showOAuthDialog());
+        notification.expire();
+      }
+    });
+
     notification.notify(project);
   }
 

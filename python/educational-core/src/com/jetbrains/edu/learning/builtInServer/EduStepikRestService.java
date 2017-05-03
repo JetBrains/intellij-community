@@ -15,6 +15,8 @@
  */
 package com.jetbrains.edu.learning.builtInServer;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -115,11 +117,13 @@ public class EduStepikRestService extends RestService {
         if (stepicUser != null) {
           StudySettings.getInstance().setUser(stepicUser);
           sendHtmlResponse(request, context, "/oauthResponsePages/okPage.html");
+          showStepicNotification(NotificationType.INFORMATION, "Authorized as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
           return null;
         }
       }
 
       sendHtmlResponse(request, context, "/oauthResponsePages/errorPage.html");
+      showStepicNotification(NotificationType.ERROR, "Failed to authorize");
       return "Couldn't find code parameter for Stepik OAuth";
     }
 
@@ -143,5 +147,10 @@ public class EduStepikRestService extends RestService {
       byteOut.close();
       pageStream.close();
     }
+  }
+
+  private static void showStepicNotification(@NotNull NotificationType notificationType, @NotNull String text) {
+    Notification notification = new Notification("Stepik", "Stepik", text, notificationType);
+    notification.notify(null);
   }
 }
