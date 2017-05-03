@@ -296,7 +296,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   }
 
   static class PatchesPreloader {
-    private final SoftHardCacheMap<String, List<TextFilePatch>> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
+    private final SoftHardCacheMap<String, PatchInfo> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
     private final Project myProject;
 
     PatchesPreloader(final Project project) {
@@ -304,23 +304,47 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     }
 
     @NotNull
-    public TextFilePatch getPatch(final ShelvedChange shelvedChange, CommitContext commitContext) throws VcsException {
-      List<TextFilePatch> textFilePatches = myFilePatchesMap.get(shelvedChange.getPatchPath());
-      if (textFilePatches == null) {
-        try {
-          textFilePatches = ShelveChangesManager.loadPatches(myProject, shelvedChange.getPatchPath(), commitContext);
-        }
-        catch (IOException | PatchSyntaxException e) {
-          throw new VcsException(e);
-        }
-        myFilePatchesMap.put(shelvedChange.getPatchPath(), textFilePatches);
+    public TextFilePatch getPatch(final ShelvedChange shelvedChange, @NotNull CommitContext commitContext) throws VcsException {
+      String patchPath = shelvedChange.getPatchPath();
+      if (myFilePatchesMap.get(patchPath) == null || isPatchFileChanged(patchPath)) {
+        readFilePatchAndUpdateCaches(patchPath, commitContext);
       }
-      for (TextFilePatch textFilePatch : textFilePatches) {
-        if (shelvedChange.getBeforePath().equals(textFilePatch.getBeforeName())) {
-          return textFilePatch;
+      PatchInfo patchInfo = myFilePatchesMap.get(patchPath);
+      if (patchInfo != null) {
+        for (TextFilePatch textFilePatch : patchInfo.myTextFilePatches) {
+          if (shelvedChange.getBeforePath().equals(textFilePatch.getBeforeName())) {
+            return textFilePatch;
+          }
         }
       }
       throw new VcsException("Can not find patch for " + shelvedChange.getBeforePath() + " in patch file.");
+    }
+
+    private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @NotNull CommitContext commitContext) throws VcsException {
+      try {
+        myFilePatchesMap.put(patchPath, new PatchInfo(ShelveChangesManager.loadPatches(myProject, patchPath, commitContext),
+                                                      new File(patchPath).lastModified()));
+      }
+      catch (IOException | PatchSyntaxException e) {
+        throw new VcsException(e);
+      }
+    }
+
+    public boolean isPatchFileChanged(String patchPath) {
+      PatchInfo patchInfo = myFilePatchesMap.get(patchPath);
+      long lastModified = new File(patchPath).lastModified();
+      return patchInfo != null && lastModified != patchInfo.myLoadedTimeStamp;
+    }
+
+    private static class PatchInfo {
+
+      private final long myLoadedTimeStamp;
+      @NotNull private final List<TextFilePatch> myTextFilePatches;
+
+      public PatchInfo(@NotNull List<TextFilePatch> patches, long loadedTimeStamp) {
+        myTextFilePatches = patches;
+        myLoadedTimeStamp = loadedTimeStamp;
+      }
     }
   }
 
