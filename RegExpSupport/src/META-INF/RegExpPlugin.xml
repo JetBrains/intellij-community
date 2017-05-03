@@ -42,5 +42,8 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="EscapedMetaCharacter" displayName="Escaped meta character"
                      enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.intellij.lang.regexp.inspection.EscapedMetaCharacterInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="EmptyAlternationBranch" displayName="Empty branch in alternation"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.EmptyAlternationBranchInspection"/>
   </extensions>
 </idea-plugin>
