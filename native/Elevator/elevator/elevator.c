@@ -91,6 +91,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	_ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDIN, stdin, nDescriptorFlags, &startupInfo.hStdInput);
 	_ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDOUT, stdout, nDescriptorFlags, &startupInfo.hStdOutput);
 	_ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDERR, stderr, nDescriptorFlags, &startupInfo.hStdError);
+
+	HANDLE parentProcess = OpenProcess(SYNCHRONIZE, FALSE, nParentPid);
 	
 	PROCESS_INFORMATION processInfo;
 	if (!CreateProcess(argv[_ARG_PROG], sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))
@@ -98,7 +100,22 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 		fwprintf(stderr, L"Error launching process. Exit code %ld, command was %ls", GetLastError(), sCommandLine);
 		return 1;
 	}
-	WaitForSingleObject(processInfo.hProcess, INFINITE);
+	HANDLE processesToWait[] = { parentProcess, processInfo.hProcess };
+
+	DWORD nWaitResult = WaitForMultipleObjects(2, processesToWait, FALSE, INFINITE);
+	if (WAIT_FAILED == nWaitResult)
+	{
+		fwprintf(stderr, L"Error waiting processes: %ld", GetLastError());
+		return -1;
+	}
+	if (nWaitResult - WAIT_OBJECT_0 == 0)
+	{
+		fwprintf(stderr, L"Parent process (launcher) died?");
+		TerminateProcess(processInfo.hProcess, -1); 
+		return -1;
+	}
+
+	
 	
 	DWORD nExitCode = 0;
 	GetExitCodeProcess(processInfo.hProcess, &nExitCode);
