@@ -177,13 +177,13 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): L
 }
 
 class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUtilRt.getFileName(path), StdFileTypes.XML, "", CharsetToolkit.UTF8_CHARSET, 1L) {
-  var content: ByteArray? = null
+  var byteContent: ByteArray? = null
     private set
 
   override fun getPath() = path
 
   override fun setBinaryContent(content: ByteArray, newModificationStamp: Long, newTimeStamp: Long, requestor: Any?) {
-    this.content = content
+    this.byteContent = content
   }
 
   override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw IllegalStateException("You must use setBinaryContent")
