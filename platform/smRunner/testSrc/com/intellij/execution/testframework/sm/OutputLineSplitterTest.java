@@ -23,15 +23,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import gnu.trove.THashMap;
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.hamcrest.CoreMatchers.*;
 
 public class OutputLineSplitterTest extends PlatformTestCase {
   private static final Key RED = Key.create(OutputLineSplitterTest.class + ".RED");
@@ -61,27 +57,6 @@ public class OutputLineSplitterTest extends PlatformTestCase {
         }
       }
     };
-  }
-
-  /**
-   * When tc message is in the middle of line it should reported as separate line like if it has \n before it
-   */
-  public void testMessageInTheMiddleOfLine() throws Exception {
-    for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
-      final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
-      final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
-
-      mySplitter.process(prefix, ProcessOutputTypes.SYSTEM);
-      mySplitter.process(prefix + testStarted, ProcessOutputTypes.SYSTEM);
-      mySplitter.process(testEnded, ProcessOutputTypes.SYSTEM);
-
-      mySplitter.flush();
-
-      final List<String> output = myOutput.get(ProcessOutputTypes.SYSTEM);
-      final String messagePrefix = ServiceMessage.SERVICE_MESSAGE_START;
-      Assert.assertThat(output, everyItem(either(startsWith(messagePrefix)).or(not(containsString(messagePrefix)))));
-      Assert.assertThat(output, hasItems(testStarted, testEnded));
-    }
   }
 
   public void testReadingSeveralStreams() throws Exception {
@@ -208,13 +183,12 @@ public class OutputLineSplitterTest extends PlatformTestCase {
     PlatformTestUtil.startPerformanceTest("Flushing lot's of fragments", 15, mySplitter::flush)
       .setup(() -> {
         for (int i = 0; i < 10_000; i++) {
-          mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
+          mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ",  ProcessOutputTypes.STDOUT);
         }
       })
       .useLegacyScaling()
       .assertTiming();
   }
-
   private static Future<?> execute(final Runnable runnable) {
     return ApplicationManager.getApplication().executeOnPooledThread(runnable);
   }
