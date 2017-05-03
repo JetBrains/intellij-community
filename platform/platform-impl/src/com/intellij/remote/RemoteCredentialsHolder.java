@@ -261,6 +261,12 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
+  /**
+   * Stores main part of ssh credentials in xml element and password and passphrase in PasswordSafe.
+   *
+   * Don't use this method to serialize intermediate state of credentials
+   * because it will overwrite password and passphrase in PasswordSafe
+   */
   public void save(Element rootElement) {
     rootElement.setAttribute(HOST, StringUtil.notNullize(getHost()));
     rootElement.setAttribute(PORT, StringUtil.notNullize(getLiteralPort()));
