@@ -26,6 +26,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
+import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -217,7 +218,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
             return new UnknownFileTypeDiffRequest(file, getName());
           }
           if (isNewFile) return createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
-          
+
           final CommitContext commitContext;
           final TextFilePatch patch;
           try {
@@ -295,12 +296,11 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   }
 
   static class PatchesPreloader {
-    private final Map<String, List<TextFilePatch>> myFilePatchesMap;
+    private final SoftHardCacheMap<String, List<TextFilePatch>> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
     private final Project myProject;
 
     PatchesPreloader(final Project project) {
       myProject = project;
-      myFilePatchesMap = new HashMap<>();
     }
 
     @NotNull
