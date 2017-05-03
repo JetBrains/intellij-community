@@ -7,24 +7,6 @@ import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions.assertThat
 import java.io.File
 
-class TestFilePathProvider: UniqueFilesProvider("chunk", File(".")) {
-
-    override fun cleanupOldFiles() {
-        super.cleanupOldFiles()
-    }
-
-    override fun getUniqueFile(): File {
-        return super.getUniqueFile()
-    }
-
-    override fun getDataFiles(): List<File> {
-        return super.getDataFiles()
-    }
-
-    override fun getStatsDataDirectory(): File {
-        return super.getStatsDataDirectory()
-    }
-}
 
 class StatisticsSenderTest: LightPlatformTestCase() {
     lateinit var firstFile: File

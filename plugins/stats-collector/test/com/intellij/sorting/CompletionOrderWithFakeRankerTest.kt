@@ -3,6 +3,9 @@ package com.intellij.sorting
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.mocks.FakeWeighter
+import com.intellij.mocks.TestExperimentDecision
+import com.intellij.mocks.TestRequestService
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
@@ -120,7 +123,7 @@ class CompletionOrderWithFakeRankerTest : LightFixtureCompletionTestCase() {
     private fun fakeWeigher() = WeigherExtensionPoint().apply {
         id = "fake"
         key = "completion"
-        implementationClass = "com.intellij.sorting.FakeWeighter"
+        implementationClass = "com.intellij.mocks.FakeWeighter"
     }
 
 }

@@ -2,11 +2,12 @@ package com.intellij.sorting
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.mocks.FakeRanker
+import com.intellij.mocks.TestRequestService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.testFramework.registerServiceInstance
-import com.jetbrains.completion.ranker.features.LookupElementInfo
 import org.assertj.core.api.Assertions.assertThat
 
 
@@ -77,16 +78,3 @@ class CompletionRerankingTest : LightFixtureCompletionTestCase() {
 }
 
 
-class FakeRanker: Ranker {
-    
-    var isShortFirst = true
-
-    /**
-     * Items are sorted by descending order, so item with the highest rank will be on top
-     */
-    override fun rank(state: LookupElementInfo, relevance: Map<String, Any?>): Double? {
-        val lookupElementLength = state.result_length!!.toDouble()
-        return if (isShortFirst) -lookupElementLength else lookupElementLength
-    }
-    
-}

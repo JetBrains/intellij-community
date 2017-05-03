@@ -1,21 +1,11 @@
 package com.intellij.sorting
 
-import com.intellij.codeInsight.completion.CompletionLocation
-import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.Pair
-import com.intellij.psi.PsiMethod
-import com.intellij.stats.completion.RequestService
-import com.intellij.stats.completion.ResponseData
-import com.intellij.stats.completion.StatsDataSender
-import com.intellij.stats.completion.experiment.ExperimentDecision
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
-import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions
-import org.mockito.Mockito.mock
-import java.io.File
 
 
 internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
@@ -52,51 +42,8 @@ internal fun LookupImpl.assertEachItemHasMlValue(value: String) {
 }
 
 
-@Suppress("unused")
-internal class FakeWeighter : CompletionWeigher() {
-
-    companion object {
-        var isReturnNull = false
-    }
-
-    override fun weigh(element: LookupElement, location: CompletionLocation): Comparable<Nothing>? {
-        if (isReturnNull) return null
-        val psiElement = element.psiElement as? PsiMethod ?: return 0
-        return psiElement.name.length - psiElement.parameterList.parametersCount
-    }
-
-}
 
 
-internal class TestExperimentDecision: ExperimentDecision {
-    companion object {
-        var isPerformExperiment = true
-    }
-    override fun isPerformExperiment(salt: String) = isPerformExperiment
-}
-
-internal class TestRequestService : RequestService() {
-
-    companion object {
-        var mock: RequestService = mock<RequestService>()
-    }
-
-    override fun post(url: String, params: Map<String, String>) = mock.post(url, params)
-    override fun post(url: String, file: File) = mock.post(url, file)
-    override fun postZipped(url: String, file: File) = mock.postZipped(url, file)
-    override fun get(url: String) = mock.get(url)
-
-}
-
-
-internal class TestStatisticSender : StatsDataSender {
-    companion object {
-        var sendAction: (String) -> Unit = { Unit }
-    }
-
-    override fun sendStatsData(url: String) {
-    }
-}
 
 
 internal object Samples {

@@ -30,7 +30,7 @@
     
     <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider" 
                         serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider" 
-                        testServiceImplementation="com.intellij.stats.completion.TestFilePathProvider">
+                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
     </applicationService>
     
     <applicationService serviceInterface="com.intellij.stats.completion.LogFileManager" 
@@ -39,7 +39,7 @@
     
     <applicationService serviceInterface="com.intellij.stats.completion.StatsDataSender"
                         serviceImplementation="com.intellij.stats.completion.StatisticSender"
-                        testServiceImplementation="com.intellij.sorting.TestStatisticSender">
+                        testServiceImplementation="com.intellij.mocks.TestStatisticSender">
     </applicationService>
     
     <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatus"
@@ -48,12 +48,12 @@
 
     <applicationService serviceInterface="com.intellij.stats.completion.RequestService"
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService"
-                        testServiceImplementation="com.intellij.sorting.TestRequestService">
+                        testServiceImplementation="com.intellij.mocks.TestRequestService">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.stats.completion.experiment.ExperimentDecision"
                         serviceImplementation="com.intellij.stats.completion.experiment.PermanentInstallationIDBasedDecision"
-                        testServiceImplementation="com.intellij.sorting.TestExperimentDecision">
+                        testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.sorting.Ranker"
