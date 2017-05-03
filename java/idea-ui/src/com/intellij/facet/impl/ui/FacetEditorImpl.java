@@ -17,14 +17,14 @@ package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetConfiguration;
-import com.intellij.facet.ui.FacetEditor;
-import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.facet.ui.FacetEditorTab;
+import com.intellij.facet.ui.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurableGroup;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.roots.ui.configuration.ModificationOfImportedModelWarningComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -103,6 +103,21 @@ public class FacetEditorImpl extends UnnamedConfigurableGroup implements Unnamed
     else {
       editorComponent = new JPanel();
     }
+    ProjectModelExternalSource externalSource = myContext.getFacet().getExternalSource();
+    if (externalSource != null) {
+      myErrorPanel.getValidatorsManager().registerValidator(new FacetEditorValidator() {
+        @NotNull
+        @Override
+        public ValidationResult check() {
+          if (isModified()) {
+            String text = ModificationOfImportedModelWarningComponent.getWarningText("Facet '" + myContext.getFacetName() + "'", externalSource);
+            return new ValidationResult(text);
+          }
+          return ValidationResult.OK;
+        }
+      }, editorComponent);
+    }
+
 
     final JComponent errorComponent = myErrorPanel.getComponent();
     UIUtil.addInsets(errorComponent, JBUI.insets(0, 5, 5, 0));
