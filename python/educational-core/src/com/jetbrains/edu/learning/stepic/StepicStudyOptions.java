@@ -16,17 +16,22 @@
 package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.jetbrains.edu.learning.StudySettings;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class StepicStudyOptions implements StudyOptionsProvider {
   private JPanel myPane;
@@ -34,6 +39,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   private JBLabel myUsernameLabel;
   private HoverHyperlinkLabel myHoverHyperlinkLabel;
   private StepicUser myStepicUser;
+  private HyperlinkAdapter myListener;
 
   public StepicStudyOptions() {
   }
@@ -55,7 +61,32 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
+        StudySettings studySettings = StudySettings.getInstance();
+        StepicUser oldUser = studySettings.getUser();
         EduStepicConnector.doAuthorize(() -> showDialog());
+
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> {
+                                                 ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                                                 StudyUtils.execCancelable(waitForUserToBeSet(studySettings, oldUser));
+                                               }, "Authorizing",
+                                               true,
+                                               DefaultProjectFactory.getInstance().getDefaultProject());
+      }
+
+      @NotNull
+      private Callable<Object> waitForUserToBeSet(StudySettings studySettings, StepicUser oldUser) {
+        return () -> {
+          StepicUser newUser = studySettings.getUser();
+          while (newUser == null || newUser.equals(oldUser)) {
+            TimeUnit.MILLISECONDS.sleep(500);
+            newUser = studySettings.getUser();
+          }
+          StudySettings.getInstance().setUser(myStepicUser);
+          myStepicUser = newUser;
+          updateLoginLabels(myStepicUser);
+          return null;
+        };
       }
     };
   }
@@ -85,11 +116,16 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   }
 
   private void updateLoginLabels(@Nullable StepicUser stepicUser) {
+    if (myListener != null) {
+      myHoverHyperlinkLabel.removeHyperlinkListener(myListener);
+    }
+
     if (stepicUser == null) {
       myUsernameLabel.setText("You're not logged in");
       myHoverHyperlinkLabel.setText("Authorize on Stepik");
-      myHoverHyperlinkLabel.addHyperlinkListener(createAuthorizeListener());
 
+      myListener = createAuthorizeListener();
+      myHoverHyperlinkLabel.addHyperlinkListener(myListener);
     }
     else {
       String firstName = stepicUser.getFirstName();
@@ -103,7 +139,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
       }
 
       myHoverHyperlinkLabel.setText("Log out");
-      myHoverHyperlinkLabel.addHyperlinkListener(createLogoutListener());
+      myListener = createLogoutListener();
+      myHoverHyperlinkLabel.addHyperlinkListener(myListener);
     }
   }
 
@@ -132,8 +169,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     reset();
   }
 
-  private static void removeCredentials() {
-    StudySettings.getInstance().setUser(null);
+  private void removeCredentials() {
+    myStepicUser = null;
     EduStepicAuthorizedClient.invalidateClient();
   }
 
