@@ -151,6 +151,7 @@
 
     <action id="Edu.StartCourse" class="com.jetbrains.edu.learning.newproject.EduStartCourseAction">
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
+      <add-to-group group-id="FileMenu" anchor="first"/>
     </action>
   </actions>
 
