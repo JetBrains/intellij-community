@@ -144,7 +144,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
-          if (CompilerReferenceReader.exists(myProject)) {
+          boolean indexExist = CompilerReferenceReader.exists(myProject);
+          if (indexExist) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
           } else {
@@ -154,7 +155,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             if (isUpToDate) {
               openReaderIfNeed(IndexOpenReason.UP_TO_DATE_CACHE);
             } else {
-              markAsOutdated();
+              markAsOutdated(indexExist);
             }
           });
         });
@@ -586,10 +587,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  private void markAsOutdated() {
+  private void markAsOutdated(boolean decrementBuildCount) {
     myOpenCloseLock.lock();
     try {
-      --myActiveBuilds;
+      if (decrementBuildCount) {
+        --myActiveBuilds;
+      }
       myDirtyScopeHolder.upToDateChecked(false);
     } finally {
       myOpenCloseLock.unlock();
