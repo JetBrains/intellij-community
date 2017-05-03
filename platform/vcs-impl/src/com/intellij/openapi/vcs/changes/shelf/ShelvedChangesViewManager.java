@@ -17,8 +17,10 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;
+import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
@@ -34,8 +36,8 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
-import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -46,7 +48,6 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -73,6 +74,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +101,6 @@ import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction.createAppliedTextPatch;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.ObjectUtils.assertNotNull;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class ShelvedChangesViewManager implements ProjectComponent {
@@ -740,10 +741,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 
-  private class MyShelvedPreviewProcessor extends CacheDiffRefreshableRequestProcessor<ShelvedChange> {
+  private class MyShelvedPreviewProcessor extends CacheDiffRefreshableRequestProcessor<ShelvedWrapper> {
 
     @NotNull private final DiffShelvedChangesAction.PatchesPreloader myPreloader;
-    @Nullable private ShelvedChange myCurrentChange;      // create common interface for text and binary
+    @Nullable private ShelvedWrapper myCurrentShelvedElement;
 
     public MyShelvedPreviewProcessor(@NotNull Project project) {
       super(project);
@@ -751,20 +752,21 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       Disposer.register(project, this);
     }
 
-    @Nullable
+    @NotNull
     @Override
-    protected String getRequestName(@NotNull ShelvedChange provider) {
-      return FileUtil.toSystemDependentName(chooseNotNull(provider.getAfterPath(), provider.getBeforePath()));
+    protected String getRequestName(@NotNull ShelvedWrapper provider) {
+      return provider.getRequestName();
     }
 
     @Override
-    protected ShelvedChange getCurrentRequestProvider() {
-      return myCurrentChange;
+    protected ShelvedWrapper getCurrentRequestProvider() {
+      return myCurrentShelvedElement;
     }
 
+    @CalledInAwt
     @Override
     public void clear() {
-      myCurrentChange = null;
+      myCurrentShelvedElement = null;
       updateRequest();
     }
 
@@ -772,31 +774,62 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     public void refresh() {
       DataContext dc = DataManager.getInstance().getDataContext(myTree);
       List<ShelvedChange> selectedChanges = getShelveChanges(dc);
+      List<ShelvedBinaryFile> selectedBinaryChanges = getBinaryShelveChanges(dc);
 
-      if (selectedChanges.isEmpty()) {
-        myCurrentChange = null;
-        updateRequest();
+      if (selectedChanges.isEmpty() && selectedBinaryChanges.isEmpty()) {
+        clear();
         return;
       }
 
-      ShelvedChange selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
-      if (selectedChange == null) {
-        myCurrentChange = selectedChanges.get(0);
-        updateRequest();
-        return;
+      if (myCurrentShelvedElement != null) {
+        if (keepBinarySelection(selectedBinaryChanges, myCurrentShelvedElement.getBinaryFile()) ||
+            keepShelvedSelection(selectedChanges, myCurrentShelvedElement.getShelvedChange())) {
+          dropCachesIfNeededAndUpdate(myCurrentShelvedElement);  
+          return;
+        }
+      }
+      //getFirstSelected
+      myCurrentShelvedElement = !selectedChanges.isEmpty()
+                                ? new ShelvedWrapper(selectedChanges.get(0))
+                                : new ShelvedWrapper(selectedBinaryChanges.get(0));
+      dropCachesIfNeededAndUpdate(myCurrentShelvedElement);
     }
-  }
+
+    private void dropCachesIfNeededAndUpdate(@NotNull ShelvedWrapper currentShelvedElement) {
+      ShelvedChange shelvedChange = currentShelvedElement.getShelvedChange();
+      boolean dropCaches = shelvedChange != null && myPreloader.isPatchFileChanged(shelvedChange.getPatchPath());
+      if (dropCaches) {
+        dropCaches();
+      }
+      updateRequest(dropCaches);
+    }
+
+    boolean keepShelvedSelection(@NotNull List<ShelvedChange> selectedChanges, @Nullable ShelvedChange currentShelvedChange) {
+      return currentShelvedChange != null && selectedChanges.contains(currentShelvedChange);
+    }
+
+    boolean keepBinarySelection(@NotNull List<ShelvedBinaryFile> selectedBinaryChanges, @Nullable ShelvedBinaryFile currentBinary) {
+      return currentBinary != null && selectedBinaryChanges.contains(currentBinary);
+    }
 
     @NotNull
     @Override
-    protected DiffRequest loadRequest(@NotNull ShelvedChange provider, @NotNull ProgressIndicator indicator)
+    protected DiffRequest loadRequest(@NotNull ShelvedWrapper provider, @NotNull ProgressIndicator indicator)
       throws ProcessCanceledException, DiffRequestProducerException {
       try {
-        TextFilePatch patch = myPreloader.getPatch(provider, new CommitContext());
-        return new PatchDiffRequest(createAppliedTextPatch(patch), getRequestName(provider),
-                                    VcsBundle.message("patch.apply.conflict.patch"));
+        ShelvedChange shelvedChange = provider.getShelvedChange();
+        if (shelvedChange != null) {
+          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, new CommitContext())));
+        }
+
+        DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
+        ShelvedBinaryFile binaryFile = assertNotNull(provider.getBinaryFile());
+        byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
+        FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
+        return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),
+                                     factory.createBinary(myProject, binaryContent, fileType, getRequestName(provider)), null, null);
       }
-      catch (VcsException e) {
+      catch (VcsException | IOException e) {
         throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
       }
     }
