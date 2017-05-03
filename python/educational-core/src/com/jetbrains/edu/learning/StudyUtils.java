@@ -67,6 +67,8 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.stepic.OAuthDialog;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
@@ -851,5 +853,13 @@ public class StudyUtils {
       return (StudyStepicUserWidget)((IdeFrameImpl)frame).getStatusBar().getWidget(StudyStepicUserWidget.ID);
     }
     return null;
+  }
+
+  public static void showOAuthDialog() {
+    OAuthDialog dialog = new OAuthDialog();
+    if (dialog.showAndGet()) {
+      StepicUser user = dialog.getStepicUser();
+      StudySettings.getInstance().setUser(user);
+    }
   }
 }

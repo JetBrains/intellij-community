@@ -13,8 +13,8 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.StudySettings;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.OAuthDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
@@ -113,18 +113,10 @@ public class StudyStepicUserWidget implements IconLikeCustomStatusBarWidget {
       return new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(HyperlinkEvent e) {
-          EduStepicConnector.doAuthorize(() -> showOAuthDialog());
+          EduStepicConnector.doAuthorize(() -> StudyUtils.showOAuthDialog());
           myPopup.cancel();
         }
       };
-    }
-
-    private static void showOAuthDialog() {
-      OAuthDialog dialog = new OAuthDialog();
-      if (dialog.showAndGet()) {
-        StepicUser user = dialog.getStepicUser();
-        StudySettings.getInstance().setUser(user);
-      }
     }
 
     @NotNull
