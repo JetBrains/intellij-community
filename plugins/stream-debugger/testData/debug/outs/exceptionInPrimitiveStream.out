@@ -1,0 +1,35 @@
+LineBreakpoint created at ExceptionInPrimitiveStream.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ExceptionInPrimitiveStream
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+ExceptionInPrimitiveStream.java:5
+IntStream.of(1, 2, 3)
+.peek(x -> {
+      throw new RuntimeException();
+    })
+.reduce(Integer.MAX_VALUE, Math::min)
+IntStream.of
+    before: nothing
+    after: 1
+peek
+    before: 1
+    after: nothing
+reduce
+    before: nothing
+    after: nothing
+mappings for peek
+    nothing -> 1 -> nothing
+mappings for reduce
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 1
+Exception in thread "main" java.lang.RuntimeException
+	at ExceptionInPrimitiveStream.lambda$main$0(ExceptionInPrimitiveStream.java:!LINE_NUMBER!)
+	at java.util.stream.IntPipeline$10$1.accept(IntPipeline.java:!LINE_NUMBER!)
+	at java.util.Spliterators$IntArraySpliterator.forEachRemaining(Spliterators.java:!LINE_NUMBER!)
+	at java.util.Spliterator$OfInt.forEachRemaining(Spliterator.java:!LINE_NUMBER!)
+	at java.util.stream.AbstractPipeline.copyInto(AbstractPipeline.java:!LINE_NUMBER!)
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(AbstractPipeline.java:!LINE_NUMBER!)
+	at java.util.stream.ReduceOps$ReduceOp.evaluateSequential(ReduceOps.java:!LINE_NUMBER!)
+	at java.util.stream.AbstractPipeline.evaluate(AbstractPipeline.java:!LINE_NUMBER!)
+	at java.util.stream.IntPipeline.reduce(IntPipeline.java:!LINE_NUMBER!)
+	at ExceptionInPrimitiveStream.main(ExceptionInPrimitiveStream.java:!LINE_NUMBER!)

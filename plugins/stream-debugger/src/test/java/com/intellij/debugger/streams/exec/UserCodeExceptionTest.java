@@ -15,11 +15,28 @@
  */
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.wrapper.StreamChain;
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author Vitaliy.Bibaev
  */
-public class UserCodeExceptionTest extends FailEvaluationTestCase {
+public class UserCodeExceptionTest extends TraceExecutionTestCase {
   public void testExceptionWhenEvaluating() {
     doTest(false);
+  }
+
+  public void testExceptionInPrimitiveStream() {
+    doTest(false);
+  }
+
+  public void testExceptionAsStreamResult() {
+    doTest(false);
+  }
+
+  @Override
+  protected void handleSuccess(@Nullable StreamChain chain, @Nullable TracingResult result, boolean resultMustBeNull) {
+    super.handleSuccess(chain, result, resultMustBeNull);
   }
 }
