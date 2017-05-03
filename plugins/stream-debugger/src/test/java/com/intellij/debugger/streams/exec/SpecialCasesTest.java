@@ -22,4 +22,8 @@ public class SpecialCasesTest extends TraceExecutionTestCase {
   public void testSortedSignedDoubleZeros() {
     doTest(false);
   }
+
+  public void testExceptionAsStreamResult() {
+    doTest(false);
+  }
 }
