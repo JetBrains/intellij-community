@@ -56,7 +56,7 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     def camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}")
     def middleMatch = myFixture.addClass("class BaseUiUtil {}")
     def elements = getPopupElements(new GotoClassModel2(project), "uiuti")
-    assert elements == [startMatch, wordSkipMatch, camelMatch, ChooseByNameBase.NON_PREFIX_SEPARATOR, middleMatch]
+    assert elements == [startMatch, wordSkipMatch, camelMatch, middleMatch]
   }
 
   void "test annotation syntax"() {
@@ -122,7 +122,7 @@ class Intf {
       xxx1 = intf.findMethodsByName('_xxx1', false)
       xxx2 = intf.findMethodsByName('xxx2', false)
     }
-    assert elements == [xxx2, ChooseByNameBase.NON_PREFIX_SEPARATOR, xxx1]
+    assert elements == [xxx2, xxx1]
   }
 
   void "test prefer exact extension matches"() {
@@ -342,7 +342,7 @@ class Intf {
     def popup = createPopup(new GotoClassModel2(project))
     def popupElements = calcPopupElements(popup, 'PsiCl', false)
 
-    assert popupElements == [wanted, ChooseByNameBase.NON_PREFIX_SEPARATOR, smth]
+    assert popupElements == [wanted, smth]
     assert popup.calcSelectedIndex(popupElements.toArray(), 'PsiCl') == 0
   }
 

@@ -88,7 +88,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -427,27 +426,18 @@ public abstract class ChooseByNameBase {
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ShowFindUsagesAction() {
       @Override
-      public PsiElement[][] getElements() {
-        final List<Object> objects = myListModel.getItems();
-        final List<PsiElement> prefixMatchElements = new ArrayList<>(objects.size());
-        final List<PsiElement> nonPrefixMatchElements = new ArrayList<>(objects.size());
-        List<PsiElement> curElements = prefixMatchElements;
+      public PsiElement[] getElements() {
+        List<Object> objects = myListModel.getItems();
+        List<PsiElement> elements = new ArrayList<>(objects.size());
         for (Object object : objects) {
           if (object instanceof PsiElement) {
-            curElements.add((PsiElement)object);
+            elements.add((PsiElement)object);
           }
           else if (object instanceof DataProvider) {
-            final PsiElement psi = CommonDataKeys.PSI_ELEMENT.getData((DataProvider)object);
-            if (psi != null) {
-              curElements.add(psi);
-            }
-          }
-          else if (object == NON_PREFIX_SEPARATOR) {
-            curElements = nonPrefixMatchElements;
+            ContainerUtil.addIfNotNull(elements, CommonDataKeys.PSI_ELEMENT.getData((DataProvider)object));
           }
         }
-        return new PsiElement[][]{PsiUtilCore.toPsiElementArray(prefixMatchElements),
-          PsiUtilCore.toPsiElementArray(nonPrefixMatchElements)};
+        return PsiUtilCore.toPsiElementArray(elements);
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
@@ -601,15 +591,6 @@ public abstract class ChooseByNameBase {
             }
             break;
         }
-
-        if (myList.getSelectedValue() == NON_PREFIX_SEPARATOR) {
-          if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_PAGE_UP) {
-            ScrollingUtil.moveUp(myList, e.getModifiersEx());
-          }
-          else {
-            ScrollingUtil.moveDown(myList, e.getModifiersEx());
-          }
-        }
       }
     });
 
@@ -654,18 +635,10 @@ public abstract class ChooseByNameBase {
     myList.setFont(editorFont);
 
     myList.addListSelectionListener(new ListSelectionListener() {
-      private int myPreviousSelectionIndex = 0;
-
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
-        if (myList.getSelectedValue() != NON_PREFIX_SEPARATOR) {
-          myPreviousSelectionIndex = myList.getSelectedIndex();
-          chosenElementMightChange();
-          updateDocumentation();
-        }
-        else if (allowMultipleSelection) {
-          myList.setSelectedIndex(myPreviousSelectionIndex);
-        }
+        chosenElementMightChange();
+        updateDocumentation();
       }
     });
 
@@ -1045,7 +1018,7 @@ public abstract class ChooseByNameBase {
   }
 
   private static boolean isSpecialElement(Object modelElement) {
-    return EXTRA_ELEM.equals(modelElement) || NON_PREFIX_SEPARATOR.equals(modelElement);
+    return EXTRA_ELEM.equals(modelElement);
   }
 
   private int getUseCount(String statContext, Object modelElement) {
@@ -1151,7 +1124,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    return ContainerUtil.filter(myList.getSelectedValues(), o -> o != EXTRA_ELEM && o != NON_PREFIX_SEPARATOR);
+    return ContainerUtil.filter(myList.getSelectedValues(), o -> !isSpecialElement(o));
   }
 
   protected void chosenElementMightChange() {
@@ -1334,7 +1307,7 @@ public abstract class ChooseByNameBase {
     }
 
     @Override
-    @Nullable
+    @NotNull
     public Point getBestPopupPosition() {
       return new Point(myTextFieldPanel.getWidth(), getHeight());
     }
@@ -1381,18 +1354,6 @@ public abstract class ChooseByNameBase {
   }
 
   public static final String EXTRA_ELEM = "...";
-  public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
-
-  public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
-    final JPanel panel = new JPanel(new BorderLayout());
-    final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
-    panel.add(separator, BorderLayout.CENTER);
-    if (!UIUtil.isUnderAquaBasedLookAndFeel()) {
-      panel.setBorder(new EmptyBorder(3, 0, 2, 0));
-    }
-    panel.setBackground(backgroundColor);
-    return panel;
-  }
 
   private class CalcElementsThread extends ReadTask {
     private final String myPattern;
@@ -1596,22 +1557,18 @@ public abstract class ChooseByNameBase {
       final UsageViewPresentation presentation = new UsageViewPresentation();
       final String text = getTrimmedText();
       final String prefixPattern = myFindUsagesTitle + " \'" + text + "\'";
-      final String nonPrefixPattern = myFindUsagesTitle + " \'*" + text + "*\'";
       presentation.setCodeUsagesString(prefixPattern);
       presentation.setUsagesInGeneratedCodeString(prefixPattern + " in generated code");
-      presentation.setDynamicUsagesString(nonPrefixPattern);
       presentation.setTabName(prefixPattern);
       presentation.setTabText(prefixPattern);
       presentation.setTargetsNodeText("Unsorted " + StringUtil.toLowerCase(patternToLowerCase(prefixPattern)));
-      final Object[][] elements = getElements();
+      PsiElement[] elements = getElements();
       final List<PsiElement> targets = new ArrayList<>();
       final Set<Usage> usages = new LinkedHashSet<>();
-      fillUsages(Arrays.asList(elements[0]), usages, targets, false);
-      fillUsages(Arrays.asList(elements[1]), usages, targets, true);
+      fillUsages(Arrays.asList(elements), usages, targets, false);
       if (myListModel.contains(EXTRA_ELEM)) { //start searching for the rest
         final boolean everywhere = myCheckBox.isSelected();
-        final Set<Object> prefixMatchElementsArray = new LinkedHashSet<>();
-        final Set<Object> nonPrefixMatchElementsArray = new LinkedHashSet<>();
+        final Set<Object> collected = new LinkedHashSet<>();
         hideHint();
         ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcUsagesThread;
@@ -1633,19 +1590,10 @@ public abstract class ChooseByNameBase {
             };
 
             ApplicationManager.getApplication().runReadAction(() -> {
-              boolean anyPlace = isSearchInAnyPlace();
-              setSearchInAnyPlace(false);
-              myCalcUsagesThread.addElementsByPattern(text, prefixMatchElementsArray, indicator, everywhere);
-              setSearchInAnyPlace(anyPlace);
-
-              if (anyPlace && !indicator.isCanceled()) {
-                myCalcUsagesThread.addElementsByPattern(text, nonPrefixMatchElementsArray, indicator, everywhere);
-                nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
-              }
+              myCalcUsagesThread.addElementsByPattern(text, collected, indicator, everywhere);
 
               indicator.setText("Prepare...");
-              fillUsages(prefixMatchElementsArray, usages, targets, false);
-              fillUsages(nonPrefixMatchElementsArray, usages, targets, true);
+              fillUsages(collected, usages, targets, false);
             });
           }
 
@@ -1703,11 +1651,11 @@ public abstract class ChooseByNameBase {
         e.getPresentation().setVisible(false);
         return;
       }
-      final Object[][] elements = getElements();
-      e.getPresentation().setEnabled(elements != null && elements[0].length + elements[1].length > 0);
+      PsiElement[] elements = getElements();
+      e.getPresentation().setEnabled(elements != null && elements.length > 0);
     }
 
-    public abstract Object[][] getElements();
+    public abstract PsiElement[] getElements();
   }
 
   private static class MyUsageInfo2UsageAdapter extends UsageInfo2UsageAdapter {

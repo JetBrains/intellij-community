@@ -156,9 +156,6 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
   }
 
   private boolean processTasks(List<Task> tasks, Processor<Object> consumer, ProgressIndicator cancelled) {
-    if (!tasks.isEmpty() && !consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) {
-      return false;
-    }
     PsiManager psiManager = PsiManager.getInstance(myProject);
     for (Task task : tasks) {
       cancelled.checkCanceled();

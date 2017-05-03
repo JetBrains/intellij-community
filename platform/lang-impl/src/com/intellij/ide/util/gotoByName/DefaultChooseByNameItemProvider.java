@@ -127,7 +127,6 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
-    boolean sortedByMatchingDegree = !(base.getModel() instanceof CustomMatcherModel);
     IdFilter idFilter = null;
 
     if (model instanceof ContributorsBasedGotoByModel) {
@@ -136,13 +135,10 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.myProject, everywhere);
     FindSymbolParameters parameters = new FindSymbolParameters(pattern, namePattern, searchScope, idFilter);
-    boolean afterStartMatch = false;
 
     for (MatchResult result : namesList) {
       indicator.checkCanceled();
       String name = result.elementName;
-
-      boolean needSeparator = sortedByMatchingDegree && !result.startMatch && afterStartMatch;
 
       // use interruptible call if possible
       Object[] elements = model instanceof ContributorsBasedGotoByModel ?
@@ -166,27 +162,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
             continue;
           }
 
-          if (needSeparator && !startMiddleMatchVariants(qualifierMiddleMatched, consumer)) return false;
           if (!consumer.process(element)) return false;
-          needSeparator = false;
-          afterStartMatch = result.startMatch;
         }
       }
       else if (elements.length == 1 && matchQualifier(elements[0], base, patternsAndMatchers) != null) {
-        if (needSeparator && !startMiddleMatchVariants(qualifierMiddleMatched, consumer)) return false;
         if (!consumer.process(elements[0])) return false;
-        afterStartMatch = result.startMatch;
       }
     }
     return ContainerUtil.process(qualifierMiddleMatched, consumer);
-  }
-
-  private static boolean startMiddleMatchVariants(@NotNull List<Object> qualifierMiddleMatched,
-                                                  @NotNull Processor<Object> consumer) {
-    if (!consumer.process(ChooseByNameBase.NON_PREFIX_SEPARATOR)) return false;
-    if (!ContainerUtil.process(qualifierMiddleMatched, consumer)) return false;
-    qualifierMiddleMatched.clear();
-    return true;
   }
 
   private static void sortNamesList(@NotNull String namePattern, @NotNull List<MatchResult> namesList) {
