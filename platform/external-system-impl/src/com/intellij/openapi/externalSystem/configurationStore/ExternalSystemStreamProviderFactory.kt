@@ -121,6 +121,7 @@ private fun createStorage(project: Project): PersistentHashMap<String, ByteArray
   })
 
   fun deleteFileAndWriteLatestFormatVersion() {
+    dir.deleteChildrenStartingWith(file.fileName.toString())
     file.delete()
     versionFile.outputStream().use { it.write(MODULE_FILE_FORMAT_VERSION) }
 
