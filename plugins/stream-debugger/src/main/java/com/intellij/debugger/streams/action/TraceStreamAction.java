@@ -23,12 +23,11 @@ import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.psi.impl.StreamChainOption;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
-import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
+import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -102,7 +101,6 @@ public class TraceStreamAction extends AnAction {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
         final ResolvedTracingResult resolvedTrace = result.resolve();
-        final List<ResolvedTrace> calls = resolvedTrace.getResolvedTraces();
         ApplicationManager.getApplication()
           .invokeLater(() -> window.setTrace(resolvedTrace, context));
       }
