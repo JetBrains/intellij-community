@@ -78,10 +78,10 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   }
 
   /**
-   * myOldSuperClass and myNewSuperClass can be interfaces or classes in any combination
+   * oldSuperClass and newSuperClass can be interfaces or classes in any combination
    * <p/>
-   * 1. not checks that myOldSuperClass is really super of aClass
-   * 2. not checks that myNewSuperClass not exists in currently existed supers
+   * 1. not checks that oldSuperClass is really super of aClass
+   * 2. not checks that newSuperClass not exists in currently existed supers
    */
   private static void changeSuperClass(@NotNull final PsiClass aClass,
                                        @NotNull final PsiClass oldSuperClass,
