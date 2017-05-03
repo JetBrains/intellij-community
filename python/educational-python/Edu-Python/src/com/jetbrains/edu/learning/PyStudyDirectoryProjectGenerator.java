@@ -4,7 +4,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -32,7 +31,6 @@ import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
-import com.jetbrains.edu.learning.stepic.EduStepicNames;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -202,8 +200,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseClicked(MouseEvent e) {
         if (isCourseAdaptiveAndNotLogged()) {
-          BrowserUtil.browse(EduStepicNames.IMPLICIT_GRANT_URL);
-          mySettingsPanel.showLoginDialog(false, "Signing In");
+          EduStepicConnector.doAuthorize(() -> mySettingsPanel.showLoginDialog(false));
         }
       }
 

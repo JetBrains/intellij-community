@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.ui;
 import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -29,7 +28,10 @@ import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
-import com.jetbrains.edu.learning.stepic.*;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.OAuthDialog;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,8 +191,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        });
               }
               else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                BrowserUtil.browse(EduStepicNames.IMPLICIT_GRANT_URL);
-                showLoginDialog(true, "Signing In And Getting Stepik Course List");
+                EduStepicConnector.doAuthorize(() -> showLoginDialog(true));
               }
             });
           }
@@ -201,8 +202,8 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     });
   }
 
-  public void showLoginDialog(final boolean refreshCourseList, @NotNull final String progressTitle) {
-    OAuthDialog dialog = new OAuthDialog(progressTitle);
+  public void showLoginDialog(final boolean refreshCourseList) {
+    OAuthDialog dialog = new OAuthDialog();
     if (dialog.showAndGet()) {
       StepicUser stepicUser = dialog.getStepicUser();
       assert stepicUser != null;

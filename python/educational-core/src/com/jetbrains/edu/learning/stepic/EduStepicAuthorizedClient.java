@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.edu.learning.StudySettings;
 import org.apache.http.*;
@@ -39,16 +38,7 @@ public class EduStepicAuthorizedClient {
 
     StudySettings studySettings = StudySettings.getInstance();
 
-    if (studySettings.getUser() == null) {
-      final StepicUser user = showLoginDialog();
-      if (user != null) {
-        studySettings.setUser(user);
-      }
-      else {
-        LOG.warn("Unable to login");
-        return null;
-      }
-    }
+    assert studySettings.getUser() != null: "User must not be null";
 
     StepicUser stepicUser = studySettings.getUser();
     assert stepicUser != null;
@@ -115,23 +105,12 @@ public class EduStepicAuthorizedClient {
     return getBuilder().setDefaultHeaders(headers).build();
   }
 
-  private static StepicUser showLoginDialog() {
-    final StepicUser[] stepicUser = new StepicUser[1];
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      final OAuthDialog dialog = new OAuthDialog("Authorize on Stepik");
-      if (dialog.showAndGet()) {
-        stepicUser[0] = dialog.getStepicUser();
-      }
-    });
-    return stepicUser[0];
-  }
-
   @Nullable
-  public static StepicUser login(@NotNull final String code) {
+  public static StepicUser login(@NotNull final String code, String redirectUrl) {
     final List<NameValuePair> parameters = new ArrayList<>();
     parameters.add(new BasicNameValuePair("grant_type", "authorization_code"));
     parameters.add(new BasicNameValuePair("code", code));
-    parameters.add(new BasicNameValuePair("redirect_uri", EduStepicNames.REDIRECT_URL));
+    parameters.add(new BasicNameValuePair("redirect_uri", redirectUrl));
     parameters.add(new BasicNameValuePair("client_id", EduStepicNames.CLIENT_ID));
 
     StepicWrappers.TokenInfo tokenInfo = getTokens(parameters);

@@ -1,6 +1,5 @@
 package com.jetbrains.edu.learning.ui;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -14,7 +13,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.edu.learning.StudySettings;
-import com.jetbrains.edu.learning.stepic.EduStepicNames;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.OAuthDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
@@ -114,15 +113,18 @@ public class StudyStepicUserWidget implements IconLikeCustomStatusBarWidget {
       return new HyperlinkAdapter() {
         @Override
         protected void hyperlinkActivated(HyperlinkEvent e) {
-          BrowserUtil.browse(EduStepicNames.IMPLICIT_GRANT_URL);
-          OAuthDialog dialog = new OAuthDialog("Authorizing on Stepik");
-          if (dialog.showAndGet()) {
-            StepicUser user = dialog.getStepicUser();
-            StudySettings.getInstance().setUser(user);
-            myPopup.cancel();
-          }
+          EduStepicConnector.doAuthorize(() -> showOAuthDialog());
+          myPopup.cancel();
         }
       };
+    }
+
+    private static void showOAuthDialog() {
+      OAuthDialog dialog = new OAuthDialog();
+      if (dialog.showAndGet()) {
+        StepicUser user = dialog.getStepicUser();
+        StudySettings.getInstance().setUser(user);
+      }
     }
 
     @NotNull

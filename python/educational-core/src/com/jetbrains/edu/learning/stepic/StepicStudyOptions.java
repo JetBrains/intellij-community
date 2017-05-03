@@ -15,7 +15,6 @@
  */
 package com.jetbrains.edu.learning.stepic;
 
-import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.HyperlinkAdapter;
@@ -56,14 +55,17 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
-        BrowserUtil.browse(EduStepicNames.IMPLICIT_GRANT_URL);
-        OAuthDialog dialog = new OAuthDialog("Authorizing on Stepik");
-        if (dialog.showAndGet()) {
-          myStepicUser = dialog.getStepicUser();
-          updateLoginLabels(myStepicUser);
-        }
+        EduStepicConnector.doAuthorize(() -> showDialog());
       }
     };
+  }
+
+  private void showDialog() {
+    OAuthDialog dialog = new OAuthDialog();
+    if (dialog.showAndGet()) {
+      myStepicUser = dialog.getStepicUser();
+      updateLoginLabels(myStepicUser);
+    }
   }
 
   @NotNull

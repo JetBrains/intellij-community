@@ -15,11 +15,11 @@ public class OAuthDialog extends DialogWrapper {
   private String myProgressTitle;
   private StepicUser myStepicUser;
 
-  public OAuthDialog(@NotNull String progressTitle) {
+  public OAuthDialog() {
     super(false);
     myLoginPanel = new AuthorizationPanel();
-    myProgressTitle = progressTitle;
-    setTitle("Authorize on Stepik");
+    myProgressTitle = "Authorizing on Stepik";
+    setTitle("Stepik Authorization");
     init();
   }
 
@@ -51,7 +51,7 @@ public class OAuthDialog extends DialogWrapper {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
 
-      myStepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(code));
+      myStepicUser = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(code, EduStepicNames.EXTERNAL_REDIRECT_URL));
       if (myStepicUser != null) {
         doJustOkAction();
       }

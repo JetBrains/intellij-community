@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,6 +31,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.IOException;
 import java.net.URI;
@@ -444,6 +446,36 @@ public class EduStepicConnector {
     EntityUtils.consume(responseEntity);
     if (line.getStatusCode() != HttpStatus.SC_CREATED) {
       LOG.error("Failed to make submission " + responseString);
+    }
+  }
+
+  @NotNull
+  public static String createOAuthLink(String authRedirectUrl) {
+    return "https://stepik.org/oauth2/authorize/" +
+           "?client_id=" + EduStepicNames.CLIENT_ID +
+           "&redirect_uri=" + authRedirectUrl +
+           "&response_type=code";
+  }
+
+  @NotNull
+  public static String getOAuthRedirectUrl() {
+    int port = BuiltInServerManager.getInstance().getPort();
+
+    // according to https://confluence.jetbrains.com/display/IDEADEV/Remote+communication
+    int defaultPort = 63342;
+    if (port >= defaultPort && port < (defaultPort + 20)) {
+      return "http://localhost:" + port + "/api/" + EduStepicNames.OAUTH_SERVICE_NAME;
+    }
+
+    return EduStepicNames.EXTERNAL_REDIRECT_URL;
+  }
+
+  public static void doAuthorize(@NotNull Runnable externalRedirectUrlHandler) {
+    String redirectUrl = getOAuthRedirectUrl();
+    String link = createOAuthLink(redirectUrl);
+    BrowserUtil.browse(link);
+    if (!redirectUrl.startsWith("http://localhost")) {
+      externalRedirectUrlHandler.run();
     }
   }
 }

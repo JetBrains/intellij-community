@@ -23,9 +23,6 @@ public class EduStepicNames {
   public static final String EDU_STEPIK_SERVICE_NAME = "edu/stepik";
   public static final String STEP_ID = "step_id";
   public static final String CLIENT_ID = "Xqr8Ez716cUJHezxCDnK8bKfMAMqpBYxWQmUxZ8D";
-  public static final String REDIRECT_URL = "https://example.com";
-  public static final String IMPLICIT_GRANT_URL = "https://stepik.org/oauth2/authorize/" +
-                                                  "?client_id=" + CLIENT_ID +
-                                                  "&redirect_uri=" + REDIRECT_URL +
-                                                  "&response_type=code";
+  public static final String OAUTH_SERVICE_NAME = "edu/stepik/oauth";
+  public static final String EXTERNAL_REDIRECT_URL = "https://example.com";
 }
