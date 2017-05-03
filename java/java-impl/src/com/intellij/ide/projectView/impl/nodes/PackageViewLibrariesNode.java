@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -51,7 +52,7 @@ public class PackageViewLibrariesNode extends ProjectViewNode<LibrariesElement>{
   @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    return ProjectViewDirectoryHelper.calculateYieldingToWriteAction(() -> {
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
       final ArrayList<VirtualFile> roots = new ArrayList<>();
       Module myModule = getValue().getModule();
       if (myModule == null) {

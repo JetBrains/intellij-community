@@ -1740,6 +1740,24 @@ public class AbstractTreeUi {
     return rerunBecauseTreeIsHidden || getUpdater().isRerunNeededFor(pass);
   }
 
+  public static <T> T calculateYieldingToWriteAction(Producer<T> producer) throws ProcessCanceledException {
+    if (!Registry.is("ide.abstractTreeUi.BuildChildrenInBackgroundYieldingToWriteAction") ||
+        ApplicationManager.getApplication().isDispatchThread()) {
+      return producer.produce();
+    }
+    Ref<T> result = new Ref<>();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    boolean succeeded = ProgressManager.getInstance().runInReadActionWithWriteActionPriority(
+      () -> result.set(producer.produce()),
+      indicator
+    );
+
+    if (!succeeded || indicator != null && indicator.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
+    return result.get();
+  }
+
   private abstract static class AsyncRunnable {
     @NotNull
     public abstract Promise<?> run();
