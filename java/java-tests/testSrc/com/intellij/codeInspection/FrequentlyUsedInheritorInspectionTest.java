@@ -8,7 +8,9 @@ import com.intellij.compiler.CompilerReferencesTestBase;
 import com.intellij.compiler.inspection.ChangeSuperClassFix;
 import com.intellij.compiler.inspection.FrequentlyUsedInheritorInspection;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +32,8 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/smartInheritance/";
   }
+
+  //test inspection
 
   public void testRelevantClassShowed() {
     doTest(Pair.create("B", 12));
@@ -57,6 +61,20 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
 
   private void assertEmptyResult() {
     doTest();
+  }
+
+  //test fixes
+
+  public void testFixClassAndClass() {
+    doTestQuickFix("extends 'B'");
+  }
+
+  public void testFixClassAndClass2() {
+    doTestQuickFix("extends 'B'");
+  }
+
+  public void testFixClassAndInterface() {
+    doTestQuickFix("extends 'B'");
   }
 
   private void doTest(final Pair<String, Integer>... expectedResults) {
@@ -88,6 +106,16 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
     assertEquals(expectedSize, actions.size());
   }
 
+  private void doTestQuickFix(String hintSuffix) {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    rebuildProject();
+
+    List<IntentionAction> fixes = myFixture.filterAvailableIntentions("Make " + hintSuffix);
+    IntentionAction fix = assertOneElement(fixes);
+    myFixture.launchAction(fix);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+  }
+
   @Nullable
   private static ChangeSuperClassFix getQuickFixFromWrapper(final QuickFixWrapper quickFixWrapper) {
     final LocalQuickFix quickFix = quickFixWrapper.getFix();
@@ -95,5 +123,10 @@ public class FrequentlyUsedInheritorInspectionTest extends CompilerReferencesTes
       return (ChangeSuperClassFix)quickFix;
     }
     return null;
+  }
+
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) throws Exception {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
   }
 }

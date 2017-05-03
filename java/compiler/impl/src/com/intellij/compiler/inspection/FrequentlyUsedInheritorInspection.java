@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.SystemProperties;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,14 +41,14 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
   private static final Logger LOG = Logger.getInstance(FrequentlyUsedInheritorInspection.class);
 
   public static final byte MAX_RESULT = 3;
-  private static final int PERCENT_THRESHOLD = 20;
+  private static final int PERCENT_THRESHOLD = SystemProperties.getIntProperty("FrequentlyUsedInheritorInspection.percent.threshold", 20);
 
   @Nullable
   @Override
   public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
                                         @NotNull final InspectionManager manager,
                                         final boolean isOnTheFly) {
-    if (aClass.isInterface() || aClass instanceof PsiTypeParameter) {
+    if (aClass instanceof PsiTypeParameter) {
       return null;
     }
 
@@ -63,7 +64,8 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
 
     final Collection<LocalQuickFix> topInheritorsQuickFix = new ArrayList<>(topInheritors.size());
     for (final ClassAndInheritorCount searchResult : topInheritors) {
-      final LocalQuickFix quickFix = new ChangeSuperClassFix(searchResult.psi, searchResult.number, superClass);
+      final LocalQuickFix quickFix = new ChangeSuperClassFix(searchResult.psi, superClass, searchResult.number,
+                                                             searchResult.psi.isInterface() && !aClass.isInterface());
       topInheritorsQuickFix.add(quickFix);
       if (topInheritorsQuickFix.size() >= MAX_RESULT) {
         break;
@@ -128,7 +130,7 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       .filter(inheritor -> !(inheritor instanceof LightRef.LightAnonymousClassDef))
       .map(inheritor -> {
         int count = compilerRefService.getInheritorCount(inheritor);
-        if (count * 100 > finalHierarchyCardinality * PERCENT_THRESHOLD) {
+        if (count != 1 && count * 100 > finalHierarchyCardinality * PERCENT_THRESHOLD) {
           return new Object() {
             final LightRef.LightClassHierarchyElementDef myDef = inheritor;
             final int inheritorCount = count;

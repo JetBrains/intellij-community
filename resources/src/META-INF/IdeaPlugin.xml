@@ -817,7 +817,7 @@
                      implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="FrequentlyUsedInheritorInspection"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="INFORMATION"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.compiler.inspection.FrequentlyUsedInheritorInspection"
                      displayName="Class may extend a commonly used base class"/>
     <localInspection language="UAST" shortName="ImplicitSubclassInspection"
