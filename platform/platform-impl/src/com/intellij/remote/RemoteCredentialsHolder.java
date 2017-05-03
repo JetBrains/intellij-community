@@ -244,12 +244,16 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
       if (credentials != null) {
         final boolean memoryOnly = PasswordSafe.getInstance().isPasswordStoredOnlyInMemory(attributes, credentials);
         if (isUseKeyPair()) {
+          setPassword(null);
+          setStorePassword(false);
           setPassphrase(credentials.getPasswordAsString());
           setStorePassphrase(memoryOnly);
         }
         else {
           setPassword(credentials.getPasswordAsString());
           setStorePassword(memoryOnly);
+          setPassphrase(null);
+          setStorePassphrase(false);
         }
       }
     }
