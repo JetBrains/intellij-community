@@ -179,7 +179,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final String errorMessage = ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessage();
 
     //15.9.3 Choosing the Constructor and its Arguments
-    //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (§15.12.2.6)
+    //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (p15.12.2.6)
     if (errorMessage == null && InferenceSession.wasUncheckedConversionPerformed(context)) {
       return DiamondInferenceResult.RAW_RESULT;
     }

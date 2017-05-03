@@ -175,7 +175,7 @@ public class TemplateContext {
    * Default value for GROOVY_STATEMENT is `true` (defined in the `plugins/groovy/groovy-psi/resources/liveTemplates/Groovy.xml`).
    * Base value is `false`.
    *
-   * If default value is defined (as in our example) — we must not take base value in account.
+   * If default value is defined (as in our example)  we must not take base value in account.
    * Because on init `setDefaultContext` will be called and we will have own value.
    * Otherwise it will be not possible to set value for `GROOVY_STATEMENT` neither to `true` (equals to default), nor to `false` (equals to base).
    * See TemplateSchemeTest.

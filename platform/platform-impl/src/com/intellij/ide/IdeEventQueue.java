@@ -436,15 +436,6 @@ public class IdeEventQueue extends EventQueue {
         break;
     }
 
-    //if (!leftAltIsPressed && KeyboardSettingsExternalizable.getInstance().isUkrainianKeyboard(sourceComponent)) {
-    //  if ('ґ' == ke.getKeyChar() || ke.getKeyCode() == KeyEvent.VK_U) {
-    //    ke = new KeyEvent(ke.getComponent(), ke.getID(), ke.getWhen(), 0,
-    //                     KeyEvent.VK_UNDEFINED, 'ґ', ke.getKeyLocation());
-    //    ke.setKeyCode(KeyEvent.VK_U);
-    //    ke.setKeyChar('ґ');
-    //    return ke;
-    //  }
-    //}
 
     // NB: Standard keyboard layout is an English keyboard layout. If such
     //     layout is active every KeyEvent that is received has

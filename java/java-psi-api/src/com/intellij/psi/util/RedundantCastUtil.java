@@ -708,7 +708,7 @@ public class RedundantCastUtil {
         }
         if (parent instanceof PsiInstanceOfExpression) {
           //15.20.2. Type Comparison Operator instanceof:
-          //If a cast (§15.16) of the RelationalExpression to the ReferenceType would be rejected as a compile-time error,
+          //If a cast (p15.16) of the RelationalExpression to the ReferenceType would be rejected as a compile-time error,
           //then the instanceof relational expression likewise produces a compile-time error.
           final PsiTypeElement checkTypeElement = ((PsiInstanceOfExpression)parent).getCheckType();
           if (checkTypeElement != null && TypeConversionUtil.areTypesConvertible(opType, checkTypeElement.getType())) {

@@ -311,9 +311,9 @@ public class HighlightUtil extends HighlightUtilBase {
   /**
    * 15.16 Cast Expressions
    * ( ReferenceType {AdditionalBound} ) expression, where AdditionalBound: & InterfaceType then all must be true
-   *  • ReferenceType must denote a class or interface type.
-   *  • The erasures of all the listed types must be pairwise different.
-   *  • No two listed types may be subtypes of different parameterization of the same generic interface.
+   *  - ReferenceType must denote a class or interface type.
+   *  - The erasures of all the listed types must be pairwise different.
+   *  - No two listed types may be subtypes of different parameterization of the same generic interface.
    */
   @Nullable
   static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression,

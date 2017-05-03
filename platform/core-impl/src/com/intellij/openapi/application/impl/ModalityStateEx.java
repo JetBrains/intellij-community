@@ -81,7 +81,7 @@ public class ModalityStateEx extends ModalityState {
     if (!(o instanceof ModalityStateEx)) return false;
 
     List<Object> entities = getModalEntities();
-    if (entities.isEmpty()) return false; // e.g. NON_MODAL isn't equal to ANY
+    if (entities.isEmpty()) return false; //e.g. NON_MODAL isn't equal to ANY
 
     return entities.equals(((ModalityStateEx)o).getModalEntities());
   }

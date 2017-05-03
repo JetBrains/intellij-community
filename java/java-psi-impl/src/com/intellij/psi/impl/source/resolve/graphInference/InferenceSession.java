@@ -843,8 +843,8 @@ public class InferenceSession {
 
   /**
    * T is a reference type, but is not a wildcard-parameterized type, and either 
-   *  i)  B2 contains a bound of one of the forms α=S or S<:α, where S is a wildcard-parameterized type, or 
-   *  ii) B2 contains two bounds of the forms S1 <: α and S2 <: α,
+   *  i)  B2 contains a bound of one of the forms alpha=S or S<:alpha, where S is a wildcard-parameterized type, or
+   *  ii) B2 contains two bounds of the forms S1 <: alpha and S2 <: alpha,
    *      where S1 and S2 have supertypes that are two different parameterizations of the same generic class or interface. 
    */
   private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
@@ -1591,7 +1591,7 @@ public class InferenceSession {
 
       if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
         //15.13.1 If ClassType is a raw type, but is not a non-static member type of a raw type,
-        //the candidate notional member methods are those specified in §15.9.3 for a
+        //the candidate notional member methods are those specified in p15.9.3 for a
         //class instance creation expression that uses <> to elide the type arguments to a class
         initBounds(containingClass.getTypeParameters());
         psiSubstitutor = PsiSubstitutor.EMPTY;

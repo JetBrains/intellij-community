@@ -174,7 +174,7 @@ public class PsiPolyExpressionUtil {
     }
     if (expr == null) return null;
     PsiType type = null;
-    //A class instance creation expression (§15.9) for a class that is convertible to a numeric type.
+    //A class instance creation expression (p15.9) for a class that is convertible to a numeric type.
     //As numeric classes do not have type parameters, at this point expressions with diamonds could be ignored
     if (expr instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expr) ||
         hasStandaloneForm(expr)) {

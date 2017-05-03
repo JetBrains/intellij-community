@@ -164,7 +164,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   }
 
   //If m is a generic method and the method invocation does not provide explicit type
-  //arguments, then the applicability of the method is inferred as specified in §18.5.1
+  //arguments, then the applicability of the method is inferred as specified in p18.5.1
   public boolean isToInferApplicability() {
     return myTypeArguments == null && getElement().hasTypeParameters() && !isRawSubstitution();
   }

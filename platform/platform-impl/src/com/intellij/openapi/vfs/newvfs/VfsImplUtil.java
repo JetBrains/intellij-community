@@ -180,7 +180,7 @@ public class VfsImplUtil {
    * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed 
    * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
    * 
-   * If you're sure that a file is changed twice in a second and you have to get the latest file's state – use this method.
+   * If you're sure that a file is changed twice in a second and you have to get the latest file's state - use this method.
    * 
    * Likely you need this method if you have following code:
    * 
