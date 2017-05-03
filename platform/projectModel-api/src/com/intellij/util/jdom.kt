@@ -79,7 +79,7 @@ fun loadElement(stream: InputStream): Element = loadDocument(stream.reader()).de
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedReader()).detachRootElement()
 
-private fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
+fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
 fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
 
