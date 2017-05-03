@@ -145,21 +145,22 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     return new ChangeListWorker(this);
   }
 
-  public boolean findListByName(@NotNull String name) {
-    return myMap.containsKey(name);
+  @Nullable
+  public LocalChangeList getChangeListByName(@Nullable String name) {
+    return myMap.get(name);
   }
 
   @Nullable
-  public LocalChangeList getCopyByName(@Nullable String name) {
-    LocalChangeListImpl list = myMap.get(name);
+  public LocalChangeList getChangeListCopyByName(@Nullable String name) {
+    LocalChangeList list = getChangeListByName(name);
     return list != null ? list.copy() : null;
   }
 
   @Nullable
-  public LocalChangeList getChangeList(String id) {
+  public LocalChangeList getChangeListById(@Nullable String id) {
     for (LocalChangeList changeList : myMap.values()) {
       if (changeList.getId().equals(id)) {
-        return changeList.copy();
+        return changeList;
       }
     }
     return null;
@@ -202,7 +203,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
                                         @Nullable Object data) {
     if (myMap.containsKey(name)) {
       LOG.error("Attempt to create duplicate changelist " + name);
-      return myMap.get(name).copy();
+      return myMap.get(name);
     }
 
     LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, null);
@@ -213,7 +214,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     if (inUpdate) {
       startProcessingChanges(newList); // this is executed only when use through GATE
     }
-    return newList.copy();
+    return newList;
   }
 
   void setChangeLists(@NotNull Collection<LocalChangeListImpl> lists) {
@@ -336,8 +337,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @NotNull
-  public LocalChangeList getDefaultListCopy() {
-    return myDefault.copy();
+  public LocalChangeList getDefaultList() {
+    return myDefault;
   }
 
   @NotNull
@@ -491,17 +492,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @NotNull
-  public List<LocalChangeList> getListsCopy() {
-    final List<LocalChangeList> result = new ArrayList<>();
-    for (LocalChangeList list : myMap.values()) {
-      result.add(list.copy());
-    }
-    return result;
-  }
-
-  @NotNull
-  public String getDefaultListName() {
-    return myDefault.getName();
+  public List<LocalChangeList> getChangeLists() {
+    return new ArrayList<>(myMap.values());
   }
 
   @NotNull
@@ -539,13 +531,13 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @Nullable
-  public LocalChangeList getListCopy(@NotNull VirtualFile file) {
+  public LocalChangeList getChangeListFor(@NotNull VirtualFile file) {
     FilePath filePath = VcsUtil.getFilePath(file);
 
     Pair<LocalChangeListImpl, Change> pair = getChangeAndListByPath(filePath);
     if (pair == null) return null;
 
-    return pair.first.copy();
+    return pair.first;
   }
 
   public void removeRegisteredChangeFor(@Nullable FilePath filePath) {
@@ -612,9 +604,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     Map<Change, LocalChangeList> internalMap = new HashMap<>();
 
     for (LocalChangeList list : myMap.values()) {
-      LocalChangeList copy = list.copy();
       for (Change change : list.getChanges()) {
-        internalMap.put(change, copy);
+        internalMap.put(change, list);
       }
     }
 
@@ -630,15 +621,15 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
   }
 
   @Nullable
-  public LocalChangeList listForChange(final Change change) {
+  public LocalChangeList getChangeListForChange(final Change change) {
     for (LocalChangeList list : myMap.values()) {
-      if (list.getChanges().contains(change)) return list.copy();
+      if (list.getChanges().contains(change)) return list;
     }
     return null;
   }
 
   @Nullable
-  public String listNameIfOnlyOne(@Nullable Change[] changes) {
+  public LocalChangeList getChangeListIfOnlyOne(@Nullable Change[] changes) {
     if (changes == null || changes.length == 0) {
       return null;
     }
@@ -655,7 +646,7 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
             return null;
           }
         }
-        return list.getName();
+        return list;
       }
     }
     return null;
@@ -710,29 +701,29 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
     @NotNull
     @Override
     public List<LocalChangeList> getListsCopy() {
-      return myWorker.getListsCopy();
+      return ContainerUtil.map(myWorker.getChangeLists(), LocalChangeList::copy);
     }
 
     @Nullable
     @Override
     public LocalChangeList findChangeList(final String name) {
-      return myWorker.getCopyByName(name);
+      return myWorker.getChangeListCopyByName(name);
     }
 
     @NotNull
     @Override
     public LocalChangeList addChangeList(@NotNull String name, @Nullable String comment) {
-      return myWorker.addChangeList(name, comment, true, null);
+      return myWorker.addChangeList(name, comment, true, null).copy();
     }
 
     @NotNull
     @Override
     public LocalChangeList findOrCreateList(@NotNull final String name, final String comment) {
-      LocalChangeList list = myWorker.getCopyByName(name);
+      LocalChangeList list = myWorker.getChangeListByName(name);
       if (list == null) {
         list = addChangeList(name, comment);
       }
-      return list;
+      return list.copy();
     }
 
     @Override

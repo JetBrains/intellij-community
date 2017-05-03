@@ -33,7 +33,7 @@ public class SetDefault implements ChangeListCommand {
   }
 
   public void apply(ChangeListWorker worker) {
-    LocalChangeList list = worker.getCopyByName(myNewDefaultName);
+    LocalChangeList list = worker.getChangeListByName(myNewDefaultName);
     if (list == null || list.isDefault()) {
       myOldDefaultListCopy = null;
       myPrevious = null;
@@ -41,9 +41,9 @@ public class SetDefault implements ChangeListCommand {
       return;
     }
 
-    myOldDefaultListCopy = worker.getDefaultListCopy();
+    myOldDefaultListCopy = worker.getDefaultList().copy();
     myPrevious = worker.setDefault(myNewDefaultName);
-    myNewDefaultListCopy = worker.getDefaultListCopy();
+    myNewDefaultListCopy = worker.getDefaultList().copy();
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {

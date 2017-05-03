@@ -104,10 +104,7 @@ class UpdatingChangeListBuilder implements ChangelistBuilder {
 
     LocalChangeList list = null;
     if (changeListName != null) {
-      list = myChangeListWorker.getCopyByName(changeListName);
-      if (list == null) {
-        list = myGate.addChangeList(changeListName, null);
-      }
+      list = myGate.findOrCreateList(changeListName, null);
     }
     processChangeInList(change, list, vcsKey);
   }

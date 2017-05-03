@@ -32,8 +32,8 @@ public class RemoveList implements ChangeListCommand {
   }
 
   public void apply(final ChangeListWorker worker) {
-    myListCopy = worker.getCopyByName(myName);
-    myDefaultListCopy = worker.getDefaultListCopy();
+    myListCopy = worker.getChangeListCopyByName(myName);
+    myDefaultListCopy = worker.getDefaultList().copy();
     myRemoved = worker.removeChangeList(myName);
   }
 

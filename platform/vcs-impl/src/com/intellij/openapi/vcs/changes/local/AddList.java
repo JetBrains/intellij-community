@@ -37,14 +37,16 @@ public class AddList implements ChangeListCommand {
   }
 
   public void apply(final ChangeListWorker worker) {
-    myNewListCopy = worker.getCopyByName(myName);
-    if (myNewListCopy != null) {
+    LocalChangeList list = worker.getChangeListByName(myName);
+    if (list != null) {
       myOldComment = worker.editComment(myName, myComment);
     }
     else {
-      myNewListCopy = worker.addChangeList(myName, myComment, myData);
+      list = worker.addChangeList(myName, myComment, myData);
       myOldComment = null;
     }
+
+    myNewListCopy = list.copy();
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {

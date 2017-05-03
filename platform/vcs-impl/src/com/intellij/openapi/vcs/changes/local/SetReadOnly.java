@@ -35,7 +35,7 @@ public class SetReadOnly implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     myResult = worker.setReadOnly(myName, myValue);
 
-    myListCopy = worker.getCopyByName(myName);
+    myListCopy = worker.getChangeListCopyByName(myName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {

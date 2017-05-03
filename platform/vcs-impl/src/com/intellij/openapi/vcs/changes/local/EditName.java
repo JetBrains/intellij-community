@@ -36,7 +36,7 @@ public class EditName implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     myResult = worker.editName(myFromName, myToName);
 
-    myListCopy = worker.getCopyByName(myToName);
+    myListCopy = worker.getChangeListCopyByName(myToName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {

@@ -39,7 +39,7 @@ public class EditComment implements ChangeListCommand {
     myOldComment = worker.editComment(myName, myNewComment);
 
     if (myOldComment != null && !Comparing.equal(myOldComment, myNewComment)) {
-      myListCopy = worker.getCopyByName(myName);
+      myListCopy = worker.getChangeListCopyByName(myName);
     }
     else {
       myListCopy = null; // nothing changed, no notify

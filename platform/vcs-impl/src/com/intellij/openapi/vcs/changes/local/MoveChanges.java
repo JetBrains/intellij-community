@@ -39,7 +39,7 @@ public class MoveChanges implements ChangeListCommand {
   public void apply(final ChangeListWorker worker) {
     myMovedFrom = worker.moveChangesTo(myName, myChanges);
 
-    myListCopy = worker.getCopyByName(myName);
+    myListCopy = worker.getChangeListCopyByName(myName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {

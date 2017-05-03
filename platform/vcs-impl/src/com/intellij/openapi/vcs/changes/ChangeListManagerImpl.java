@@ -728,7 +728,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public List<LocalChangeList> getChangeListsCopy() {
     synchronized (myDataLock) {
-      return myWorker.getListsCopy();
+      return ContainerUtil.map(myWorker.getChangeLists(), LocalChangeList::copy);
     }
   }
 
@@ -861,14 +861,15 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList findChangeList(final String name) {
     synchronized (myDataLock) {
-      return myWorker.getCopyByName(name);
+      return myWorker.getChangeListCopyByName(name);
     }
   }
 
   @Override
   public LocalChangeList getChangeList(String id) {
     synchronized (myDataLock) {
-      return myWorker.getChangeList(id);
+      LocalChangeList list = myWorker.getChangeListById(id);
+      return list != null ? list.copy() : null;
     }
   }
 
@@ -884,7 +885,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       synchronized (myDataLock) {
         final LocalChangeList changeList = myModifier.addChangeList(name, comment, data);
         myChangesViewManager.scheduleRefresh();
-        return changeList;
+        return changeList.copy();
       }
     });
   }
@@ -919,7 +920,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public LocalChangeList getDefaultChangeList() {
     synchronized (myDataLock) {
-      return myWorker.getDefaultListCopy();
+      return myWorker.getDefaultList().copy();
     }
   }
 
@@ -927,7 +928,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @NotNull
   public Collection<LocalChangeList> getInvolvedListsFilterChanges(@NotNull Collection<Change> changes, @NotNull List<Change> validChanges) {
     synchronized (myDataLock) {
-      return myWorker.getInvolvedListsFilterChanges(changes, validChanges);
+      Collection<LocalChangeList> changelists = myWorker.getInvolvedListsFilterChanges(changes, validChanges);
+      return ContainerUtil.map(changelists, LocalChangeList::copy);
     }
   }
 
@@ -935,14 +937,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList getChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
-      return myWorker.listForChange(change);
+      LocalChangeList list = myWorker.getChangeListForChange(change);
+      return list != null ? list.copy() : null;
     }
   }
 
   @Override
   public String getChangeListNameIfOnlyOne(final Change[] changes) {
     synchronized (myDataLock) {
-      return myWorker.listNameIfOnlyOne(changes);
+      LocalChangeList list = myWorker.getChangeListIfOnlyOne(changes);
+      return list != null ? list.getName() : null;
     }
   }
 
@@ -953,11 +957,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Nullable
   public LocalChangeList getIdentityChangeList(@NotNull Change change) {
     synchronized (myDataLock) {
-      final List<LocalChangeList> lists = myWorker.getListsCopy();
+      final List<LocalChangeList> lists = myWorker.getChangeLists();
       for (LocalChangeList list : lists) {
         for (Change oldChange : list.getChanges()) {
           if (oldChange == change) {
-            return list;
+            return list.copy();
           }
         }
       }
@@ -981,7 +985,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public LocalChangeList getChangeList(@NotNull VirtualFile file) {
     synchronized (myDataLock) {
-      return myWorker.getListCopy(file);
+      LocalChangeList list = myWorker.getChangeListFor(file);
+      return list != null ? list.copy() : null;
     }
   }
 
@@ -1395,7 +1400,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   @Override
   public String getDefaultListName() {
     synchronized (myDataLock) {
-      return myWorker.getDefaultListName();
+      return myWorker.getDefaultList().getName();
     }
   }
 

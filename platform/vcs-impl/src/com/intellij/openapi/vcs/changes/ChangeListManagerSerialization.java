@@ -44,7 +44,7 @@ class ChangeListManagerSerialization {
   @NonNls private static final String DIRECTORY_TAG = "directory";
 
   public static void writeExternal(@NotNull Element element, @NotNull IgnoredFilesComponent ignoredFilesComponent, @NotNull ChangeListWorker worker) {
-    for (LocalChangeList list : worker.getListsCopy()) {
+    for (LocalChangeList list : worker.getChangeLists()) {
       element.addContent(writeChangeList(list));
     }
 
