@@ -245,19 +245,21 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ShelvedChangesToolbar"));
-    actionGroup.add(new ShowDiffPreviewAction() {
+    ShowDiffPreviewAction diffPreviewAction = new ShowDiffPreviewAction() {
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         super.setSelected(e, state);
         assertNotNull(mySplitterComponent).setDetailsOn(state);
         VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN = state;
       }
-    }, new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
+    };
+    actionGroup.add(diffPreviewAction, new Constraints(AFTER, "ShelvedChanges.ShowHideDeleted"));
 
-     ShelvedChangesViewManager.MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
+    MyShelvedPreviewProcessor changeProcessor = new MyShelvedPreviewProcessor(myProject);
     mySplitterComponent =
       new PreviewDiffSplitterComponent(pane, changeProcessor, "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION",
                                        VcsConfiguration.getInstance(myProject).SHELVE_DETAILS_PREVIEW_SHOWN);
+    diffPreviewAction.setSelected(null, mySplitterComponent.isDetailsOn());
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
 
     JPanel rootPanel = new JPanel(new BorderLayout());
@@ -738,12 +740,12 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 
-  private class MyChangeProcessor extends CacheDiffRefreshableRequestProcessor<ShelvedChange> {
+  private class MyShelvedPreviewProcessor extends CacheDiffRefreshableRequestProcessor<ShelvedChange> {
 
     @NotNull private final DiffShelvedChangesAction.PatchesPreloader myPreloader;
     @Nullable private ShelvedChange myCurrentChange;      // create common interface for text and binary
 
-    public MyChangeProcessor(@NotNull Project project) {
+    public MyShelvedPreviewProcessor(@NotNull Project project) {
       super(project);
       myPreloader = new DiffShelvedChangesAction.PatchesPreloader(project);
       Disposer.register(project, this);
