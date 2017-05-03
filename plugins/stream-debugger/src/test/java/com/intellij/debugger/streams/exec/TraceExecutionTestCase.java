@@ -152,7 +152,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
           }
         }
         catch (Throwable t) {
-          println("Exception caught: " + t, ProcessOutputTypes.SYSTEM);
+          t.printStackTrace();
+          println("Exception caught: " + t + ", " + t.getMessage(), ProcessOutputTypes.SYSTEM);
         }
         finally {
           resume();
