@@ -37,8 +37,9 @@
                         serviceImplementation="com.intellij.stats.completion.LogFileManagerImpl">
     </applicationService>
     
-    <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender" 
-                        serviceImplementation="com.intellij.stats.completion.StatisticSender">
+    <applicationService serviceInterface="com.intellij.stats.completion.StatsDataSender"
+                        serviceImplementation="com.intellij.stats.completion.StatisticSender"
+                        testServiceImplementation="com.intellij.sorting.TestStatisticSender">
     </applicationService>
     
     <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatus"

@@ -26,7 +26,7 @@ fun assertNotEDT() {
     assert(!SwingUtilities.isEventDispatchThread() || isInTestMode)
 }
 
-class SenderComponent(val sender: StatisticSender,
+class SenderComponent(val sender: StatsDataSender,
                       val statusHelper: WebServiceStatus
 ) : ApplicationComponent.Adapter() {
 
@@ -36,8 +36,6 @@ class SenderComponent(val sender: StatisticSender,
     private val sendInterval = 5 * Time.MINUTE
 
     private fun send() {
-        if (ApplicationManager.getApplication().isUnitTestMode) return
-
         try {
             ApplicationManager.getApplication().executeOnPooledThread {
                 statusHelper.updateStatus()
@@ -64,9 +62,14 @@ class SenderComponent(val sender: StatisticSender,
     }
 }
 
-class StatisticSender(val requestService: RequestService, val filePathProvider: FilePathProvider) {
+interface StatsDataSender {
+    fun sendStatsData(url: String)
+}
 
-    fun sendStatsData(url: String) {
+
+class StatisticSender(val requestService: RequestService, val filePathProvider: FilePathProvider): StatsDataSender {
+
+    override fun sendStatsData(url: String) {
         assertNotEDT()
         filePathProvider.cleanupOldFiles()
         val filesToSend = filePathProvider.getDataFiles()

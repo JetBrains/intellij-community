@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiMethod
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.ResponseData
+import com.intellij.stats.completion.StatsDataSender
 import com.intellij.stats.completion.experiment.ExperimentDecision
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
@@ -85,6 +86,16 @@ internal class TestRequestService : RequestService() {
     override fun postZipped(url: String, file: File) = mock.postZipped(url, file)
     override fun get(url: String) = mock.get(url)
 
+}
+
+
+internal class TestStatisticSender : StatsDataSender {
+    companion object {
+        var sendAction: (String) -> Unit = { Unit }
+    }
+
+    override fun sendStatsData(url: String) {
+    }
 }
 
 
