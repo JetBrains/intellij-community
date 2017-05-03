@@ -4,10 +4,12 @@ import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiMethod
 import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.ResponseData
 import com.intellij.stats.completion.experiment.ExperimentDecision
+import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions
@@ -35,6 +37,19 @@ internal fun LookupImpl.checkMlRanking(ranker: Ranker, prefix_length: Int) {
                 .withFailMessage("Calculated: $calculated_ml_rank Regular: ${ml_rank?.toDouble()}")
     }
 }
+
+
+internal fun LookupImpl.assertEachItemHasMlValue(value: String) {
+    val objects: Map<LookupElement, List<Pair<String, Any>>> = getRelevanceObjects(items, false)
+    val ranks = objects
+            .mapNotNull { it.value.find { it.first == FeatureUtils.ML_RANK } }
+            .map { it.second }
+            .toSet()
+
+    Assertions.assertThat(ranks.size).withFailMessage("Ranks size: ${ranks.size} expected: 1\nRanks $ranks").isEqualTo(1)
+    Assertions.assertThat(ranks.first()).isEqualTo(value)
+}
+
 
 @Suppress("unused")
 internal class FakeWeighter : CompletionWeigher() {

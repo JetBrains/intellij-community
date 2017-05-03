@@ -7,7 +7,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.sorting.Samples.classNameCompletion
 import com.intellij.sorting.Samples.classText
 import com.intellij.sorting.Samples.methodCompletion
-import com.intellij.stats.completion.ResponseData
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import org.assertj.core.api.Assertions.assertThat
 
@@ -19,7 +18,7 @@ class CompletionOrderTest : LightFixtureCompletionTestCase() {
     override fun setUp() {
         super.setUp()
         ranker = Ranker.getInstance()
-        TestRequestService.mock = WebServiceInfo.MOCK_REQUEST_SERVICE
+        TestRequestService.mock = WebServiceMock.mockRequestService(performExperiment = true)
         WebServiceStatus.getInstance().updateStatus()
     }
 

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.stats.completion.ResponseData
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.testFramework.registerServiceInstance
 import com.jetbrains.completion.ranker.features.LookupElementInfo
@@ -46,7 +45,7 @@ class CompletionRerankingTest : LightFixtureCompletionTestCase() {
         myFixture.addClass(testInterface)
         myFixture.configureByText(JavaFileType.INSTANCE, text)
 
-        TestRequestService.mock = WebServiceInfo.MOCK_REQUEST_SERVICE
+        TestRequestService.mock = WebServiceMock.mockRequestService(performExperiment = true)
         WebServiceStatus.getInstance().updateStatus()
     }
 
