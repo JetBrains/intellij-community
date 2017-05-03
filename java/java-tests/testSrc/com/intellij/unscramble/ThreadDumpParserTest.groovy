@@ -96,5 +96,28 @@ class ThreadDumpParserTest extends TestCase {
     assert threads[0].isAwaitedBy(threads[1])
   }
 
+  void "test YourKit format"() {
+    def text = """
+Stacks at 2017-05-03 01:07:25 PM (uptime 4h 21m 28s) Threads shown: 38 of 46
+
+ApplicationImpl pooled thread 228 [WAITING]
+java.lang.Thread.run() Thread.java:745
+
+ApplicationImpl pooled thread 234 [WAITING] [DAEMON]
+java.lang.Thread.run() Thread.java:745
+
+ApplicationImpl pooled thread 6 [RUNNABLE, IN_NATIVE]
+java.net.DatagramSocket.receive(DatagramPacket) DatagramSocket.java:812
+com.intellij.a.f.a.c.a() c.java:60
+com.intellij.a.f.a.d.run() d.java:20
+java.lang.Thread.run() Thread.java:745
+"""
+    def threads = ThreadDumpParser.parse(text)
+    assert threads.collect { it.name } == ['ApplicationImpl pooled thread 228', 'ApplicationImpl pooled thread 234', 'ApplicationImpl pooled thread 6']
+    assert threads.collect { it.state } == ['WAITING', 'WAITING', 'RUNNABLE, IN_NATIVE']
+    assert threads.collect { it.daemon } == [false, true, false]
+    assert threads.collect { it.stackTrace.readLines().size() } == [2, 2, 5] // thread name is included into stack trace
+  }
+
 
 }
