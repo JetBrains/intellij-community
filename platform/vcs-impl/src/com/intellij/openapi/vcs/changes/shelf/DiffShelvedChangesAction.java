@@ -45,6 +45,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -193,7 +194,8 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
             throws DiffRequestProducerException, ProcessCanceledException {
             try {
               TextFilePatch patch = preloader.getPatch(shelvedChange, new CommitContext());
-              PatchDiffRequest patchDiffRequest = new PatchDiffRequest(createAppliedTextPatch(patch), getName());
+              PatchDiffRequest patchDiffRequest =
+                new PatchDiffRequest(createAppliedTextPatch(patch), getName(), VcsBundle.message("patch.apply.conflict.patch"));
               DiffUtil.addNotification(createNotification("Cannot find local file for '" + chooseNotNull(beforePath, afterPath) + "'"),
                                        patchDiffRequest);
               return patchDiffRequest;

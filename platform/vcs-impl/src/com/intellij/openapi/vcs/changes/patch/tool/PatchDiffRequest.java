@@ -22,12 +22,19 @@ import org.jetbrains.annotations.Nullable;
 
 public class PatchDiffRequest extends DiffRequest {
   @NotNull protected final AppliedTextPatch myAppliedPatch;
-  
-  @Nullable protected final String myWindowTitle;
 
-  public PatchDiffRequest(@NotNull AppliedTextPatch patch, @Nullable String windowTitle) {
+  @Nullable protected final String myWindowTitle;
+  @Nullable protected final String myPanelTitle;
+
+
+  public PatchDiffRequest(@NotNull AppliedTextPatch appliedPatch) {
+    this(appliedPatch, null, null);
+  }
+
+  public PatchDiffRequest(@NotNull AppliedTextPatch patch, @Nullable String windowTitle, @Nullable String panelTitle) {
     myAppliedPatch = patch;
     myWindowTitle = windowTitle;
+    myPanelTitle = panelTitle;
   }
 
   @Nullable
@@ -36,9 +43,13 @@ public class PatchDiffRequest extends DiffRequest {
     return myWindowTitle;
   }
 
+  @Nullable
+  public String getPanelTitle() {
+    return myPanelTitle;
+  }
+
   @NotNull
   public AppliedTextPatch getPatch() {
     return myAppliedPatch;
   }
-
 }

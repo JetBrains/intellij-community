@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BooleanGetter;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +80,10 @@ public class PatchDiffTool implements FrameDiffTool {
       myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
 
       Wrapper editorPanel = new Wrapper(new BorderLayout(0, DiffUtil.TITLE_GAP), myEditor.getComponent());
-      editorPanel.add(DiffUtil.createTitle(VcsBundle.message("patch.apply.conflict.patch")), BorderLayout.NORTH);
+      String panelTitle = request.getPanelTitle();
+      if (panelTitle != null) {
+        editorPanel.add(DiffUtil.createTitle(panelTitle), BorderLayout.NORTH);
+      }
       myPanel = new SimpleDiffPanel(editorPanel, this, context);
     }
 
