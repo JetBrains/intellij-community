@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -198,18 +199,57 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
 
   @Nullable
   @Override
-  public LabeledComponent<JComponent> getLanguageSettingsComponent() {
+  public LabeledComponent<JComponent> getLanguageSettingsComponent(@NotNull Course selectedCourse) {
     final Project project = ProjectManager.getInstance().getDefaultProject();
     final List<Sdk> sdks = PyConfigurableInterpreterList.getInstance(project).getAllPythonSdks();
     VirtualEnvProjectFilter.removeAllAssociated(sdks);
-
+    // by default we create new virtual env in project, we need to add this non-existing sdk to sdk list
+    ProjectJdkImpl fakeSdk = createFakeSdk(selectedCourse);
+    if (fakeSdk != null) {
+      sdks.add(0, fakeSdk);
+    }
     PythonSdkChooserCombo combo = new PythonSdkChooserCombo(project, sdks, sdk -> true);
+    if (fakeSdk != null) {
+      patchRenderer(fakeSdk, combo);
+      combo.getComboBox().setSelectedItem(fakeSdk);
+    }
     if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
       combo.putClientProperty("JButton.buttonType", null);
     }
     combo.setButtonIcon(PythonIcons.Python.InterpreterGear);
-    combo.addChangedListener(e -> mySettings.setSdk(((Sdk)combo.getComboBox().getSelectedItem())));
+    combo.addChangedListener(e -> {
+      Sdk selectedSdk = (Sdk)combo.getComboBox().getSelectedItem();
+      mySettings.setSdk(selectedSdk == fakeSdk ? null : selectedSdk);
+    });
     return LabeledComponent.create(combo, "Interpreter", BorderLayout.WEST);
+  }
+
+  @Nullable
+  private static ProjectJdkImpl createFakeSdk(@NotNull Course selectedCourse) {
+    String fakeSdkPath = getBaseSdk(selectedCourse);
+    if (fakeSdkPath == null) {
+      return null;
+    }
+    PythonSdkFlavor flavor = PythonSdkFlavor.getApplicableFlavors(false).get(0);
+    String prefix = flavor.getName() + " ";
+    String versionString = flavor.getVersionString(fakeSdkPath);
+    if (versionString == null || !versionString.contains(prefix)) {
+      return null;
+    }
+    String name = "new virtual env " + versionString.substring(prefix.length());
+    return new ProjectJdkImpl(name, PythonSdkType.getInstance());
+  }
+
+  private static void patchRenderer(@NotNull ProjectJdkImpl fakeSdk, @NotNull PythonSdkChooserCombo combo) {
+    combo.getComboBox().setRenderer(new PySdkListCellRenderer(true) {
+      @Override
+      public void customize(JList list, Object item, int index, boolean selected, boolean hasFocus) {
+        super.customize(list, item, index, selected, hasFocus);
+        if (item == fakeSdk) {
+          setIcon(IconLoader.getTransparentIcon(PythonIcons.Python.Virtualenv));
+        }
+      }
+    });
   }
 
   public void setValidationResult(ValidationResult validationResult) {
@@ -319,7 +359,11 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
 
   public void createAndAddVirtualEnv(Project project, PyNewProjectSettings settings) {
     final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
-    final String baseSdk = getBaseSdk(project);
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return;
+    }
+    final String baseSdk = getBaseSdk(course);
 
     if (baseSdk != null) {
       final PyPackageManager packageManager = PyPackageManager.getInstance(new PyDetectedSdk(baseSdk));
@@ -353,20 +397,17 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
     }
   }
 
-  private static String getBaseSdk(@NotNull final Project project) {
-    final Course course = StudyTaskManager.getInstance(project).getCourse();
+  private static String getBaseSdk(@NotNull final Course course) {
     LanguageLevel baseLevel = LanguageLevel.PYTHON30;
-    if (course != null) {
-      final String version = course.getLanguageVersion();
-      if (PyEduPluginConfigurator.PYTHON_2.equals(version)) {
-        baseLevel = LanguageLevel.PYTHON27;
-      }
-      else if (PyEduPluginConfigurator.PYTHON_3.equals(version)) {
-        baseLevel = LanguageLevel.PYTHON31;
-      }
-      else if (version != null) {
-        baseLevel = LanguageLevel.fromPythonVersion(version);
-      }
+    final String version = course.getLanguageVersion();
+    if (PyEduPluginConfigurator.PYTHON_2.equals(version)) {
+      baseLevel = LanguageLevel.PYTHON27;
+    }
+    else if (PyEduPluginConfigurator.PYTHON_3.equals(version)) {
+      baseLevel = LanguageLevel.PYTHON31;
+    }
+    else if (version != null) {
+      baseLevel = LanguageLevel.fromPythonVersion(version);
     }
     final PythonSdkFlavor flavor = PythonSdkFlavor.getApplicableFlavors(false).get(0);
     String baseSdk = null;

@@ -190,7 +190,7 @@ public class EduCoursesPanel extends JPanel {
     if (generator == null) {
       return;
     }
-    LabeledComponent<JComponent> component = generator.getLanguageSettingsComponent();
+    LabeledComponent<JComponent> component = generator.getLanguageSettingsComponent(selectedCourse);
     if (component == null) {
       return;
     }

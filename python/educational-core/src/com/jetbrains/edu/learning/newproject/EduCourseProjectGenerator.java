@@ -41,7 +41,7 @@ public interface EduCourseProjectGenerator {
   void afterProjectGenerated(@NotNull Project project);
 
   @Nullable
-  default LabeledComponent<JComponent> getLanguageSettingsComponent() {
+  default LabeledComponent<JComponent> getLanguageSettingsComponent(@NotNull Course selectedCourse) {
     return null;
   }
 }
