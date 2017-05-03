@@ -1,0 +1,25 @@
+LineBreakpoint created at ExceptionInIntermediateCall.java:16
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ExceptionInIntermediateCall
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+ExceptionInIntermediateCall.java:15
+Stream.of(1, 2, 3)
+.map(x -> {
+      if (x % 2 == 1) {
+        return x;
+      }
+      throw new RuntimeException();
+    })
+.collect(Collectors.toList())
+Stream.of
+    before: nothing
+    after: 1,3
+map
+    before: 1,3
+    after: 2
+collect
+    before: 2
+    after: nothing
+Exception caught: java.lang.AssertionError, null
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

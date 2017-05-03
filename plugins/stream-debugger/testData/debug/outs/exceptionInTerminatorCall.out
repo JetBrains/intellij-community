@@ -1,0 +1,19 @@
+LineBreakpoint created at ExceptionInTerminatorCall.java:14
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ExceptionInTerminatorCall
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+ExceptionInTerminatorCall.java:13
+Stream.of(1, 2, 3)
+.reduce(0, (l, r) -> {
+      throw new RuntimeException();
+    })
+Stream.of
+    before: nothing
+    after: 1
+reduce
+    before: 1
+    after: nothing
+mappings for reduce
+    nothing -> 1 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

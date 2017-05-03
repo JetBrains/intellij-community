@@ -1,0 +1,23 @@
+LineBreakpoint created at ExceptionInProducerCall.java:14
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ExceptionInProducerCall
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+ExceptionInProducerCall.java:13
+Stream.generate(() -> {
+      throw new RuntimeException();
+    })
+.map(Function.identity())
+.toArray()
+Stream.generate
+    before: nothing
+    after: nothing
+map
+    before: nothing
+    after: nothing
+toArray
+    before: nothing
+    after: nothing
+mappings for map
+mappings for toArray
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

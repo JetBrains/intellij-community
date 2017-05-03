@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.exec;
 
+import com.intellij.debugger.streams.exec.TraceExecutionTestCase;
 import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import org.jetbrains.annotations.Nullable;
@@ -23,20 +24,26 @@ import org.jetbrains.annotations.Nullable;
  * @author Vitaliy.Bibaev
  */
 public class UserCodeExceptionTest extends TraceExecutionTestCase {
-  public void testExceptionWhenEvaluating() {
+  public void testExceptionInProducerCall() {
     doTest(false);
   }
 
-  public void testExceptionInPrimitiveStream() {
+  public void testExceptionInTerminatorCall() {
     doTest(false);
   }
 
-  public void testExceptionAsStreamResult() {
+  public void testExceptionInIntermediateCall() {
+    doTest(false);
+  }
+
+  public void testExceptionInStreamWithPrimitiveResult() {
     doTest(false);
   }
 
   @Override
   protected void handleSuccess(@Nullable StreamChain chain, @Nullable TracingResult result, boolean resultMustBeNull) {
+    assertNotNull(result);
     super.handleSuccess(chain, result, resultMustBeNull);
+    assertTrue(result.isException());
   }
 }
