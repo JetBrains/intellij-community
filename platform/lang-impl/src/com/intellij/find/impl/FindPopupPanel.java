@@ -178,6 +178,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
           if (!ApplicationManager.getApplication().isActive()) return false;
+          if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
           List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
           if (!popups.isEmpty()) {
             for (JBPopup popup : popups) {
