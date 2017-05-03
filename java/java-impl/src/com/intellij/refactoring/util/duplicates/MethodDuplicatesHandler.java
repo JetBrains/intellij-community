@@ -24,7 +24,6 @@ import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -204,7 +203,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           nothingFoundRunnable.run();
         } else {
-          ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(nothingFoundRunnable, project.getDisposed());
         }
       }
     } else {
@@ -239,7 +238,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
         a.finish();
       }
     };
-    ApplicationManager.getApplication().invokeLater(replaceRunnable, ModalityState.NON_MODAL);
+    ApplicationManager.getApplication().invokeLater(replaceRunnable, project.getDisposed());
   }
 
   public static List<Match> hasDuplicates(final PsiFile file, final PsiMember member) {
