@@ -18,6 +18,7 @@ package com.intellij.ide.codeStyleSettings;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
 
 public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
@@ -34,7 +35,7 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      for (CodeStyleScheme scheme : myModel.getSchemes()) {
+      for (CodeStyleScheme scheme : myModel.getSchemes().toArray(new CodeStyleScheme[myModel.getSchemes().size()])) {
         if (myModel.canDeleteScheme(scheme)) {
           myModel.removeScheme(scheme);
         }
@@ -42,6 +43,9 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
           scheme.resetToDefaults();
         }
       }
+      CodeStyleScheme projectScheme = myModel.getProjectScheme();
+      ((CodeStyleSchemeImpl)projectScheme).setCodeStyleSettings(new CodeStyleSettings());
+      myModel.setUsePerProjectSettings(false);
       myModel.selectScheme(myDefaultScheme, null);
       myModel.apply();
     }
@@ -54,5 +58,28 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
     CodeStyleScheme defaultScheme = myModel.getSelectedScheme();
     assertEquals("Default", defaultScheme.getName());
     assertEquals(new CodeStyleSettings(), defaultScheme.getCodeStyleSettings());
+  }
+
+  public void testCopyToIde() throws Exception {
+    CodeStyleScheme projectScheme = myModel.getProjectScheme();
+    myModel.setUsePerProjectSettings(true);
+    assertEquals(CodeStyleSchemesModel.PROJECT_SCHEME_NAME, myModel.getSelectedScheme().getName());
+    CodeStyleSettings settings = projectScheme.getCodeStyleSettings();
+    settings.setRightMargin(null, 66);
+    CodeStyleScheme newScheme = myModel.exportProjectScheme("New Scheme");
+    assertEquals(66, newScheme.getCodeStyleSettings().getRightMargin(null));
+    // Check that code style settings instance is not the same as in the original
+    assertFalse(projectScheme.getCodeStyleSettings() == newScheme.getCodeStyleSettings());
+  }
+
+  public void testCopyToProject() {
+    CodeStyleSettings defaultSettings = new CodeStyleSettings();
+    CodeStyleScheme projectScheme = myModel.getProjectScheme();
+    assertEquals(defaultSettings.getDefaultRightMargin(), projectScheme.getCodeStyleSettings().getDefaultRightMargin());
+    CodeStyleScheme scheme = myModel.createNewScheme("New Scheme", myModel.getSelectedScheme());
+    CodeStyleSettings settings = scheme.getCodeStyleSettings();
+    settings.setDefaultRightMargin(66);
+    myModel.copyToProject(scheme);
+    assertEquals(66, projectScheme.getCodeStyleSettings().getDefaultRightMargin());
   }
 }
