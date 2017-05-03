@@ -37,8 +37,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   public static final String USERNAME = "USERNAME";
   public static final String PASSWORD = "PASSWORD";
   public static final String USE_KEY_PAIR = "USE_KEY_PAIR";
-  public static final String STORE_PASSWORD = "STORE_PASSWORD";
-  public static final String STORE_PASSPHRASE = "STORE_PASSPHRASE";
   public static final String PRIVATE_KEY_FILE = "PRIVATE_KEY_FILE";
   public static final String KNOWN_HOSTS_FILE = "MY_KNOWN_HOSTS_FILE";
   public static final String PASSPHRASE = "PASSPHRASE";
@@ -239,27 +237,21 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     setSerializedPassphrase(element.getAttributeValue(PASSPHRASE));
     setUseKeyPair(StringUtil.parseBoolean(element.getAttributeValue(USE_KEY_PAIR), false));
 
-    if (!isStorePassword()) {
-      setStorePassword(StringUtil.parseBoolean(element.getAttributeValue(STORE_PASSWORD), false));
-    }
-
-    if (!isStorePassphrase()) {
-      setStorePassphrase(StringUtil.parseBoolean(element.getAttributeValue(STORE_PASSPHRASE), false));
-    }
-
-    boolean memoryOnly = isUseKeyPair() ? !isStorePassphrase() : !isStorePassword();
-    final Credentials credentials = PasswordSafe.getInstance().get(createAttributes(memoryOnly));
-    if (isUseKeyPair()) {
+    if (getPassword() == null && getPassphrase() == null) {
+      // no password is specified -> try to load credentials from PasswordSafe
+      final CredentialAttributes attributes = createAttributes(false);
+      final Credentials credentials = PasswordSafe.getInstance().get(attributes);
       if (credentials != null) {
-        setPassphrase(credentials.getPasswordAsString());
+        final boolean memoryOnly = PasswordSafe.getInstance().isPasswordStoredOnlyInMemory(attributes, credentials);
+        if (isUseKeyPair()) {
+          setPassphrase(credentials.getPasswordAsString());
+          setStorePassphrase(memoryOnly);
+        }
+        else {
+          setPassword(credentials.getPasswordAsString());
+          setStorePassword(memoryOnly);
+        }
       }
-      setStorePassphrase(getPassphrase() != null);
-    }
-    else {
-      if (credentials != null) {
-        setPassword(credentials.getPasswordAsString());
-      }
-      setStorePassword(getPassword() != null);
     }
 
     boolean isAnonymous = StringUtil.parseBoolean(element.getAttributeValue(ANONYMOUS), false);
@@ -276,8 +268,6 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     rootElement.setAttribute(PRIVATE_KEY_FILE, StringUtil.notNullize(getPrivateKeyFile()));
     rootElement.setAttribute(KNOWN_HOSTS_FILE, StringUtil.notNullize(getKnownHostsFile()));
     rootElement.setAttribute(USE_KEY_PAIR, Boolean.toString(isUseKeyPair()));
-    rootElement.setAttribute(STORE_PASSWORD, Boolean.toString(isStorePassword()));
-    rootElement.setAttribute(STORE_PASSPHRASE, Boolean.toString(isStorePassphrase()));
 
     boolean memoryOnly = isUseKeyPair() ? !isStorePassphrase() : !isStorePassword();
     final String password = isUseKeyPair() ? getPassphrase() : getPassword();
