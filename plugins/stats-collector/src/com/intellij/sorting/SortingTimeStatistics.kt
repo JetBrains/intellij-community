@@ -61,7 +61,8 @@ class TimingStatState {
         return totalSortsByTime.mapIndexedNotNull({ index, total ->
             if (total == 0) return@mapIndexedNotNull null 
             val start = index * 100
-            "[$start, ${start + 100}) ms sorting happened $total times"
+            val end = (start + 100).toString() + if (index == size - 1) "+" else ""
+            "[$start, $end) ms sorting happened $total times"
         })
     }
 
@@ -70,7 +71,8 @@ class TimingStatState {
         return avgSortingTimeByN.mapIndexedNotNull { index, avg -> 
             if (avg < 0.01) return@mapIndexedNotNull null
             val start = index * 100
-            "[$start, ${start + 100}) elements sorted on average in ${avg.format(1)} ms"
+            val end = (start + 100).toString() + if (index == size - 1) "+" else ""
+            "[$start, $end) elements sorted on average in ${avg.format(1)} ms"
         }
     }
 

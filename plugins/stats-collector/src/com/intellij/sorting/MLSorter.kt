@@ -74,7 +74,7 @@ class MLSorter : CompletionFinalSorter() {
         val buildNumber = PluginManager.BUILD_NUMBER
 
         if (is171BranchOrInUnitTestMode(buildNumber) && isJava(language)) {
-            return webServiceStatus.isPerformExperiment()
+            return webServiceStatus.isExperimentOnCurrentIDE()
         }
 
         return false

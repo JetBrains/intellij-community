@@ -26,7 +26,7 @@ class StatusUpdateHappensTest: LightPlatformTestCase() {
         Thread.sleep(100)
 
         verify(statusHelper, times(1)).updateStatus()
-        verify(statusHelper, never()).isPerformExperiment()
+        verify(statusHelper, never()).isExperimentOnCurrentIDE()
 
         senderComponent.disposeComponent()
     }
@@ -36,11 +36,11 @@ class StatusUpdateHappensTest: LightPlatformTestCase() {
 
         TestRequestService.mock = WebServiceMock.mockRequestService(performExperiment = false)
         status.updateStatus()
-        assertThat(status.isPerformExperiment()).isFalse()
+        assertThat(status.isExperimentOnCurrentIDE()).isFalse()
 
         TestRequestService.mock = WebServiceMock.mockRequestService(performExperiment = true)
         status.updateStatus()
-        assertThat(status.isPerformExperiment()).isTrue()
+        assertThat(status.isExperimentOnCurrentIDE()).isTrue()
     }
 
 }

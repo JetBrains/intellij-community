@@ -186,7 +186,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         completionStarted = true
         lastAction = {
-            val isPerformExperiment = serviceStatus.isPerformExperiment()
+            val isPerformExperiment = serviceStatus.isExperimentOnCurrentIDE()
             val experimentVersion = serviceStatus.experimentVersion()
             logger.completionStarted(lookup, isPerformExperiment, experimentVersion)
         }

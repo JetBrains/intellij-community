@@ -25,7 +25,8 @@ interface WebServiceStatus {
     fun isServerOk(): Boolean
     fun dataServerUrl(): String
 
-    fun isPerformExperiment(): Boolean
+    fun isExperimentGoingOnNow(): Boolean
+    fun isExperimentOnCurrentIDE(): Boolean
     fun experimentVersion(): Int
 
     fun updateStatus()
@@ -58,10 +59,12 @@ class StatusInfoProvider(
     override fun experimentVersion(): Int = info.experimentVersion
     
     override fun dataServerUrl(): String = dataServerUrl
-    
+
+    override fun isExperimentGoingOnNow() = info.performExperiment
+
     override fun isServerOk(): Boolean = serverStatus.equals("ok", ignoreCase = true)
     
-    override fun isPerformExperiment(): Boolean {
+    override fun isExperimentOnCurrentIDE(): Boolean {
         if (!info.performExperiment) {
             return false
         }
