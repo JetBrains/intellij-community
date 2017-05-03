@@ -142,4 +142,9 @@ public class TextComponentDocument extends UserDataHolderBase implements com.int
   public void setText(@NotNull CharSequence text) {
     throw new UnsupportedOperationException("Not implemented");
   }
+
+  @Override
+  public long getModificationStamp() {
+    throw new UnsupportedOperationException("Not implemented");
+  }
 }
