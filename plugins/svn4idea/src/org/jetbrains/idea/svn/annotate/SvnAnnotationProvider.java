@@ -233,7 +233,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
   private SvnRemoteFileAnnotation annotateNonExisting(Pair<SvnChangeList, FilePath> pair,
                                                       VcsFileRevision revision,
                                                       Info info,
-                                                      Charset charset, final VirtualFile current)
+                                                      Charset charset, @NotNull VirtualFile current)
     throws VcsException, SVNException, IOException {
     final File wasFile = pair.getSecond().getIOFile();
     final File root = getCommonAncestor(wasFile, info.getFile());
