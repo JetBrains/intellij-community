@@ -117,7 +117,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testMethodsWithSameName() {
-    assertAdvisorLookupElementEquals("f.createType", 1, 5, 1, 0, assertOneElement(doCompletion()));
+    assertAdvisorLookupElementEquals("f.createType", 1, 10, 1, 0, assertOneElement(doCompletion()));
   }
 
   public void testBigrams2() {

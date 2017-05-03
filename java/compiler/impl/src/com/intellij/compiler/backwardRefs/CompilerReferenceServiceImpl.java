@@ -248,6 +248,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
               count);
           }))
           .filter(Objects::nonNull)
+          .collect(Collectors.groupingBy(x -> x.getUnderlying(), Collectors.summarizingInt(x -> x.getOccurrences())))
+          .entrySet()
+          .stream()
+          .map(e -> new OccurrencesAware<>(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
