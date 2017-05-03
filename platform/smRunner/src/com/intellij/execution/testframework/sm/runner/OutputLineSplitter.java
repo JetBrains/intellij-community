@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import gnu.trove.THashMap;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -26,7 +27,8 @@ import java.util.Map;
 
 
 public abstract class OutputLineSplitter {
-  private static final String TEAMCITY_SERVICE_MESSAGE_PREFIX = "##teamcity[";
+  private static final String TEAMCITY_SERVICE_MESSAGE_PREFIX = ServiceMessage.SERVICE_MESSAGE_START;
+  public static final int TC_MESSAGE_LENGTH = TEAMCITY_SERVICE_MESSAGE_PREFIX.length();
 
   private final boolean myStdinSupportEnabled;
 
@@ -43,10 +45,26 @@ public abstract class OutputLineSplitter {
   public void process(final String text, final Key outputType) {
     int from = 0;
     int to = 0;
+    // new line char and teamcity message start are two reasons to flush previous line
+    int inMessageBlockPosition = 0;
+    boolean justFlushed = true;
     for (; to < text.length(); to++) {
-      if (text.charAt(to) == '\n') {
+      final char currentChar = text.charAt(to);
+      if (currentChar == '\n') {
         processLine(text.substring(from, to + 1), outputType);
         from = to + 1;
+        justFlushed = true;
+      } else if ( (!justFlushed) && currentChar == TEAMCITY_SERVICE_MESSAGE_PREFIX.charAt(inMessageBlockPosition)) {
+        inMessageBlockPosition++;
+        if (inMessageBlockPosition == TC_MESSAGE_LENGTH) {
+          final int tcMessageStart = to + 1 - TC_MESSAGE_LENGTH;
+          processLine(text.substring(from, tcMessageStart), outputType);
+          from = tcMessageStart;
+          inMessageBlockPosition = 0;
+        }
+      } else {
+        inMessageBlockPosition = 0;
+        justFlushed = false;
       }
     }
     if (from < text.length()) {
