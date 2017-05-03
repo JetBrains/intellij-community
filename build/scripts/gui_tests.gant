@@ -76,7 +76,8 @@ target('default' : "Run all UI tests") {
 def args = [
         "-Xmx2048m",
         "-XX:ReservedCodeCacheSize=96m",
-        "-XX:+UseCodeCacheFlushing"
+        "-XX:+UseCodeCacheFlushing",
+	"-Denable.nav.editor=true"
 ]
 
 setProperty("jvm_args", args)
