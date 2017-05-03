@@ -24,9 +24,7 @@ import com.intellij.debugger.streams.trace.impl.resolve.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.LongValue;
-import com.sun.jdi.Value;
+import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -43,11 +41,12 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
   @Override
   public TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray) {
     final ArrayReference info = (ArrayReference)resultArray.getValue(0);
-    final Value streamResult = ((ArrayReference)resultArray.getValue(1)).getValue(0);
+    final ArrayReference result = (ArrayReference)resultArray.getValue(1);
+    final Value streamResult = result.getValue(0);
     final Value time = resultArray.getValue(2);
     logTime(time);
     final List<TraceInfo> trace = getTrace(chain, info);
-    return new TracingResultImpl(streamResult, trace);
+    return new TracingResultImpl(streamResult, trace, isException(result));
   }
 
   @NotNull
@@ -70,5 +69,16 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     final long elapsedNanoseconds = ((LongValue)elapsedTime).value();
     final long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds);
     LOG.info("evaluation completed in " + elapsedMillis + "ms");
+  }
+
+  private static boolean isException(@NotNull ArrayReference result) {
+    final ReferenceType type = result.referenceType();
+    if (type instanceof ArrayType) {
+      if (((ArrayType)type).componentTypeName().contains("Throwable")) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

@@ -39,16 +39,23 @@ import java.util.List;
 public class TracingResultImpl implements TracingResult {
   private final Value myStreamResult;
   private final List<TraceInfo> myTrace;
+  private final boolean myIsResultException;
 
-  TracingResultImpl(@Nullable Value streamResult, @NotNull List<TraceInfo> trace) {
+  TracingResultImpl(@Nullable Value streamResult, @NotNull List<TraceInfo> trace, boolean isResultException) {
     myStreamResult = streamResult;
     myTrace = trace;
+    myIsResultException = isResultException;
   }
 
   @Nullable
   @Override
   public Value getResult() {
     return myStreamResult;
+  }
+
+  @Override
+  public boolean isException() {
+    return myIsResultException;
   }
 
   @NotNull
