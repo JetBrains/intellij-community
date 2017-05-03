@@ -76,6 +76,14 @@ public class WebDeploymentCredentialsHolder {
     return myRemoteCredentials;
   }
 
+  @NotNull
+  public WebDeploymentCredentialsHolder copyFrom(@NotNull WebDeploymentCredentialsHolder holder) {
+    setWebServerConfigId(holder.getWebServerConfigId());
+    setWebServerConfigName(holder.getWebServerConfigName());
+    myRemoteCredentials.copyFrom(holder.getSshCredentials());
+    return this;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
