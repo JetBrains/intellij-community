@@ -54,6 +54,7 @@ public class EduCoursesPanel extends JPanel {
   private JBList<Course> myCoursesList;
   private LabeledComponent<TextFieldWithBrowseButton> myLocationField;
   private List<Course> myCourses;
+  private List<CourseValidationListener> myListeners = new ArrayList<>();
 
   public EduCoursesPanel() {
     setLayout(new BorderLayout());
@@ -116,10 +117,17 @@ public class EduCoursesPanel extends JPanel {
       public void valueChanged(ListSelectionEvent e) {
         Course selectedCourse = myCoursesList.getSelectedValue();
         if (selectedCourse == null) {
+          notifyListeners(false);
           return;
         }
         updateCourseInfoPanel(selectedCourse);
         updateAdvancedSettings(selectedCourse);
+        if (!isLoggedIn()) {
+          myErrorLabel.setVisible(true);
+          myErrorLabel.setText(UIUtil.toHtml("<u><b>Log in</b></u> " + (selectedCourse.isAdaptive() ? "to start adaptive course" :"to see more courses")));
+          myErrorLabel.setForeground((selectedCourse.isAdaptive() ? MessageType.ERROR : MessageType.WARNING).getTitleForeground());
+        }
+        notifyListeners(!selectedCourse.isAdaptive());
       }
     });
     JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(myCoursesList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -135,39 +143,35 @@ public class EduCoursesPanel extends JPanel {
     UIUtil.setBackgroundRecursively(myCoursesList, LIST_COLOR);
     myDescriptionTextArea.setBackground(UIUtil.getPanelBackground());
     myAdvancedSettingsPlaceholder.setVisible(false);
-    if (!isLoggedIn()) {
-      myErrorLabel.setVisible(true);
-      myErrorLabel.setText(UIUtil.toHtml("<u>Log in</u> to see more courses"));
-      myErrorLabel.setForeground(MessageType.WARNING.getTitleForeground());
-      myErrorLabel.addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          if (!isLoggedIn()) {
-            StepicUser user = EduStepicAuthorizedClient.showLoginDialog();
-            if (user != null) {
-              StudySettings.getInstance().setUser(user);
-              myCourses = getCourses();
-              updateModel(myCourses);
-              myErrorLabel.setVisible(false);
-            }
+    myErrorLabel.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseClicked(MouseEvent e) {
+        if (!isLoggedIn() && myErrorLabel.isVisible()) {
+          StepicUser user = EduStepicAuthorizedClient.showLoginDialog();
+          if (user != null) {
+            StudySettings.getInstance().setUser(user);
+            myCourses = getCourses();
+            updateModel(myCourses);
+            myErrorLabel.setVisible(false);
+            notifyListeners(true);
           }
         }
+      }
 
-        @Override
-        public void mouseEntered(MouseEvent e) {
-          if (!isLoggedIn()) {
-            e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-          }
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        if (!isLoggedIn() && myErrorLabel.isVisible()) {
+          e.getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
+      }
 
-        @Override
-        public void mouseExited(MouseEvent e) {
-          if (!isLoggedIn()) {
-            e.getComponent().setCursor(Cursor.getDefaultCursor());
-          }
+      @Override
+      public void mouseExited(MouseEvent e) {
+        if (!isLoggedIn() && myErrorLabel.isVisible()) {
+          e.getComponent().setCursor(Cursor.getDefaultCursor());
         }
-      });
-    }
+      }
+    });
   }
 
   @NotNull
@@ -289,5 +293,19 @@ public class EduCoursesPanel extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     return JBUI.size(600, 400);
+  }
+
+  public void addCourseValidationListener(CourseValidationListener listener) {
+    myListeners.add(listener);
+  }
+
+  private void notifyListeners(boolean canStartCourse) {
+    for (CourseValidationListener listener : myListeners) {
+      listener.validationStatusChanged(canStartCourse);
+    }
+  }
+
+  public interface CourseValidationListener {
+    void validationStatusChanged(boolean canStartCourse);
   }
 }

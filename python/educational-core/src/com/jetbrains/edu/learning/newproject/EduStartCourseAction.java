@@ -21,6 +21,12 @@ public class EduStartCourseAction extends AnAction {
     DialogBuilder dialogBuilder = new DialogBuilder().title("Select Course").centerPanel(panel);
     dialogBuilder.removeAllActions();
     dialogBuilder.addOkAction().setText("Start");
+    panel.addCourseValidationListener(new EduCoursesPanel.CourseValidationListener() {
+      @Override
+      public void validationStatusChanged(boolean canStartCourse) {
+        dialogBuilder.setOkActionEnabled(canStartCourse);
+      }
+    });
     dialogBuilder.setOkOperation(() -> {
       dialogBuilder.getDialogWrapper().close(DialogWrapper.OK_EXIT_CODE);
       Course course = panel.getSelectedCourse();
