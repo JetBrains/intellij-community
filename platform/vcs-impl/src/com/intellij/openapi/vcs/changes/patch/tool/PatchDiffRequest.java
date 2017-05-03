@@ -24,16 +24,28 @@ public class PatchDiffRequest extends DiffRequest {
   @NotNull private final AppliedTextPatch myAppliedPatch;
 
   @Nullable private final String myWindowTitle;
+  @Nullable private final String myPanelTitle;
 
-  public PatchDiffRequest(@NotNull AppliedTextPatch patch, @Nullable String windowTitle) {
+
+  public PatchDiffRequest(@NotNull AppliedTextPatch appliedPatch) {
+    this(appliedPatch, null, null);
+  }
+
+  public PatchDiffRequest(@NotNull AppliedTextPatch patch, @Nullable String windowTitle, @Nullable String panelTitle) {
     myAppliedPatch = patch;
     myWindowTitle = windowTitle;
+    myPanelTitle = panelTitle;
   }
 
   @Nullable
   @Override
   public String getTitle() {
     return myWindowTitle;
+  }
+
+  @Nullable
+  public String getPanelTitle() {
+    return myPanelTitle;
   }
 
   @NotNull

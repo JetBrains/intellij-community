@@ -791,7 +791,8 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       throws ProcessCanceledException, DiffRequestProducerException {
       try {
         TextFilePatch patch = myPreloader.getPatch(provider, new CommitContext());
-        return new PatchDiffRequest(createAppliedTextPatch(patch), getRequestName(provider));
+        return new PatchDiffRequest(createAppliedTextPatch(patch), getRequestName(provider),
+                                    VcsBundle.message("patch.apply.conflict.patch"));
       }
       catch (VcsException e) {
         throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
