@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -35,7 +36,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EduCoursesPanel extends JPanel {
   private static final JBColor LIST_COLOR = new JBColor(Gray.xFF, Gray.x39);
@@ -215,7 +218,22 @@ public class EduCoursesPanel extends JPanel {
     addTags(myTagsPanel, selectedCourse);
     myTagsPanel.revalidate();
     myTagsPanel.repaint();
-    myDescriptionTextArea.setText(UIUtil.toHtml(description.replace("\n", "<br>")));
+    StringBuilder builder = new StringBuilder();
+    List<StepicUser> authors = selectedCourse.getAuthors();
+    if (!authors.isEmpty()) {
+      builder.append("<b>Instructor");
+      if (authors.size() > 1) {
+        builder.append("s");
+      }
+      builder.append("</b>: ");
+      List<String> fullNames = authors.stream().
+        map(user -> StringUtil.join(Arrays.asList(user.getFirstName(), user.getLastName()), " "))
+        .collect(Collectors.toList());
+      builder.append(StringUtil.join(fullNames, ", "));
+      builder.append("<br><br>");
+    }
+    builder.append(description.replace("\n", "<br>"));
+    myDescriptionTextArea.setText(UIUtil.toHtml(builder.toString()));
   }
 
   private static void addTags(JPanel tagsPanel, @NotNull Course course) {
