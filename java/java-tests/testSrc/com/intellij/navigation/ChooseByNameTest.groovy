@@ -59,6 +59,15 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     assert elements == [startMatch, wordSkipMatch, camelMatch, middleMatch]
   }
 
+  void "test disprefer start matches when prefix starts with asterisk"() {
+    def startMatch = myFixture.addClass('class ITable {}')
+    def endMatch = myFixture.addClass('class HappyHippoIT {}')
+    def camelStartMatch = myFixture.addClass('class IntelligentTesting {}')
+    def camelMiddleMatch = myFixture.addClass('class VeryIntelligentTesting {}')
+
+    assert getPopupElements(new GotoClassModel2(project), "*IT") == [endMatch, startMatch, camelStartMatch, camelMiddleMatch]
+  }
+
   void "test annotation syntax"() {
     def match = myFixture.addClass("@interface Anno1 {}")
     myFixture.addClass("class Anno2 {}")
