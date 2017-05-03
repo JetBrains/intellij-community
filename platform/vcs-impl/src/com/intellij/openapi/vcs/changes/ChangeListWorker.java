@@ -41,7 +41,7 @@ import java.util.*;
 /** should work under _external_ lock
  * just logic here: do modifications to group of change lists
  */
-public class ChangeListWorker implements ChangeListsWriteOperations {
+public class ChangeListWorker {
   private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListWorker");
 
   private final Project myProject;
