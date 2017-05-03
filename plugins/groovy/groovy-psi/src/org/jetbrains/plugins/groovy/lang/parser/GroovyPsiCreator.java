@@ -190,6 +190,7 @@ public class GroovyPsiCreator {
     if (elem == GroovyElementTypes.CONDITIONAL_EXPRESSION) return new GrConditionalExprImpl(node);
     if (elem == GroovyElementTypes.ELVIS_EXPRESSION) return new GrElvisExprImpl(node);
     if (elem == GroovyElementTypes.ASSIGNMENT_EXPRESSION) return new GrAssignmentExpressionImpl(node);
+    if (elem == GroovyElementTypes.TUPLE_ASSIGNMENT_EXPRESSION) return new GrTupleAssignmentExpressionImpl(node);
 
     if (elem == GroovyElementTypes.LOGICAL_OR_EXPRESSION) return new GrLogicalExpressionImpl(node);
     if (elem == GroovyElementTypes.LOGICAL_AND_EXPRESSION) return new GrLogicalExpressionImpl(node);

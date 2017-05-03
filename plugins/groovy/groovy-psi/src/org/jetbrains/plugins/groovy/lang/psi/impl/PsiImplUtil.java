@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -607,17 +607,15 @@ public class PsiImplUtil {
     else if (pparent instanceof GrListOrMap) {
       PsiElement ppparent = PsiUtil.skipParentheses(pparent.getParent(), true);
 
-      if (ppparent instanceof GrAssignmentExpression &&
-          PsiTreeUtil.isAncestor(((GrAssignmentExpression)ppparent).getRValue(), pparent, false)) {
+      if (ppparent instanceof GrTupleAssignmentExpression &&
+          PsiTreeUtil.isAncestor(((GrTupleAssignmentExpression)ppparent).getRValue(), pparent, false)) {
 
-        PsiElement lValue = PsiUtil.skipParentheses(((GrAssignmentExpression)ppparent).getLValue(), false);
-        if (lValue instanceof GrTupleExpression) {
-          GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
-          int index = ArrayUtil.find(initializers, diamondNew);
-          GrExpression[] expressions = ((GrTupleExpression)lValue).getExpressions();
-          if (index < expressions.length) {
-            return expressions[index].getNominalType();
-          }
+        GrTupleExpression lValue = ((GrTupleAssignmentExpression)ppparent).getLValue();
+        GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
+        int index = ArrayUtil.find(initializers, diamondNew);
+        GrExpression[] expressions = lValue.getExpressions();
+        if (index < expressions.length) {
+          return expressions[index].getNominalType();
         }
       }
     }
