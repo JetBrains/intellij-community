@@ -110,7 +110,7 @@ public abstract class IndexedFilesListener implements BulkFileListener, VirtualF
     }
   }
 
-  protected boolean invalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+  protected boolean invalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
     if (isUnderConfigOrSystem(file)) {
       return false;
     }
@@ -126,9 +126,9 @@ public abstract class IndexedFilesListener implements BulkFileListener, VirtualF
     return true;
   }
 
-  protected abstract void iterateIndexableFiles(VirtualFile file, ContentIterator iterator);
-  protected abstract void buildIndicesForFile(VirtualFile file, boolean contentChange);
-  protected abstract void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange);
+  protected abstract void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator);
+  protected abstract void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange);
+  protected abstract void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange);
 
   protected void invalidateIndicesRecursively(@NotNull final VirtualFile file, final boolean contentChange) {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {

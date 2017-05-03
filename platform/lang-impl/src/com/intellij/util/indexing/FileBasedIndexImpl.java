@@ -1573,7 +1573,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
 
-  private void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
+  private void updateSingleIndex(@NotNull ID<?, ?> indexId, @NotNull VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
@@ -1640,7 +1640,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     myReadLock = lock.readLock();
     myWriteLock = lock.writeLock();
   }
-  private void scheduleUpdate(@NotNull final ID<?, ?> indexId, final Computable<Boolean> update, VirtualFile file, final int inputId, final boolean hasContent) {
+  private void scheduleUpdate(@NotNull final ID<?, ?> indexId, @NotNull Computable<Boolean> update, @NotNull VirtualFile file, final int inputId, final boolean hasContent) {
     if (updateWithBufferingEnabled(update)) {
       myReadLock.lock();
       try {
@@ -1722,7 +1722,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
   }
 
-  private void scheduleFileForIndexing(int fileId, final VirtualFile file, boolean contentChange) {
+  private void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
     // handle 'content-less' indices separately
     boolean fileIsDirectory = file.isDirectory();
 
@@ -1808,7 +1808,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     @Override
-    protected void iterateIndexableFiles(VirtualFile file, ContentIterator iterator) {
+    protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
       for (IndexableFileSet set : myIndexableSets) {
         if (set.isInSet(file)) {
           set.iterateIndexableFilesIn(file, iterator);
@@ -1817,13 +1817,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     }
 
     @Override
-    protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
+    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
       int fileId = getIdMaskingNonIdBasedFile(file);
       myVfsEventsMerger.recordFileEvent(fileId, file, contentChange);
     }
 
     @Override
-    protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
       final int fileId = Math.abs(getIdMaskingNonIdBasedFile(file));
       myVfsEventsMerger.recordBeforeFileEvent(fileId, file, contentChange);
     }
@@ -1979,7 +1979,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     return false;
   }
 
-  static int getIdMaskingNonIdBasedFile(VirtualFile file) {
+  static int getIdMaskingNonIdBasedFile(@NotNull VirtualFile file) {
     return file instanceof VirtualFileWithId ?((VirtualFileWithId)file).getId() : IndexingStamp.INVALID_FILE_ID;
   }
 
