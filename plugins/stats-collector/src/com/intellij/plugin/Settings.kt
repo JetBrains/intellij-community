@@ -36,17 +36,24 @@ class PluginSettingsConfigurable : Configurable {
         isForceExperimentCb = JBCheckBox("Force Experiment", isMlSortingEnabledByForce())
         isForceExperimentCb.border = IdeBorderFactory.createEmptyBorder(5)
 
+        val timingStats = JBLabel(getStatsText())
+        timingStats.border = IdeBorderFactory.createEmptyBorder(5)
+
+        val status = JBLabel(getStatusText())
+        status.border = IdeBorderFactory.createEmptyBorder(5)
+
         val panel = JPanel()
         panel.apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(JBLabel(getHtmlText()))
+            add(timingStats)
+            add(status)
             add(isForceExperimentCb)
         }
 
         return panel
     }
     
-    private fun getHtmlText(): String {
+    private fun getStatsText(): String {
         val stats = SortingTimeStatistics.getInstance()
         val time: List<String> = stats.state.getTimeDistribution()
         val avgTime: List<String> = stats.state.getAvgTimeByElementsSortedDistribution()
@@ -55,18 +62,28 @@ class PluginSettingsConfigurable : Configurable {
             return "No stats available"
         }
 
+        return "<html>" +
+                "<b>Time to Sorts Number Distribution:</b>" +
+                "<br>" +
+                time.joinToString("<br>") +
+                "<br><br>" +
+                "<b>Elements Count to Avg Sorting Time:</b>" +
+                "<br>" +
+                avgTime.joinToString("<br>") +
+                "</html>"
+    }
+
+    private fun getStatusText(): String {
         val status = WebServiceStatus.getInstance()
         val isExperimentOnCurrentIDE = status.isExperimentOnCurrentIDE()
         val isExperimentGoingOnNow = status.isExperimentGoingOnNow()
 
-        val html = "<html>" +
-                "<b>Time to Sorts Number Distribution:</b><br>" + time.joinToString("<br>") +
-                "<br><br><b>Elements Count to Avg Sorting Time:</b><br>" + avgTime.joinToString("<br>") +
-                "<br><br><b>Is experiment going on now:</b> $isExperimentGoingOnNow" +
-                "<br><b>Is experiment on current IDE:</b> $isExperimentOnCurrentIDE" +
+        return "<html>" +
+                "<br><br>" +
+                "<b>Is experiment going on now:</b> $isExperimentGoingOnNow" +
+                "<br>" +
+                "<b>Is experiment on current IDE:</b> $isExperimentOnCurrentIDE" +
                 "</html>"
-
-        return html
     }
 
     override fun reset() {
