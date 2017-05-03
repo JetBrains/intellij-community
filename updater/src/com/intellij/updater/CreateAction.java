@@ -16,7 +16,6 @@
 package com.intellij.updater;
 
 import java.io.*;
-import java.util.Locale;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -62,7 +61,7 @@ public class CreateAction extends PatchAction {
     ValidationResult result = doValidateAccess(toFile, ValidationResult.Action.CREATE, true);
     if (result != null) return result;
 
-    if (toFile.exists() && !(toFile.isDirectory() && toFile.getAbsolutePath().contains("jre64"))) {
+    if (toFile.exists()) {
       ValidationResult.Option[] options = myPatch.isStrict()
                                           ? new ValidationResult.Option[]{ValidationResult.Option.REPLACE}
                                           : new ValidationResult.Option[]{ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP};
@@ -86,17 +85,8 @@ public class CreateAction extends PatchAction {
 
     ZipEntry entry = Utils.getZipEntry(patchFile, getPath());
     if (entry.isDirectory()) {
-      // create jre32 (win) only if jre exists
-      // create jre64 (unix) only if jre exists
-      String osName = System.getProperty("os.name").toLowerCase(Locale.US);
-      if ((toFile.getName().lastIndexOf("jre32") >= 0 && osName.startsWith("windows") && !Runner.isJrePresent()) ||
-          (toFile.getName().lastIndexOf("jre64") >= 0 && !osName.startsWith("windows") && !Runner.isJrePresent())) {
-        Runner.logger().info("Skip creation: " + toFile.getName() + ". jre is not installed.");
-      }
-      else {
-        if (!toFile.mkdir()) {
-          throw new IOException("Unable to create directory " + getPath());
-        }
+      if (!toFile.mkdir()) {
+        throw new IOException("Unable to create directory " + getPath());
       }
     }
     else {
