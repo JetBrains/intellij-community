@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@ public class ViewTextAction extends XFetchValueActionBase {
 
       @Override
       public void handleInCollector(Project project, String value, XDebuggerTree tree) {
-        String text = StringUtil.unquoteString(value);
+        // do not unquote here! Value here must be correct already
+        String text = value; //StringUtil.unquoteString(value);
         if (dialog == null) {
           dialog = new MyDialog(project, text, node);
           dialog.setTitle(ActionsBundle.message(node != null ? "action.Debugger.ViewEditText.text" : "action.Debugger.ViewText.text"));
