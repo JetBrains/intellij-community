@@ -28,5 +28,6 @@
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="configuration-store-impl" />
+    <orderEntry type="module" module-name="testExtensions" scope="TEST" />
   </component>
 </module>

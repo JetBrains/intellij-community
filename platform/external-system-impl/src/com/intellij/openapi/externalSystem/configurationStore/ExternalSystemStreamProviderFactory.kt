@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StreamProviderFactory
 import com.intellij.openapi.Disposable
@@ -25,6 +26,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -32,6 +34,7 @@ import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.Function
 import com.intellij.util.io.*
 import java.io.DataInput
 import java.io.DataOutput
@@ -42,7 +45,10 @@ import java.util.*
 private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
 private val LOG = logger<ExternalSystemStreamProviderFactory>()
 
-private fun isEnabled() = Registry.`is`("store.imported.project.elements.separately", false)
+private fun isEnabled() = Registry.`is`("store.imported.project.elements.separately", false) || IS_ENABLED
+
+// test only
+internal var IS_ENABLED = false
 
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
@@ -71,6 +77,22 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
           }
         })
     }
+
+    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object: ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        nameToData.remove(module.name)
+      }
+
+      override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+        for (module in modules) {
+          val oldName = oldNameProvider.`fun`(module)
+          nameToData.get(oldName)?.let {
+            nameToData.remove(oldName)
+            nameToData.put(module.name, it)
+          }
+        }
+      }
+    })
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
