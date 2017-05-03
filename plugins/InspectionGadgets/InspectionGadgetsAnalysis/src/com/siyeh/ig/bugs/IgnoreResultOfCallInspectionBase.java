@@ -18,9 +18,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
@@ -234,8 +237,13 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
             // Check that annotation actually belongs to the same library/source root
             // which could be important in case of split-packages
             PsiFile file = PsiTreeUtil.getParentOfType(annotation, PsiFile.class);
-            if(file != null && file.getParent() != classOwner.getParent()) {
-              return null;
+            if(file != null) {
+              ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
+              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(file.getVirtualFile());
+              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(classOwner.getVirtualFile());
+              if(!Objects.equals(annotationClassRoot, currentClassRoot)) {
+                return null;
+              }
             }
           }
           return annotation;
