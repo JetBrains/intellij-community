@@ -112,6 +112,19 @@ static void _LaunchPipeThread(_PIPE_CONNECTION_INFO* pPipeInfo, _Out_opt_ PHANDL
 	*pDescriptorFlags |= pPipeInfo->nDescriptor;
 }
 
+static void _AddRestOfCommandLine(WCHAR** psNewCommandLine)
+{
+	// https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
+	WCHAR* sOriginalCommandLine = GetCommandLine();
+	int nNumberOfOriginalArgs;
+	WCHAR** sOriginalArgs = CommandLineToArgvW(sOriginalCommandLine, &nNumberOfOriginalArgs);
+	size_t nCommandSizeChars = wcslen(sOriginalArgs[0]);
+	WCHAR* sOriginalCommandLineNoCommand = (sOriginalCommandLine + nCommandSizeChars);
+	size_t nNewBufferSizeChars = (wcslen(*psNewCommandLine) + wcslen(sOriginalCommandLineNoCommand) + 1);
+	*psNewCommandLine = realloc(*psNewCommandLine, nNewBufferSizeChars * sizeof(WCHAR));
+	wcscat_s(*psNewCommandLine, nNewBufferSizeChars, sOriginalCommandLineNoCommand);
+}
+
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
 
@@ -143,22 +156,18 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 
 	//Build commandline 
 	size_t chCurrentSize = 1;
-	WCHAR* sCommandLine = calloc(1, sizeof(WCHAR));
+	WCHAR* sNewCommandLine = calloc(1, sizeof(WCHAR));
 
-	ElevAddStringToCommandLine(&chCurrentSize, &sCommandLine, sPid);
-	ElevAddStringToCommandLine(&chCurrentSize, &sCommandLine, sCurrentDirectory);
+	ElevAddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sPid);
+	ElevAddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sCurrentDirectory);
 	WCHAR sDescriptorFlags[3];
 	_itow_s(nDescriptorFlags, sDescriptorFlags, 2, 10);
-	ElevAddStringToCommandLine(&chCurrentSize, &sCommandLine, sDescriptorFlags);
+	ElevAddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sDescriptorFlags);
 	
 
-	// Add arguments
-	for (int i = 1; i < argc; i++)
-	{
-		ElevAddStringToCommandLine(&chCurrentSize, &sCommandLine, argv[i]);
-	}
-
-
+	// Add arguments provided by user to the tail of command line
+	_AddRestOfCommandLine(&sNewCommandLine);
+	
 	// Get full path to elevator
 	WCHAR sPath[MAX_PATH + 1];
 	if(!GetModuleFileName(NULL, sPath, MAX_PATH))
@@ -176,7 +185,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	SHELLEXECUTEINFO execInfo;
 	ZeroMemory(&execInfo, sizeof(SHELLEXECUTEINFO));
 	execInfo.cbSize = sizeof(SHELLEXECUTEINFO);
-	execInfo.lpParameters = sCommandLine;
+	execInfo.lpParameters = sNewCommandLine;
 	execInfo.lpFile = sPath;
 	execInfo.lpDirectory = sCurrentDirectory;
 	execInfo.fMask = SEE_MASK_NOASYNC | SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE;
