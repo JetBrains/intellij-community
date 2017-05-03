@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.ui.impl;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.resolve.ResolvedTraceImpl;
+import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -95,7 +96,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return "#com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow";
   }
 
-  public void setTrace(@NotNull List<ResolvedTrace> traces, @Nullable Value result, @NotNull EvaluationContextImpl context) {
+  public void setTrace(@NotNull ResolvedTracingResult resolvedTrace, @NotNull EvaluationContextImpl context) {
+    final List<ResolvedTrace> traces = resolvedTrace.getResolvedTraces();
     assert myTabContents.size() == traces.size() + 1;
 
     List<TraceController> controllers = new ArrayList<>();
@@ -125,6 +127,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }
 
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
+    final Value result = resolvedTrace.getResult();
     if (result != null) {
       final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
       final CollectionView view = new CollectionView("Result", context, Collections.singletonList(resultTraceElement));
