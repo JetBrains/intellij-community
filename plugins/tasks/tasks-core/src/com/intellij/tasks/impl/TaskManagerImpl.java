@@ -267,9 +267,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return ContainerUtil.filter(myIssueCache.values(), task -> withClosed || !task.isClosed());
   }
 
-  @Nullable
-  @Override
-  public Task updateIssue(@NotNull String id) {
+  private void updateIssue(@NotNull String id) {
     for (TaskRepository repository : getAllRepositories()) {
       if (repository.extractId(id) == null) {
         continue;
@@ -281,16 +279,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
           LocalTask localTask = findTask(id);
           if (localTask != null) {
             localTask.updateFromIssue(issue);
-            return localTask;
+            return;
           }
-          return issue;
+          return;
         }
       }
       catch (Exception e) {
         LOG.info(e);
       }
     }
-    return null;
   }
 
   @Override
@@ -904,16 +901,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     addTask(task);
     if (changeList.isDefault()) {
       activateTask(task, false);
-    }
-  }
-
-  @Override
-  public void disassociateFromTask(@NotNull LocalChangeList changeList) {
-    ChangeListInfo changeListInfo = new ChangeListInfo(changeList);
-    for (LocalTask localTask : getLocalTasks()) {
-      if (localTask.getChangeLists().contains(changeListInfo)) {
-        localTask.removeChangelist(changeListInfo);
-      }
     }
   }
 

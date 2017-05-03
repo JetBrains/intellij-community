@@ -81,9 +81,6 @@ public abstract class TaskManager {
 
   public abstract List<Task> getCachedIssues(final boolean withClosed);
 
-  @Nullable
-  public abstract Task updateIssue(@NotNull String id);
-
   public abstract List<LocalTask> getLocalTasks();
 
   public abstract List<LocalTask> getLocalTasks(final boolean withClosed);
@@ -117,8 +114,6 @@ public abstract class TaskManager {
   public abstract LocalTask getAssociatedTask(LocalChangeList list);
 
   public abstract void trackContext(LocalChangeList changeList);
-
-  public abstract void disassociateFromTask(LocalChangeList changeList);
 
   public abstract void removeTask(LocalTask task);
 
