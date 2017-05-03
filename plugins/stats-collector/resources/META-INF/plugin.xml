@@ -47,7 +47,7 @@
 
     <applicationService serviceInterface="com.intellij.stats.completion.RequestService"
                         serviceImplementation="com.intellij.stats.completion.SimpleRequestService"
-                        testServiceImplementation="com.intellij.sorting.DumbRequestService">
+                        testServiceImplementation="com.intellij.sorting.TestRequestService">
     </applicationService>
 
     <applicationService serviceInterface="com.intellij.stats.completion.experiment.ExperimentDecision"

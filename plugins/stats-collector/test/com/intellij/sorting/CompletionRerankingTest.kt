@@ -46,15 +46,7 @@ class CompletionRerankingTest : LightFixtureCompletionTestCase() {
         myFixture.addClass(testInterface)
         myFixture.configureByText(JavaFileType.INSTANCE, text)
 
-        DumbRequestService.onAnyRequestReturn = ResponseData(200, """{
-  "status" : "ok",
-  "salt":"a777b8ad",
-  "experimentVersion":2,
-  "url": "http://test.jetstat-resty.aws.intellij.net/uploadstats",
-  "urlForZipBase64Content": "http://test.jetstat-resty.aws.intellij.net/uploadstats/compressed",
-  "performExperiment": true
-}
-""")
+        TestRequestService.mock = WebServiceInfo.MOCK_REQUEST_SERVICE
         WebServiceStatus.getInstance().updateStatus()
     }
 

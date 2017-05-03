@@ -10,10 +10,46 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.WeigherExtensionPoint
+import com.intellij.sorting.WebServiceInfo.MOCK_REQUEST_SERVICE
+import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.ResponseData
+import com.intellij.stats.completion.experiment.StatusInfoProvider
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
+import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions
+import org.mockito.ArgumentMatchers.anyMap
+import org.mockito.ArgumentMatchers.anyString
+import java.io.File
+
+
+object WebServiceInfo {
+
+    val STATUS_JSON = """
+{
+    "status" : "ok",
+    "salt":"a777b8ad",
+    "experimentVersion":2,
+    "url": "http://url1",
+    "urlForZipBase64Content":"http://url2",
+    "performExperiment": true
+}"""
+
+    private val NOT_SUPPOSED_TO_BE_CALLED = IllegalAccessError("NOT SUPPOSED TO BE CALLED")
+
+    val MOCK_REQUEST_SERVICE = mock<RequestService> {
+        on { get(anyString()) }.thenAnswer {
+            val url = it.arguments.first() as String
+            if (url == StatusInfoProvider.STATUS_URL) ResponseData(200,STATUS_JSON) else throw NOT_SUPPOSED_TO_BE_CALLED
+        }
+        on { post(anyString(), anyMap())}.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+        on { postZipped(anyString(), any())}.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+        on { post(anyString(), any<File>())}.thenThrow(NOT_SUPPOSED_TO_BE_CALLED)
+    }
+
+
+}
 
 
 class CompletionOrderWithFakeRankerTest : LightFixtureCompletionTestCase() {
@@ -31,16 +67,7 @@ class CompletionOrderWithFakeRankerTest : LightFixtureCompletionTestCase() {
         point = Extensions.getRootArea().getExtensionPoint(name)
         point.registerExtension(fakeWeigherExt, LoadingOrder.before("templates"))
 
-        DumbRequestService.onAnyRequestReturn = ResponseData(200, """{
-  "status" : "ok",
-  "salt":"a777b8ad",
-  "experimentVersion":2,
-  "url": "http://test.jetstat-resty.aws.intellij.net/uploadstats",
-  "urlForZipBase64Content": "http://test.jetstat-resty.aws.intellij.net/uploadstats/compressed",
-  "performExperiment": true
-}
-""")
-
+        TestRequestService.mock = MOCK_REQUEST_SERVICE
         WebServiceStatus.getInstance().updateStatus()
     }
 

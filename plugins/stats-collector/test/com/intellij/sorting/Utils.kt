@@ -9,7 +9,9 @@ import com.intellij.stats.completion.RequestService
 import com.intellij.stats.completion.ResponseData
 import com.intellij.stats.completion.experiment.ExperimentDecision
 import com.jetbrains.completion.ranker.features.LookupElementInfo
+import com.nhaarman.mockito_kotlin.mock
 import org.assertj.core.api.Assertions
+import org.mockito.Mockito.mock
 import java.io.File
 
 
@@ -57,16 +59,16 @@ internal class TestExperimentDecision: ExperimentDecision {
     override fun isPerformExperiment(salt: String) = isPerformExperiment
 }
 
-internal class DumbRequestService : RequestService() {
+internal class TestRequestService : RequestService() {
 
     companion object {
-        var onAnyRequestReturn: ResponseData? = null
+        var mock: RequestService = mock<RequestService>()
     }
 
-    override fun post(url: String, params: Map<String, String>) = onAnyRequestReturn
-    override fun post(url: String, file: File) = onAnyRequestReturn
-    override fun postZipped(url: String, file: File) = onAnyRequestReturn
-    override fun get(url: String) = onAnyRequestReturn
+    override fun post(url: String, params: Map<String, String>) = mock.post(url, params)
+    override fun post(url: String, file: File) = mock.post(url, file)
+    override fun postZipped(url: String, file: File) = mock.postZipped(url, file)
+    override fun get(url: String) = mock.get(url)
 
 }
 

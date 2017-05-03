@@ -42,8 +42,9 @@ class StatusInfoProvider(
 ): WebServiceStatus {
 
     companion object {
+        val STATUS_URL = "https://www.jetbrains.com/config/features-service-status.json"
+
         private val GSON = Gson()
-        private val STATUS_URL = "https://www.jetbrains.com/config/features-service-status.json"
 
         private val SALT = "completion.stats.experiment.salt"
         private val EXPERIMENT_VERSION_KEY = "completion.stats.experiment.version"
