@@ -23,7 +23,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
@@ -125,9 +125,10 @@ private fun createStorage(project: Project): PersistentHashMap<String, ByteArray
     versionFile.outputStream().use { it.write(MODULE_FILE_FORMAT_VERSION) }
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      val externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project)
-      externalProjectsManager.init()
-      externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+      val externalProjectsManager = ServiceManager.getService(project, ExternalProjectsManager::class.java)
+      externalProjectsManager.runWhenInitialized {
+        externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+      }
     }
   }
 
