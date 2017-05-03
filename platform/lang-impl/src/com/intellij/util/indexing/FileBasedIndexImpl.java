@@ -1573,7 +1573,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   static final Key<Boolean> ourPhysicalContentKey = Key.create("physical.content.flag");
 
-  private void updateSingleIndex(@NotNull ID<?, ?> indexId, @NotNull VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
+  private void updateSingleIndex(@NotNull ID<?, ?> indexId, VirtualFile file, final int inputId, @Nullable FileContent currentFC) {
     if (!RebuildStatus.isOk(indexId) && !myIsUnitTestMode) {
       return; // the index is scheduled for rebuild, no need to update
     }
@@ -1640,7 +1640,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     myReadLock = lock.readLock();
     myWriteLock = lock.writeLock();
   }
-  private void scheduleUpdate(@NotNull final ID<?, ?> indexId, @NotNull Computable<Boolean> update, @NotNull VirtualFile file, final int inputId, final boolean hasContent) {
+  private void scheduleUpdate(@NotNull final ID<?, ?> indexId, @NotNull Computable<Boolean> update, VirtualFile file, final int inputId, final boolean hasContent) {
     if (updateWithBufferingEnabled(update)) {
       myReadLock.lock();
       try {
