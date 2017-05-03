@@ -16,7 +16,7 @@
 package com.intellij.project
 
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -132,7 +132,7 @@ private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator
 
 @JvmOverloads
 fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
-  return getProjectCachePath(Paths.get(PathManager.getSystemPath(), cacheName), forceNameUse, hashSeparator)
+  return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse, hashSeparator)
 }
 
 /**

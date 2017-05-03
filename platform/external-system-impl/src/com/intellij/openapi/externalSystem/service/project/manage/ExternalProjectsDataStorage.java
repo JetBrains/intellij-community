@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PathManagerExKt;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -424,7 +423,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   @NotNull
   private static Path getExternalBuildSystemDir(String folder) {
-    return Paths.get(PathManager.getSystemPath(), "external_build_system", folder).toAbsolutePath();
+    return PathManagerExKt.getAppSystemDir().resolve("external_build_system").resolve(folder);
   }
 
   @Nullable
