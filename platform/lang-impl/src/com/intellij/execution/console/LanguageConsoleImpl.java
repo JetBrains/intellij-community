@@ -538,7 +538,10 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     public Document getDocument() {
       Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
       if (document == null) {
-        throw new AssertionError("no document for: " + virtualFile);
+        Language language = (virtualFile instanceof LightVirtualFile) ? ((LightVirtualFile)virtualFile).getLanguage() : null;
+        throw new AssertionError(String.format("no document for: %s (fileType: %s, language: %s, length: %s, valid: %s)",
+                                               virtualFile,
+                                               virtualFile.getFileType(), language, virtualFile.getLength(), virtualFile.isValid()));
       }
       return document;
     }
