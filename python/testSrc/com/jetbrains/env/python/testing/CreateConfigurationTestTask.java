@@ -21,7 +21,6 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.psi.PsiElement;
@@ -41,7 +40,6 @@ import org.junit.Assert;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 
 /**
@@ -93,7 +91,7 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
    */
   @NotNull
   protected T getTemplateConfiguration(@NotNull final PythonConfigurationFactoryBase factory) {
-    final RunnerAndConfigurationSettingsImpl settings =
+    final RunnerAndConfigurationSettings settings =
       RunManagerImpl.getInstanceImpl(myFixture.getProject()).getConfigurationTemplate(factory);
     final RunConfiguration configuration = settings.getConfiguration();
     assert myExpectedConfigurationType.isAssignableFrom(configuration.getClass()): "Wrong configuration created. Wrong factory?";
