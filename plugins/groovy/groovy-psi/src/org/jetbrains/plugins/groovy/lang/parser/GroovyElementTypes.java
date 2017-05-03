@@ -207,6 +207,7 @@ public interface GroovyElementTypes {
   GroovyElementType CONDITIONAL_EXPRESSION = new GroovyElementType("Conditional expression");
   GroovyElementType ELVIS_EXPRESSION = new GroovyElementType("Elvis expression");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("Assignment expression");
+  GroovyElementType TUPLE_ASSIGNMENT_EXPRESSION = new GroovyElementType("Tuple assignment expression");
   GroovyElementType LOGICAL_OR_EXPRESSION = new GroovyElementType("Logical OR expression");
   GroovyElementType LOGICAL_AND_EXPRESSION = new GroovyElementType("Logical AND expression");
   GroovyElementType INCLUSIVE_OR_EXPRESSION = new GroovyElementType("Inclusive OR expression");

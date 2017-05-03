@@ -63,6 +63,10 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl getOrCreateTab(final int index) {
+    if (index < 0) {
+      return createNewTab();
+    }
+
     TabImpl tab = findTab(index);
     if (tab != null) return tab;
 
@@ -93,7 +97,8 @@ public class RunnerLayout  {
 
   @NotNull
   public TabImpl createNewTab() {
-    return createNewTab(myTabs.size());
+    final int index = myTabs.stream().mapToInt(x -> x.getIndex()).max().orElse(-1) + 1;
+    return createNewTab(index);
   }
 
   private boolean isUsed(@NotNull TabImpl tab) {
@@ -266,7 +271,7 @@ public class RunnerLayout  {
   }
 
   /**
-   *   States of contents marked as "lightweight" won't be persisted
+   * States of contents marked as "lightweight" won't be persisted
    */
   public void setLightWeight(Content content) {
     if (myLightWeightIds == null) {

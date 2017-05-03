@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
 
-import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
- * Represents lValue of tuple assignment.<br/>
- * Example: {@code (a, b)} in {@code (a, b) = c}.
+ * Represents tuple assignment expression.
+ * Guaranteed to have GrTuple as lValue and {@code =} as operator token.
+ * <pre>
+ * (a, b) = someExpression
+ * </pre>
+ *
+ * @see GrAssignmentExpression
  */
-public interface GrTupleExpression extends GroovyPsiElement {
-
-  @Nullable
-  @Override
-  GrTupleAssignmentExpression getParent();
-
-  int indexOf(@NotNull PsiElement element);
+public interface GrTupleAssignmentExpression extends GrExpression {
 
   @NotNull
-  GrExpression[] getExpressions();
+  GrTupleExpression getLValue();
+
+  @Nullable
+  GrExpression getRValue();
 }

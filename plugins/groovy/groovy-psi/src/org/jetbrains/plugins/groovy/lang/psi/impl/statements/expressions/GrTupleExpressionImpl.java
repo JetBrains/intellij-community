@@ -18,28 +18,22 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
 /**
  * @author ilyas
  */
-public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleExpression {
+public class GrTupleExpressionImpl extends GroovyPsiElementImpl implements GrTupleExpression {
 
   public GrTupleExpressionImpl(@NotNull ASTNode node) {
     super(node);
-  }
-
-  @Override
-  public PsiType getType() {
-    // The reason this method exists is that tuple expression can appear in the left side of an assignment.
-    // LHS should probably have its own interface with implementations: GrReferenceExpression, GrIndexProperty, GrTupleExpression,
-    // while GrTupleExpression will just implement it, but not an GrExpression.
-    throw new UnsupportedOperationException("Tuple expressions cannot have type");
   }
 
   @Override
@@ -48,10 +42,18 @@ public class GrTupleExpressionImpl extends GrExpressionImpl implements GrTupleEx
     return ArrayUtilRt.find(children, element);
   }
 
-  @Override
   @NotNull
+  @Override
   public GrExpression[] getExpressions() {
     return findChildrenByClass(GrExpression.class);
+  }
+
+  @Nullable
+  @Override
+  public GrTupleAssignmentExpression getParent() {
+    PsiElement parent = super.getParent();
+    assert parent == null || parent instanceof GrTupleAssignmentExpression;
+    return (GrTupleAssignmentExpression)parent;
   }
 
   @Override
