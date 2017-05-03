@@ -282,7 +282,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   @NotNull
   private CredentialAttributes createAttributes(boolean memoryOnly) {
-    final String serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + ":" + String.valueOf(isUseKeyPair());
+    final String serviceName =
+      SERVICE_NAME_PREFIX + getCredentialsString(this) + "(" + (isUseKeyPair() ? "passphrase" : "password") + ")";
     return new CredentialAttributes(serviceName, getUserName(), null, memoryOnly);
   }
 
