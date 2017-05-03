@@ -247,11 +247,11 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
           setPassword(null);
           setStorePassword(false);
           setPassphrase(credentials.getPasswordAsString());
-          setStorePassphrase(memoryOnly);
+          setStorePassphrase(!memoryOnly);
         }
         else {
           setPassword(credentials.getPasswordAsString());
-          setStorePassword(memoryOnly);
+          setStorePassword(!memoryOnly);
           setPassphrase(null);
           setStorePassphrase(false);
         }
