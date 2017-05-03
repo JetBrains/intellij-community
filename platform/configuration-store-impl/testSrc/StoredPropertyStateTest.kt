@@ -10,8 +10,6 @@ internal class AState : BaseState() {
   @get:Attribute("customName")
   var languageLevel by storedProperty<String?>()
 
-  var bar by string()
-
   var property2 by storedProperty(0)
 
   var floatProperty by storedProperty(0.3)
@@ -38,10 +36,6 @@ class StoredPropertyStateTest {
     assertThat(state.modificationCount).isEqualTo(1)
 
     assertThat(state).isNotEqualTo(AState())
-
-    val newEqualState = AState()
-    newEqualState.languageLevel = String("foo".toCharArray())
-    assertThat(state).isEqualTo(newEqualState)
 
     assertThat(state.serialize()).isEqualTo("""<AState customName="foo" />""")
     assertThat(loadElement("""<AState customName="foo" />""").deserialize(AState::class.java).languageLevel).isEqualTo("foo")
