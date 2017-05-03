@@ -177,7 +177,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     return myUserName;
   }
 
-  public void setSerializedUserName(String userName) {
+  private void setSerializedUserName(String userName) {
     if (StringUtil.isEmpty(userName)) {
       myUserName = null;
     }
@@ -186,7 +186,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  public void setSerializedPassword(String serializedPassword) {
+  private void setSerializedPassword(String serializedPassword) {
     if (!StringUtil.isEmpty(serializedPassword)) {
       myPassword = PasswordUtil.decodePassword(serializedPassword);
       myStorePassword = true;
@@ -196,7 +196,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     }
   }
 
-  public void setSerializedPassphrase(String serializedPassphrase) {
+  private void setSerializedPassphrase(String serializedPassphrase) {
     if (!StringUtil.isEmpty(serializedPassphrase)) {
       myPassphrase = PasswordUtil.decodePassword(serializedPassphrase);
       myStorePassphrase = true;
