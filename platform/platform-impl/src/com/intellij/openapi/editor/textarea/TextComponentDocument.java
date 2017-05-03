@@ -36,7 +36,7 @@ public class TextComponentDocument extends UserDataHolderBase implements com.int
 
   @NotNull
   @Override
-  public String getText() {
+  public CharSequence getImmutableCharSequence() {
     try {
       final Document document = myTextComponent.getDocument();
       return document.getText(0, document.getLength());

@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -139,12 +138,6 @@ public class FrozenDocument implements DocumentEx {
   @Override
   public CharSequence getImmutableCharSequence() {
     return myText;
-  }
-
-  @NotNull
-  @Override
-  public char[] getChars() {
-    return CharArrayUtil.fromSequence(myText);
   }
 
   @Override
