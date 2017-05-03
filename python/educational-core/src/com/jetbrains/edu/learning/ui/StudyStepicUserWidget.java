@@ -32,7 +32,7 @@ public class StudyStepicUserWidget implements IconLikeCustomStatusBarWidget {
 
   public StudyStepicUserWidget() {
     StepicUser user = StudySettings.getInstance().getUser();
-    Icon icon = user == null ? EducationalCoreIcons.StepikOff : EducationalCoreIcons.Stepic;
+    Icon icon = user == null ? EducationalCoreIcons.StepikOff : EducationalCoreIcons.Stepik;
     myComponent = new JLabel(icon);
 
     new ClickListener() {
@@ -71,7 +71,7 @@ public class StudyStepicUserWidget implements IconLikeCustomStatusBarWidget {
 
   public void update() {
     StepicUser user = StudySettings.getInstance().getUser();
-    Icon icon = user == null ? EducationalCoreIcons.StepikOff : EducationalCoreIcons.Stepic;
+    Icon icon = user == null ? EducationalCoreIcons.StepikOff : EducationalCoreIcons.Stepik;
     myComponent.setIcon(icon);
   }
 

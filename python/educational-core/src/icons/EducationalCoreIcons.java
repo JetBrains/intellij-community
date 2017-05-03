@@ -23,7 +23,6 @@ public class EducationalCoreIcons {
   public static final Icon Sandbox = load("/icons/com/jetbrains/edu/learning/Sandbox.png"); // 16x16
   public static final Icon ShowHint = load("/icons/com/jetbrains/edu/learning/showHint.png"); // 16x16
   public static final Icon Stepik = load("/icons/com/jetbrains/edu/learning/Stepik.png"); // 16x16
-  public static final Icon Stepic = load("/icons/com/jetbrains/edu/learning/Stepic.png"); // 16x16
   public static final Icon StepikOff = load("/icons/com/jetbrains/edu/learning/StepikOff.png"); // 16x16
   public static final Icon Task = load("/icons/com/jetbrains/edu/learning/Task.png"); // 16x16
   public static final Icon TaskCompl = load("/icons/com/jetbrains/edu/learning/TaskCompl.png"); // 16x16
