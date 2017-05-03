@@ -10,10 +10,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 
-class ToggleMlSorting: AnAction() {
+class ForceMlSorting : AnAction() {
 
-    private val enableText = "Disable ML sorting"
-    private val disableText = "Enable ML sorting"
+    private val enableText = "Disable Force ML Sorting"
+    private val disableText = "Enable Force ML Sorting"
 
     init {
         templatePresentation.text = "Toggle ML sorting"
@@ -35,7 +35,7 @@ class ToggleMlSorting: AnAction() {
         if (lookup != null) {
             CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project!!, editor!!, 10, false, false)
         } else {
-            val content = if (before) "Reranking disabled" else "Reranking enabled"
+            val content = if (before) "Forced ML Sorting Disabled" else "Forced ML Sorting Enabled"
             val collector = "Completion Stats Collector"
             val notification = Notification(collector, collector, content, NotificationType.INFORMATION)
             notification.notify(project)
