@@ -226,9 +226,7 @@ public class EduCoursesPanel extends JPanel {
         builder.append("s");
       }
       builder.append("</b>: ");
-      List<String> fullNames = authors.stream().
-        map(user -> StringUtil.join(Arrays.asList(user.getFirstName(), user.getLastName()), " "))
-        .collect(Collectors.toList());
+      List<String> fullNames = getAuthorFullNames(authors);
       builder.append(StringUtil.join(fullNames, ", "));
       builder.append("<br><br>");
     }
@@ -236,10 +234,15 @@ public class EduCoursesPanel extends JPanel {
     myDescriptionTextArea.setText(UIUtil.toHtml(builder.toString()));
   }
 
+  private static List<String> getAuthorFullNames(List<StepicUser> authors) {
+    return authors.stream().
+          map(user -> StringUtil.join(Arrays.asList(user.getFirstName(), user.getLastName()), " "))
+          .collect(Collectors.toList());
+  }
+
   private static void addTags(JPanel tagsPanel, @NotNull Course course) {
-    tagsPanel.add(createTagLabel(course.getLanguageById().getDisplayName()));
-    if (course.isAdaptive()) {
-      tagsPanel.add(createTagLabel("Adaptive"));
+    for (String tag : getTags(course)) {
+      tagsPanel.add(createTagLabel(tag));
     }
   }
 
@@ -258,6 +261,9 @@ public class EduCoursesPanel extends JPanel {
       listModel.addElement(course);
     }
     myCoursesList.setModel(listModel);
+    if (myCoursesList.getItemsCount() > 0) {
+      myCoursesList.setSelectedIndex(0);
+    }
   }
 
   public Course getSelectedCourse() {
@@ -282,7 +288,24 @@ public class EduCoursesPanel extends JPanel {
   }
 
   public boolean accept(String filter, Course course) {
-    return course.getName().toLowerCase().contains(filter.toLowerCase()) || filter.isEmpty();
+    if (filter.isEmpty()) {
+      return true;
+    }
+    filter = filter.toLowerCase();
+    if (course.getName().toLowerCase().contains(filter)) {
+      return true;
+    }
+    for (String tag : getTags(course)) {
+      if (tag.toLowerCase().contains(filter)) {
+        return true;
+      }
+    }
+    for (String authorName : getAuthorFullNames(course.getAuthors())) {
+      if (authorName.toLowerCase().contains(filter)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -326,5 +349,14 @@ public class EduCoursesPanel extends JPanel {
 
   public interface CourseValidationListener {
     void validationStatusChanged(boolean canStartCourse);
+  }
+
+  private static List<String> getTags(@NotNull Course course) {
+    List<String> tags = new ArrayList<>();
+    tags.add(course.getLanguageById().getDisplayName());
+    if (course.isAdaptive()) {
+      tags.add("Adaptive");
+    }
+    return tags;
   }
 }
