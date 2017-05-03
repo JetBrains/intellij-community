@@ -2,6 +2,7 @@ package com.intellij.plugin
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.sorting.SortingTimeStatistics
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.ui.IdeBorderFactory
@@ -10,6 +11,12 @@ import com.intellij.ui.components.JBLabel
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+
+
+class PluginSettingsConfigurableProvider : ConfigurableProvider() {
+    override fun createConfigurable() = PluginSettingsConfigurable()
+    override fun canCreateConfigurable() = ApplicationManager.getApplication().isInternal
+}
 
 class PluginSettingsConfigurable : Configurable {
 
@@ -36,8 +43,7 @@ class PluginSettingsConfigurable : Configurable {
             add(isForceExperimentCb)
         }
 
-        val isInternal = ApplicationManager.getApplication().isInternal
-        return if (isInternal) panel else null
+        return panel
     }
     
     private fun getHtmlText(): String {
