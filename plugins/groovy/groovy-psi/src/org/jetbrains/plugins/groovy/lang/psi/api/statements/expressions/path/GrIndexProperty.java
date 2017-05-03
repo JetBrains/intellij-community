@@ -35,8 +35,4 @@ public interface GrIndexProperty extends GrExpression {
 
   @Nullable
   GroovyPolyVariantReference getRValueReference();
-
-  @NotNull
-  @Override
-  GroovyPolyVariantReference[] getReferences();
 }
