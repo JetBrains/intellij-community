@@ -59,12 +59,6 @@ public class TextComponentDocument extends UserDataHolderBase implements com.int
   }
 
   @Override
-  @NotNull
-  public char[] getChars() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @Override
   public int getTextLength() {
     return myTextComponent.getDocument().getLength();
   }
