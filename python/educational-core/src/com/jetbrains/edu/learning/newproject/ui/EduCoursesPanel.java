@@ -39,6 +39,7 @@ import java.util.List;
 
 public class EduCoursesPanel extends JPanel {
   private static final JBColor LIST_COLOR = new JBColor(Gray.xFF, Gray.x39);
+  public static final Color COLOR = new Color(70, 130, 180, 70);
   private JPanel myMainPanel;
   private JPanel myCourseListPanel;
   private JPanel myCoursePanel;
@@ -229,7 +230,7 @@ public class EduCoursesPanel extends JPanel {
     JBLabel label = new JBLabel(tagText);
     label.setOpaque(true);
     label.setBorder(emptyBorder);
-    label.setBackground(JBColor.LIGHT_GRAY);
+    label.setBackground(new JBColor(COLOR, COLOR));
     return label;
   }
 
