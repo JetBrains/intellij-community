@@ -33,6 +33,7 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -416,6 +417,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         }
       }
     }
+  }
+
+  public void setExternalSource(Facet facet, ProjectModelExternalSource externalSource) {
+    facet.setExternalSource(externalSource);
   }
 
   @Override

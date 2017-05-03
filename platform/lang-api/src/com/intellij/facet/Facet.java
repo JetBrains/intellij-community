@@ -18,10 +18,13 @@ package com.intellij.facet;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectModelElement;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a specific instance of facet
@@ -30,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author nik
  */
-public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable {
+public class Facet<C extends FacetConfiguration> extends UserDataHolderBase implements UserDataHolder, Disposable, ProjectModelElement {
   public static final Facet[] EMPTY_ARRAY = new Facet[0];
   @NotNull private final FacetType myFacetType;
   @NotNull private final Module myModule;
@@ -38,6 +41,7 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
   private final Facet myUnderlyingFacet;
   private String myName;
   private boolean isDisposed;
+  private ProjectModelExternalSource myExternalSource;
 
   public Facet(@NotNull final FacetType facetType, @NotNull final Module module, @NotNull final String name, @NotNull final C configuration, Facet underlyingFacet) {
     myName = name;
@@ -113,6 +117,16 @@ public class Facet<C extends FacetConfiguration> extends UserDataHolderBase impl
    */
   final void setName(@NotNull final String name) {
     myName = name;
+  }
+
+  @Nullable
+  @Override
+  public ProjectModelExternalSource getExternalSource() {
+    return myExternalSource;
+  }
+
+  void setExternalSource(ProjectModelExternalSource externalSource) {
+    myExternalSource = externalSource;
   }
 
   @Override
