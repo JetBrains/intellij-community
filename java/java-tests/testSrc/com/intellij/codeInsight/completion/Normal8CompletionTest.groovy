@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.testFramework.LightProjectDescriptor
-
 /**
  * @author anna
  */
@@ -286,6 +285,13 @@ class Test88 {
                        "}")
     configureByTestName()
     myFixture.type('\n')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
+  void testOverrideMethodAsDefault() {
+    configureByTestName()
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'default void run'
+    myFixture.type('\t')
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
