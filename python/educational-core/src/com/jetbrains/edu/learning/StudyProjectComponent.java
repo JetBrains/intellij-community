@@ -110,8 +110,14 @@ public class StudyProjectComponent implements ProjectComponent {
       }
     });
 
-    StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    statusBar.addWidget(new StudyStepicUserWidget(), "before Position");
+    StudyStepicUserWidget widget = StudyUtils.getStepicWidget();
+    if (widget == null) {
+      StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
+      statusBar.addWidget(new StudyStepicUserWidget(), "before Position");
+    }
+    else {
+      widget.update();
+    }
 
     selectStep();
   }

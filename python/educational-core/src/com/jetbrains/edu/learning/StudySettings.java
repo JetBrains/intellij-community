@@ -4,15 +4,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 @State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
 public class StudySettings implements PersistentStateComponent<StudySettings> {
@@ -58,12 +53,9 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
   }
 
   private static void updateStepicUserWidget() {
-    JFrame frame = WindowManager.getInstance().findVisibleFrame();
-    if (frame instanceof IdeFrameImpl) {
-      StatusBarWidget widget = ((IdeFrameImpl)frame).getStatusBar().getWidget(StudyStepicUserWidget.ID);
-      if (widget != null) {
-        ((StudyStepicUserWidget)widget).update();
-      }
+    StudyStepicUserWidget widget = StudyUtils.getStepicWidget();
+    if (widget != null) {
+      widget.update();
     }
   }
 
