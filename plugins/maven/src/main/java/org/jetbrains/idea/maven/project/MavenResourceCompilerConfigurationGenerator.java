@@ -341,8 +341,6 @@ public class MavenResourceCompilerConfigurationGenerator {
     boolean filterWebXml = Boolean.parseBoolean(warCfg.getChildTextTrim("filteringDeploymentDescriptors"));
     Element webResources = warCfg.getChild("webResources");
 
-    if (webResources == null && !filterWebXml) return;
-
     String webArtifactName = MavenUtil.getArtifactName("war", module, true);
 
     MavenWebArtifactConfiguration artifactResourceCfg = projectCfg.webArtifactConfigs.get(webArtifactName);
@@ -353,6 +351,16 @@ public class MavenResourceCompilerConfigurationGenerator {
     }
     else {
       LOG.error("MavenWebArtifactConfiguration already exists.");
+    }
+
+    String packagingIncludes = warCfg.getChildTextTrim("packagingIncludes");
+    if (packagingIncludes != null) {
+      artifactResourceCfg.packagingIncludes.addAll(StringUtil.split(packagingIncludes, ","));
+    }
+
+    String packagingExcludes = warCfg.getChildTextTrim("packagingExcludes");
+    if (packagingExcludes != null) {
+      artifactResourceCfg.packagingExcludes.addAll(StringUtil.split(packagingExcludes, ","));
     }
 
     if (webResources != null) {
