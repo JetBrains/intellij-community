@@ -53,10 +53,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     myData = origin.myData;
 
     myChanges = ContainerUtil.newHashSet(origin.myChanges);
-
-    if (myReadChangesCache != null) {
-      myReadChangesCache = origin.myReadChangesCache;
-    }
+    myReadChangesCache = origin.myReadChangesCache;
   }
 
   @NotNull
