@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * For example, the declaration range of a method includes its modifiers, return type, name and
  * parameter list.
  */
-public interface DeclarationRangeHandler<T extends PsiElement>{
+public interface DeclarationRangeHandler<T extends PsiElement> {
   ExtensionPointName<MixinEP<DeclarationRangeHandler>> EP_NAME = ExtensionPointName.create("com.intellij.declarationRangeHandler");
 
   /**
