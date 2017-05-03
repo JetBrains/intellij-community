@@ -27,7 +27,6 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -48,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -144,8 +144,8 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
   }
 
   @NotNull
-  public static String baseTestDiscoveryPathForProject(Project project) {
-    return PathManager.getSystemPath() + File.separator + "testDiscovery" + File.separator + ProjectKt.getSystemCacheFileName(project, true, ".");
+  public static Path baseTestDiscoveryPathForProject(Project project) {
+    return ProjectKt.getProjectCachePath(project, "testDiscovery", true, ".");
   }
 
   private static final Object ourTracesLock = new Object();

@@ -16,6 +16,7 @@
 package com.intellij.project
 
 import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -33,6 +34,7 @@ import com.intellij.util.PathUtilRt
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.exists
 import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.nio.file.Paths
 
 val Project.isDirectoryBased: Boolean
@@ -123,9 +125,20 @@ fun Project.guessProjectDir() : VirtualFile {
   return this.baseDir!!
 }
 
-// Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
-@JvmOverloads
-fun Project.getSystemCacheFileName(forceNameUse: Boolean = false, hashSeparator: String = "-"): String {
+private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
   val name = if (!forceNameUse && isDirectoryBased) FileUtil.sanitizeFileName(PathUtilRt.getFileName(basePath), false) else name
   return "$name$hashSeparator$locationHash"
+}
+
+@JvmOverloads
+fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
+  return getProjectCachePath(Paths.get(PathManager.getSystemPath(), cacheName), forceNameUse, hashSeparator)
+}
+
+/**
+ * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
+ */
+@JvmOverloads
+fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
+  return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
