@@ -23,7 +23,7 @@ class PluginSettingsConfigurable : Configurable {
     private lateinit var isForceExperimentCb: JBCheckBox
 
     override fun isModified(): Boolean {
-        return false
+        return isForceExperimentCb.isSelected != isMlSortingEnabledByForce()
     }
 
     override fun getDisplayName() = "Completion Stats Collector"
@@ -87,6 +87,7 @@ class PluginSettingsConfigurable : Configurable {
     }
 
     override fun reset() {
+        isForceExperimentCb.isSelected = isMlSortingEnabledByForce()
     }
 
     override fun getHelpTopic(): String? = null
