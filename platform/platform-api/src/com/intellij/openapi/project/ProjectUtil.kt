@@ -33,7 +33,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
-import com.intellij.util.PathUtil
+import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -143,8 +143,7 @@ private fun Project.getPresentableFileName(): String {
     return name
   }
 
-  val location = presentableUrl!!
-  val projectName = PathUtil.getFileName(FileUtilRt.toSystemIndependentName(location))
+  val projectName = FileUtilRt.toSystemIndependentName(PathUtilRt.getFileName(presentableUrl!!))
     .toLowerCase(Locale.US)
     .removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
   return FileUtil.sanitizeFileName(projectName, false)
