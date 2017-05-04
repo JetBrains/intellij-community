@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.ui.impl;
 
+import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
@@ -33,7 +34,9 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.sun.jdi.Value;
 import icons.StreamDebuggerIcons;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,20 +96,32 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       }
     });
 
+    final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(values).groupingBy(TraceElement::getValue);
+
     getTreeModel().addTreeModelListener(new TreeModelAdapter() {
       @Override
       public void treeNodesInserted(TreeModelEvent event) {
         final Object[] children = event.getChildren();
-        for (int i = 0; i < children.length; i++) {
-          Object child = children[i];
+        for (Object child : children) {
           if (child instanceof XValueNodeImpl) {
             final XValueNodeImpl node = (XValueNodeImpl)child;
-            myValue2Path.put(values.get(i), node.getPath());
-            myPath2Value.put(node.getPath(), values.get(i));
+            final XValue container = node.getValueContainer();
+            if (container instanceof JavaValue) {
+              final Value value = ((JavaValue)container).getDescriptor().getValue();
+              final List<TraceElement> traceElements = map2TraceElement.get(value);
+              if (traceElements != null && !traceElements.isEmpty()) {
+                final TraceElement head = traceElements.get(0);
+                myValue2Path.put(head, node.getPath());
+                myPath2Value.put(node.getPath(), head);
+                map2TraceElement.put(value, tail(traceElements));
+              }
+            }
           }
         }
 
-        getTreeModel().removeTreeModelListener(this);
+        if (myPath2Value.size() == values.size()) {
+          getTreeModel().removeTreeModelListener(this);
+        }
       }
     });
 
@@ -281,6 +296,15 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     return path != null && (myHighlighted.contains(path) || isPathSelected(path));
   }
 
+  @NotNull
+  private static <T> List<T> tail(@NotNull List<T> list) {
+    if (list.size() <= 1) {
+      return Collections.emptyList();
+    }
+
+    return list.subList(1, list.size());
+  }
+
   private class MyRootValue extends XValue {
     private final List<TraceElement> myValues;
     private final EvaluationContextImpl myEvaluationContext;
@@ -294,8 +318,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     public void computeChildren(@NotNull XCompositeNode node) {
       final XValueChildrenList children = new XValueChildrenList();
       for (TraceElement traceElement : myValues) {
+        final PrimitiveValueDescriptor valueDescriptor = new PrimitiveValueDescriptor(myProject, traceElement.getValue());
         children
-          .add(new InstanceJavaValue(new PrimitiveValueDescriptor(myProject, traceElement.getValue()), myEvaluationContext, myNodeManager));
+          .add(new InstanceJavaValue(valueDescriptor, myEvaluationContext, myNodeManager));
       }
 
       node.addChildren(children, true);
