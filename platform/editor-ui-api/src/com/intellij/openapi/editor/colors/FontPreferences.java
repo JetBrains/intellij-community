@@ -31,7 +31,8 @@ public interface FontPreferences {
   float DEFAULT_LINE_SPACING = 1.0f;
   String MAC_OS_DEFAULT_FONT_FAMILY   = "Menlo";
   String LINUX_DEFAULT_FONT_FAMILY    = "DejaVu Sans Mono";
-  String WINDOWS_DEFAULT_FONT_FAMILY  = "Monospaced";
+  String WINDOWS_DEFAULT_FONT_FAMILY  = "Consolas";
+  String FALLBACK_FONT_FAMILY         = "Monospaced";
 
   @NotNull
   List<String> getEffectiveFontFamilies();
@@ -77,6 +78,7 @@ public interface FontPreferences {
   }
 
   static String getDefaultFontName() {
+    if (SystemInfo.isWindows) return WINDOWS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isMacOSSnowLeopard) return MAC_OS_DEFAULT_FONT_FAMILY;
     if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
@@ -85,6 +87,6 @@ public interface FontPreferences {
         }
       }
     }
-    return WINDOWS_DEFAULT_FONT_FAMILY;
+    return FALLBACK_FONT_FAMILY;
   }
 }
