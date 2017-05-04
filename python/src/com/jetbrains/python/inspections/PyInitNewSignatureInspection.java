@@ -61,15 +61,15 @@ public class PyInitNewSignatureInspection extends PyInspection {
       if (!PyNames.NEW.equals(functionName) && !PyNames.INIT.equals(functionName)) return;
       final PyClass cls = node.getContainingClass();
       if (cls == null) return;
-      if (!cls.isNewStyleClass(null)) return;
+      if (!cls.isNewStyleClass(myTypeEvalContext)) return;
       final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
-      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true, null);
+      final PyFunction complementaryMethod = cls.findMethodByName(complementaryName, true, myTypeEvalContext);
       if (complementaryMethod == null || PyUtil.isObjectClass(assertNotNull(complementaryMethod.getContainingClass()))) return;
       if (!PyUtil.isSignatureCompatibleTo(complementaryMethod, node, myTypeEvalContext) &&
           !PyUtil.isSignatureCompatibleTo(node, complementaryMethod, myTypeEvalContext) &&
           node.getContainingFile() == cls.getContainingFile()) {
-        registerProblem(node.getParameterList(), PyNames.NEW.equals(node.getName()) ? PyBundle.message("INSP.new.incompatible.to.init") :
-                                                      PyBundle.message("INSP.init.incompatible.to.new"),
+        registerProblem(node.getParameterList(), PyBundle.message(PyNames.NEW.equals(node.getName()) ? "INSP.new.incompatible.to.init"
+                                                                                                     : "INSP.init.incompatible.to.new"),
                         new PyChangeSignatureQuickFix(false));
       }
     }
