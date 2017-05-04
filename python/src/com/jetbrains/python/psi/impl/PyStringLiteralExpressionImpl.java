@@ -34,10 +34,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
-import org.intellij.lang.regexp.psi.RegExpChar;
-import org.intellij.lang.regexp.psi.RegExpGroup;
-import org.intellij.lang.regexp.psi.RegExpNamedGroupRef;
-import org.intellij.lang.regexp.psi.RegExpNumber;
+import org.intellij.lang.regexp.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -456,6 +453,12 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
   @Override
   public boolean supportsNamedGroupRefSyntax(RegExpNamedGroupRef ref) {
     return ref.isPythonNamedGroupRef();
+  }
+
+  @NotNull
+  @Override
+  public EnumSet<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    return EnumSet.of(RegExpGroup.Type.PYTHON_NAMED_GROUP);
   }
 
   @Override

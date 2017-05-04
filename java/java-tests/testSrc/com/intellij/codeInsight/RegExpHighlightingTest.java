@@ -22,6 +22,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.intellij.lang.annotations.Language;
+import org.intellij.lang.regexp.inspection.AnonymousGroupInspection;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,11 @@ import org.jetbrains.annotations.NotNull;
  */
 @SuppressWarnings("Annotator")
 public class RegExpHighlightingTest extends LightCodeInsightFixtureTestCase {
+
+  public void testAnonymousCapturingGroupInspection() {
+    myFixture.enableInspections(new AnonymousGroupInspection());
+    doTest("<warning descr=\"Anonymous capturing group\">(</warning>moo)<warning descr=\"Numeric back reference\">\\1</warning>");
+  }
 
   public void testSingleRepetition() {
     doTest("a<weak_warning descr=\"Single repetition\">{1}</weak_warning>");

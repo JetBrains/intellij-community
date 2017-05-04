@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * @author yole
  */
@@ -104,6 +107,14 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
       // supportsNamedGroupRefSyntax() not present
       return false;
     }
+  }
+
+  public Collection<RegExpGroup.Type> getSupportedNamedGroupTypes(RegExpElement context) {
+    final RegExpLanguageHost host = findRegExpHost(context);
+    if (host == null) {
+      return Collections.emptySet();
+    }
+    return host.getSupportedNamedGroupTypes(context);
   }
 
   public boolean isValidGroupName(String name, @Nullable final PsiElement context) {

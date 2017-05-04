@@ -45,5 +45,8 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="EmptyAlternationBranch" displayName="Empty branch in alternation"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.regexp.inspection.EmptyAlternationBranchInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="AnonymousGroup"
+                     displayName="Anonymous capturing group or numeric back reference" enabledByDefault="false" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.AnonymousGroupInspection"/>
   </extensions>
 </idea-plugin>
