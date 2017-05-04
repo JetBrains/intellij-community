@@ -16,10 +16,7 @@
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -47,7 +44,7 @@ import java.util.Map;
 /**
  * @author Dmitry Batkovich
  */
-public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLocalInspectionTool {
+public class MigrateAssertToMatcherAssertInspection extends BaseJavaBatchLocalInspectionTool {
 
   private final static Logger LOG = Logger.getInstance(MigrateAssertToMatcherAssertInspection.class);
   private final static Map<String, Pair<String, String>> ASSERT_METHODS = new HashMap<>();
