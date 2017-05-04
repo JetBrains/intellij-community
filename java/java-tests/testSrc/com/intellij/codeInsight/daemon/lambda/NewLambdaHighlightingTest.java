@@ -157,6 +157,7 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCapturedWildcardNotOpenedDuringInference() { doTest(); }
   public void testIgnoreStandaloneExpressionsInLambdaReturnForNestedCalls() { doTest(); }
   public void testArrayNotAFunctionalInterface() { doTest(); }
+  public void testRawSubstitutionForInterfaceMethod() { doTest(); }
 
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());

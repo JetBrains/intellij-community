@@ -100,10 +100,7 @@ public class LambdaUtil {
     final PsiSubstitutor superClassSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(methodContainingClass, derivedClass, PsiSubstitutor.EMPTY);
     for (PsiTypeParameter param : superClassSubstitutor.getSubstitutionMap().keySet()) {
-      final PsiType substitute = superClassSubstitutor.substitute(param);
-      if (substitute != null) {
-        initialSubst = initialSubst.put(param, initialSubst.substitute(substitute));
-      }
+      initialSubst = initialSubst.put(param, initialSubst.substitute(superClassSubstitutor.substitute(param)));
     }
     return initialSubst;
   }
