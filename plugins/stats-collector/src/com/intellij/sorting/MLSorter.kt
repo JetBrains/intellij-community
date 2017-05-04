@@ -15,10 +15,12 @@ import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
 import com.jetbrains.completion.ranker.features.LookupElementInfo
 
+
 @Suppress("DEPRECATION")
 class MLSorterFactory : CompletionFinalSorter.Factory {
     override fun newSorter() = MLSorter()
 }
+
 
 class MLSorter : CompletionFinalSorter() {
 
@@ -34,7 +36,11 @@ class MLSorter : CompletionFinalSorter() {
         if (hasUnknownFeatures(items)) {
             return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.UNDEFINED as Any)) }
         }
-
+        
+        if (!isCacheValid(items)) {
+            return items.associate { it to listOf(Pair.create(FeatureUtils.ML_RANK, FeatureUtils.INVALID_CACHE as Any)) }
+        }
+        
         return items.associate {
             val result = mutableListOf<Pair<String, Any>>()
             val cached = cachedScore[it]
@@ -45,7 +51,11 @@ class MLSorter : CompletionFinalSorter() {
             it to result
         }
     }
-
+    
+    private fun isCacheValid(items: Iterable<LookupElement>): Boolean {
+        return items.map { cachedScore[it]?.prefixLength }.toSet().size == 1
+    }
+    
     private fun hasUnknownFeatures(items: Iterable<LookupElement>) = items.any {
         val score = cachedScore[it]
         score == null || score.mlRank == null
@@ -104,11 +114,11 @@ class MLSorter : CompletionFinalSorter() {
     }
 
 
-    private fun getCachedRankInfo(lookup: LookupImpl, element: LookupElement): ItemRankInfo? {
+    private fun getCachedRankInfo(lookup: LookupImpl, element: LookupElement, position: Int): ItemRankInfo? {
         val currentPrefixLength = lookup.getPrefixLength(element)
 
         val cached = cachedScore[element]
-        if (cached != null && currentPrefixLength == cached.prefixLength) {
+        if (cached != null && currentPrefixLength == cached.prefixLength && cached.positionBefore == position) {
             return cached
         }
 
@@ -121,7 +131,7 @@ class MLSorter : CompletionFinalSorter() {
                                      position: Int, 
                                      relevance: List<Pair<String, Any?>>): Double?
     {
-        val cachedWeight = getCachedRankInfo(lookup, element)
+        val cachedWeight = getCachedRankInfo(lookup, element, position)
         if (cachedWeight != null) {
             return cachedWeight.mlRank
         }
@@ -143,7 +153,7 @@ class MLSorter : CompletionFinalSorter() {
 }
 
 
-private class ItemRankInfo(val positionBefore: Int, val mlRank: Double?, val prefixLength: Int)
+private data class ItemRankInfo(val positionBefore: Int, val mlRank: Double?, val prefixLength: Int)
 
 
 typealias WeightedElement = Pair<LookupElement, Double>
