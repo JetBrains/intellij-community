@@ -890,7 +890,7 @@ public class InferenceSession {
         if (argumentList != null) {
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
           if (properties != null && properties.isApplicabilityCheck()) {
-            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor());
+            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor(), inferParent);
           }
 
           final JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
@@ -901,7 +901,7 @@ public class InferenceSession {
           }
           if (element instanceof PsiMethod && (inferParent || !((PsiMethod)element).hasTypeParameters())) {
             final boolean varargs = result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
-            return getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor());
+            return getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor(), inferParent);
           }
         }
       }
@@ -946,12 +946,13 @@ public class InferenceSession {
                                          PsiExpressionList argumentList,
                                          PsiElement parentMethod,
                                          boolean varargs,
-                                         PsiSubstitutor substitutor) {
+                                         PsiSubstitutor substitutor,
+                                         boolean inferParent) {
     if (parentMethod instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
       if (parameters.length == 0) return null;
       final PsiExpression[] args = argumentList.getExpressions();
-      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length) return null;
+      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length && !inferParent) return null;
       PsiElement arg = context;
       while (arg.getParent() instanceof PsiParenthesizedExpression) {
         arg = arg.getParent();
