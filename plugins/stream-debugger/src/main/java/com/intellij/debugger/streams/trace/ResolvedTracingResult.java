@@ -29,7 +29,7 @@ public interface ResolvedTracingResult {
   @NotNull
   List<ResolvedTrace> getResolvedTraces();
 
-  boolean isException();
+  boolean exceptionThrown();
 
   @Nullable
   Value getResult();

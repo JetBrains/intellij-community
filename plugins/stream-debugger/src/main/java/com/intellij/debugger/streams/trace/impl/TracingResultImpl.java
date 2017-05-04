@@ -54,7 +54,7 @@ public class TracingResultImpl implements TracingResult {
   }
 
   @Override
-  public boolean isException() {
+  public boolean exceptionThrown() {
     return myIsResultException;
   }
 
@@ -108,7 +108,7 @@ public class TracingResultImpl implements TracingResult {
     }
 
     @Override
-    public boolean isException() {
+    public boolean exceptionThrown() {
       return myIsResultException;
     }
 
