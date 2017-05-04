@@ -42,4 +42,6 @@ public interface MutableRemoteCredentials extends RemoteCredentials {
   void setPassphrase(@Nullable String passphrase);
 
   void setUseKeyPair(boolean useKeyPair);
+
+  void setUseAuthAgent(boolean useSshAgent);
 }
