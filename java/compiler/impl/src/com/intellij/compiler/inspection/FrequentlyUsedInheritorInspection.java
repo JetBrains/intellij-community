@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
@@ -53,9 +54,10 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       return null;
     }
 
-    final PsiClass superClass = getSuperIfOnlyOne(aClass);
-    if (superClass == null) return null;
+    final Pair<PsiClass, PsiElement> superClassAndPlace = getSuperIfOnlyOne(aClass);
+    if (superClassAndPlace == null) return null;
 
+    PsiClass superClass = superClassAndPlace.getFirst();
     long ms = System.currentTimeMillis();
     final List<ClassAndInheritorCount> topInheritors = getTopInheritorsUsingCompilerIndices(superClass, aClass.getResolveScope(), aClass);
     if (LOG.isDebugEnabled()) {
@@ -76,25 +78,39 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
         break;
       }
     }
+
+    PsiElement highlightingElement;
+    if (aClass.getFields().length == 0 &&
+        aClass.getMethods().length == 0 &&
+        aClass.getInnerClasses().length == 0 &&
+        aClass.getInitializers().length == 0) {
+      highlightingElement = aClass;
+    } else {
+      highlightingElement = superClassAndPlace.getSecond();
+    }
+
     return new ProblemDescriptor[]{manager
-      .createProblemDescriptor(aClass, "Class can have more common super class", isOnTheFly,
+      .createProblemDescriptor(highlightingElement,
+                               "Class can have more common super class",
+                               isOnTheFly,
                                topInheritorsQuickFix.toArray(LocalQuickFix.EMPTY_ARRAY),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING)};
   }
 
   @Nullable
-  private static PsiClass getSuperIfOnlyOne(@NotNull final PsiClass aClass) {
+  private static Pair<PsiClass, PsiElement> getSuperIfOnlyOne(@NotNull final PsiClass aClass) {
     PsiClass superClass = aClass.getSuperClass();
     if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) {
-      return isInSourceContent(aClass) ? superClass : null;
+      return isInSourceContent(aClass) ? Pair.create(superClass, aClass.getExtendsList()) : null;
     }
 
-    return Arrays
+    PsiClass anInterface = Arrays
       .stream(aClass.getInterfaces())
       .filter(c -> !CommonClassNames.JAVA_LANG_OBJECT.equals(c.getQualifiedName()))
       .filter(c -> isInSourceContent(c))
       .collect(MoreCollectors.onlyOne())
       .orElse(null);
+    return anInterface == null ? null : Pair.create(anInterface, aClass.getImplementsList());
   }
 
   @NotNull
