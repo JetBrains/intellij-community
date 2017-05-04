@@ -238,6 +238,14 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals("s", ((NewStyleSubstitutionChunk)chunks.get(0)).getConversion());
   }
 
+  public void testNewStyleUnicodeEscaping() {
+    List<SubstitutionChunk> chunks = filterSubstitutions(parseNewStyleFormat("u\"\\N{LATIN SMALL LETTER B}{:s}\\N{NUMBER SIGN}\\\n" +
+                                                                             "        {:s}\\N{LATIN SMALL LETTER B}\""));
+    assertEquals(2, chunks.size());
+    assertEquals('s', chunks.get(0).getConversionType());
+    assertEquals('s', chunks.get(1).getConversionType());
+  }
+
   public void testNewStyleNestedFields() {
     final Field field = doParseAndGetFirstField("u'{foo:{bar} {baz}}'");
     assertEquals("foo", field.getFirstName());

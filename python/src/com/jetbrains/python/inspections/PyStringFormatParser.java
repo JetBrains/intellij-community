@@ -312,15 +312,23 @@ public class PyStringFormatParser {
     final List<FormatStringChunk> results = new ArrayList<>();
     final Matcher matcher = NEW_STYLE_FORMAT_TOKENS.matcher(myLiteral);
     int autoPositionedFieldsCount = 0;
+    boolean skipNext = false;
     while (matcher.find()) {
       final String group = matcher.group();
       myPos = matcher.start();
       final int end = matcher.end();
+      if (group.endsWith("\\N")) {
+        skipNext = true;
+        continue;
+      }
       if ("{{".equals(group) || "}}".equals(group)) {
         results.add(new ConstantChunk(myPos, end));
       }
       else if (group.startsWith("{") && group.endsWith("}")) {
-        autoPositionedFieldsCount = parseNewStyleSubstitution(results, end, autoPositionedFieldsCount);
+        if (!skipNext) {
+          autoPositionedFieldsCount = parseNewStyleSubstitution(results, end, autoPositionedFieldsCount);
+        }
+        skipNext = false;
       }
       else {
         results.add(new ConstantChunk(myPos, end));
