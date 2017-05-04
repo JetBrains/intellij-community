@@ -120,6 +120,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
+    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+
     String[] command = getCommand(envs);
 
     for (LocalTerminalCustomizer customizer : LocalTerminalCustomizer.EP_NAME.getExtensions()) {
