@@ -230,8 +230,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public VirtualFile getBaseDir() {
-    String path = isDefault() ? null : getStateStore().getProjectBasePath();
-    return path == null ? null : LocalFileSystem.getInstance().findFileByPath(path);
+    return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
   }
 
   @Nullable
@@ -249,17 +248,14 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return myName;
   }
 
-  @NonNls
   @Override
   public String getPresentableUrl() {
     if (isDefault()) {
-      // not yet initialized
       return null;
     }
 
     IProjectStore store = getStateStore();
-    String path = store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath();
-    return path == null ? null : FileUtil.toSystemDependentName(path);
+    return FileUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
   }
 
   @NotNull
@@ -267,7 +263,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @Override
   public String getLocationHash() {
     String str = getPresentableUrl();
-    if (str == null) str = getName();
+    if (str == null) {
+      str = getName();
+    }
 
     final String prefix = !isDefault() && getStateStore().getStorageScheme() == StorageScheme.DIRECTORY_BASED ? "" : getName();
     return prefix + Integer.toHexString(str.hashCode());
