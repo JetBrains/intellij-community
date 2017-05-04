@@ -21,7 +21,7 @@ import com.intellij.credentialStore.kdbx.loadKdbx
 import com.intellij.credentialStore.windows.WindowsCryptUtils
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.setOwnerPermissions
 import com.intellij.util.EncryptionSupport
@@ -69,7 +69,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
       else {
         val masterPassword = existingMasterPassword ?: masterKeyStorage.get()
         if (masterPassword == null) {
-          LOG.catchAndLog {
+          LOG.runAndLogException {
             if (this.dbFile.exists()) {
               val renameTo = baseDirectory.resolve("old.c.kdbx")
               LOG.warn("Credentials database file exists (${this.dbFile}), but no master password file. Moved to $renameTo")

@@ -18,7 +18,7 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
@@ -62,7 +62,7 @@ open class DefaultKeymap {
           else -> fileName
         }
 
-        LOG.catchAndLog {
+        LOG.runAndLogException {
           loadKeymapsFromElement(object: SchemeDataHolder<KeymapImpl> {
             override fun read() = provider.load(key) { JDOMUtil.load(it) }
 

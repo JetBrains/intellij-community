@@ -28,8 +28,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -723,7 +723,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings {
     val settings = RunnerAndConfigurationSettingsImpl(this)
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       settings.readExternal(element, isShared)
     }
     addConfiguration(element, settings)

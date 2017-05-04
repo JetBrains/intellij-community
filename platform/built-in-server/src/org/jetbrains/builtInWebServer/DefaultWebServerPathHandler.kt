@@ -15,7 +15,7 @@
  */
 package org.jetbrains.builtInWebServer
 
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.endsWithName
@@ -120,7 +120,7 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
 
     val canonicalPath = if (indexUsed) "$path/${pathInfo.name}" else path
     for (fileHandler in WebServerFileHandler.EP_NAME.extensions) {
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         if (fileHandler.process(pathInfo!!, canonicalPath, project, request, channel, if (isCustomHost) null else projectName, extraHeaders)) {
           return true
         }

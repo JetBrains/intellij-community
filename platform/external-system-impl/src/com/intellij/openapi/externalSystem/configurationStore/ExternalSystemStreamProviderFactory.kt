@@ -21,8 +21,8 @@ import com.intellij.configurationStore.StreamProviderFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.module.Module
@@ -68,7 +68,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
             isStorageFlushInProgress = true
             ApplicationManager.getApplication().executeOnPooledThread {
               try {
-                LOG.catchAndLog { nameToData.force() }
+                LOG.runAndLogException { nameToData.force() }
               }
               finally {
                 isStorageFlushInProgress = false
