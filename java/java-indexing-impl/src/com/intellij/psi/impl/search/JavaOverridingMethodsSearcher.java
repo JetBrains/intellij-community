@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -37,6 +38,7 @@ import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 
@@ -51,7 +53,8 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
     Project project = ReadAction.compute(method::getProject);
     final SearchScope searchScope = parameters.getScope();
 
-    if (searchScope instanceof LocalSearchScope) {
+    if (searchScope instanceof LocalSearchScope &&
+        Arrays.stream(((LocalSearchScope)searchScope).getVirtualFiles()).allMatch(file -> file.getFileType() == JavaFileType.INSTANCE)) {
       return processLocalScope((LocalSearchScope)searchScope, method, project, consumer);
     }
 
