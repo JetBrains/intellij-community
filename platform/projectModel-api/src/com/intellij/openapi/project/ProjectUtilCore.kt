@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,29 +16,20 @@
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
-import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
-import java.util.*
 
-fun displayUrlRelativeToProject(file: VirtualFile,
-                                url: String,
-                                project: Project,
-                                includeFilePath: Boolean,
-                                keepModuleAlwaysOnTheLeft: Boolean): String {
-  var url = url
+fun displayUrlRelativeToProject(file: VirtualFile, url: String, project: Project, includeFilePath: Boolean, keepModuleAlwaysOnTheLeft: Boolean): String {
+  var result = url
   val baseDir = project.baseDir
   if (baseDir != null && includeFilePath) {
-
     val projectHomeUrl = baseDir.presentableUrl
-    if (url.startsWith(projectHomeUrl)) {
-      url = "..." + url.substring(projectHomeUrl.length)
+    if (result.startsWith(projectHomeUrl)) {
+      result = "...${result.substring(projectHomeUrl.length)}"
     }
   }
 
@@ -48,44 +39,23 @@ fun displayUrlRelativeToProject(file: VirtualFile,
       val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
       if (libraryEntry != null) {
         if (libraryEntry is JdkOrderEntry) {
-          url = url + " - [" + libraryEntry.jdkName + "]"
+          result = "$result - [${libraryEntry.jdkName}]"
         }
         else {
-          url = url + " - [" + libraryEntry.presentableName + "]"
+          result = "$result - [${libraryEntry.presentableName}]"
         }
       }
       else {
-        url = url + " - [" + fileForJar.name + "]"
+        result = "$result - [${fileForJar.name}]"
       }
     }
   }
 
-  val module = ModuleUtilCore.findModuleForFile(file, project) ?: return url
-  return if (!keepModuleAlwaysOnTheLeft && SystemInfo.isMac)
-    url + " - [" + module.name + "]"
-  else
-    "[" + module.name + "] - " + url
-}
-
-fun getPresentableName(project: Project): String? {
-  if (project.isDefault) {
-    return project.name
+  val module = ModuleUtilCore.findModuleForFile(file, project) ?: return result
+  return if (!keepModuleAlwaysOnTheLeft && SystemInfo.isMac) {
+    "$result - [${module.name}]"
   }
-
-  val location = project.presentableUrl ?: return null
-
-  var projectName = FileUtil.toSystemIndependentName(location)
-  projectName = StringUtil.trimEnd(projectName, "/")
-
-  val lastSlash = projectName.lastIndexOf('/')
-  if (lastSlash >= 0 && lastSlash + 1 < projectName.length) {
-    projectName = projectName.substring(lastSlash + 1)
+  else {
+    "[${module.name}] - $result"
   }
-
-  if (StringUtil.endsWithIgnoreCase(projectName, ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-    projectName = projectName.substring(0, projectName.length - ProjectFileType.DOT_DEFAULT_EXTENSION.length)
-  }
-
-  projectName = projectName.toLowerCase(Locale.US).replace(':', '_') // replace ':' from windows drive names
-  return projectName
 }

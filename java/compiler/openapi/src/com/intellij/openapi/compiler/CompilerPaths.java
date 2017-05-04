@@ -22,7 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtilCore;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
@@ -92,7 +92,7 @@ public class CompilerPaths {
 
   public static String getCompilerSystemDirectoryName(Project project) {
     // todo: use ProjectKt.getSystemCacheFileName()
-    return ProjectUtilCore.getPresentableName(project) + "." + project.getLocationHash();
+    return ProjectUtil.getPresentableName(project) + "." + project.getLocationHash();
   }
 
   public static File getCompilerSystemDirectory() {
