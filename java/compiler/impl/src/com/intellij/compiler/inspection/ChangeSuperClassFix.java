@@ -46,17 +46,21 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   private final SmartPsiElementPointer<PsiClass> myNewSuperClass;
   @NotNull
   private final SmartPsiElementPointer<PsiClass> myOldSuperClass;
+  @NotNull
+  private final SmartPsiElementPointer<PsiClass> myTargetClass;
   private final int myInheritorCount;
   @NotNull
   private final String myNewSuperName;
   private final boolean myImplements;
 
-  public ChangeSuperClassFix(@NotNull final PsiClass newSuperClass,
-                             @NotNull final PsiClass oldSuperClass,
+  public ChangeSuperClassFix(@NotNull PsiClass targetClass,
+                             @NotNull PsiClass newSuperClass,
+                             @NotNull PsiClass oldSuperClass,
                              final int percent,
                              final boolean isImplements) {
     final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(newSuperClass.getProject());
     myNewSuperName = ObjectUtils.notNull(newSuperClass.getQualifiedName());
+    myTargetClass = smartPointerManager.createSmartPsiElementPointer(targetClass);
     myNewSuperClass = smartPointerManager.createSmartPsiElementPointer(newSuperClass);
     myOldSuperClass = smartPointerManager.createSmartPsiElementPointer(oldSuperClass);
     myInheritorCount = percent;
@@ -96,8 +100,8 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
     final PsiClass oldSuperClass = myOldSuperClass.getElement();
     final PsiClass newSuperClass = myNewSuperClass.getElement();
     if (oldSuperClass == null || newSuperClass == null) return;
-    PsiElement element = problemDescriptor.getPsiElement();
-    if (!(element instanceof PsiClass) || !FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
+    PsiElement element = myTargetClass.getElement();
+    if (element == null || !FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     PsiClass aClass = (PsiClass)element;
     changeSuperClass(aClass, oldSuperClass, newSuperClass);
   }

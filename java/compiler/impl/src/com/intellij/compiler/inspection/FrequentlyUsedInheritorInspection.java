@@ -71,7 +71,10 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       if (InheritanceUtil.isInheritorOrSelf(psi, aClass, true)) {
         continue;
       }
-      final LocalQuickFix quickFix = new ChangeSuperClassFix(psi, superClass, searchResult.number,
+      final LocalQuickFix quickFix = new ChangeSuperClassFix(aClass,
+                                                             psi,
+                                                             superClass,
+                                                             searchResult.number,
                                                              searchResult.psi.isInterface() && !aClass.isInterface());
       topInheritorsQuickFix.add(quickFix);
       if (topInheritorsQuickFix.size() >= MAX_RESULT) {
