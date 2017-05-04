@@ -31,6 +31,7 @@ import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -762,8 +763,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Nullable
   private <T> T onException(@NotNull Exception e, @NotNull String actionName) {
-    if (e instanceof ProcessCanceledException) {
-      throw (ProcessCanceledException)e;
+    if (e instanceof ControlFlowException) {
+      throw (RuntimeException)e;
     }
 
     LOG.error("an exception during " + actionName + " calculation", e);
