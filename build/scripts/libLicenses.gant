@@ -250,6 +250,7 @@ libraryLicense(name: "jzlib", libraryName: "jzlib", version: "1.1.1", license: "
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "2.22", license: "New BSD License", url: "https://github.com/EsotericSoftware/kryo", licenseUrl: "https://github.com/EsotericSoftware/kryo/blob/master/license.txt")
 libraryLicense(name: "kXML2", libraryName: "kxml2", version: "2.3.0", license: "BSD", url: "http://sourceforge.net/projects/kxml/")
 libraryLicense(name: "Lobo evolution", libraryName: "Loboevolution.jar", version: "0.98.6 (with patches by JetBrains)", license: "MIT", url: "http://sourceforge.net/projects/loboevolution/", licenseUrl: "http://opensource.org/licenses/mit-license.php")
+libraryLicense(name: "owasp-java-html-sanitizer", libraryName: "owasp-java-html-sanitizer.jar", version: "20160413.1", license: "Apache 2.0", url: "https://github.com/OWASP/java-html-sanitizer/", licenseUrl: "https://github.com/OWASP/java-html-sanitizer/blob/master/COPYING")
 libraryLicense(name: "Log4j", libraryName: "Log4J", version: "1.2.17", license: "Apache 2.0", url: "http://logging.apache.org/log4j/1.2/index.html", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Lombok AST", libraryName: "lombok-ast", version: "0.2.1", license: "MIT", url: "http://projectlombok.org/", licenseUrl: "http://opensource.org/licenses/mit-license.php")
 libraryLicense(name: "markdown4j", libraryName: "markdown4j-2.2", version: "2.2", license: "New BSD", url: "https://code.google.com/p/markdown4j/", licenseUrl: "http://opensource.org/licenses/BSD-3-Clause")
