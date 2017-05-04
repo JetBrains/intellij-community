@@ -23,6 +23,7 @@ import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBCardLayout;
@@ -57,12 +58,13 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   private final List<MyPlaceholder> myTabContents;
   private final MyPlaceholder myFlatContent;
   private final StreamChain myStreamChain;
+  private final JBTabsPaneImpl myTabsPane;
 
   private MyMode myMode = MyMode.SPLIT;
 
   public EvaluationAwareTraceWindow(@NotNull XDebugSession session, @NotNull StreamChain chain) {
     super(session.getProject(), true);
-    final JBTabsPaneImpl tabs = new JBTabsPaneImpl(session.getProject(), SwingConstants.TOP, getDisposable());
+    myTabsPane = new JBTabsPaneImpl(session.getProject(), SwingConstants.TOP, getDisposable());
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
@@ -74,12 +76,12 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     myStreamChain = chain;
     final JBCardLayout layout = new JBCardLayout();
     myCenterPane = new JPanel(layout);
-    myCenterPane.add(tabs.getComponent());
+    myCenterPane.add(myTabsPane.getComponent());
     myTabContents = new ArrayList<>();
     for (int i = 0, chainLength = chain.length(); i < chainLength; i++) {
       final StreamCall call = chain.getCall(i);
       final MyPlaceholder tab = new MyPlaceholder();
-      tabs.insertTab(call.getName(), StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab, call.getName() + call.getArguments(), i);
+      myTabsPane.insertTab(call.getName(), StreamDebuggerIcons.STREAM_CALL_TAB_ICON, tab, call.getName() + call.getArguments(), i);
       myTabContents.add(tab);
     }
 
@@ -141,8 +143,15 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       controllers.add(controller);
     }
     else {
-      final String text = resolvedTrace.exceptionThrown() ? "There is no result: exception was thrown" : "There is no result of such stream chain";
+      final String text =
+        resolvedTrace.exceptionThrown() ? "There is no result: exception was thrown" : "There is no result of such stream chain";
       resultTab.setContent(new JBLabel(text, SwingConstants.CENTER), BorderLayout.CENTER);
+    }
+
+    if (result != null && resolvedTrace.exceptionThrown()) {
+      final TraceElementImpl exception = new TraceElementImpl(Integer.MAX_VALUE, result);
+      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, exception), "", 0);
+      myTabsPane.setSelectedIndex(0);
     }
 
     final FlatView flatView = new FlatView(controllers, context);
