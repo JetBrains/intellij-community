@@ -1,7 +1,7 @@
 import typing
 
 
-MyTup1 = typing.NamedTuple(<warning descr="Unexpected argument">bar=''</warning><warning descr="Parameter 'fields' unfilled"><warning descr="Parameter 'typename' unfilled">)</warning></warning>
+MyTup1 = typing.NamedTuple(bar=''<warning descr="Parameter 'typename' unfilled">)</warning>
 MyTup2 = typing.NamedTuple("MyTup2", bar=int, baz=str)
 MyTup3 = typing.NamedTuple("MyTup2", [("bar", int), ("baz", str)])
 
