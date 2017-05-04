@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -457,11 +457,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       refname = predicate.getRegExp();
 
       if (handler.isStrictSubtype() || handler.isSubtype()) {
-        final OptimizingSearchHelper searchHelper = compileContext.getSearchHelper();
-        if (addDescendantsOf(refname, handler.isSubtype(), searchHelper, compileContext)) {
-          searchHelper.endTransaction();
-        }
-
+        addDescendantsOf(refname, handler.isSubtype(), compileContext);
         return;
       }
     }
@@ -469,9 +465,9 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     GlobalCompilingVisitor.addFilesToSearchForGivenWord(refname, true, GlobalCompilingVisitor.OccurenceKind.CODE, compileContext);
   }
 
-
-  public static boolean addDescendantsOf(final String refname, final boolean subtype, OptimizingSearchHelper searchHelper, CompileContext context) {
-    final List<PsiClass> classes = buildDescendants(refname, subtype, searchHelper, context);
+  private static void addDescendantsOf(String refname, boolean subtype, CompileContext context) {
+    final OptimizingSearchHelper searchHelper = context.getSearchHelper();
+    final List<PsiClass> classes = buildDescendants(refname, subtype, context);
 
     for (final PsiClass aClass : classes) {
       if (aClass instanceof PsiAnonymousClass) {
@@ -481,15 +477,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         searchHelper.addWordToSearchInCode(aClass.getName());
       }
     }
-
-    return classes.size() > 0;
+    if (!classes.isEmpty()) {
+      searchHelper.endTransaction();
+    }
   }
 
-  private static List<PsiClass> buildDescendants(String className,
-                                                 boolean includeSelf,
-                                                 OptimizingSearchHelper searchHelper,
-                                                 CompileContext context) {
-    if (!searchHelper.doOptimizing()) return Collections.emptyList();
+  private static List<PsiClass> buildDescendants(String className, boolean includeSelf, CompileContext context) {
     final SearchScope scope = context.getOptions().getScope();
     if (!(scope instanceof GlobalSearchScope)) return Collections.emptyList();
 
@@ -512,7 +505,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     return results;
   }
-
 
   @Override
   public void visitCodeBlock(PsiCodeBlock block) {
