@@ -1,8 +1,4 @@
 #!/bin/bash
-
-#immediately exit script with an error if a command fails
-set -euo pipefail
-
 export COPY_EXTENDED_ATTRIBUTES_DISABLE=true
 export COPYFILE_DISABLE=true
 EXPLODED=$2.exploded
@@ -65,6 +61,8 @@ for f in ${EXPLODED}/"$BUILD_NAME"/Contents/*.txt ; do
 done
 shopt -u nullglob
 
+#immediately exit script with an error if a command fails
+set -euo pipefail
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
 
