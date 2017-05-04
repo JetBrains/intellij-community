@@ -50,6 +50,8 @@ import java.util.stream.Stream;
  * @author Vitaliy.Bibaev
  */
 public class EvaluationAwareTraceWindow extends DialogWrapper {
+  private static final String DIALOG_TITLE = "Stream Trace";
+
   private static final int DEFAULT_WIDTH = 870;
   private static final int DEFAULT_HEIGHT = 400;
   private static final String FLAT_MODE_NAME = "Flat Mode";
@@ -72,7 +74,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       }
     }, myDisposable);
     setModal(false);
-    setTitle("Stream Trace");
+    setTitle(DIALOG_TITLE);
     myStreamChain = chain;
     final JBCardLayout layout = new JBCardLayout();
     myCenterPane = new JPanel(layout);
@@ -143,6 +145,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }
 
     if (result != null && resolvedTrace.exceptionThrown()) {
+      setTitle(DIALOG_TITLE + " - Exception was thrown. Trace can be incomplete");
       final TraceElementImpl exception = new TraceElementImpl(Integer.MAX_VALUE, result);
       myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, exception), "", 0);
       myTabsPane.setSelectedIndex(0);
