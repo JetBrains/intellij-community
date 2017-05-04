@@ -1,15 +1,9 @@
 package circlet.components
 
-import circlet.*
-import circlet.api.client.*
 import circlet.utils.*
-import com.intellij.ide.passwordSafe.*
 import com.intellij.openapi.components.*
-import com.intellij.openapi.project.*
 import klogging.*
-import runtime.*
-import runtime.async.*
-import runtime.kdata.*
+import runtime.reactive.*
 
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 

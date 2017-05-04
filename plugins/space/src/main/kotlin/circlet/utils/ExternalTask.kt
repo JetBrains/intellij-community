@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.*
 import klogging.*
 import runtime.*
-import runtime.kdata.*
+import runtime.reactive.*
 
 private val log = KLoggers.logger("plugin/ExternalTask.kt")
 

@@ -1,6 +1,5 @@
 package circlet.components
 
-import circlet.*
 import runtime.async.*
 import circlet.login.*
 import circlet.reactive.*
@@ -10,7 +9,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
 import klogging.*
-import runtime.kdata.*
+import runtime.reactive.*
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 

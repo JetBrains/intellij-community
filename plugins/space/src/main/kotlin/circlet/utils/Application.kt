@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import com.intellij.psi.*
-import runtime.kdata.*
+import runtime.reactive.*
 
 inline fun <reified T : Any> ComponentManager.getComponent(): T =
     this.getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
