@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -110,7 +109,7 @@ public class RunConfigurationModule implements JDOMExternalizable {
     if (myProject.isDisposed()) {
       return null;
     }
-    return ReadAction.compute(() -> getModuleManager().findModuleByName(moduleName));
+    return getModuleManager().findModuleByName(moduleName);
   }
 
   public void setModule(final Module module) {
