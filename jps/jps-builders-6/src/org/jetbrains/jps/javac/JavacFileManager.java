@@ -165,11 +165,14 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (mySourceTransformers.isEmpty()) {
       return originalObjects;
     }
-    final List<JavaFileObject> wrapped = new ArrayList<JavaFileObject>();
+    List<JavaFileObject> wrapped = null;
     for (JavaFileObject fo : originalObjects) {
+      if (wrapped == null) {
+        wrapped = new ArrayList<JavaFileObject>(); // lazy init
+      }
       wrapped.add(JavaFileObject.Kind.SOURCE.equals(fo.getKind())? new TransformableJavaFileObject(fo, mySourceTransformers) : fo);
     }
-    return wrapped;
+    return wrapped != null? wrapped : originalObjects;
   }
   
   @Override
