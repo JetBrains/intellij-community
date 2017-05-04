@@ -17,6 +17,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
+import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -122,6 +123,8 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
+
+    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
     String[] command = getCommand(envs);
 
