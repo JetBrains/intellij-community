@@ -28,6 +28,7 @@ import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.inspections.quickfix.PyChangeSignatureQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
 import com.jetbrains.python.psi.*;
@@ -207,7 +208,18 @@ public class PyArgumentListInspection extends PyInspection {
       // if there is only one mapping, we could suggest quick fixes
       final Set<String> duplicateKeywords = getDuplicateKeywordArguments(node);
 
-      for (PyExpression argument : mappings.get(0).getUnmappedArguments()) {
+      final PyCallExpression.PyArgumentsMapping mapping = mappings.get(0);
+      if (!mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
+        final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
+        if (markedCallee != null && markedCallee.getCallable() instanceof PyFunction) {
+          holder.registerProblem(node,
+                                 PyBundle.message("INSP.unexpected.arg(s)"),
+                                 PyChangeSignatureQuickFix.forMismatchedCall(mapping));
+        }
+      }
+
+
+      for (PyExpression argument : mapping.getUnmappedArguments()) {
         final List<LocalQuickFix> quickFixes = Lists.newArrayList(new PyRemoveArgumentQuickFix());
         if (argument instanceof PyKeywordArgument) {
           if (duplicateKeywords.contains(((PyKeywordArgument)argument).getKeyword())) {
@@ -225,7 +237,7 @@ public class PyArgumentListInspection extends PyInspection {
       holder.registerProblem(node, addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.unexpected.arg(s)"), mappings, context));
     }
   }
-
+  
   private static void highlightUnfilledParameters(@NotNull PyArgumentList node,
                                                   @NotNull ProblemsHolder holder,
                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,

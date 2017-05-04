@@ -20,24 +20,66 @@ import com.google.common.collect.PeekingIterator;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyCallExpression.PyArgumentsMapping;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
 import com.jetbrains.python.refactoring.changeSignature.PyParameterInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
-  @NotNull private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
+  private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
+
+  @NotNull
+  public static PyChangeSignatureQuickFix forMismatchedCall(@NotNull PyArgumentsMapping mapping) {
+    assert mapping.getMarkedCallee() != null;
+    final PyFunction function = as(mapping.getMarkedCallee().getCallable(), PyFunction.class);
+    final PyCallExpression callExpression = mapping.getCallExpression();
+    assert function != null;
+    int positionalParamAnchor = -1;
+    final PyParameter[] parameters = function.getParameterList().getParameters();
+    for (PyParameter parameter : parameters) {
+      final PyNamedParameter namedParam = parameter.getAsNamed();
+      final boolean isVararg = namedParam != null && (namedParam.isPositionalContainer() || namedParam.isKeywordContainer());
+      if (parameter instanceof PySingleStarParameter || parameter.hasDefaultValue() || isVararg) {
+        break;
+      }
+      positionalParamAnchor++;
+    }
+    final List<Pair<Integer, PyParameterInfo>> newParameters = new ArrayList<>();
+    for (PyExpression arg : mapping.getUnmappedArguments()) {
+      if (arg instanceof PyKeywordArgument) {
+        newParameters.add(Pair.create(parameters.length - 1, new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), "", false)));
+      }
+      else {
+        final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callExpression.getContainingFile());
+        final PyType type = context.getType(arg);
+        final String typeName = type != null && type.getName() != null ? type.getName() : PyNames.OBJECT;
+        final String paramName = PyRefactoringUtil.selectUniqueNameFromType(typeName, function.getStatementList());
+        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, "", false)));
+      }
+    }    
+    return new PyChangeSignatureQuickFix(function, newParameters);
+  }
+  
 
   @NotNull
   public static PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
@@ -65,12 +107,26 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   @NotNull
   @Override
   public String getText() {
-    return getFamilyName();
+    final PyFunction function = getFunction();
+    if (function == null) {
+      return getFamilyName();
+    }
+    final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> {
+      return info.getOldIndex() == -1 ? "<b>" + info.getName() + "</b>" : info.getName();
+    }, ", ");
+    return "<html>" +
+           PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")") +
+           "</html>"; 
+  }
+
+  @Nullable
+  private PyFunction getFunction() {
+    return (PyFunction)getStartElement();
   }
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, createMethodDescriptor((PyFunction)startElement));
+    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, createMethodDescriptor(getFunction()));
     dialog.show();
   }
 
