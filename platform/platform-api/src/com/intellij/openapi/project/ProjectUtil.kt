@@ -27,8 +27,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.util.io.exists
+import java.nio.file.InvalidPathException
+import java.nio.file.Paths
 import javax.swing.JComponent
 
 val Module.rootManager: ModuleRootManager
@@ -95,4 +99,38 @@ inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() 
     model.commit()
   }
   return result
+}
+
+fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
+  try {
+    return Paths.get(FileUtil.toSystemDependentName(parent.path), Project.DIRECTORY_STORE_FOLDER).exists()
+  }
+  catch (e: InvalidPathException) {
+    return false
+  }
+}
+
+/**
+ *  Tries to guess the "main project directory" of the project.
+ *
+ *  There is no strict definition of what is a project directory, since a project can contain multiple modules located in different places,
+ *  and the `.idea` directory can be located elsewhere (making the popular [Project.getBaseDir] method not applicable to get the "project
+ *  directory"). This method should be preferred, although it can't provide perfect accuracy either.
+ *
+ *  @throws IllegalStateException if called on the default project, since there is no sense in "project dir" in that case.
+ */
+fun Project.guessProjectDir() : VirtualFile {
+  if (isDefault) {
+    throw IllegalStateException("Not applicable for default project")
+  }
+
+  val modules = ModuleManager.getInstance(this).modules
+  val module = if (modules.size == 1) modules.first() else modules.find { it.name == this.name }
+  if (module != null) {
+    val roots = ModuleRootManager.getInstance(module).contentRoots
+    roots.firstOrNull()?.let {
+      return it
+    }
+  }
+  return this.baseDir!!
 }
