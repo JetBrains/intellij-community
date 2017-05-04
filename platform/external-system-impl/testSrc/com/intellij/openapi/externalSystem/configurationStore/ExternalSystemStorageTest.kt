@@ -30,20 +30,6 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
-private class ExternalStorageRule : TestRule {
-  override fun apply(base: Statement, description: Description): Statement {
-    return statement {
-      try {
-        IS_ENABLED = true
-        base.evaluate()
-      }
-      finally {
-        IS_ENABLED = false
-      }
-    }
-  }
-}
-
 @RunsInEdt
 @RunsInActiveStoreMode
 class ExternalSystemStorageTest {
@@ -73,6 +59,20 @@ class ExternalSystemStorageTest {
       assertThat(moduleFile.readText()).startsWith("""
       <?xml version="1.0" encoding="UTF-8"?>
       <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4" />""".trimIndent())
+    }
+  }
+}
+
+private class ExternalStorageRule : TestRule {
+  override fun apply(base: Statement, description: Description): Statement {
+    return statement {
+      try {
+        IS_ENABLED = true
+        base.evaluate()
+      }
+      finally {
+        IS_ENABLED = false
+      }
     }
   }
 }

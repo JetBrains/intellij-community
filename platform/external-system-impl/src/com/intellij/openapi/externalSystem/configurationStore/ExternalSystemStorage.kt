@@ -21,25 +21,22 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import org.jdom.Element
-import java.io.ByteArrayInputStream
 
 internal class ExternalProjectStorage(private val module: Module, storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, null, storageManager.macroSubstitutor, RoamingType.DISABLED) {
   private val manager = StreamProviderFactory.EP_NAME.getExtensions(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
 
-  override public fun loadLocalData(): Element? {
-    val data = manager.nameToData.get(module.name) ?: return null
-    return ByteArrayInputStream(data).use { deserializeElementFromBinary(it) }
-  }
+  override public fun loadLocalData() = manager.readModuleData(module.name)
 
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
     override fun saveLocally(element: Element?) {
+      val nameToData = manager.nameToData.value
       if (element == null) {
-        manager.nameToData.remove(module.name)
+        nameToData.remove(module.name)
       }
       else {
         val byteOut = BufferExposingByteArrayOutputStream()
         serializeElementToBinary(element, byteOut)
-        manager.nameToData.put(module.name, byteOut.toByteArray())
+        nameToData.put(module.name, byteOut.toByteArray())
       }
     }
   }

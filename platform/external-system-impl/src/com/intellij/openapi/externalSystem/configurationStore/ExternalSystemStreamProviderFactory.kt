@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StreamProviderFactory
+import com.intellij.configurationStore.deserializeElementFromBinary
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -36,10 +37,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Function
 import com.intellij.util.io.*
-import java.io.DataInput
-import java.io.DataOutput
-import java.io.IOException
-import java.io.InputStream
+import org.jdom.Element
+import java.io.*
 import java.util.*
 
 private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
@@ -52,23 +51,29 @@ internal var IS_ENABLED = false
 
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val nameToData by lazy { createStorage(project) }
+  val nameToData = lazy {
+    val storage = createStorage(project)
+    Disposer.register(project, Disposable { storage.close() })
+    isStorageFlushInProgress = false
+    storage
+  }
+
+  private val nameToDataIfInitialized: PersistentHashMap<String, ByteArray>?
+    get() = if (nameToData.isInitialized()) nameToData.value else null
 
   private var isStorageFlushInProgress = false
 
   init {
     if (isEnabled()) {
-      Disposer.register(project, Disposable { nameToData.close() })
-
       // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
       ApplicationManager.getApplication().messageBus
         .connect(project)
         .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
-          if (it === project && !isStorageFlushInProgress && nameToData.isDirty) {
+          if (it === project && !isStorageFlushInProgress && (nameToDataIfInitialized?.isDirty ?: false)) {
             isStorageFlushInProgress = true
             ApplicationManager.getApplication().executeOnPooledThread {
               try {
-                LOG.runAndLogException { nameToData.force() }
+                LOG.runAndLogException { nameToData.value.force() }
               }
               finally {
                 isStorageFlushInProgress = false
@@ -78,10 +83,11 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
         })
       project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
         override fun moduleRemoved(project: Project, module: Module) {
-          nameToData.remove(module.name)
+          nameToDataIfInitialized?.remove(module.name)
         }
 
         override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+          val nameToData = nameToDataIfInitialized ?: return
           for (module in modules) {
             val oldName = oldNameProvider.`fun`(module)
             nameToData.get(oldName)?.let {
@@ -118,6 +124,11 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
 
     // todo we can return on StateStorageOperation.WRITE default iml storage and then somehow using StateStorageChooserEx return Resolution.CLEAR to remove data from iml
     return listOf(EXTERNAL_STORAGE_ANNOTATION)
+  }
+
+  fun readModuleData(name: String): Element? {
+    val data = nameToData.value.get(name) ?: return null
+    return ByteArrayInputStream(data).use { deserializeElementFromBinary(it) }
   }
 }
 
