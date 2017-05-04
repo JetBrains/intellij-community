@@ -16,19 +16,15 @@
 package com.intellij.project
 
 import com.intellij.ide.highlighter.ProjectFileType
-import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtilRt
 import com.intellij.util.io.basicAttributesIfExists
 import com.intellij.util.io.exists
 import java.nio.file.InvalidPathException
-import java.nio.file.Path
 import java.nio.file.Paths
 
 val Project.stateStore: IProjectStore
@@ -60,26 +56,5 @@ fun isValidProjectPath(path: String, anyRegularFileIsValid: Boolean = false): Bo
 }
 
 fun isEqualToProjectFileStorePath(project: Project, filePath: String, storePath: String): Boolean {
-  if (!project.isDirectoryBased) {
-    return false
-  }
-  return filePath.equals(project.stateStore.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
-}
-
-private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
-  val name = if (!forceNameUse && isDirectoryBased) FileUtil.sanitizeFileName(PathUtilRt.getFileName(basePath), false) else name
-  return "$name$hashSeparator$locationHash"
-}
-
-@JvmOverloads
-fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
-  return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse, hashSeparator)
-}
-
-/**
- * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
- */
-@JvmOverloads
-fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
-  return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
+  return project.isDirectoryBased && filePath.equals(project.stateStore.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
 }

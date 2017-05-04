@@ -18,7 +18,6 @@ package com.intellij.openapi.compiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -29,7 +28,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
@@ -43,16 +41,7 @@ import java.util.Comparator;
  */
 public class CompilerPaths {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
-  private static volatile String ourSystemPath;
   private static final Comparator<String> URLS_COMPARATOR = (o1, o2) -> o1.compareTo(o2);
-  /**
-   * Returns a directory
-   * @return a directory where compiler may generate files. All generated files are not deleted when the application exits
-   */
-  public static File getGeneratedDataDirectory(Project project, Compiler compiler) {
-    //noinspection HardCodedStringLiteral
-    return new File(getGeneratedDataDirectory(project), compiler.getDescription().replaceAll("\\s+", "_"));
-  }
 
   /**
    * @return a root directory where generated files for various compilers are stored
@@ -70,35 +59,12 @@ public class CompilerPaths {
     return new File(getCompilerSystemDirectory(project), ".caches");
   }
 
-  public static File getCacheStoreDirectory(String compilerProjectDirName) {
-    //noinspection HardCodedStringLiteral
-    return new File(getCompilerSystemDirectory(compilerProjectDirName), ".caches");
-  }
-
-  public static File getRebuildMarkerFile(Project project) {
-    return new File(getCompilerSystemDirectory(project), "rebuild_required");
-  }
-
   /**
    * @return a directory under IDEA "system" directory where all files related to compiler subsystem are stored (such as compiler caches or generated files)
    */
-  public static File getCompilerSystemDirectory(Project project) {
-    return getCompilerSystemDirectory(getCompilerSystemDirectoryName(project));
-  }
-
-  public static File getCompilerSystemDirectory(String compilerProjectDirName) {
-    return new File(getCompilerSystemDirectory(), compilerProjectDirName);
-  }
-
-  public static String getCompilerSystemDirectoryName(Project project) {
-    // todo: use ProjectKt.getSystemCacheFileName()
-    return ProjectUtil.getPresentableName(project) + "." + project.getLocationHash();
-  }
-
-  public static File getCompilerSystemDirectory() {
-    //noinspection HardCodedStringLiteral
-    final String systemPath = ourSystemPath != null? ourSystemPath : (ourSystemPath = PathUtil.getCanonicalPath(PathManager.getSystemPath()));
-    return new File(systemPath, "compiler");
+  @NotNull
+  public static File getCompilerSystemDirectory(@NotNull Project project) {
+    return ProjectUtil.getProjectCachePath(project, "compiler", false, ".").toFile();
   }
 
   /**

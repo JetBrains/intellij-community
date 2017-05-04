@@ -18,8 +18,8 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.project.ProjectKt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.io.DataExternalizer;
@@ -50,7 +50,7 @@ public class DetectedFrameworksData {
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<>();
-    File file = ProjectKt.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true, ".").resolve("files").toFile();
+    File file = ProjectUtil.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true, ".").resolve("files").toFile();
     myNewFiles = new TIntObjectHashMap<>();
     try {
       myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());

@@ -56,7 +56,7 @@ import java.io.IOException;
  * @author Eugene Belyaev
  */
 public class ProjectUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
+  private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   private ProjectUtil() { }
 

@@ -29,13 +29,13 @@ import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.project.ProjectKt;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
@@ -145,7 +145,7 @@ public class TestDiscoveryExtension extends RunConfigurationExtension {
 
   @NotNull
   public static Path baseTestDiscoveryPathForProject(Project project) {
-    return ProjectKt.getProjectCachePath(project, "testDiscovery", true, ".");
+    return ProjectUtil.getProjectCachePath(project, "testDiscovery", true, ".");
   }
 
   private static final Object ourTracesLock = new Object();

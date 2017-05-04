@@ -19,6 +19,7 @@ package com.intellij.openapi.project
 import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
@@ -29,10 +30,13 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
+import com.intellij.util.PathUtil
 import com.intellij.util.io.exists
 import java.nio.file.InvalidPathException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import javax.swing.JComponent
@@ -134,23 +138,32 @@ fun Project.guessProjectDir() : VirtualFile {
   return this.baseDir!!
 }
 
-fun getPresentableName(project: Project): String? {
-  if (project.isDefault) {
-    return project.name
+private fun Project.getPresentableFileName(): String {
+  if (isDefault) {
+    return name
   }
 
-  val location = project.presentableUrl ?: return null
+  val location = presentableUrl!!
+  val projectName = PathUtil.getFileName(FileUtilRt.toSystemIndependentName(location))
+    .toLowerCase(Locale.US)
+    .removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+  return FileUtil.sanitizeFileName(projectName, false)
+}
 
-  var projectName = FileUtil.toSystemIndependentName(location).trimEnd('/')
-  val lastSlash = projectName.lastIndexOf('/')
-  if (lastSlash >= 0 && lastSlash + 1 < projectName.length) {
-    projectName = projectName.substring(lastSlash + 1)
-  }
+private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
+  val name = if (!forceNameUse) getPresentableFileName() else name
+  return "$name$hashSeparator$locationHash"
+}
 
-  if (projectName.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION, ignoreCase = true)) {
-    projectName = projectName.substring(0, projectName.length - ProjectFileType.DOT_DEFAULT_EXTENSION.length)
-  }
+@JvmOverloads
+fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
+  return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse, hashSeparator)
+}
 
-  // replace ':' from windows drive names
-  return projectName.toLowerCase(Locale.US).replace(':', '_')
+/**
+ * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
+ */
+@JvmOverloads
+fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
+  return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
