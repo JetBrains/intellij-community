@@ -86,7 +86,7 @@ public class HardcodedContracts {
              className.startsWith("org.assertj.core.api.")) {
       return handleTestFrameworks(paramCount, className, methodName, call);
     }
-    else if (TypeUtils.isOptional(owner) && methodName.startsWith("get") || methodName.equals("isPresent")) {
+    else if (TypeUtils.isOptional(owner) && (methodName.startsWith("get") || methodName.equals("isPresent")) && paramCount == 0) {
       // To force purity for Guava optional
       return Collections.singletonList(new MethodContract(new MethodContract.ValueConstraint[0], NOT_NULL_VALUE));
     }

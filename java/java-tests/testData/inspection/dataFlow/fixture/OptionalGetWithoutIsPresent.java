@@ -342,4 +342,14 @@ class OptionalWithoutIsPresent {
       System.out.println(opt.get());
     }
   }
+
+  boolean isPresent(int x) {
+    return x == 2;
+  }
+
+  void testEA100796() {
+    if(this.isPresent(3)) {
+      System.out.println("Hello!");
+    }
+  }
 }
