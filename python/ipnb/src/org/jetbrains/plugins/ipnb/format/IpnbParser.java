@@ -598,7 +598,15 @@ public class IpnbParser {
       final JsonObject object = json.getAsJsonObject();
       final OutputDataRaw dataRaw = new OutputDataRaw();
       final JsonElement png = object.get("image/png");
-      if (png != null) {
+      if (png instanceof JsonArray) {
+        final JsonArray array = png.getAsJsonArray();
+        StringBuilder pngString = new StringBuilder();
+        for (int i = 0; i != array.size(); ++i) {
+          pngString.append(array.get(i).getAsString());
+        }
+        dataRaw.png = pngString.toString();
+      }
+      else if (png instanceof JsonPrimitive) {
         dataRaw.png = png.getAsString();
       }
       dataRaw.html = getStringOrArray("text/html", object);
