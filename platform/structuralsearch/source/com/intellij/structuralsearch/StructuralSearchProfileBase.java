@@ -501,7 +501,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
       final Pattern[] patterns = new Pattern[prefixes.length];
 
       for (int i = 0; i < prefixes.length; i++) {
-        final String s = StructuralSearchUtil.shieldSpecialChars(prefixes[i]);
+        final String s = StructuralSearchUtil.shieldRegExpMetaChars(prefixes[i]);
         patterns[i] = Pattern.compile("\\b(" + s + "\\w+)\\b");
       }
       return patterns;

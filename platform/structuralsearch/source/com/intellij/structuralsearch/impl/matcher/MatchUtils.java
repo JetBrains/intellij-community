@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NonNls;
  * Time: 22:10:20
  */
 public class MatchUtils {
-  public static final String SPECIAL_CHARS = ".$|()[{^?*+\\";
 
   public static boolean compareWithNoDifferenceToPackage(String typeImage, String typeImage2) {
     return compareWithNoDifferenceToPackage(typeImage, typeImage2, false);
@@ -36,11 +35,11 @@ public class MatchUtils {
     final boolean endsWith = ignoreCase ? StringUtil.endsWithIgnoreCase(typeImage2, typeImage) : typeImage2.endsWith(typeImage);
     return endsWith && (
       typeImage.length() == typeImage2.length() ||
-      typeImage2.charAt(typeImage2.length()-typeImage.length()-1)=='.' // package separator
+      typeImage2.charAt(typeImage2.length()-typeImage.length() - 1)=='.' // package separator
     );
   }
 
-  public static PsiElement getReferencedElement(final PsiElement element) {
+  public static PsiElement getReferencedElement(PsiElement element) {
     if (element instanceof PsiReference) {
       return ((PsiReference)element).resolve();
     }

@@ -162,8 +162,7 @@ public class PatternCompiler {
     final Pattern[] patterns = new Pattern[applicablePrefixes.length];
 
     for (int i = 0; i < applicablePrefixes.length; i++) {
-      String s = StructuralSearchUtil.shieldSpecialChars(applicablePrefixes[i]);
-      patterns[i] = Pattern.compile(s + "\\w+\\b");
+      patterns[i] = Pattern.compile(StructuralSearchUtil.shieldRegExpMetaChars(applicablePrefixes[i]) + "\\w+\\b");
     }
 
     final int[] varEndOffsets = findAllTypedVarOffsets(file, patterns);
