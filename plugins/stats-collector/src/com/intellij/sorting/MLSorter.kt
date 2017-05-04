@@ -115,7 +115,9 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     private fun calcPrefixLength(lookup: LookupImpl): Int {
-        return lookup.lookupOriginalStart - lookup.editor.caretModel.offset
+        val lookupOriginalStart = lookup.lookupOriginalStart
+        val caretOffset = lookup.editor.caretModel.offset
+        return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart
     }
 
     private fun getCachedRankInfo(element: LookupElement, prefixLength: Int, position: Int): ItemRankInfo? {
@@ -127,9 +129,9 @@ class MLSorter : CompletionFinalSorter() {
     }
 
 
-    private fun calculateElementRank(element: LookupElement, 
-                                     position: Int, 
-                                     relevance: List<Pair<String, Any?>>, 
+    private fun calculateElementRank(element: LookupElement,
+                                     position: Int,
+                                     relevance: List<Pair<String, Any?>>,
                                      prefixLength: Int): Double? 
     {
         val cachedWeight = getCachedRankInfo(element, prefixLength, position)
