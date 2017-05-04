@@ -31,6 +31,7 @@ mv ${BG_PIC} ${EXPLODED}/.background
 ln -s /Applications ${EXPLODED}/" "
 # allocate space for .DS_Store
 dd if=/dev/zero of=${EXPLODED}/DSStorePlaceHolder bs=1024 count=512
+stat ${EXPLODED}/DSStorePlaceHolder
 
 echo "Creating unpacked r/w disk image ${VOLNAME}..."
 hdiutil create -srcfolder ./${EXPLODED} -volname "$VOLNAME" -anyowners -nospotlight -quiet -fs HFS+ -fsargs "-c c=64,a=16,e=16" -format UDRW $2.temp.dmg
@@ -40,10 +41,12 @@ echo "Mounting unpacked r/w disk image..."
 device=$(hdiutil attach -readwrite -noverify -noautoopen $2.temp.dmg | egrep '^/dev/' | sed 1q | awk '{print $1.dmg}')
 echo "Mounted as ${device}."
 sleep 10
+find /Volumes/"$VOLNAME" -maxdepth 1
 
 # set properties
 echo "Updating $VOLNAME disk image styles..."
-rm /Volumes/"$VOLNAME"/DSStorePlaceHolder
+stat /Volumes/"$VOLNAME"/DSStorePlaceHolder || true
+rm -f /Volumes/"$VOLNAME"/DSStorePlaceHolder
 perl makedmg.pl "$VOLNAME" ${BG_PIC}
 sync;sync;sync
 hdiutil detach ${device}
