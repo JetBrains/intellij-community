@@ -15,30 +15,46 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.google.common.collect.Iterators;
+import com.google.common.collect.PeekingIterator;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.search.PySuperMethodsSearch;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
 import com.jetbrains.python.refactoring.changeSignature.PyParameterInfo;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-public class PyChangeSignatureQuickFix implements LocalQuickFix {
+public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
-  private final boolean myOverridenMethod;
+  @NotNull private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
 
-  public PyChangeSignatureQuickFix(boolean overriddenMethod) {
-    myOverridenMethod = overriddenMethod;
+  @NotNull
+  public static PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
+    final int paramLength = function.getParameterList().getParameters().length;
+    final int complementaryParamLength = complementary.getParameterList().getParameters().length;
+    if (complementaryParamLength > paramLength) {
+      return new PyChangeSignatureQuickFix(function,
+                                           Collections.singletonList(Pair.create(paramLength - 1,
+                                                                                 new PyParameterInfo(-1, "**kwargs", "", false))));
+    }
+    return new PyChangeSignatureQuickFix(function, Collections.emptyList());
+  }
+
+
+  public PyChangeSignatureQuickFix(@NotNull PyFunction function, @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters) {
+    super(function);
+    myExtraParameters = ContainerUtil.sorted(extraParameters, Comparator.comparingInt(p -> p.getFirst()));
   }
 
   @NotNull
@@ -46,31 +62,38 @@ public class PyChangeSignatureQuickFix implements LocalQuickFix {
     return PyBundle.message("QFIX.NAME.change.signature");
   }
 
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    final PyFunction function = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyFunction.class);
-    if (function == null) return;
-    final PyClass cls = function.getContainingClass();
-    assert cls != null;
-    final String functionName = function.getName();
-    final String complementaryName = PyNames.NEW.equals(functionName) ? PyNames.INIT : PyNames.NEW;
-    final TypeEvalContext context = TypeEvalContext.userInitiated(project, descriptor.getEndElement().getContainingFile());
-    final PyFunction complementaryMethod = myOverridenMethod ? (PyFunction)PySuperMethodsSearch.search(function, context).findFirst()
-                                                             : cls.findMethodByName(complementaryName, true, null);
+  @NotNull
+  @Override
+  public String getText() {
+    return getFamilyName();
+  }
 
-    assert complementaryMethod != null;
-    final PyMethodDescriptor methodDescriptor = new PyMethodDescriptor(function) {
-      @Override
-      public List<PyParameterInfo> getParameters() {
-        final List<PyParameterInfo> parameterInfos = super.getParameters();
-        final int paramLength = function.getParameterList().getParameters().length;
-        final int complementaryParamLength = complementaryMethod.getParameterList().getParameters().length;
-        if (complementaryParamLength > paramLength)
-          parameterInfos.add(new PyParameterInfo(-1, "**kwargs", "", false));
-        return parameterInfos;
-      }
-    };
-    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, methodDescriptor);
+  @Override
+  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
+    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, createMethodDescriptor((PyFunction)startElement));
     dialog.show();
+  }
+
+  @NotNull
+  private PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
+    return new PyMethodDescriptor(function) {
+        @Override
+        public List<PyParameterInfo> getParameters() {
+          final List<PyParameterInfo> result = new ArrayList<>();
+          final List<PyParameterInfo> originalParams = super.getParameters();
+          final PeekingIterator<Pair<Integer, PyParameterInfo>> extra = Iterators.peekingIterator(myExtraParameters.iterator());
+          while (extra.hasNext() && extra.peek().getFirst() < 0) {
+            result.add(extra.next().getSecond());
+          }
+          for (int i = 0; i < originalParams.size(); i++) {
+            result.add(originalParams.get(i));
+            while (extra.hasNext() && extra.peek().getFirst() == i) {
+              result.add(extra.next().getSecond());
+            }
+          }
+          return result;
+        }
+      };
   }
 
   @Override

@@ -70,7 +70,7 @@ public class PyInitNewSignatureInspection extends PyInspection {
           node.getContainingFile() == cls.getContainingFile()) {
         registerProblem(node.getParameterList(), PyBundle.message(PyNames.NEW.equals(node.getName()) ? "INSP.new.incompatible.to.init"
                                                                                                      : "INSP.init.incompatible.to.new"),
-                        new PyChangeSignatureQuickFix(false));
+                        PyChangeSignatureQuickFix.forMismatchingMethods(node, complementaryMethod));
       }
     }
   }
