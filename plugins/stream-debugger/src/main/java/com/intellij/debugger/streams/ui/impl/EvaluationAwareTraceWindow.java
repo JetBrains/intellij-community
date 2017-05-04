@@ -102,7 +102,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final List<ResolvedTrace> traces = resolvedTrace.getResolvedTraces();
     assert myTabContents.size() == traces.size() + 1;
 
-    List<TraceController> controllers = createControllers(resolvedTrace.getResolvedTraces());
+    List<TraceControllerImpl> controllers = createControllers(resolvedTrace.getResolvedTraces());
 
     final CollectionView sourceView = new CollectionView("Source", context, traces.get(0).getValues());
     controllers.get(0).register(sourceView);
@@ -127,9 +127,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
                                                                        Collections.singletonList(resultTraceElement),
                                                                        Collections.emptyMap(),
                                                                        Collections.emptyMap());
-      final TraceControllerImpl controller = new TraceControllerImpl(terminationTrace);
-      controller.register(view);
-      controllers.add(controller);
+      final TraceControllerImpl resultController = new TraceControllerImpl(terminationTrace);
+      resultController.register(view);
+      if (!controllers.isEmpty()) {
+        final TraceControllerImpl previousLastController = controllers.get(controllers.size() - 1);
+        previousLastController.setNextListener(resultController);
+        resultController.setPreviousListener(previousLastController);
+      }
+      controllers.add(resultController);
     }
     else {
       final String text =
@@ -173,8 +178,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return myCenterPane;
   }
 
-  private static List<TraceController> createControllers(@NotNull List<ResolvedTrace> traces) {
-    List<TraceController> controllers = new ArrayList<>();
+  private static List<TraceControllerImpl> createControllers(@NotNull List<ResolvedTrace> traces) {
+    List<TraceControllerImpl> controllers = new ArrayList<>();
     TraceControllerImpl prev = null;
     for (final ResolvedTrace trace : traces) {
       final TraceControllerImpl current = new TraceControllerImpl(trace);
