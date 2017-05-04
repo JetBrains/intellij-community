@@ -53,7 +53,8 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class MethodsChainsCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodsChainsCompletionContributor.class);
-  public static final CompletionType COMPLETION_TYPE = ApplicationManager.getApplication().isUnitTestMode() ? CompletionType.BASIC : CompletionType.SMART;
+  private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
+  public static final CompletionType COMPLETION_TYPE = UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
 
   @SuppressWarnings("unchecked")
   public MethodsChainsCompletionContributor() {
@@ -77,12 +78,14 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
             result.passResult(completionResult);
           });
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
-          Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
-          while (it.hasNext()) {
-            LookupElement lookupElement = it.next();
-            PsiElement psi = lookupElement.getPsiElement();
-            if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
-              it.remove();
+          if (!UNIT_TEST_MODE) {
+            Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
+            while (it.hasNext()) {
+              LookupElement lookupElement = it.next();
+              PsiElement psi = lookupElement.getPsiElement();
+              if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
+                it.remove();
+              }
             }
           }
           result.addAllElements(elementsFoundByMethodsChainsSearch);
