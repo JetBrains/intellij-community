@@ -250,6 +250,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
+    JBPopup popup = component instanceof JComponent ? (JBPopup)((JComponent)component).getRootPane().getClientProperty(JBPopup.KEY) : null;
+    if (popup != null) {
+      return popup.isModalContext();
+    }
+
     Window window = UIUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
@@ -271,19 +276,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    boolean isFloatingDecorator = window instanceof FloatingDecorator;
-
-    boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
-    if (isPopup) {
-      if (component instanceof JWindow) {
-        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(JBPopup.KEY);
-        if (popup != null) {
-          return popup.isModalContext();
-        }
-      }
-    }
-
-    return !isFloatingDecorator;
+    return !(window instanceof FloatingDecorator);
   }
 
   private boolean inWaitForSecondStrokeState() {
