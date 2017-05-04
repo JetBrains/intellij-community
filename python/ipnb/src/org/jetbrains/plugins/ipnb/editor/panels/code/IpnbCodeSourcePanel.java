@@ -53,13 +53,11 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
   private Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final IpnbCodePanel myParent;
-  @NotNull private final String mySource;
 
   public IpnbCodeSourcePanel(@NotNull final Project project, @NotNull final IpnbCodePanel parent, @NotNull final IpnbCodeCell cell) {
     super(cell, new HorizontalLayout(5));
     myProject = project;
     myParent = parent;
-    mySource = cell.getSourceAsString();
     final JComponent panel = createViewPanel();
     add(panel);
     addRightClickMenu();
@@ -210,7 +208,7 @@ public class IpnbCodeSourcePanel extends IpnbPanel<JComponent, IpnbCodeCell> imp
         final MouseEvent mouseEvent = e.getMouseEvent();
         if (SwingUtilities.isRightMouseButton(mouseEvent) && mouseEvent.getClickCount() == 1) {
           final ListPopup menu = createPopupMenu(new DefaultActionGroup(new IpnbMergeCellAboveAction(), new IpnbMergeCellBelowAction(),
-                                                                        new IpnbSplitCellAction()));
+                                                                        new IpnbSplitCellAction(), new IpnbToggleLineNumbersAction(myParent)));
           menu.show(RelativePoint.fromScreen(e.getMouseEvent().getLocationOnScreen()));
         }
       }
