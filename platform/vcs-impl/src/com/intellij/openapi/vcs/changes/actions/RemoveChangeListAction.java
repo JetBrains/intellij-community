@@ -48,6 +48,9 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(visible);
+    presentation.setText(changeLists != null && changeLists.length > 1
+                         ? ActionsBundle.message("action.ChangesView.RemoveChangeList.multiple.text")
+                         : ActionsBundle.message("action.ChangesView.RemoveChangeList.text"));
     if (e.getPlace().equals(ActionPlaces.CHANGES_VIEW_POPUP)) {
       presentation.setVisible(visible);
     }
