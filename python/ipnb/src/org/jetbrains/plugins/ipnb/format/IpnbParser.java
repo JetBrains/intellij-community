@@ -579,7 +579,12 @@ public class IpnbParser {
       }
       final JsonElement number = object.get("prompt_number");
       if (number != null) {
-        cellRaw.prompt_number = number.getAsInt();
+        if ("*".equals(number.getAsString())) {
+          cellRaw.prompt_number = null;
+        }
+        else {
+          cellRaw.prompt_number = number.getAsInt();
+        }
       }
       return cellRaw;
     }
