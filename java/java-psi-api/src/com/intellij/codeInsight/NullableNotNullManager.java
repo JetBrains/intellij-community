@@ -44,7 +44,8 @@ public abstract class NullableNotNullManager {
   private static final String JAVAX_ANNOTATION_NULLABLE = "javax.annotation.Nullable";
   private static final String JAVAX_ANNOTATION_NONNULL = "javax.annotation.Nonnull";
 
-  static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, JAVAX_ANNOTATION_NULLABLE,
+  static final String[] DEFAULT_NULLABLES = {AnnotationUtil.NULLABLE, 
+    JAVAX_ANNOTATION_NULLABLE, "javax.annotation.CheckForNull",
     "edu.umd.cs.findbugs.annotations.Nullable", "android.support.annotation.Nullable"
   };
 
