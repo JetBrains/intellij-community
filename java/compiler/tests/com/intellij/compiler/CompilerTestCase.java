@@ -271,16 +271,7 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         createTestProjectStructure(myModuleRoot);
         setupMainModuleRootModel();
 
-        final File compilerSystemDir = CompilerPaths.getCompilerSystemDirectory(myProject);
-        compilerSystemDir.mkdirs();
-        final File[] files = CompilerPaths.getCompilerSystemDirectory().listFiles();
-        if (files != null) {
-          for (File file : files) {
-            if (file.isDirectory()) {
-              myFilesToDelete.add(file);
-            }
-          }
-        }
+        myFilesToDelete.add(CompilerPaths.getCompilerSystemDirectory(myProject).getParentFile());
 
         // load data
         //if (new File(testDataPath).exists()) {
