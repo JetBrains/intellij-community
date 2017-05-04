@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,8 +64,6 @@ public class GroovyConsole {
   private final ConsoleView myConsoleView;
   private final ProcessHandler myProcessHandler;
 
-  private boolean first = true;
-
   public GroovyConsole(Project project, RunContentDescriptor descriptor, ConsoleView view, ProcessHandler handler) {
     myProject = project;
     myContentDescriptor = descriptor;
@@ -74,18 +72,11 @@ public class GroovyConsole {
   }
 
   private void doExecute(@NotNull String command) {
-    // dirty hack
-    if (first) {
-      first = false;
-    }
-    else {
+    for (String line : command.trim().split("\n")) {
+      myConsoleView.print("> ", ConsoleViewContentType.USER_INPUT);
+      myConsoleView.print(line, ConsoleViewContentType.USER_INPUT);
       myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
-    if (!command.endsWith("\n")) command += "\n";
-    myConsoleView.print("> ", ConsoleViewContentType.USER_INPUT);
-    myConsoleView.print(command, ConsoleViewContentType.NORMAL_OUTPUT);
-    myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
-    myConsoleView.print("Result: ", ConsoleViewContentType.SYSTEM_OUTPUT);
     send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"));
   }
 
@@ -150,7 +141,7 @@ public class GroovyConsole {
     consoleStateService.setFileModule(contentFile, module);
     final String title = consoleStateService.getSelectedModuleTitle(contentFile);
 
-    final ConsoleViewImpl consoleView = new ConsoleViewImpl(project, true);
+    final ConsoleViewImpl consoleView = new GroovyConsoleView(project);
     final RunContentDescriptor descriptor = new RunContentDescriptor(consoleView, processHandler, new JPanel(new BorderLayout()), title);
     final GroovyConsole console = new GroovyConsole(project, descriptor, consoleView, processHandler);
 
