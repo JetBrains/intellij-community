@@ -148,8 +148,7 @@ class TaskItemProvider implements ChooseByNameItemProvider, Disposable {
       limit = GotoTaskAction.PAGE_SIZE;
       myCurrentOffset += GotoTaskAction.PAGE_SIZE;
     }
-    List<Task> tasks = TaskSearchSupport.getRepositoriesTasks(TaskManager.getManager(myProject),
-                                                              pattern, offset, limit, true, everywhere, cancelled);
+    List<Task> tasks = TaskSearchSupport.getRepositoriesTasks(myProject, pattern, offset, limit, true, everywhere, cancelled);
     myOldEverywhere = everywhere;
     myOldPattern = pattern;
     return tasks;

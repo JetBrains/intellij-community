@@ -6,7 +6,7 @@ import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -25,7 +25,7 @@ public class BugzillaRepositoryType extends TaskRepositoryType<BugzillaRepositor
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Bugzilla;
+    return TasksCoreIcons.Bugzilla;
   }
 
   @NotNull

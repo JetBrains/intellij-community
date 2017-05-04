@@ -9,7 +9,7 @@ import com.intellij.tasks.mantis.model.IssueHeaderData;
 import com.intellij.tasks.mantis.model.IssueNoteData;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +101,7 @@ public class MantisTask extends Task {
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Mantis;
+    return TasksCoreIcons.Mantis;
   }
 
   @NotNull

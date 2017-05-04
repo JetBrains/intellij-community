@@ -20,7 +20,9 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Ref;
+import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskProjectConfiguration;
@@ -78,7 +80,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
 
     assertNull(notificationRef.get());
 
-    myTaskManager.getIssues("");
+    TaskSearchSupport.getRepositoriesTasks(getProject(), "", 0, 100, true, false, new EmptyProgressIndicator());
 
     assertNotNull(notificationRef.get());
   }
@@ -122,7 +124,7 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertEquals(1, issues.size());
 
     stopper.set(Boolean.TRUE);
-    issues = myTaskManager.getIssues("");
+    TaskSearchSupport.getRepositoriesTasks(getProject(), "", 0, 100, true, false, new EmptyProgressIndicator());
     assertEquals(1, issues.size());
   }
 

@@ -15,12 +15,10 @@
  */
 package com.intellij.tasks.impl;
 
-import com.intellij.notification.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,8 +34,6 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.VcsType;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.tasks.*;
-import com.intellij.tasks.actions.TaskSearchSupport;
-import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.util.ArrayUtil;
@@ -60,7 +56,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.Timer;
-import javax.swing.event.HyperlinkEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.net.SocketTimeoutException;
@@ -92,7 +87,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return i == 0 ? Comparing.compare(o2.getCreated(), o1.getCreated()) : i;
   };
   private static final Convertor<Task, String> KEY_CONVERTOR = o -> o.getId();
-  static final String TASKS_NOTIFICATION_GROUP = "Task Group";
 
   private final Project myProject;
 
@@ -793,7 +787,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         myBadRepositories.remove(repository);
         if (issues == null) issues = new ArrayList<>(tasks.length);
         if (!repository.isSupported(TaskRepository.NATIVE_SEARCH) && request != null) {
-          List<Task> filteredTasks = TaskSearchSupport.filterTasks(request, ContainerUtil.list(tasks));
+          List<Task> filteredTasks = TaskUtil.filterTasks(request, ContainerUtil.list(tasks));
           ContainerUtil.addAll(issues, filteredTasks);
         }
         else {
@@ -820,32 +814,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         }
         myBadRepositories.add(repository);
         if (forceRequest) {
-          notifyAboutConnectionFailure(repository, reason);
+          throw new RequestFailedException(repository, reason);
         }
       }
     }
     return issues;
-  }
-
-  private void notifyAboutConnectionFailure(final TaskRepository repository, String details) {
-    Notifications.Bus.register(TASKS_NOTIFICATION_GROUP, NotificationDisplayType.BALLOON);
-    String content = "<p><a href=\"\">Configure server...</a></p>";
-    if (!StringUtil.isEmpty(details)) {
-      content = "<p>" + details + "</p>" + content;
-    }
-    Notifications.Bus.notify(new Notification(TASKS_NOTIFICATION_GROUP, "Cannot connect to " + repository.getUrl(),
-                                              content, NotificationType.WARNING,
-                                              new NotificationListener() {
-                                                public void hyperlinkUpdate(@NotNull Notification notification,
-                                                                            @NotNull HyperlinkEvent event) {
-                                                  TaskRepositoriesConfigurable configurable =
-                                                    new TaskRepositoriesConfigurable(myProject);
-                                                  ShowSettingsUtil.getInstance().editConfigurable(myProject, configurable);
-                                                  if (!ArrayUtil.contains(repository, getAllRepositories())) {
-                                                    notification.expire();
-                                                  }
-                                                }
-                                              }), myProject);
   }
 
   @Override
@@ -962,16 +935,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myChangeListListener;
   }
 
-  /**
-   * Reconfigure repository's HTTP clients probably to apply new connection settings.
-   */
-  public void reconfigureRepositoryClients() {
-    for (TaskRepository repository : myRepositories) {
-      if (repository instanceof BaseRepositoryImpl) {
-        ((BaseRepositoryImpl)repository).reconfigureClient();
-      }
-    }
-  }
 
   public static class Config {
 

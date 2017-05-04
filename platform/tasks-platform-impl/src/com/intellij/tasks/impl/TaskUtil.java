@@ -26,22 +26,19 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
 import com.intellij.util.JdomKt;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.http.HttpResponse;
-import org.apache.http.protocol.HTTP;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -49,7 +46,7 @@ import java.text.ParseException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -269,50 +266,6 @@ public class TaskUtil {
     }
   }
 
-  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
-    if (logger.isDebugEnabled() && response.hasBeenUsed()) {
-      try {
-        String content = TaskResponseUtil.getResponseContentAsString(response);
-        Header header = response.getRequestHeader(HTTP.CONTENT_TYPE);
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
-        if (contentType.contains("xml")) {
-          prettyFormatXmlToLog(logger, content);
-        }
-        else if (contentType.contains("json")) {
-          prettyFormatJsonToLog(logger, content);
-        }
-        else {
-          logger.debug(content);
-        }
-      }
-      catch (IOException e) {
-        logger.error(e);
-      }
-    }
-  }
-
-  public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpResponse response) {
-    if (logger.isDebugEnabled()) {
-      try {
-        String content = TaskResponseUtil.getResponseContentAsString(response);
-        org.apache.http.Header header = response.getEntity().getContentType();
-        String contentType = header == null ? "text/plain" : header.getElements()[0].getName().toLowerCase(Locale.ENGLISH);
-        if (contentType.contains("xml")) {
-          prettyFormatXmlToLog(logger, content);
-        }
-        else if (contentType.contains("json")) {
-          prettyFormatJsonToLog(logger, content);
-        }
-        else {
-          logger.debug(content);
-        }
-      }
-      catch (IOException e) {
-        logger.error(e);
-      }
-    }
-  }
-
   /**
    * Perform standard {@code application/x-www-urlencoded} translation for string {@code s}.
    *
@@ -326,5 +279,24 @@ public class TaskUtil {
     catch (UnsupportedEncodingException e) {
       throw new AssertionError("UTF-8 is not supported");
     }
+  }
+
+  public static List<Task> filterTasks(final String pattern, final List<Task> tasks) {
+    final com.intellij.util.text.Matcher matcher = getMatcher(pattern);
+    return ContainerUtil.mapNotNull(tasks,
+                                    (NullableFunction<Task, Task>)task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
+  }
+
+  private static com.intellij.util.text.Matcher getMatcher(String pattern) {
+    StringTokenizer tokenizer = new StringTokenizer(pattern, " ");
+    StringBuilder builder = new StringBuilder();
+    while (tokenizer.hasMoreTokens()) {
+      String word = tokenizer.nextToken();
+      builder.append('*');
+      builder.append(word);
+      builder.append("* ");
+    }
+
+    return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
   }
 }

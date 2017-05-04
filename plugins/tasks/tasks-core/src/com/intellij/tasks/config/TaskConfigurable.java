@@ -24,6 +24,8 @@ import com.intellij.openapi.options.binding.ControlBinder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.tasks.TaskManager;
+import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.components.JBCheckBox;
@@ -121,8 +123,12 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     Integer connectionTimeout = Integer.valueOf(myConnectionTimeout.getText());
     TaskSettings.getInstance().CONNECTION_TIMEOUT = connectionTimeout;
 
-    if (manager instanceof TaskManagerImpl && connectionTimeout != oldConnectionTimeout) {
-      ((TaskManagerImpl)manager).reconfigureRepositoryClients();
+    if (connectionTimeout != oldConnectionTimeout) {
+      for (TaskRepository repository : manager.getAllRepositories()) {
+        if (repository instanceof BaseRepositoryImpl) {
+          ((BaseRepositoryImpl)repository).reconfigureClient();
+        }
+      }
     }
   }
 

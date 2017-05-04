@@ -18,7 +18,7 @@ package com.intellij.tasks.trello;
 
 import com.intellij.tasks.trello.model.TrelloLabel;
 import com.intellij.util.ui.UIUtil;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 
 import javax.swing.*;
 import java.awt.*;
@@ -44,7 +44,7 @@ public class TrelloIconBuilder {
 
   public Icon buildIcon(Set<TrelloLabel.LabelColor> colorSet) {
     if (colorSet.isEmpty()) {
-      return TasksIcons.Trello;
+      return TasksCoreIcons.Trello;
     }
     Image image = CACHE.get(colorSet);
     if (image == null) {

@@ -1,12 +1,16 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.TaskRepository;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
 public class RequestFailedException extends RuntimeException {
+
+  private TaskRepository myRepository;
+
   @NotNull
   public static RequestFailedException forStatusCode(int code) {
     return new RequestFailedException(TaskBundle.messageForStatusCode(code));
@@ -22,6 +26,11 @@ public class RequestFailedException extends RuntimeException {
     return new RequestFailedException(TaskBundle.message("failure.server.message", message));
   }
 
+  public RequestFailedException(TaskRepository repository, String message) {
+    super(message);
+    myRepository = repository;
+  }
+
   public RequestFailedException(String message) {
     super(message);
   }
@@ -32,5 +41,9 @@ public class RequestFailedException extends RuntimeException {
 
   public RequestFailedException(Throwable cause) {
     super(cause);
+  }
+
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 }

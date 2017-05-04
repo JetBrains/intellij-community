@@ -16,7 +16,6 @@
 
 package com.intellij.tasks;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
