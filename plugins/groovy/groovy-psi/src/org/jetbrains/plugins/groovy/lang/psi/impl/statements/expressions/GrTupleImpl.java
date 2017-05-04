@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -41,8 +42,8 @@ public class GrTupleImpl extends GroovyPsiElementImpl implements GrTuple {
 
   @NotNull
   @Override
-  public GrExpression[] getExpressions() {
-    return findChildrenByClass(GrExpression.class);
+  public GrReferenceExpression[] getExpressions() {
+    return findChildrenByClass(GrReferenceExpression.class);
   }
 
   @Nullable
