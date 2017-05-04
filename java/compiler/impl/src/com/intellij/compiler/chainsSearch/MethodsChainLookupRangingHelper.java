@@ -166,7 +166,7 @@ public class MethodsChainLookupRangingHelper {
           parametersMap.put(i, createSubLookup(relevantStringElement));
         }
       }
-      else if (!ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
+      else if (!ChainCompletionContext.isWidelyUsed(type)) {
         Collection<PsiElement> contextVariables = context.getQualifiers(type).collect(Collectors.toList());
         PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
         if (contextVariable != null) {
