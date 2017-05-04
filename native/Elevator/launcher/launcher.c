@@ -25,6 +25,60 @@ static _PIPE_CONNECTION_INFO g_stdOutPipe, g_stdErrPipe, g_stdInPipe;
 		pipeInfo.bFromExternalProcess = bFromExternalProcessDirection; \
 }
 
+// Returns full command line excluding program itself
+static WCHAR* _GetCommandLineNoProgram()
+{
+	WCHAR* sCommandLine = GetCommandLine();
+	int nNumberOfArgs;
+	WCHAR** args = CommandLineToArgvW(sCommandLine, &nNumberOfArgs);
+	WCHAR* sProgram = args[0];
+	size_t nProgramLengthChars = wcslen(sProgram);
+	LocalFree(args);
+	if (sCommandLine[0] == L'"')
+	{
+		nProgramLengthChars += 2; //Program name is in quotes
+	}
+	WCHAR * sCommandLineAfterProgram = sCommandLine + nProgramLengthChars;
+	for (; sCommandLineAfterProgram[0] == L' '; sCommandLineAfterProgram++) {} // Remove spaces after program
+
+	return sCommandLineAfterProgram;
+}
+
+// Adds argument to command line. 
+// pchCurrentBufferSize should be *psCommandLine size. Incremeted automatically.
+// psCommandLine to append to
+// sStringToAdd arugment to add
+// Escaping is not supported, so string can't have quotes
+static void _AddStringToCommandLine(_Inout_ size_t* pchCurrentBufferChars, _Inout_ WCHAR** psCommandLine, _In_ WCHAR* sStringToAdd, _In_ BOOL bAddQuotes)
+{
+	// TODO: Doc suboptimal. Use line length instead of wcslen(*psCommandLine) ("shlemiel the painter algorithm")	
+
+	size_t nCurrentLineLengthChars = wcslen(*psCommandLine);
+	size_t nStringToAddLengthChars = wcslen(sStringToAdd);
+	size_t nSpaceLeftInBufferChars = (*pchCurrentBufferChars) - nCurrentLineLengthChars;
+	// "\"new_string_goes_here\" "
+	size_t nRequiredSizeChars = (*pchCurrentBufferChars) + nStringToAddLengthChars;
+	if (bAddQuotes)
+	{
+		nRequiredSizeChars += wcslen(L"\"\" ");
+	}
+	if (nSpaceLeftInBufferChars < nRequiredSizeChars)
+	{
+		// Not enough space, add more space
+		(*pchCurrentBufferChars) = nRequiredSizeChars;
+		*psCommandLine = realloc(*psCommandLine, sizeof(WCHAR) * (*pchCurrentBufferChars));
+	}
+	WCHAR* endOfCommandLine = (*psCommandLine) + nCurrentLineLengthChars;
+	if (bAddQuotes) {
+		wsprintf(endOfCommandLine, L"\"%ls\" ", sStringToAdd);
+	}
+	else
+	{
+		wcscat_s((*psCommandLine), (*pchCurrentBufferChars), sStringToAdd);
+	}
+}
+
+
 // ThreadProc to connect pipe to remote process
 static DWORD _CreateConnectPipe(_PIPE_CONNECTION_INFO* pPipeInfo)
 {
@@ -112,19 +166,6 @@ static void _LaunchPipeThread(_PIPE_CONNECTION_INFO* pPipeInfo, _Out_opt_ PHANDL
 	*pDescriptorFlags |= pPipeInfo->nDescriptor;
 }
 
-static void _AddRestOfCommandLine(WCHAR** psNewCommandLine)
-{
-	// https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
-	WCHAR* sOriginalCommandLine = GetCommandLine();
-	int nNumberOfOriginalArgs;
-	WCHAR** sOriginalArgs = CommandLineToArgvW(sOriginalCommandLine, &nNumberOfOriginalArgs);
-	size_t nCommandSizeChars = wcslen(sOriginalArgs[0]);
-	WCHAR* sOriginalCommandLineNoCommand = (sOriginalCommandLine + nCommandSizeChars);
-	size_t nNewBufferSizeChars = (wcslen(*psNewCommandLine) + wcslen(sOriginalCommandLineNoCommand) + 1);
-	*psNewCommandLine = realloc(*psNewCommandLine, nNewBufferSizeChars * sizeof(WCHAR));
-	wcscat_s(*psNewCommandLine, nNewBufferSizeChars, sOriginalCommandLineNoCommand);
-}
-
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
 
@@ -158,16 +199,23 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	size_t chCurrentSize = 1;
 	WCHAR* sNewCommandLine = calloc(1, sizeof(WCHAR));
 
-	ElevAddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sPid);
-	ElevAddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sCurrentDirectory);
+	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sPid, TRUE);
+	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sCurrentDirectory, TRUE);
 	WCHAR sDescriptorFlags[3];
 	_itow_s(nDescriptorFlags, sDescriptorFlags, 2, 10);
-	ElevAddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sDescriptorFlags);
+	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, sDescriptorFlags, TRUE);
 	
 
-	// Add arguments provided by user to the tail of command line
-	_AddRestOfCommandLine(&sNewCommandLine);
+	_AddStringToCommandLine(&chCurrentSize, &sNewCommandLine, ELEV_COMMAND_LINE_SEPARATOR, FALSE);
+
 	
+	// Add arguments provided by user to the tail of command line
+	// https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
+	WCHAR * sOriginalCommandLineNoProgram = _GetCommandLineNoProgram();
+	size_t nNewBufferSizeChars = wcslen(sOriginalCommandLineNoProgram) + wcslen(sNewCommandLine) + 1;
+	sNewCommandLine = realloc(sNewCommandLine, nNewBufferSizeChars * sizeof(WCHAR));
+	wcscat_s(sNewCommandLine, nNewBufferSizeChars, sOriginalCommandLineNoProgram);
+		
 	// Get full path to elevator
 	WCHAR sPath[MAX_PATH + 1];
 	if(!GetModuleFileName(NULL, sPath, MAX_PATH))

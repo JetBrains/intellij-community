@@ -50,30 +50,21 @@ static void _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* stre
 #define _ARG_PID 1
 #define _ARG_DIR 2
 #define _ARG_DESCRIPTORS 3
-#define _ARG_PROG 4
 
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 {
-	if (argc <= _ARG_PROG)
+	if (argc <= _ARG_DESCRIPTORS)
 	{
-		fwprintf(stderr, L"Usage PIDD Directory DescriptorsFlag ProgramToRun Arguments");
+		fwprintf(stderr, L"Bad command line");
 		return 1;
 	}
 	SetCurrentDirectory(argv[_ARG_DIR]);
 	DWORD nParentPid = _wtol(argv[_ARG_PID]);
 	int nDescriptorFlags = _wtoi(argv[_ARG_DESCRIPTORS]);
-	
+		
 
-	//TODO: Extract to shared place to prevent copy/paste
-	size_t chCurrentSize = 1;
-	WCHAR* sCommandLine = calloc(1, sizeof(WCHAR));
-
-	// Add arguments
-	for (int i = _ARG_PROG; i < argc; i++)
-	{
-		ElevAddStringToCommandLine(&chCurrentSize, &sCommandLine, argv[i]);
-	}
-
+	// Add rest commandline
+	WCHAR* sCommandLine = wcsstr(GetCommandLine(), ELEV_COMMAND_LINE_SEPARATOR) + wcslen(ELEV_COMMAND_LINE_SEPARATOR);
 
 	// Fix console
 	FreeConsole();
@@ -81,8 +72,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	{
 		fwprintf(stderr, L"Failed to attach console: %d", GetLastError());
 		return 1;
-	}
-
+	}	
+	
 	STARTUPINFO startupInfo;
 	ZeroMemory(&startupInfo, sizeof(startupInfo));
 	startupInfo.cb = sizeof(startupInfo);
@@ -95,7 +86,8 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	HANDLE parentProcess = OpenProcess(SYNCHRONIZE, FALSE, nParentPid);
 	
 	PROCESS_INFORMATION processInfo;
-	if (!CreateProcess(argv[_ARG_PROG], sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))
+	
+	if (!CreateProcess(NULL, sCommandLine, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &startupInfo, &processInfo))
 	{
 		fwprintf(stderr, L"Error launching process. Exit code %ld, command was %ls", GetLastError(), sCommandLine);
 		return 1;

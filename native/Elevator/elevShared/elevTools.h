@@ -22,8 +22,6 @@
 // Pipe name
 typedef wchar_t ELEV_PIPE_NAME[32];
 
-// Adds argument to command line. 
-// pchCurrentBufferSize should be *psCommandLine size. Incremeted automatically.
-// psCommandLine to append to
-// sStringToAdd arugment to add
-extern void ElevAddStringToCommandLine(_Inout_ size_t* pchCurrentBufferSize, _Inout_ WCHAR** psCommandLine, _In_ WCHAR* sStringToAdd);
+// Separates arguments provided to elevator and user command line
+#define ELEV_COMMAND_LINE_SEPARATOR L"--::--"
+
