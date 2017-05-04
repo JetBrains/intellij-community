@@ -103,40 +103,40 @@ class MLSorter : CompletionFinalSorter() {
                                 lookup: LookupImpl,
                                 relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
+        val prefixLength = calcPrefixLength(lookup)
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
-                    val rank: Double = calculateElementRank(lookup, lookupElement, index, relevance) ?: return null
+                    val rank: Double = calculateElementRank(lookupElement, index, relevance, prefixLength) ?: return null
                     lookupElement to rank
                 }
                 .sortedByDescending { it.second }
                 .map { it.first }
     }
 
+    private fun calcPrefixLength(lookup: LookupImpl): Int {
+        return lookup.lookupOriginalStart - lookup.editor.caretModel.offset
+    }
 
-    private fun getCachedRankInfo(lookup: LookupImpl, element: LookupElement, position: Int): ItemRankInfo? {
-        val currentPrefixLength = lookup.getPrefixLength(element)
-
+    private fun getCachedRankInfo(element: LookupElement, prefixLength: Int, position: Int): ItemRankInfo? {
         val cached = cachedScore[element]
-        if (cached != null && currentPrefixLength == cached.prefixLength && cached.positionBefore == position) {
+        if (cached != null && prefixLength == cached.prefixLength && cached.positionBefore == position) {
             return cached
         }
-
         return null
     }
 
 
-    private fun calculateElementRank(lookup: LookupImpl, 
-                                     element: LookupElement, 
+    private fun calculateElementRank(element: LookupElement, 
                                      position: Int, 
-                                     relevance: List<Pair<String, Any?>>): Double?
+                                     relevance: List<Pair<String, Any?>>, 
+                                     prefixLength: Int): Double? 
     {
-        val cachedWeight = getCachedRankInfo(lookup, element, position)
+        val cachedWeight = getCachedRankInfo(element, prefixLength, position)
         if (cachedWeight != null) {
             return cachedWeight.mlRank
         }
 
-        val prefixLength = lookup.getPrefixLength(element)
         val elementLength = element.lookupString.length
 
         val state = LookupElementInfo(position, query_length = prefixLength, result_length = elementLength)
