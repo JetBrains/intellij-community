@@ -13,88 +13,79 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.project;
+@file:JvmName("ProjectUtilCore")
+package com.intellij.openapi.project
 
-import com.intellij.ide.highlighter.ProjectFileType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.roots.JdkOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.LibraryUtil;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileProvider;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.highlighter.ProjectFileType
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.JdkOrderEntry
+import com.intellij.openapi.roots.libraries.LibraryUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileProvider
+import com.intellij.openapi.vfs.VirtualFile
+import java.util.*
 
-import java.util.Locale;
+fun displayUrlRelativeToProject(file: VirtualFile,
+                                url: String,
+                                project: Project,
+                                includeFilePath: Boolean,
+                                keepModuleAlwaysOnTheLeft: Boolean): String {
+  var url = url
+  val baseDir = project.baseDir
+  if (baseDir != null && includeFilePath) {
 
-public class ProjectUtilCore {
-  public static String displayUrlRelativeToProject(@NotNull VirtualFile file,
-                                                   @NotNull String url,
-                                                   @NotNull Project project,
-                                                   boolean includeFilePath,
-                                                   boolean keepModuleAlwaysOnTheLeft) {
-    final VirtualFile baseDir = project.getBaseDir();
-    if (baseDir != null && includeFilePath) {
-      //noinspection ConstantConditions
-      final String projectHomeUrl = baseDir.getPresentableUrl();
-      if (url.startsWith(projectHomeUrl)) {
-        url = "..." + url.substring(projectHomeUrl.length());
-      }
+    val projectHomeUrl = baseDir.presentableUrl
+    if (url.startsWith(projectHomeUrl)) {
+      url = "..." + url.substring(projectHomeUrl.length)
     }
+  }
 
-    if (SystemInfo.isMac && file.getFileSystem() instanceof LocalFileProvider) {
-      final VirtualFile fileForJar = ((LocalFileProvider)file.getFileSystem()).getLocalVirtualFileFor(file);
-      if (fileForJar != null) {
-        final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(file, project);
-        if (libraryEntry != null) {
-          if (libraryEntry instanceof JdkOrderEntry) {
-            url = url + " - [" + ((JdkOrderEntry)libraryEntry).getJdkName() + "]";
-          }
-          else {
-            url = url + " - [" + libraryEntry.getPresentableName() + "]";
-          }
+  if (SystemInfo.isMac && file.fileSystem is LocalFileProvider) {
+    val fileForJar = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
+    if (fileForJar != null) {
+      val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
+      if (libraryEntry != null) {
+        if (libraryEntry is JdkOrderEntry) {
+          url = url + " - [" + libraryEntry.jdkName + "]"
         }
         else {
-          url = url + " - [" + fileForJar.getName() + "]";
+          url = url + " - [" + libraryEntry.presentableName + "]"
         }
       }
+      else {
+        url = url + " - [" + fileForJar.name + "]"
+      }
     }
-
-    final Module module = ModuleUtilCore.findModuleForFile(file, project);
-    if (module == null) return url;
-    return !keepModuleAlwaysOnTheLeft && SystemInfo.isMac ?
-           url + " - [" + module.getName() + "]" :
-           "[" + module.getName() + "] - " + url;
   }
 
-  @Nullable
-  public static String getPresentableName(@NotNull Project project) {
-    if (project.isDefault()) {
-      return project.getName();
-    }
+  val module = ModuleUtilCore.findModuleForFile(file, project) ?: return url
+  return if (!keepModuleAlwaysOnTheLeft && SystemInfo.isMac)
+    url + " - [" + module.name + "]"
+  else
+    "[" + module.name + "] - " + url
+}
 
-    String location = project.getPresentableUrl();
-    if (location == null) {
-      return null;
-    }
-
-    String projectName = FileUtil.toSystemIndependentName(location);
-    projectName = StringUtil.trimEnd(projectName, "/");
-
-    final int lastSlash = projectName.lastIndexOf('/');
-    if (lastSlash >= 0 && lastSlash + 1 < projectName.length()) {
-      projectName = projectName.substring(lastSlash + 1);
-    }
-
-    if (StringUtil.endsWithIgnoreCase(projectName, ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-      projectName = projectName.substring(0, projectName.length() - ProjectFileType.DOT_DEFAULT_EXTENSION.length());
-    }
-
-    projectName = projectName.toLowerCase(Locale.US).replace(':', '_'); // replace ':' from windows drive names
-    return projectName;
+fun getPresentableName(project: Project): String? {
+  if (project.isDefault) {
+    return project.name
   }
+
+  val location = project.presentableUrl ?: return null
+
+  var projectName = FileUtil.toSystemIndependentName(location)
+  projectName = StringUtil.trimEnd(projectName, "/")
+
+  val lastSlash = projectName.lastIndexOf('/')
+  if (lastSlash >= 0 && lastSlash + 1 < projectName.length) {
+    projectName = projectName.substring(lastSlash + 1)
+  }
+
+  if (StringUtil.endsWithIgnoreCase(projectName, ProjectFileType.DOT_DEFAULT_EXTENSION)) {
+    projectName = projectName.substring(0, projectName.length - ProjectFileType.DOT_DEFAULT_EXTENSION.length)
+  }
+
+  projectName = projectName.toLowerCase(Locale.US).replace(':', '_') // replace ':' from windows drive names
+  return projectName
 }
