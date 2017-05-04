@@ -34,14 +34,12 @@ import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.Comparator;
 
 /**
  * A set of utility methods for working with paths
  */
 public class CompilerPaths {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.compiler.CompilerPaths");
-  private static final Comparator<String> URLS_COMPARATOR = (o1, o2) -> o1.compareTo(o2);
+  private static final Logger LOG = Logger.getInstance(CompilerPaths.class);
 
   /**
    * @return a root directory where generated files for various compilers are stored
@@ -69,7 +67,7 @@ public class CompilerPaths {
 
   /**
    * @param forTestClasses true if directory for test sources, false - for sources.
-   * @return a directory to which the sources (or test sources depending on the second partameter) should be compiled.
+   * @return a directory to which the sources (or test sources depending on the second parameter) should be compiled.
    * Null is returned if output directory is not specified or is not valid
    */
   @Nullable
@@ -156,7 +154,7 @@ public class CompilerPaths {
         return null;
       }
       if (roots.length > 1) {
-        Arrays.sort(roots, URLS_COMPARATOR);
+        Arrays.sort(roots);
       }
       return StringUtil.isEmpty(sourceDirName)? VirtualFileManager.extractPath(roots[0]): VirtualFileManager.extractPath(roots[0]) + "/" + sourceDirName;
     }
