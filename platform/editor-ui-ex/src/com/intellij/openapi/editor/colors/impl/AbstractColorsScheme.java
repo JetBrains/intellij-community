@@ -220,7 +220,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setLineSpacing(float lineSpacing) {
-    myFontPreferences.setLineSpacing(lineSpacing);
+    ensureEditableFontPreferences().setLineSpacing(lineSpacing);
   }
 
   @NotNull
@@ -330,10 +330,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           readSettings(childNode, isDefault, fontScale);
           break;
         case EDITOR_FONT:
-          myFontPreferences = readFontSettings(childNode, isDefault, fontScale.get());
+          myFontPreferences = readFontSettings(childNode, isDefault, fontScale.get(), myFontPreferences.getLineSpacing());
           break;
         case CONSOLE_FONT:
-          myConsoleFontPreferences = readFontSettings(childNode, isDefault, fontScale.get());
+          myConsoleFontPreferences = readFontSettings(childNode, isDefault, fontScale.get(), myConsoleFontPreferences.getLineSpacing());
           break;
         case COLORS_ELEMENT:
           readColors(childNode);
@@ -511,7 +511,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private FontPreferencesImpl readFontSettings(@NotNull Element element,
                                                boolean isDefaultScheme,
-                                               @Nullable Float fontScale) {
+                                               @Nullable Float fontScale,
+                                               float lineSpacing) {
     FontPreferencesImpl preferences = new FontPreferencesImpl();
     preferences.setChangeListener(() -> initFonts());
     List children = element.getChildren(OPTION_ELEMENT);
@@ -532,6 +533,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     else if (fontFamily != null) {
       preferences.addFontFamily(fontFamily);
     }
+    preferences.setLineSpacing(lineSpacing);
     return preferences;
   }
 
@@ -820,7 +822,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setConsoleLineSpacing(float lineSpacing) {
-    myConsoleFontPreferences.setLineSpacing(lineSpacing);
+    ensureEditableConsoleFontPreferences().setLineSpacing(lineSpacing);
   }
 
   protected TextAttributes getFallbackAttributes(@NotNull TextAttributesKey fallbackKey) {

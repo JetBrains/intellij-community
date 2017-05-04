@@ -51,11 +51,11 @@ public class AppEditorFontOptionsPanel extends AbstractFontOptionsPanel {
 
   @Override
   protected float getLineSpacing() {
-    return getFontPreferences().getLineSpacing();
+    return myScheme.getLineSpacing();
   }
 
   @Override
   protected void setCurrentLineSpacing(float lineSpacing) {
-    getFontPreferences().setLineSpacing(lineSpacing);
+    myScheme.setLineSpacing(lineSpacing);
   }
 }

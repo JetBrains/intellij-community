@@ -70,9 +70,5 @@ public class DelegatingFontPreferences implements FontPreferences {
     return myDelegateSupplier.get().getLineSpacing();
   }
 
-  @Override
-  public void setLineSpacing(float lineSpacing) {
-    myDelegateSupplier.get().setLineSpacing(lineSpacing);
-  }
 
 }

@@ -1092,7 +1092,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       else {
         setConsoleFontPreferences(parentScheme.getConsoleFontPreferences());
       }
-      setConsoleLineSpacing(parentScheme.getConsoleLineSpacing());
 
       if (parentScheme.isUseAppFontPreferencesInEditor()) {
         setUseAppFontPreferencesInEditor();

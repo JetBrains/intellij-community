@@ -28,6 +28,7 @@ public interface ModifiableFontPreferences extends FontPreferences {
   void setEffectiveFontFamilies(List<String> fontFamilies);
   void setRealFontFamilies(List<String> fontFamilies);
   void setTemplateFontSize(int size);
+  void setLineSpacing(float lineSpacing);
   void resetFontSizes();
   void setFontSize(@NotNull String fontFamily, int size);
 }

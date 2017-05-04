@@ -53,8 +53,6 @@ public interface FontPreferences {
 
   float getLineSpacing();
 
-  void setLineSpacing(float lineSpacing);
-
   /**
    * There is a possible case that particular font family is not available at particular environment (e.g. Monaco under *nix).
    * However, java environment tries to mask that via 'Dialog' fonts, i.e. when we try to create font like
