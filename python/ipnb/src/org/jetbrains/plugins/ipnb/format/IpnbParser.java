@@ -157,7 +157,7 @@ public class IpnbParser {
     final JsonWriter writer = new JsonWriter(stringWriter);
     writer.setIndent(" ");
     gson.toJson(fileRaw, fileRaw.getClass(), writer);
-    return stringWriter.toString();
+    return stringWriter.toString() +"\n";
   }
 
   private static void writeToFile(@NotNull final String path, @NotNull final String json) {
