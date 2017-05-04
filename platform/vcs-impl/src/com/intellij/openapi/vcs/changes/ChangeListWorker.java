@@ -151,7 +151,8 @@ public class ChangeListWorker implements ChangeListsWriteOperations {
 
   @Nullable
   public LocalChangeList getCopyByName(@Nullable String name) {
-    return myMap.get(name);
+    LocalChangeListImpl list = myMap.get(name);
+    return list != null ? list.copy() : null;
   }
 
   @Nullable
