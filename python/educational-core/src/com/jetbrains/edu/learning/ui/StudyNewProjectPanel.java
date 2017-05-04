@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -191,7 +192,19 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
                                        });
               }
               else if (LOGIN_TO_STEPIC.equals(selectedValue)) {
-                EduStepicConnector.doAuthorize(() -> showLoginDialog(true));
+                EduStepicConnector.doAuthorize(() -> showLoginDialog());
+                StepicUser stepicUser = StudySettings.getInstance().getUser();
+                if (stepicUser != null) {
+                  ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                    () -> myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser)),
+                    "Getting Enrolled Courses", true, DefaultProjectFactory.getInstance().getDefaultProject());
+
+                  final List<Course> courses = myGenerator.getCourses(true);
+                  if (courses != null) {
+                    ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
+                  }
+                }
+
               }
             });
           }
@@ -202,17 +215,11 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     });
   }
 
-  public void showLoginDialog(final boolean refreshCourseList) {
+  public void showLoginDialog() {
     OAuthDialog dialog = new OAuthDialog();
     if (dialog.showAndGet()) {
       StepicUser stepicUser = dialog.getStepicUser();
-      assert stepicUser != null;
       StudySettings.getInstance().setUser(stepicUser);
-      myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(stepicUser));
-      final List<Course> courses = myGenerator.getCourses(true);
-      if (courses != null && refreshCourseList) {
-        ApplicationManager.getApplication().invokeLater(() -> refreshCoursesList(courses));
-      }
       setOK();
     }
   }
