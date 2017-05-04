@@ -201,8 +201,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
     if (configuration is ModuleBasedConfiguration<*>) {
-      configuration.configurationModule.module?.let {
-        PathMacroManager.getInstance(it).expandPaths(element)
+      val moduleName = element.getChild("module")?.getAttributeValue("name")
+      if (moduleName != null) {
+        configuration.configurationModule.findModule(moduleName)?.let {
+          PathMacroManager.getInstance(it).expandPaths(element)
+        }
       }
     }
 
