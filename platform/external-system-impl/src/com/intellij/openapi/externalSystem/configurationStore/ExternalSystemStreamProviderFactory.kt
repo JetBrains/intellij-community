@@ -76,23 +76,22 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
             }
           }
         })
-    }
+      project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+        override fun moduleRemoved(project: Project, module: Module) {
+          nameToData.remove(module.name)
+        }
 
-    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object: ModuleListener {
-      override fun moduleRemoved(project: Project, module: Module) {
-        nameToData.remove(module.name)
-      }
-
-      override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
-        for (module in modules) {
-          val oldName = oldNameProvider.`fun`(module)
-          nameToData.get(oldName)?.let {
-            nameToData.remove(oldName)
-            nameToData.put(module.name, it)
+        override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+          for (module in modules) {
+            val oldName = oldNameProvider.`fun`(module)
+            nameToData.get(oldName)?.let {
+              nameToData.remove(oldName)
+              nameToData.put(module.name, it)
+            }
           }
         }
-      }
-    })
+      })
+    }
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
