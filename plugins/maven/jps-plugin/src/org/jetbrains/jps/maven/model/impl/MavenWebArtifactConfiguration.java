@@ -45,6 +45,9 @@ public class MavenWebArtifactConfiguration {
   @Tag("packaging-excludes")
   public List<String> packagingExcludes = new ArrayList<>();
 
+  @Tag("war-root")
+  public String warSourceDirectory;
+
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;
 

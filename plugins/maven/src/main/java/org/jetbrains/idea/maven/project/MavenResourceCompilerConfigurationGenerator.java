@@ -363,6 +363,13 @@ public class MavenResourceCompilerConfigurationGenerator {
       artifactResourceCfg.packagingExcludes.addAll(StringUtil.split(packagingExcludes, ","));
     }
 
+    String warSourceDirectory = warCfg.getChildTextTrim("warSourceDirectory");
+    if (warSourceDirectory == null) warSourceDirectory = "src/main/webapp";
+    if (!FileUtil.isAbsolute(warSourceDirectory)) {
+      warSourceDirectory = mavenProject.getDirectory() + '/' + warSourceDirectory;
+    }
+    artifactResourceCfg.warSourceDirectory = FileUtil.toSystemIndependentName(StringUtil.trimEnd(warSourceDirectory, '/'));
+
     if (webResources != null) {
       for (Element resource : webResources.getChildren("resource")) {
         ResourceRootConfiguration r = new ResourceRootConfiguration();
@@ -404,7 +411,7 @@ public class MavenResourceCompilerConfigurationGenerator {
 
     if (filterWebXml) {
       ResourceRootConfiguration r = new ResourceRootConfiguration();
-      r.directory = mavenProject.getDirectory() + "/src/main/webapp";
+      r.directory = warSourceDirectory;
       r.includes = Collections.singleton("WEB-INF/web.xml");
       r.isFiltered = true;
       r.targetPath = "";
