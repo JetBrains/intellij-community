@@ -53,8 +53,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class MethodsChainsCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodsChainsCompletionContributor.class);
-  private static final boolean IS_UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
-  public static final CompletionType COMPLETION_TYPE = IS_UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
+  public static final CompletionType COMPLETION_TYPE = ApplicationManager.getApplication().isUnitTestMode() ? CompletionType.BASIC : CompletionType.SMART;
 
   @SuppressWarnings("unchecked")
   public MethodsChainsCompletionContributor() {
@@ -69,28 +68,22 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
           final Set<PsiMethod> alreadySuggested = new THashSet<>();
-          if (!IS_UNIT_TEST_MODE) {
-            result.runRemainingContributors(parameters, completionResult -> {
-              LookupElement lookupElement = completionResult.getLookupElement();
-              PsiElement psi = lookupElement.getPsiElement();
-              if (psi instanceof PsiMethod) {
-                alreadySuggested.add((PsiMethod)psi);
-              }
-              result.passResult(completionResult);
-            });
-          }
-          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
-          if (!IS_UNIT_TEST_MODE) {
-            Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
-            while (it.hasNext()) {
-              LookupElement lookupElement = it.next();
-              PsiElement psi = lookupElement.getPsiElement();
-              if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
-                it.remove();
-              }
+          result.runRemainingContributors(parameters, completionResult -> {
+            LookupElement lookupElement = completionResult.getLookupElement();
+            PsiElement psi = lookupElement.getPsiElement();
+            if (psi instanceof PsiMethod) {
+              alreadySuggested.add((PsiMethod)psi);
             }
-          } else {
-            result.stopHere();
+            result.passResult(completionResult);
+          });
+          List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
+          Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
+          while (it.hasNext()) {
+            LookupElement lookupElement = it.next();
+            PsiElement psi = lookupElement.getPsiElement();
+            if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
+              it.remove();
+            }
           }
           result.addAllElements(elementsFoundByMethodsChainsSearch);
         }
