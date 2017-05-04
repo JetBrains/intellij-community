@@ -20,7 +20,6 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -69,9 +68,7 @@ fun isEqualToProjectFileStorePath(project: Project, filePath: String, storePath:
   if (!project.isDirectoryBased) {
     return false
   }
-
-  val store = project.stateStore as IProjectStore
-  return filePath.equals(store.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
+  return filePath.equals(project.stateStore.stateStorageManager.expandMacros(storePath), !SystemInfo.isFileSystemCaseSensitive)
 }
 
 private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {

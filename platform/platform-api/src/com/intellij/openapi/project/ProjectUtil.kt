@@ -128,11 +128,8 @@ fun Project.guessProjectDir() : VirtualFile {
 
   val modules = ModuleManager.getInstance(this).modules
   val module = if (modules.size == 1) modules.first() else modules.find { it.name == this.name }
-  if (module != null) {
-    val roots = ModuleRootManager.getInstance(module).contentRoots
-    roots.firstOrNull()?.let {
-      return it
-    }
+  module?.rootManager?.contentRoots?.firstOrNull()?.let {
+    return it
   }
   return this.baseDir!!
 }
