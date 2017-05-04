@@ -130,6 +130,7 @@ public class CCStepicConnector {
       }
       ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(course, project, postedCourse.getId()));
       StudyTaskManager.getInstance(project).setCourse(postedCourse);
+      showNotification(project, "Course published");
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
@@ -238,6 +239,9 @@ public class CCStepicConnector {
           LOG.error(message + responseString);
           showErrorNotification(project, message, responseString);
         }
+        else {
+          showNotification(project, "Task updated");
+        }
       }
       catch (IOException e) {
         LOG.error(e.getMessage());
@@ -266,6 +270,10 @@ public class CCStepicConnector {
         showErrorNotification(project, message, responseString);
         return -1;
       }
+      else {
+        showNotification(project, "Lesson updated");
+      }
+
       final Lesson postedLesson = new Gson().fromJson(responseString, RemoteCourse.class).getLessons().get(0);
       for (Integer step : postedLesson.steps) {
         deleteTask(step, project);
@@ -291,6 +299,12 @@ public class CCStepicConnector {
     final String detailString = details.get("detail").getAsString();
     final Notification notification =
       new Notification("Push.course", message, detailString, NotificationType.ERROR);
+    notification.notify(project);
+  }
+
+  private static void showNotification(@NotNull Project project, String message) {
+    final Notification notification =
+      new Notification("Push.course", message, message, NotificationType.INFORMATION);
     notification.notify(project);
   }
 
