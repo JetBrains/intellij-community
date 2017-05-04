@@ -188,14 +188,21 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     int shift = centerStrict ? 0 : centerDefault ? 4 : 0;
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
+    Rectangle rowBounds = null;
     if (c instanceof JTree) {
       TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
       if (path != null) {
-        Rectangle pathBounds = ((JTree)c).getPathBounds(path);
-        if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
-          shift += me.getY() - pathBounds.y - 4;
-        }
+        rowBounds = ((JTree)c).getPathBounds(path);
       }
+    }
+    else if (c instanceof JList) {
+      int row = ((JList)c).locationToIndex(me.getPoint());
+      if (row > -1) {
+        rowBounds = ((JList)c).getCellBounds(row, row);
+      }
+    }
+    if (rowBounds != null && rowBounds.y + 4 < me.getY()) {
+      shift += me.getY() - rowBounds.y - 4;
     }
 
     queueShow(comp, me, centerStrict || centerDefault, shift, -shift, -shift);
