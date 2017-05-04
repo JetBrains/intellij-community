@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,20 +28,21 @@ import javax.swing.JComponent
 object ProjectUtil {
   @JvmOverloads
   @JvmStatic
-  fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFilePath: Boolean, includeUniqueFilePath: Boolean = false, keepModuleAlwaysOnTheLeft: Boolean = false): String {
+  fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFilePath: Boolean = true, includeUniqueFilePath: Boolean = false, keepModuleAlwaysOnTheLeft: Boolean = false): String {
     if (file is VirtualFilePathWrapper && file.enforcePresentableName()) {
       return if (includeFilePath) file.presentablePath else file.name
     }
-    val url: String
-    if (includeFilePath) {
-      url = file.presentableUrl
+
+    val url = if (includeFilePath) {
+      file.presentableUrl
     }
     else if (includeUniqueFilePath) {
-      url = UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
+      UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
     }
     else {
-      url = file.name
+      file.name
     }
+
     if (project == null) {
       return url
     }
@@ -49,14 +50,7 @@ object ProjectUtil {
   }
 
   @JvmStatic
-  fun calcRelativeToProjectPath(file: VirtualFile, project: Project): String {
-    return calcRelativeToProjectPath(file, project, true)
-  }
-
-  @JvmStatic
-  fun guessProjectForFile(file: VirtualFile): Project? {
-    return ProjectLocator.getInstance().guessProjectForFile(file)
-  }
+  fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
   /***
    * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
@@ -68,13 +62,7 @@ object ProjectUtil {
       return null
     }
 
-    for (project in ProjectManager.getInstance().openProjects) {
-      if (!project.isDefault && project.isInitialized && !project.isDisposed && ProjectRootManager.getInstance(project).fileIndex.isInContent(file)) {
-        return project
-      }
-    }
-
-    return null
+    return ProjectManager.getInstance().openProjects.firstOrNull { !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file) }
   }
 
   @JvmStatic
@@ -89,17 +77,11 @@ object ProjectUtil {
     if (component != null) {
       project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component))
     }
-    if (project == null) {
-      val openProjects = ProjectManager.getInstance().openProjects
-      if (openProjects.size > 0) project = openProjects[0]
-      if (project == null) {
-        val dataContext = DataManager.getInstance().dataContext
-        project = CommonDataKeys.PROJECT.getData(dataContext)
-      }
-      if (project == null) {
-        project = ProjectManager.getInstance().defaultProject
-      }
-    }
+
+    @Suppress("DEPRECATION")
     return project
+           ?: ProjectManager.getInstance().openProjects.firstOrNull()
+           ?: CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContext)
+           ?: ProjectManager.getInstance().defaultProject
   }
 }
