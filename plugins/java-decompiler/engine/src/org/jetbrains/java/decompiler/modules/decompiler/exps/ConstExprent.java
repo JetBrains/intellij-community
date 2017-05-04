@@ -371,7 +371,8 @@ public class ConstExprent extends Exprent {
     // BYTECHAR and SHORTCHAR => CHAR in the CHAR context
     if (expectedType.equals(VarType.VARTYPE_CHAR) &&
             (constType.equals(VarType.VARTYPE_BYTECHAR) || constType.equals(VarType.VARTYPE_SHORTCHAR))) {
-      if (isPrintableAscii(getIntValue())) {
+      int intValue = getIntValue();
+      if (isPrintableAscii(intValue) || CHAR_ESCAPES.containsKey(intValue)) {
         setConstType(VarType.VARTYPE_CHAR);
       }
     }

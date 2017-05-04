@@ -77,6 +77,12 @@ public class TestPrimitives {
     boolean res = (c > -1);
     res = (c > 0);
     res = (c > 1);
+    res = (c > '\b');
+    res = (c > '\t');
+    res = (c > '\n');
+    res = (c > '\f');
+    res = (c > '\r');
+    res = (c > ' ');
     res = (c > 'a');
     res = (c > 'Z');
     res = (c > 127);
