@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple
 
 /**
  * The expression is a rValue when it is in rValue position or it's a lValue of operator assignment.
@@ -37,7 +37,7 @@ fun GrExpression.isRValue(): Boolean {
 fun GrExpression.isLValue(): Boolean {
   val parent = parent
   return when (parent) {
-    is GrTupleExpression -> true
+    is GrTuple -> true
     is GrAssignmentExpression -> this == parent.lValue
     else -> false
   }

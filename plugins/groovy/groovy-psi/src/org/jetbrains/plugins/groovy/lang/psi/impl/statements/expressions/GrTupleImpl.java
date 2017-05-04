@@ -23,16 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 
-/**
- * @author ilyas
- */
-public class GrTupleExpressionImpl extends GroovyPsiElementImpl implements GrTupleExpression {
+public class GrTupleImpl extends GroovyPsiElementImpl implements GrTuple {
 
-  public GrTupleExpressionImpl(@NotNull ASTNode node) {
+  public GrTupleImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -58,7 +55,7 @@ public class GrTupleExpressionImpl extends GroovyPsiElementImpl implements GrTup
 
   @Override
   public void accept(GroovyElementVisitor visitor) {
-    visitor.visitTupleExpression(this);
+    visitor.visitTuple(this);
   }
 
   @Override

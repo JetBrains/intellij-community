@@ -172,8 +172,8 @@ public class TypeInferenceHelper {
       return ((GrAssignmentExpression)parent).getType();
     }
 
-    if (parent instanceof GrTupleExpression) {
-      GrTupleExpression list = (GrTupleExpression)parent;
+    if (parent instanceof GrTuple) {
+      GrTuple list = (GrTuple)parent;
       GrTupleAssignmentExpression assignment = list.getParent();
       if (assignment != null) {
         final GrExpression rValue = assignment.getRValue();
@@ -201,9 +201,9 @@ public class TypeInferenceHelper {
   public static GrExpression getInitializerFor(GrExpression lValue) {
     final PsiElement parent = lValue.getParent();
     if (parent instanceof GrAssignmentExpression) return ((GrAssignmentExpression)parent).getRValue();
-    if (parent instanceof GrTupleExpression) {
-      final int i = ((GrTupleExpression)parent).indexOf(lValue);
-      final GrTupleAssignmentExpression pparent = ((GrTupleExpression)parent).getParent();
+    if (parent instanceof GrTuple) {
+      final int i = ((GrTuple)parent).indexOf(lValue);
+      final GrTupleAssignmentExpression pparent = ((GrTuple)parent).getParent();
       LOG.assertTrue(pparent != null);
 
       final GrExpression rValue = pparent.getRValue();

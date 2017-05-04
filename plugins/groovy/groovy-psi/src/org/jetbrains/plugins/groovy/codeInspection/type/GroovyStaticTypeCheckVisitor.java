@@ -34,8 +34,8 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 
 import java.util.List;
 
@@ -48,7 +48,7 @@ public class GroovyStaticTypeCheckVisitor extends GroovyTypeCheckVisitor {
 
     final GrExpression initializer = expression.getRValue();
     if (initializer instanceof GrListOrMap && !((GrListOrMap)initializer).isMap()) {
-      GrTupleExpression tupleExpression = expression.getLValue();
+      GrTuple tupleExpression = expression.getLValue();
       final GrListOrMap initializerList = (GrListOrMap)initializer;
       final GrExpression[] vars = tupleExpression.getExpressions();
       final GrExpression[] expressions = initializerList.getInitializers();

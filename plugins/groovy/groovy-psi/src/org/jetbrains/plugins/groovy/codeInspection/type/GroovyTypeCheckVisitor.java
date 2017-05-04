@@ -647,7 +647,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     GrExpression initializer = expression.getRValue();
     if (initializer == null) return;
 
-    GrTupleExpression tupleExpression = expression.getLValue();
+    GrTuple tupleExpression = expression.getLValue();
     GrExpression[] lValues = tupleExpression.getExpressions();
     if (initializer instanceof GrListOrMap) {
       GrExpression[] initializers = ((GrListOrMap)initializer).getInitializers();

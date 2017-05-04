@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
@@ -124,14 +124,14 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
       }
 
       @Override
-      public void visitTupleExpression(@NotNull GrTupleExpression tupleExpression) {
-        for (GrExpression grExpression : tupleExpression.getExpressions()) {
+      public void visitTuple(@NotNull GrTuple tuple) {
+        for (GrExpression grExpression : tuple.getExpressions()) {
           if (isRefToMe(grExpression)) {
             myHasWriteAccess = true;
             break;
           }
         }
-        super.visitTupleExpression(tupleExpression);
+        super.visitTuple(tuple);
       }
 
       @Override

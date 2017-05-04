@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public interface GrTupleAssignmentExpression extends GrExpression {
 
   @NotNull
-  GrTupleExpression getLValue();
+  GrTuple getLValue();
 
   @Nullable
   GrExpression getRValue();

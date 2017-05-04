@@ -610,7 +610,7 @@ public class PsiImplUtil {
       if (ppparent instanceof GrTupleAssignmentExpression &&
           PsiTreeUtil.isAncestor(((GrTupleAssignmentExpression)ppparent).getRValue(), pparent, false)) {
 
-        GrTupleExpression lValue = ((GrTupleAssignmentExpression)ppparent).getLValue();
+        GrTuple lValue = ((GrTupleAssignmentExpression)ppparent).getLValue();
         GrExpression[] initializers = ((GrListOrMap)pparent).getInitializers();
         int index = ArrayUtil.find(initializers, diamondNew);
         GrExpression[] expressions = lValue.getExpressions();

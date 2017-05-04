@@ -417,7 +417,7 @@ public interface GroovyElementTypes {
   };
   GrVariableDeclarationElementType VARIABLE_DEFINITION = new GrVariableDeclarationElementType();
   GroovyElementType TUPLE_DECLARATION = new GroovyElementType("tuple declaration");
-  GroovyElementType TUPLE_EXPRESSION = new GroovyElementType("tuple expression");
+  GroovyElementType TUPLE = new GroovyElementType("tuple");
 
   GrVariableElementType VARIABLE = new GrVariableElementType();
 

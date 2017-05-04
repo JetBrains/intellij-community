@@ -465,8 +465,8 @@ public abstract class GroovyElementVisitor {
     visitTypeDefinition(typeParameter);
   }
 
-  public void visitTupleExpression(@NotNull GrTupleExpression tupleExpression) {
-    visitElement(tupleExpression);
+  public void visitTuple(@NotNull GrTuple tuple) {
+    visitElement(tuple);
   }
 
   public void visitSpreadArgument(@NotNull GrSpreadArgument spreadArgument) {

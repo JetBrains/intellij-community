@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  * Represents lValue of tuple assignment.<br/>
  * Example: {@code (a, b)} in {@code (a, b) = c}.
  */
-public interface GrTupleExpression extends GroovyPsiElement {
+public interface GrTuple extends GroovyPsiElement {
 
   @Nullable
   @Override

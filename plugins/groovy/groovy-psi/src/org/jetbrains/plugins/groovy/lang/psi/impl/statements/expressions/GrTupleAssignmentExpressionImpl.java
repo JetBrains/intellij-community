@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTuple;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrTupleExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrAssignmentExpressionImpl.processLValue;
@@ -46,8 +46,8 @@ public class GrTupleAssignmentExpressionImpl extends GrExpressionImpl implements
 
   @NotNull
   @Override
-  public GrTupleExpression getLValue() {
-    return findNotNullChildByClass(GrTupleExpression.class);
+  public GrTuple getLValue() {
+    return findNotNullChildByClass(GrTuple.class);
   }
 
   @Nullable
