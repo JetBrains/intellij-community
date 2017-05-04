@@ -442,6 +442,13 @@ class InOutInterpreter extends BasicInterpreter {
             }
           }
           break;
+        case INVOKEDYNAMIC:
+          LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
+          if(lambda != null) {
+            // indy producing lambda is never null
+            return new NotNullValue(lambda.getFunctionalInterfaceType());
+          }
+          break;
         case MULTIANEWARRAY:
           return new NotNullValue(super.naryOperation(insn, values).getType());
         default:

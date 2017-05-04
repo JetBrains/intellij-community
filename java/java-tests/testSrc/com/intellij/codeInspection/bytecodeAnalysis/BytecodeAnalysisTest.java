@@ -130,6 +130,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(psiClass);
 
     for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
+      if(javaMethod.isSynthetic()) continue; // skip lambda runtime representation
       PsiMethod psiMethod = psiClass.findMethodsByName(javaMethod.getName(), false)[0];
       Annotation[][] annotations = javaMethod.getParameterAnnotations();
 
@@ -186,9 +187,12 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     assertNotNull(psiClass);
 
     for (java.lang.reflect.Method javaMethod : javaClass.getDeclaredMethods()) {
+      if(javaMethod.isSynthetic()) continue; // skip lambda runtime representation
       Method method = new Method(Type.getType(javaClass).getInternalName(), javaMethod.getName(), Type.getMethodDescriptor(javaMethod));
       boolean noKey = javaMethod.getAnnotation(ExpectNoPsiKey.class) != null;
-      PsiMethod psiMethod = psiClass.findMethodsByName(javaMethod.getName(), false)[0];
+      PsiMethod[] methods = psiClass.findMethodsByName(javaMethod.getName(), false);
+      assertTrue("Must be single method: "+javaMethod, methods.length == 1);
+      PsiMethod psiMethod = methods[0];
       checkCompoundId(method, psiMethod, noKey);
     }
 

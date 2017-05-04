@@ -89,4 +89,32 @@ public class Test01 {
     return !isNull(o);
   }
 
+  interface MySupplier {
+    String get();
+  }
+
+  @ExpectNotNull
+  public static MySupplier lambda(@ExpectNotNull String s) {
+    return () -> s.trim();
+  }
+
+  @ExpectNotNull
+  public MySupplier lambdaNonStatic(@ExpectNotNull String s) {
+    return () -> getThis().hashCode() + s.trim();
+  }
+
+  @ExpectNotNull
+  public MySupplier lambdaBranching(@ExpectNotNull String s, String t, boolean b) {
+    if(b) {
+      System.out.println(s);
+    } else {
+      System.out.println(t);
+    }
+    return () -> s.trim();
+  }
+
+  @ExpectNotNull
+  public static MySupplier methodReference(@ExpectNotNull String s) {
+    return s::trim;
+  }
 }
