@@ -102,18 +102,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final List<ResolvedTrace> traces = resolvedTrace.getResolvedTraces();
     assert myTabContents.size() == traces.size() + 1;
 
-    List<TraceController> controllers = new ArrayList<>();
-    TraceControllerImpl prev = null;
-    for (final ResolvedTrace trace : traces) {
-      final TraceControllerImpl current = new TraceControllerImpl(trace);
-      if (prev != null) {
-        current.setPreviousListener(prev);
-        prev.setNextListener(current);
-      }
-
-      controllers.add(current);
-      prev = current;
-    }
+    List<TraceController> controllers = createControllers(resolvedTrace.getResolvedTraces());
 
     final CollectionView sourceView = new CollectionView("Source", context, traces.get(0).getValues());
     controllers.get(0).register(sourceView);
@@ -182,6 +171,23 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     return myCenterPane;
+  }
+
+  private static List<TraceController> createControllers(@NotNull List<ResolvedTrace> traces) {
+    List<TraceController> controllers = new ArrayList<>();
+    TraceControllerImpl prev = null;
+    for (final ResolvedTrace trace : traces) {
+      final TraceControllerImpl current = new TraceControllerImpl(trace);
+      if (prev != null) {
+        current.setPreviousListener(prev);
+        prev.setNextListener(current);
+      }
+
+      controllers.add(current);
+      prev = current;
+    }
+
+    return controllers;
   }
 
   private class MyToggleViewAction extends DialogWrapperAction {
