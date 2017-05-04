@@ -254,6 +254,9 @@ public class IpnbJfxUtils {
         if (source.contains("\\frac")) {
           count += 1;
         }
+        if (source.contains("\\limits")) {
+          count += 2;
+        }
         while (source.contains("$$")) {
           if (inMath) {
             final String substring = source.substring(0, source.indexOf("$$") + 2);
