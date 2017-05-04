@@ -53,7 +53,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
@@ -346,8 +345,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     myReadDataLock.lock();
     try {
       if (myReader == null) throw new ReferenceIndexUnavailableException();
-      LightRef.NamedLightRef[] hierarchy = ObjectUtils.notNull(myReader.getHierarchy(baseClass, false, true, -1));
-      return hierarchy.length;
+      LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
+      return hierarchy == null ? -1 : hierarchy.length;
     } catch (Exception e) {
       onException(e, "inheritor count");
       throw new ReferenceIndexUnavailableException();

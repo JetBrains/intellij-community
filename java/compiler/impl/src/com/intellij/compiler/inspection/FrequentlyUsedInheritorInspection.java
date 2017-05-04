@@ -122,6 +122,9 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
 
     if (hierarchyCardinality == -1) {
       hierarchyCardinality = compilerRefService.getInheritorCount(classAsLightRef);
+      if (hierarchyCardinality == -1) {
+        return Collections.emptyList();
+      }
     }
     int finalHierarchyCardinality = hierarchyCardinality;
 
