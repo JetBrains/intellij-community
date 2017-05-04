@@ -38,8 +38,13 @@ abstract class JvmCommonIntentionActionsFactory {
 
   open fun createChangeModifierAction(declaration: UDeclaration, @PsiModifier.ModifierConstant @NonNls modifier: String, shouldPresent: Boolean): IntentionAction? = null
 
-  open fun createAddMethodAction(u: UClass, methodName: String, returnType: PsiType, vararg parameters: PsiType): IntentionAction? = null
+  open fun createAddMethodAction(u: UClass,
+                                 methodName: String,
+                                 @PsiModifier.ModifierConstant visibilityModifier: String,
+                                 returnType: PsiType,
+                                 vararg parameters: PsiType): IntentionAction? = null
 
-  companion object : LanguageExtension<JvmCommonIntentionActionsFactory>("com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory")
+  companion object : LanguageExtension<JvmCommonIntentionActionsFactory>(
+    "com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory") {}
 }
 
