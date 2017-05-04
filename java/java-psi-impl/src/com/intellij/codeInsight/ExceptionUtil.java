@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
@@ -458,7 +457,7 @@ public class ExceptionUtil {
       return Collections.emptyList();
     }
     final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(methodCall.getArgumentList());
-    final JavaResolveResult result = properties != null ? properties.getInfo() : InferenceSession.getResolveResult(methodCall);
+    final JavaResolveResult result = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(methodCall);
     final PsiElement element = result.getElement();
     final PsiMethod method = element instanceof PsiMethod ? (PsiMethod)element : null;
     if (method == null) {

@@ -527,7 +527,7 @@ public class InferenceSession {
     if (properties != null) {
       return properties.getMethod();
     }
-    final JavaResolveResult resolveResult = getResolveResult(arg);
+    final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(arg);
     if (resolveResult instanceof MethodCandidateInfo) {
       return (PsiMethod)resolveResult.getElement();
     }
@@ -587,7 +587,7 @@ public class InferenceSession {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
       MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-      final JavaResolveResult result = properties != null ? null : getResolveResult(callExpression);
+      final JavaResolveResult result = properties != null ? null : PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
       final PsiMethod method = properties != null ? properties.getMethod() : result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() :  null;
       if (method != null) {
         final PsiExpression[] newArgs = argumentList.getExpressions();
@@ -598,33 +598,6 @@ public class InferenceSession {
         }
       }
     }
-  }
-
-  public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
-    if (callExpression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)callExpression)) {
-      PsiUtilCore.ensureValid(callExpression);
-      return CachedValuesManager.getCachedValue(callExpression, () -> {
-        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
-        JavaResolveResult constructor = JavaResolveResult.EMPTY;
-        JavaResolveResult resolveResult = null;
-        if (classReference != null) {
-          resolveResult = classReference.advancedResolve(false);
-          final PsiElement psiClass = resolveResult.getElement();
-          if (psiClass != null) {
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-            final PsiExpressionList argumentList = callExpression.getArgumentList();
-            if (argumentList != null) {
-              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
-                                                                         argumentList,
-                                                                         callExpression);
-            }
-          }
-        }
-        return new CachedValueProvider.Result<>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
-                                                PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    }
-    return callExpression.resolveMethodGenerics();
   }
 
   public static PsiSubstitutor chooseSiteSubstitutor(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,

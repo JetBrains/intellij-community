@@ -85,6 +85,10 @@ public class Diamond8HighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testRawTypePassedToDiamond() throws Exception {
+    doTest();
+  }
+
   public void testDiamondInsideOverloadedThisReference() throws Exception {
     doTest();
   }

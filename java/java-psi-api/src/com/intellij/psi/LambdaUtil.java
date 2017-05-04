@@ -431,7 +431,7 @@ public class LambdaUtil {
               return properties.getSubstitutor().substitute(getNormalizedType(parameters[finalLambdaIdx]));
             }
           }
-          final JavaResolveResult resolveResult = properties != null ? properties.getInfo() : contextCall.resolveMethodGenerics();
+          JavaResolveResult resolveResult = properties != null ? properties.getInfo() : PsiDiamondType.getDiamondsAwareResolveResult(contextCall);
           return getSubstitutedType(expression, tryToSubstitute, lambdaIdx, resolveResult);
         }
       }
