@@ -9,10 +9,10 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.modifyModules
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.impl.ModuleRootManagerComponent
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.project.modifyModules
-import com.intellij.project.rootManager
 import com.intellij.testFramework.*
 import com.intellij.util.Function
 import com.intellij.util.SmartList

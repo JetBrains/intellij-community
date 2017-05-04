@@ -13,75 +13,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("ProjectUtil")
 package com.intellij.openapi.project
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.module.ModifiableModuleModel
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import javax.swing.JComponent
 
-object ProjectUtil {
-  @JvmOverloads
-  @JvmStatic
-  fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFilePath: Boolean = true, includeUniqueFilePath: Boolean = false, keepModuleAlwaysOnTheLeft: Boolean = false): String {
-    if (file is VirtualFilePathWrapper && file.enforcePresentableName()) {
-      return if (includeFilePath) file.presentablePath else file.name
-    }
+val Module.rootManager: ModuleRootManager
+  get() = ModuleRootManager.getInstance(this)
 
-    val url = if (includeFilePath) {
-      file.presentableUrl
-    }
-    else if (includeUniqueFilePath) {
-      UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
-    }
-    else {
-      file.name
-    }
-
-    if (project == null) {
-      return url
-    }
-    return ProjectUtilCore.displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
+@JvmOverloads
+fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFilePath: Boolean = true, includeUniqueFilePath: Boolean = false, keepModuleAlwaysOnTheLeft: Boolean = false): String {
+  if (file is VirtualFilePathWrapper && file.enforcePresentableName()) {
+    return if (includeFilePath) file.presentablePath else file.name
   }
 
-  @JvmStatic
-  fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
-
-  /***
-   * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
-   */
-  @JvmOverloads
-  @JvmStatic
-  fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = file.fileType): Project? {
-    if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
-      return null
-    }
-
-    return ProjectManager.getInstance().openProjects.firstOrNull { !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file) }
+  val url = if (includeFilePath) {
+    file.presentableUrl
+  }
+  else if (includeUniqueFilePath) {
+    UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, file)
+  }
+  else {
+    file.name
   }
 
-  @JvmStatic
-  fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean {
-    // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
-    return ProjectCoreUtil.isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.name))
+  if (project == null) {
+    return url
+  }
+  return ProjectUtilCore.displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
+}
+
+fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
+
+/***
+ * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
+ */
+@JvmOverloads
+fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = file.fileType): Project? {
+  if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
+    return null
   }
 
-  @JvmStatic
-  fun guessCurrentProject(component: JComponent?): Project {
-    var project: Project? = null
-    if (component != null) {
-      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component))
-    }
+  return ProjectManager.getInstance().openProjects.firstOrNull { !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file) }
+}
 
-    @Suppress("DEPRECATION")
-    return project
-           ?: ProjectManager.getInstance().openProjects.firstOrNull()
-           ?: CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContext)
-           ?: ProjectManager.getInstance().defaultProject
+fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean {
+  // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
+  return ProjectCoreUtil.isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.name))
+}
+
+fun guessCurrentProject(component: JComponent?): Project {
+  var project: Project? = null
+  if (component != null) {
+    project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component))
   }
+
+  @Suppress("DEPRECATION")
+  return project
+         ?: ProjectManager.getInstance().openProjects.firstOrNull()
+         ?: CommonDataKeys.PROJECT.getData(DataManager.getInstance().dataContext)
+         ?: ProjectManager.getInstance().defaultProject
+}
+
+inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
+  val model = ModuleManager.getInstance(this).modifiableModel
+  val result = model.task()
+  runWriteAction {
+    model.commit()
+  }
+  return result
 }
