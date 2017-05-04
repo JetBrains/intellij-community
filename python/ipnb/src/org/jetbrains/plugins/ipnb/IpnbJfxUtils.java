@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.sun.javafx.webkit.Accessor;
 import com.sun.webkit.WebPage;
 import com.sun.webkit.graphics.WCSize;
@@ -60,7 +61,8 @@ public class IpnbJfxUtils {
                                                  "                }\n" +
                                                  "            });\n" +
                                                  "</script><script type=\"text/javascript\"\n" +
-                                                 " src=\"http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML-full\">\n" +
+                                                 " src=\" %s" +
+                                                 "?config=TeX-AMS_HTML-full\">\n" +
                                                  " </script>" + ourBody;
   private static final String ourPrefix = ourStyle + ourBody;
   private static final String ourPostfix = "</div></body></html>";
@@ -100,8 +102,8 @@ public class IpnbJfxUtils {
       final BorderPane pane = new BorderPane(webView);
       final String prefix;
       if (hasMath) {
-
-        prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
+        prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize(),
+                               PythonHelpersLocator.getHelperFile("/MathJax/MathJax.js").toURI());
       }
       else {
         prefix = String.format(ourPrefix, width - 500);
