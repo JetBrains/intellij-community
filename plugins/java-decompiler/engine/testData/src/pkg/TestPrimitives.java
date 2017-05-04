@@ -72,4 +72,15 @@ public class TestPrimitives {
   public void constructor() {
     new Byte((byte)1);
   }
+
+  private boolean compare(char c) {
+    boolean res = (c > -1);
+    res = (c > 0);
+    res = (c > 1);
+    res = (c > 'a');
+    res = (c > 'Z');
+    res = (c > 127);
+    res = (c > 255);
+    return res;
+  }
 }

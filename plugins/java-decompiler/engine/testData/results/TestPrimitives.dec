@@ -69,6 +69,17 @@ public class TestPrimitives {
    public void constructor() {
       new Byte((byte)1);// 73
    }// 74
+
+   private boolean compare(char c) {
+      boolean res = c > -1;// 77
+      res = c > 0;// 78
+      res = c > 1;// 79
+      res = c > 'a';// 80
+      res = c > 'Z';// 81
+      res = c > 127;// 82
+      res = c > 255;// 83
+      return res;// 84
+   }
 }
 
 class 'pkg/TestPrimitives' {
@@ -210,6 +221,30 @@ class 'pkg/TestPrimitives' {
       4      69
       9      70
    }
+
+   method 'compare (C)Z' {
+      1      73
+      2      73
+      a      73
+      c      74
+      14      74
+      16      75
+      17      75
+      1f      75
+      21      76
+      23      76
+      2b      76
+      2d      77
+      2f      77
+      37      77
+      39      78
+      3b      78
+      43      78
+      45      79
+      48      79
+      50      79
+      52      80
+   }
 }
 
 Lines mapping:
@@ -248,3 +283,11 @@ Lines mapping:
 70 <-> 67
 73 <-> 70
 74 <-> 71
+77 <-> 74
+78 <-> 75
+79 <-> 76
+80 <-> 77
+81 <-> 78
+82 <-> 79
+83 <-> 80
+84 <-> 81
