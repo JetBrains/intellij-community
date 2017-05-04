@@ -128,7 +128,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
     final Value result = resolvedTrace.getResult();
-    if (result != null) {
+    if (result != null && !resolvedTrace.exceptionThrown()) {
       final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
       final CollectionView view = new CollectionView("Result", context, Collections.singletonList(resultTraceElement));
       resultTab.setContent(view, BorderLayout.CENTER);
@@ -136,12 +136,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
                                                                        Collections.singletonList(resultTraceElement),
                                                                        Collections.emptyMap(),
                                                                        Collections.emptyMap());
-      controllers.add(new TraceControllerImpl(terminationTrace));
+      final TraceControllerImpl controller = new TraceControllerImpl(terminationTrace);
+      controller.register(view);
+      controllers.add(controller);
     }
     else {
-      resultTab.setContent(new JBLabel("There is no result of such stream chain", SwingConstants.CENTER), BorderLayout.CENTER);
+      final String text = resolvedTrace.exceptionThrown() ? "There is no result: exception was thrown" : "There is no result of such stream chain";
+      resultTab.setContent(new JBLabel(text, SwingConstants.CENTER), BorderLayout.CENTER);
     }
-
 
     final FlatView flatView = new FlatView(controllers, context);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
