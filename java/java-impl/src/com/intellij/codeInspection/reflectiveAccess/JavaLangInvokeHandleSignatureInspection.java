@@ -23,6 +23,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -46,8 +47,7 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
   public static final Key<ReflectiveSignature> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
   public static final Key<List<LookupElement>> POSSIBLE_SIGNATURES = Key.create("POSSIBLE_SIGNATURES");
 
-  private static final String FIND_CONSTRUCTOR = "findConstructor";
-  private static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
+  static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
     ContainerUtil.union(Arrays.asList(HANDLE_FACTORY_METHOD_NAMES), Collections.singletonList(FIND_CONSTRUCTOR)));
 
   @NotNull
@@ -184,11 +184,9 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
 
     final ReflectiveType reflectiveType = getReflectiveType(fieldTypeExpression);
     if (reflectiveType != null && !reflectiveType.isEqualTo(field.getType())) {
-      final String expectedTypeText = getTypeText(field.getType(), field);
-      if (expectedTypeText != null) {
-        final String message = InspectionsBundle.message("inspection.handle.signature.field.type", fieldName, expectedTypeText);
-        holder.registerProblem(fieldTypeExpression, message, new FieldTypeQuickFix(expectedTypeText));
-      }
+      final String expectedTypeText = getTypeText(field.getType());
+      final String message = InspectionsBundle.message("inspection.handle.signature.field.type", fieldName, expectedTypeText);
+      holder.registerProblem(fieldTypeExpression, message, new FieldTypeQuickFix(expectedTypeText));
     }
   }
 
@@ -301,11 +299,8 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     return ReflectiveSignature.create(typeTexts);
   }
 
-  /**
-   * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
-   */
   @Nullable
-  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
+  static Pair.NonNull<Integer, Boolean> getGenericSignature(@NotNull PsiExpression[] genericSignatureShape) {
     if (genericSignatureShape.length == 0 || genericSignatureShape.length > 2) {
       return null;
     }
@@ -320,6 +315,18 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     if (finalArray == null || finalArray && objectArgCount > 254) {
       return null;
     }
+    return Pair.createNonNull(objectArgCount, finalArray);
+  }
+
+  /**
+   * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
+   */
+  @Nullable
+  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
+    final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(genericSignatureShape);
+    if (signature == null) return null;
+    final int objectArgCount = signature.getFirst();
+    final boolean finalArray = signature.getSecond();
 
     final List<String> typeNames = new ArrayList<>();
     typeNames.add(CommonClassNames.JAVA_LANG_OBJECT); // return type
