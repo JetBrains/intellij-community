@@ -62,7 +62,7 @@ fun calcRelativeToProjectPath(file: VirtualFile, project: Project?, includeFileP
   return displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
 }
 
-fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
+fun guessProjectForFile(file: VirtualFile?): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /***
  * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned

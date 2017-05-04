@@ -20,7 +20,6 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.StorageScheme
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
-import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -32,20 +31,11 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 
-val Project.isDirectoryBased: Boolean
-  get() {
-    if (isDefault) {
-      return false
-    }
-
-    val store = stateStore
-    return store is IProjectStore && StorageScheme.DIRECTORY_BASED == store.storageScheme
-  }
-
 val Project.stateStore: IProjectStore
-  get() {
-    return picoContainer.getComponentInstance(IComponentStore::class.java) as IProjectStore
-  }
+  get() = picoContainer.getComponentInstance(IComponentStore::class.java) as IProjectStore
+
+val Project.isDirectoryBased: Boolean
+  get() = !isDefault && StorageScheme.DIRECTORY_BASED == stateStore.storageScheme
 
 fun getProjectStoreDirectory(file: VirtualFile): VirtualFile? {
   return if (file.isDirectory) file.findChild(Project.DIRECTORY_STORE_FOLDER) else null

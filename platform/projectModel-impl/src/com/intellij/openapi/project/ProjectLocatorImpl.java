@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class ProjectLocatorImpl extends ProjectLocator {
 
   @Override
   @Nullable
-  public Project guessProjectForFile(final VirtualFile file) {
+  public Project guessProjectForFile(@Nullable VirtualFile file) {
     ProjectManager projectManager = ProjectManager.getInstance();
     if (projectManager == null) return null;
     final Project[] projects = projectManager.getOpenProjects();
