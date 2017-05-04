@@ -62,7 +62,7 @@ public class CompilerPaths {
    */
   @NotNull
   public static File getCompilerSystemDirectory(@NotNull Project project) {
-    return ProjectUtil.getProjectCachePath(project, "compiler", false, ".").toFile();
+    return ProjectUtil.getProjectCachePath(project, "compiler").toFile();
   }
 
   /**

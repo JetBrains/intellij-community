@@ -50,7 +50,7 @@ public class DetectedFrameworksData {
 
   public DetectedFrameworksData(Project project) {
     myDetectedFrameworks = new MultiMap<>();
-    File file = ProjectUtil.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true, ".").resolve("files").toFile();
+    File file = ProjectUtil.getProjectCachePath(project, FrameworkDetectorRegistryImpl.getDetectionDirPath(), true).resolve("files").toFile();
     myNewFiles = new TIntObjectHashMap<>();
     try {
       myExistentFrameworkFiles = new PersistentHashMap<>(file, EnumeratorIntegerDescriptor.INSTANCE, new TIntHashSetExternalizer());

@@ -150,19 +150,18 @@ private fun Project.getPresentableFileName(): String {
 }
 
 private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
-  val name = if (!forceNameUse) getPresentableFileName() else name
-  return "$name$hashSeparator$locationHash"
+  return "${if (forceNameUse) name else getPresentableFileName()}$hashSeparator$locationHash"
 }
 
 @JvmOverloads
-fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
-  return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse, hashSeparator)
+fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false): Path {
+  return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse)
 }
 
 /**
  * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
  */
 @JvmOverloads
-fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "-"): Path {
+fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "."): Path {
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
