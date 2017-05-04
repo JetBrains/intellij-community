@@ -65,8 +65,8 @@ public class PatternCompiler {
     StringToConstraintsTransformer.transformOldPattern(options);
   }
 
-  public static CompiledPattern compilePattern(final Project project, final MatchOptions options) throws MalformedPatternException,
-                                                                                                         UnsupportedOperationException {
+  public static CompiledPattern compilePattern(final Project project, final MatchOptions options)
+    throws MalformedPatternException, UnsupportedOperationException {
     FileType fileType = options.getFileType();
     assert fileType instanceof LanguageFileType;
     Language language = ((LanguageFileType)fileType).getLanguage();
@@ -77,12 +77,10 @@ public class PatternCompiler {
     final String[] prefixes = result.getTypedVarPrefixes();
     assert prefixes.length > 0;
 
-    final CompileContext context = new CompileContext();
+    final CompileContext context = new CompileContext(result, options, project);
     if (ApplicationManager.getApplication().isUnitTestMode()) lastTestingContext = context;
 
     try {
-      context.init(result, options, project, options.getScope() instanceof GlobalSearchScope);
-
       List<PsiElement> elements = compileByAllPrefixes(project, options, result, context, prefixes);
 
       final CompiledPattern pattern = context.getPattern();
@@ -364,7 +362,6 @@ public class PatternCompiler {
                                             PrefixProvider prefixProvider,
                                             CompileContext context) {
     result.clearHandlers();
-    context.init(result, options, project, options.getScope() instanceof GlobalSearchScope);
 
     final StringBuilder buf = new StringBuilder();
 
@@ -372,7 +369,6 @@ public class PatternCompiler {
 
     int segmentsCount = template.getSegmentsCount();
     String text = template.getTemplateText();
-    buf.setLength(0);
     int prevOffset = 0;
 
     for(int i=0;i<segmentsCount;++i) {
