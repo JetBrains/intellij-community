@@ -162,10 +162,26 @@ public class ProjectViewFixture extends ToolWindowFixture {
     }
   }
 
-  public NodeFixture path(String... path) {
-    return selectProjectPane().getNode(path);
+  /**
+   *
+   * @param pathTo could be a separate vararg of String objects like ["project_name", "src", "Test.java"] or one String with a path
+   *               separated by slash sign: ["project_name/src/Test.java"]
+   * @return NodeFixture object for a pathTo; may be used for expanding, scrolling and clicking node
+   */
+  @Nullable
+  public NodeFixture path(String... pathTo) {
+    if (pathTo.length == 1) {
+      if (pathTo[0].contains("/")) {
+        String[] newPath = pathTo[0].split("/");
+        return selectProjectPane().getNode(newPath);
+      }
+    }
+    return selectProjectPane().getNode(pathTo);
   }
 
+  public boolean containsPath(String... pathTo) {
+    return path(pathTo) == null;
+  }
 
   public class PaneFixture {
     @NotNull private final AbstractProjectViewPane myPane;

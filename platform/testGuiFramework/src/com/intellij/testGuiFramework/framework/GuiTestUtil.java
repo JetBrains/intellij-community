@@ -877,4 +877,8 @@ GuiTestUtil {
       }
     }, timeout);
   }
+
+  public static Component getListCellRendererComponent(JList list, Object value, int index) {
+    return list.getCellRenderer().getListCellRendererComponent(list, value, index, true, true);
+  }
 }
