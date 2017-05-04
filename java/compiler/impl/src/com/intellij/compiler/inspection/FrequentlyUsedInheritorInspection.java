@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SystemProperties;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,11 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
 
     final Collection<LocalQuickFix> topInheritorsQuickFix = new ArrayList<>(topInheritors.size());
     for (final ClassAndInheritorCount searchResult : topInheritors) {
-      final LocalQuickFix quickFix = new ChangeSuperClassFix(searchResult.psi, superClass, searchResult.number,
+      PsiClass psi = searchResult.psi;
+      if (InheritanceUtil.isInheritorOrSelf(psi, aClass, true)) {
+        continue;
+      }
+      final LocalQuickFix quickFix = new ChangeSuperClassFix(psi, superClass, searchResult.number,
                                                              searchResult.psi.isInterface() && !aClass.isInterface());
       topInheritorsQuickFix.add(quickFix);
       if (topInheritorsQuickFix.size() >= MAX_RESULT) {
