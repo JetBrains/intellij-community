@@ -31,6 +31,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.builtInWebServer.BuiltInServerOptions;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.IOException;
@@ -462,7 +463,7 @@ public class EduStepicConnector {
     int port = BuiltInServerManager.getInstance().getPort();
 
     // according to https://confluence.jetbrains.com/display/IDEADEV/Remote+communication
-    int defaultPort = 63342;
+    int defaultPort = BuiltInServerOptions.getInstance().builtInServerPort;
     if (port >= defaultPort && port < (defaultPort + 20)) {
       return "http://localhost:" + port + "/api/" + EduStepicNames.OAUTH_SERVICE_NAME;
     }
