@@ -49,30 +49,19 @@ private val LOG = Logger.getInstance(ModuleAttachProcessor::class.java)
 class ModuleAttachProcessor : ProjectAttachProcessor() {
   companion object {
     @JvmStatic
-    fun getPrimaryModule(project: Project) = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
-
-    @JvmStatic
     fun findModuleInBaseDir(project: Project): Module? {
-      for (module in ModuleManager.getInstance(project).modules) {
-        for (root in module.rootManager.contentRoots) {
-          if (root == project.baseDir) {
-            return module
-          }
-        }
-      }
-      return null
+      val baseDir = project.baseDir
+      return ModuleManager.getInstance(project).modules.firstOrNull { it.rootManager.contentRoots.any { it == baseDir } }
     }
 
     @JvmStatic
+    fun getPrimaryModule(project: Project) = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
+
+    @JvmStatic
     fun getSortedModules(project: Project): List<Module> {
-      val result = ArrayList<Module>()
       val primaryModule = getPrimaryModule(project)
-      val modules = ModuleManager.getInstance(project).modules
-      for (module in modules) {
-        if (module !== primaryModule) {
-          result.add(module)
-        }
-      }
+      val result = ArrayList<Module>()
+      ModuleManager.getInstance(project).modules.filterTo(result) { it !== primaryModule}
       result.sortBy(Module::getName)
       primaryModule?.let {
         result.add(0, it)
@@ -82,7 +71,6 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
     /**
      * @param project the project
-     * *
      * @return null if either multi-projects are not enabled or the project has only one module
      */
     @JvmStatic
@@ -96,8 +84,8 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
         return null
       }
 
-      val primaryModule = getPrimaryModule(project) ?: modules[0]
-      val result = StringBuilder(primaryModule!!.name)
+      val primaryModule = getPrimaryModule(project) ?: modules.first()
+      val result = StringBuilder(primaryModule.name)
       result.append(", ")
       for (module in modules) {
         if (module === primaryModule) {
