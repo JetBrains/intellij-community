@@ -21,4 +21,4 @@ import java.nio.file.Paths
 /**
  * Absolute path to system cache dir.
  */
-val appSystemDir: Path by lazy { Paths.get(PathManager.getSystemPath()).toAbsolutePath() }
+val appSystemDir: Path by lazy { Paths.get(PathManager.getSystemPath()).toRealPath() }
