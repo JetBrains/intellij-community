@@ -207,11 +207,10 @@ class NewPropertyAction extends AnAction {
 
       final ResourceBundle resourceBundle = myResourceBundleEditor.getResourceBundle();
       for (final PropertiesFile propertiesFile : resourceBundle.getPropertiesFiles()) {
-        for (final String propertyName : propertiesFile.getNamesMap().keySet()) {
-          if (newPropertyName.equals(propertyName)) {
-            Messages.showErrorDialog("Can't add new property. Property with key \'" + newPropertyName + "\' already exists.", "New Property");
-            return false;
-          }
+        IProperty key = propertiesFile.findPropertyByKey(newPropertyName);
+        if (key != null) {
+          Messages.showErrorDialog("Can't add new property. Property with key \'" + newPropertyName + "\' already exists.", "New Property");
+          return false;
         }
       }
 
