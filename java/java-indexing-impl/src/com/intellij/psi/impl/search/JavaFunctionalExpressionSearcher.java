@@ -293,8 +293,11 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
     }
 
     List<FunctionalExpressionKey> generateKeys() {
+      String name = samClass.isValid() ? samClass.getName() : null;
+      if (name == null) return Collections.emptyList();
+
       List<FunctionalExpressionKey> result = new ArrayList<>();
-      for (String lambdaType : new String[]{assertNotNull(samClass.getName()), ""}) {
+      for (String lambdaType : new String[]{assertNotNull(name), ""}) {
         for (int lambdaParamCount : new int[]{FunctionalExpressionKey.UNKNOWN_PARAM_COUNT, samParamCount}) {
           result.add(new FunctionalExpressionKey(lambdaParamCount, FunctionalExpressionKey.CoarseType.UNKNOWN, lambdaType));
           if (isVoid) {
