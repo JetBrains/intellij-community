@@ -10,13 +10,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.PathUtil;
+import org.jacoco.agent.rt.RT;
 import org.jacoco.core.analysis.*;
 import org.jacoco.core.data.ExecutionDataReader;
 import org.jacoco.core.data.ExecutionDataStore;
@@ -37,7 +38,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   public ProjectData loadCoverageData(@NotNull File sessionDataFile, @Nullable CoverageSuite baseCoverageSuite) {
     final ProjectData data = new ProjectData();
     try {
-      final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? ((BaseCoverageSuite)baseCoverageSuite).getProject() : null;
+      final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? baseCoverageSuite.getProject() : null;
       if (project != null) {
         loadExecutionData(sessionDataFile, data, project);
       }
@@ -81,7 +82,17 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
       if (compilerModuleExtension != null) {
         final VirtualFile[] roots = compilerModuleExtension.getOutputRoots(true);
         for (VirtualFile root : roots) {
-          analyzer.analyzeAll(VfsUtil.virtualToIoFile(root));
+          VfsUtilCore.processFilesRecursively(root, file -> {
+            if (!file.isDirectory()) {
+              try {
+                analyzer.analyzeAll(file.getInputStream(), file.getPath());
+              }
+              catch (Exception e) {
+                LOG.error(e);
+              }
+            }
+            return true;
+          });
         }
       }
     }
@@ -125,8 +136,8 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
 
   public void appendCoverageArgument(final String sessionDataFilePath, final String[] patterns, final SimpleJavaParameters javaParameters,
                                      final boolean collectLineInfo, final boolean isSampling) {
-    StringBuffer argument = new StringBuffer("-javaagent:");
-    final String agentPath = PathUtil.getJarPathForClass(org.jacoco.agent.rt.RT.class);
+    StringBuilder argument = new StringBuilder("-javaagent:");
+    final String agentPath = PathUtil.getJarPathForClass(RT.class);
     final String parentPath = handleSpacesInPath(agentPath);
     argument.append(parentPath).append(File.separator).append(new File(agentPath).getName());
     argument.append("=");
