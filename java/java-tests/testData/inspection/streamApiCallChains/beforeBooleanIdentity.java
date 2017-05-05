@@ -58,4 +58,24 @@ public class Main {
   public boolean noneMatchDittoLambda(List<String> list) {
     return list.stream().map(String::isEmpty).noneMatch(b -> b);
   }
+
+  public boolean anyMatchBooleanEquals(List<String> list) {
+    return list.stream().map(String::isEmpty).anyMatch(Boolean.TRUE::equals);
+  }
+
+  public boolean anyMatchBooleanEqualsFalse(List<String> list) {
+    return list.stream().map(String::isEmpty).anyMatch(Boolean.FALSE::equals);
+  }
+
+  public boolean anyMatchBooleanEqualsLambda(List<String> list) {
+    return list.stream().map(String::isEmpty).anyMatch(b -> Boolean.TRUE.equals(b));
+  }
+
+  public boolean allMatchBooleanEqualsLambda(List<String> list) {
+    return list.stream().map(String::isEmpty).allMatch(b -> Boolean.FALSE.equals((b)));
+  }
+
+  public boolean noneMatchBooleanEqualsLambda(List<String> list) {
+    return list.stream().map(String::isEmpty).noneMatch(b -> Boolean.FALSE.equals((!b)));
+  }
 }

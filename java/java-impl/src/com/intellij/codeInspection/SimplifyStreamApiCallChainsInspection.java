@@ -75,6 +75,8 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher OPTIONAL_IS_PRESENT =
     instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "isPresent").parameterCount(0);
+  private static final CallMatcher BOOLEAN_EQUALS =
+    instanceCall(CommonClassNames.JAVA_LANG_BOOLEAN, "equals").parameterCount(1);
 
   private static final CallMatcher STREAM_MATCH = CallMatcher.anyOf(STREAM_ANY_MATCH, STREAM_NONE_MATCH, STREAM_ALL_MATCH);
 
@@ -1109,6 +1111,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   }
 
   private static class RemoveBooleanIdentityFix implements CallChainSimplification {
+    private boolean myInvert;
+
+    public RemoveBooleanIdentityFix(boolean invert) {
+      myInvert = invert;
+    }
+
     @Override
     public String getName() {
       return "Merge with previous 'map' call";
@@ -1125,6 +1133,17 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if (qualifier == null) return null;
       String name = call.getMethodExpression().getReferenceName();
       if (name == null) return null;
+      if (myInvert) {
+        if (name.equals("allMatch")) {
+          name = "noneMatch";
+        }
+        else if (name.equals("noneMatch")) {
+          name = "allMatch";
+        }
+        else {
+          return null;
+        }
+      }
       PsiExpression[] args = qualifier.getArgumentList().getExpressions();
       CommentTracker ct = new CommentTracker();
       if (args.length == 1) {
@@ -1140,12 +1159,21 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     static CallHandler<CallChainSimplification> handler() {
       return CallHandler.of(STREAM_MATCH, call -> {
         PsiExpression predicate = call.getArgumentList().getExpressions()[0];
-        if (!isBooleanIdentity(predicate)) return null;
+        boolean invert = false;
+        if (!isBooleanIdentity(predicate)) {
+          if (!"anyMatch".equals(call.getMethodExpression().getReferenceName()) &&
+              Boolean.FALSE.equals(getBooleanEqualsTarget(predicate))) {
+            invert = true;
+          }
+          else {
+            return null;
+          }
+        }
         PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
         if (!STREAM_MAP.test(qualifierCall)) return null;
         PsiExpression qualifierArg = qualifierCall.getArgumentList().getExpressions()[0];
         if (adaptToPredicate(qualifierArg) == null) return null;
-        return new RemoveBooleanIdentityFix();
+        return new RemoveBooleanIdentityFix(invert);
       });
     }
 
@@ -1154,10 +1182,42 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       if (FunctionalExpressionUtils.isFunctionalReferenceTo(arg, CommonClassNames.JAVA_LANG_BOOLEAN, PsiType.BOOLEAN,
                                                             "booleanValue", PsiType.EMPTY_ARRAY) ||
           FunctionalExpressionUtils.isFunctionalReferenceTo(arg, CommonClassNames.JAVA_LANG_BOOLEAN, null,
-                                                            "valueOf", PsiType.BOOLEAN)) {
+                                                            "valueOf", PsiType.BOOLEAN) ||
+          Boolean.TRUE.equals(getBooleanEqualsTarget(arg))) {
         return true;
       }
       return arg instanceof PsiLambdaExpression && LambdaUtil.isIdentityLambda((PsiLambdaExpression)arg);
+    }
+
+    @Nullable
+    private static Boolean getBooleanEqualsTarget(PsiExpression arg) {
+      // Boolean.TRUE::equals or x -> Boolean.TRUE.equals(x)
+      arg = PsiUtil.skipParenthesizedExprDown(arg);
+      PsiReferenceExpression qualifier = null;
+      if (arg instanceof PsiMethodReferenceExpression) {
+        PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)arg;
+        if (!BOOLEAN_EQUALS.methodReferenceMatches(methodRef)) return null;
+        qualifier = tryCast(methodRef.getQualifierExpression(), PsiReferenceExpression.class);
+      }
+      else if (arg instanceof PsiLambdaExpression) {
+        PsiLambdaExpression lambda = (PsiLambdaExpression)arg;
+        PsiParameter parameter = ArrayUtil.getFirstElement(lambda.getParameterList().getParameters());
+        if (parameter == null) return null;
+        PsiMethodCallExpression call = tryCast(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()), PsiMethodCallExpression.class);
+        if (!BOOLEAN_EQUALS.test(call)) return null;
+        if (!ExpressionUtils.isReferenceTo(call.getArgumentList().getExpressions()[0], parameter)) return null;
+        qualifier = tryCast(call.getMethodExpression().getQualifierExpression(), PsiReferenceExpression.class);
+      }
+      if (qualifier == null) return null;
+      PsiField field = tryCast(qualifier.resolve(), PsiField.class);
+      if (field == null) return null;
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && CommonClassNames.JAVA_LANG_BOOLEAN.equals(containingClass.getQualifiedName())) {
+        String name = field.getName();
+        if ("TRUE".equals(name)) return Boolean.TRUE;
+        if ("FALSE".equals(name)) return Boolean.FALSE;
+      }
+      return null;
     }
 
     /**
