@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventHandler;
@@ -382,6 +383,7 @@ public class Breadcrumbs extends JComponent {
     private String text;
     private Path2D path;
 
+    private int scale;
     private Font font;
     private Color foreground;
     private Color background;
@@ -410,10 +412,14 @@ public class Breadcrumbs extends JComponent {
       Font font = getFont(crumb);
       if (font == null) font = getFont();
 
-      if (this.font != font) {
+      int scale = getScale();
+      if (this.scale != scale && icon != null) {
+        icon = IconUtil.scale(icon, Breadcrumbs.this, scale);
+      }
+      if (this.scale != scale || this.font != font) {
+        this.scale = scale;
         this.font = font;
 
-        int scale = getScale();
         preferred.width = 2 * getLeftRight(scale);
         preferred.height = 2 * getTopBottom(scale);
 
