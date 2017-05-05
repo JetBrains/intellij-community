@@ -27,6 +27,8 @@ import javax.swing.Icon
  * @author gregsh
  */
 class MockRunManager : RunManagerEx() {
+  override fun getConfigurationType(typeName: String) = TODO("not implemented")
+
   override fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
   }
 

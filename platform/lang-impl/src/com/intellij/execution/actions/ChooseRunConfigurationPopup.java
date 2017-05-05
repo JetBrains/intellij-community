@@ -819,7 +819,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
       RunnerAndConfigurationSettings selectedConfiguration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
       if (myConfigurations.contains(selectedConfiguration)) {
-        RunManagerEx.getInstanceEx(project).setSelectedConfiguration(selectedConfiguration);
+        RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
         ExecutionUtil.runConfiguration(selectedConfiguration, myExecutorProvider.getExecutor());
       }
     }
@@ -873,7 +873,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
         return doFinalStep(() -> {
           RunnerAndConfigurationSettings settings = selectedValue.getSettings();
-          RunManagerEx.getInstanceEx(myProject).setSelectedConfiguration(settings);
+          RunManager.getInstance(myProject).setSelectedConfiguration(settings);
           ExecutionUtil.runConfiguration(settings, myExecutorProvider.getExecutor());
         });
       } else {

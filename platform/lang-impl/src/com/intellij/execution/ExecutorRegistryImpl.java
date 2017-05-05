@@ -278,7 +278,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
     @Nullable
     private RunnerAndConfigurationSettings getSelectedConfiguration(@NotNull final Project project) {
-      return RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+      return RunManager.getInstance(project).getSelectedConfiguration();
     }
 
     @Override

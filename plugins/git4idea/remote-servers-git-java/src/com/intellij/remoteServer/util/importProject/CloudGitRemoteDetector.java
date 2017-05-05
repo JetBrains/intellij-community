@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.util.importProject;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -143,7 +144,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     private boolean hasRunConfig4Repository(GitRepository repository) {
       List<RunConfiguration> runConfigurations
-        = RunManagerEx.getInstanceEx(myProject).getConfigurationsList(DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(getCloudType()));
+        = RunManager.getInstance(myProject).getConfigurationsList(DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(getCloudType()));
 
       VirtualFile repositoryRoot = repository.getRoot();
 

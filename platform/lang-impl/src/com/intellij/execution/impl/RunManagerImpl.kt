@@ -761,7 +761,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return result ?: emptyList()
   }
 
-  fun getConfigurationType(typeName: String) = idToType.get(typeName)
+  override fun getConfigurationType(typeName: String) = idToType.get(typeName)
 
   @JvmOverloads
   fun getFactory(typeName: String?, _factoryName: String?, checkUnknown: Boolean = false): ConfigurationFactory? {

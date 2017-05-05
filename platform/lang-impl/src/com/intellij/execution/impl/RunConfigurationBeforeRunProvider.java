@@ -423,8 +423,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof RunnerAndConfigurationSettings) {
             RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)value;
-            RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-            setIcon(runManager.getConfigurationIcon(settings));
+            setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
             RunConfiguration configuration = settings.getConfiguration();
             append(configuration.getName(), settings.isTemporary()
                                             ? SimpleTextAttributes.GRAY_ATTRIBUTES

@@ -198,4 +198,8 @@ abstract class RunManager {
     configuration.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type)
     return oldName != configuration.name
   }
+
+  abstract fun getConfigurationType(typeName: String): ConfigurationType?
+
+  abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 }

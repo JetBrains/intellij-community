@@ -135,7 +135,7 @@ class RunConfigurable extends BaseConfigurable {
     });
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
+      public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
                                         boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
@@ -161,7 +161,6 @@ class RunConfigurable extends BaseConfigurable {
             setIcon(((ConfigurationFactory)userObject).getIcon());
           }
           else {
-            final RunManagerImpl runManager = getRunManager();
             RunnerAndConfigurationSettings configuration = null;
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
@@ -245,7 +244,7 @@ class RunConfigurable extends BaseConfigurable {
             updateRightPanel((SingleConfigurationConfigurable<RunConfiguration>)userObject);
           }
           else if (userObject instanceof String) {
-            showFolderField(getSelectedConfigurationType(), node, (String)userObject);
+            showFolderField(node, (String)userObject);
           }
           else {
             if (userObject instanceof ConfigurationType || userObject == DEFAULTS) {
@@ -335,7 +334,7 @@ class RunConfigurable extends BaseConfigurable {
     updateRightPanel(configurable);
   }
 
-  private void showFolderField(final ConfigurationType type, final DefaultMutableTreeNode node, final String folderName) {
+  private void showFolderField(final DefaultMutableTreeNode node, final String folderName) {
     myRightPanel.removeAll();
     JPanel p = new JPanel(new MigLayout("ins " + myToolbarDecorator.getActionsPanel().getHeight() + " 5 0 0, flowx"));
     final JTextField textField = new JTextField(folderName);
@@ -349,9 +348,7 @@ class RunConfigurable extends BaseConfigurable {
     textField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          getGlobalInstance().requestFocus(myTree, true);
-        });
+        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myTree, true));
       }
     });
     p.add(new JLabel("Folder name:"), "gapright 5");
@@ -363,9 +360,7 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.repaint();
     if (isFolderCreating) {
       textField.selectAll();
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(textField, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(textField, true));
     }
   }
 
@@ -642,10 +637,6 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     setModified(false);
-  }
-
-  public Configurable getSelectedConfigurable() {
-    return mySelectedConfigurable;
   }
 
   @Override
@@ -1065,7 +1056,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final ConfigurationFactory factory) {
-    DefaultMutableTreeNode node = null;
+    DefaultMutableTreeNode node;
     DefaultMutableTreeNode selectedNode = null;
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
@@ -1679,10 +1670,6 @@ class RunConfigurable extends BaseConfigurable {
       return myShared;
     }
 
-    public List<BeforeRunTask> getStepsBeforeLaunch() {
-      return myStepsBeforeLaunch;
-    }
-
     public SingleConfigurationConfigurable getConfigurable() {
       return myConfigurable;
     }
@@ -1934,18 +1921,6 @@ class RunConfigurable extends BaseConfigurable {
           }
         }
       }
-    }
-
-    @Nullable
-    private RunnerAndConfigurationSettings getSettings(@NotNull DefaultMutableTreeNode treeNode) {
-      Object userObject = treeNode.getUserObject();
-      if (userObject instanceof SingleConfigurationConfigurable) {
-        SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-        return (RunnerAndConfigurationSettings)configurable.getSettings();
-      } else if (userObject instanceof RunnerAndConfigurationSettings) {
-        return (RunnerAndConfigurationSettings)userObject;
-      }
-      return null;
     }
 
     @Nullable

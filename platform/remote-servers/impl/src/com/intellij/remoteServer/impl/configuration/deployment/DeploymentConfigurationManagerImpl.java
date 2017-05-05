@@ -17,7 +17,6 @@ package com.intellij.remoteServer.impl.configuration.deployment;
 
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -52,7 +51,7 @@ public class DeploymentConfigurationManagerImpl extends DeploymentConfigurationM
   @Override
   public void createAndRunConfiguration(@NotNull ServerType<?> serverType, @Nullable RemoteServer<?> remoteServer) {
     DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    RunManager runManager = RunManager.getInstance(myProject);
     ConfigurationFactoryEx factory = configurationType.getFactory();
     RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
     factory.onNewConfigurationCreated(settings.getConfiguration());

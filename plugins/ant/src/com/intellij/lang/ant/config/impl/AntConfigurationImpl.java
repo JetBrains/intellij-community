@@ -20,7 +20,6 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
@@ -784,7 +783,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (buildFileUrl == null || targetName == null || configType == null) {
       return;
     }
-    final RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(project);
+    final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
     final ConfigurationType type = runManager.getConfigurationType(configType);
     if (type == null) {
       return;
