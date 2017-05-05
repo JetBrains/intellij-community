@@ -2125,7 +2125,7 @@ public class AbstractTreeUi {
           setUpdaterState(oldState);
         }
 
-        if (!isReady()) return;
+        if (!isReady(true)) return;
       }
     }
 
