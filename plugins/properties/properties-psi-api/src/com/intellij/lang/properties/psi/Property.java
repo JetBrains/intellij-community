@@ -28,6 +28,10 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.StubBasedPsiElement;
 
 /**
+ * An interface representing a property inside .properties based properties files
+ *
+ * @see PropertiesFile
+ * @see IProperty
  * @see PropertiesElementFactory
  */
 public interface Property extends PsiNamedElement, StubBasedPsiElement<PropertyStub>, NavigatablePsiElement, IProperty {
