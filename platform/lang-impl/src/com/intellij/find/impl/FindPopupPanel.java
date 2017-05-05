@@ -805,7 +805,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) {
         final UsageViewPresentation presentation =
           FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myHelper.getModel().clone());
         final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
@@ -837,7 +837,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
-
             int occurrences = resultsCount.get();
             int filesWithOccurrences = resultsFilesCount.get();
             if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -862,6 +861,12 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
           return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
         }, processPresentation, filesToScanInitially);
+
+        return new Continuation(() -> {
+          if (!isCancelled()) {
+            if (resultsCount.get() == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+          }
+        }, state);
       }
 
       boolean isCancelled() {
