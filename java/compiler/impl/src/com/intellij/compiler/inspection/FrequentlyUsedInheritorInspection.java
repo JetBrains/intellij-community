@@ -88,7 +88,11 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
         aClass.getInnerClasses().length == 0 &&
         aClass.getInitializers().length == 0) {
       highlightingElement = aClass;
-    } else {
+    }
+    else if (aClass instanceof PsiAnonymousClass) {
+      highlightingElement = ((PsiAnonymousClass)aClass).getBaseClassReference();
+    }
+    else {
       highlightingElement = superClassAndPlace.getSecond();
     }
 
@@ -113,7 +117,12 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
       .filter(c -> isInSourceContent(c))
       .collect(MoreCollectors.onlyOne())
       .orElse(null);
-    return anInterface == null ? null : Pair.create(anInterface, aClass.getImplementsList());
+    if (anInterface == null) {
+      return null;
+    }
+    else {
+      return Pair.create(anInterface, aClass.isInterface() ? aClass.getExtendsList() : aClass.getImplementsList());
+    }
   }
 
   @NotNull
