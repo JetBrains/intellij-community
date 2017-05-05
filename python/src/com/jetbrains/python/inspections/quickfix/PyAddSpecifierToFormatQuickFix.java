@@ -67,7 +67,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
     final PyExpression leftExpression = expression.getLeftExpression();
     if (leftExpression instanceof PyStringLiteralExpression) {
       final List<PyStringFormatParser.SubstitutionChunk> chunks =
-        filterSubstitutions(parsePercentFormat(((PyStringLiteralExpression)leftExpression).getStringValue()));
+        filterSubstitutions(parsePercentFormat(leftExpression.getText()));
       PyExpression[] elements;
       if (rightExpression instanceof PyTupleExpression) {
         elements = ((PyTupleExpression)rightExpression).getElements();
@@ -76,7 +76,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
         elements = new PyExpression[]{rightExpression};
       }
 
-      int shift = 2;
+      int shift = 1;
       for (int i = 0; i < chunks.size(); i++) {
         final PyStringFormatParser.PercentSubstitutionChunk chunk = PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
         if (chunk != null) {
