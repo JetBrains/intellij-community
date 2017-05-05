@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.remoteServer.util.importProject;
 
-import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -62,16 +61,14 @@ import java.util.Map;
 public class CloudGitRemoteDetector extends AbstractProjectComponent implements GitRepositoryChangeListener {
 
   private final GitRepositoryManager myRepositoryManager;
-  private final RunManagerEx myRunManager;
 
   private final CloudNotifier myNotifier;
 
   private final List<CloudTypeDelegate> myDelegates;
 
-  public CloudGitRemoteDetector(Project project, GitRepositoryManager repositoryManager, RunManager runManager) {
+  public CloudGitRemoteDetector(Project project, GitRepositoryManager repositoryManager) {
     super(project);
     myRepositoryManager = repositoryManager;
-    myRunManager = (RunManagerEx)runManager;
 
     myNotifier = new CloudNotifier("Git remotes detector");
 
@@ -85,7 +82,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
   public void projectOpened() {
     myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
 
-    myRunManager.addRunManagerListener(new RunManagerListener() {
+    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
 
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
@@ -146,7 +143,7 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
     private boolean hasRunConfig4Repository(GitRepository repository) {
       List<RunConfiguration> runConfigurations
-        = myRunManager.getConfigurationsList(DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(getCloudType()));
+        = RunManagerEx.getInstanceEx(myProject).getConfigurationsList(DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(getCloudType()));
 
       VirtualFile repositoryRoot = repository.getRoot();
 
