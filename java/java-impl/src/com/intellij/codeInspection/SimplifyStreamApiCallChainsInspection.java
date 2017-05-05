@@ -55,6 +55,8 @@ import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalInspectionTool {
   private static final CallMatcher COLLECTION_STREAM =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "stream").parameterCount(0);
+  private static final CallMatcher OPTIONAL_STREAM =
+    instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "stream").parameterCount(0);
   private static final CallMatcher STREAM_FIND =
     instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "findFirst", "findAny").parameterCount(0);
   private static final CallMatcher STREAM_FILTER =
@@ -90,6 +92,7 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
   private static final Logger LOG = Logger.getInstance(SimplifyStreamApiCallChainsInspection.class);
 
   private static final String FOR_EACH_METHOD = "forEach";
+  private static final String IF_PRESENT_METHOD = "ifPresent";
   private static final String STREAM_METHOD = "stream";
   private static final String EMPTY_METHOD = "empty";
   private static final String OF_METHOD = "of";
@@ -392,12 +395,12 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "forEach", "forEachOrdered").parameterCount(1);
 
     private final String myStreamMethod;
-    private final String myCollectionMethod;
+    private final String myReplacementMethod;
     private final boolean myChangeSemantics;
 
-    public ReplaceForEachMethodFix(String streamMethod, String collectionMethod, boolean changeSemantics) {
+    public ReplaceForEachMethodFix(String streamMethod, String replacementMethod, boolean changeSemantics) {
       myStreamMethod = streamMethod;
-      myCollectionMethod = collectionMethod;
+      myReplacementMethod = replacementMethod;
       myChangeSemantics = changeSemantics;
     }
 
@@ -406,14 +409,14 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
     @Override
     public String getName() {
       return "Replace 'stream()." + myStreamMethod +
-             "()' with '" + myCollectionMethod + "()'" +
+             "()' with '" + myReplacementMethod + "()'" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
     @NotNull
     public String getMessage() {
       return "The 'stream()." + myStreamMethod +
-             "()' chain can be replaced with '" + myCollectionMethod + "()'" +
+             "()' chain can be replaced with '" + myReplacementMethod + "()'" +
              (myChangeSemantics ? " (may change semantics)" : "");
     }
 
@@ -424,16 +427,21 @@ public class SimplifyStreamApiCallChainsInspection extends BaseJavaBatchLocalIns
       PsiExpression collectionExpression = collectionStreamCall.getMethodExpression().getQualifierExpression();
       if (collectionExpression == null) return null;
       collectionStreamCall.replace(collectionExpression);
-      if (!myStreamMethod.equals(myCollectionMethod)) {
-        ExpressionUtils.bindCallTo(streamMethodCall, myCollectionMethod);
-      }
+      ExpressionUtils.bindCallTo(streamMethodCall, myReplacementMethod);
       return streamMethodCall;
     }
 
     static CallHandler<CallChainSimplification> handler() {
-      return CallHandler.of(STREAM_FOR_EACH, call ->
-        COLLECTION_STREAM.test(getQualifierMethodCall(call))
-        ? new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), FOR_EACH_METHOD, true) : null);
+      return CallHandler.of(STREAM_FOR_EACH, call -> {
+        PsiMethodCallExpression qualifierCall = getQualifierMethodCall(call);
+        if (COLLECTION_STREAM.test(qualifierCall)) {
+          return new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), FOR_EACH_METHOD, true);
+        }
+        if (OPTIONAL_STREAM.test(qualifierCall)) {
+          return new ReplaceForEachMethodFix(call.getMethodExpression().getReferenceName(), IF_PRESENT_METHOD, false);
+        }
+        return null;
+      });
     }
   }
 

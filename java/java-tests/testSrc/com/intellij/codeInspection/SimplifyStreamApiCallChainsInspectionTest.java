@@ -16,6 +16,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +33,11 @@ public class SimplifyStreamApiCallChainsInspectionTest extends LightQuickFixPara
 
   public void test() throws Exception {
     doAllTests();
+  }
+
+  @Override
+  protected Sdk getProjectJDK() {
+    return IdeaTestUtil.getMockJdk9();
   }
 
   @Override
