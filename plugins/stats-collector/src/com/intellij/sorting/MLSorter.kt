@@ -79,7 +79,7 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
-        if (ManualExperimentControl.isEnabled && ManualMlSorting.isEnabled) return true
+        if (ManualExperimentControl.isOn && ManualMlSorting.isOn) return true
 
         val language = parameters.language() ?: return false
         val buildNumber = PluginManager.BUILD_NUMBER

@@ -16,20 +16,20 @@ class ToggleManualMlSorting : AnAction() {
     private val enableText = "Enable Manual ML Sorting"
 
     init {
-        templatePresentation.text = "Toggle Manual ML sorting"
+        templatePresentation.text = "Toggle Manual ML Sorting"
     }
     
     override fun update(e: AnActionEvent) {
-        if (!ManualExperimentControl.isEnabled) {
+        if (!ManualExperimentControl.isOn) {
             e.presentation.isEnabledAndVisible = false
             return
         }
         
-        e.presentation.text = if (ManualMlSorting.isEnabled) disableText else enableText
+        e.presentation.text = if (ManualMlSorting.isOn) disableText else enableText
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val before = ManualMlSorting.isEnabled
+        val before = ManualMlSorting.isOn
         ManualMlSorting.switch()
         
         val editor = CommonDataKeys.EDITOR.getData(e.dataContext)
@@ -50,14 +50,14 @@ class ToggleManualMlSorting : AnAction() {
 }
 
 internal fun ApplicationProperty.switch() {
-    isEnabled = !isEnabled
+    isOn = !isOn
 }
 
 abstract class ApplicationProperty {
     internal abstract val key: String
     internal abstract val default: Boolean
     
-    var isEnabled: Boolean 
+    var isOn: Boolean 
         get() = PropertiesComponent.getInstance().getBoolean(key, default) 
         set(value) = PropertiesComponent.getInstance().setValue(key, value, default)
 }   

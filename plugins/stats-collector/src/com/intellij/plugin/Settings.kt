@@ -1,5 +1,6 @@
 package com.intellij.plugin
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
@@ -8,6 +9,7 @@ import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
+import java.awt.event.ActionEvent
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -20,75 +22,128 @@ class PluginSettingsConfigurableProvider : ConfigurableProvider() {
 
 class PluginSettingsConfigurable : Configurable {
 
-    private lateinit var isControlExperimentManuallyCb: JBCheckBox
+    private lateinit var manualControlCb: JBCheckBox
+    private lateinit var manualSortingCb: JBCheckBox
 
     override fun isModified(): Boolean {
-        return isControlExperimentManuallyCb.isSelected != ManualExperimentControl.isEnabled
+        val isModifiedStates = mutableListOf<Boolean>()
+        isModifiedStates += manualControlCb.isSelected != ManualExperimentControl.isOn
+        
+        if (manualControlCb.isSelected) {
+            isModifiedStates += manualSortingCb.isSelected == ManualMlSorting.isOn    
+        }
+        
+        return isModifiedStates.contains(true)
     }
 
     override fun getDisplayName() = "Completion Stats Collector"
 
     override fun apply() {
-        ManualExperimentControl.isEnabled = isControlExperimentManuallyCb.isSelected
+        ManualExperimentControl.isOn = manualControlCb.isSelected
+        if (ManualExperimentControl.isOn) {
+            ManualMlSorting.isOn = manualSortingCb.isSelected
+        }
     }
 
     override fun createComponent(): JComponent? {
-        val label = "Control Experiment Manually"
-        isControlExperimentManuallyCb = JBCheckBox(label, ManualExperimentControl.isEnabled)
-        isControlExperimentManuallyCb.border = IdeBorderFactory.createEmptyBorder(5)
+        val manualControlPanel = manualControlCheckBoxPanel()
+        val timingPanel = timingPanel()
+        val autoExperimentPanel = autoExperimentStatusPanel()
+        val manualExperimentPanel = manualExperimentPanel()
 
-        val timingStats = JBLabel(getStatsText())
-        timingStats.border = IdeBorderFactory.createEmptyBorder(5)
-
-        val status = JBLabel(getStatusText())
-        status.border = IdeBorderFactory.createEmptyBorder(5)
-
+        val updateStatus: (ActionEvent?) -> Unit = {
+            val inManualExperimentMode = manualControlCb.isSelected
+            autoExperimentPanel.isVisible = !inManualExperimentMode
+            manualExperimentPanel.isVisible = inManualExperimentMode
+        }
+        
+        manualControlCb.addActionListener(updateStatus)
+        
         val panel = JPanel()
         panel.apply {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
-            add(timingStats)
-            add(status)
-            add(isControlExperimentManuallyCb)
+            add(timingPanel)
+            add(manualControlPanel)
+            add(manualExperimentPanel)
+            add(autoExperimentPanel)
         }
+        
+        updateStatus(null)
 
         return panel
     }
+
+    private fun manualControlCheckBoxPanel(): JPanel {
+        manualControlCb = JBCheckBox("Control experiment manually", ManualExperimentControl.isOn).apply { 
+            border = IdeBorderFactory.createEmptyBorder()
+        }
+        
+        val panel = JPanel()
+        return panel.apply {
+            layout = BoxLayout(panel, BoxLayout.Y_AXIS)    
+            add(manualControlCb)
+        }
+    }
+
+    private fun manualExperimentPanel(): JPanel {
+        val action = ActionManager.getInstance().getAction("ToggleManualMlSorting")
+        val shortcuts = action.shortcutSet.shortcuts.firstOrNull()?.let { " $it" } ?: ""
+        val text = "(can be changed by \"${action.templatePresentation.text}\" action$shortcuts)"
+        
+        manualSortingCb = JBCheckBox("Enable sorting $text", ManualMlSorting.isOn).apply { 
+            border = IdeBorderFactory.createEmptyBorder()
+        }
+        
+        val panel = JPanel()
+        return panel.apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = IdeBorderFactory.createEmptyBorder(5, 0, 0, 0)
+            add(manualSortingCb)
+        }
+    }
     
-    private fun getStatsText(): String {
+    private fun timingPanel(): JPanel {
+        val panel = JPanel()
+        
         val stats = SortingTimeStatistics.getInstance()
         val time: List<String> = stats.state.getTimeDistribution()
         val avgTime: List<String> = stats.state.getAvgTimeByElementsSortedDistribution()
-
-        if (time.isEmpty() && avgTime.isEmpty()) {
-            return "No stats available"
+        
+        return panel.apply {
+            border = IdeBorderFactory.createEmptyBorder(5)
+            layout = BoxLayout(panel, BoxLayout.Y_AXIS)
+            
+            if (time.isNotEmpty()) {
+                add(JBLabel("<html><b>Time to Sorts Number Distribution:</b></html>"))
+                time.forEach { add(JBLabel(it)) }
+            }
+            if (avgTime.isNotEmpty()) {
+                add(JBLabel("<html><b>Elements Count to Avg Sorting Time:</b></html>"))
+                avgTime.forEach { add(JBLabel(it)) }
+            }
+            if (time.isEmpty() && avgTime.isEmpty()) {
+                add(JBLabel("<html><b>No Stats Available</b></html>"))
+            }
         }
-
-        return "<html>" +
-                "<b>Time to Sorts Number Distribution:</b>" +
-                "<br>" +
-                time.joinToString("<br>") +
-                "<br><br>" +
-                "<b>Elements Count to Avg Sorting Time:</b>" +
-                "<br>" +
-                avgTime.joinToString("<br>") +
-                "</html>"
     }
-
-    private fun getStatusText(): String {
+    
+    private fun autoExperimentStatusPanel(): JPanel {
         val status = WebServiceStatus.getInstance()
         val isExperimentOnCurrentIDE = status.isExperimentOnCurrentIDE()
         val isExperimentGoingOnNow = status.isExperimentGoingOnNow()
 
-        return "<html>" +
-                "<br><br>" +
-                "<b>Is experiment going on now:</b> $isExperimentGoingOnNow" +
-                "<br>" +
-                "<b>Is experiment on current IDE:</b> $isExperimentOnCurrentIDE" +
-                "</html>"
+        val panel = JPanel()
+        return panel.apply {
+            layout = BoxLayout(this, BoxLayout.Y_AXIS)
+            border = IdeBorderFactory.createEmptyBorder(5)
+            add(JBLabel("<html><b>Is experiment going on now:</b> $isExperimentGoingOnNow</html>"))
+            add(JBLabel("<html><b>Is experiment on current IDE:</b> $isExperimentOnCurrentIDE</html>"))
+        }
     }
 
     override fun reset() {
-        isControlExperimentManuallyCb.isSelected = ManualExperimentControl.isEnabled
+        manualControlCb.isSelected = ManualExperimentControl.isOn
+        manualSortingCb.isSelected = ManualMlSorting.isOn
     }
 
     override fun getHelpTopic(): String? = null
