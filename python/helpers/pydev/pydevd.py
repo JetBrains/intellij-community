@@ -1011,6 +1011,10 @@ class PyDB:
             sys.stderr.write("Matplotlib support in debugger failed\n")
             traceback.print_exc()
 
+        if hasattr(sys, 'exc_clear'):
+            # we should clean exception information in Python 2, before user's code execution
+            sys.exc_clear()
+
         if not is_module:
             pydev_imports.execfile(file, globals, locals)  # execute the script
         else:
