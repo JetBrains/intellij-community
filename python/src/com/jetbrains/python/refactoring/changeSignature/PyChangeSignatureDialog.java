@@ -230,11 +230,6 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
   }
 
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myNameField;
-  }
-
-  @Override
   protected String calculateSignature() {
     @NonNls StringBuilder builder = new StringBuilder();
     builder.append(getMethodName());
