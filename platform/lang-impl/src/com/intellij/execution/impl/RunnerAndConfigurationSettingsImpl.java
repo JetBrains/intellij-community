@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -375,9 +376,16 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
 
     PathMacroManager.getInstance(myConfiguration.getProject()).expandPaths(element);
     if (myConfiguration instanceof ModuleBasedConfiguration) {
-      Element moduleNameElement = element.getChild("module");
-      String moduleName = moduleNameElement == null ? null : moduleNameElement.getAttributeValue("name");
-      Module module = moduleName == null ? null : ((ModuleBasedConfiguration)myConfiguration).getConfigurationModule().findModule(moduleName);
+      Module module;
+      if (PlatformUtils.isRubyMine()) {
+        Element moduleNameElement = element.getChild("module");
+        String moduleName = moduleNameElement == null ? null : moduleNameElement.getAttributeValue("name");
+        module = moduleName == null ? null : ((ModuleBasedConfiguration)myConfiguration).getConfigurationModule().findModule(moduleName);
+      }
+      else {
+        module = ((ModuleBasedConfiguration)myConfiguration).getConfigurationModule().getModule();
+      }
+
       if (module != null) {
         PathMacroManager.getInstance(module).expandPaths(element);
       }
