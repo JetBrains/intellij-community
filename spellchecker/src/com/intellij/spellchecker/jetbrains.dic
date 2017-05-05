@@ -308,6 +308,7 @@ keymap
 keymaps
 keystore
 kotlin
+kryo
 labeler
 labelers
 lcov
