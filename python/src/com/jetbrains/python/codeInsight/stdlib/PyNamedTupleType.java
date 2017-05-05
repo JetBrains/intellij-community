@@ -45,7 +45,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   private final String myName;
 
   @NotNull
-  private final Map<String, Optional<PyType>> myFields;
+  private final Map<String, FieldTypeAndDefaultValue> myFields;
 
   @NotNull
   private final DefinitionLevel myDefinitionLevel;
@@ -53,7 +53,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   public PyNamedTupleType(@NotNull PyClass tupleClass,
                           @NotNull PsiElement declaration,
                           @NotNull String name,
-                          @NotNull Map<String, Optional<PyType>> fields,
+                          @NotNull Map<String, FieldTypeAndDefaultValue> fields,
                           @NotNull DefinitionLevel definitionLevel) {
     super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
     myDeclaration = declaration;
@@ -149,7 +149,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   }
 
   @NotNull
-  public Map<String, Optional<PyType>> getFields() {
+  public Map<String, FieldTypeAndDefaultValue> getFields() {
     return myFields;
   }
 
@@ -162,8 +162,13 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
     return isCallable()
-           ? ContainerUtil.map(myFields.entrySet(), field -> new PyCallableParameterImpl(field.getKey(), field.getValue().orElse(null)))
+           ? ContainerUtil.map(myFields.entrySet(), field -> fieldToCallableParameter(field.getKey(), field.getValue()))
            : null;
+  }
+
+  @NotNull
+  private static PyCallableParameter fieldToCallableParameter(@NotNull String name, @NotNull FieldTypeAndDefaultValue typeAndDefaultValue) {
+    return new PyCallableParameterImpl(name, typeAndDefaultValue.getType(), typeAndDefaultValue.getDefaultValue());
   }
 
   public enum DefinitionLevel {
@@ -171,5 +176,29 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     AS_SUPERCLASS,
     NEW_TYPE,
     INSTANCE
+  }
+
+  public static class FieldTypeAndDefaultValue {
+
+    @Nullable
+    private final PyType myType;
+
+    @Nullable
+    private final PyExpression myDefaultValue;
+
+    public FieldTypeAndDefaultValue(@Nullable PyType type, @Nullable PyExpression defaultValue) {
+      myType = type;
+      myDefaultValue = defaultValue;
+    }
+
+    @Nullable
+    public PyType getType() {
+      return myType;
+    }
+
+    @Nullable
+    public PyExpression getDefaultValue() {
+      return myDefaultValue;
+    }
   }
 }

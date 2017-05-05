@@ -278,6 +278,11 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-24099
+  public void testInitializingTypingNamedTupleWithDefaultValues() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-4344, PY-8422, PY-22269, PY-22740
   public void testInitializingCollectionsNamedTuple() {
     doTest();

@@ -648,12 +648,18 @@ public class PyStubsTest extends PyTestCase {
     final Iterator<String> fieldsNamesIterator = expectedFieldsNames.iterator();
     final Iterator<String> fieldsTypesIterator = expectedFieldsTypes.iterator();
 
-    for (Map.Entry<String, Optional<PyType>> entry : namedTupleType.getFields().entrySet()) {
+    for (Map.Entry<String, PyNamedTupleType.FieldTypeAndDefaultValue> entry : namedTupleType.getFields().entrySet()) {
       assertTrue(fieldsNamesIterator.hasNext());
       assertTrue(fieldsTypesIterator.hasNext());
 
-      assertEquals(fieldsNamesIterator.next(), entry.getKey());
-      assertEquals(fieldsTypesIterator.next(), entry.getValue().map(PyType::getName).orElse(null));
+      final String fieldName = entry.getKey();
+      final PyNamedTupleType.FieldTypeAndDefaultValue fieldTypeAndDefaultValue = entry.getValue();
+
+      assertEquals(fieldsNamesIterator.next(), fieldName);
+
+      final PyType fieldType = fieldTypeAndDefaultValue.getType();
+      assertEquals(fieldsTypesIterator.next(), fieldType == null ? null : fieldType.getName());
+      assertNull(fieldTypeAndDefaultValue.getDefaultValue());
     }
 
     assertFalse(fieldsNamesIterator.hasNext());

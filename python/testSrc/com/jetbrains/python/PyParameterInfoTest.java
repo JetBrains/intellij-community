@@ -672,7 +672,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
-        final Map<String, PsiElement> test = loadTest(6);
+        final Map<String, PsiElement> test = loadTest(7);
 
         for (int offset : StreamEx.of(1, 2, 3, 4).map(number -> test.get("<arg" + number + ">").getTextOffset())) {
           final List<String> texts = Collections.singletonList("bar: int, baz: str");
@@ -688,6 +688,10 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         final List<String> texts2 = Collections.singletonList("names: List[str], ages: List[int]");
         final List<String[]> highlighted2 = Collections.singletonList(new String[]{"names: List[str], "});
         feignCtrlP(test.get("<arg6>").getTextOffset()).check(texts2, highlighted2, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+
+        final List<String> texts3 = Collections.singletonList("bar: int, baz: str=\"\"");
+        final List<String[]> highlighted3 = Collections.singletonList(new String[]{"bar: int, "});
+        feignCtrlP(test.get("<arg7>").getTextOffset()).check(texts3, highlighted3, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
       }
     );
   }
