@@ -58,7 +58,6 @@ def patch_qt(qt_support_mode):
 
     elif qt_support_mode == 'pyqt5':
         try:
-            print("trying to import")
             import PyQt5.QtCore  # @UnresolvedImport
             _internal_patch_qt(PyQt5.QtCore)
         except:
