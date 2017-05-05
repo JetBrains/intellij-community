@@ -59,6 +59,8 @@ import static javax.swing.SwingUtilities.layoutCompoundLabel;
  * @author Sergey.Malenkov
  */
 public class Breadcrumbs extends JComponent {
+  private static final int LEFT_RIGHT = 5;
+  private static final int TOP_BOTTOM = 2;
 
   private BiConsumer<Crumb, InputEvent> hover = ((crumb, event) -> hovered = crumb);
   private BiConsumer<Crumb, InputEvent> select = ((crumb, event) -> selected = crumb);
@@ -255,7 +257,6 @@ public class Breadcrumbs extends JComponent {
     for (CrumbView view : views) {
       if (view.crumb != null) {
         if (update || view.font == null) view.update();
-        bounds.x += getGap(view, scale);
         view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
         bounds.x += view.preferred.width;
       }
@@ -276,42 +277,19 @@ public class Breadcrumbs extends JComponent {
     for (CrumbView view : views) {
       if (view.crumb != null) {
         if (view.font == null) view.update();
-        size.width += view.preferred.width + getGap(view, scale);
+        size.width += view.preferred.width;
         if (size.height < view.preferred.height) {
           size.height = view.preferred.height;
         }
       }
     }
-    if (size.width > 0) {
-      size.width += getGap(null, scale);
-    }
     if (size.height == 0) {
       Font font = getFont();
       if (font != null) {
         FontMetrics fm = getFontMetrics(font);
-        size.height = 2 * getTopBottom(scale) + (fm != null ? fm.getHeight() : font.getSize());
+        size.height = scale * (TOP_BOTTOM + TOP_BOTTOM) + (fm != null ? fm.getHeight() : font.getSize());
       }
     }
-  }
-
-  private static int getGap(CrumbView view, int scale) {
-    if (Registry.is("editor.breadcrumbs.marker")) {
-      return view != null && view.parent != null ? 10 * scale : 0;
-    }
-    int gap = Registry.intValue("editor.breadcrumbs.gap.right", 9);
-    if (view != null) {
-      int left = Registry.intValue("editor.breadcrumbs.gap.left", 5);
-      gap = view.parent != null ? gap + left : left;
-    }
-    return gap * scale;
-  }
-
-  private static int getLeftRight(int scale) {
-    return 5 * scale;
-  }
-
-  private static int getTopBottom(int scale) {
-    return 2 * scale;
   }
 
   private int getScale() {
@@ -420,8 +398,8 @@ public class Breadcrumbs extends JComponent {
         this.scale = scale;
         this.font = font;
 
-        preferred.width = 2 * getLeftRight(scale);
-        preferred.height = 2 * getTopBottom(scale);
+        preferred.width = scale * (LEFT_RIGHT + LEFT_RIGHT + getLeftGap() + getRightGap());
+        preferred.height = scale * (TOP_BOTTOM + TOP_BOTTOM);
 
         if (font != null && !StringUtil.isEmpty(text)) {
           FontMetrics fm = getFontMetrics(font);
@@ -448,22 +426,10 @@ public class Breadcrumbs extends JComponent {
     }
 
     private void setBounds(int x, int y, int width, int height, int scale) {
-      bounds.setBounds(x, y, width, height);
-      if (Registry.is("editor.breadcrumbs.marker")) {
-        path = null;
-      }
-      else {
-        int left = getGap(this, scale);
-        int right = getGap(null, scale);
-        path = new Path2D.Double();
-        path.moveTo(x - left, y);
-        path.lineTo(x + width, y);
-        path.lineTo(x + width + right, y + height * 0.5);
-        path.lineTo(x + width, y + height);
-        path.lineTo(x - left, y + height);
-        if (parent != null) path.lineTo(x - left + right, y + height * 0.5);
-        path.closePath();
-      }
+      int left = scale * getLeftGap();
+      int right = scale * getRightGap();
+      bounds.setBounds(x + left, y, width - left - right, height);
+      path = Registry.is("editor.breadcrumbs.marker") ? null : createPath(scale, true);
     }
 
     private boolean contains(int x, int y) {
@@ -478,21 +444,15 @@ public class Breadcrumbs extends JComponent {
           g.fill(path);
         }
         if (parent != null && parent.background == background && gradient != null) {
-          int left = getGap(this, scale);
-          int right = getGap(null, scale);
-          Path2D path = new Path2D.Double();
-          path.moveTo(bounds.x - left, bounds.y);
-          path.lineTo(bounds.x - left + right, bounds.y + bounds.height * 0.5);
-          path.lineTo(bounds.x - left, bounds.y + bounds.height);
           g.setPaint(gradient);
-          g.draw(path); //TODO: paint >
+          g.draw(createPath(scale, false));
         }
       }
-      if (effectType == EffectType.ROUNDED_BOX) {
+      if (effectType == EffectType.ROUNDED_BOX && effectColor != null) {
         Rectangle bounds = getBounds(scale, scale);
         RectanglePainter.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, bounds.height / 2, background, effectColor);
       }
-      else if (effectType == EffectType.BOXED) {
+      else if (effectType == EffectType.BOXED && effectColor != null) {
         Rectangle bounds = getBounds(scale, scale);
         RectanglePainter.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, 0, background, effectColor);
       }
@@ -515,7 +475,7 @@ public class Breadcrumbs extends JComponent {
         if (fm != null) {
           Rectangle iconR = new Rectangle();
           Rectangle textR = new Rectangle();
-          Rectangle viewR = getBounds(getLeftRight(scale), getTopBottom(scale));
+          Rectangle viewR = getBounds(scale * LEFT_RIGHT, scale * TOP_BOTTOM);
           String text = layout(fm, iconR, textR, viewR);
           if (!StringUtil.isEmpty(text)) {
             g.setColor(foreground != null ? foreground : getForeground());
@@ -534,6 +494,41 @@ public class Breadcrumbs extends JComponent {
           }
         }
       }
+    }
+
+    private int getLeftGap() {
+      return !Registry.is("editor.breadcrumbs.marker")
+             ? Registry.intValue("editor.breadcrumbs.gap.left", 5)
+             : parent != null ? 10 : 0;
+    }
+
+    private int getRightGap() {
+      return !Registry.is("editor.breadcrumbs.marker")
+             ? Registry.intValue("editor.breadcrumbs.gap.right", 9)
+             : 0;
+    }
+
+    private Path2D createPath(int scale, boolean closed) {
+      Path2D path = new Path2D.Double();
+
+      int left = scale * getLeftGap();
+      int right = scale * getRightGap();
+      if (parent != null) {
+        left += right;
+        path.moveTo(bounds.x - left, bounds.y);
+        path.lineTo(bounds.x - left + right, bounds.y + bounds.height * 0.5);
+      }
+      else {
+        path.moveTo(bounds.x - left, bounds.y);
+      }
+      path.lineTo(bounds.x - left, bounds.y + bounds.height);
+      if (closed) {
+        path.lineTo(bounds.x + bounds.width, bounds.y + bounds.height);
+        path.lineTo(bounds.x + bounds.width + right, bounds.y + bounds.height * 0.5);
+        path.lineTo(bounds.x + bounds.width, bounds.y);
+        path.closePath();
+      }
+      return path;
     }
   }
 }
