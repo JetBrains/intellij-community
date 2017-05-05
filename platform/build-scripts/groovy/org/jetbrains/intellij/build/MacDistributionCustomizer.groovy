@@ -112,7 +112,8 @@ abstract class MacDistributionCustomizer {
    * @return application bundle directory name
    */
   String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
-    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} EAP" : ""
+    String minorVersion = applicationInfo.minorVersion.equals("0") ? "" : ".${applicationInfo.minorVersion.charAt(0)}"
+    String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}${minorVersion} EAP" : ""
     "$applicationInfo.productName${suffix}.app"
   }
 
