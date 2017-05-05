@@ -42,7 +42,7 @@ public class SwitchHelper {
         DecompilerContext.getClassProcessor().getMapRootClasses().get(arrayField.getClassname());
       if (classNode != null) {
         MethodWrapper wrapper = classNode.getWrapper().getMethodWrapper(CodeConstants.CLINIT_NAME, "()V");
-        if (wrapper != null) {
+        if (wrapper != null && wrapper.root != null) {
           wrapper.getOrBuildGraph().iterateExprents(new DirectGraph.ExprentIterator() {
             @Override
             public int processExprent(Exprent exprent) {
