@@ -170,7 +170,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     }
 
     if ("true".equalsIgnoreCase(System.getProperty("bundle.kotlin.plugin"))) {
-      def currentVersion = "kotlin-plugin-1.1.2-release-Studio2.4-2.zip"
+      def currentVersion = "kotlin-plugin-1.1.2-release-Studio2.4-3.zip"
       context.ant.unzip(
         src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/$currentVersion",
         dest: "$targetDirectory/plugins")
