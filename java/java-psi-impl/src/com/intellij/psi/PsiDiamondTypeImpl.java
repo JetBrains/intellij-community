@@ -398,7 +398,10 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
           return psiParameter.getType().getCanonicalText() + " p" + myIdx++;
         }
       }, ",")).append(")");
-      buf.append(constructor.getThrowsList().getText());
+      PsiClassType[] types = constructor.getThrowsList().getReferencedTypes();
+      if (types.length > 0) {
+        buf.append("throws ").append(StringUtil.join(types, type -> type.getCanonicalText(), ", "));
+      }
     }
     buf.append("{}");
 
