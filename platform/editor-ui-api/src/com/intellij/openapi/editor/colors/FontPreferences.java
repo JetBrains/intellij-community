@@ -29,10 +29,10 @@ public interface FontPreferences {
   int DEFAULT_FONT_SIZE = FontSize.SMALL.getSize();
 
   float DEFAULT_LINE_SPACING = 1.0f;
+  String FALLBACK_FONT_FAMILY         = "Monospaced";
   String MAC_OS_DEFAULT_FONT_FAMILY   = "Menlo";
   String LINUX_DEFAULT_FONT_FAMILY    = "DejaVu Sans Mono";
-  String WINDOWS_DEFAULT_FONT_FAMILY  = "Consolas";
-  String FALLBACK_FONT_FAMILY         = "Monospaced";
+  String WINDOWS_DEFAULT_FONT_FAMILY  = FALLBACK_FONT_FAMILY;
 
   @NotNull
   List<String> getEffectiveFontFamilies();
