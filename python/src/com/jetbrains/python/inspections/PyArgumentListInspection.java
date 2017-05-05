@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
@@ -37,6 +38,7 @@ import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureHandler;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -211,10 +213,12 @@ public class PyArgumentListInspection extends PyInspection {
       final PyCallExpression.PyArgumentsMapping mapping = mappings.get(0);
       if (!mapping.getUnmappedArguments().isEmpty() && mapping.getUnmappedParameters().isEmpty()) {
         final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
-        if (markedCallee != null && markedCallee.getCallable() instanceof PyFunction) {
-          holder.registerProblem(node,
-                                 PyBundle.message("INSP.unexpected.arg(s)"),
-                                 PyChangeSignatureQuickFix.forMismatchedCall(mapping));
+        if (markedCallee != null) {
+          final PyCallable callable = markedCallee.getCallable();
+          final Project project = node.getProject();
+          if (callable instanceof PyFunction && !PyChangeSignatureHandler.isNotUnderSourceRoot(project, callable.getContainingFile())) {
+            holder.registerProblem(node, PyBundle.message("INSP.unexpected.arg(s)"), PyChangeSignatureQuickFix.forMismatchedCall(mapping));
+          }
         }
       }
 
