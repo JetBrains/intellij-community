@@ -332,6 +332,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testAccessingSameArrayElements() { doTest(); }
   public void testArrayLength() { doTest(); }
+  public void testForEachOverEmptyCollection() { doTest(); }
 
   public void testMethodParametersCanChangeNullability() { doTest(); }
 

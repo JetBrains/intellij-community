@@ -28,6 +28,7 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
 import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public class LiveVariablesAnalyzer {
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final FactoryMap<PsiElement, List<DfaVariableValue>> myClosureReads = new FactoryMap<PsiElement, List<DfaVariableValue>>() {
-    @Nullable
+    @NotNull
     @Override
     protected List<DfaVariableValue> create(PsiElement closure) {
       final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
@@ -208,7 +209,11 @@ public class LiveVariablesAnalyzer {
 
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
-        instruction.getVarsToFlush().addAll(toFlush.get(instruction));
+        Collection<DfaVariableValue> values = toFlush.get(instruction);
+        // Do not flush special values as they could be used implicitly
+        values.removeIf(var -> var.getQualifier() != null &&
+                               StreamEx.of(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(var.getPsiVariable())));
+        instruction.getVarsToFlush().addAll(values);
       }
     }
   }

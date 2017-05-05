@@ -669,11 +669,24 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                        PsiElement psiAnchor,
                                        boolean evaluatesToTrue) {
     if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
-      final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
-                                                 "dataflow.message.constant.condition.when.reached" :
-                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-      holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
+      if (psiAnchor.getParent() instanceof PsiForeachStatement) {
+        // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
+        if (!evaluatesToTrue) {
+          // loop on always non-empty collection -- nothing to report
+          return;
+        }
+        boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
+        holder.registerProblem(psiAnchor, array ?
+                                          InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
+                                          InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
+      }
+      else {
+        final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                                   "dataflow.message.constant.condition.when.reached" :
+                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+        holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
+      }
     }
   }
 
