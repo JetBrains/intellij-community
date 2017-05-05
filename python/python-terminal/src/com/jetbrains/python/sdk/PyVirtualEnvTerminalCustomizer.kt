@@ -24,6 +24,7 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.run.PyVirtualEnvReader
 import com.jetbrains.python.run.findActivateScript
 import org.jetbrains.plugins.terminal.LocalTerminalCustomizer
@@ -55,6 +56,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
             ((shellName == "fish") && PythonSdkType.isVirtualEnv(sdk))) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
           findActivateScript(path, shellPath)?.let { activate ->
+            envs.putAll(EnvironmentUtil.getEnvironmentMap())
             envs.put("JEDITERM_SOURCE", if (activate.second != null) "${activate.first} ${activate.second}" else activate.first)
           }
         }
