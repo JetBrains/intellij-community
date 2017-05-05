@@ -9,7 +9,8 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Pair
-import com.intellij.plugin.isMlSortingEnabledByForce
+import com.intellij.plugin.ManualExperimentControl
+import com.intellij.plugin.ManualMlSorting
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.completion.experiment.WebServiceStatus
 import com.jetbrains.completion.ranker.features.FeatureUtils
@@ -78,7 +79,7 @@ class MLSorter : CompletionFinalSorter() {
     }
 
     private fun shouldSortByMlRank(parameters: CompletionParameters): Boolean {
-        if (isMlSortingEnabledByForce()) return true
+        if (ManualExperimentControl.isEnabled() && ManualMlSorting.isEnabled()) return true
 
         val language = parameters.language() ?: return false
         val buildNumber = PluginManager.BUILD_NUMBER

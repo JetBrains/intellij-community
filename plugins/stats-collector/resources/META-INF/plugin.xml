@@ -72,7 +72,7 @@
   </extensions>
 
   <actions>
-    <action class="com.intellij.plugin.ForceMlSorting" id="ToggleMlSorting" internal="true"/>
+    <action class="com.intellij.plugin.ToggleManualMlSorting" id="ToggleMlSorting" internal="true"/>
   </actions>
 
   <project-components>

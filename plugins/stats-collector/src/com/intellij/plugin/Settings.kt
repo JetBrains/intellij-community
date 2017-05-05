@@ -20,21 +20,22 @@ class PluginSettingsConfigurableProvider : ConfigurableProvider() {
 
 class PluginSettingsConfigurable : Configurable {
 
-    private lateinit var isForceExperimentCb: JBCheckBox
+    private lateinit var isControlExperimentManuallyCb: JBCheckBox
 
     override fun isModified(): Boolean {
-        return isForceExperimentCb.isSelected != isMlSortingEnabledByForce()
+        return isControlExperimentManuallyCb.isSelected != ManualExperimentControl.isEnabled()
     }
 
     override fun getDisplayName() = "Completion Stats Collector"
 
     override fun apply() {
-        setMlSortingEnabledByForce(isForceExperimentCb.isSelected)
+        ManualExperimentControl.setEnabled(isControlExperimentManuallyCb.isSelected)
     }
 
     override fun createComponent(): JComponent? {
-        isForceExperimentCb = JBCheckBox("Force Experiment", isMlSortingEnabledByForce())
-        isForceExperimentCb.border = IdeBorderFactory.createEmptyBorder(5)
+        val label = "Control Experiment Manually"
+        isControlExperimentManuallyCb = JBCheckBox(label, ManualExperimentControl.isEnabled())
+        isControlExperimentManuallyCb.border = IdeBorderFactory.createEmptyBorder(5)
 
         val timingStats = JBLabel(getStatsText())
         timingStats.border = IdeBorderFactory.createEmptyBorder(5)
@@ -47,7 +48,7 @@ class PluginSettingsConfigurable : Configurable {
             layout = BoxLayout(this, BoxLayout.Y_AXIS)
             add(timingStats)
             add(status)
-            add(isForceExperimentCb)
+            add(isControlExperimentManuallyCb)
         }
 
         return panel
@@ -87,7 +88,7 @@ class PluginSettingsConfigurable : Configurable {
     }
 
     override fun reset() {
-        isForceExperimentCb.isSelected = isMlSortingEnabledByForce()
+        isControlExperimentManuallyCb.isSelected = ManualExperimentControl.isEnabled()
     }
 
     override fun getHelpTopic(): String? = null
