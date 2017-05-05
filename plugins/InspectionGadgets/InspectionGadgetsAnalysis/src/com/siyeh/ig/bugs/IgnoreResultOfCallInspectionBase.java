@@ -25,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
@@ -236,12 +235,13 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
           if(annotation != null) {
             // Check that annotation actually belongs to the same library/source root
             // which could be important in case of split-packages
-            PsiFile file = PsiTreeUtil.getParentOfType(annotation, PsiFile.class);
-            if(file != null) {
+            VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
+            VirtualFile currentFile = classOwner.getVirtualFile();
+            if(annotationFile != null && currentFile != null) {
               ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
-              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(file.getVirtualFile());
-              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(classOwner.getVirtualFile());
-              if(!Objects.equals(annotationClassRoot, currentClassRoot)) {
+              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
+              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
+              if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
                 return null;
               }
             }
