@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -49,14 +50,11 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
     settings -> settings != null && usesMyModule(settings.getConfiguration());
-  @NotNull
-  private final RunManagerImpl myManager;
   @Nullable
   private List<Element> myUnloadedElements = null;
 
-  public ModuleRunConfigurationManager(@NotNull final Module module, @NotNull final RunManagerImpl runManager) {
+  public ModuleRunConfigurationManager(@NotNull Module module) {
     myModule = module;
-    myManager = runManager;
 
     myModule.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
@@ -64,7 +62,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
         if (myModule.equals(module)) {
           LOG.debug("time to remove something from project (" + project + ")");
           synchronized (LOCK) {
-            getModuleRunConfigurationSettings().forEach(settings -> myManager.removeConfiguration(settings));
+            getModuleRunConfigurationSettings().forEach(settings -> getRunManager().removeConfiguration(settings));
           }
         }
       }
@@ -98,7 +96,12 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   @NotNull
   private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getConfigurationSettings(), myModuleConfigCondition);
+    return ContainerUtil.filter(getRunManager().getConfigurationSettings(), myModuleConfigCondition);
+  }
+
+  @NotNull
+  private RunManagerImpl getRunManager() {
+    return (RunManagerImpl)RunManager.getInstance(myModule.getProject());
   }
 
   private boolean usesMyModule(RunConfiguration config) {
@@ -109,8 +112,8 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   public Element writeExternal(@NotNull final Element element, boolean isShared) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
     getModuleRunConfigurationSettings().stream()
-      .filter(settings -> myManager.isConfigurationShared(settings) == isShared)
-      .forEach(settings -> myManager.addConfigurationElement(element, settings));
+      .filter(settings -> getRunManager().isConfigurationShared(settings) == isShared)
+      .forEach(settings -> getRunManager().addConfigurationElement(element, settings));
     if (myUnloadedElements != null) {
       myUnloadedElements.forEach(unloadedElement -> element.addContent(unloadedElement.clone()));
     }
@@ -134,8 +137,9 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   private void doReadExternal(@NotNull Element element, boolean isShared) {
     LOG.debug("readExternal(" + myModule + ");  shared: " + isShared);
 
+    RunManagerImpl runManager = getRunManager();
     for (final Element child : element.getChildren()) {
-      final RunnerAndConfigurationSettings configuration = myManager.loadConfiguration(child, isShared);
+      final RunnerAndConfigurationSettings configuration = runManager.loadConfiguration(child, isShared);
       if (configuration == null && Comparing.strEqual(element.getName(), RunManagerImpl.CONFIGURATION)) {
         if (myUnloadedElements == null) myUnloadedElements = new ArrayList<>(2);
         myUnloadedElements.add(element);
@@ -143,7 +147,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     }
 
     // IDEA-60004: configs may never be sorted before write, so call it manually after shared configs read
-    myManager.setOrdered(false);
-    myManager.getSortedConfigurations();
+    runManager.setOrdered(false);
+    runManager.getSortedConfigurations();
   }
 }
