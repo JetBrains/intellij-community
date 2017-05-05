@@ -81,12 +81,11 @@ abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     if (transform) {
       MatcherImplUtil.transform(options);
     }
-    pattern = options.getSearchPattern();
     options.setFileType(patternFileType);
     options.setDialect(patternLanguage);
 
     MatcherImpl.validate(getProject(), options);
-    return testMatcher.testFindMatches(in, pattern, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
+    return testMatcher.testFindMatches(in, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
   protected List<MatchResult> findMatches(String in, String pattern, boolean filePattern, FileType patternFileType) {

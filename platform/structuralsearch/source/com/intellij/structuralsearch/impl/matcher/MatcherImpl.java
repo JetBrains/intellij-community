@@ -347,13 +347,11 @@ public class MatcherImpl {
   /**
    * Finds the matches of given pattern starting from given tree element.
    * @param source string for search
-   * @param pattern to be searched
    * @return list of matches found
    * @throws MalformedPatternException
    * @throws UnsupportedPatternException
    */
   protected List<MatchResult> testFindMatches(String source,
-                                              String pattern,
                                               MatchOptions options,
                                               boolean filePattern,
                                               FileType sourceFileType,
@@ -370,7 +368,6 @@ public class MatcherImpl {
                                                                        sourceExtension,
                                                                        project, physicalSourceFile);
 
-      options.setSearchPattern(pattern);
       options.setScope(new LocalSearchScope(elements));
       testFindMatches(sink, options);
     }
@@ -385,8 +382,8 @@ public class MatcherImpl {
     return sink.getMatches();
   }
 
-  protected List<MatchResult> testFindMatches(String source, String pattern, MatchOptions options, boolean filePattern) {
-    return testFindMatches(source, pattern, options, filePattern, options.getFileType(), null, false);
+  protected List<MatchResult> testFindMatches(String source, MatchOptions options, boolean filePattern) {
+    return testFindMatches(source, options, filePattern, options.getFileType(), null, false);
   }
 
   class TaskScheduler implements MatchingProcess {
