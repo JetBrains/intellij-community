@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -145,6 +146,29 @@ public class ComplementaryFontsRegistry {
    * pass not-null correct {@link FontRenderContext} to this method.
    */
   @NotNull
+  public static FontInfo getFontAbleToDisplay(@NotNull CharSequence text, int start, int end, 
+                                              @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
+                                              FontRenderContext context) {
+    assert 0 <= start && start < end && end <= text.length() : "Start: " + start + ", end: " + end + ", length: " + text.length();
+    if (end - start == 1) {
+      // fast path for BMP code points
+      return getFontAbleToDisplay(text.charAt(start), style, preferences, context);
+    }
+    int firstCodePoint = Character.codePointAt(text, start);
+    int secondOffset = Character.offsetByCodePoints(text, start, 1);
+    if (secondOffset == end) {
+      // fast path for a single SMP code point
+      return getFontAbleToDisplay(firstCodePoint, style, preferences, context);
+    }
+    char[] tmp = CharArrayUtil.fromSequence(text, secondOffset, end);
+    return getFontAbleToDisplay(firstCodePoint, tmp, 0, tmp.length, style, preferences, context);
+  }
+
+  /**
+   * If you intend to use font metrics from returned {@link FontInfo} object,
+   * pass not-null correct {@link FontRenderContext} to this method.
+   */
+  @NotNull
   public static FontInfo getFontAbleToDisplay(@NotNull char[] text, int start, int end, 
                                               @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
                                               FontRenderContext context) {
@@ -159,6 +183,12 @@ public class ComplementaryFontsRegistry {
       // fast path for a single SMP code point
       return getFontAbleToDisplay(firstCodePoint, style, preferences, context);
     }
+    return getFontAbleToDisplay(firstCodePoint, text, secondOffset, end, style, preferences, context);
+  }
+  
+  private static FontInfo getFontAbleToDisplay(int codePoint, @NotNull char[] remainingText, int start, int end, 
+                                              @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences,
+                                              FontRenderContext context) {
     boolean tryDefaultFont = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     boolean useLigatures = SystemInfo.isJetbrainsJvm && preferences.useLigatures();
@@ -166,8 +196,8 @@ public class ComplementaryFontsRegistry {
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, len = fontFamilies.size(); i < len; ++i) { // avoid foreach, it instantiates ArrayList$Itr, this traversal happens very often
       final String fontFamily = fontFamilies.get(i);
-      result = doGetFontAbleToDisplay(firstCodePoint, preferences.getSize(fontFamily), style, fontFamily, useLigatures, context);
-      if (result != null && result.getFont().canDisplayUpTo(text, secondOffset, end) == -1) {
+      result = doGetFontAbleToDisplay(codePoint, preferences.getSize(fontFamily), style, fontFamily, useLigatures, context);
+      if (result != null && result.getFont().canDisplayUpTo(remainingText, start, end) == -1) {
         return result;
       }
       tryDefaultFont &= !FontPreferences.DEFAULT_FONT_NAME.equals(fontFamily);
@@ -177,12 +207,12 @@ public class ComplementaryFontsRegistry {
       size = preferences.getSize(fontFamilies.get(0));
     }
     if (tryDefaultFont) {
-      result = doGetFontAbleToDisplay(firstCodePoint, size, style, FontPreferences.DEFAULT_FONT_NAME, useLigatures, context);
-      if (result != null && result.getFont().canDisplayUpTo(text, secondOffset, end) == -1) {
+      result = doGetFontAbleToDisplay(codePoint, size, style, FontPreferences.DEFAULT_FONT_NAME, useLigatures, context);
+      if (result != null && result.getFont().canDisplayUpTo(remainingText, start, end) == -1) {
         return result;
       }
     }
-    result = doGetFontAbleToDisplay(firstCodePoint, text, secondOffset, end, size, style, useLigatures, context);
+    result = doGetFontAbleToDisplay(codePoint, remainingText, start, end, size, style, useLigatures, context);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Fallback font: " + result.getFont().getFontName());
     }

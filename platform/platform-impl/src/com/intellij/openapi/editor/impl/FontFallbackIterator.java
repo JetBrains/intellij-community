@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.util.text.CharArrayIterator;
+import com.intellij.util.text.CharSequenceIterator;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,9 +33,9 @@ import java.text.CharacterIterator;
  * Text's characters are grouped into ranges that can be displayed using the same font.
  * <p>
  * Instances can be reused for different texts or preferred fonts - 
- * each {@link #start(char[], int, int)} invocation initiates a new iteration. 
- * All required font-related properties for a given iteration should be set before correspongin 
- * {@link #start(char[], int, int)} invocation.
+ * each {@code start} method invocation initiates a new iteration. 
+ * All required font-related properties for a given iteration should be set before corresponding
+ * {@code start} method invocation.
  * <p>
  * Sample usage scenario:
  * <code><pre>
@@ -48,13 +49,16 @@ import java.text.CharacterIterator;
  * </pre></code>
  */
 public class FontFallbackIterator {
+  private static final char COMPLEX_CHAR_START = 0x300; // start of Combining Diacritical Marks block
+  
   private final BreakAtEveryCharacterIterator myTrivialBreaker = new BreakAtEveryCharacterIterator();
 
   private FontPreferences myFontPreferences = new FontPreferencesImpl();
   private int myFontStyle = Font.PLAIN;
   private FontRenderContext myFontRenderContext;
 
-  private char[] myText;
+  private char[] myTextAsArray;
+  private CharSequence myTextAsCharSequence;
   private BreakIterator myIterator;
   private int myStart;
   private int myEnd;
@@ -76,28 +80,45 @@ public class FontFallbackIterator {
     return this;
   }
 
+  public void start(@NotNull CharSequence text, int start, int end) {
+    assert 0 <= start && start <= end && end <= text.length() : "Text length: " + text.length() + ", start: " + start + ", end: " + end;
+    CharacterIterator characterIterator = null;
+    for (int i = start; i < end; i++) {
+      if (text.charAt(i) >= COMPLEX_CHAR_START) {
+        characterIterator = new CharSequenceIterator(text, start, end);
+        break;
+      }
+    }
+    doStart(text, null, characterIterator, start, end);
+  }
+
   public void start(@NotNull char[] text, int start, int end) {
     assert 0 <= start && start <= end && end <= text.length : "Text length: " + text.length + ", start: " + start + ", end: " + end;
-    myText = text;
-    myIterator = getBreakIterator(text, start, end);
+    CharacterIterator characterIterator = null;
+    for (int i = start; i < end; i++) {
+      if (text[i] >= COMPLEX_CHAR_START) {
+        characterIterator = new CharArrayIterator(text, start, end);
+        break;
+      }
+    }
+    doStart(null, text, characterIterator, start, end);
+  }
+
+  private void doStart(CharSequence textAsCharSequence, char[] textAsArray, CharacterIterator characterIterator, int start, int end) {
+    myTextAsCharSequence = textAsCharSequence;
+    myTextAsArray = textAsArray;
+    if (characterIterator == null) {
+      myTrivialBreaker.setRange(start, end);
+      myIterator = myTrivialBreaker;
+    }
+    else {
+      myIterator = BreakIterator.getCharacterInstance(); // locale-dependent
+      myIterator.setText(characterIterator);
+    }
     myStart = myEnd = myIterator.first();
     assert myStart == start;
     myFontInfo = myNextFontInfo = null;
     advance();
-  }
-
-  private BreakIterator getBreakIterator(char[] text, int start, int end) {
-    for (int i = start; i < end; i++) {
-      if (text[i] >= 0x300 /* start of Combining Diacritical Marks block */) {
-        // text is complex - use standard Unicode algorithm
-        BreakIterator breakIterator = BreakIterator.getCharacterInstance(); // locale-dependent
-        breakIterator.setText(new CharArrayIterator(text, start, end));
-        return breakIterator;
-      }
-    }
-    // text is simple - can be treated char-by-char
-    myTrivialBreaker.setRange(start, end);
-    return myTrivialBreaker;
   }
 
   public boolean atEnd() {
@@ -122,7 +143,14 @@ public class FontFallbackIterator {
   }
 
   private FontInfo getFontAbleToDisplay(int start, int end) {
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(myText, start, end, myFontStyle, myFontPreferences, myFontRenderContext);
+    if (myTextAsCharSequence == null) {
+      return ComplementaryFontsRegistry.getFontAbleToDisplay(myTextAsArray, start, end, 
+                                                             myFontStyle, myFontPreferences, myFontRenderContext);
+    }
+    else {
+      return ComplementaryFontsRegistry.getFontAbleToDisplay(myTextAsCharSequence, start, end,
+                                                             myFontStyle, myFontPreferences, myFontRenderContext);
+    }
   }
 
   public int getStart() {
