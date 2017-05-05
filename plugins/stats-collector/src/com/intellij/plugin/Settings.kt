@@ -23,18 +23,18 @@ class PluginSettingsConfigurable : Configurable {
     private lateinit var isControlExperimentManuallyCb: JBCheckBox
 
     override fun isModified(): Boolean {
-        return isControlExperimentManuallyCb.isSelected != ManualExperimentControl.isEnabled()
+        return isControlExperimentManuallyCb.isSelected != ManualExperimentControl.isEnabled
     }
 
     override fun getDisplayName() = "Completion Stats Collector"
 
     override fun apply() {
-        ManualExperimentControl.setEnabled(isControlExperimentManuallyCb.isSelected)
+        ManualExperimentControl.isEnabled = isControlExperimentManuallyCb.isSelected
     }
 
     override fun createComponent(): JComponent? {
         val label = "Control Experiment Manually"
-        isControlExperimentManuallyCb = JBCheckBox(label, ManualExperimentControl.isEnabled())
+        isControlExperimentManuallyCb = JBCheckBox(label, ManualExperimentControl.isEnabled)
         isControlExperimentManuallyCb.border = IdeBorderFactory.createEmptyBorder(5)
 
         val timingStats = JBLabel(getStatsText())
@@ -88,7 +88,7 @@ class PluginSettingsConfigurable : Configurable {
     }
 
     override fun reset() {
-        isControlExperimentManuallyCb.isSelected = ManualExperimentControl.isEnabled()
+        isControlExperimentManuallyCb.isSelected = ManualExperimentControl.isEnabled
     }
 
     override fun getHelpTopic(): String? = null

@@ -20,16 +20,16 @@ class ToggleManualMlSorting : AnAction() {
     }
     
     override fun update(e: AnActionEvent) {
-        if (!ManualExperimentControl.isEnabled()) {
+        if (!ManualExperimentControl.isEnabled) {
             e.presentation.isEnabledAndVisible = false
             return
         }
         
-        e.presentation.text = if (ManualMlSorting.isEnabled()) disableText else enableText
+        e.presentation.text = if (ManualMlSorting.isEnabled) disableText else enableText
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val before = ManualMlSorting.isEnabled()
+        val before = ManualMlSorting.isEnabled
         ManualMlSorting.switch()
         
         val editor = CommonDataKeys.EDITOR.getData(e.dataContext)
@@ -49,15 +49,18 @@ class ToggleManualMlSorting : AnAction() {
     
 }
 
-internal fun ApplicationProperty.switch() = setEnabled(!isEnabled())
+internal fun ApplicationProperty.switch() {
+    isEnabled = !isEnabled
+}
 
 abstract class ApplicationProperty {
     internal abstract val key: String
     internal abstract val default: Boolean
     
-    fun isEnabled() = PropertiesComponent.getInstance().getBoolean(key, default) 
-    fun setEnabled(value: Boolean) = PropertiesComponent.getInstance().setValue(key, value, default)
-}
+    var isEnabled: Boolean 
+        get() = PropertiesComponent.getInstance().getBoolean(key, default) 
+        set(value) = PropertiesComponent.getInstance().setValue(key, value, default)
+}   
 
 object ManualExperimentControl : ApplicationProperty() {
     override val key = "ml.control.experiment.manually"
