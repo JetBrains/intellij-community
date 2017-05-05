@@ -21,9 +21,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.messages.Topic
 import com.intellij.util.text.nullize
 import java.util.regex.Pattern
 
@@ -35,8 +33,6 @@ import java.util.regex.Pattern
 abstract class RunManager {
   companion object {
     private val UNNAMED = "Unnamed"
-
-    val TOPIC = Topic("RunManager changes", ModuleRootListener::class.java)
 
     @JvmStatic
     fun getInstance(project: Project): RunManager {
