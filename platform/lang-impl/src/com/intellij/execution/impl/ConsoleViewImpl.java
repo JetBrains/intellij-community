@@ -516,7 +516,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   @TestOnly
   public void waitAllRequests() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread((Runnable)() -> {
       while (true) {
         try {
           myFlushAlarm.waitForAllExecuted(10, TimeUnit.SECONDS);
