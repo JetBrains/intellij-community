@@ -61,6 +61,8 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "boxed":
         return new MapResolver();
       case "sorted":
+      case "toArray":
+      case "collect":
         return new IdentityResolver();
       case "distinct":
         return new DistinctResolver();

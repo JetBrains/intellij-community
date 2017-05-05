@@ -37,6 +37,9 @@ public class ResolverFactory {
     switch (callName) {
       case "distinct":
         return new DistinctCallTraceResolver();
+      case "toArray":
+      case "collect":
+        return new CollectIdentityResolver();
       default:
         return new SimplePeekCallTraceResolver();
     }
