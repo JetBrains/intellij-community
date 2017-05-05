@@ -52,8 +52,8 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
   public static PyChangeSignatureQuickFix forMismatchedCall(@NotNull PyArgumentsMapping mapping) {
     assert mapping.getMarkedCallee() != null;
     final PyFunction function = as(mapping.getMarkedCallee().getCallable(), PyFunction.class);
-    final PyCallExpression callExpression = mapping.getCallExpression();
     assert function != null;
+    final PyCallExpression callExpression = mapping.getCallExpression();
     int positionalParamAnchor = -1;
     final PyParameter[] parameters = function.getParameterList().getParameters();
     for (PyParameter parameter : parameters) {
@@ -150,6 +150,12 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
           return result;
         }
       };
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+    return getFunction();
   }
 
   @Override
