@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.xml;
+package com.intellij.psi;
 
-import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiLiteralValue;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Mike
- */
-public interface XmlAttributeValue extends XmlElement, PsiLiteralValue {
+public interface PsiLiteralValue {
   /**
-   * @return text inside XML attribute with quotes stripped off
+   * Returns the value of the literal expression (an Integer for an integer constant, a String
+   * for a string literal, and so on).
+   *
+   * @return the value of the expression, or null if the parsing of the literal failed.
    */
-  String getValue();
-  
-  /**
-   * @return the range occupied by text inside XML attribute with quotes stripped off
-   */
-  TextRange getValueTextRange();
+  @Nullable
+  Object getValue();
 }
