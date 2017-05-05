@@ -61,10 +61,6 @@ import java.util.regex.Pattern;
 public class PatternCompiler {
   private static CompileContext lastTestingContext;
 
-  public static void transformOldPattern(MatchOptions options) {
-    StringToConstraintsTransformer.transformOldPattern(options);
-  }
-
   public static CompiledPattern compilePattern(final Project project, final MatchOptions options)
     throws MalformedPatternException, UnsupportedOperationException {
     FileType fileType = options.getFileType();
@@ -89,7 +85,7 @@ public class PatternCompiler {
 
       if (context.getSearchHelper().doOptimizing() && context.getSearchHelper().isScannedSomething()) {
         final Set<PsiFile> set = context.getSearchHelper().getFilesSetToScan();
-        final List<PsiFile> filesToScan = new ArrayList<>(set.size());
+        final List<PsiFile> filesToScan = new SmartList<>();
         final GlobalSearchScope scope = (GlobalSearchScope)options.getScope();
 
         for (final PsiFile file : set) {

@@ -268,8 +268,7 @@ public class StringToConstraintsTransformerTest {
     assertEquals("a", constraint.getRegExp());
   }
 
-  private void test(String pattern) {
-    myOptions.setSearchPattern(pattern);
-    StringToConstraintsTransformer.transformOldPattern(myOptions);
+  private void test(String criteria) {
+    StringToConstraintsTransformer.transformCriteria(criteria, myOptions);
   }
 }

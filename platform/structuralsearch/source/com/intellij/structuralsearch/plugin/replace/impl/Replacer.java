@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -20,9 +35,13 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
@@ -64,14 +83,13 @@ public class Replacer {
                             FileType sourceFileType, Language sourceDialect) {
     this.options = options;
     final MatchOptions matchOptions = this.options.getMatchOptions();
-    matchOptions.setSearchPattern(what);
     this.options.setReplacement(by);
     replacementBuilder=null;
     context = null;
     replaceHandler = null;
 
     matchOptions.clearVariableConstraints();
-    MatcherImplUtil.transform(matchOptions);
+    matchOptions.fillSearchCriteria(what);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(matchOptions.getFileType());
     assert profile != null;
@@ -106,7 +124,7 @@ public class Replacer {
       CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
-      final List<ReplacementInfo> resultPtrList = new ArrayList<>();
+      final List<ReplacementInfo> resultPtrList = new SmartList<>();
 
       for (final MatchResult result : sink.getMatches()) {
         resultPtrList.add(buildReplacement(result));
@@ -370,7 +388,7 @@ public class Replacer {
   }
 
   public ReplacementInfo buildReplacement(MatchResult result) {
-    List<SmartPsiElementPointer> l = new ArrayList<>();
+    List<SmartPsiElementPointer> l = new SmartList<>();
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(result.getName())) {

@@ -1802,8 +1802,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     Matcher testMatcher = new Matcher(getProject());
     MatchOptions options = new MatchOptions();
-    options.setSearchPattern("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
-    MatcherImplUtil.transform(options);
+    options.fillSearchCriteria("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
     options.setFileType(StdFileTypes.JAVA);
 
     List<MatchResult> results = new ArrayList<>();
@@ -1824,8 +1823,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     results.clear();
 
     options.clearVariableConstraints();
-    options.setSearchPattern("try  { '_st*; } catch('Type:Type2 '_t) { '_st2*; }");
-    MatcherImplUtil.transform(options);
+    options.fillSearchCriteria("try  { '_st*; } catch('Type:Type2 '_t) { '_st2*; }");
 
     for(PsiVariable var:vars) {
       final PsiTypeElement typeElement = var.getTypeElement();
