@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.function.BooleanSupplier;
 
 public class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader pool", 2);
@@ -88,7 +90,11 @@ public class AsyncEditorLoader {
 
   private Future<Runnable> scheduleLoading() {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
-    long startStamp = myEditor.getDocument().getModificationStamp();
+    Document document = myEditor.getDocument();
+    long startStamp = document.getModificationStamp();
+    BooleanSupplier psiDocumentRemainSame = () ->
+      startStamp == document.getModificationStamp() &&
+      psiDocumentManager.isCommitted(document); // undo after document change restores stamp but keeps PSI changed, hence additional check
     return ourExecutor.submit(() -> {
       Ref<Runnable> ref = new Ref<>();
       try {
@@ -101,7 +107,7 @@ public class AsyncEditorLoader {
           Runnable continuation = ref.get();
           if (continuation != null) {
             invokeLater(() -> {
-              if (startStamp == myEditor.getDocument().getModificationStamp()) loadingFinished(continuation);
+              if (psiDocumentRemainSame.getAsBoolean()) loadingFinished(continuation);
               else if (!myProject.isDisposed() && !myEditorComponent.isDisposed()) scheduleLoading();
             });
             return continuation;
