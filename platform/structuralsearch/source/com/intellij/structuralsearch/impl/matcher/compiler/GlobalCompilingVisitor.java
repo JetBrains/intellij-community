@@ -143,9 +143,7 @@ public class GlobalCompilingVisitor {
     assert profile != null;
     profile.compile(elements, this);
 
-    if (context.getPattern().getStrategy() == null) {
-      System.out.println();
-    }
+    assert context.getPattern().getStrategy() != null;
   }
 
   @Nullable
