@@ -989,13 +989,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     float scale = getEditorScaleFactor();
-    if (icon instanceof ScalableIcon && scale != 1f) {
-      if (icon instanceof JBUIScaleTrackable) {
-        ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
-      }
-      return ((ScalableIcon)icon).scale(scale);
-    }
-    return icon;
+    return scale == 1 ? icon : IconUtil.scale(icon, this, scale);
   }
 
   private int scaleWidth(int width) {

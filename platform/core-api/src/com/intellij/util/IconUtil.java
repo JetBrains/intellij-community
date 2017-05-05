@@ -440,14 +440,20 @@ public class IconUtil {
   /**
    * Returns a scaled icon instance.
    *
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   *
    * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
    * @param scale the scale factor
-   * @param smartScale whether to scale via {@link ScalableIcon#scale(float)} when applicable
    * @return the scaled icon
    */
   @NotNull
-  public static Icon scale(@NotNull Icon icon, float scale, boolean smartScale) {
-    if (smartScale && icon instanceof ScalableIcon) {
+  public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof JBUI.JBUIScaleTrackable && ancestor != null) {
+        ((JBUI.JBUIScaleTrackable)icon).updateJBUIScale(ancestor.getGraphicsConfiguration());
+      }
       return ((ScalableIcon)icon).scale(scale);
     }
     return scale(icon, scale);
