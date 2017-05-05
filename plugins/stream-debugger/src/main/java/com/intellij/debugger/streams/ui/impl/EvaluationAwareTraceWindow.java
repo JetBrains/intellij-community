@@ -17,7 +17,6 @@ package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
-import com.intellij.debugger.streams.resolve.ResolvedTraceImpl;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.ui.TraceController;
@@ -59,7 +58,6 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   private final JPanel myCenterPane;
   private final List<MyPlaceholder> myTabContents;
   private final MyPlaceholder myFlatContent;
-  private final StreamChain myStreamChain;
   private final JBTabsPaneImpl myTabsPane;
 
   private MyMode myMode = MyMode.SPLIT;
@@ -75,7 +73,6 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     }, myDisposable);
     setModal(false);
     setTitle(DIALOG_TITLE);
-    myStreamChain = chain;
     final JBCardLayout layout = new JBCardLayout();
     myCenterPane = new JPanel(layout);
     myCenterPane.add(myTabsPane.getComponent());
@@ -105,13 +102,14 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     final List<ResolvedTrace> traces = resolvedTrace.getResolvedTraces();
     assert myTabContents.size() == traces.size() + 1;
 
-    List<TraceControllerImpl> controllers = createControllers(resolvedTrace.getResolvedTraces());
+    final List<TraceControllerImpl> controllers = createControllers(resolvedTrace);
 
-    final CollectionView sourceView = new CollectionView("Source", context, traces.get(0).getValues());
+    if (controllers.isEmpty()) return;
+    final CollectionView sourceView = new SourceView(context, controllers.get(0).getResolvedTrace().getValues());
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
 
-    for (int i = 1; i < myTabContents.size() - 1; i++) {
+    for (int i = 1; i < myTabContents.size(); i++) {
       final MyPlaceholder tab = myTabContents.get(i);
       final TraceController previous = controllers.get(i - 1);
       final TraceController current = controllers.get(i);
@@ -120,26 +118,10 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       tab.setContent(view, BorderLayout.CENTER);
     }
 
-    final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
     final Value result = resolvedTrace.getResult();
-    if (result != null && !resolvedTrace.exceptionThrown()) {
-      final TraceElementImpl resultTraceElement = new TraceElementImpl(Integer.MAX_VALUE, result);
-      final CollectionView view = new CollectionView("Result", context, Collections.singletonList(resultTraceElement));
-      resultTab.setContent(view, BorderLayout.CENTER);
-      final ResolvedTraceImpl terminationTrace = new ResolvedTraceImpl(myStreamChain.getTerminationCall(),
-                                                                       Collections.singletonList(resultTraceElement),
-                                                                       Collections.emptyMap(),
-                                                                       Collections.emptyMap());
-      final TraceControllerImpl resultController = new TraceControllerImpl(terminationTrace);
-      resultController.register(view);
-      if (!controllers.isEmpty()) {
-        final TraceControllerImpl previousLastController = controllers.get(controllers.size() - 1);
-        previousLastController.setNextListener(resultController);
-        resultController.setPreviousListener(previousLastController);
-      }
-      controllers.add(resultController);
-    }
-    else {
+    final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
+
+    if (result == null || resolvedTrace.exceptionThrown()) {
       final String text =
         resolvedTrace.exceptionThrown() ? "There is no result: exception was thrown" : "There is no result of such stream chain";
       resultTab.setContent(new JBLabel(text, SwingConstants.CENTER), BorderLayout.CENTER);
@@ -152,7 +134,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       myTabsPane.setSelectedIndex(0);
     }
 
-    final FlatView flatView = new FlatView(controllers, context);
+    final FlatView flatView = new FlatView(controllers.subList(1, controllers.size()), context);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
     myCenterPane.revalidate();
     myCenterPane.repaint();
@@ -181,10 +163,12 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return myCenterPane;
   }
 
-  private static List<TraceControllerImpl> createControllers(@NotNull List<ResolvedTrace> traces) {
+  @NotNull
+  private static List<TraceControllerImpl> createControllers(@NotNull ResolvedTracingResult resolvedResult) {
     List<TraceControllerImpl> controllers = new ArrayList<>();
     TraceControllerImpl prev = null;
-    for (final ResolvedTrace trace : traces) {
+    final List<ResolvedTrace> traces = resolvedResult.getResolvedTraces();
+    for (final ResolvedTrace trace : traces.subList(0, traces.size() - 1)) {
       final TraceControllerImpl current = new TraceControllerImpl(trace);
       if (prev != null) {
         current.setPreviousListener(prev);
@@ -193,6 +177,18 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
       controllers.add(current);
       prev = current;
+    }
+
+    if (!traces.isEmpty()) {
+      final ResolvedTrace lastTrace = traces.get(traces.size() - 1);
+      final TraceControllerImpl terminatorController =
+        new TraceControllerImpl(lastTrace, Collections.singletonList(resolvedResult.getResult()));
+      if (!controllers.isEmpty()) {
+        final TraceControllerImpl lastController = controllers.get(controllers.size() - 1);
+        lastController.setNextListener(terminatorController);
+        terminatorController.setPreviousListener(lastController);
+      }
+      controllers.add(terminatorController);
     }
 
     return controllers;

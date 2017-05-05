@@ -16,18 +16,21 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.debugger.streams.ui.PaintingListener
 import com.intellij.debugger.streams.ui.ValuesPositionsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.EventDispatcher
+import com.sun.jdi.Value
 
 /**
  * @author Vitaliy.Bibaev
  */
-class PositionsAwareCollectionView(header: String,
-                                   evaluationContext: EvaluationContextImpl,
-                                   private val values: List<ValueWithPositionImpl>) : CollectionView(header, evaluationContext,
-                                                                                                     values.map { it.traceElement }) {
+open class PositionsAwareCollectionView(header: String,
+                                        evaluationContext: EvaluationContextImpl,
+                                        rawValues: List<Value>,
+                                        private val values: List<ValueWithPositionImpl>)
+  : CollectionView(header, evaluationContext, rawValues, values.map { it.traceElement }) {
   private val myDispatcher: EventDispatcher<ValuesPositionsListener> = EventDispatcher.create(ValuesPositionsListener::class.java)
 
   init {
@@ -82,5 +85,5 @@ class PositionsAwareCollectionView(header: String,
   }
 }
 
-
-
+class SourceView(evaluationContext: EvaluationContextImpl, traceElements: List<TraceElement>)
+  : CollectionView("Source", evaluationContext, traceElements.map { it.value }, traceElements)

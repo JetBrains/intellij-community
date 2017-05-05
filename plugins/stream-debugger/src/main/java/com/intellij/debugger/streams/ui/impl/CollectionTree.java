@@ -67,7 +67,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private boolean myIgnoreInternalSelectionEvents = false;
   private boolean myIgnoreExternalSelectionEvents = false;
 
-  CollectionTree(@NotNull List<TraceElement> values, @NotNull EvaluationContextImpl evaluationContext) {
+  CollectionTree(@NotNull List<Value> values,
+                 @NotNull List<TraceElement> traceElements,
+                 @NotNull EvaluationContextImpl evaluationContext) {
     super(evaluationContext.getProject(), new JavaDebuggerEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
     myProject = evaluationContext.getProject();
@@ -96,7 +98,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       }
     });
 
-    final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(values).groupingBy(TraceElement::getValue);
+    final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(traceElements).groupingBy(TraceElement::getValue);
 
     getTreeModel().addTreeModelListener(new TreeModelAdapter() {
       @Override
@@ -306,10 +308,10 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   private class MyRootValue extends XValue {
-    private final List<TraceElement> myValues;
+    private final List<Value> myValues;
     private final EvaluationContextImpl myEvaluationContext;
 
-    MyRootValue(@NotNull List<TraceElement> values, @NotNull EvaluationContextImpl evaluationContext) {
+    MyRootValue(@NotNull List<Value> values, @NotNull EvaluationContextImpl evaluationContext) {
       myValues = values;
       myEvaluationContext = evaluationContext;
     }
@@ -317,10 +319,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     @Override
     public void computeChildren(@NotNull XCompositeNode node) {
       final XValueChildrenList children = new XValueChildrenList();
-      for (TraceElement traceElement : myValues) {
-        final PrimitiveValueDescriptor valueDescriptor = new PrimitiveValueDescriptor(myProject, traceElement.getValue());
-        children
-          .add(new InstanceJavaValue(valueDescriptor, myEvaluationContext, myNodeManager));
+      for (final Value value : myValues) {
+        final PrimitiveValueDescriptor valueDescriptor = new PrimitiveValueDescriptor(myProject, value);
+        children.add(new InstanceJavaValue(valueDescriptor, myEvaluationContext, myNodeManager));
       }
 
       node.addChildren(children, true);

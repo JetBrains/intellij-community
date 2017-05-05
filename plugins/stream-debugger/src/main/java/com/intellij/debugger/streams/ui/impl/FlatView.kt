@@ -39,7 +39,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val (valuesBefore, valuesAfter, mapping) = controller.resolve(controllers[index + 1])
       val mappingPane = MappingPane(controller.call.name, valuesBefore, mapping)
 
-      val view = PositionsAwareCollectionView(" ", evaluationContext, valuesBefore)
+      val view = PositionsAwareCollectionView(" ", evaluationContext, controller.values, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
@@ -68,8 +68,9 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
     }
 
     lastValues?.let {
-      val view = PositionsAwareCollectionView(" ", evaluationContext, it)
-      controllers.last().register(view)
+      val terminationController = controllers.last()
+      val view = PositionsAwareCollectionView(" ", evaluationContext, terminationController.values, it)
+      terminationController.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
         override fun valuesPositionsChanged() {
           prevMappingPane?.repaint()
@@ -105,7 +106,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       resultMapping.put(key, mapping[key]!!.toList())
     }
 
-    return LinkedValuesWithPositions(prevValues, nextController.values.map { getValue(it) }, object : LinkedValuesMapping {
+    return LinkedValuesWithPositions(prevValues, nextController.resolvedTrace.values.map { getValue(it) }, object : LinkedValuesMapping {
       override fun getLinkedValues(value: ValueWithPosition): List<ValueWithPosition>? {
         return resultMapping[value]
       }
