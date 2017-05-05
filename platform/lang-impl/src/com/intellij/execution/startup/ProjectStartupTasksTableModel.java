@@ -15,7 +15,6 @@
  */
 package com.intellij.execution.startup;
 
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EditableModel;
@@ -33,10 +32,8 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   private final Set<RunnerAndConfigurationSettings> mySharedConfigurations;
   private final List<RunnerAndConfigurationSettings> myAllConfigurations;
-  private final RunManagerEx myRunManager;
 
-  public ProjectStartupTasksTableModel(RunManagerEx runManager) {
-    myRunManager = runManager;
+  public ProjectStartupTasksTableModel() {
     mySharedConfigurations = new HashSet<>();
     myAllConfigurations = new ArrayList<>();
   }

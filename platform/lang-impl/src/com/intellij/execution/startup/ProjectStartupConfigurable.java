@@ -98,7 +98,7 @@ public class ProjectStartupConfigurable implements SearchableConfigurable, Confi
   @Nullable
   @Override
   public JComponent createComponent() {
-    myModel = new ProjectStartupTasksTableModel(RunManagerEx.getInstanceEx(myProject));
+    myModel = new ProjectStartupTasksTableModel();
     myTable = new JBTable(myModel);
     myTable.getEmptyText().setText("Add run configurations with the + button");
     new TableSpeedSearch(myTable);
