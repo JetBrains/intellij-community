@@ -343,9 +343,9 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Override
   public int getInheritorCount(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
-    if (myReader == null) throw new ReferenceIndexUnavailableException();
     myReadDataLock.lock();
     try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
       LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
       return hierarchy == null ? -1 : hierarchy.length;
     } catch (Exception e) {
