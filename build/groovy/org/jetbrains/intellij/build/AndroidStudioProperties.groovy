@@ -261,6 +261,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfd") {
       fileset(dir: "$root/out/studio/native/out/release")
     }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources/simpleperf") {
+      fileset(dir: "$root/prebuilts/tools/common/simpleperf")
+    }
 
     buildContext.ant.copy(todir: "$targetDirectory/bin/lldb/shared") {
       fileset(dir: "$root/tools/vendor/google/android-ndk/bin/lldb/shared")
