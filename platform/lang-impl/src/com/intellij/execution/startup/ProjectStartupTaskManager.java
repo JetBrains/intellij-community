@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.execution.startup;
 
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.NotificationGroup;
@@ -55,7 +56,7 @@ public class ProjectStartupTaskManager {
       final Iterator<RunnerAndConfigurationSettings> iterator = sharedConfigurations.iterator();
       while (iterator.hasNext()) {
         final RunnerAndConfigurationSettings configuration = iterator.next();
-        if (! myRunManager.isConfigurationShared(configuration)) {
+        if (!RunManagerEx.getInstanceEx(myProject).isConfigurationShared(configuration)) {
           iterator.remove();
           canNotBeShared.add(configuration);
         }
@@ -114,7 +115,7 @@ public class ProjectStartupTaskManager {
   }
 
   public void checkOnChange(RunnerAndConfigurationSettings settings) {
-    if (! myRunManager.isConfigurationShared(settings)) {
+    if (!RunManagerEx.getInstanceEx(myProject).isConfigurationShared(settings)) {
       final Collection<RunnerAndConfigurationSettings> sharedConfigurations = getSharedConfigurations();
       if (sharedConfigurations.remove(settings)) {
         final List<RunnerAndConfigurationSettings> localConfigurations = new ArrayList<>(getLocalConfigurations());
