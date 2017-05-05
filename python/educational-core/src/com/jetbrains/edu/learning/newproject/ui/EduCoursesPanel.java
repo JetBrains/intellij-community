@@ -91,6 +91,7 @@ public class EduCoursesPanel extends JPanel {
     myCoursesList = new JBList<>();
     myCourses = getCourses();
     updateModel(myCourses);
+    updateCourseInfoPanel(myCoursesList.getSelectedValue());
     myErrorLabel.setVisible(false);
     myErrorLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 0, 0));
 
@@ -250,7 +251,13 @@ public class EduCoursesPanel extends JPanel {
     myAdvancedSettings.repaint();
   }
 
-  private void updateCourseInfoPanel(Course selectedCourse) {
+  private void updateCourseInfoPanel(@Nullable Course selectedCourse) {
+    if (selectedCourse == null) {
+      myInfoScroll.setVisible(false);
+      myAdvancedSettingsPlaceholder.setVisible(false);
+      return;
+    }
+    myInfoScroll.setVisible(true);
     String courseName = selectedCourse.getName();
     String description = selectedCourse.getDescription();
     myCourseNameLabel.setText(courseName);
@@ -303,6 +310,8 @@ public class EduCoursesPanel extends JPanel {
     myCoursesList.setModel(listModel);
     if (myCoursesList.getItemsCount() > 0) {
       myCoursesList.setSelectedIndex(0);
+    } else {
+      updateCourseInfoPanel(null);
     }
   }
 
