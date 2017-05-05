@@ -2,6 +2,7 @@ package com.intellij.plugin
 
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.sorting.SortingTimeStatistics
@@ -27,10 +28,12 @@ class PluginSettingsConfigurable : Configurable {
 
     override fun isModified(): Boolean {
         val isModifiedStates = mutableListOf<Boolean>()
-        isModifiedStates += manualControlCb.isSelected != ManualExperimentControl.isOn
+        isModifiedStates +=
+                manualControlCb.isSelected != ManualExperimentControl.isOn
         
         if (manualControlCb.isSelected) {
-            isModifiedStates += manualSortingCb.isSelected == ManualMlSorting.isOn    
+            isModifiedStates +=
+                    manualSortingCb.isSelected != ManualMlSorting.isOn
         }
         
         return isModifiedStates.contains(true)
@@ -46,7 +49,9 @@ class PluginSettingsConfigurable : Configurable {
     }
 
     override fun createComponent(): JComponent? {
-        val manualControlPanel = manualControlCheckBoxPanel()
+        val manualControlPanel = manualControlCheckBoxPanel().apply {
+            border = IdeBorderFactory.createEmptyBorder(5, 0, 0, 0)
+        }
         val timingPanel = timingPanel()
         val autoExperimentPanel = autoExperimentStatusPanel()
         val manualExperimentPanel = manualExperimentPanel()
@@ -87,7 +92,7 @@ class PluginSettingsConfigurable : Configurable {
 
     private fun manualExperimentPanel(): JPanel {
         val action = ActionManager.getInstance().getAction("ToggleManualMlSorting")
-        val shortcuts = action.shortcutSet.shortcuts.firstOrNull()?.let { " $it" } ?: ""
+        val shortcuts = action.shortcutSet.shortcuts.firstOrNull()?.let { " \"${KeymapUtil.getShortcutText(it)}\"" } ?: ""
         val text = "(can be changed by \"${action.templatePresentation.text}\" action$shortcuts)"
         
         manualSortingCb = JBCheckBox("Enable sorting $text", ManualMlSorting.isOn).apply { 
@@ -118,7 +123,9 @@ class PluginSettingsConfigurable : Configurable {
                 time.forEach { add(JBLabel(it)) }
             }
             if (avgTime.isNotEmpty()) {
-                add(JBLabel("<html><b>Elements Count to Avg Sorting Time:</b></html>"))
+                val label = JBLabel("<html><b>Elements Count to Avg Sorting Time:</b></html>")
+                label.border = IdeBorderFactory.createEmptyBorder(5, 0, 0, 0)
+                add(label)
                 avgTime.forEach { add(JBLabel(it)) }
             }
             if (time.isEmpty() && avgTime.isEmpty()) {
