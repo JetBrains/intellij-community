@@ -2043,19 +2043,19 @@ div {
     attribute inheritnum { db.orderedlist.inheritnum.enumeration }
   db.orderedlist.numeration.enumeration =
     
-    ## Specifies Arabic numeration (1, 2, 3, …)
+    ## Specifies Arabic numeration (1, 2, 3, ...)
     "arabic"
     | 
-      ## Specifies upper-case alphabetic numeration (A, B, C, …)
+      ## Specifies upper-case alphabetic numeration (A, B, C, ...)
       "upperalpha"
     | 
-      ## Specifies lower-case alphabetic numeration (a, b, c, …)
+      ## Specifies lower-case alphabetic numeration (a, b, c, ...)
       "loweralpha"
     | 
-      ## Specifies upper-case Roman numeration (I, II, III, …)
+      ## Specifies upper-case Roman numeration (I, II, III, ...)
       "upperroman"
     | 
-      ## Specifies lower-case Roman numeration (i, ii, iii …)
+      ## Specifies lower-case Roman numeration (i, ii, iii ...)
       "lowerroman"
   db.orderedlist.numeration.attribute =
     
