@@ -294,9 +294,15 @@ public class Breadcrumbs extends JComponent {
   }
 
   private static int getGap(CrumbView view, int scale) {
-    return Registry.is("editor.breadcrumbs.marker")
-           ? (view != null && view.parent != null ? 10 * scale : 0)
-           : (view != null && view.parent != null ? 14 * scale : 9 * scale);
+    if (Registry.is("editor.breadcrumbs.marker")) {
+      return view != null && view.parent != null ? 10 * scale : 0;
+    }
+    int gap = Registry.intValue("editor.breadcrumbs.gap.right", 9);
+    if (view != null) {
+      int left = Registry.intValue("editor.breadcrumbs.gap.left", 5);
+      gap = view.parent != null ? gap + left : left;
+    }
+    return gap * scale;
   }
 
   private static int getLeftRight(int scale) {
