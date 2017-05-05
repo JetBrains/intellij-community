@@ -2,13 +2,21 @@ package com.jetbrains.edu.learning.newproject.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -18,6 +26,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -134,10 +143,41 @@ public class EduCoursesPanel extends JPanel {
         notifyListeners(!selectedCourse.isAdaptive());
       }
     });
-    JScrollPane installedScrollPane = ScrollPaneFactory.createScrollPane(myCoursesList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-    installedScrollPane.setBorder(null);
-    myCourseListPanel.add(installedScrollPane, BorderLayout.CENTER);
+    DefaultActionGroup group = new DefaultActionGroup(new AnAction("Import Course", "import local course", AllIcons.ToolbarDecorator.Import) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final FileChooserDescriptor fileChooser = new FileChooserDescriptor(true, false, false, true, false, false) {
+          @Override
+          public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+            return file.isDirectory() || StudyUtils.isZip(file.getName());
+          }
+
+          @Override
+          public boolean isFileSelectable(VirtualFile file) {
+            return StudyUtils.isZip(file.getName());
+          }
+
+        };
+        Project[] projects = ProjectManager.getInstance().getOpenProjects();
+        FileChooser.chooseFile(fileChooser, null, projects.length == 0 ? null : projects[0].getBaseDir(),
+                               file -> {
+                                 String fileName = file.getPath();
+                                 Course course = new StudyProjectGenerator().addLocalCourse(fileName);
+                                 if (course != null) {
+                                   myCourses.add(course);
+                                   updateModel(myCourses);
+                                   myCoursesList.setSelectedValue(course, true);
+                                 }
+                               });
+      }
+    });
+
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myCoursesList).
+      disableAddAction().disableRemoveAction().disableUpDownActions().setActionGroup(group);
+    JPanel toolbarDecoratorPanel = toolbarDecorator.createPanel();
+    toolbarDecoratorPanel.setBorder(null);
+    myCoursesList.setBorder(null);
+    myCourseListPanel.add(toolbarDecoratorPanel, BorderLayout.CENTER);
     Border border = JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 0, 1, 1);
     myCoursePanel.setBorder(border);
     myCourseListPanel.setBorder(JBUI.Borders.customLine(OnePixelDivider.BACKGROUND, 1, 1, 1, 1));
