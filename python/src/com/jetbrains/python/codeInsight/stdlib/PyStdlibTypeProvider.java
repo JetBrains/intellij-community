@@ -404,7 +404,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return new PyNamedTupleType(tupleClass,
                                 referenceTarget,
                                 stub.getName(),
-                                parseNamedTupleFieldsTypes(referenceTarget, stub.getFields(), context),
+                                parseNamedTupleFields(referenceTarget, stub.getFields(), context),
                                 definitionLevel);
   }
 
@@ -431,27 +431,33 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @NotNull
-  private static LinkedHashMap<String, Optional<PyType>> parseNamedTupleFieldsTypes(@NotNull PsiElement anchor,
-                                                                                    @NotNull Map<String, Optional<String>> fields,
-                                                                                    @NotNull TypeEvalContext context) {
-    final LinkedHashMap<String, Optional<PyType>> result = new LinkedHashMap<>();
+  private static LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue> parseNamedTupleFields(@NotNull PsiElement anchor,
+                                                                                                        @NotNull Map<String, Optional<String>> fields,
+                                                                                                        @NotNull TypeEvalContext context) {
+    final LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue> result = new LinkedHashMap<>();
 
     for (Map.Entry<String, Optional<String>> entry : fields.entrySet()) {
-      result.put(entry.getKey(), entry.getValue().map(type -> parseNamedTupleFieldType(anchor, type, context)));
+      result.put(entry.getKey(), parseNamedTupleField(anchor, entry.getValue().orElse(null), context));
     }
 
     return result;
   }
 
   @Nullable
-  private static PyType parseNamedTupleFieldType(@NotNull PsiElement anchor, @NotNull String type, @NotNull TypeEvalContext context) {
+  private static PyNamedTupleType.FieldTypeAndDefaultValue parseNamedTupleField(@NotNull PsiElement anchor,
+                                                                                @Nullable String type,
+                                                                                @NotNull TypeEvalContext context) {
+    if (type == null) return new PyNamedTupleType.FieldTypeAndDefaultValue(null, null);
+
     final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", type, false);
     codeFragment.setContext(anchor.getContainingFile());
 
     final PsiElement element = codeFragment.getFirstChild();
     if (element instanceof PyExpressionStatement) {
       final PyExpression expression = ((PyExpressionStatement)element).getExpression();
-      return Ref.deref(PyTypingTypeProvider.getType(expression, context));
+      final PyType pyType = Ref.deref(PyTypingTypeProvider.getType(expression, context));
+
+      return new PyNamedTupleType.FieldTypeAndDefaultValue(pyType, null);
     }
 
     return null;

@@ -32,17 +32,24 @@ import java.util.Objects;
 public class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final String myName;
   @Nullable private final PyType myType;
+  @Nullable private final PyExpression myDefaultValue;
   @Nullable private final PyParameter myElement;
 
   public PyCallableParameterImpl(@Nullable String name, @Nullable PyType type) {
+    this(name, type, null);
+  }
+
+  public PyCallableParameterImpl(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
     myName = name;
     myType = type;
+    myDefaultValue = defaultValue;
     myElement = null;
   }
 
   public PyCallableParameterImpl(@NotNull PyParameter element) {
     myName = null;
     myType = null;
+    myDefaultValue = null;
     myElement = element;
   }
 
@@ -79,12 +86,12 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable
   @Override
   public PyExpression getDefaultValue() {
-    return myElement == null ? null : myElement.getDefaultValue();
+    return myElement == null ? myDefaultValue : myElement.getDefaultValue();
   }
 
   @Override
   public boolean hasDefaultValue() {
-    return myElement != null && myElement.hasDefaultValue();
+    return myElement == null ? myDefaultValue != null : myElement.hasDefaultValue();
   }
 
   @Override
