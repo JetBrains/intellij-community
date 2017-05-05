@@ -16,6 +16,7 @@
 package com.intellij.tasks.context;
 
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.openapi.project.Project;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,10 +24,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Dmitry Avdeev
  */
 public class RunConfigurationsContextProvider extends WorkingContextProvider {
-  private final RunManagerImpl myManager;
+  @NotNull private final Project myProject;
 
-  public RunConfigurationsContextProvider(RunManagerImpl manager) {
-    myManager = manager;
+  public RunConfigurationsContextProvider(@NotNull Project project) {
+    myProject = project;
   }
 
   @Override
@@ -43,11 +44,11 @@ public class RunConfigurationsContextProvider extends WorkingContextProvider {
 
   @Override
   public void saveContext(Element toElement) {
-    myManager.writeContext(toElement);
+    RunManagerImpl.getInstanceImpl(myProject).writeContext(toElement);
   }
 
   @Override
   public void loadContext(Element fromElement) {
-    myManager.readContext(fromElement);
+    RunManagerImpl.getInstanceImpl(myProject).readContext(fromElement);
   }
 }
