@@ -41,8 +41,8 @@ final class PsiBreadcrumbs extends Breadcrumbs {
   }
 
   @Override
-  protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
-    super.paint(g, x, y, width, above ? height : thickness, crumb, thickness);
+  protected void paintMarker(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
+    super.paintMarker(g, x, y, width, above ? height : thickness, crumb, thickness);
   }
 
   @Override
@@ -51,7 +51,7 @@ final class PsiBreadcrumbs extends Breadcrumbs {
       float size = font.getSize2D();
       if (Registry.is("editor.breadcrumbs.system.font")) {
         Font system = UIUtil.getLabelFont();
-        if (system != null) font = system;
+        if (system != null) font = system.deriveFont(size);
       }
       if (Registry.is("editor.breadcrumbs.small.font")) {
         font = font.deriveFont(size / 1.09f);
