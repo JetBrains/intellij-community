@@ -172,16 +172,16 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
             }
           );
 
-          final Collector<PyTargetExpression, ?, LinkedHashMap<String, Optional<PyType>>> toTypedFields =
+          final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
             Collectors.toMap(PyTargetExpression::getName,
-                             field -> Optional.ofNullable(context.getType(field)),
+                             field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
                              (v1, v2) -> v2,
                              LinkedHashMap::new);
 
           return new PyNamedTupleType(tupleClass,
                                       this,
                                       name,
-                                      fields.stream().collect(toTypedFields),
+                                      fields.stream().collect(toNTFields),
                                       PyNamedTupleType.DefinitionLevel.NEW_TYPE);
         }
       }
