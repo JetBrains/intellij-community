@@ -16,7 +16,6 @@
 package com.intellij.execution.startup;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.notification.NotificationGroup;
@@ -37,18 +36,15 @@ public class ProjectStartupTaskManager {
   private final Project myProject;
   private final ProjectStartupSharedConfiguration myShared;
   private final ProjectStartupLocalConfiguration myLocal;
-  private final RunManagerEx myRunManager;
 
   public static ProjectStartupTaskManager getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, ProjectStartupTaskManager.class);
   }
 
-  public ProjectStartupTaskManager(Project project, ProjectStartupSharedConfiguration shared, ProjectStartupLocalConfiguration local,
-                                   @NotNull RunManager runManager) {
+  public ProjectStartupTaskManager(Project project, ProjectStartupSharedConfiguration shared, ProjectStartupLocalConfiguration local) {
     myProject = project;
     myShared = shared;
     myLocal = local;
-    myRunManager = (RunManagerEx)runManager;
     verifyState();
   }
 
@@ -84,8 +80,9 @@ public class ProjectStartupTaskManager {
 
     final List<RunnerAndConfigurationSettings> result = new ArrayList<>();
     final List<ProjectStartupConfigurationBase.ConfigurationDescriptor> list = configuration.getList();
+    RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
     for (ProjectStartupConfigurationBase.ConfigurationDescriptor descriptor : list) {
-      final RunnerAndConfigurationSettings settings = ((RunManagerImpl) myRunManager).getConfigurationById(descriptor.getId());
+      final RunnerAndConfigurationSettings settings = runManager.getConfigurationById(descriptor.getId());
       if (settings != null && settings.getName().equals(descriptor.getName())) {
         result.add(settings);
       } else {
