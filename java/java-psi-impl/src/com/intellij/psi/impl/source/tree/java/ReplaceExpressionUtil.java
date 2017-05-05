@@ -33,14 +33,10 @@ public class ReplaceExpressionUtil {
   public static boolean isNeedParenthesis(ASTNode oldExpr, ASTNode newExpr) {
     final ASTNode oldParent = oldExpr.getTreeParent();
     if (!ElementType.EXPRESSION_BIT_SET.contains(oldParent.getElementType())) return false;
-    IElementType i = oldParent.getElementType();
-    if(!(newExpr.getElementType() instanceof JavaElementType) || !(i instanceof JavaElementType)) {
-      // Non-Java elements supplied: add parentheses just for the case
-      return true;
-    }
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldParent);
     if (priority > parentPriority) return false;
+    IElementType i = oldParent.getElementType();
     if (i == JavaElementType.ASSIGNMENT_EXPRESSION) {
       return priority < parentPriority || ((CompositeElement)oldParent).getChildRole(oldExpr) == ChildRole.LOPERAND;
     }
