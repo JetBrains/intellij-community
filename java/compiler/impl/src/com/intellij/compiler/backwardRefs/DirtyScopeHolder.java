@@ -282,7 +282,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   private Module getModuleForSourceContentFile(@NotNull VirtualFile file) {
-    if (myService.getFileIndex().isInSourceContent(file) && myService.getFileTypes().contains(file.getFileType())) {
+    if (myService.getFileTypes().contains(file.getFileType()) && myService.getFileIndex().isInSourceContent(file)) {
       return myService.getFileIndex().getModuleForFile(file);
     }
     return null;

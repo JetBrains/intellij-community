@@ -21,6 +21,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,7 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
       getRequiredMethodArguments(methodCall.getMethodExpression().getQualifierExpression(), argumentOffset, methodPredicate);
     if (requiredTypes != null) {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
-      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset);
+      final Arguments actualArguments = getActualMethodArguments(argumentList.getExpressions(), argumentOffset, true);
       if (actualArguments != null) {
         if (requiredTypes.size() != actualArguments.expressions.length) {
           if (actualArguments.varargAsArray) {
@@ -147,8 +148,8 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
   }
 
   @Nullable
-  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset) {
-    if (arguments.length == argumentOffset + 1) {
+  static Arguments getActualMethodArguments(PsiExpression[] arguments, int argumentOffset, boolean allowVarargAsArray) {
+    if (allowVarargAsArray && arguments.length == argumentOffset + 1) {
       final PsiExpression[] expressions = getVarargAsArray(arguments[argumentOffset]);
       if (expressions != null) {
         return new Arguments(expressions, true);
@@ -169,32 +170,34 @@ public class JavaReflectionInvocationInspection extends BaseJavaBatchLocalInspec
 
   @Nullable
   private static PsiExpression[] getVarargAsArray(@Nullable PsiExpression maybeArray) {
-    if (maybeArray != null) {
-      final PsiType type = maybeArray.getType();
-      if (type instanceof PsiArrayType &&
-          type.getArrayDimensions() == 1 &&
-          type.getDeepComponentType() instanceof PsiClassType) {
-
-        final PsiExpression argumentsDefinition = findDefinition(maybeArray);
-        if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
-          return ((PsiArrayInitializerExpression)argumentsDefinition).getInitializers();
+    if (isVarargAsArray(maybeArray)) {
+      final PsiExpression argumentsDefinition = findDefinition(maybeArray);
+      if (argumentsDefinition instanceof PsiArrayInitializerExpression) {
+        return ((PsiArrayInitializerExpression)argumentsDefinition).getInitializers();
+      }
+      if (argumentsDefinition instanceof PsiNewExpression) {
+        final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)argumentsDefinition).getArrayInitializer();
+        if (arrayInitializer != null) {
+          return arrayInitializer.getInitializers();
         }
-        if (argumentsDefinition instanceof PsiNewExpression) {
-          final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)argumentsDefinition).getArrayInitializer();
-          if (arrayInitializer != null) {
-            return arrayInitializer.getInitializers();
-          }
-          final PsiExpression[] dimensions = ((PsiNewExpression)argumentsDefinition).getArrayDimensions();
-          if (dimensions.length == 1) { // special case: new Object[0]
-            final Integer itemCount = computeConstantExpression(findDefinition(dimensions[0]), Integer.class);
-            if (itemCount != null && itemCount == 0) {
-              return PsiExpression.EMPTY_ARRAY;
-            }
+        final PsiExpression[] dimensions = ((PsiNewExpression)argumentsDefinition).getArrayDimensions();
+        if (dimensions.length == 1) { // special case: new Object[0]
+          final Integer itemCount = computeConstantExpression(findDefinition(dimensions[0]), Integer.class);
+          if (itemCount != null && itemCount == 0) {
+            return PsiExpression.EMPTY_ARRAY;
           }
         }
       }
     }
     return null;
+  }
+
+  @Contract("null -> false")
+  static boolean isVarargAsArray(@Nullable PsiExpression maybeArray) {
+    final PsiType type = maybeArray != null ? maybeArray.getType() : null;
+    return type instanceof PsiArrayType &&
+           type.getArrayDimensions() == 1 &&
+           type.getDeepComponentType() instanceof PsiClassType;
   }
 
   @Nullable

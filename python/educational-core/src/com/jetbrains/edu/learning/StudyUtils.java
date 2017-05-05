@@ -39,10 +39,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -69,6 +67,9 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.stepic.OAuthDialog;
+import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
 import com.jetbrains.edu.learning.ui.StudyToolWindow;
 import com.jetbrains.edu.learning.ui.StudyToolWindowFactory;
 import com.petebevin.markdown.MarkdownProcessor;
@@ -843,5 +844,22 @@ public class StudyUtils {
       }
     }
     return null;
+  }
+
+  @Nullable
+  static StudyStepicUserWidget getStepicWidget() {
+    JFrame frame = WindowManager.getInstance().findVisibleFrame();
+    if (frame instanceof IdeFrameImpl) {
+      return (StudyStepicUserWidget)((IdeFrameImpl)frame).getStatusBar().getWidget(StudyStepicUserWidget.ID);
+    }
+    return null;
+  }
+
+  public static void showOAuthDialog() {
+    OAuthDialog dialog = new OAuthDialog();
+    if (dialog.showAndGet()) {
+      StepicUser user = dialog.getStepicUser();
+      StudySettings.getInstance().setUser(user);
+    }
   }
 }

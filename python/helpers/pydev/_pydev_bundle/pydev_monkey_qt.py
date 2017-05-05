@@ -50,12 +50,18 @@ def patch_qt(qt_support_mode):
 
 
     if qt_support_mode == 'pyside':
-        import PySide.QtCore  # @UnresolvedImport
-        _internal_patch_qt(PySide.QtCore, qt_support_mode)
+        try:
+            import PySide.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PySide.QtCore, qt_support_mode)
+        except:
+            return
 
     elif qt_support_mode == 'pyqt5':
-        import PyQt5.QtCore  # @UnresolvedImport
-        _internal_patch_qt(PyQt5.QtCore)
+        try:
+            import PyQt5.QtCore  # @UnresolvedImport
+            _internal_patch_qt(PyQt5.QtCore)
+        except:
+            return
 
     elif qt_support_mode == 'pyqt4':
         # Ok, we have an issue here:

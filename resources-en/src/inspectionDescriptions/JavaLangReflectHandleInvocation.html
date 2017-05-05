@@ -1,0 +1,27 @@
+<html>
+<body>
+The inspection checks that the arguments provided to MethodHandle.invoke(), VarHandle.set(), and similar methods
+match the method handle signature and var handle type.
+<!-- tooltip end -->
+<p>The signature of the method handle is specified in Lookup.findVirtual(), Lookup.findGetter(), etc.</p>
+<p>The type of the var handle is specified in Lookup.findVarHandle(), MethodHandles.arrayElementVarHandle(), etc.</p>
+
+<p>Examples:</p>
+<pre><code>
+  MethodHandle mh = MethodHandles.lookup().findVirtual(
+    MyClass.class, "foo", MethodType.methodType(void.class, int.class));
+  <i>// the argument should be an <b>int</b> value</i>
+  mh.invoke(myObj, "<b>abc</b>");
+</code></pre>
+<pre><code>
+  VarHandle vh = MethodHandles.lookup().findVarHandle(
+    MyClass.class, "text", String.class);
+  <i>// the argument should be a <b>String</b> value</i>
+  vh.set(myObj, <b>42</b>);
+</code></pre>
+
+<p>
+  <small>New in 2017.2</small>
+</p>
+</body>
+</html>

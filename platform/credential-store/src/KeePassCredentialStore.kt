@@ -169,7 +169,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
     }
     else {
       val group = db.rootGroup.getOrCreateGroup(GROUP_NAME)
-      // should be the only credentials per service name — find without user name
+      // should be the only credentials per service name - find without user name
       val userName = attributes.userName ?: credentials.userName
       var entry = group.getEntry(attributes.serviceName, if (attributes.serviceName == SERVICE_NAME_PREFIX) userName else null)
       if (entry == null) {

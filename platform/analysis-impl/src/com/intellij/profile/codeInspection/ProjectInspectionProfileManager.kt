@@ -271,7 +271,7 @@ class ProjectInspectionProfileManager(val project: Project,
   @Synchronized fun useApplicationProfile(name: String) {
     schemeManager.currentSchemeName = null
     state.useProjectProfile = false
-    // yes, we reuse the same field - useProjectProfile field will be used to distinguish — is it app or project level
+    // yes, we reuse the same field - useProjectProfile field will be used to distinguish - is it app or project level
     // to avoid data format change
     state.projectProfile = name
   }

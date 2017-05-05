@@ -6,6 +6,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
@@ -48,6 +49,14 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setUser(@Nullable final StepicUser user) {
     myUser = user;
+    updateStepicUserWidget();
+  }
+
+  private static void updateStepicUserWidget() {
+    StudyStepicUserWidget widget = StudyUtils.getStepicWidget();
+    if (widget != null) {
+      widget.update();
+    }
   }
 
   public boolean isEnableTestingFromSamples() {

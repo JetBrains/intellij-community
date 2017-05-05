@@ -95,6 +95,7 @@ class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
 }
 
 class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
+  override fun priority(): Int = 1
   override fun accept(cmp: Component) = cmp is ActionLink
   override fun generate(cmp: ActionLink, me: MouseEvent, cp: Point) = "actionLink(\"${cmp.text}\").click()"
 }
@@ -172,7 +173,7 @@ class JRadioButtonGenerator : ComponentCodeGenerator<JRadioButton> {
 
 class LinkLabelGenerator : ComponentCodeGenerator<LinkLabel<*>> {
   override fun accept(cmp: Component) = cmp is LinkLabel<*>
-  override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = "radioButton(\"${cmp.text}\").select()"
+  override fun generate(cmp: LinkLabel<*>, me: MouseEvent, cp: Point) = "linkLabel(\"${cmp.text}\").click()"
 }
 
 class JTreeGenerator : ComponentCodeGenerator<JTree> {
@@ -532,7 +533,15 @@ object Utils {
       when (elementAt) {
         is PopupFactoryImpl.ActionItem -> return elementAt.text
         is ProjectTemplate -> return elementAt.name
-        else -> return elementAt.toString()
+        else -> {
+          val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jbList, elementAt, index) as JComponent
+          if (listCellRendererComponent is JPanel) {
+            val label = BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock().finder().find(listCellRendererComponent,
+                                                                                           ComponentMatcher { it is JLabel })
+            if (label is JLabel) return label.text
+          }
+          return elementAt.toString()
+        }
       }
     }
     return null
@@ -543,6 +552,7 @@ object Utils {
     val cellBounds = jList.getCellBounds(index, index)
     if (cellBounds.contains(pointOnList)) {
       val elementAt = jList.model.getElementAt(index)
+      val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jList, elementAt, index)
       when (elementAt) {
         is PopupFactoryImpl.ActionItem -> return elementAt.text
         is ProjectTemplate -> return elementAt.name
@@ -552,7 +562,16 @@ object Utils {
           val name = getNameMethod.invoke(elementAt)
           return name as String
         }
-        else -> return elementAt.toString()
+        else -> {
+          if (listCellRendererComponent is JPanel) {
+            if (!listCellRendererComponent.components.isEmpty() && listCellRendererComponent.components[0] is JLabel)
+              return (listCellRendererComponent.components[0] as JLabel).text
+          }
+          else
+            if (listCellRendererComponent is JLabel)
+              return listCellRendererComponent.text
+          return elementAt.toString()
+        }
       }
     }
     return null
@@ -581,7 +600,8 @@ object Utils {
   fun getBoundedLabel(hierarchyLevel: Int, component: Component): JLabel {
 
     var currentComponent = component
-    if (hierarchyLevel < 1) throw Exception("Hierarchy level (actual is $hierarchyLevel) should starts from 1 to see bounded label for a component itself")
+    if (hierarchyLevel < 1) throw Exception(
+      "Hierarchy level (actual is $hierarchyLevel) should starts from 1 to see bounded label for a component itself")
 
     for (i in 1..hierarchyLevel) {
       val boundedLabel = findBoundedLabel(currentComponent)
