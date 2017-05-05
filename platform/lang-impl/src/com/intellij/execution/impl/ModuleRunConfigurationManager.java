@@ -24,8 +24,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -61,6 +64,19 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
         }
       }
     });
+  }
+
+  static class ModuleRunConfigurationManagerStartupActivity implements StartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (!project.isDefault()) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if (!module.isDisposed()) {
+            ModuleServiceManager.getService(module, ModuleRunConfigurationManager.class);
+          }
+        }
+      }
+    }
   }
 
   @Nullable

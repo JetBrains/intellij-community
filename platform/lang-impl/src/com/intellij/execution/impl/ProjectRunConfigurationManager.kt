@@ -15,11 +15,9 @@
  */
 package com.intellij.execution.impl
 
+import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.UnknownRunConfiguration
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.StateSplitterEx
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -31,7 +29,13 @@ import org.jdom.Element
 
 internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAware {
   override fun runActivity(project: Project) {
-    if (project.isDefault || !Registry.`is`("runManager.use.schemeManager", false)) {
+    if (project.isDefault) {
+      return
+    }
+
+    ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
+
+    if (!Registry.`is`("runManager.use.schemeManager", false)) {
       return
     }
 
@@ -44,7 +48,9 @@ internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAwa
 }
 
 @State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
-internal class ProjectRunConfigurationManager(private val manager: RunManagerImpl) : PersistentStateComponent<Element> {
+internal class ProjectRunConfigurationManager(manager: RunManager) : PersistentStateComponent<Element> {
+  private val manager = manager as RunManagerImpl
+
   override fun getState(): Element? {
     if (Registry.`is`("runManager.use.schemeManager", false)) {
       return null

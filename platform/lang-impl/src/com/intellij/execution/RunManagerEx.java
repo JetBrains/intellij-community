@@ -31,7 +31,7 @@ import java.util.Map;
 
 public abstract class RunManagerEx extends RunManager {
   public static RunManagerEx getInstanceEx(final Project project) {
-    return (RunManagerEx)project.getComponent(RunManager.class);
+    return (RunManagerEx)RunManager.getInstance(project);
   }
 
   /**
