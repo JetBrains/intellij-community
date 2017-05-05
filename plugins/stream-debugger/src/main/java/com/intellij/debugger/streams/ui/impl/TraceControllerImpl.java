@@ -19,8 +19,11 @@ import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.*;
 import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
@@ -37,15 +40,21 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
 
   private ValuesHighlightingListener myPrevListener = EMPTY_LISTENER;
   private ValuesHighlightingListener myNextListener = EMPTY_LISTENER;
+  private List<Value> myValues;
 
-  TraceControllerImpl(@NotNull ResolvedTrace trace) {
+  TraceControllerImpl(@NotNull ResolvedTrace trace, @NotNull List<Value> values) {
     myResolvedTrace = trace;
+    myValues = new ArrayList<>(values);
     mySelectionListener = elements -> {
       selectAll(elements);
 
       propagateForward(elements);
       propagateBackward(elements);
     };
+  }
+
+  TraceControllerImpl(@NotNull ResolvedTrace trace) {
+    this(trace, trace.getValues().stream().map(TraceElement::getValue).collect(Collectors.toList()));
   }
 
   void setPreviousListener(@NotNull ValuesHighlightingListener listener) {
@@ -58,8 +67,8 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
 
   @NotNull
   @Override
-  public List<TraceElement> getValues() {
-    return myResolvedTrace.getValues();
+  public List<Value> getValues() {
+    return Collections.unmodifiableList(myValues);
   }
 
   @NotNull
