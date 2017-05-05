@@ -235,10 +235,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         PyExpression underStarExpr = PyPsiUtils.flattenParens(expression.getExpression());
         if (underStarExpr != null) {
           if (underStarExpr instanceof PyDictLiteralExpression) {
-            return getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, index);
+            Ref<PyExpression> expr = getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, index);
+            allKeysForSure = expr != null;
+            if (expr != null && !expr.isNull()) return expr;
           }
           else if (underStarExpr instanceof PyCallExpression) {
-            return getElementFromCallExpression((PyCallExpression)underStarExpr, index.toString());
+            Ref<PyExpression> expr = getElementFromCallExpression((PyCallExpression)underStarExpr, index.toString());
+            allKeysForSure = expr != null;
+            if (expr != null && !expr.isNull()) return expr;
+          }
+          else {
+            allKeysForSure = false;
           }
         }
       }
@@ -462,10 +469,17 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           PyExpression underStarExpr = PyPsiUtils.flattenParens(expr.getExpression());
           if (underStarExpr != null) {
             if (underStarExpr instanceof PyDictLiteralExpression) {
-              return getElementFromDictLiteral(underStarExpr, mappingKey);
+              Ref<PyExpression> element = getElementFromDictLiteral(underStarExpr, mappingKey);
+              allKeysForSure = element != null;
+               if (element != null && !element.isNull()) return element;
             }
             else if (underStarExpr instanceof PyCallExpression) {
-              return getElementFromCallExpression((PyCallExpression)underStarExpr, mappingKey);
+              Ref<PyExpression> element = getElementFromCallExpression((PyCallExpression)underStarExpr, mappingKey);
+              allKeysForSure = element != null;
+              if (element != null && !element.isNull()) return element;
+            }
+            else {
+              allKeysForSure = false;
             }
           }
         }

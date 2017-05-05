@@ -37,11 +37,7 @@ public class Py3StringFormatInspectionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
-  public void testIndexElementWithPackedDictLiteralInsideDictLiteralArg() {
-    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
-  }
-
-  public void testIndexElementWithPackedDictCallInsideDictLiteralArg() {
+  public void testIndexElementWithPackedReferenceExpr() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
@@ -66,6 +62,14 @@ public class Py3StringFormatInspectionTest extends PyTestCase {
   }
 
   public void testPackedListInsideTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedRefInsideList()  {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedRefInsideTuple()  {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
