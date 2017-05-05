@@ -34,6 +34,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureDialog;
 import com.jetbrains.python.refactoring.changeSignature.PyMethodDescriptor;
 import com.jetbrains.python.refactoring.changeSignature.PyParameterInfo;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,7 +127,13 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, createMethodDescriptor(getFunction()));
+    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, createMethodDescriptor(getFunction())) {
+      // Similar to JavaChangeSignatureDialog.createAndPreselectNew()
+      @Override
+      protected int getSelectedIdx() {
+        return (int)StreamEx.of(getParameters()).indexOf(info -> info.getOldIndex() < 0).orElse(super.getSelectedIdx());
+      }
+    };
     dialog.show();
   }
 
