@@ -59,6 +59,7 @@ public abstract class OutputLineSplitter {
         if (inMessageBlockPosition == TC_MESSAGE_LENGTH) {
           final int tcMessageStart = to + 1 - TC_MESSAGE_LENGTH;
           processLine(text.substring(from, tcMessageStart), outputType);
+          flush(); // Message may still go to buffer if it does not end with new line, force flush
           from = tcMessageStart;
           inMessageBlockPosition = 0;
         }
