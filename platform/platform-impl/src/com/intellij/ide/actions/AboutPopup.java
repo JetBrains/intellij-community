@@ -329,9 +329,11 @@ public class AboutPopup {
         g2.setColor(Gray.x33);
         g2.setFont(JBUI.Fonts.label(12));
       }
+      /* Android Studio: b.android.com/200000 Remove misleading copyright notice
       final int copyrightX = Registry.is("ide.new.about") ? JBUI.scale(140) : JBUI.scale(30);
       final int copyrightY = Registry.is("ide.new.about") ? JBUI.scale(390) : JBUI.scale(284);
       g2.drawString(getCopyrightText(), copyrightX, copyrightY);
+      */
       if (myShowDebugInfo) {
         g2.setColor(((ApplicationInfoEx)appInfo).getAboutForeground());
         for (Link link : myLinks) {
