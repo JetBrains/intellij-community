@@ -74,6 +74,7 @@ target('default' : "Run all UI tests") {
 }
 
 def args = [
+        "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
         "-Xmx2048m",
         "-XX:ReservedCodeCacheSize=96m",
         "-XX:+UseCodeCacheFlushing"
