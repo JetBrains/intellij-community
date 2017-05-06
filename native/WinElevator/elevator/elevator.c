@@ -14,12 +14,13 @@
 // Connects and waits for pipe if required by descriptor flags
 // nDescriptor ELEV_DESC_*
 // nDescriptorFlags flags passed from launcher to check if descriptor should be connected
-static void _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* stream, int nDescriptorFlags, _Out_ PHANDLE pRemoteProcessHandle)
+// Returns 0 if ok, error otherwise. Could be windows error, EBADF or EMFILE for dup2
+static DWORD _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* stream, int nDescriptorFlags, _Out_ PHANDLE pRemoteProcessHandle)
 {
 	if (!(nDescriptorFlags & nDescriptor))
 	{
 		*pRemoteProcessHandle = GetStdHandle(ELEV_DESCR_GET_HANDLE(nDescriptor));
-		return; // Not needed to connect pipe, use real descriptor
+		return 0; // Not needed to connect pipe, use real descriptor
 	}
 	ELEV_PIPE_NAME sPipeName;
 	ELEV_GEN_PIPE_NAME(sPipeName, nParentPid, nDescriptor);
@@ -29,21 +30,30 @@ static void _ConnectIfNeededPipe(DWORD nParentPid, DWORD nDescriptor, FILE* stre
 	HANDLE hPipe = CreateFile(sPipeName, access, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hPipe == INVALID_HANDLE_VALUE || hPipe == NULL)
 	{
-		DWORD nError = GetLastError();
-		exit(nError); // No place to output errors yet		
+		return GetLastError();
 	}
 
 	// Make inheritable by remote process
-	SetHandleInformation(hPipe, HANDLE_FLAG_INHERIT, TRUE);
+	if (!SetHandleInformation(hPipe, HANDLE_FLAG_INHERIT, TRUE))
+	{
+		return GetLastError();
+	}
 
 	// Fix CRT
-	_dup2(_open_osfhandle((intptr_t)hPipe, _O_WTEXT | _O_TEXT), _fileno(stream));
+	if (_dup2(_open_osfhandle((intptr_t)hPipe, _O_WTEXT | _O_TEXT), _fileno(stream)) != 0)
+	{
+		return errno;
+	}
 
 	// Fix Win32API
 	DWORD hStdHandleToChange = ELEV_DESCR_GET_HANDLE(nDescriptor);
-	SetStdHandle(hStdHandleToChange, hPipe);
+	if (!SetStdHandle(hStdHandleToChange, hPipe))
+	{
+		return GetLastError();
+	}
 
 	*pRemoteProcessHandle = hPipe;
+	return 0;
 }
 
 // PID Directory DescriptorFlags ProgramToRun Arguments
@@ -56,15 +66,48 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	if (argc <= _ARG_DESCRIPTORS)
 	{
 		fwprintf(stderr, L"Bad command line");
-		return 1;
+		return -1;
 	}
-	SetCurrentDirectory(argv[_ARG_DIR]);
+	if (!SetCurrentDirectory(argv[_ARG_DIR]))
+	{
+		fwprintf(stderr, L"Failed to set directory to %s : %ld", argv[_ARG_DIR], GetLastError());
+		return -1;
+	}
 	DWORD nParentPid = _wtol(argv[_ARG_PID]);
-	int nDescriptorFlags = _wtoi(argv[_ARG_DESCRIPTORS]);
-		
+	if (!nParentPid)
+	{
+		fwprintf(stderr, L"Failed to get parent pid from %s", argv[_ARG_PID]);
+		return -1;
+	}
 
+	wchar_t* sDescriptorsStr = argv[_ARG_DESCRIPTORS];
+	size_t nDescriptorsLen = wcslen(sDescriptorsStr);
+	if (!nDescriptorsLen)
+	{
+		fwprintf(stderr, L"Failed to get descriptors from %s", sDescriptorsStr);
+		return -1;
+	}
+	for(int i = 0; i < nDescriptorsLen; i++)
+	{
+		if (! iswdigit(sDescriptorsStr[i]))
+		{
+			fwprintf(stderr, L"Bad descriptor %s", sDescriptorsStr);
+			return -1;
+		}
+	}
+	int nDescriptorFlags = _wtoi(sDescriptorsStr);	
+
+	
+
+
+	wchar_t* sFromSeparator = wcsstr(GetCommandLine(), ELEV_COMMAND_LINE_SEPARATOR);
+	if (! sFromSeparator)
+	{
+		fwprintf(stderr, L"Failed to find %s in %s", ELEV_COMMAND_LINE_SEPARATOR, GetCommandLine());
+		return -1;
+	}
 	// Add rest commandline
-	WCHAR* sCommandLine = wcsstr(GetCommandLine(), ELEV_COMMAND_LINE_SEPARATOR) + wcslen(ELEV_COMMAND_LINE_SEPARATOR);
+	WCHAR* sCommandLine = sFromSeparator + wcslen(ELEV_COMMAND_LINE_SEPARATOR);
 
 	// Fix console
 	FreeConsole();
@@ -79,11 +122,29 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[])
 	startupInfo.cb = sizeof(startupInfo);
 	startupInfo.dwFlags = STARTF_USESTDHANDLES; // To pass handles to remote process
 
-	_ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDIN, stdin, nDescriptorFlags, &startupInfo.hStdInput);
-	_ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDOUT, stdout, nDescriptorFlags, &startupInfo.hStdOutput);
-	_ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDERR, stderr, nDescriptorFlags, &startupInfo.hStdError);
+	DWORD nError; // No place to output errors yet. Event log is overkill here, so we use  exit code. 	
+
+	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDIN, stdin, nDescriptorFlags, &startupInfo.hStdInput);
+	if (nError != 0)
+	{
+		exit(nError);
+	}
+	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDOUT, stdout, nDescriptorFlags, &startupInfo.hStdOutput);
+	if (nError != 0)
+	{
+		exit(nError);
+	}
+	nError = _ConnectIfNeededPipe(nParentPid, ELEV_DESCR_STDERR, stderr, nDescriptorFlags, &startupInfo.hStdError);
+	if (nError != 0)
+	{
+		exit(nError);
+	}
 
 	HANDLE parentProcess = OpenProcess(SYNCHRONIZE, FALSE, nParentPid);
+	if (!parentProcess)
+	{
+		exit(GetLastError()); // If parent process can't be opened it probably dead
+	}
 	
 	PROCESS_INFORMATION processInfo;
 	
