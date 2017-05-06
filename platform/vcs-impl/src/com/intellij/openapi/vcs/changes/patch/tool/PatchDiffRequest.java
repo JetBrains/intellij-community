@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public class PatchDiffRequest extends DiffRequest {
   @NotNull protected final AppliedTextPatch myAppliedPatch;
 
-  @Nullable protected final String myWindowTitle;
+  @Nullable private final String myWindowTitle;
   @Nullable protected final String myPanelTitle;
 
 
