@@ -169,10 +169,12 @@ public class PatchDiffTool implements FrameDiffTool {
       @Nullable
       LineRange getHunkRangeByLine(int line) {
         for (PatchChangeBuilder.Hunk hunk : getChanges()) {
-          if (hunk.getPatchDeletionRange().start <= line && hunk.getPatchInsertionRange().end > line) {
-            return new LineRange(hunk.getPatchDeletionRange().start, hunk.getPatchInsertionRange().end);
+          int start = hunk.getPatchDeletionRange().start;
+          int end = hunk.getPatchInsertionRange().end;
+          if (start <= line && end > line) {
+            return new LineRange(start, end);
           }
-          if (hunk.getPatchDeletionRange().start > line) return null;
+          if (start > line) return null;
         }
         return null;
       }
