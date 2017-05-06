@@ -24,7 +24,7 @@ public class PatchDiffRequest extends DiffRequest {
   @NotNull protected final AppliedTextPatch myAppliedPatch;
 
   @Nullable private final String myWindowTitle;
-  @Nullable protected final String myPanelTitle;
+  @Nullable private final String myPanelTitle;
 
 
   public PatchDiffRequest(@NotNull AppliedTextPatch appliedPatch) {
