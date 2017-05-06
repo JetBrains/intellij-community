@@ -46,7 +46,7 @@ class ShelvedWrapper {
     return myBinaryFile;
   }
 
-  String getRequestName() {
+  public String getRequestName() {
     return FileUtil.toSystemDependentName(chooseNotNull(getAfterPath(), getBeforePath()));
   }
 
