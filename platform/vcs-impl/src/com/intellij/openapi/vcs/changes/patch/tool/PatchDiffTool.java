@@ -45,7 +45,7 @@ public class PatchDiffTool implements FrameDiffTool {
   @NotNull
   @Override
   public String getName() {
-    return "Patch Content Viewer";
+    return "Patch content viewer";
   }
 
   @Override
