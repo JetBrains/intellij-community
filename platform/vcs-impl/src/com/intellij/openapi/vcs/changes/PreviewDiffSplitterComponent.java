@@ -33,9 +33,9 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
     super(splitterDimensionKey, 0.5f);
     myFirstComponent = firstComponent;
     myProcessor = processor;
-    myDetailsOn = detailsOn;
     setHonorComponentsMinimumSize(false);
     setFirstComponent(firstComponent);
+    setDetailsOn(detailsOn);
   }
 
   public void updatePreview() {
@@ -44,9 +44,6 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
     }
     else {
       myProcessor.clear();
-    }
-    if (myDetailsOn == (getSecondComponent() == null)) {
-      updateVisibility();
     }
   }
 
@@ -65,5 +62,8 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
   public void setDetailsOn(boolean detailsOn) {
     myDetailsOn = detailsOn;
     updatePreview();
+    if (myDetailsOn == (getSecondComponent() == null)) {
+      updateVisibility();
+    }
   }
 }

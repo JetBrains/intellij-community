@@ -83,6 +83,7 @@ import static java.util.stream.Collectors.toList;
 public class ChangesViewManager implements ChangesViewI, ProjectComponent, PersistentStateComponent<ChangesViewManager.State> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangesViewManager");
+  public static final String CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION = "ChangesViewManager.DETAILS_SPLITTER_PROPORTION";
 
   @NotNull private final ChangesListView myView;
   private JPanel myProgressLabel;
@@ -97,7 +98,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   @NotNull private ChangesViewManager.State myState = new ChangesViewManager.State();
 
-  @Nullable private PreviewDiffSplitterComponent mySplitterComponent;
+  private PreviewDiffSplitterComponent mySplitterComponent;
 
   @NotNull private final TreeSelectionListener myTsl;
   private Content myContent;
@@ -215,7 +216,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     wrapper.add(scrollPane, BorderLayout.CENTER);
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
     mySplitterComponent =
-      new PreviewDiffSplitterComponent(wrapper, changeProcessor, "ChangesViewManager.DETAILS_SPLITTER_PROPORTION",
+      new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
                                        VcsConfiguration.getInstance(myProject).LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
     content.add(mySplitterComponent, BorderLayout.CENTER);
