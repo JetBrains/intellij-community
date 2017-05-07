@@ -50,6 +50,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -457,7 +458,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     byte[] bytes = FileUtil.loadFileBytes(VfsUtilCore.virtualToIoFile(file));
-    Charset charset = LoadTextUtil.detectCharsetAndSetBOM(file, bytes);
+    Charset charset = LoadTextUtil.detectCharsetAndSetBOM(file, bytes, file.getFileType());
     assertEquals(CharsetToolkit.UTF8_CHARSET, charset);
     assertArrayEquals(CharsetToolkit.UTF8_BOM, file.getBOM());
 
@@ -871,10 +872,10 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
   public void testBigFileInsideJarCorrectlyHandlesBOM() throws IOException {
     File tmpDir = createTempDirectory();
     File jar = new File(tmpDir, "x.jar");
-    String text = StringUtil.repeat("u", FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
-    byte[] bytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, text.getBytes(CharsetToolkit.UTF_16BE_CHARSET));
+    String bigText = StringUtil.repeat("u", FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
+    byte[] utf16beBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, bigText.getBytes(CharsetToolkit.UTF_16BE_CHARSET));
     String name = "sjkdhfksjdf";
-    IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, bytes)));
+    IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, utf16beBytes)));
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar);
     assertNotNull(vFile);
     VirtualFile jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(vFile);
@@ -884,11 +885,19 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     assertNotNull(file);
     try (InputStream stream = file.getInputStream()) {
       String loaded = new String(FileUtil.loadBytes(stream, 8192*2), CharsetToolkit.UTF_16BE_CHARSET);
-      assertEquals(text.substring(0, 8192), loaded);
+      assertEquals(bigText.substring(0, 8192), loaded);
     }
     assertEquals(PlainTextFileType.INSTANCE, file.getFileType());
     assertEquals(CharsetToolkit.UTF_16BE_CHARSET, file.getCharset());
+    assertArrayEquals(CharsetToolkit.UTF16BE_BOM, file.getBOM());
     // should not load the entire file anyway
     //assertEquals(text, LoadTextUtil.loadText(file).toString());
+  }
+
+  public void testSevenBitFileTextOptimisationWorks() throws IOException {
+    PsiFile file = createFile("x.txt", "a,mvnsxkjfhswr\nsdfsdf\n");
+    VirtualFile virtualFile = file.getVirtualFile();
+    CharSequence loaded = LoadTextUtil.loadText(virtualFile);
+    assertInstanceOf(loaded, ByteArrayCharSequence.class);
   }
 }

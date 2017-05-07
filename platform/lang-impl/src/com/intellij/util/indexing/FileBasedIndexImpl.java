@@ -1220,6 +1220,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   private interface DocumentContent {
+    @NotNull
     CharSequence getText();
 
     long getModificationStamp();
@@ -1232,6 +1233,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myDocument = document;
     }
 
+    @NotNull
     @Override
     public CharSequence getText() {
       return myDocument.getImmutableCharSequence();
@@ -1252,6 +1254,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       myFile = file;
     }
 
+    @NotNull
     @Override
     public CharSequence getText() {
       if (myFile.getViewProvider().getModificationStamp() != myDocument.getModificationStamp()) {
@@ -1305,7 +1308,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           newFc = previousContent;
         }
         else {
-          newFc = new FileContentImpl(vFile, contentText, vFile.getCharset(), currentDocStamp);
+          newFc = new FileContentImpl(vFile, contentText, currentDocStamp);
           document.putUserData(ourFileContentKey, new WeakReference<>(newFc));
         }
 

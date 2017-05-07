@@ -19,6 +19,14 @@
  */
 package com.intellij.openapi.vfs.newvfs.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -28,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.LineSeparator;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.keyFMap.KeyFMap;
@@ -128,7 +137,23 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
     checkNotTooLarge(null);
     final byte[] preloadedContent = getUserData(ourPreloadedContentKey);
     if (preloadedContent != null) return preloadedContent;
-    return ourPersistence.contentsToByteArray(this, cacheContent);
+    byte[] bytes = ourPersistence.contentsToByteArray(this, cacheContent);
+    if (!isCharsetSet()) {
+      // optimisation: take the opportunity to not load bytes again in getCharset()
+      // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
+      FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
+
+      try {
+        // execute in impatient mode to not deadlock when the indexing process waits in under write action for queue to load contents in other threads
+        // and that other thread asks JspManager for encoding which requires read action for PSI
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
+          LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType);
+        });
+      }
+      catch (ApplicationUtil.CannotRunReadActionException ignored) {
+      }
+    }
+    return bytes;
   }
 
   @Override
