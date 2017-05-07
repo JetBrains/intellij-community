@@ -40,9 +40,9 @@ import java.util.regex.Pattern;
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
-  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy)?\\.jar");
+  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*)?\\.jar");
   public static final int VERSION_GROUP_NUMBER = 3; // version will be in third group in GROOVY_ALL_JAR_PATTERN
-  @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d+(\\.\\d+)*))?(-indy)?\\.jar");
+  @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*)?\\.jar");
 
   public static final String NO_VERSION = "<no version>";
   public static final String GROOVY1_7 = "1.7";
