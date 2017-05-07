@@ -31,7 +31,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
-import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +192,8 @@ public class EduCoursesPanel extends JPanel {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (!isLoggedIn() && myErrorLabel.isVisible()) {
-          StepicUser user = EduStepicAuthorizedClient.showLoginDialog();
+          EduStepicConnector.doAuthorize(() -> StudyUtils.showOAuthDialog());
+          StepicUser user = StudySettings.getInstance().getUser();
           if (user != null) {
             StudySettings.getInstance().setUser(user);
             myCourses = getCourses();
