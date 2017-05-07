@@ -19,12 +19,14 @@
  */
 package com.intellij.util.io.zip;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,7 +88,7 @@ public class JBZipFile {
    * href="http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html">http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html</a>.
    * Defaults to the platform's default character encoding.</p>
    */
-  private final String encoding;
+  private final Charset encoding;
 
   /**
    * The actual data source.
@@ -94,7 +96,7 @@ public class JBZipFile {
   final RandomAccessFile archive;
 
   private JBZipOutputStream myOutputStream;
-  private long currentcfdfoffset = 0;
+  private long currentcfdfoffset;
 
   /**
    * Opens the given file for reading, assuming the platform's
@@ -104,7 +106,7 @@ public class JBZipFile {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(File f) throws IOException {
-    this(f, "UTF-8");
+    this(f, CharsetToolkit.UTF8_CHARSET);
   }
 
   /**
@@ -115,7 +117,7 @@ public class JBZipFile {
    * @throws IOException if an error occurs while reading the file.
    */
   public JBZipFile(String name) throws IOException {
-    this(new File(name), "UTF-8");
+    this(new File(name), CharsetToolkit.UTF8_CHARSET);
   }
 
   /**
@@ -126,7 +128,7 @@ public class JBZipFile {
    * @param encoding the encoding to use for file names
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(String name, String encoding) throws IOException {
+  public JBZipFile(String name, @NotNull String encoding) throws IOException {
     this(new File(name), encoding);
   }
 
@@ -138,7 +140,10 @@ public class JBZipFile {
    * @param encoding the encoding to use for file names
    * @throws IOException if an error occurs while reading the file.
    */
-  public JBZipFile(File f, String encoding) throws IOException {
+  public JBZipFile(File f, @NotNull String encoding) throws IOException {
+    this(f, Charset.forName(encoding));
+  }
+  public JBZipFile(File f, @NotNull Charset encoding) throws IOException {
     this.encoding = encoding;
     archive = new RandomAccessFile(f, "rw");
     try {
@@ -165,7 +170,7 @@ public class JBZipFile {
    *
    * @return null if using the platform's default character encoding.
    */
-  public String getEncoding() {
+  public Charset getEncoding() {
     return encoding;
   }
 
@@ -427,19 +432,13 @@ public class JBZipFile {
    *
    * @param bytes the byte array to transform
    * @return String obtained by using the given encoding
-   * @throws ZipException if the encoding cannot be recognized.
    */
-  String getString(byte[] bytes) throws ZipException {
+  private String getString(byte[] bytes) {
     if (encoding == null) {
       return new String(bytes);
     }
     else {
-      try {
-        return new String(bytes, encoding);
-      }
-      catch (UnsupportedEncodingException uee) {
-        throw new ZipException(uee.getMessage());
-      }
+      return new String(bytes, encoding);
     }
   }
 
