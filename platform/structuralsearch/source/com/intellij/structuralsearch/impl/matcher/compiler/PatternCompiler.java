@@ -459,8 +459,7 @@ public class PatternCompiler {
       );
 
       if (!StringUtil.isEmptyOrSpaces(constraint.getWithinConstraint())) {
-        MatchPredicate predicate =
-          new WithinPredicate(Configuration.CONTEXT_VAR_NAME, constraint.getWithinConstraint(), options.getFileType(), project);
+        MatchPredicate predicate = new WithinPredicate(constraint.getWithinConstraint(), options.getFileType(), project);
         if (constraint.isInvertWithinConstraint()) {
           predicate = new NotPredicate(predicate);
         }

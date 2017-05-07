@@ -353,7 +353,7 @@ public class MatcherImpl {
    */
   protected List<MatchResult> testFindMatches(String source,
                                               MatchOptions options,
-                                              boolean filePattern,
+                                              boolean fileContext,
                                               FileType sourceFileType,
                                               String sourceExtension,
                                               boolean physicalSourceFile)
@@ -363,7 +363,7 @@ public class MatcherImpl {
 
     try {
       PsiElement[] elements = MatcherImplUtil.createSourceTreeFromText(source,
-                                                                       filePattern ? PatternTreeContext.File : PatternTreeContext.Block,
+                                                                       fileContext ? PatternTreeContext.File : PatternTreeContext.Block,
                                                                        sourceFileType,
                                                                        sourceExtension,
                                                                        project, physicalSourceFile);

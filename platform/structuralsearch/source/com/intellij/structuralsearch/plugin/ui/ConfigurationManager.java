@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -152,6 +153,14 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
 
   public Collection<Configuration> getConfigurations() {
     return configurations;
+  }
+
+  public Configuration findConfigurationByName(String name) {
+    final Configuration configuration = findConfigurationByName(configurations, name);
+    if (configuration != null) {
+      return configuration;
+    }
+    return findConfigurationByName(StructuralSearchUtil.getPredefinedTemplates(), name);
   }
 
   public static Configuration findConfigurationByName(final Collection<Configuration> configurations, final String name) {

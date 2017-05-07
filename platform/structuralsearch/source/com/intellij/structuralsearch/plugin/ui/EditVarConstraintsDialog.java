@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -47,7 +48,6 @@ import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -96,7 +96,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
   ComponentWithBrowseButton<EditorTextField> customScriptCode;
   JCheckBox maxoccursUnlimited;
 
-  ComboboxWithBrowseButton withinCombo;
+  TextFieldWithBrowseButton withinTextField;
   private JPanel containedInConstraints;
   private JCheckBox invertWithinIn;
   private JPanel expressionConstraints;
@@ -168,24 +168,25 @@ class EditVarConstraintsDialog extends DialogWrapper {
     formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
 
     containedInConstraints.setVisible(false);
-    withinCombo.getComboBox().setEditable(true);
 
-    withinCombo.getButton().addActionListener(new ActionListener() {
+    withinTextField.setEditable(false);
+    withinTextField.getButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
         final SelectTemplateDialog dialog = new SelectTemplateDialog(project, false, false);
+        dialog.selectConfiguration(withinTextField.getText().trim());
         dialog.show();
         if (dialog.getExitCode() == OK_EXIT_CODE) {
           final Configuration[] selectedConfigurations = dialog.getSelectedConfigurations();
           if (selectedConfigurations.length == 1) {
-            withinCombo.getComboBox().getEditor().setItem(selectedConfigurations[0].getMatchOptions().getSearchPattern()); // TODO:
+            withinTextField.setText(selectedConfigurations[0].getName());
           }
         }
       }
     });
 
     boolean hasContextVar = false;
-    for(Variable var:variables) {
+    for (Variable var : variables) {
       if (Configuration.CONTEXT_VAR_NAME.equals(var.getName())) {
         hasContextVar = true; break;
       }
@@ -361,8 +362,9 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setNameOfFormalArgType(formalArgType.getDocument().getText());
     saveScriptInfo(varInfo);
 
-    final String withinConstraint = (String)withinCombo.getComboBox().getEditor().getItem();
-    varInfo.setWithinConstraint(withinConstraint.length() > 0 ? "\"" + withinConstraint +"\"":"");
+    final String withinConstraint = withinTextField.getText().trim();
+    final Configuration configuration = ConfigurationManager.getInstance(myProject).findConfigurationByName(withinConstraint);
+    varInfo.setWithinConstraint(configuration == null && withinConstraint.length() > 0 ? '"' + withinConstraint + '"' : withinConstraint);
     varInfo.setInvertWithinConstraint(invertWithinIn.isSelected());
   }
 
@@ -420,7 +422,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       formalArgType.getDocument().setText("");
       customScriptCode.getChildComponent().setText("");
 
-      withinCombo.getComboBox().getEditor().setItem("");
+      withinTextField.setText("");
       invertWithinIn.setSelected(false);
     } else {
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
@@ -450,7 +452,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
       formalArgType.getDocument().setText(varInfo.getNameOfFormalArgType());
       restoreScriptCode(varInfo);
 
-      withinCombo.getComboBox().getEditor().setItem(StringUtil.unquoteString(varInfo.getWithinConstraint()));
+      withinTextField.setText(StringUtil.unquoteString(varInfo.getWithinConstraint()));
       invertWithinIn.setSelected(varInfo.isInvertWithinConstraint());
     }
 

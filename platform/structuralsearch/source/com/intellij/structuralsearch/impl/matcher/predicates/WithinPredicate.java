@@ -20,40 +20,48 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
+import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
+import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 
 import java.util.List;
 
 /**
  * @author Maxim.Mossienko
  */
-public class WithinPredicate extends AbstractStringBasedPredicate {
+public class WithinPredicate extends MatchPredicate {
   private final MatchOptions myMatchOptions;
-  private Matcher matcher;
+  private final Matcher matcher;
 
-  public WithinPredicate(String name, String within, FileType fileType, Project project) {
-    super(name, within);
-    myMatchOptions = new MatchOptions();
-
-    myMatchOptions.setLooseMatching(true);
-    myMatchOptions.setFileType(fileType);
-    final String unquoted = StringUtil.unquoteString(within);
-    if (!unquoted.equals(within)) {
-      myMatchOptions.fillSearchCriteria(unquoted);
-      matcher = new Matcher(project, myMatchOptions);
-    } else {
-      assert false;
+  public WithinPredicate(String within, FileType fileType, Project project) {
+    if (StringUtil.isQuotedString(within)) {
+      // keep old configurations working
+      myMatchOptions = new MatchOptions();
+      myMatchOptions.setLooseMatching(true);
+      myMatchOptions.setFileType(fileType);
+      myMatchOptions.fillSearchCriteria(StringUtil.unquoteString(within));
     }
+    else {
+      final Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(within);
+      if (configuration == null) {
+        throw new MalformedPatternException();
+      }
+      myMatchOptions = configuration.getMatchOptions();
+    }
+
+    matcher = new Matcher(project, myMatchOptions);
   }
 
   @Override
-  public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
-    final List<MatchResult> results = matcher.matchByDownUp(match, myMatchOptions);
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+    final List<MatchResult> results = matcher.matchByDownUp(matchedNode, myMatchOptions);
     for (MatchResult result : results) {
-      if (PsiTreeUtil.isAncestor(result.getMatch(), match, false)) {
+      if (PsiTreeUtil.isAncestor(result.getMatch(), matchedNode, false)) {
         return true;
       }
     }
