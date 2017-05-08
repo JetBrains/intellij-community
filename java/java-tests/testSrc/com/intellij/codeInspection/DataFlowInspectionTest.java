@@ -157,14 +157,18 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testReportConstantReferences() {
     doTestReportConstantReferences();
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
+    String hint = "Replace with 'null'";
+    checkIntentionResult(hint);
+  }
+
+  private void checkIntentionResult(String hint) {
+    myFixture.launchAction(myFixture.findSingleIntention(hint));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
   public void testReportConstantReferences_OverloadedCall() {
     doTestReportConstantReferences();
-    myFixture.launchAction(myFixture.findSingleIntention("Replace with 'null'"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    checkIntentionResult("Replace with 'null'");
   }
 
   public void testReportConstantReferencesAfterFinalFieldAccess() { doTestReportConstantReferences(); }
@@ -394,8 +398,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   public void testTrueOrEqualsSomething() {
     doTest();
-    myFixture.launchAction(myFixture.findSingleIntention("Remove redundant assignment"));
-    myFixture.checkResultByFile(getTestName(false) + "_after.java");
+    checkIntentionResult("Remove redundant assignment");
   }
 
   public void testDontSimplifyAssignment() {
@@ -420,6 +423,16 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testLiteralIfCondition() {
     doTest();
     myFixture.findSingleIntention("Remove 'if' statement");
+  }
+
+  public void testLiteralWhileCondition() {
+    doTest();
+    checkIntentionResult("Remove 'while' statement");
+  }
+
+  public void testLiteralDoWhileCondition() {
+    doTest();
+    checkIntentionResult("Unwrap 'do-while' statement");
   }
 
   //https://youtrack.jetbrains.com/issue/IDEA-162184

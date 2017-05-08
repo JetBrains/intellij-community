@@ -153,6 +153,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
+      @Override
+      public void visitWhileStatement(PsiWhileStatement statement) {
+        checkLoopCondition(statement.getCondition());
+      }
+
+      @Override
+      public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        checkLoopCondition(statement.getCondition());
+      }
+
+      private void checkLoopCondition(PsiExpression condition) {
+        if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
+          holder.registerProblem(condition, "Condition is always false", createSimplifyBooleanExpressionFix(condition, false));
+        }
+      }
     };
   }
 

@@ -59,8 +59,13 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   public String getText() {
     PsiExpression expression = getSubExpression();
     assert expression != null;
-    if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiIfStatement) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiIfStatement) {
       return mySubExpressionValue ? "Unwrap 'if' statement" : "Remove 'if' statement";
+    }
+    if (!mySubExpressionValue) {
+      if (parent instanceof PsiWhileStatement) return "Remove 'while' statement";
+      if (parent instanceof PsiDoWhileStatement) return "Unwrap 'do-while' statement";
     }
     return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(),  mySubExpressionValue);
   }
@@ -102,13 +107,29 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     simplifyExpression(expression);
   }
 
-  public static boolean simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return false;
-    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+  public static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
-    PsiIfStatement ifStatement = (PsiIfStatement)parent;
-    if (condition) {
+    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression) {
+      simplifyIfStatement(condition, (PsiIfStatement)parent);
+      return true;
+    }
+    if (parent instanceof PsiWhileStatement && !condition) {
+      parent.delete();
+      return true;
+    }
+    if (parent instanceof PsiDoWhileStatement && !condition) {
+      replaceWithStatements((PsiDoWhileStatement)parent, ((PsiDoWhileStatement)parent).getBody());
+      return true;
+    }
+
+    return false;
+  }
+
+  private static void simplifyIfStatement(boolean conditionAlwaysTrue, PsiIfStatement ifStatement) {
+    if (conditionAlwaysTrue) {
       replaceWithStatements(ifStatement, ifStatement.getThenBranch());
     }
     else {
@@ -120,10 +141,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         replaceWithStatements(ifStatement, elseBranch);
       }
     }
-    return true;
   }
 
-  private static void replaceWithStatements(@NotNull PsiIfStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
+  private static void replaceWithStatements(@NotNull PsiStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
     if (statement == null) {
       orig.delete();
       return;
@@ -172,7 +192,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
   }
 
-  private static void removeFollowingStatements(@NotNull PsiIfStatement anchor, @NotNull PsiCodeBlock parentBlock) {
+  private static void removeFollowingStatements(@NotNull PsiStatement anchor, @NotNull PsiCodeBlock parentBlock) {
     PsiStatement[] siblingStatements = parentBlock.getStatements();
     int ifIndex = Arrays.asList(siblingStatements).indexOf(anchor);
     if (ifIndex >= 0 && ifIndex < siblingStatements.length - 1) {
@@ -226,7 +246,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
     }
-    if (!simplifyIfStatement(newExpression)) {
+    if (!simplifyIfOrLoopStatement(newExpression)) {
       ParenthesesUtils.removeParentheses(newExpression, false);
     }
   }
