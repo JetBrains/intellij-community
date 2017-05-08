@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.view;
 
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.EditConfigurationsDialog;
@@ -102,8 +101,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
     final Project project = getExternalProjectsView().getProject();
     ProgramRunnerUtil.executeConfiguration(project, mySettings, DefaultRunExecutor.getRunExecutorInstance());
-    final RunManagerEx runManagerEx = RunManagerEx.getInstanceEx(project);
-    runManagerEx.setSelectedConfiguration(mySettings);
+    RunManager.getInstance(project).setSelectedConfiguration(mySettings);
   }
 
   @Nullable

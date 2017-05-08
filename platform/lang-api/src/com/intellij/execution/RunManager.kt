@@ -200,6 +200,12 @@ abstract class RunManager {
   abstract fun getConfigurationType(typeName: String): ConfigurationType?
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
+
+  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+
+  abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
+
+  abstract fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?)
 }
 
 private val UNNAMED = "Unnamed"

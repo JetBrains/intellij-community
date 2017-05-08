@@ -43,8 +43,6 @@ public abstract class RunManagerEx extends RunManager {
     setSelectedConfiguration(configuration);
   }
 
-  public abstract void setTemporaryConfiguration(@Nullable RunnerAndConfigurationSettings tempConfiguration);
-
   @NotNull
   public abstract RunManagerConfig getConfig();
 
@@ -95,8 +93,6 @@ public abstract class RunManagerEx extends RunManager {
   public final Collection<RunnerAndConfigurationSettings> getSortedConfigurations() {
     return getAllSettings();
   }
-
-  public abstract void removeConfiguration(@Nullable RunnerAndConfigurationSettings settings);
 
   /**
    * @deprecated Use {@link RunManagerListener#TOPIC} instead.

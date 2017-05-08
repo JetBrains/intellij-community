@@ -880,8 +880,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return allSettings.firstOrNull { it.name == name }
   }
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
-
   override fun <T : BeforeRunTask<*>> getBeforeRunTasks(settings: RunConfiguration, taskProviderId: Key<T>): List<T> {
     if (settings is WrappingRunConfiguration<*>) {
       return getBeforeRunTasks(settings.peer, taskProviderId)

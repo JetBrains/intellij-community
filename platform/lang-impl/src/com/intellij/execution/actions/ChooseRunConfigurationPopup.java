@@ -199,13 +199,13 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     final Executor executor = getExecutor();
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor)) {
-      RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
+      RunManager.getInstance(project).setSelectedConfiguration(configuration);
       ExecutionUtil.runConfiguration(configuration, executor);
     }
   }
 
   private static void deleteConfiguration(final Project project, @NotNull final RunnerAndConfigurationSettings configurationSettings) {
-    RunManagerEx.getInstanceEx(project).removeConfiguration(configurationSettings);
+    RunManager.getInstance(project).removeConfiguration(configurationSettings);
   }
 
   @Override
@@ -337,7 +337,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         @Override
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
-          RunManagerEx.getInstanceEx(project).setSelectedConfiguration(config);
+          RunManager.getInstance(project).setSelectedConfiguration(config);
           ExecutionUtil.runConfiguration(config, executor);
         }
 
@@ -539,7 +539,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
           @Override
           public void perform() {
-            final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+            final RunManager manager = RunManager.getInstance(project);
             if (dynamic) {
               manager.setTemporaryConfiguration(settings);
             }
@@ -558,7 +558,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           result.add(new ActionWrapper(executor.getActionName(), executor.getIcon(), isFirst) {
             @Override
             public void perform() {
-              final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
+              final RunManager manager = RunManager.getInstance(project);
               if (dynamic) {
                 manager.setTemporaryConfiguration(settings);
               }
@@ -573,8 +573,9 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(new ActionWrapper("Edit...", AllIcons.Actions.EditSource, true) {
         @Override
         public void perform() {
-          final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-          if (dynamic) manager.setTemporaryConfiguration(settings);
+          if (dynamic) {
+            RunManager.getInstance(project).setTemporaryConfiguration(settings);
+          }
           action.editConfiguration(project, settings);
         }
       });
@@ -583,8 +584,10 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         result.add(new ActionWrapper("Save configuration", AllIcons.Actions.Menu_saveall) {
           @Override
           public void perform() {
-            final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-            if (dynamic) manager.setTemporaryConfiguration(settings);
+            final RunManager manager = RunManager.getInstance(project);
+            if (dynamic) {
+              manager.setTemporaryConfiguration(settings);
+            }
             manager.makeStable(settings);
           }
         });
@@ -817,9 +820,10 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
 
     @Override
     public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
-      RunnerAndConfigurationSettings selectedConfiguration = RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
+      RunManager runManager = RunManager.getInstance(project);
+      RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
       if (myConfigurations.contains(selectedConfiguration)) {
-        RunManager.getInstance(project).setSelectedConfiguration(selectedConfiguration);
+        runManager.setSelectedConfiguration(selectedConfiguration);
         ExecutionUtil.runConfiguration(selectedConfiguration, myExecutorProvider.getExecutor());
       }
     }
@@ -942,8 +946,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       result.add(edit);
     }
 
-    RunManagerEx manager = RunManagerEx.getInstanceEx(project);
-    final RunnerAndConfigurationSettings selectedConfiguration = manager.getSelectedConfiguration();
+    final RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
     if (selectedConfiguration != null) {
       boolean isFirst = true;
       final ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
@@ -979,8 +982,9 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     Map<RunnerAndConfigurationSettings, ItemWrapper> wrappedExisting = new LinkedHashMap<>();
-    for (ConfigurationType type : manager.getConfigurationFactoriesWithoutUnknown()) {
-      Map<String, List<RunnerAndConfigurationSettings>> structure = manager.getStructure(type);
+    RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+    for (ConfigurationType type : runManager.getConfigurationFactoriesWithoutUnknown()) {
+      Map<String, List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
       for (Map.Entry<String, List<RunnerAndConfigurationSettings>> entry : structure.entrySet()) {
         if (entry.getValue().isEmpty()) {
           continue;
@@ -1012,7 +1016,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     }
     if (!DumbService.isDumb(project)) {
-      populateWithDynamicRunners(result, wrappedExisting, project, manager, selectedConfiguration);
+      populateWithDynamicRunners(result, wrappedExisting, project, RunManagerEx.getInstanceEx(project), selectedConfiguration);
     }
     result.addAll(wrappedExisting.values());
     return result.toArray(new ItemWrapper[result.size()]);
@@ -1021,7 +1025,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
   @NotNull
   private static List<RunnerAndConfigurationSettings> populateWithDynamicRunners(final List<ItemWrapper> result,
                                                                                  Map<RunnerAndConfigurationSettings, ItemWrapper> existing,
-                                                                                 final Project project, final RunManagerEx manager,
+                                                                                 final Project project, final RunManager manager,
                                                                                  final RunnerAndConfigurationSettings selectedConfiguration) {
 
     final ArrayList<RunnerAndConfigurationSettings> contextConfigurations = new ArrayList<>();
@@ -1078,7 +1082,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           @Override
           public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
             manager.setTemporaryConfiguration(configuration);
-            RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
+            RunManager.getInstance(project).setSelectedConfiguration(configuration);
             ExecutionUtil.runConfiguration(configuration, executor);
           }
 

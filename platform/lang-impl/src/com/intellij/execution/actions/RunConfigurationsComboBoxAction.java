@@ -65,7 +65,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       else {
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
-                           RunManagerEx.getInstanceEx(project).getSelectedConfiguration(),
+                           RunManager.getInstance(project).getSelectedConfiguration(),
                            project,
                            presentation);
         presentation.setEnabled(true);
@@ -139,7 +139,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project != null) {
-      final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
       allActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
       allActionsGroup.add(new SaveTemporaryAction());
@@ -154,6 +153,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         allActionsGroup.addSeparator();
       }
 
+      final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
       for (ConfigurationType type : runManager.getConfigurationFactories()) {
         final DefaultActionGroup actionGroup = new DefaultActionGroup();
         Map<String,List<RunnerAndConfigurationSettings>> structure = runManager.getStructure(type);
@@ -250,7 +250,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public void actionPerformed(AnActionEvent e) {
       ExecutionTargetManager.setActiveTarget(myProject, myTarget);
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject),
-                         RunManagerEx.getInstanceEx(myProject).getSelectedConfiguration(),
+                         RunManager.getInstance(myProject).getSelectedConfiguration(),
                          myProject,
                          e.getPresentation());
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.remoteServer.util;
 
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -54,7 +54,7 @@ public class CloudRunConfigurationUtil {
 
     String name = generateRunConfigurationName(accountName, module.getName());
 
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
+    final RunManager runManager = RunManager.getInstance(project);
     ConfigurationFactory configurationFactory = getRunConfigurationType(account.getType()).getConfigurationFactories()[0];
     final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name, configurationFactory);
 
