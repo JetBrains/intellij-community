@@ -148,29 +148,6 @@
             <arg value="apply"/>
             <arg value="${patchFile}"/>
         </exec>
-
-        <!-- Remove when switch to branch with this commit (IDEA Community 172)-->
-        <property name="temporaryPatchFile"
-                  value="${basedir}/patches/Don_t_show_help_button_if_there_is_no_help_available.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${temporaryPatchFile}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${temporaryPatchFile}"/>
-        </exec>
-    </target>
-
-    <!-- ===================================================== -->
-    <!-- Download Kotlin                                       -->
-    <!-- ===================================================== -->
-
-    <target name="kotlin" description="Download Kotlin for compiling IDEA Community">
-        <ant antfile="${community.folder}/build/gant.xml" target="doGant" inheritall="true" inheritrefs="true">
-            <property name="gant.script" value="${community.folder}/build/scripts/download_kotlin.gant"/>
-        </ant>
     </target>
 
     <!-- ===================================================== -->
@@ -178,7 +155,7 @@
     <!-- ===================================================== -->
 
     <!-- Exists as standalone task for TeamCity build -->
-    <target name="prepare" depends="patch,modules,libraries,kotlin" description="Make all build preparation tasks"/>
+    <target name="prepare" depends="patch,modules,libraries" description="Make all build preparation tasks"/>
 
     <!-- Exists as standalone task for TeamCity build -->
     <target name="compile" description="Runs building script.">
@@ -249,7 +226,7 @@
             <fileset dir="${community.out}/dist.all/bin/win"/>
         </copy>
         <copy file="${community.out}/dist.all/build/resources/mps" todir="${mps.folder}/build/resources"/>
-        <copy file="${community.out}/dist.all/build/conf/jreVersions.properties" todir="${mps.folder}/build/conf"/>
+        <copy file="${community.out}/dist.all/build/dependencies/gradle.properties" todir="${mps.folder}/build/dependencies"/>
 
         <!--Copy plugin libraries to plugin folders-->
         <copy todir="${mps.folder}/plugins/cvsIntegration/lib">

@@ -120,8 +120,8 @@ class MPSProperties extends ProductProperties {
                 todir: "$targetDirectory/bin/win/")
 
         // copy jre version
-        context.ant.copy(file: "$context.paths.communityHome/build/conf/jreVersions.properties",
-                todir: "$targetDirectory/build/conf/")
+        context.ant.copy(file: "$context.paths.communityHome/build/dependencies/gradle.properties",
+                todir: "$targetDirectory/build/dependencies/")
     }
 
     @Override
@@ -131,25 +131,16 @@ class MPSProperties extends ProductProperties {
 
     @Override
     WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
-        return new WindowsDistributionCustomizer() {
-            {
-            }
-        }
+        return null
     }
 
     @Override
     LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
-        return new LinuxDistributionCustomizer() {
-            {
-            }
-        }
+        return null
     }
 
     @Override
     MacDistributionCustomizer createMacCustomizer(String projectHome) {
-        return new MacDistributionCustomizer() {
-            {
-            }
-        }
+        return null
     }
 }
