@@ -32,8 +32,6 @@ import java.util.regex.Pattern
  */
 abstract class RunManager {
   companion object {
-    private val UNNAMED = "Unnamed"
-
     @JvmStatic
     fun getInstance(project: Project): RunManager {
       return ServiceManager.getService(project, RunManager::class.java)
@@ -203,3 +201,5 @@ abstract class RunManager {
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 }
+
+private val UNNAMED = "Unnamed"

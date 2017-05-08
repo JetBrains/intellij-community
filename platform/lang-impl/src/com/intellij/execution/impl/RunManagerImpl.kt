@@ -41,7 +41,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeat
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.EventDispatcher
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
@@ -122,8 +121,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private val customOrder = ObjectIntHashMap<String>()
   private val recentlyUsedTemporaries = ArrayList<RunnerAndConfigurationSettings>()
 
-  private val myDispatcher = EventDispatcher.create(RunManagerListener::class.java)!!
-
   private val schemeManagerProvider = SchemeManagerIprProvider("configuration")
 
   @Suppress("LeakingThis")
@@ -138,6 +135,9 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     result
   }
+
+  private val eventPublisher: RunManagerListener
+    get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
@@ -286,10 +286,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     checkRecentsLimit()
 
     if (existingId == null) {
-      myDispatcher.multicaster.runConfigurationAdded(settings)
+      eventPublisher.runConfigurationAdded(settings)
     }
     else {
-      myDispatcher.multicaster.runConfigurationChanged(settings, existingId)
+      eventPublisher.runConfigurationChanged(settings, existingId)
     }
   }
 
@@ -373,7 +373,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
 
       selectedConfigurationId = value?.uniqueID
-      fireRunConfigurationSelected()
+      eventPublisher.runConfigurationSelected()
     }
 
   @Volatile
@@ -644,7 +644,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     fireBeforeRunTasksUpdated()
     // todo is it required
-    fireRunConfigurationSelected()
+    eventPublisher.runConfigurationSelected()
   }
 
   fun readContext(parentNode: Element) {
@@ -659,7 +659,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     this.selectedConfigurationId = selectedConfigurationId
 
-    fireRunConfigurationSelected()
+    eventPublisher.runConfigurationSelected()
   }
 
   override fun hasSettings(settings: RunnerAndConfigurationSettings) = lock.read { idToSettings.get(settings.uniqueID) == settings }
@@ -718,7 +718,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     iconCache.clear()
-    removedConfigurations.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
+    val eventPublisher = eventPublisher
+    removedConfigurations.forEach { eventPublisher.runConfigurationRemoved(it) }
   }
 
   fun loadConfiguration(element: Element, isShared: Boolean): RunnerAndConfigurationSettings {
@@ -1047,35 +1048,32 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
         }
       }
     }
-    removed?.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
+
+    if (removed != null) {
+      val publisher = eventPublisher
+      removed?.forEach { publisher.runConfigurationRemoved(it) }
+    }
   }
 
   fun fireBeginUpdate() {
-    myDispatcher.multicaster.beginUpdate()
+    eventPublisher.beginUpdate()
   }
 
   fun fireEndUpdate() {
-    myDispatcher.multicaster.endUpdate()
+    eventPublisher.endUpdate()
   }
 
   fun fireRunConfigurationChanged(settings: RunnerAndConfigurationSettings) {
-    myDispatcher.multicaster.runConfigurationChanged(settings, null)
+    eventPublisher.runConfigurationChanged(settings, null)
   }
 
-  private fun fireRunConfigurationSelected() {
-    myDispatcher.multicaster.runConfigurationSelected()
-  }
-
+  @Suppress("OverridingDeprecatedMember")
   override fun addRunManagerListener(listener: RunManagerListener) {
-    myDispatcher.addListener(listener)
-  }
-
-  override fun removeRunManagerListener(listener: RunManagerListener) {
-    myDispatcher.removeListener(listener)
+    project.messageBus.connect().subscribe(RunManagerListener.TOPIC, listener)
   }
 
   fun fireBeforeRunTasksUpdated() {
-    myDispatcher.multicaster.beforeRunTasksChanged()
+    eventPublisher.beforeRunTasksChanged()
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {
@@ -1131,7 +1129,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       selectedConfiguration = null
     }
 
-    removed.forEach { myDispatcher.multicaster.runConfigurationRemoved(it) }
-    changedSettings.forEach { myDispatcher.multicaster.runConfigurationChanged(it, null) }
+    removed.forEach { eventPublisher.runConfigurationRemoved(it) }
+    changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
   }
 }

@@ -15,7 +15,10 @@
  */
 package com.intellij.mock
 
-import com.intellij.execution.*
+import com.intellij.execution.BeforeRunTask
+import com.intellij.execution.RunManagerConfig
+import com.intellij.execution.RunManagerEx
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
@@ -113,10 +116,6 @@ class MockRunManager : RunManagerEx() {
   }
 
   override fun removeConfiguration(settings: RunnerAndConfigurationSettings?) {}
-
-  override fun addRunManagerListener(listener: RunManagerListener) {}
-
-  override fun removeRunManagerListener(listener: RunManagerListener) {}
 
   override fun refreshUsagesList(profile: RunProfile) {}
 }

@@ -16,7 +16,6 @@
 package com.intellij.remoteServer.util.importProject;
 
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunManagerListener;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -46,6 +45,7 @@ import com.intellij.remoteServer.util.CloudBundle;
 import com.intellij.remoteServer.util.CloudGitDeploymentDetector;
 import com.intellij.remoteServer.util.CloudNotifier;
 import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
@@ -81,10 +81,9 @@ public class CloudGitRemoteDetector extends AbstractProjectComponent implements 
 
   @Override
   public void projectOpened() {
-    myProject.getMessageBus().connect().subscribe(GitRepository.GIT_REPO_CHANGE, this);
-
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
-
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(GitRepository.GIT_REPO_CHANGE, this);
+    connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
         onRunConfigurationAddedOrChanged(settings);
