@@ -48,7 +48,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private PsiSubstitutor myCalcedSubstitutor;
 
   private volatile String myInferenceError;
-  private ThreadLocal<String> myApplicabilityError = new ThreadLocal<>();
+  private final ThreadLocal<String> myApplicabilityError = new ThreadLocal<>();
 
   private final LanguageLevel myLanguageLevel;
 
@@ -306,7 +306,7 @@ public class MethodCandidateInfo extends CandidateInfo{
       if (myTypeArguments == null) {
         final RecursionGuard.StackStamp stackStamp = PsiDiamondType.ourDiamondGuard.markStack();
 
-        myApplicabilityError.set(null);
+        myApplicabilityError.remove();
         try {
           final PsiSubstitutor inferredSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, includeReturnConstraint);
 
@@ -330,7 +330,7 @@ public class MethodCandidateInfo extends CandidateInfo{
           //   at least one applicability error for {bar()} candidate, when the last overloaded method leads to error but first was ok:
           //2. {bar()}.getSubstitutor() would preserve error from wrong {foo} candidate => when the error was cleared - everything ok
           if (includeReturnConstraint) {
-            myApplicabilityError.set(null);
+            myApplicabilityError.remove();
           }
         }
       }
