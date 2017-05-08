@@ -29,7 +29,8 @@ public class ConcurrentCollectors {
         static <T, K, D, M1 extends Map<K, D>> C<T, M1> groupingBy(F<M1> f,
                                                                    C<T, D> c,
                                                                    BiConsumer<M1, T> consumer) {
-            return new CImpl<error descr="Cannot infer arguments"><></error>(f, consumer, arg<error descr="'arg(ConcurrentCollectors.BiOp<V>)' in 'ConcurrentCollectors.Test3' cannot be applied to '(ConcurrentCollectors.BiOp<D>)'">(c.getOp())</error>);
+            return new CImpl<error descr="Cannot infer arguments"><></error>(f, consumer, <error descr="Incompatible types. Required BiOp<R> but 'arg' was inferred to BiOp<M2>:
+no instance(s) of type variable(s) K, V exist so that R conforms to ConcurrentMap<K, V>">arg(c.getOp())</error>);
         }
 
         static <K, V, M2 extends ConcurrentMap<K, V>> BiOp<M2> arg(BiOp<V> op) {

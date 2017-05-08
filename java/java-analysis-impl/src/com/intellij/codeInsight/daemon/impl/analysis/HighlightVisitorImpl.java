@@ -354,7 +354,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                                                (PsiCallExpression)parent.getParent() : null;
       final JavaResolveResult containingCallResolveResult = callExpression != null ? callExpression.resolveMethodGenerics() : null;
       if (containingCallResolveResult instanceof MethodCandidateInfo) {
-        parentInferenceErrorMessage = ((MethodCandidateInfo)containingCallResolveResult).getParentInferenceErrorMessage((PsiExpressionList)parent);
+        parentInferenceErrorMessage = ((MethodCandidateInfo)containingCallResolveResult).getInferenceErrorMessage();
       }
       final Map<PsiElement, String> returnErrors = LambdaUtil.checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
       if (parentInferenceErrorMessage != null && (returnErrors == null || !returnErrors.containsValue(parentInferenceErrorMessage))) {

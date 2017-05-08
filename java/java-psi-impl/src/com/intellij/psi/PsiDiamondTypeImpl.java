@@ -19,6 +19,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -167,7 +168,14 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (staticFactoryCandidateInfo == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
-    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> staticFactoryCandidateInfo.getSubstitutor());
+    final Ref<String> refError = new Ref<>();
+    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, () -> {
+      PsiSubstitutor substitutor = staticFactoryCandidateInfo.getSubstitutor();
+      if (staticFactoryCandidateInfo instanceof MethodCandidateInfo) {
+        refError.set(((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessageAssumeAlreadyComputed());
+      }
+      return substitutor;
+    });
     if (inferredSubstitutor == null) {
       return DiamondInferenceResult.NULL_RESULT;
     }
@@ -176,7 +184,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       return DiamondInferenceResult.UNRESOLVED_CONSTRUCTOR;
     }
 
-    final String errorMessage = ((MethodCandidateInfo)staticFactoryCandidateInfo).getInferenceErrorMessage();
+    final String errorMessage = refError.get();
 
     //15.9.3 Choosing the Constructor and its Arguments
     //The return type and throws clause of cj are the same as the return type and throws clause determined for mj (p15.12.2.6)

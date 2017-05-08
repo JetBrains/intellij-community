@@ -363,7 +363,7 @@ public class InferenceSession {
       }
 
       if (properties != null && myErrorMessages != null) {
-        properties.getInfo().setInferenceError(StringUtil.join(myErrorMessages, "\n"));
+        properties.getInfo().setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
       }
     }
   }
