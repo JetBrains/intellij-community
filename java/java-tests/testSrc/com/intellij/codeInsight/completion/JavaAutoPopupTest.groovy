@@ -1833,4 +1833,11 @@ ita<caret>
 
     myFixture.assertPreferredCompletionItems 0, 'KimeFamilyRange'
   }
+
+  void "test show autopopup when typing digit after letter"() {
+    myFixture.configureByText 'a.java', 'class Foo {{ int a42; a<caret> }}'
+    type '4'
+    assert lookup
+  }
+
 }
