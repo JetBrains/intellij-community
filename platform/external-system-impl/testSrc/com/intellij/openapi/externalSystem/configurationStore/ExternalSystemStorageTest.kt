@@ -17,10 +17,12 @@ package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.createModule
 import com.intellij.configurationStore.useAndDispose
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.util.io.delete
 import com.intellij.util.io.parentSystemIndependentPath
 import com.intellij.util.io.readText
 import org.junit.ClassRule
@@ -48,13 +50,20 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `must be empty if external system storage`() {
+    val cacheDir = ExternalProjectsDataStorage.getProjectConfigurationDir(projectRule.project)
+    cacheDir.delete()
+
     // we must not use VFS here, file must not be created
     val moduleFile = tempDirManager.newPath("module", refreshVfs = true).resolve("test.iml")
     projectRule.createModule(moduleFile).useAndDispose {
+      assertThat(cacheDir).doesNotExist()
+
       setOption(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY, "true")
 
       ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+      assertThat(cacheDir).doesNotExist()
       saveStore()
+      assertThat(cacheDir).isDirectory
       assertThat(moduleFile).isRegularFile
       assertThat(moduleFile.readText()).startsWith("""
       <?xml version="1.0" encoding="UTF-8"?>
