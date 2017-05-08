@@ -333,7 +333,15 @@ public class MarkerType {
   }
 
   // Used in Kotlin, please don't make private
-  public static void navigateToSubclassedClass(MouseEvent e, @NotNull final PsiClass aClass) {
+  public static void navigateToSubclassedClass(MouseEvent e,
+                                               @NotNull final PsiClass aClass) {
+    navigateToSubclassedClass(e, aClass, new PsiClassOrFunctionalExpressionListCellRenderer());
+  }
+
+  // Used in Kotlin, please don't make private
+  public static void navigateToSubclassedClass(MouseEvent e,
+                                               @NotNull final PsiClass aClass,
+                                               PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
     if (DumbService.isDumb(aClass.getProject())) {
       DumbService.getInstance(aClass.getProject()).showDumbModeNotification("Navigation to overriding methods is not possible during index update");
       return;
@@ -354,7 +362,6 @@ public class MarkerType {
     ContainerUtil.addIfNotNull(inheritors, collectProcessor.getFoundElement());
     ContainerUtil.addIfNotNull(inheritors, collectExprProcessor.getFoundElement());
     if (inheritors.isEmpty()) return;
-    final PsiClassOrFunctionalExpressionListCellRenderer renderer = new PsiClassOrFunctionalExpressionListCellRenderer();
     final SubclassUpdater subclassUpdater = new SubclassUpdater(aClass, renderer);
     Collections.sort(inheritors, renderer.getComparator());
     PsiElementListNavigator.openTargets(e, inheritors.toArray(new NavigatablePsiElement[inheritors.size()]), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
@@ -362,9 +369,9 @@ public class MarkerType {
 
   private static class SubclassUpdater extends ListBackgroundUpdaterTask {
     private final PsiClass myClass;
-    private final PsiClassOrFunctionalExpressionListCellRenderer myRenderer;
+    private final PsiElementListCellRenderer<NavigatablePsiElement> myRenderer;
 
-    private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiClassOrFunctionalExpressionListCellRenderer renderer) {
+    private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
       super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS);
       myClass = aClass;
       myRenderer = renderer;
