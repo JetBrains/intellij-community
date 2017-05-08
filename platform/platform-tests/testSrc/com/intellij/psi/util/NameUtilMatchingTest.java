@@ -704,4 +704,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertOrderedEquals(matcher.matchingFragments(text),
                         new TextRange(3, 4), new TextRange(6, 7));
   }
+
+  public void testCamelHumpWinsOverConsecutiveCaseMismatch() {
+    assertSize(3, NameUtil.buildMatcher("GEN", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments("GetExtendedName"));
+
+    assertPreference("GEN", "GetName", "GetExtendedName");
+    assertPreference("*GEN", "GetName", "GetExtendedName");
+  }
 }

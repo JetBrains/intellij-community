@@ -392,25 +392,13 @@ public class MinusculeMatcher implements Matcher {
     while (nameIndex + i < name.length() &&
            patternIndex + i < myPattern.length &&
            charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
-      if (isUpperCase[patternIndex + i] && myHasHumps) {
-        // when an uppercase pattern letter matches lowercase name letter, try to find an uppercase (better) match further in the name
-        if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
-          if (i < minFragment) {
-            return null;
-          }
-          int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
-          FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart, matchingState);
-          if (ranges != null) {
-            return prependRange(ranges, nameIndex, i);
-          }
-          // at least three consecutive uppercase letters shouldn't match lowercase
-          if (i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
-            // but if there's a lowercase after them, it can match (in case shift was released a bit later)
-            if (nameIndex + i + 1 == name.length() ||
-                patternIndex + i + 1 < myPattern.length && !isLowerCase[patternIndex + i + 1]) {
-              return null;
-            }
-          }
+      if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i)) {
+        FList<TextRange> ranges = i < minFragment ? null : findUppercaseMatchFurther(name, patternIndex + i, nameIndex + i, matchingState);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, i);
+        }
+        if (shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
+          return null;
         }
       }
       i++;
@@ -434,6 +422,30 @@ public class MinusculeMatcher implements Matcher {
       i--;
     }
     return null;
+  }
+
+  private boolean isUppercasePatternVsLowercaseNameChar(String name, int patternIndex, int nameIndex) {
+    return isUpperCase[patternIndex] && myPattern[patternIndex] != name.charAt(nameIndex);
+  }
+
+  private FList<TextRange> findUppercaseMatchFurther(String name,
+                                                     int patternIndex,
+                                                     int nameIndex,
+                                                     MatchingState matchingState) {
+    int nextWordStart = indexOfWordStart(name, patternIndex, nameIndex);
+    return matchWildcards(name, patternIndex, nextWordStart, matchingState);
+  }
+
+  private boolean shouldProhibitCaseMismatch(String name, int patternIndex, int nameIndex) {
+    // at least three consecutive uppercase letters shouldn't match lowercase
+    if (myHasHumps && patternIndex >= 2 && isUpperCase[patternIndex - 1] && isUpperCase[patternIndex - 2]) {
+      // but if there's a lowercase after them, it can match (in case shift was released a bit later)
+      if (nameIndex + 1 == name.length() ||
+          patternIndex + 1 < myPattern.length && !isLowerCase[patternIndex + 1]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean isFirstCharMatching(@NotNull String name, int nameIndex, int patternIndex) {
