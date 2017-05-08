@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,7 @@ import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -58,6 +55,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +101,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public void projectOpened() {
     if (isEnabled()) {
-      myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
+      MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+      connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
           if (project == myProject) {
@@ -112,8 +111,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         }
       });
 
-      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
+      connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
           compilationFinished(compileContext);
@@ -142,6 +140,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       myDirtyScopeHolder.installVFSListener();
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
           boolean indexExist = CompilerReferenceReader.exists(myProject);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,18 +256,21 @@ public abstract class CompilerManager {
                                    @Nullable Runnable onTaskFinished);
 
   /**
-   * Register a listener to track compilation events.
-   *
-   * @param listener the listener to be registered.
+   * @deprecated Use CompilerTopics.COMPILATION_STATUS
    */
+  @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener);
+
+  /**
+   * @deprecated Use CompilerTopics.COMPILATION_STATUS
+   */
+  @Deprecated
   public abstract void addCompilationStatusListener(@NotNull CompilationStatusListener listener, @NotNull Disposable parentDisposable);
 
   /**
-   * Unregister a compilation listener.
-   *
-   * @param listener the listener to be unregistered.
+   * @deprecated Use CompilerTopics.COMPILATION_STATUS
    */
+  @Deprecated
   public abstract void removeCompilationStatusListener(@NotNull CompilationStatusListener listener);
 
   /**
