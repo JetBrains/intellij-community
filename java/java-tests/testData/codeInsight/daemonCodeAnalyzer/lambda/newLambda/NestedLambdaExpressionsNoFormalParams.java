@@ -26,7 +26,10 @@ abstract class NoFormalParamTypeInferenceNeeded {
   {
     map(a -> zip(text ->  text));
     zip(a -> zip(text ->  text));
-    Integer zip = zip(a -> zip(text -> <error descr="Bad return type in lambda expression: Object cannot be converted to R">text</error>));
+    Integer zip = zip(<error descr="no instance(s) of type variable(s)  exist so that Object conforms to Integer
+inference variable R has incompatible bounds:
+ lower bounds: Object
+upper bounds: Object, Integer">a -> zip(text -> text)</error>);
   }
 
 }
