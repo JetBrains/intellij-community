@@ -207,4 +207,9 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testPassingNullableCollectionWhereNotNullIsExpected() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
 }
