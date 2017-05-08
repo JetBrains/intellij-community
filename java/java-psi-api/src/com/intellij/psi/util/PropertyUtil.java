@@ -452,50 +452,44 @@ public class PropertyUtil {
     VariableKind kind = codeStyleManager.getVariableKind(field);
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(field);
-    try {
-      PsiMethod setMethod = factory
-        .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
-                              field);
-      String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
-      PsiParameter param = factory.createParameter(parameterName, field.getType());
+    PsiMethod setMethod = factory
+      .createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(),
+                            field);
+    String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
+    PsiParameter param = factory.createParameter(parameterName, field.getType());
 
-      NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
+    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
 
-      setMethod.getParameterList().add(param);
-      PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);
-      PsiUtil.setModifierProperty(setMethod, PsiModifier.STATIC, isStatic);
+    setMethod.getParameterList().add(param);
+    PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);
+    PsiUtil.setModifierProperty(setMethod, PsiModifier.STATIC, isStatic);
 
-      @NonNls StringBuilder buffer = new StringBuilder();
-      buffer.append("{\n");
-      if (name.equals(parameterName)) {
-        if (!isStatic) {
-          buffer.append("this.");
-        }
-        else {
-          String className = containingClass.getName();
-          if (className != null) {
-            buffer.append(className);
-            buffer.append(".");
-          }
+    @NonNls StringBuilder buffer = new StringBuilder();
+    buffer.append("{\n");
+    if (name.equals(parameterName)) {
+      if (!isStatic) {
+        buffer.append("this.");
+      }
+      else {
+        String className = containingClass.getName();
+        if (className != null) {
+          buffer.append(className);
+          buffer.append(".");
         }
       }
-      buffer.append(name);
-      buffer.append("=");
-      buffer.append(parameterName);
-      buffer.append(";\n");
-      if (returnSelf) {
-        buffer.append("return this;\n");
-      }
-      buffer.append("}");
-      PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
-      setMethod.getBody().replace(body);
-      setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
-      return setMethod;
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-      return null;
+    buffer.append(name);
+    buffer.append("=");
+    buffer.append(parameterName);
+    buffer.append(";\n");
+    if (returnSelf) {
+      buffer.append("return this;\n");
     }
+    buffer.append("}");
+    PsiCodeBlock body = factory.createCodeBlockFromText(buffer.toString(), null);
+    setMethod.getBody().replace(body);
+    setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
+    return setMethod;
   }
 
   /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
