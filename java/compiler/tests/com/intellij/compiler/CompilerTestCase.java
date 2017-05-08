@@ -1,5 +1,6 @@
 package com.intellij.compiler;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -9,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -146,19 +148,19 @@ public abstract class CompilerTestCase extends ModuleTestCase {
         final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
         final List<String> generated = new ArrayList<>();
-        final CompilationStatusAdapter listener = new CompilationStatusAdapter() {
+        Disposable eventDisposable = Disposer.newDisposable();
+        myProject.getMessageBus().connect(eventDisposable).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
           @Override
           public void fileGenerated(String outputRoot, String relativePath) {
             generated.add(relativePath);
           }
-        };
-        compilerManager.addCompilationStatusListener(listener);
+        });
         upToDateStatus.set(compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject)));
 
         doCompile(new CompileStatusNotification() {
           @Override
           public void finished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-            compilerManager.removeCompilationStatusListener(listener);
+            Disposer.dispose(eventDisposable);
             try {
               String prefix = FileUtil.toSystemIndependentName(myModuleRoot.getPath());
               if (!StringUtil.endsWithChar(prefix, '/')) {
