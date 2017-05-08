@@ -19,10 +19,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
@@ -390,6 +392,19 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       PsiAnnotation annotation = isDeclaredNotNull == null ? isDeclaredNullable : isDeclaredNotNull;
       reportPrimitiveType(holder, annotation, annotation, parameter);
     }
+    if (parameter.getParent() instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)parameter.getParent()).getIteratedValue();
+      Nullness itemTypeNullability = DfaPsiUtil.getTypeNullability(iteratedValue == null ? null : JavaGenericsUtil.getCollectionItemType(iteratedValue));
+      if (isDeclaredNotNull != null && itemTypeNullability == Nullness.NULLABLE) {
+        holder.registerProblem(isDeclaredNotNull, "Loop parameter can be null",
+                               new RemoveAnnotationQuickFix(isDeclaredNotNull, null));
+      }
+      else if (isDeclaredNullable != null && itemTypeNullability == Nullness.NOT_NULL) {
+        holder.registerProblem(isDeclaredNullable, "Loop parameter is always not-null",
+                               new RemoveAnnotationQuickFix(isDeclaredNullable, null));
+      }
+    }
+
     return new Annotated(isDeclaredNotNull != null,isDeclaredNullable != null);
   }
 

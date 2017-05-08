@@ -202,4 +202,9 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testForeachParameterNullability() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
 }

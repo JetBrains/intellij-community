@@ -69,18 +69,8 @@ public class DfaPsiUtil {
 
   @NotNull
   public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
-    if (resultType != null) {
-      for (PsiAnnotation annotation : resultType.getAnnotations()) {
-        String qualifiedName = annotation.getQualifiedName();
-        NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
-        if (nnn.getNullables().contains(qualifiedName)) {
-          return Nullness.NULLABLE;
-        }
-        if (nnn.getNotNulls().contains(qualifiedName)) {
-          return Nullness.NOT_NULL;
-        }
-      }
-    }
+    Nullness x = getTypeNullability(resultType);
+    if (x != Nullness.UNKNOWN) return x;
 
     if (owner == null || resultType instanceof PsiPrimitiveType) {
       return Nullness.UNKNOWN;
@@ -106,6 +96,23 @@ public class DfaPsiUtil {
       return getFunctionalParameterNullability(lambda, index);
     }
 
+    return Nullness.UNKNOWN;
+  }
+
+  @NotNull
+  public static Nullness getTypeNullability(@Nullable PsiType type) {
+    if (type != null) {
+      for (PsiAnnotation annotation : type.getAnnotations()) {
+        String qualifiedName = annotation.getQualifiedName();
+        NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
+        if (nnn.getNullables().contains(qualifiedName)) {
+          return Nullness.NULLABLE;
+        }
+        if (nnn.getNotNulls().contains(qualifiedName)) {
+          return Nullness.NOT_NULL;
+        }
+      }
+    }
     return Nullness.UNKNOWN;
   }
 
