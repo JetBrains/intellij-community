@@ -59,7 +59,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
     }
     try {
-      if (project == null || project.isDisposed() || !project.isInitialized()) {
+      if (project == null || project.isDisposed() || !project.isOpen()) {
         updatePresentation(null, null, null, presentation);
         presentation.setEnabled(false);
       }
@@ -274,10 +274,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
       final Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
-      final ConfigurationType type = configuration.getType();
-      if (type != null) {
-        presentation.setDescription("Select " + type.getConfigurationTypeDescription() + " '" + name + "'");
-      }
+      presentation.setDescription("Select " + configuration.getType().getConfigurationTypeDescription() + " '" + name + "'");
       updateIcon(presentation);
     }
 
