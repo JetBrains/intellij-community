@@ -51,7 +51,9 @@ public class PsiMigrationManager {
    */
   @NotNull
   public PsiMigration startMigration() {
-    LOG.assertTrue(myCurrentMigration == null);
+    if (myCurrentMigration != null) {
+      LOG.assertTrue(myCurrentMigration == null);
+    }
     myCurrentMigration = new PsiMigrationImpl(this, JavaPsiFacade.getInstance(myProject),
                                               (PsiManagerImpl)PsiManager.getInstance(myProject));
     return myCurrentMigration;

@@ -118,8 +118,10 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   private void finishFindMigration() {
-    myPsiMigration.finish();
-    myPsiMigration = null;
+    if (myPsiMigration != null) {
+      myPsiMigration.finish();
+      myPsiMigration = null;
+    }
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
@@ -132,6 +134,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
   }
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
+    finishFindMigration();
     final PsiMigration psiMigration = PsiMigrationManager.getInstance(myProject).startMigration();
     LocalHistoryAction a = LocalHistory.getInstance().startAction(getCommandName());
 
