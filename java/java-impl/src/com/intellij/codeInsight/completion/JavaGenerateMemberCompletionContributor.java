@@ -35,6 +35,7 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.generate.exception.GenerateCodeException;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -90,8 +91,11 @@ public class JavaGenerateMemberCompletionContributor {
       if (field instanceof PsiEnumConstant) continue;
 
       List<PsiMethod> prototypes = ContainerUtil.newSmartList();
-      Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true));
-      Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false));
+      try {
+        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, true, false));
+        Collections.addAll(prototypes, GetterSetterPrototypeProvider.generateGetterSetters(field, false, false));
+      }
+      catch (GenerateCodeException ignore) { }
       for (final PsiMethod prototype : prototypes) {
         if (parent.findMethodBySignature(prototype, false) == null && addedSignatures.add(prototype.getSignature(PsiSubstitutor.EMPTY))) {
           Icon icon = prototype.getIcon(Iconable.ICON_FLAG_VISIBILITY);
