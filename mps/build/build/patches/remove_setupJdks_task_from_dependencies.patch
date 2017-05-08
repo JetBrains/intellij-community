@@ -1,0 +1,16 @@
+Index: community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/CompilationContextImpl.groovy
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/CompilationContextImpl.groovy	(revision 5ed2b17d7725cf79cc423f192b91444db4801cb4)
++++ community/platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/CompilationContextImpl.groovy	(revision )
+@@ -125,7 +125,7 @@
+   static void setupCompilationDependencies(GradleRunner gradle) {
+     if (!dependenciesInstalled) {
+       dependenciesInstalled = true
+-      gradle.run('Setting up compilation dependencies', 'setupJdks', 'setupKotlinPlugin')
++      gradle.run('Setting up compilation dependencies', 'setupKotlinPlugin')
+     }
+   }
+ 

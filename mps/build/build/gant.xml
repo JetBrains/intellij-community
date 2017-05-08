@@ -148,6 +148,18 @@
             <arg value="apply"/>
             <arg value="${patchFile}"/>
         </exec>
+
+        <property name="patchFileSetupJdks"
+                  value="${basedir}/patches/remove_setupJdks_task_from_dependencies.patch"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="--check"/>
+            <arg value="${patchFileSetupJdks}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${patchFileSetupJdks}"/>
+        </exec>
     </target>
 
     <!-- ===================================================== -->
