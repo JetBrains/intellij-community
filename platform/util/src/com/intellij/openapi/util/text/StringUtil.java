@@ -2752,39 +2752,48 @@ public class StringUtil extends StringUtilRt {
       char ch1 = string1.charAt(i);
       char ch2 = string2.charAt(j);
       if ((isDecimalDigit(ch1) || ch1 == ' ') && (isDecimalDigit(ch2) || ch2 == ' ')) {
-        int startNum1 = i;
+        final int offset1 = i;
         while (ch1 == ' ' || ch1 == '0') { // skip leading spaces and zeros
-          startNum1++;
-          if (startNum1 >= string1Length) break;
-          ch1 = string1.charAt(startNum1);
+          i++;
+          if (i >= string1Length) break;
+          ch1 = string1.charAt(i);
         }
-        int startNum2 = j;
+        final int offset2 = j;
         while (ch2 == ' ' || ch2 == '0') { // skip leading spaces and zeros
-          startNum2++;
-          if (startNum2 >= string2Length) break;
-          ch2 = string2.charAt(startNum2);
+          j++;
+          if (j >= string2Length) break;
+          ch2 = string2.charAt(j);
         }
-        i = startNum1;
-        j = startNum2;
+        int adjustedOffset1 = i;
+        int adjustedOffset2 = j;
         // find end index of number
         while (i < string1Length && isDecimalDigit(string1.charAt(i))) i++;
         while (j < string2Length && isDecimalDigit(string2.charAt(j))) j++;
-        final int lengthDiff = (i - startNum1) - (j - startNum2);
+        final int lengthDiff = (i - adjustedOffset1) - (j - adjustedOffset2);
         if (lengthDiff != 0) {
           // numbers with more digits are always greater than shorter numbers
           return lengthDiff;
         }
-        for (; startNum1 < i; startNum1++, startNum2++) {
+        for (; adjustedOffset1 < i; adjustedOffset1++, adjustedOffset2++) {
           // compare numbers with equal digit count
-          final int diff = string1.charAt(startNum1) - string2.charAt(startNum2);
+          final int diff = string1.charAt(adjustedOffset1) - string2.charAt(adjustedOffset2);
           if (diff != 0) {
             return diff;
           }
+        }
+        final int realLengthDiff = (i - offset1) - (j - offset2);
+        if (realLengthDiff != 0) {
+          // compare number length including leading spaces and zeroes
+          return realLengthDiff;
         }
         i--;
         j--;
       }
       else {
+        // transitivity fix, can otherwise fail when comparing strings with characters between ' ' and '0' (e.g. '#')
+        if (ch1 == ' ') ch1 = '0';
+        if (ch2 == ' ') ch2 = '0';
+
         if (caseSensitive) {
           return ch1 - ch2;
         }
