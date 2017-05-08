@@ -69,8 +69,8 @@ public class WebDeploymentCredentialsHolder {
   public void load(Element element) {
     setWebServerConfigId(element.getAttributeValue(WEB_SERVER_CONFIG_ID));
     setWebServerConfigName(StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CONFIG_NAME)));
-    myCredentialsId = element.getAttributeValue(WEB_SERVER_CREDENTIALS_ID);
-    if (StringUtil.isEmpty(myCredentialsId) && element.getAttributeValue(RemoteCredentialsHolder.HOST) != null) {
+    myCredentialsId = StringUtil.notNullize(element.getAttributeValue(WEB_SERVER_CREDENTIALS_ID));
+    if (StringUtil.isEmpty(myCredentialsId)) {
       // loading old settings -> convert previously saved credentials to id
       final RemoteCredentialsHolder credentials = new RemoteCredentialsHolder();
       credentials.load(element);
@@ -81,7 +81,7 @@ public class WebDeploymentCredentialsHolder {
   public void save(Element element) {
     element.setAttribute(WEB_SERVER_CONFIG_ID, getWebServerConfigId());
     element.setAttribute(WEB_SERVER_CONFIG_NAME, getWebServerConfigName());
-    element.setAttribute(WEB_SERVER_CREDENTIALS_ID, getCredentialsId());
+    element.setAttribute(WEB_SERVER_CREDENTIALS_ID, StringUtil.notNullize(getCredentialsId()));
   }
 
   @NotNull
