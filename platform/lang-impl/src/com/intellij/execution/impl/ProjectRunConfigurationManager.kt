@@ -33,7 +33,9 @@ internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAwa
       return
     }
 
+    val runManager = RunManagerImpl.getInstanceImpl(project)
     ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
+    runManager.eventPublisher.runConfigurationSelected()
 
     if (!Registry.`is`("runManager.use.schemeManager", false)) {
       return

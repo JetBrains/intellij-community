@@ -136,7 +136,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     result
   }
 
-  private val eventPublisher: RunManagerListener
+  internal val eventPublisher: RunManagerListener
     get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
@@ -596,6 +596,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun loadState(parentNode: Element) {
+    val oldSelectedConfigurationId = selectedConfigurationId
     clear(false)
 
     schemeManagerProvider.load(parentNode) {
@@ -643,8 +644,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     fireBeforeRunTasksUpdated()
-    // todo is it required
-    eventPublisher.runConfigurationSelected()
+
+    // ProjectRunConfigurationStartupActivity will dispatch runConfigurationSelected on first load (when oldSelectedConfigurationId == null)
+    if (oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
+      eventPublisher.runConfigurationSelected()
+    }
   }
 
   fun readContext(parentNode: Element) {
