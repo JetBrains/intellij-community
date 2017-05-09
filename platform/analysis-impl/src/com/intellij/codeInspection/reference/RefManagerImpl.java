@@ -70,7 +70,7 @@ import java.util.concurrent.ConcurrentMap;
 public class RefManagerImpl extends RefManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefManager");
 
-  private long myLastUsedMask = 256 * 256 * 256 * 8;
+  private long myLastUsedMask = 0x0800_0000; // guarded by this
 
   @NotNull
   private final Project myProject;
@@ -80,7 +80,7 @@ public class RefManagerImpl extends RefManager {
   private final ConcurrentMap<PsiAnchor, RefElement> myRefTable = ContainerUtil.newConcurrentMap();
   private final ConcurrentMap<PsiElement, RefElement> myPsiToRefTable = ContainerUtil.newConcurrentMap(); // replacement of myRefTable
 
-  private volatile List<RefElement> mySortedRefs;
+  private volatile List<RefElement> myCachedSortedRefs; // holds cached values from myPsiToRefTable/myRefTable sorted by containing virtual file; benign data race
 
   private final ConcurrentMap<Module, RefModule> myModules = ContainerUtil.newConcurrentMap();
   private final ProjectIterator myProjectIterator = new ProjectIterator();
@@ -147,7 +147,7 @@ public class RefManagerImpl extends RefManager {
     myScope = null;
     myRefProject = null;
     (usePsiAsKey() ? myPsiToRefTable : myRefTable).clear();
-    mySortedRefs = null;
+    myCachedSortedRefs = null;
     myModules.clear();
     myContext = null;
 
@@ -180,11 +180,9 @@ public class RefManagerImpl extends RefManager {
     }
   }
 
-  void fireNodeMarkedReferenced(PsiElement what,
-                                PsiElement from,
-                                boolean referencedFromClassInitializer) {
+  void fireNodeMarkedReferenced(PsiElement what, PsiElement from) {
     for (RefGraphAnnotator annotator : myGraphAnnotators) {
-      annotator.onMarkReferenced(what, from, referencedFromClassInitializer);
+      annotator.onMarkReferenced(what, from, false);
     }
   }
 
@@ -202,13 +200,17 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Override
-  public long getLastUsedMask() {
+  public synchronized long getLastUsedMask() {
+    if (myLastUsedMask < 0) {
+      throw new IllegalStateException("We're out of 64 bits, sorry");
+    }
     myLastUsedMask *= 2;
     return myLastUsedMask;
   }
 
   @Override
   public <T> T getExtension(@NotNull final Key<T> key) {
+    //noinspection unchecked
     return (T)myExtensions.get(key);
   }
 
@@ -353,7 +355,7 @@ public class RefManagerImpl extends RefManager {
     myIsInProcess = false;
     if (myScope != null) myScope.invalidate();
 
-    mySortedRefs = null;
+    myCachedSortedRefs = null;
   }
 
   public void startOfflineView() {
@@ -382,7 +384,7 @@ public class RefManagerImpl extends RefManager {
 
   @NotNull
   List<RefElement> getSortedElements() {
-    List<RefElement> answer = mySortedRefs;
+    List<RefElement> answer = myCachedSortedRefs;
     if (answer != null) return answer;
 
     answer = new ArrayList<>(usePsiAsKey() ? myPsiToRefTable.values() : myRefTable.values());
@@ -392,7 +394,7 @@ public class RefManagerImpl extends RefManager {
       VirtualFile v2 = ((RefElementImpl)o2).getVirtualFile();
       return (v1 != null ? v1.hashCode() : 0) - (v2 != null ? v2.hashCode() : 0);
     }));
-    mySortedRefs = answer = Collections.unmodifiableList(answer);
+    myCachedSortedRefs = answer = Collections.unmodifiableList(answer);
     return answer;
   }
 
@@ -433,7 +435,7 @@ public class RefManagerImpl extends RefManager {
         }
       }
     }
-    mySortedRefs = null;
+    myCachedSortedRefs = null;
   }
 
   @NotNull
@@ -575,7 +577,7 @@ public class RefManagerImpl extends RefManager {
     result = factory.create();
     if (result == null) return null;
 
-    mySortedRefs = null;
+    myCachedSortedRefs = null;
     RefElement prev = usePsiAsKey() ? myPsiToRefTable.putIfAbsent(element, result) : myRefTable.putIfAbsent(psiAnchor, result);
     if (prev != null) {
       //noinspection unchecked

@@ -507,7 +507,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
           }
           else {
-            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement, false);
+            ((RefManagerImpl)refManager).fireNodeMarkedReferenced(psiClass, psiElement);
           }
         }
       }
