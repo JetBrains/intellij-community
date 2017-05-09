@@ -75,7 +75,7 @@ import java.nio.charset.Charset;
 import java.util.*;
 import java.util.List;
 
-public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, ProjectManagerListener, SafeWriteRequestor {
+public class FileDocumentManagerImpl extends FileDocumentManager implements VirtualFileListener, VetoableProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
 
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -125,8 +125,9 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     }
   };
 
-  public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager) {
+  public FileDocumentManagerImpl(@NotNull VirtualFileManager virtualFileManager, @NotNull ProjectManager projectManager) {
     virtualFileManager.addVirtualFileListener(this);
+    projectManager.addProjectManagerListener(this);
 
     myBus = ApplicationManager.getApplication().getMessageBus();
     myBus.connect().subscribe(ProjectManager.TOPIC, this);
@@ -708,7 +709,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @Override
-  public boolean canCloseProject(Project project) {
+  public boolean canClose(@NotNull Project project) {
     if (!myUnsavedDocuments.isEmpty()) {
       myOnClose = true;
       try {

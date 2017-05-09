@@ -134,6 +134,18 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
           }
         }
       }
+
+      @Override
+      public void projectClosingBeforeSave(@NotNull Project project) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+          try {
+            listener.projectClosingBeforeSave(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
+        }
+      }
     });
   }
 
@@ -614,6 +626,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
+      myBusPublisher.projectClosingBeforeSave(project);
+
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
@@ -662,6 +676,11 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public void addProjectManagerListener(@NotNull ProjectManagerListener listener) {
+    myListeners.add(listener);
+  }
+
+  @Override
+  public void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener) {
     myListeners.add(listener);
   }
 

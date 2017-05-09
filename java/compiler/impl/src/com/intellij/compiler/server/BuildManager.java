@@ -1693,9 +1693,8 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public boolean canCloseProject(Project project) {
+    public void projectClosingBeforeSave(@NotNull Project project) {
       cancelAutoMakeTasks(project);
-      return true;
     }
 
     @Override

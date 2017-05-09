@@ -46,6 +46,8 @@ public abstract class ProjectManager {
   @Deprecated
   public abstract void addProjectManagerListener(@NotNull ProjectManagerListener listener);
 
+  public abstract void addProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
+
   /**
    * @deprecated Use {@link Topic}
    */
