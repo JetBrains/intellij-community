@@ -149,13 +149,16 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   @NotNull
   @Override
   public List<ExecutionTarget> getTargetsFor(@Nullable RunnerAndConfigurationSettings settings) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    if (settings == null) return Collections.emptyList();
+    if (settings == null) {
+      return Collections.emptyList();
+    }
 
     List<ExecutionTarget> result = new ArrayList<>();
     for (ExecutionTargetProvider eachTargetProvider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
       for (ExecutionTarget eachTarget : eachTargetProvider.getTargets(myProject, settings)) {
-        if (canRun(settings, eachTarget)) result.add(eachTarget);
+        if (canRun(settings, eachTarget)) {
+          result.add(eachTarget);
+        }
       }
     }
     return Collections.unmodifiableList(result);
