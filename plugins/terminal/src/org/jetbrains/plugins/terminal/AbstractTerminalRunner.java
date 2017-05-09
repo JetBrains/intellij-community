@@ -169,6 +169,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
             createAndStartSession(terminalWidget, createTtyConnector(process));
+            terminalWidget.getComponent().revalidate();
           }
           catch (RuntimeException e) {
             showCannotOpenTerminalDialog(e);
