@@ -94,7 +94,6 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChanged = false;
 
   @Nullable private CommandAdapter myCommandListener;
-  @Nullable private CaretListener myCaretListener;
   @Nullable private LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -169,7 +168,15 @@ public class TemplateState implements Disposable {
       }
     };
 
-    myCaretListener = new CaretAdapter() {
+    if (myEditor != null) {
+      installCaretListener(myEditor);
+    }
+    myDocument.addDocumentListener(myEditorDocumentListener, this);
+    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+  }
+
+  private void installCaretListener(@NotNull Editor editor) {
+    CaretListener listener = new CaretAdapter() {
       @Override
       public void caretAdded(CaretEvent e) {
         if (isMultiCaretMode()) {
@@ -185,11 +192,8 @@ public class TemplateState implements Disposable {
       }
     };
 
-    if (myEditor != null) {
-      myEditor.getCaretModel().addCaretListener(myCaretListener);
-    }
-    myDocument.addDocumentListener(myEditorDocumentListener, this);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+    editor.getCaretModel().addCaretListener(listener);
+    Disposer.register(this, () -> editor.getCaretModel().removeCaretListener(listener));
   }
 
   private boolean isCaretInsideNextVariable() {
@@ -233,7 +237,6 @@ public class TemplateState implements Disposable {
 
     myEditorDocumentListener = null;
     myCommandListener = null;
-    myCaretListener = null;
 
     myProcessor = null;
 
