@@ -35,6 +35,7 @@ internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAwa
 
     val runManager = RunManagerImpl.getInstanceImpl(project)
     ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
+    // important, especially for AppCode ("hack" (projectOpened listener) in the OCWorkspaceRunConfigurationListener removed in favour of platform fix)
     runManager.eventPublisher.runConfigurationSelected()
 
     if (!Registry.`is`("runManager.use.schemeManager", false)) {
