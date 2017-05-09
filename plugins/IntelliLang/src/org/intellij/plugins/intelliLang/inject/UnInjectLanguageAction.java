@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -75,7 +74,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
         PsiLanguageInjectionHost host = (PsiLanguageInjectionHost)reference.getElement();
         for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
           if (support.isApplicableTo(host) && support.removeInjectionInPlace(host)) {
-            ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+            PsiManager.getInstance(project).dropPsiCaches();
             return;
           }
         }
@@ -84,7 +83,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
       LanguageInjectionSupport support = element.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
       if (support != null) {
         if (support.removeInjection(element)) {
-          ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+          PsiManager.getInstance(project).dropPsiCaches();
         }
       }
       return;

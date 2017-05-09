@@ -114,7 +114,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
       }
     }.execute();
 
-    ((PsiManagerImpl)getPsiManager()).getFileManager().cleanupForNextTest();
+    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));

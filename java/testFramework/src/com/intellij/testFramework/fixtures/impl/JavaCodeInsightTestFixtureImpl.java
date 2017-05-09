@@ -20,9 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaPsiFacadeEx;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
@@ -82,15 +80,4 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
     return aPackage;
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      EdtTestUtil.runInEdtAndWait(() -> {
-        ((PsiModificationTrackerImpl)getPsiManager().getModificationTracker()).incCounter();// drop all caches
-      });
-    }
-    finally {
-      super.tearDown();
-    }
-  }
 }
