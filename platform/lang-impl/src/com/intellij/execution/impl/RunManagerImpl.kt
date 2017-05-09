@@ -47,6 +47,7 @@ import com.intellij.util.containers.*
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
@@ -127,6 +128,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
 
   internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
+
+  private val isFirstLoadState = AtomicBoolean()
 
   private val stringIdToBeforeRunProvider by lazy {
     val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
@@ -595,9 +598,19 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return methodElement
   }
 
+  override fun noStateLoaded() {
+    isFirstLoadState.set(false)
+  }
+
   override fun loadState(parentNode: Element) {
-    val oldSelectedConfigurationId = selectedConfigurationId
-    clear(false)
+    val oldSelectedConfigurationId: String?
+    if (isFirstLoadState.compareAndSet(true, false)) {
+      oldSelectedConfigurationId = null
+    }
+    else {
+      oldSelectedConfigurationId = selectedConfigurationId
+      clear(false)
+    }
 
     schemeManagerProvider.load(parentNode) {
       var name = it.getAttributeValue("name")
