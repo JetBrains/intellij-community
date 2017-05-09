@@ -95,16 +95,7 @@ public final class LoadTextUtil {
       prev = c;
     }
 
-    String detectedLineSeparator = null;
-    if (crlfCount > crCount && crlfCount > lfCount) {
-      detectedLineSeparator = "\r\n";
-    }
-    else if (crCount > lfCount) {
-      detectedLineSeparator = "\r";
-    }
-    else if (lfCount > 0) {
-      detectedLineSeparator = "\n";
-    }
+    String detectedLineSeparator = guessLineSeparator(crCount, lfCount, crlfCount);
 
     CharSequence result = buffer.length() == dst ? buffer : buffer.subSequence(0, dst);
     return Pair.create(result, detectedLineSeparator);
@@ -151,6 +142,14 @@ public final class LoadTextUtil {
       prev = c;
     }
 
+    String detectedLineSeparator = guessLineSeparator(crCount, lfCount, crlfCount);
+
+    ByteArrayCharSequence sequence = new ByteArrayCharSequence(result, 0, dst);
+    return Pair.create(sequence, detectedLineSeparator);
+  }
+
+  @Nullable
+  private static String guessLineSeparator(int crCount, int lfCount, int crlfCount) {
     String detectedLineSeparator = null;
     if (crlfCount > crCount && crlfCount > lfCount) {
       detectedLineSeparator = "\r\n";
@@ -161,9 +160,7 @@ public final class LoadTextUtil {
     else if (lfCount > 0) {
       detectedLineSeparator = "\n";
     }
-
-    ByteArrayCharSequence sequence = new ByteArrayCharSequence(result, 0, dst);
-    return Pair.create(sequence, detectedLineSeparator);
+    return detectedLineSeparator;
   }
 
   // private fake charsets for files which have one-byte-for-ascii-characters encoding but contain seven bits characters only. used for optimization since we don't have to encode-decode bytes here.
