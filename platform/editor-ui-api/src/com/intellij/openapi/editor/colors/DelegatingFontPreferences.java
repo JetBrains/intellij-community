@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class DelegatingFontPreferences implements FontPreferences {
+public class DelegatingFontPreferences extends FontPreferences {
   private Supplier<FontPreferences> myDelegateSupplier;
 
   public DelegatingFontPreferences(@NotNull Supplier<FontPreferences> delegateSupplier) {
