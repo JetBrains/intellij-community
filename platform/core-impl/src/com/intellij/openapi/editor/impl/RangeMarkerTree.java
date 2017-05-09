@@ -22,15 +22,13 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.ex.SweepProcessor;
 import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.Segment;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -302,51 +300,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       correctMax(root,0);
     }
     return norm;
-  }
-
-  @FunctionalInterface
-  public interface Generator<T> {
-    boolean generateInStartOffsetOrder(@NotNull Processor<T> processor);
-  }
-
-  public static <T extends Segment> boolean sweep(@NotNull Generator<T> generator, @NotNull final SweepProcessor<T> sweepProcessor) {
-    final Queue<T> ends = new PriorityQueue<>(5, Comparator.comparingInt(Segment::getEndOffset));
-    final List<T> starts = new ArrayList<>();
-    if (!generator.generateInStartOffsetOrder(marker -> {
-      // decide whether previous marker ends here or new marker begins
-      int start = marker.getStartOffset();
-      while (true) {
-        assert ends.size() == starts.size();
-        T previous = ends.peek();
-        if (previous != null) {
-          int prevEnd = previous.getEndOffset();
-          if (prevEnd <= start) {
-            if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-            ends.remove();
-            boolean removed = starts.remove(previous);
-            assert removed;
-            continue;
-          }
-        }
-        break;
-      }
-      if (!sweepProcessor.process(start, marker, true, ends)) return false;
-      starts.add(marker);
-      ends.offer(marker);
-
-      return true;
-    })) return false;
-
-    while (!ends.isEmpty()) {
-      assert ends.size() == starts.size();
-      T previous = ends.remove();
-      int prevEnd = previous.getEndOffset();
-      if (!sweepProcessor.process(prevEnd, previous, false, ends)) return false;
-      boolean removed = starts.remove(previous);
-      assert removed;
-    }
-
-    return true;
   }
 
   private void reTarget(int start, int end, int newBase) {
