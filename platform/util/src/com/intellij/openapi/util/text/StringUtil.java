@@ -2715,116 +2715,11 @@ public class StringUtil extends StringUtilRt {
     return res;
   }
 
-  public static final Comparator<String> NATURAL_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String o1, String o2) {
-      return naturalCompare(o1, o2);
-    }
-  };
+  public static final Comparator<String> NATURAL_COMPARATOR = new NaturalComparator();
 
-  /**
-   * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html"/>
-   * "Sorting for Humans: Natural Sort Order"</a>
-   */
   @Contract(pure = true)
   public static int naturalCompare(@Nullable String string1, @Nullable String string2) {
-    return naturalCompare(string1, string2, false);
-  }
-
-  @Contract(pure = true)
-  private static int naturalCompare(@Nullable String string1, @Nullable String string2, boolean caseSensitive) {
-    //noinspection StringEquality
-    if (string1 == string2) {
-      return 0;
-    }
-    if (string1 == null) {
-      return -1;
-    }
-    if (string2 == null) {
-      return 1;
-    }
-
-    final int string1Length = string1.length();
-    final int string2Length = string2.length();
-    int i = 0;
-    int j = 0;
-    for (; i < string1Length && j < string2Length; i++, j++) {
-      char ch1 = string1.charAt(i);
-      char ch2 = string2.charAt(j);
-      if ((isDecimalDigit(ch1) || ch1 == ' ') && (isDecimalDigit(ch2) || ch2 == ' ')) {
-        final int offset1 = i;
-        while (ch1 == ' ' || ch1 == '0') { // skip leading spaces and zeros
-          i++;
-          if (i >= string1Length) break;
-          ch1 = string1.charAt(i);
-        }
-        final int offset2 = j;
-        while (ch2 == ' ' || ch2 == '0') { // skip leading spaces and zeros
-          j++;
-          if (j >= string2Length) break;
-          ch2 = string2.charAt(j);
-        }
-        int adjustedOffset1 = i;
-        int adjustedOffset2 = j;
-        // find end index of number
-        while (i < string1Length && isDecimalDigit(string1.charAt(i))) i++;
-        while (j < string2Length && isDecimalDigit(string2.charAt(j))) j++;
-        final int lengthDiff = (i - adjustedOffset1) - (j - adjustedOffset2);
-        if (lengthDiff != 0) {
-          // numbers with more digits are always greater than shorter numbers
-          return lengthDiff;
-        }
-        for (; adjustedOffset1 < i; adjustedOffset1++, adjustedOffset2++) {
-          // compare numbers with equal digit count
-          final int diff = string1.charAt(adjustedOffset1) - string2.charAt(adjustedOffset2);
-          if (diff != 0) {
-            return diff;
-          }
-        }
-        final int realLengthDiff = (i - offset1) - (j - offset2);
-        if (realLengthDiff != 0) {
-          // compare number length including leading spaces and zeroes
-          return realLengthDiff;
-        }
-        i--;
-        j--;
-      }
-      else {
-        // transitivity fix, can otherwise fail when comparing strings with characters between ' ' and '0' (e.g. '#')
-        if (ch1 == ' ') ch1 = '0';
-        if (ch2 == ' ') ch2 = '0';
-
-        if (caseSensitive) {
-          return ch1 - ch2;
-        }
-        else {
-          // similar logic to charsMatch() below
-          if (ch1 != ch2) {
-            final int diff1 = StringUtilRt.toUpperCase(ch1) - StringUtilRt.toUpperCase(ch2);
-            if (diff1 != 0) {
-              final int diff2 = StringUtilRt.toLowerCase(ch1) - StringUtilRt.toLowerCase(ch2);
-              if (diff2 != 0) {
-                return diff2;
-              }
-            }
-          }
-        }
-      }
-    }
-    // After the loop the end of one of the strings might not have been reached, if the other
-    // string ends with a number and the strings are equal until the end of that number. When
-    // there are more characters in the string, then it is greater.
-    if (i < string1Length) {
-      return 1;
-    }
-    if (j < string2Length) {
-      return -1;
-    }
-    if (!caseSensitive && string1Length == string2Length) {
-      // do case sensitive compare if case insensitive strings are equal
-      return naturalCompare(string1, string2, true);
-    }
-    return string1Length - string2Length;
+    return NATURAL_COMPARATOR.compare(string1, string2);
   }
 
   @Contract(pure = true)
