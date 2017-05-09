@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
+import com.intellij.codeInsight.folding.JavaFoldingTestCase;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -25,6 +26,7 @@ import com.intellij.lang.LanguageSurrounders;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.surroundWith.SurroundDescriptor;
 import com.intellij.lang.surroundWith.Surrounder;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -33,6 +35,8 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -237,5 +241,20 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     assertNotNull(templateState);
     templateState.nextTab();
     checkResultByFile(BASE_PATH + fileName + "_after.java");
+  }
+
+  public void testInvokingSurroundInOneLineFoldedMethod() {
+    configureFromFileText("a.java",
+                          "class Foo {\n" +
+                          " void bar() {\n" +
+                          "  Sy<caret>stem.out.println();\n" +
+                          " }\n" +
+                          "}");
+    JavaFoldingTestCase.performInitialFolding(myEditor);
+    List<AnAction> actions = SurroundWithHandler.buildSurroundActions(ourProject, myEditor, myFile, null);
+    assertSize(2, ContainerUtil.findAll(actions, a -> {
+      String text = a.getTemplatePresentation().getText();
+      return text != null && text.contains("while");
+    }));
   }
 }
