@@ -188,7 +188,7 @@ public abstract class CompletionPhase implements Disposable {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);
         }
       };
-      final DocumentAdapter documentListener = new DocumentAdapter() {
+      final DocumentListener documentListener = new DocumentListener() {
         @Override
         public void beforeDocumentChange(DocumentEvent e) {
           CompletionServiceImpl.setCompletionPhase(NoCompletion);

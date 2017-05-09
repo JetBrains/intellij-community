@@ -173,7 +173,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return this;
   }
 
-  public void addDocumentListener(DocumentListener listener) {
+  public void addDocumentListener(@NotNull DocumentListener listener) {
     myDocumentListeners.add(listener);
     installDocumentListener();
   }

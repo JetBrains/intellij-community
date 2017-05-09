@@ -25,8 +25,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -120,7 +120,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
     regexp.getDocument().addDocumentListener(new MyDocumentListener(notRegexp, wholeWordsOnly));
-    regexp.getDocument().addDocumentListener(new DocumentAdapter() {
+    regexp.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
@@ -590,7 +590,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
     }
   }
 
-  private static class MyDocumentListener extends DocumentAdapter {
+  private static class MyDocumentListener implements DocumentListener {
     private final JComponent[] components;
 
     MyDocumentListener(JComponent... _components) {

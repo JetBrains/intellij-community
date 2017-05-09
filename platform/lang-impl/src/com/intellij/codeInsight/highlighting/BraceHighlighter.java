@@ -82,7 +82,7 @@ public class BraceHighlighter implements StartupActivity {
     };
     eventMulticaster.addSelectionListener(mySelectionListener, project);
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    DocumentListener documentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         myAlarm.cancelAllRequests();

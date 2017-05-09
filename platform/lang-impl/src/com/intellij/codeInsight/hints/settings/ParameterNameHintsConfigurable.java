@@ -22,8 +22,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -206,7 +206,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     String blackList = getLanguageBlackList(language);
 
     EditorTextField editorTextField = createBlacklistEditorField(blackList);
-    editorTextField.addDocumentListener(new DocumentAdapter() {
+    editorTextField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         updateOkEnabled(language, editorTextField);

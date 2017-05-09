@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
   private final Document myDocument;
   private final MessageBusConnection myBusConnection;
   private IpnbFile myIpnbFile;
@@ -77,7 +77,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     setBackground(IpnbEditorUtil.getBackground());
 
     final Alarm alarm = new Alarm();
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new DocumentListener() {
       public void documentChanged(final DocumentEvent e) {
         if (mySynchronize) {
           alarm.cancelAllRequests();

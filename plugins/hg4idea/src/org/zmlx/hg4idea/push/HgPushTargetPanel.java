@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.dvcs.push.VcsError;
 import com.intellij.dvcs.push.ui.PushTargetEditorListener;
 import com.intellij.dvcs.push.ui.PushTargetTextField;
 import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -93,6 +93,7 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
     myTargetRenderedComponent.updateLinkText(myDestTargetPanel.getText());
   }
 
+  @Override
   @Nullable
   public ValidationInfo verify() {
     if (StringUtil.isEmptyOrSpaces(myDestTargetPanel.getText())) {
@@ -108,10 +109,9 @@ public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
   @Override
   public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
-    myDestTargetPanel.addDocumentListener(new DocumentAdapter() {
+    myDestTargetPanel.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        super.documentChanged(e);
         listener.onTargetInEditModeChanged(myDestTargetPanel.getText());
       }
     });

@@ -19,8 +19,8 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 
@@ -34,7 +34,7 @@ public class UndoHelper {
   private boolean myShowing;
   private final Set<Document> myCurrentDocuments = new HashSet<>();
   private boolean myDirty;
-  private final DocumentAdapter myDocumentAdapter = new DocumentAdapter() {
+  private final DocumentListener myDocumentAdapter = new DocumentListener() {
     @Override
     public void documentChanged(DocumentEvent e) {
       if (myShowing) {

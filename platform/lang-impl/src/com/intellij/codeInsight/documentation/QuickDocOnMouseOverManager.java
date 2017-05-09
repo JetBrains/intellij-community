@@ -402,7 +402,7 @@ public class QuickDocOnMouseOverManager {
     }
   }
   
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void documentChanged(DocumentEvent e) {
       Editor editor = getEditor();

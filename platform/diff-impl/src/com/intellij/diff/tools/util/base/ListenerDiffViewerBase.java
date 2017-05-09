@@ -21,7 +21,6 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.vfs.*;
@@ -46,15 +45,13 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
     if (fileListener != null) VirtualFileManager.getInstance().addVirtualFileListener(fileListener, this);
 
     DocumentListener documentListener = createDocumentListener();
-    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> {
-      return content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null;
-    });
+    List<Document> documents = ContainerUtil.mapNotNull(myRequest.getContents(), (content) -> content instanceof DocumentContent ? ((DocumentContent)content).getDocument() : null);
     TextDiffViewerUtil.installDocumentListeners(documentListener, documents, this);
   }
 
   @NotNull
   protected DocumentListener createDocumentListener() {
-    return new DocumentAdapter() {
+    return new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent event) {
         onBeforeDocumentChange(event);

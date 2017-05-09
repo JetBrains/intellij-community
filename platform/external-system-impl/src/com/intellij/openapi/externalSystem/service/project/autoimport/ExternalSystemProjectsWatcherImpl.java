@@ -143,7 +143,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     makeUserAware(myChangedDocumentsQueue, myProject);
     myChangedDocumentsQueue.activate();
 
-    DocumentAdapter myDocumentListener = new DocumentAdapter() {
+    DocumentListener myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         Document doc = event.getDocument();
@@ -381,7 +381,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         }
       }, mergingUpdateQueue);
 
-      multicaster.addDocumentListener(new DocumentAdapter() {
+      multicaster.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent event) {
           mergingUpdateQueue.restartTimer();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
@@ -33,7 +34,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -101,6 +101,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     return "replace_constructor_with_builder_dialog";
   }
 
+  @Override
   protected void doAction() {
     TableUtil.stopEditing(myTable);
 
@@ -161,11 +162,13 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final Splitter splitter = new Splitter(true);
     splitter.setFirstComponent(createTablePanel());
     splitter.setSecondComponent(myWholePanel);
     final ActionListener enableDisableListener = new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         setEnabled(myCreateBuilderClassRadioButton.isSelected());
         IdeFocusManager.getInstance(myProject).requestFocus(
@@ -231,6 +234,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
     myTable.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           final int[] selectedRows = myTable.getSelectedRows();
           for (final int selectedRow : selectedRows) {
@@ -259,7 +263,8 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
   private static final int SKIP_SETTER = 4;
 
   private void createUIComponents() {
-    final com.intellij.openapi.editor.event.DocumentAdapter adapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+    final DocumentListener adapter = new DocumentListener() {
+      @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         validateButtons();
       }
@@ -278,6 +283,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
     ((DestinationFolderComboBox)myDestinationCb).setData(myProject, myConstructors[0].getContainingFile().getContainingDirectory(), myPackageTextField.getChildComponent());
 
     myExistentClassTF = new ReferenceEditorComboWithBrowseButton(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final TreeClassChooser chooser = TreeClassChooserFactory.getInstance(getProject())
           .createWithInnerClassesScopeChooser("Select Builder Class", GlobalSearchScope.projectScope(myProject), null, null);
@@ -298,6 +304,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
   private class MyTableModel extends AbstractTableModel {
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == SKIP_SETTER) {
         return Boolean.class;
@@ -305,14 +312,17 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       return String.class;
     }
 
+    @Override
     public int getRowCount() {
       return myParametersMap.size();
     }
 
+    @Override
     public int getColumnCount() {
       return 5;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final ParameterData data = getParamData(rowIndex);
       switch (columnIndex) {

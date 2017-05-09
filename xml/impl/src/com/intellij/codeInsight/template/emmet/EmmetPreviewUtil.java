@@ -24,8 +24,8 @@ import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -76,7 +76,7 @@ public class EmmetPreviewUtil {
   public static void addEmmetPreviewListeners(@NotNull final Editor editor,
                                               @NotNull final PsiFile file,
                                               final boolean expandPrimitiveAbbreviations) {
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+    editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         EmmetPreviewHint existingHint = EmmetPreviewHint.getExistingHint(editor);

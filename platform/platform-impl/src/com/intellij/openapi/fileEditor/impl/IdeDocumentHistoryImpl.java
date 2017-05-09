@@ -110,13 +110,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     myEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
     EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
 
-    DocumentListener documentListener = new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         onDocumentChanged(e);
       }
-    };
-    eventMulticaster.addDocumentListener(documentListener, myProject);
+    }, myProject);
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override

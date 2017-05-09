@@ -88,7 +88,7 @@ public class MavenMergingUpdateQueue extends MergingUpdateQueue {
           }
         }, this);
 
-      multicaster.addDocumentListener(new DocumentAdapter() {
+      multicaster.addDocumentListener(new DocumentListener() {
           @Override
           public void documentChanged(DocumentEvent event) {
             MavenMergingUpdateQueue.this.restartTimer();

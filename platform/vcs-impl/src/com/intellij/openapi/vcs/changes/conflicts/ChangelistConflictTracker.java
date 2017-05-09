@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -59,7 +59,7 @@ public class ChangelistConflictTracker {
   private final ChangeListAdapter myChangeListListener;
 
   private final FileDocumentManager myDocumentManager;
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
 
   private final FileStatusManager myFileStatusManager;
   private final Set<VirtualFile> myCheckSet;
@@ -92,7 +92,7 @@ public class ChangelistConflictTracker {
       }
       checkFiles(localSet);
     };
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!myOptions.TRACKING_ENABLED) {

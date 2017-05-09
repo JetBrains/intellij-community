@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
@@ -152,7 +153,7 @@ public class ThreadDumpPanel extends JPanel implements DataProvider {
 
     final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(consoleView.getPreferredFocusableComponent()));
     if (editor != null) {
-      editor.getDocument().addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
           String filter = myFilterField.getText();
