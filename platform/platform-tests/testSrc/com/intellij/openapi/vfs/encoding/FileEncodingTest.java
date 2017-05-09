@@ -24,8 +24,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -334,7 +334,7 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
 
     final Document document = getDocument(file);
     final boolean[] changed = {false};
-    document.addDocumentListener(new DocumentAdapter() {
+    document.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(final DocumentEvent event) {
         changed[0] = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -566,11 +566,10 @@ public class CompilerTask extends Task.Backgroundable {
     private boolean myUserAcceptedCancel = false;
 
     @Override
-    public boolean canCloseProject(final Project project) {
-      if (project != null && project.equals(myProject)) {
+    public void projectClosingBeforeSave(@NotNull Project project) {
+      if (myProject == project) {
         cancel();
       }
-      return true;
     }
 
     public void setContent(Content content, ContentManager contentManager) {

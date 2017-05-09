@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -128,7 +128,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private ComboBox myFileFilter;
   private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
-  private final Map<EditorTextField, DocumentAdapter> myComboBoxListeners = new HashMap<>();
+  private final Map<EditorTextField, DocumentListener> myComboBoxListeners = new HashMap<>();
 
   private Action myFindAllAction;
   private JRadioButton myRbCustomScope;
@@ -188,7 +188,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     finishPreviousPreviewSearch();
     if (mySearchRescheduleOnCancellationsAlarm != null) Disposer.dispose(mySearchRescheduleOnCancellationsAlarm);
     if (myUsagePreviewPanel != null) Disposer.dispose(myUsagePreviewPanel);
-    for(Map.Entry<EditorTextField, DocumentAdapter> e: myComboBoxListeners.entrySet()) {
+    for(Map.Entry<EditorTextField, DocumentListener> e: myComboBoxListeners.entrySet()) {
       e.getKey().removeDocumentListener(e.getValue());
     }
     myComboBoxListeners.clear();
@@ -287,7 +287,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     if (editorComponent instanceof EditorTextField) {
       final EditorTextField etf = (EditorTextField) editorComponent;
 
-      DocumentAdapter listener = new DocumentAdapter() {
+      DocumentListener listener = new DocumentListener() {
         @Override
         public void documentChanged(final DocumentEvent e) {
           handleComboBoxValueChanged(comboBox);
@@ -299,7 +299,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     else {
       if (editorComponent instanceof JTextComponent) {
         final javax.swing.text.Document document = ((JTextComponent)editorComponent).getDocument();
-        final com.intellij.ui.DocumentAdapter documentAdapter = new com.intellij.ui.DocumentAdapter() {
+        final DocumentAdapter documentAdapter = new DocumentAdapter() {
           @Override
           protected void textChanged(javax.swing.event.DocumentEvent e) {
             handleAnyComboBoxValueChanged(comboBox);
@@ -346,18 +346,14 @@ public class FindDialog extends DialogWrapper implements FindUI {
         comboBox,
         KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, 0),
         "scrollUp",
-        () -> {
-          ScrollingUtil.movePageUp(myResultsPreviewTable);
-        }
+        () -> ScrollingUtil.movePageUp(myResultsPreviewTable)
       );
 
       makeResultsPreviewActionOverride(
         comboBox,
         KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, 0),
         "scrollDown",
-        () -> {
-          ScrollingUtil.movePageDown(myResultsPreviewTable);
-        }
+        () -> ScrollingUtil.movePageDown(myResultsPreviewTable)
       );
 
       AnAction action = new AnAction() {
@@ -568,6 +564,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
   }
 
+  @Override
   public void updateReplaceVisibility() {
       boolean isReplaceState = myHelper.getModel().isReplaceState();
       myReplacePrompt.setVisible(isReplaceState);
@@ -1349,6 +1346,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     return originPanel;
   }
 
+  @Override
   @NotNull
   public String getStringToFind() {
     String string = (String)myInputComboBox.getEditor().getItem();
@@ -1462,6 +1460,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     model.setFileFilter(mask);
   }
 
+  @Override
   @Nullable
   public String getFileTypeMask() {
     String mask = null;

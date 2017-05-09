@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LazyRangeMarkerFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -41,7 +41,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   public LazyRangeMarkerFactoryImpl(@NotNull Project project, @NotNull final FileDocumentManager fileDocumentManager) {
     myProject = project;
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
         transformRangeMarkers(e);
@@ -75,7 +75,7 @@ public class LazyRangeMarkerFactoryImpl extends LazyRangeMarkerFactory {
   }
 
   static WeakList<LazyMarker> getMarkers(@NotNull VirtualFile file) {
-    return file.getUserData(LazyRangeMarkerFactoryImpl.LAZY_MARKERS_KEY);
+    return file.getUserData(LAZY_MARKERS_KEY);
   }
 
   private static void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {

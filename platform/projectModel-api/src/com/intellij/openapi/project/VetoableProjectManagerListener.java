@@ -15,9 +15,17 @@
  */
 package com.intellij.openapi.project;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- * @deprecated Use ProjectManagerListener
+ * Must be added only using {@link ProjectManager#addProjectManagerListener(VetoableProjectManagerListener)}, not message bus.
  */
-@Deprecated
-public abstract class ProjectManagerAdapter implements ProjectManagerListener {
+public interface VetoableProjectManagerListener extends ProjectManagerListener {
+  /**
+   * Checks whether the project can be closed.
+   *
+   * @param project project to check
+   * @return true or false
+   */
+  boolean canClose(@NotNull Project project);
 }

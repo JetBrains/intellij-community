@@ -42,7 +42,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   implements StatusBarWidget.MultipleTextValuesPresentation, StatusBarWidget.Multiframe
 {
   protected static final Logger LOG = Logger.getInstance(DvcsStatusWidget.class);
-  private static final String MAX_STRING = "VCS: Rebasing feature-12345";
+  private static final String MAX_STRING = "VCS: Rebasing feature-12345 in custom development branch";
 
   @NotNull private final String myPrefix;
 

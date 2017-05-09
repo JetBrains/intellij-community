@@ -143,7 +143,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     makeUserAware(myChangedDocumentsQueue, myProject);
     myChangedDocumentsQueue.activate();
 
-    DocumentAdapter myDocumentListener = new DocumentAdapter() {
+    DocumentListener myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         Document doc = event.getDocument();
@@ -204,6 +204,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       }
 
       myUpdatesQueue.queue(new Update(Pair.create(systemId, workingDir)) {
+        @Override
         public void run() {
           doUpdateNotifications(true, systemId, workingDir);
         }
@@ -243,6 +244,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
     else {
       myUpdatesQueue.queue(new Update(Pair.create(systemId, projectPath)) {
+        @Override
         public void run() {
           doUpdateNotifications(false, systemId, projectPath);
         }
@@ -372,14 +374,14 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     try {
       EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
 
-      multicaster.addCaretListener(new CaretAdapter() {
+      multicaster.addCaretListener(new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent e) {
           mergingUpdateQueue.restartTimer();
         }
       }, mergingUpdateQueue);
 
-      multicaster.addDocumentListener(new DocumentAdapter() {
+      multicaster.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent event) {
           mergingUpdateQueue.restartTimer();
@@ -543,6 +545,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       if (systemId != null) {
         ProjectSystemId finalSystemId = systemId;
         myUpdatesQueue.queue(new Update(Pair.create(finalSystemId, externalProjectPath)) {
+          @Override
           public void run() {
             doUpdateNotifications(true, finalSystemId, externalProjectPath);
           }

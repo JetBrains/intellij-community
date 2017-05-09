@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -311,7 +312,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         }
       };
     myFileMaskField.setPreferredWidth(JBUI.scale(100));
-    myFileMaskField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myFileMaskField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         scheduleResultsUpdate();

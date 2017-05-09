@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -70,10 +70,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   private String myOldUTFGuessing;
   private boolean myNative2AsciiForPropertiesFilesWasSpecified;
 
-  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager, ProjectManager projectManager) {
+  public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)ideEncodingManager;
-    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         if (project == myProject) {
@@ -91,7 +91,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     Element element = new Element("x");
     if (!myMapping.isEmpty()) {
       List<VirtualFile> files = new ArrayList<>(myMapping.keySet());
-      ContainerUtil.quickSort(files, (o1, o2) -> o1.getPath().compareTo(o2.getPath()));
+      ContainerUtil.quickSort(files, Comparator.comparing(VirtualFile::getPath));
       for (VirtualFile file : files) {
         Charset charset = myMapping.get(file);
         Element child = new Element("file");

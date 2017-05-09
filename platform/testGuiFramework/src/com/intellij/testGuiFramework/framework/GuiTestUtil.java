@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -30,8 +31,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
@@ -48,6 +50,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
+import com.intellij.util.MessageBusUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.*;
@@ -217,7 +220,7 @@ GuiTestUtil {
           if (frame instanceof IdeFrame) {
             if (frame instanceof IdeFrameImpl) {
               listener.myActive = true;
-              ProjectManager.getInstance().addProjectManagerListener(listener);
+              MessageBusUtil.subscribe(ProjectManager.TOPIC, listener);
             }
             return true;
           }
@@ -250,7 +253,7 @@ GuiTestUtil {
                                !progressManager.hasProgressIndicator() &&
                                !progressManager.hasUnsafeProgressIndicator();
               if (isIdle) {
-                ProjectManager.getInstance().removeProjectManagerListener(listener);
+                Disposer.dispose(listener);
               }
               return isIdle;
             }
@@ -725,13 +728,17 @@ GuiTestUtil {
     return s == null ? System.getenv(name) : s;
   }
 
-  private static class MyProjectManagerListener extends ProjectManagerAdapter {
+  private static class MyProjectManagerListener implements ProjectManagerListener, Disposable {
     boolean myActive;
     boolean myNotified;
 
     @Override
     public void projectOpened(Project project) {
       myNotified = true;
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 

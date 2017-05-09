@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
@@ -68,7 +69,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
 
     if (!myListenerInstalled) {
       myListenerInstalled = true;
-      ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
         @Override
         public void projectClosed(Project project) {
           setDisabled(null);

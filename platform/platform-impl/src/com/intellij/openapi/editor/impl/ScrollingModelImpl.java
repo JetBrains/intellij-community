@@ -31,8 +31,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
@@ -67,7 +67,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   private boolean myAccumulateViewportChanges;
   private boolean myViewportPositioned;
 
-  private final DocumentAdapter myDocumentListener = new DocumentAdapter() {
+  private final DocumentListener myDocumentListener = new DocumentListener() {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       if (!myEditor.getDocument().isInBulkUpdate()) {

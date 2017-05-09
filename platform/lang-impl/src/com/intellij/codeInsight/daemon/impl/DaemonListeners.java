@@ -171,7 +171,7 @@ public class DaemonListeners implements Disposable {
       }
     });
     EditorEventMulticaster eventMulticaster = editorFactory.getEventMulticaster();
-    eventMulticaster.addDocumentListener(new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
       public void beforeDocumentChange(final DocumentEvent e) {
@@ -186,7 +186,7 @@ public class DaemonListeners implements Disposable {
       }
     }, this);
 
-    eventMulticaster.addCaretListener(new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();

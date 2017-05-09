@@ -19,8 +19,8 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -112,7 +112,7 @@ public class ViewTextAction extends XFetchValueActionBase {
       setCrossClosesWindow(true);
 
       myTextViewer = new TextViewer(initialValue, project, myStringNode == null);
-      myTextViewer.addDocumentListener(new DocumentAdapter() {
+      myTextViewer.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent e) {
           if (e.getNewLength() + e.getOldLength() > 0) {

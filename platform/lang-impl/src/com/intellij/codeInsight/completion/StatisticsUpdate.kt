@@ -22,8 +22,8 @@ import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.statistics.StatisticsInfo
@@ -78,7 +78,7 @@ class StatisticsUpdate
     }
 
     val marker = document.createRangeMarker(startOffset, tailOffset)
-    val listener = object : DocumentAdapter() {
+    val listener = object : DocumentListener {
       override fun beforeDocumentChange(e: DocumentEvent) {
         if (!marker.isValid || e.offset > marker.startOffset && e.offset < marker.endOffset) {
           cancelLastCompletionStatisticsUpdate()

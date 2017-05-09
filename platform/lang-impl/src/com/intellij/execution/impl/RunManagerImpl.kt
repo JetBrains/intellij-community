@@ -47,6 +47,7 @@ import com.intellij.util.containers.*
 import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.swing.Icon
 import kotlin.concurrent.read
@@ -128,6 +129,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
 
+  private val isFirstLoadState = AtomicBoolean()
+
   private val stringIdToBeforeRunProvider by lazy {
     val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
     for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
@@ -136,8 +139,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     result
   }
 
-  internal val eventPublisher: RunManagerListener
-    get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
+  private val eventPublisher: RunManagerListener
+    get() = createRunManagerEventPublisher(project)
 
   init {
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
@@ -595,9 +598,19 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     return methodElement
   }
 
+  override fun noStateLoaded() {
+    isFirstLoadState.set(false)
+  }
+
   override fun loadState(parentNode: Element) {
-    val oldSelectedConfigurationId = selectedConfigurationId
-    clear(false)
+    val oldSelectedConfigurationId: String?
+    if (isFirstLoadState.compareAndSet(true, false)) {
+      oldSelectedConfigurationId = null
+    }
+    else {
+      oldSelectedConfigurationId = selectedConfigurationId
+      clear(false)
+    }
 
     schemeManagerProvider.load(parentNode) {
       var name = it.getAttributeValue("name")
@@ -1135,3 +1148,5 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
   }
 }
+
+internal fun createRunManagerEventPublisher(project: Project) = project.messageBus.syncPublisher(RunManagerListener.TOPIC)

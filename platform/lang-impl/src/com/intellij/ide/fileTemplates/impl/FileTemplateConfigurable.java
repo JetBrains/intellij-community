@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.fileTemplates.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -32,8 +31,8 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
@@ -77,11 +76,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-/*
- * @author: MYakovlev
- * Date: Jul 26, 2002
- * Time: 12:46:00 PM
- */
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
   @NonNls private static final String EMPTY_HTML = "<html></html>";
@@ -232,7 +226,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     editorSettings.setAdditionalLinesCount(3);
     editorSettings.setCaretRowShown(false);
 
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+    editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         onTextChanged();
@@ -451,15 +445,11 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   public void focusToNameField() {
     myNameField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true));
   }
 
   public void focusToExtensionField() {
     myExtensionField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myExtensionField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myExtensionField, true));
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@ package com.jetbrains.python.refactoring.changeSignature;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ValidationInfo;
@@ -356,7 +356,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
         namePanel.add(nameLabel);
         namePanel.add(myNameEditor);
         myNameEditor.setPreferredWidth(t.getWidth() / 2);
-        myNameEditor.addDocumentListener(new DocumentAdapter() {
+        myNameEditor.addDocumentListener(new DocumentListener() {
           @Override
           public void documentChanged(DocumentEvent event) {
             fireDocumentChanged(event, 0);

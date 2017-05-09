@@ -27,8 +27,8 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -105,14 +105,14 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     createComponents(allowNoContext);
 
-    myKeyField.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+    myKeyField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setKey(StringUtil.notNullize(myKeyField.getText()).trim());
         myNodeChanged.run();
       }
     });
-    myDescription.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+    myDescription.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(javax.swing.event.DocumentEvent e) {
         myTemplate.setDescription(myDescription.getText());
@@ -172,18 +172,16 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     panel.add(createShortContextPanel(allowNoContexts), gb.nextLine().next().weighty(0).fillCellNone().anchor(GridBagConstraints.WEST));
 
-    myTemplateEditor.getDocument().addDocumentListener(
-      new DocumentAdapter() {
-        @Override
-        public void documentChanged(DocumentEvent e) {
-          validateEditVariablesButton();
+    myTemplateEditor.getDocument().addDocumentListener(new DocumentListener() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        validateEditVariablesButton();
 
-          myTemplate.setString(myTemplateEditor.getDocument().getText());
-          applyVariables(updateVariablesByTemplateText());
-          myNodeChanged.run();
-        }
+        myTemplate.setString(myTemplateEditor.getDocument().getText());
+        applyVariables(updateVariablesByTemplateText());
+        myNodeChanged.run();
       }
-    );
+    });
 
     myEditVariablesButton.addActionListener(
       new ActionListener(){

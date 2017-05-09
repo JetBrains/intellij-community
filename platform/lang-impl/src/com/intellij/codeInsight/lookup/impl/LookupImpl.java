@@ -38,7 +38,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -704,7 +703,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void addListeners() {
-    myEditor.getDocument().addDocumentListener(new DocumentAdapter() {
+    myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         if (!myChangeGuard && !myFinishing) {
@@ -713,7 +712,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     }, this);
 
-    final CaretListener caretListener = new CaretAdapter() {
+    final CaretListener caretListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myChangeGuard && !myFinishing) {

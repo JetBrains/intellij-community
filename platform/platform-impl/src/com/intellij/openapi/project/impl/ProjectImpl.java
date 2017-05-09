@@ -17,6 +17,7 @@ package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -41,7 +42,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -75,8 +76,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   @TestOnly
   public static final String LIGHT_PROJECT_NAME = "light_temp";
 
-  private ProjectManager myProjectManager;
-  private MyProjectManagerListener myProjectManagerListener;
   private final AtomicBoolean mySavingInProgress = new AtomicBoolean(false);
   private String myName;
   private final boolean myLight;
@@ -85,9 +84,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
   /**
    * @param filePath System-independent path
    */
-  protected ProjectImpl(@NotNull ProjectManager projectManager,
-                        @NotNull String filePath,
-                        @Nullable String projectName) {
+  protected ProjectImpl(@NotNull String filePath, @Nullable String projectName) {
     super(ApplicationManager.getApplication(), "Project " + (projectName == null ? filePath : projectName));
 
     putUserData(CREATION_TIME, System.nanoTime());
@@ -100,8 +97,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     if (!isDefault()) {
       getStateStore().setPath(filePath);
     }
-
-    myProjectManager = projectManager;
 
     myName = projectName;
     // light project may be changed later during test, so we need to remember its initial state 
@@ -287,24 +282,54 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     long time = System.currentTimeMillis() - start;
     String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
       LOG.debug(message);
     } else {
       LOG.info(message);
     }
 
-    if (!isDefault() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!isDefault() && !application.isHeadlessEnvironment()) {
       distributeProgress();
     }
     if (myName == null) {
       myName = getStateStore().getProjectName();
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
+    application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
 
     //noinspection SynchronizeOnThis
     synchronized (this) {
-      myProjectManagerListener = new MyProjectManagerListener();
-      myProjectManager.addProjectManagerListener(this, myProjectManagerListener);
+      getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+        @Override
+        public void projectOpened(Project project) {
+          if (project == ProjectImpl.this) {
+            for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
+              try {
+                component.projectOpened();
+              }
+              catch (Throwable e) {
+                LOG.error(component.toString(), e);
+              }
+            }
+            ourClassesAreLoaded = true;
+          }
+        }
+
+        @Override
+        public void projectClosed(Project project) {
+          if (project == ProjectImpl.this) {
+            List<ProjectComponent> components = getComponentInstancesOfType(ProjectComponent.class);
+            for (int i = components.size() - 1; i >= 0; i--) {
+              try {
+                components.get(i).projectClosed();
+              }
+              catch (Throwable e) {
+                LOG.error(e);
+              }
+            }
+          }
+        }
+      });
     }
   }
 
@@ -373,14 +398,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
     // we use super here, because temporarilyDisposed will be true if project closed
     LOG.assertTrue(!super.isDisposed(), this + " is disposed already");
-    if (myProjectManagerListener != null) {
-      myProjectManager.removeProjectManagerListener(this, myProjectManagerListener);
-    }
-
     disposeComponents();
     Extensions.disposeArea(this);
-    myProjectManager = null;
-    myProjectManagerListener = null;
 
     super.dispose();
 
@@ -390,50 +409,10 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     TimedReference.disposeTimed();
   }
 
-  private void projectOpened() {
-    for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
-      try {
-        component.projectOpened();
-      }
-      catch (Throwable e) {
-        LOG.error(component.toString(), e);
-      }
-    }
-    ourClassesAreLoaded = true;
-  }
-
-  private void projectClosed() {
-    List<ProjectComponent> components = getComponentInstancesOfType(ProjectComponent.class);
-    for (int i = components.size() - 1; i >= 0; i--) {
-      try {
-        components.get(i).projectClosed();
-      }
-      catch (Throwable e) {
-        LOG.error(e);
-      }
-    }
-  }
-
   @NotNull
   @Override
   public <T> T[] getExtensions(@NotNull final ExtensionPointName<T> extensionPointName) {
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
-  }
-
-  private class MyProjectManagerListener extends ProjectManagerAdapter {
-    @Override
-    public void projectOpened(Project project) {
-      if (project == ProjectImpl.this) {
-        ProjectImpl.this.projectOpened();
-      }
-    }
-
-    @Override
-    public void projectClosed(Project project) {
-      if (project == ProjectImpl.this) {
-        ProjectImpl.this.projectClosed();
-      }
-    }
   }
 
   @NotNull
