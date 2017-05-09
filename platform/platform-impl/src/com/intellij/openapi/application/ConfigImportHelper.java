@@ -180,11 +180,11 @@ public class ConfigImportHelper {
       File v1_5 = new File(PathManager.getDefaultConfigPathFor("AndroidStudio1.5"));
       File v2_0 = new File(PathManager.getDefaultConfigPathFor("AndroidStudio2.0"));
       File v2_1 = new File(PathManager.getDefaultConfigPathFor("AndroidStudio2.1"));
-      File v22preview = new File(PathManager.getDefaultConfigPathFor("AndroidStudioPreview2.2"));
       File v2_2 = new File(PathManager.getDefaultConfigPathFor("AndroidStudio2.2"));
       File preview = new File(PathManager.getDefaultConfigPathFor("AndroidStudioPreview2.3"));
       File v2_3 = new File(PathManager.getDefaultConfigPathFor("AndroidStudio2.3"));
-      for (File file : new File[] { v1_1, v1_2, v1_3, v1_4, v1_5, v2_0, v2_1, v22preview, v2_2, preview, v2_3 }) {
+      File v24preview = new File(PathManager.getDefaultConfigPathFor("AndroidStudioPreview2.4"));
+      for (File file : new File[] { v1_1, v1_2, v1_3, v1_4, v1_5, v2_0, v2_1, v2_2, preview, v2_3, v24preview }) {
         if (!file.isDirectory()) {
           continue;
         }
