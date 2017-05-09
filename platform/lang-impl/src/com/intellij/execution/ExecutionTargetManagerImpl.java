@@ -16,6 +16,7 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "ExecutionTargetManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "ExecutionTargetManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements PersistentStateComponent<Element> {
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
@@ -107,7 +108,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
 
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget toSelect) {
     List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
-                                                      : getTargetsFor(settings);
+                                                      : ReadAction.compute(()->getTargetsFor(settings));
     ExecutionTarget toNotify;
     synchronized (myActiveTargetLock) {
       if (toSelect == null) toSelect = myActiveTarget;
