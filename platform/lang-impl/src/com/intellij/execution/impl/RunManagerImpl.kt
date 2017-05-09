@@ -139,8 +139,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     result
   }
 
-  internal val eventPublisher: RunManagerListener
-    get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
+  private val eventPublisher: RunManagerListener
+    get() = createRunManagerEventPublisher(project)
 
   init {
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
@@ -1148,3 +1148,5 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
   }
 }
+
+internal fun createRunManagerEventPublisher(project: Project) = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
