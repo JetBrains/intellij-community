@@ -16,16 +16,18 @@
 package com.intellij.designer;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -43,14 +45,13 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public abstract class LightToolWindowManager implements ProjectComponent {
+public abstract class LightToolWindowManager implements Disposable {
   public static final String EDITOR_MODE = "UI_DESIGNER_EDITOR_MODE.";
 
-  private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue(getComponentName(), 200, true, null);
+  private final MergingUpdateQueue myWindowQueue = new MergingUpdateQueue(getComponentName(), 200, true, null, this);
   protected final Project myProject;
   protected final FileEditorManager myFileEditorManager;
   protected volatile ToolWindow myToolWindow;
-  private volatile boolean myToolWindowDisposed;
 
   private final PropertiesComponent myPropertiesComponent;
   public final String myEditorModeKey;
@@ -58,38 +59,26 @@ public abstract class LightToolWindowManager implements ProjectComponent {
   private ToggleEditorModeAction myRightEditorModeAction;
 
   private MessageBusConnection myConnection;
-  private final FileEditorManagerListener myListener = new FileEditorManagerListener() {
-    @Override
-    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      bindToDesigner(getActiveDesigner());
-    }
-
-    @Override
-    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-      ApplicationManager.getApplication().invokeLater(() -> bindToDesigner(getActiveDesigner()));
-    }
-
-    @Override
-    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-      bindToDesigner(getDesigner(event.getNewEditor()));
-    }
-  };
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // ToolWindow
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
 
   protected LightToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
+
+    myConnection = myProject.getMessageBus().connect();
+
+    myConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(Project project) {
+        if (myProject == project) {
+          LightToolWindowManager.this.projectOpened();
+        }
+      }
+    });
   }
 
-  @Override
-  public void projectOpened() {
+  protected void projectOpened() {
     initToolWindow();
 
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
@@ -100,18 +89,23 @@ public abstract class LightToolWindowManager implements ProjectComponent {
     });
   }
 
-  @Override
-  public void projectClosed() {
-    if (!myToolWindowDisposed) {
-      disposeComponent();
-      myToolWindowDisposed = true;
-      myToolWindow = null;
-    }
-  }
-
   private void initListeners() {
-    myConnection = myProject.getMessageBus().connect();
-    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myListener);
+    myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
+      @Override
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        bindToDesigner(getActiveDesigner());
+      }
+
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        ApplicationManager.getApplication().invokeLater(() -> bindToDesigner(getActiveDesigner()));
+      }
+
+      @Override
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
+        bindToDesigner(getDesigner(event.getNewEditor()));
+      }
+    });
   }
 
   private void removeListeners() {
@@ -139,9 +133,6 @@ public abstract class LightToolWindowManager implements ProjectComponent {
     myWindowQueue.queue(new Update("update") {
       @Override
       public void run() {
-        if (myToolWindowDisposed) {
-          return;
-        }
         if (myToolWindow == null) {
           if (designer == null) {
             return;
@@ -291,5 +282,15 @@ public abstract class LightToolWindowManager implements ProjectComponent {
 
   final ToolWindow getToolWindow() {
     return myToolWindow;
+  }
+
+  @Override
+  public void dispose() {
+    myToolWindow = null;
+  }
+
+  @NotNull
+  protected String getComponentName() {
+    return getClass().getName();
   }
 }
