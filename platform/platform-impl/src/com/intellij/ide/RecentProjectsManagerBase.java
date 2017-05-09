@@ -22,7 +22,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
@@ -510,7 +510,7 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
 
   protected abstract void doOpenProject(@NotNull String projectPath, @Nullable Project projectToClose, boolean forceOpenInNewFrame);
 
-  private class MyProjectListener extends ProjectManagerAdapter {
+  private class MyProjectListener implements ProjectManagerListener {
     @Override
     public void projectOpened(final Project project) {
       String path = getProjectPath(project);

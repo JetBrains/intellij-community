@@ -56,7 +56,7 @@ import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -75,6 +75,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -189,9 +190,10 @@ public class PyCharmEduInitialConfigurator {
     final EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
     editorColorsScheme.setEditorFontSize(14);
 
+    MessageBusConnection connection = bus.connect();
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
 
-      bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
         public void welcomeScreenDisplayed() {
 
@@ -207,7 +209,7 @@ public class PyCharmEduInitialConfigurator {
       });
     }
 
-    bus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(final Project project) {
         if (project.isDefault()) return;

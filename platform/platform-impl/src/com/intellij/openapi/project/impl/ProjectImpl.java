@@ -41,7 +41,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -420,7 +420,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return Extensions.getArea(this).getExtensionPoint(extensionPointName).getExtensions();
   }
 
-  private class MyProjectManagerListener extends ProjectManagerAdapter {
+  private class MyProjectManagerListener implements ProjectManagerListener {
     @Override
     public void projectOpened(Project project) {
       if (project == ProjectImpl.this) {

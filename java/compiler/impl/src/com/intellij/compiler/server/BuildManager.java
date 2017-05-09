@@ -53,7 +53,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -1561,7 +1561,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private class ProjectWatcher extends ProjectManagerAdapter {
+  private class ProjectWatcher implements ProjectManagerListener {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override
@@ -1695,7 +1695,7 @@ public class BuildManager implements Disposable {
     @Override
     public boolean canCloseProject(Project project) {
       cancelAutoMakeTasks(project);
-      return super.canCloseProject(project);
+      return true;
     }
 
     @Override

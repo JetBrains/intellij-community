@@ -34,7 +34,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -909,10 +909,10 @@ public class HintManagerImpl extends HintManager implements Disposable {
    * We have to spy for all opened projects to register MyEditorManagerListener into
    * all opened projects.
    */
-  private final class MyProjectManagerListener extends ProjectManagerAdapter {
+  private final class MyProjectManagerListener implements ProjectManagerListener {
     @Override
     public void projectOpened(Project project) {
-      project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
+      project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, myEditorManagerListener);
     }
 
     @Override

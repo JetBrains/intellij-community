@@ -173,7 +173,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
         });
       }
     });
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         if (project == myProject) {

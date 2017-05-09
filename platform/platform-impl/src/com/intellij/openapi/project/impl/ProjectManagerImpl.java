@@ -99,7 +99,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
           try {
             listener.projectOpened(project);
           }
@@ -111,7 +111,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosed(Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
           try {
             listener.projectClosed(project);
           }
@@ -125,7 +125,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosing(Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
           try {
             listener.projectClosing(project);
           }
@@ -716,7 +716,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("enter: canClose()");
     }
 
-    for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+    for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
       try {
         if (!listener.canCloseProject(project)) {
           LOG.debug("close canceled by " + listener);
