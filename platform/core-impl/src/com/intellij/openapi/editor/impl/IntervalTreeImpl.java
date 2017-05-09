@@ -489,7 +489,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
     return processOverlappingWith(root.getRight(), start, end, modCountBefore, delta, processor);
   }
 
-  boolean processOverlappingWithOutside(int start, int end, @NotNull Processor<? super T> processor) {
+  public boolean processOverlappingWithOutside(int start, int end, @NotNull Processor<? super T> processor) {
     try {
       l.readLock().lock();
       checkMax(true);

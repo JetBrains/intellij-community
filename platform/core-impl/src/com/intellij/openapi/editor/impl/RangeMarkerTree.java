@@ -302,6 +302,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return norm;
   }
 
+  // all intervals contained in (start, end) will be shifted by (newBase-start)
+  // that's what happens when you "move" text in document, e.g. ctrl-shift-up/down the selection.
   private void reTarget(int start, int end, int newBase) {
     l.writeLock().lock();
     try {
