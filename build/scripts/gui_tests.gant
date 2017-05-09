@@ -77,7 +77,8 @@ def args = [
         "-Dgradle.adjust.userdir=true",  // work around youtrack.jetbrains.com/issue/IDEA-172452
         "-Xmx2048m",
         "-XX:ReservedCodeCacheSize=96m",
-        "-XX:+UseCodeCacheFlushing"
+        "-XX:+UseCodeCacheFlushing",
+	"-Denable.nav.editor=true"
 ]
 
 setProperty("jvm_args", args)
