@@ -690,11 +690,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
         }
       };
     }
-    catch (RuntimeException e) {
-      l.readLock().unlock();
-      throw e;
-    }
-    catch (Error e) {
+    catch (RuntimeException | Error e) {
       l.readLock().unlock();
       throw e;
     }
@@ -1377,54 +1373,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
                                                                                   @NotNull Comparator<? super T> comparator) {
     MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range);
     MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range);
-    return mergeIterators(exact, lines, comparator);
-  }
-
-  @NotNull
-  static <T extends MutableInterval> MarkupIterator<T> mergeIterators(@NotNull final MarkupIterator<T> iterator1,
-                                                                      @NotNull final MarkupIterator<T> iterator2,
-                                                                      @NotNull final Comparator<? super T> comparator) {
-    return new MarkupIterator<T>() {
-      @Override
-      public void dispose() {
-        iterator1.dispose();
-        iterator2.dispose();
-      }
-
-      @Override
-      public boolean hasNext() {
-        return iterator1.hasNext() || iterator2.hasNext();
-      }
-
-      @Override
-      public T next() {
-        return choose().next();
-      }
-
-      @NotNull
-      private MarkupIterator<T> choose() {
-        T t1 = iterator1.hasNext() ? iterator1.peek() : null;
-        T t2 = iterator2.hasNext() ? iterator2.peek() : null;
-        if (t1 == null) {
-          return iterator2;
-        }
-        if (t2 == null) {
-          return iterator1;
-        }
-        int compare = comparator.compare(t1, t2);
-        return compare < 0 ? iterator1 : iterator2;
-      }
-
-      @Override
-      public void remove() {
-        throw new NoSuchElementException();
-      }
-
-      @Override
-      public T peek() {
-        return choose().peek();
-      }
-    };
+    return MarkupIterator.mergeIterators(exact, lines, comparator);
   }
 
   T findRangeMarkerAfter(@NotNull T marker) {
