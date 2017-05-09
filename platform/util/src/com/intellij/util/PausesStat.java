@@ -27,11 +27,12 @@ public class PausesStat {
   @NotNull private final String myName;
   private final Thread myEdtThread;
   private boolean started;
-  private long startTimeStamp = System.currentTimeMillis();
+  private long startTimeStamp;
   private int maxDuration;
   private Object maxDurationDescription;
   private int totalNumberRecorded;
   private int indexToOverwrite; // used when pauses.size() == N_MAX and we have to overflow cyclically
+  private String startDescription;
 
   public PausesStat(@NotNull String name) {
     myName = name;
@@ -49,11 +50,13 @@ public class PausesStat {
     }
   }
 
-  public void started() {
+  public void started(@NotNull String description) {
     assertEdt();
     assert !started;
+    assert startTimeStamp == 0 : startTimeStamp;
     startTimeStamp = System.currentTimeMillis();
     started = true;
+    startDescription = description;
   }
 
   private void assertEdt() {
@@ -65,9 +68,17 @@ public class PausesStat {
     assert started;
     long finishStamp = System.currentTimeMillis();
     long startTimeStamp = this.startTimeStamp;
-    if (finishStamp < startTimeStamp) throw new IllegalStateException("startTimeStamp: " + startTimeStamp + "; finishStamp: " + finishStamp);
     int duration = (int)(finishStamp - startTimeStamp);
-    if (duration < 0) throw new IllegalStateException("startTimeStamp: " + startTimeStamp + "; finishStamp: " + finishStamp+"; duration: "+duration);
+    if (finishStamp < startTimeStamp || duration < 0) {
+      int lastPause = durations.size() == N_MAX ? durations.get((indexToOverwrite -1 + N_MAX) % N_MAX) : durations.get(durations.size()-1);
+      throw new IllegalStateException("startTimeStamp: " + startTimeStamp
+                                      + "; finishStamp: " + finishStamp
+                                      + "; duration: " + duration
+                                      + "; lastPause: " + lastPause
+                                      + "\n; description: " + description
+                                      + (description.equals(startDescription) ? "" : "\n; startDescription: " + startDescription)
+      );
+    }
 
     started = false;
     this.startTimeStamp = 0;
