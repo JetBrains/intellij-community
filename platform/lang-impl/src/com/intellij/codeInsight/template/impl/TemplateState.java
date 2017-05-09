@@ -39,7 +39,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -174,7 +177,7 @@ public class TemplateState implements Disposable {
   }
 
   private void installCaretListener(@NotNull Editor editor) {
-    CaretListener listener = new CaretAdapter() {
+    CaretListener listener = new CaretListener() {
       @Override
       public void caretAdded(CaretEvent e) {
         if (isMultiCaretMode()) {

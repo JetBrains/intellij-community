@@ -391,7 +391,7 @@ public class QuickDocOnMouseOverManager {
     }
   }
   
-  private class MyCaretListener extends CaretAdapter {
+  private class MyCaretListener implements CaretListener {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       Editor editor = getEditor();

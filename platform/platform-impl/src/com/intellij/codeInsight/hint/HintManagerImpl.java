@@ -108,7 +108,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
     myAnActionListener = new MyAnActionListener();
     actionManagerEx.addAnActionListener(myAnActionListener);
 
-    myCaretMoveListener = new CaretAdapter() {
+    myCaretMoveListener = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         hideHints(HIDE_BY_ANY_KEY, false, false);

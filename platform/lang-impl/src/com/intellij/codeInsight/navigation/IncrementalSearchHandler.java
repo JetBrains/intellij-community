@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,7 +171,7 @@ public class IncrementalSearchHandler {
     };
     document.addDocumentListener(documentListener[0]);
 
-    caretListener[0] = new CaretAdapter() {
+    caretListener[0] = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         PerHintSearchData data = hint.getUserData(SEARCH_DATA_IN_HINT_KEY);

@@ -118,13 +118,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     };
     eventMulticaster.addDocumentListener(documentListener, myProject);
 
-    CaretListener caretListener = new CaretAdapter() {
+    eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         onCaretPositionChanged(e);
       }
-    };
-    eventMulticaster.addCaretListener(caretListener,myProject);
+    }, myProject);
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
