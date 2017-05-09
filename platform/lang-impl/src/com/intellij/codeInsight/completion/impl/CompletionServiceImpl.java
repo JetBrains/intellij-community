@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -44,7 +44,7 @@ public final class CompletionServiceImpl extends CompletionService {
   private static String ourPhaseTrace;
 
   public CompletionServiceImpl() {
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
         CompletionProgressIndicator indicator = getCurrentCompletion();

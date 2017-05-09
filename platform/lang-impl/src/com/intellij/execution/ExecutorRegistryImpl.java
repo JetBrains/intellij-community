@@ -28,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -38,7 +39,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,11 +128,10 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
   @Override
   public void initComponent() {
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(final Project project) {
-        final MessageBusConnection connect = project.getMessageBus().connect(project);
-        connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener(){
+        project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener(){
           @Override
           public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment environment) {
             myInProgress.add(createExecutionId(executorId, environment));

@@ -252,10 +252,9 @@ public class BuildManager implements Disposable {
       myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
     }
 
-    projectManager.addProjectManagerListener(new ProjectWatcher());
-
-    final MessageBusConnection conn = application.getMessageBus().connect();
-    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    MessageBusConnection connection = application.getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
@@ -302,7 +301,7 @@ public class BuildManager implements Disposable {
 
     });
 
-    conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
       @Override
       public void batchChangeStarted(Project project) {
         myFileChangeCounter++;

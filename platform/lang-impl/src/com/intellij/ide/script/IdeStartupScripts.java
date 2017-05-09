@@ -17,6 +17,7 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,13 +25,15 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.MessageBusUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,47 +69,7 @@ class IdeStartupScripts implements ApplicationComponent {
     LOG.info(scripts.size() + " startup script(s) found");
     if (scripts.isEmpty()) return;
 
-    final Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture = prepareScriptEnginesAsync(scripts);
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
-      final AtomicBoolean myScriptsExecutionStarted = new AtomicBoolean();
-
-      @Override
-      public void projectOpened(final Project project) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
-          if (project.isDisposed()) return;
-          if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
-          ProjectManager.getInstance().removeProjectManagerListener(this);
-          runAllScriptsImpl(project);
-        });
-      }
-
-      private void runAllScriptsImpl(@NotNull Project project) {
-        try {
-          for (Pair<VirtualFile, IdeScriptEngine> pair : scriptsAndEnginesFuture.get()) {
-            try {
-              if (pair.second == null) {
-                LOG.warn(pair.first.getPath() + " not supported (no script engine)");
-              }
-              else {
-                runImpl(project, pair.first, pair.second);
-              }
-            }
-            catch (Exception e) {
-              LOG.warn(e);
-            }
-          }
-        }
-        catch (ProcessCanceledException e) {
-          LOG.warn("... cancelled");
-        }
-        catch (InterruptedException e) {
-          LOG.warn("... interrupted");
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    });
+    MessageBusUtil.subscribe(ProjectManager.TOPIC, new MyProjectManagerListener(prepareScriptEnginesAsync(scripts)));
   }
 
   @NotNull
@@ -167,5 +130,56 @@ class IdeStartupScripts implements ApplicationComponent {
   private static VirtualFile getScriptsRootDirectory() throws IOException {
     PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
     return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
+  }
+
+  private static class MyProjectManagerListener implements ProjectManagerListener, Disposable {
+    final AtomicBoolean myScriptsExecutionStarted;
+    private final Future<List<Pair<VirtualFile, IdeScriptEngine>>> myScriptsAndEnginesFuture;
+
+    public MyProjectManagerListener(@NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture) {
+      myScriptsAndEnginesFuture = scriptsAndEnginesFuture;
+      myScriptsExecutionStarted = new AtomicBoolean();
+    }
+
+    @Override
+    public void projectOpened(final Project project) {
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+        if (project.isDisposed()) return;
+        if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
+        Disposer.dispose(this);
+        runAllScriptsImpl(project);
+      });
+    }
+
+    private void runAllScriptsImpl(@NotNull Project project) {
+      try {
+        for (Pair<VirtualFile, IdeScriptEngine> pair : myScriptsAndEnginesFuture.get()) {
+          try {
+            if (pair.second == null) {
+              LOG.warn(pair.first.getPath() + " not supported (no script engine)");
+            }
+            else {
+              runImpl(project, pair.first, pair.second);
+            }
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
+        }
+      }
+      catch (ProcessCanceledException e) {
+        LOG.warn("... cancelled");
+      }
+      catch (InterruptedException e) {
+        LOG.warn("... interrupted");
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public void dispose() {
+    }
   }
 }

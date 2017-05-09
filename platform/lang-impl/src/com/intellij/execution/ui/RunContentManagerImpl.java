@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -603,14 +603,14 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     return null;
   }
 
-  private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener {
+  private class CloseListener extends ContentManagerAdapter implements ProjectManagerListener, Disposable {
     private Content myContent;
     private final Executor myExecutor;
 
     private CloseListener(@NotNull final Content content, @NotNull Executor executor) {
       myContent = content;
       content.getManager().addContentManagerListener(this);
-      ProjectManager.getInstance().addProjectManagerListener(this);
+      ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, this);
       myExecutor = executor;
     }
 
@@ -618,11 +618,12 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     public void contentRemoved(final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
-        dispose();
+        Disposer.dispose(this);
       }
     }
 
-    private void dispose() {
+    @Override
+    public void dispose() {
       if (myContent == null) return;
 
       final Content content = myContent;
@@ -635,7 +636,6 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       }
       finally {
         content.getManager().removeContentManagerListener(this);
-        ProjectManager.getInstance().removeProjectManagerListener(this);
         content.release(); // don't invoke myContent.release() because myContent becomes null after destroyProcess()
         myContent = null;
       }
@@ -655,7 +655,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     public void projectClosed(final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
-        dispose(); // Dispose content even if content manager refused to.
+        Disposer.dispose(this); // Dispose content even if content manager refused to.
       }
     }
 

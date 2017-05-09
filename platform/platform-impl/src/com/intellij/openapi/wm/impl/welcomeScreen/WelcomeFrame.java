@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
@@ -70,7 +70,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     setTitle(ApplicationNamesInfo.getInstance().getFullProductName());
     AppUIUtil.updateWindowIcon(this);
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         dispose();
