@@ -272,11 +272,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
   }
 
-  private ProjectImpl createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
+  @NotNull
+  private static ProjectImpl createProject(@Nullable String projectName, @NotNull String filePath, boolean isDefault) {
     if (isDefault) {
-      return new DefaultProject(this, "");
+      return new DefaultProject("");
     }
-    return new ProjectImpl(this, FileUtilRt.toSystemIndependentName(filePath), projectName);
+    return new ProjectImpl(FileUtilRt.toSystemIndependentName(filePath), projectName);
   }
 
   @Override
