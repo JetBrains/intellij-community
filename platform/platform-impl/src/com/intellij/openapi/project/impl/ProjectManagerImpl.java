@@ -51,6 +51,7 @@ import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.UnsafeWeakList;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -76,10 +77,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private Project[] myOpenProjects = {}; // guarded by lock
   private final Map<String, Project> myOpenProjectByHash = ContainerUtil.newConcurrentMap();
   private final Object lock = new Object();
+
+  // we cannot use the same approach to migrate to message bus as CompilerManagerImpl because of method canCloseProject
   private final List<ProjectManagerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final ProgressManager myProgressManager;
   private volatile boolean myDefaultProjectWasDisposed;
+  private final ProjectManagerListener myBusPublisher;
 
   @NotNull
   private static List<ProjectManagerListener> getListeners(@NotNull Project project) {
@@ -90,46 +94,56 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   public ProjectManagerImpl(ProgressManager progressManager) {
     myProgressManager = progressManager;
-    final ProjectManagerListener busPublisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC);
-    addProjectManagerListener(
-      new ProjectManagerListener() {
-        @Override
-        public void projectOpened(final Project project) {
-          busPublisher.projectOpened(project);
-          for (ProjectManagerListener listener : getListeners(project)) {
+    MessageBus messageBus = ApplicationManager.getApplication().getMessageBus();
+    myBusPublisher = messageBus.syncPublisher(TOPIC);
+    messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+          try {
             listener.projectOpened(project);
           }
-        }
-
-        @Override
-        public void projectClosed(Project project) {
-          busPublisher.projectClosed(project);
-          for (ProjectManagerListener listener : getListeners(project)) {
-            listener.projectClosed(project);
-          }
-          ZipHandler.clearFileAccessorCache();
-          LaterInvocator.purgeExpiredItems();
-        }
-
-        @Override
-        public boolean canCloseProject(Project project) {
-          for (ProjectManagerListener listener : getListeners(project)) {
-            if (!listener.canCloseProject(project)) {
-              return false;
-            }
-          }
-          return true;
-        }
-
-        @Override
-        public void projectClosing(Project project) {
-          busPublisher.projectClosing(project);
-          for (ProjectManagerListener listener : getListeners(project)) {
-            listener.projectClosing(project);
+          catch (Exception e) {
+            handleListenerError(e, listener);
           }
         }
       }
-    );
+
+      @Override
+      public void projectClosed(Project project) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+          try {
+            listener.projectClosed(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
+        }
+        ZipHandler.clearFileAccessorCache();
+        LaterInvocator.purgeExpiredItems();
+      }
+
+      @Override
+      public void projectClosing(Project project) {
+        for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
+          try {
+            listener.projectClosing(project);
+          }
+          catch (Exception e) {
+            handleListenerError(e, listener);
+          }
+        }
+      }
+    });
+  }
+
+  private static void handleListenerError(@NotNull Throwable e, @NotNull ProjectManagerListener listener) {
+    if (e instanceof ProcessCanceledException) {
+      throw (ProcessCanceledException)e;
+    }
+    else {
+      LOG.error("From listener " + listener + " (" + listener.getClass() + ")", e);
+    }
   }
 
   @Override
@@ -642,14 +656,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("enter: fireProjectClosing()");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
-      try {
-        listener.projectClosing(project);
-      }
-      catch (Exception e) {
-        LOG.error("From listener "+listener+" ("+listener.getClass()+")", e);
-      }
-    }
+    myBusPublisher.projectClosing(project);
   }
 
   @Override
@@ -692,14 +699,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectOpened");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
-      try {
-        listener.projectOpened(project);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    myBusPublisher.projectOpened(project);
   }
 
   private void fireProjectClosed(@NotNull Project project) {
@@ -707,14 +707,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectClosed");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
-      try {
-        listener.projectClosed(project);
-      }
-      catch (Exception e) {
-        LOG.error(e);
-      }
-    }
+    myBusPublisher.projectClosed(project);
   }
 
   @Override
@@ -723,7 +716,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("enter: canClose()");
     }
 
-    for (ProjectManagerListener listener : myListeners) {
+    for (ProjectManagerListener listener : ContainerUtil.concat(myListeners, getListeners(project))) {
       try {
         if (!listener.canCloseProject(project)) {
           LOG.debug("close canceled by " + listener);
@@ -731,7 +724,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
         }
       }
       catch (Throwable e) {
-        LOG.warn(e); // DO NOT LET ANY PLUGIN to prevent closing due to exception
+        handleListenerError(e, listener);
       }
     }
 
