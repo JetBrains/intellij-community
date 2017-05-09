@@ -105,7 +105,7 @@ class GitRevertTest : GitSingleRepoTest() {
     assertSuccessfulNotification("Reverted 2 commits from 3", """
       ${commit3.id.toShortString()} ${commit3.subject}
       ${commit1.id.toShortString()} ${commit1.subject}
-      ${commit2.id.toShortString()} wasn't reverted, because all changes have already been reverted.
+      ${commit2.id.toShortString()} was skipped, because all changes have already been reverted.
     """)
   }
 

@@ -391,9 +391,9 @@ class GitApplyChangesProcess(private val project: Project,
   private fun formSkippedDescription(skipped: List<VcsFullCommitDetails>, but: Boolean): String {
     val hashes = StringUtil.join(skipped, { commit -> commit.id.toShortString() }, ", ")
     if (but) {
-      val wasnt = if (skipped.size == 1) "wasn't" else "weren't"
+      val was = if (skipped.size == 1) "was" else "were"
       val it = if (skipped.size == 1) "it" else "them"
-      return String.format("%s %s ${operationName}ed, because all changes have already been ${appliedWord}.", hashes, wasnt, it)
+      return String.format("%s %s skipped, because all changes have already been ${appliedWord}.", hashes, was, it)
     }
     return String.format("All changes from %s have already been ${appliedWord}", hashes)
   }

@@ -175,6 +175,6 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     assertSuccessfulNotification("Cherry-picked 2 commits from 3","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
-      ${shortHash(emptyCommit)} wasn't cherry-picked, because all changes have already been applied.""")
+      ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
   }
 }
