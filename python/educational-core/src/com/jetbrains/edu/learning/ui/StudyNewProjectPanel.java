@@ -250,7 +250,7 @@ public class StudyNewProjectPanel extends JPanel implements PanelWithAnchor {
     }
   }
 
-  private void setOK() {
+  public void setOK() {
     myGenerator.fireStateChanged(ValidationResult.OK);
     if (myValidationManager != null) {
       myValidationManager.validate();

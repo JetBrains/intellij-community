@@ -57,6 +57,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>
   implements EduCourseProjectGenerator {
@@ -203,14 +204,32 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseClicked(MouseEvent e) {
         if (isCourseAdaptiveAndNotLogged()) {
+          StudySettings studySettings = StudySettings.getInstance();
+          StepicUser oldUser = studySettings.getUser();
+
           EduStepicConnector.doAuthorize(() -> mySettingsPanel.showLoginDialog());
 
-          StepicUser user = StudySettings.getInstance().getUser();
-          if (user != null) {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(
-              () -> myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(user)), "Getting Enrolled Courses",
-              true, DefaultProjectFactory.getInstance().getDefaultProject());
-          }
+          ProgressManager.getInstance()
+            .runProcessWithProgressSynchronously(() -> {
+                                                   ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                                                   StepicUser user = StudyUtils.execCancelable(() -> {
+                                                     StepicUser newUser = studySettings.getUser();
+                                                     while (newUser == null || newUser.equals(oldUser)) {
+                                                       TimeUnit.MILLISECONDS.sleep(500);
+                                                       newUser = studySettings.getUser();
+                                                     }
+                                                     myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(newUser));
+
+
+                                                     return newUser;
+                                                   });
+
+                                                   if (user != null) {
+                                                     mySettingsPanel.setOK();
+                                                   }
+                                                 }, "Authorizing",
+                                                 true,
+                                                 DefaultProjectFactory.getInstance().getDefaultProject());
         }
       }
 
