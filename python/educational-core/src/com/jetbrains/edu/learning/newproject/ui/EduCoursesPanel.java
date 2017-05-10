@@ -5,6 +5,8 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -92,7 +94,7 @@ public class EduCoursesPanel extends JPanel {
     myInfoScroll.setBorder(null);
     myCoursesList = new JBList<>();
     myCourses = getCourses();
-    updateModel(myCourses);
+    updateModel(myCourses, null);
     updateCourseInfoPanel(myCoursesList.getSelectedValue());
     myErrorLabel.setVisible(false);
     myErrorLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 0, 0));
@@ -168,8 +170,7 @@ public class EduCoursesPanel extends JPanel {
                                  Course course = new StudyProjectGenerator().addLocalCourse(fileName);
                                  if (course != null) {
                                    myCourses.add(course);
-                                   updateModel(myCourses);
-                                   myCoursesList.setSelectedValue(course, true);
+                                   updateModel(myCourses, course.getName());
                                  }
                                });
       }
@@ -194,15 +195,19 @@ public class EduCoursesPanel extends JPanel {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (!isLoggedIn() && myErrorLabel.isVisible()) {
+          ApplicationManager.getApplication().getMessageBus().connect().subscribe(StudySettings.USER_SET, u -> {
+            StepicUser user = StudySettings.getInstance().getUser();
+            if (user != null) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                Course selectedCourse = myCoursesList.getSelectedValue();
+                myCourses = getCourses();
+                updateModel(myCourses, selectedCourse.getName());
+                myErrorLabel.setVisible(false);
+                notifyListeners(true);
+              }, ModalityState.any());
+            }
+          });
           EduStepicConnector.doAuthorize(() -> StudyUtils.showOAuthDialog());
-          StepicUser user = StudySettings.getInstance().getUser();
-          if (user != null) {
-            StudySettings.getInstance().setUser(user);
-            myCourses = getCourses();
-            updateModel(myCourses);
-            myErrorLabel.setVisible(false);
-            notifyListeners(true);
-          }
         }
       }
 
@@ -305,7 +310,7 @@ public class EduCoursesPanel extends JPanel {
     return label;
   }
 
-  private void updateModel(List<Course> courses) {
+  private void updateModel(List<Course> courses, @Nullable String courseToSelect) {
     DefaultListModel<Course> listModel = new DefaultListModel<>();
     for (Course course : courses) {
       listModel.addElement(course);
@@ -315,6 +320,13 @@ public class EduCoursesPanel extends JPanel {
       myCoursesList.setSelectedIndex(0);
     } else {
       updateCourseInfoPanel(null);
+    }
+    if (courseToSelect == null) {
+      return;
+    }
+    Course newCourseToSelect = myCourses.stream().filter(course -> course.getName().equals(courseToSelect)).findFirst().orElse(null);
+    if (newCourseToSelect != null ) {
+      myCoursesList.setSelectedValue(newCourseToSelect, true);
     }
   }
 
@@ -333,7 +345,7 @@ public class EduCoursesPanel extends JPanel {
             filtered.add(course);
           }
         }
-        updateModel(filtered);
+        updateModel(filtered, null);
       }
     };
     UIUtil.setBackgroundRecursively(mySearchField, UIUtil.getTextFieldBackground());

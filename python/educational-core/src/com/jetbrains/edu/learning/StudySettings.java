@@ -1,9 +1,11 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
@@ -11,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 @State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
 public class StudySettings implements PersistentStateComponent<StudySettings> {
+  public static final Topic<UserSetListener> USER_SET = Topic.create("Edu.UserSet", UserSetListener.class);
   private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
   private boolean myEnableTestingFromSamples = false;
@@ -49,6 +52,7 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setUser(@Nullable final StepicUser user) {
     myUser = user;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(USER_SET).userSet(user);
     updateStepicUserWidget();
   }
 
@@ -73,5 +77,10 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setCourseCreatorEnabled(boolean courseCreatorEnabled) {
     isCourseCreatorEnabled = courseCreatorEnabled;
+  }
+
+  @FunctionalInterface
+  public interface UserSetListener {
+    void userSet(StepicUser user);
   }
 }
