@@ -47,7 +47,6 @@ public class CompilerBackwardReferenceIndex {
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myIndicesDir;
-  private final boolean myReadOnly;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
@@ -67,7 +66,6 @@ public class CompilerBackwardReferenceIndex {
 
   public CompilerBackwardReferenceIndex(File buildDir, boolean readOnly) {
     myIndicesDir = getIndexDir(buildDir);
-    myReadOnly = readOnly;
     if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
       throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
     }
