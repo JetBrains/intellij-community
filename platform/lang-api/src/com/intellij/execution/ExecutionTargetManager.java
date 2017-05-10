@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,6 @@ public abstract class ExecutionTargetManager {
 
   public static void setActiveTarget(@NotNull Project project, @NotNull ExecutionTarget target) {
     getInstance(project).setActiveTarget(target);
-  }
-
-  @NotNull
-  public static List<ExecutionTarget> getTargetsFor(@NotNull Project project, @Nullable RunnerAndConfigurationSettings settings) {
-    return getInstance(project).getTargetsFor(settings);
   }
 
   @NotNull

@@ -16,7 +16,6 @@
 package com.intellij.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -81,7 +80,6 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   @NotNull
   @Override
   public ExecutionTarget getActiveTarget() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     synchronized (myActiveTargetLock) {
       if (myActiveTarget == null) {
         updateActiveTarget();
@@ -108,7 +106,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
 
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget toSelect) {
     List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
-                                                      : ReadAction.compute(()->getTargetsFor(settings));
+                                                      : getTargetsFor(settings);
     ExecutionTarget toNotify;
     synchronized (myActiveTargetLock) {
       if (toSelect == null) toSelect = myActiveTarget;
