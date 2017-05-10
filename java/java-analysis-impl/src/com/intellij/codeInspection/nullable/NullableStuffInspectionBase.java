@@ -784,5 +784,11 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
     public String getName() {
       return InspectionsBundle.message("annotate.overridden.methods.as.notnull", ClassUtil.extractClassName(myAnnotation));
     }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.annotate.overridden.method.quickfix.family.name");
+    }
   }
 }
