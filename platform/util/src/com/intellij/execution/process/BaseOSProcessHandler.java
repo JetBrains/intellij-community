@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
 
   private static final Options ADAPTIVE_NON_BLOCKING = new Options() {
     @Override
+    @SuppressWarnings("deprecation")
     public BaseDataReader.SleepingPolicy policy() {
       return new BaseDataReader.AdaptiveSleepingPolicy();
     }
@@ -89,12 +90,14 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myProcess;
   }
 
-  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 18) */
+  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 2018) */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
     return false;
   }
 
-  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 18) */
+  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 2018) */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected boolean useNonBlockingRead() {
     return !Registry.is("output.reader.blocking.mode", false);
   }
@@ -163,12 +166,14 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     super.startNotify();
   }
 
-  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 18) */
+  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected BaseDataReader createErrorDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
     return createErrorDataReader();
   }
 
-  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 18) */
+  /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected BaseDataReader createOutputDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
     return createOutputDataReader();
   }
@@ -262,8 +267,8 @@ public class BaseOSProcessHandler extends ProcessHandler implements TaskExecutor
     return myCharset;
   }
 
+  /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 2018) */
   public static class ExecutorServiceHolder {
-    /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 17) */
     public static Future<?> submit(@NotNull Runnable task) {
       LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());
       return AppExecutorUtil.getAppExecutorService().submit(task);
