@@ -64,6 +64,7 @@ public class EduCoursesPanel extends JPanel {
   private JBScrollPane myInfoScroll;
   private JBLabel myErrorLabel;
   private JSplitPane mySplitPane;
+  private JPanel mySplitPaneRoot;
   private JBList<Course> myCoursesList;
   private LabeledComponent<TextFieldWithBrowseButton> myLocationField;
   private List<Course> myCourses;
@@ -77,8 +78,9 @@ public class EduCoursesPanel extends JPanel {
 
 
   private void initUI() {
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myMainPanel, true);
-    mySplitPane.setDividerLocation(0.4);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(mySplitPaneRoot, true);
+    mySplitPane.setDividerLocation(0.5);
+    mySplitPane.setResizeWeight(0.5);
     myCourseNameLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 5, 10));
     Font labelFont = UIUtil.getLabelFont();
     myCourseNameLabel.setFont(new Font(labelFont.getName(), Font.BOLD, JBUI.scaleFontSize(18.0f)));
