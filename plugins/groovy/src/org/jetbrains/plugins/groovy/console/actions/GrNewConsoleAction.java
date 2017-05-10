@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,22 +19,15 @@ import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType;
-import org.jetbrains.plugins.groovy.util.ModuleChooserUtil;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtil.APPLICABLE_MODULE;
+import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getAnyApplicableModule;
 
 public class GrNewConsoleAction extends AnAction {
 
@@ -63,15 +56,6 @@ public class GrNewConsoleAction extends AnAction {
   protected Module getModule(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) return null;
-    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-    
-    if (file != null) {
-      final Module moduleForFile = ModuleUtilCore.findModuleForFile(file, project);
-      if (moduleForFile != null) return moduleForFile;
-    }
-
-    final List<Module> modules = ModuleChooserUtil.filterGroovyCompatibleModules(
-      Arrays.asList(ModuleManager.getInstance(project).getModules()), APPLICABLE_MODULE);
-    return modules.isEmpty() ? null : modules.get(0);
+    return getAnyApplicableModule(project);
   }
 }

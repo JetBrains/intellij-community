@@ -22,16 +22,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
+import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.console.GroovyConsole
 import org.jetbrains.plugins.groovy.console.GroovyConsoleStateService
-import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil
+import org.jetbrains.plugins.groovy.console.GroovyConsoleUtil.getTitle
+import org.jetbrains.plugins.groovy.console.getApplicableModules
+import org.jetbrains.plugins.groovy.util.createSelectModulePopup
 import org.jetbrains.plugins.groovy.util.removeUserData
 
 class GrSelectModuleAction(
   private val project: Project,
   private val file: VirtualFile
-) : AnAction(null, "Which module to use classpath of?", AllIcons.Nodes.Module) {
+) : AnAction(message("select.module.title"), message("select.module.description"), AllIcons.Nodes.Module) {
 
   private val consoleService by lazy {
     GroovyConsoleStateService.getInstance(project)
@@ -39,19 +41,22 @@ class GrSelectModuleAction(
 
   override fun update(e: AnActionEvent) {
     val module = consoleService.getSelectedModule(file)
-    e.presentation.text = if (module == null || module.isDisposed) "Select module..." else GroovyConsoleUtil.getTitle(module)
+    if (module == null || module.isDisposed) return
+    e.presentation.text = getTitle(module)
   }
 
-  override fun displayTextInToolbar(): Boolean {
-    return true
-  }
+  override fun displayTextInToolbar(): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent) {
-    GroovyConsoleUtil.selectModuleAndRun(project, Consumer { module: Module ->
-      if (consoleService.getSelectedModule(file) == module) return@Consumer
-      file.removeUserData(GroovyConsole.GROOVY_CONSOLE)?.stop()
-      consoleService.setFileModule(file, module)
-      ProjectView.getInstance(project).refresh()
-    }, e.dataContext)
+    val component = e.inputEvent?.component ?: return
+    val popup = createSelectModulePopup(project, getApplicableModules(project), ::getTitle, { moduleSelected(it) })
+    popup.showUnderneathOf(component)
+  }
+
+  private fun moduleSelected(module: Module) {
+    if (consoleService.getSelectedModule(file) == module) return
+    file.removeUserData(GroovyConsole.GROOVY_CONSOLE)?.stop()
+    consoleService.setFileModule(file, module)
+    ProjectView.getInstance(project).refresh()
   }
 }
