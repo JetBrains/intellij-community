@@ -1,0 +1,20 @@
+LineBreakpoint created at MinMappingPresent.java:8
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MinMappingPresent
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+MinMappingPresent.java:7
+Stream.of(1, 2, 3)
+.min(Comparator.comparingInt(x -> -x))
+Stream.of
+    before: nothing
+    after: 1,2,3
+min
+    before: 1,2,3
+    after: nothing
+mappings for min
+    nothing -> 1 -> nothing
+    nothing -> 2 -> nothing
+    nothing -> 3 -> nothing
+no
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0

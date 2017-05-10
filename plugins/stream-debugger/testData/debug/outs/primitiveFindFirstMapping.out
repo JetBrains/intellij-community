@@ -1,0 +1,24 @@
+LineBreakpoint created at PrimitiveFindFirstMapping.java:7
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! PrimitiveFindFirstMapping
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+PrimitiveFindFirstMapping.java:6
+IntStream.of(1, 2)
+.skip(2)
+.findAny()
+IntStream.of
+    before: nothing
+    after: 1,2
+skip
+    before: 1,2
+    after: nothing
+findAny
+    before: nothing
+    after: nothing
+mappings for skip
+    nothing -> 1 -> nothing
+    nothing -> 2 -> nothing
+mappings for findAny
+no
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
