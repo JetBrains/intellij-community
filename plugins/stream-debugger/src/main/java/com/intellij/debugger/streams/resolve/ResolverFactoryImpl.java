@@ -57,6 +57,7 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "mapToInt":
       case "mapToLong":
       case "mapToDouble":
+      case "mapToObj":
       case "boxed":
         return new MapResolver();
       case "sorted":
