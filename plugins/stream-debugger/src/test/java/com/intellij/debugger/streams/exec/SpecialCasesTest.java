@@ -26,4 +26,8 @@ public class SpecialCasesTest extends TraceExecutionTestCase {
   public void testExceptionAsStreamResult() {
     doTest(false);
   }
+
+  public void testParallelStream() {
+    doTest(false);
+  }
 }
