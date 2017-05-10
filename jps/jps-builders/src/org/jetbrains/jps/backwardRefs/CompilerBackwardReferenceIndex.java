@@ -75,8 +75,6 @@ public class CompilerBackwardReferenceIndex {
       if (versionDiffers(buildDir)) {
         saveVersion(buildDir);
       }
-      if (myReadOnly) logModification("open");
-
       myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB)) {
         @Override
         public int enumerate(String value) throws IOException {
@@ -126,7 +124,6 @@ public class CompilerBackwardReferenceIndex {
     for (InvertedIndex<?, ?, CompiledFileData> index : myIndices.values()) {
       close(index, exceptionProc);
     }
-    if (myReadOnly) logModification("close");
     final Exception exception = exceptionProc.getFoundValue();
     if (exception != null) {
       removeIndexFiles(myIndicesDir);
@@ -207,20 +204,6 @@ public class CompilerBackwardReferenceIndex {
 
   void setRebuildRequestCause(Exception e) {
     myRebuildRequestCause = e;
-  }
-
-  private void logModification(String state) {
-    try {
-      File[] files = myIndicesDir.listFiles();
-      if (files != null) {
-        LOG.info("indices state on " +
-                 state +
-                 ": " +
-                 Arrays.stream(files).map(f -> f.getName() + ":" + f.lastModified()).collect(Collectors.joining(", ")));
-      }
-    }
-    catch (Exception ignored) {
-    }
   }
 
   private static void close(InvertedIndex<?, ?, CompiledFileData> index, CommonProcessors.FindFirstProcessor<Exception> exceptionProcessor) {
