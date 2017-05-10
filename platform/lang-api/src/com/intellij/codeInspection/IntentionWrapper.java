@@ -29,12 +29,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: angus
- * Date: 4/20/11
- * Time: 9:27 PM
- */
 public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder, IntentionActionDelegate {
   private final IntentionAction myAction;
   private final PsiFile myFile;

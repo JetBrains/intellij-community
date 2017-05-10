@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 03.08.2006
- * Time: 14:01:20
- */
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonJavaRunConfigurationParameters;

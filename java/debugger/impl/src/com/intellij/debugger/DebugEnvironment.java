@@ -23,10 +23,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: michael.golubev
- */
 public interface DebugEnvironment {
 
   int LOCAL_START_TIMEOUT = 30000;

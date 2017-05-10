@@ -15,13 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: Mar 26, 2004
- * Time: 4:58:00 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class PsiFragment {
   private static final Logger LOG = Logger.getInstance("#com.intellij.dupLocator.PsiFragment");
 

@@ -36,14 +36,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: db
- * Date: 22.07.2003
- * Time: 22:46:44
- * To change this template use Options | File Templates.
- */
-
 public class TypeCookTest extends MultiFileTestCase {
   @Override
   protected String getTestDataPath() {

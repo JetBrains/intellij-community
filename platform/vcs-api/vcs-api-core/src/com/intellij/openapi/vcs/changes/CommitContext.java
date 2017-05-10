@@ -23,12 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/15/11
- * Time: 1:28 PM
- */
 public class CommitContext implements UserDataHolder {
   private final Map<Key, Object> myMap;
 

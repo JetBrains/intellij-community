@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: 11/09/2006
- * Time: 19:50:29
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;

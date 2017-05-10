@@ -8,13 +8,6 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 14, 2004
- * Time: 5:29:37 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class Configuration implements JDOMExternalizable, Comparable<Configuration> {
   public static final Configuration[] EMPTY_ARRAY = {};
   @NonNls protected static final String NAME_ATTRIBUTE_NAME = "name";

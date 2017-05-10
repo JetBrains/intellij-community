@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: 11/11/2006
- * Time: 16:15:10
- */
 package com.theoryinpractice.testng;
 
 import com.intellij.codeInsight.AnnotationUtil;

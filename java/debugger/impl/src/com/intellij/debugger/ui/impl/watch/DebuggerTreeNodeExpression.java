@@ -40,11 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-/**
- * User: lex
- * Date: Oct 29, 2003
- * Time: 9:24:52 PM
- */
 public class DebuggerTreeNodeExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression");
 

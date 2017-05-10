@@ -25,13 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 10.06.2003
- * Time: 16:36:05
- * To change this template use Options | File Templates.
- */
 public class JavaVariableConflictResolver implements PsiConflictResolver{
   @Override
   public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts){

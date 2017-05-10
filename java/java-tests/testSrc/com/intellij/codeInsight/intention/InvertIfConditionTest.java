@@ -1,11 +1,3 @@
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 22, 2002
- * Time: 2:58:42 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;

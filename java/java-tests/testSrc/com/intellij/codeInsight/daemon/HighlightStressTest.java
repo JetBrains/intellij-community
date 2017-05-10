@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 31, 2007
- * Time: 2:39:56 PM
- */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Aug 20, 2006
- * Time: 8:40:15 PM
- */
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.openapi.progress.PerformInBackgroundOption;

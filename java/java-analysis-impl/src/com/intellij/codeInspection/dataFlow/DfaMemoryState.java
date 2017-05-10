@@ -24,13 +24,6 @@ import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jul 16, 2003
- * Time: 10:25:44 PM
- * To change this template use Options | File Templates.
- */
 public interface DfaMemoryState {
   @NotNull
   DfaMemoryState createCopy();

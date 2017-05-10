@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 31, 2002
- * Time: 9:03:01 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.psi.PsiElement;

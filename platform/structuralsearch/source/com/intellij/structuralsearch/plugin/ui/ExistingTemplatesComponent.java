@@ -43,13 +43,6 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 2, 2004
- * Time: 1:27:54 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ExistingTemplatesComponent {
   private final Tree patternTree;
   private final DefaultTreeModel patternTreeModel;

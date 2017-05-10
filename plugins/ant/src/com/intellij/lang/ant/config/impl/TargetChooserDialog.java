@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 21-Jul-2006
- * Time: 11:31:06
- */
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.lang.ant.AntBundle;

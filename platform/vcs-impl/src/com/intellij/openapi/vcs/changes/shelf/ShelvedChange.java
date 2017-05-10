@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2006
- * Time: 19:06:26
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.application.ReadAction;

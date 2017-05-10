@@ -2,12 +2,6 @@
  * Copyright (c) 2000-2006 JetBrains s.r.o. All Rights Reserved.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 07-Nov-2006
- * Time: 13:13:59
- */
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;

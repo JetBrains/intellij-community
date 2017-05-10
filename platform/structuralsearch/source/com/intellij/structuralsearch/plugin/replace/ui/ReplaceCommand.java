@@ -8,13 +8,6 @@ import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UsageViewContext;
 import com.intellij.usages.Usage;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 31, 2004
- * Time: 3:54:03 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ReplaceCommand extends SearchCommand {
 
   private ReplaceUsageViewContext myReplaceUsageViewContext;

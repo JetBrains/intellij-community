@@ -31,13 +31,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 27.08.2003
- * Time: 19:09:43
- * To change this template use Options | File Templates.
- */
 public class ResolvePerformanceTest extends ResolveTestCase {
   public void testPerformance1() throws Exception{
     final String fullPath = PathManagerEx.getTestDataPath() + "/psi/resolve/Thinlet.java";

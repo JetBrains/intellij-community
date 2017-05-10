@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 22, 2007
- * Time: 9:09:57 PM
- */
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.Document;

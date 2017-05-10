@@ -19,13 +19,6 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.position.PositionElementFilter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 13.02.2003
- * Time: 12:17:49
- * To change this template use Options | File Templates.
- */
 public class ContentFilter extends PositionElementFilter{
   public ContentFilter(ElementFilter filter){
     setFilter(filter);

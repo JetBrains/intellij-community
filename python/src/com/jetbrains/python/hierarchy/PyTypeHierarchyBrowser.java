@@ -32,12 +32,6 @@ import javax.swing.*;
 import java.util.Comparator;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 31, 2009
- * Time: 6:14:42 PM
- */
 public class PyTypeHierarchyBrowser extends TypeHierarchyBrowserBase {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.hierarchy.TypeHierarchyBrowser");
 

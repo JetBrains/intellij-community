@@ -29,12 +29,6 @@ import com.intellij.psi.PsiFile;
 
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Eugene.Kudelevsky
- * Date: 25.03.2010
- * Time: 1:50:53
- */
 public class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
   private final Editor myEditor;

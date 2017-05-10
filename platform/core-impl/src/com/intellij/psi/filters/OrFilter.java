@@ -22,14 +22,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 19:23:44
- * To change this template use Options | File Templates.
- */
-
 public class OrFilter implements ElementFilter{
   private final List<ElementFilter> myFilters = new ArrayList<>();
 

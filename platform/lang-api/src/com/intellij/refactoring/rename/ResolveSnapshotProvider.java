@@ -18,11 +18,6 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * User: Maxim.Mossienko
- * Date: 29.07.2009
- * Time: 14:00:17
- */
 public abstract class ResolveSnapshotProvider {
   public abstract ResolveSnapshot createSnapshot(PsiElement scope);
 

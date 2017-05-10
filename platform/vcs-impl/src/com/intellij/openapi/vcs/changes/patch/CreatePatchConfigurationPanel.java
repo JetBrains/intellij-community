@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 14.11.2006
- * Time: 19:04:28
- */
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;

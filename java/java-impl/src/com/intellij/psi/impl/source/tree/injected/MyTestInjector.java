@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Sep 4, 2007
- * Time: 7:17:07 PM
- */
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.lang.ASTNode;

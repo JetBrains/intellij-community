@@ -45,12 +45,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 8:39 PM
- */
 public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilter");

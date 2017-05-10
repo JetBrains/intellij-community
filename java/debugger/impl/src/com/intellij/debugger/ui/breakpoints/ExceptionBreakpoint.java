@@ -155,7 +155,7 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
     if(event instanceof ExceptionEvent) {
       return ((ExceptionEvent) event).exception();
     }
-    return super.getThisObject(context, event);    //To change body of overriden methods use Options | File Templates.
+    return super.getThisObject(context, event);    
   }
 
   public String getEventMessage(LocatableEvent event) {

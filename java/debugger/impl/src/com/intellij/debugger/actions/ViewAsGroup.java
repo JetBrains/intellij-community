@@ -35,11 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 26, 2003
- * Time: 11:05:57 PM
- */
 public class ViewAsGroup extends ActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.actions.ViewAsGroup");
 

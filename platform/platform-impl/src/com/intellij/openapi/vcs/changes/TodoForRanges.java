@@ -33,12 +33,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/9/11
- * Time: 9:55 AM
- */
 public abstract class TodoForRanges {
   protected final Project myProject;
   private final List<TextRange> myRanges;

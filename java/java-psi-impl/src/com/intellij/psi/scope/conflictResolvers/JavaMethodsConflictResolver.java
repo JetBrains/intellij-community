@@ -41,13 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 10.06.2003
- * Time: 19:41:51
- * To change this template use Options | File Templates.
- */
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver");
 

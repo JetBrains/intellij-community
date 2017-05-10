@@ -19,13 +19,6 @@ import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 26.12.2003
- * Time: 19:52:57
- * To change this template use Options | File Templates.
- */
 public class VariableFilter implements NodeFilter {
 
   private static final NodeFilter INSTANCE = new VariableFilter();

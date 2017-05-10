@@ -15,12 +15,5 @@
  */
 package com.intellij.ide.highlighter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 15.04.11
- * Time: 14:57
- * To change this template use File | Settings | File Templates.
- */
 public interface DomSupportEnabled {
 }

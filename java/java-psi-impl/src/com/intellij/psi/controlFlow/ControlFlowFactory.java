@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 13, 2002
- * Time: 12:07:14 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.components.ServiceManager;

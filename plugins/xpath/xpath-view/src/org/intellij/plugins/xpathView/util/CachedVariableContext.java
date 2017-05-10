@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 12.07.2006
- * Time: 19:16:08
- */
 package org.intellij.plugins.xpathView.util;
 
 import com.intellij.psi.xml.XmlElement;

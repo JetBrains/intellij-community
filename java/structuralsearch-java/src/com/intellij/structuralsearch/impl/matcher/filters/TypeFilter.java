@@ -21,13 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiTypeParameter;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim
- * Date: 23.01.2004
- * Time: 1:07:09
- * To change this template use File | Settings | File Templates.
- */
 public class TypeFilter implements NodeFilter {
 
   private static final NodeFilter INSTANCE = new TypeFilter();

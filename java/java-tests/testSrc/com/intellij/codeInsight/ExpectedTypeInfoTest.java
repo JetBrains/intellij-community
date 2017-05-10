@@ -1,11 +1,3 @@
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 19, 2002
- * Time: 5:40:30 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight;
 
 import com.intellij.psi.CommonClassNames;

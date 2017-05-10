@@ -36,12 +36,6 @@ import java.awt.event.*;
 import java.util.Collection;
 import java.util.EnumSet;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 18, 2009
- * Time: 8:43:28 PM
- */
 public class PyIntroduceDialog extends DialogWrapper {
   private JPanel myContentPane;
   private JLabel myNameLabel;

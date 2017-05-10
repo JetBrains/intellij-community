@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 17, 2007
- * Time: 3:20:51 PM
- */
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;

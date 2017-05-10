@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 08.07.2006
- * Time: 0:07:45
- */
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;

@@ -19,11 +19,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.Enumeration;
 
-/**
- * User: lex
- * Date: Sep 10, 2003
- * Time: 7:01:02 PM
- */
 public abstract class TreeBuilderNode extends DefaultMutableTreeNode{
   private boolean  myChildrenBuilt = false;
 

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 09.04.2005
- * Time: 22:37:50
- */
 package com.intellij.lang.properties.psi;
 
 import com.intellij.lang.properties.IProperty;

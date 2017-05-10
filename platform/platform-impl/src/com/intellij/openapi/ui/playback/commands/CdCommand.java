@@ -21,13 +21,6 @@ import com.intellij.openapi.util.ActionCallback;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/23/11
- * Time: 10:11 AM
- * To change this template use File | Settings | File Templates.
- */
 public class CdCommand extends AbstractCommand {
 
   public static final String PREFIX = CMD_PREFIX + "cd";

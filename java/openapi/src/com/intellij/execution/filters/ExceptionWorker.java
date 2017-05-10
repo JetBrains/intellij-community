@@ -38,11 +38,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 8:36 PM
- */
 public class ExceptionWorker {
   @NonNls private static final String AT = "at";
   private static final String AT_PREFIX = AT + " ";

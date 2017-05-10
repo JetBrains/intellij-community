@@ -50,12 +50,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: 05.07.2005
- * Time: 23:35:12
- */
 public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
 

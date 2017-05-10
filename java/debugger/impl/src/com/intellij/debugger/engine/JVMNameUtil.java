@@ -40,11 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 2, 2003
- * Time: 11:25:59 AM
- */
 public class JVMNameUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.JVMNameUtil");
 

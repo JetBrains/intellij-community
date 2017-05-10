@@ -27,13 +27,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 8/17/11
- * Time: 10:04 AM
- * To change this template use File | Settings | File Templates.
- */
 public class ActivityMonitorTest extends LightPlatformTestCase {
   private UiActivityMonitorImpl myMonitor;
 

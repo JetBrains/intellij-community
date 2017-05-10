@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 19-Sep-2006
- * Time: 12:02:30
- */
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;

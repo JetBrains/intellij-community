@@ -423,13 +423,13 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
       }
 
       public void addNotify() {
-        super.addNotify();    //To change body of overriden methods use Options | File Templates.
+        super.addNotify();
         if (myAddRemoveCounter == 0) myShouldResetCaches = true;
         myAddRemoveCounter++;
       }
 
       public void removeNotify() {
-        super.removeNotify();    //To change body of overriden methods use Options | File Templates.
+        super.removeNotify();
         myAddRemoveCounter--;
       }
     };

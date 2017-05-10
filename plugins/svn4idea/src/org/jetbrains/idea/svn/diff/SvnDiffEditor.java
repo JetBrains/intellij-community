@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexander.Kitaev
- * Date: 20.07.2006
- * Time: 19:09:29
- */
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.vcs.FilePath;

@@ -18,13 +18,6 @@ package com.intellij.debugger.impl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Jun 4, 2003
- * Time: 12:45:56 PM
- * To change this template use Options | File Templates.
- */
 public abstract class DebuggerStateManager {
   private final EventDispatcher<DebuggerContextListener> myEventDispatcher = EventDispatcher.create(DebuggerContextListener.class);
 

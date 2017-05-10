@@ -34,11 +34,6 @@ import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
-/**
- * User: lex
- * Date: Sep 20, 2003
- * Time: 10:27:12 PM
- */
 public class LabelRenderer extends TypeRenderer implements ValueLabelRenderer{
   public static final @NonNls String UNIQUE_ID = "LabelRenderer";
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.impl.watch.render.ClassLabelRenderer");

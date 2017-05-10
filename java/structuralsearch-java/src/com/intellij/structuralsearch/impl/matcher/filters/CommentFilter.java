@@ -18,13 +18,6 @@ package com.intellij.structuralsearch.impl.matcher.filters;
 import com.intellij.dupLocator.util.NodeFilter;
 import com.intellij.psi.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 22, 2004
- * Time: 9:13:12 PM
- * To change this template use File | Settings | File Templates.
- */
 public class CommentFilter implements NodeFilter {
 
   private static final NodeFilter INSTANCE = new CommentFilter();

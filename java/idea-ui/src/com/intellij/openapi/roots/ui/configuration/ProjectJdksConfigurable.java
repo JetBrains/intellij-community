@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 16-Aug-2006
- * Time: 16:56:21
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.AnAction;

@@ -23,13 +23,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.sun.jdi.Value;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Jul 15, 2003
- * Time: 1:44:35 PM
- * To change this template use Options | File Templates.
- */
 public class ExpressionEvaluatorImpl implements ExpressionEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator");
   private final Evaluator myEvaluator;

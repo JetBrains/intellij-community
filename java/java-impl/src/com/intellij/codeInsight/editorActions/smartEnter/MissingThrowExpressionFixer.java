@@ -20,13 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 8, 2003
- * Time: 4:20:36 PM
- * To change this template use Options | File Templates.
- */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class MissingThrowExpressionFixer implements Fixer {
   @Override

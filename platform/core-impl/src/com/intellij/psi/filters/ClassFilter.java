@@ -20,13 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 19:30:55
- * To change this template use Options | File Templates.
- */
 public class ClassFilter implements ElementFilter{
   private final Class myFilter;
   private final boolean myAcceptableFlag;

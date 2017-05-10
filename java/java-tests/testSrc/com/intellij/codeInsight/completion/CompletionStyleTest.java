@@ -14,13 +14,6 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 20.08.2003
- * Time: 15:44:18
- * To change this template use Options | File Templates.
- */
 @TestDataPath("$CONTENT_ROOT/testData")
 public class CompletionStyleTest extends LightCodeInsightTestCase{
   private static final String BASE_PATH = "/codeInsight/completion/style";
@@ -332,7 +325,7 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   @Override
   protected void tearDown() throws Exception {
     LookupManager.getInstance(getProject()).hideActiveLookup();
-    super.tearDown();    //To change body of overriden methods use Options | File Templates.
+    super.tearDown();    
   }
 
   public void testAfterNew15() throws Exception {

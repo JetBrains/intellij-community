@@ -35,13 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 02.12.2003
- * Time: 16:49:25
- * To change this template use Options | File Templates.
- */
 public class AllClassesGetter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.AllClassesGetter");
   public static final InsertHandler<JavaPsiClassReferenceElement> TRY_SHORTENING = new InsertHandler<JavaPsiClassReferenceElement>() {

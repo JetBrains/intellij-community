@@ -18,13 +18,6 @@ package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 19:24:33
- * To change this template use Options | File Templates.
- */
 public class NotFilter implements ElementFilter {
   private final ElementFilter myFilter;
 

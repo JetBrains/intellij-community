@@ -19,13 +19,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/2/11
- * Time: 12:29 AM
- * To change this template use File | Settings | File Templates.
- */
 public interface DiffMixin {
   @Nullable
   VcsRevisionDescription getCurrentRevisionDescription(final VirtualFile file);

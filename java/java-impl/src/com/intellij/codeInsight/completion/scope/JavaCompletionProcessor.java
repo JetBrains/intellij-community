@@ -41,13 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 20.01.2003
- * Time: 16:13:27
- * To change this template use Options | File Templates.
- */
 public class JavaCompletionProcessor extends BaseScopeProcessor implements ElementClassHint {
 
   private final boolean myInJavaDoc;

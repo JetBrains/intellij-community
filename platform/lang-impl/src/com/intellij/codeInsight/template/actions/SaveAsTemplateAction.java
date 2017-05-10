@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 20, 2002
- * Time: 5:04:04 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
