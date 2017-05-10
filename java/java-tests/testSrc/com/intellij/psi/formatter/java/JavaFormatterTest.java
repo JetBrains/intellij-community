@@ -3364,5 +3364,18 @@ public void testSCR260() throws Exception {
       "        break;\n" +
       "}");
   }
+
+  public void testAnnotationAndFinalInsideParamList() {
+    doClassTest(
+      "public class Test {\n" +
+      "    void test(@Nullable    final String childFallbackProvider) {\n" +
+      "    }\n" +
+      "}",
+      "public class Test {\n" +
+      "    void test(@Nullable final String childFallbackProvider) {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
   
 }
