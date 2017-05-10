@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,13 +30,14 @@ public class EditorFontCacheImpl extends EditorFontCache {
 
   @Override
   @NotNull
-  public Font getFont(EditorFontType key) {
+  public Font getFont(@Nullable EditorFontType key) {
     synchronized (myFonts) {
       if (myFonts.isEmpty()) {
         initFonts();
       }
-      final Font font = myFonts.get(key);
-      assert font != null : "Font " + key + " not found.";
+      EditorFontType fontType = ObjectUtils.notNull(key, EditorFontType.PLAIN);
+      final Font font = myFonts.get(fontType);
+      assert font != null : "Font " + fontType + " not found.";
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getPresentationMode()) {
         return new Font(font.getName(), font.getStyle(), uiSettings.getPresentationModeFontSize());
