@@ -2023,4 +2023,17 @@ public class Foo {}
 <info>import</info> a.b.c.trait.d.as.e.def.f.in.g.*
 ''', false, true
   }
+
+  void 'test resolve methods of boxed types on primitive qualifiers'() {
+    testHighlighting '''\
+class Widget {
+    float width = 1.1f
+}
+
+Widget w = new Widget()
+w.width.round()
+w.width.intValue()
+w.width.compareTo(2f)
+''', GrUnresolvedAccessInspection
+  }
 }
