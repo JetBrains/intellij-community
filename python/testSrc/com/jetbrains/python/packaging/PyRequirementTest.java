@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2253,6 +2253,37 @@ public class PyRequirementTest extends PyTestCase {
     final PyRequirement requirementWithLocalVersion = PyRequirement.fromLine("foo==1.0+foo0100");
     assertEquals(firstPackageWithLocalVersion, requirementWithLocalVersion.match(Collections.singletonList(firstPackageWithLocalVersion)));
     assertNull(requirementWithLocalVersion.match(Collections.singletonList(secondPackageWithLocalVersion)));
+  }
+
+  // https://www.python.org/dev/peps/pep-0440/#version-matching
+  // PY-22275
+  public void testMatchingStar() {
+    final PyRequirement requirement = PyRequirement.fromLine("foo==1.1.*");
+    final PyPackage release = new PyPackage("foo", "1.1.2", null, Collections.emptyList());
+    final PyPackage pre = new PyPackage("foo", "1.1.2a1", null, Collections.emptyList());
+    final PyPackage post = new PyPackage("foo", "1.1.2.post1", null, Collections.emptyList());
+    final PyPackage dev = new PyPackage("foo", "1.1.2.dev1", null, Collections.emptyList());
+    final PyPackage localVersion = new PyPackage("foo", "1.1.2+local.version", null, Collections.emptyList());
+
+    assertEquals(release, requirement.match(Collections.singletonList(release)));
+    assertEquals(pre, requirement.match(Collections.singletonList(pre)));
+    assertEquals(post, requirement.match(Collections.singletonList(post)));
+    assertEquals(dev, requirement.match(Collections.singletonList(dev)));
+    assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
+
+    final PyRequirement negativeRequirement = PyRequirement.fromLine("foo!=1.1.*");
+    final PyPackage negativeRelease = new PyPackage("foo", "1.2.2", null, Collections.emptyList());
+    final PyPackage negativePre = new PyPackage("foo", "1.2.2a1", null, Collections.emptyList());
+    final PyPackage negativePost = new PyPackage("foo", "1.2.2.post1", null, Collections.emptyList());
+    final PyPackage negativeDev = new PyPackage("foo", "1.2.2.dev1", null, Collections.emptyList());
+    final PyPackage negativeLocalVersion = new PyPackage("foo", "1.2.2+local.version", null, Collections.emptyList());
+
+    assertNull(negativeRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
+    assertEquals(negativeRelease, negativeRequirement.match(Collections.singletonList(negativeRelease)));
+    assertEquals(negativePre, negativeRequirement.match(Collections.singletonList(negativePre)));
+    assertEquals(negativePost, negativeRequirement.match(Collections.singletonList(negativePost)));
+    assertEquals(negativeDev, negativeRequirement.match(Collections.singletonList(negativeDev)));
+    assertEquals(negativeLocalVersion, negativeRequirement.match(Collections.singletonList(negativeLocalVersion)));
   }
 
   // OPTIONS
