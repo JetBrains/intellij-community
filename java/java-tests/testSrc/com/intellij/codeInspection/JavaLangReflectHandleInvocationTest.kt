@@ -25,17 +25,9 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
  * @author Pavel.Dolgov
  */
-class JavaLangReflectHandleInvocationTest : LightCodeInsightFixtureTestCase() {
-  override fun setUp() {
-    super.setUp()
-    LanguageLevelProjectExtension.getInstance(project).languageLevel = LanguageLevel.JDK_1_7
-    myFixture.enableInspections(JavaLangReflectHandleInvocationInspection())
-  }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = LightCodeInsightFixtureTestCase.JAVA_8
-
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
-
+class JavaLangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_7,
+                                                                                    LightCodeInsightFixtureTestCase.JAVA_8) {
   fun testVirtual() = doTest()
   fun testStatic() = doTest()
   fun testConstructor() = doTest()
@@ -45,8 +37,28 @@ class JavaLangReflectHandleInvocationTest : LightCodeInsightFixtureTestCase() {
 
   fun testStaticGetter() = doTest()
   fun testStaticSetter() = doTest()
+}
 
-  private fun doTest() {
+class Java9LangReflectHandleInvocationTest : JavaLangReflectHandleInvocationTestBase(LanguageLevel.JDK_1_9,
+                                                                                     LightCodeInsightFixtureTestCase.JAVA_9) {
+  fun testVarHandle() = doTest()
+  fun testStaticVarHandle() = doTest()
+  fun testArrayVarHandle() = doTest()
+}
+
+abstract class JavaLangReflectHandleInvocationTestBase(val languageLevel: LanguageLevel,
+                                                       val descriptor: LightProjectDescriptor) : LightCodeInsightFixtureTestCase() {
+  override fun setUp() {
+    super.setUp()
+    LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
+    myFixture.enableInspections(JavaLangReflectHandleInvocationInspection())
+  }
+
+  override fun getProjectDescriptor(): LightProjectDescriptor = descriptor
+
+  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/javaLangReflectHandleInvocation"
+
+  protected fun doTest() {
     myFixture.testHighlighting("${getTestName(false)}.java")
   }
 }
