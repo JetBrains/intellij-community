@@ -1,7 +1,7 @@
 LineBreakpoint created at FlatMap.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! FlatMap
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-FlatMap.java:5
+FlatMap.java:6
 Stream.of(1, 4)
 .flatMap(x -> Stream.of(x + 1, x + 2))
 .count()

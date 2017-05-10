@@ -1,7 +1,7 @@
 LineBreakpoint created at DistinctEquals.java:22
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! DistinctEquals
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-DistinctEquals.java:21
+DistinctEquals.java:22
 Stream.of(Id.create(), Id.create(), Id.create())
 .distinct()
 .count()

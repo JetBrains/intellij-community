@@ -1,7 +1,7 @@
 LineBreakpoint created at AccessToPrivateMethodsInStaticContext.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! AccessToPrivateMethodsInStaticContext
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-AccessToPrivateMethodsInStaticContext.java:5
+AccessToPrivateMethodsInStaticContext.java:6
 Stream.generate(() -> 1)
 .limit(10)
 .peek(x -> method(x))

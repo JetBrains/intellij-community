@@ -1,7 +1,7 @@
 LineBreakpoint created at LinkedChains.java:8
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! LinkedChains
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-LinkedChains.java:7
+LinkedChains.java:8
 Stream
       .of(1, 2, 3, 4, 5, 6).map(x -> x * x).collect(Collectors.toList())
       .stream()

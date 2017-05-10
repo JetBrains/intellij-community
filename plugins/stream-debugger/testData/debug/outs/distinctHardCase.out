@@ -1,7 +1,7 @@
 LineBreakpoint created at DistinctHardCase.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! DistinctHardCase
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-DistinctHardCase.java:5
+DistinctHardCase.java:6
 Stream.of(new Integer(1), new Integer(2), new Integer(1))
 .distinct()
 .count()

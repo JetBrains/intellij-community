@@ -1,7 +1,7 @@
 LineBreakpoint created at DistinctSame.java:7
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! DistinctSame
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-DistinctSame.java:6
+DistinctSame.java:7
 Stream.of(obj, obj, obj)
 .distinct()
 .count()
