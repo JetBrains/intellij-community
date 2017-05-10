@@ -776,7 +776,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     for (methodElement in child.getChildren(OPTION)) {
       val key = methodElement.getAttributeValue(NAME_ATTR)
       val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
-      val beforeRunTask = provider.createTask(settings.configuration) ?: continue
+      val beforeRunTask = (if (provider is RunConfigurationBeforeRunProvider) provider.createTask(settings.configuration, this) else provider.createTask(settings.configuration)) ?: continue
       beforeRunTask.readExternal(methodElement)
       if (result == null) {
         result = SmartList()
