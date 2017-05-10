@@ -37,6 +37,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
@@ -247,9 +249,34 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     blacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
     
     blacklistPanel.add(new JBLabel(getBlacklistExplanationHTML(language)));
+
+    blacklistPanel.add(createResetPanel(language));
     blacklistPanel.add(editorTextField);
 
     return blacklistPanel;
+  }
+
+  @NotNull
+  private JComponent createResetPanel(@NotNull Language language) {
+    SwingActionLink link = new SwingActionLink(new AbstractAction("Reset") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        setLanguageBlacklistToDefault(language);
+      }
+    });
+
+    Box box = Box.createHorizontalBox();
+    box.add(Box.createHorizontalGlue());
+    box.add(link);
+
+    return box;
+  }
+
+  private void setLanguageBlacklistToDefault(Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    Set<String> defaultBlacklist = provider.getDefaultBlackList();
+    EditorTextField editor = myEditors.get(language);
+    editor.setText(StringUtil.join(defaultBlacklist, "\n"));
   }
 
   @NotNull
