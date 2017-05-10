@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,20 @@ import com.intellij.ide.diff.DirDiffOperation;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class SetCopyToRight extends SetOperationToBase {
+public class MirrorToRightAction extends SetOperationToBase {
+  @Override
+  protected boolean isEnabledFor(DirDiffElement element) {
+    return true;
+  }
+
   @NotNull
   @Override
   protected DirDiffOperation getOperation(DirDiffElementImpl element) {
-    return DirDiffOperation.COPY_TO;
-  }
-
-  @Override
-  protected boolean isEnabledFor(DirDiffElement element) {
-    return element.getSource() != null;
+    if (element.isTarget()) {
+      return DirDiffOperation.DELETE;
+    }
+    else {
+      return DirDiffOperation.COPY_TO;
+    }
   }
 }
