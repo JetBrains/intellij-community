@@ -19,6 +19,7 @@ import com.intellij.util.containers.UnsignedShortArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.util.concurrent.TimeUnit;
 
 public class PausesStat {
   private static final int N_MAX = 100000;
@@ -54,7 +55,7 @@ public class PausesStat {
     assertEdt();
     assert !started;
     assert startTimeStamp == 0 : startTimeStamp;
-    startTimeStamp = System.currentTimeMillis();
+    startTimeStamp = System.nanoTime();
     started = true;
     startDescription = description;
   }
@@ -66,29 +67,30 @@ public class PausesStat {
   public void finished(@NotNull String description) {
     assertEdt();
     assert started;
-    long finishStamp = System.currentTimeMillis();
+    started = false;
+    long finishStamp = System.nanoTime();
     long startTimeStamp = this.startTimeStamp;
-    int duration = (int)(finishStamp - startTimeStamp);
-    if (finishStamp < startTimeStamp || duration < 0) {
+    int durationMs = (int)TimeUnit.NANOSECONDS.toMillis(finishStamp - startTimeStamp);
+    this.startTimeStamp = 0;
+    if (finishStamp < startTimeStamp || durationMs < 0) {
       int lastPause = durations.size() == N_MAX ? durations.get((indexToOverwrite -1 + N_MAX) % N_MAX) : durations.get(durations.size()-1);
-      throw new IllegalStateException("startTimeStamp: " + startTimeStamp
-                                      + "; finishStamp: " + finishStamp
-                                      + "; duration: " + duration
+      throw new IllegalStateException(  "\n"+
+                                        "startTimeStamp: " + startTimeStamp +"\n"
+                                      + ";  finishStamp: " + finishStamp
+                                      + "; durationMs: " + durationMs
                                       + "; lastPause: " + lastPause
                                       + "\n; description: " + description
                                       + (description.equals(startDescription) ? "" : "\n; startDescription: " + startDescription)
       );
     }
 
-    started = false;
-    this.startTimeStamp = 0;
-    duration = Math.min(duration, Short.MAX_VALUE);
-    if (duration > maxDuration) {
-      maxDuration = duration;
+    durationMs = Math.min(durationMs, Short.MAX_VALUE);
+    if (durationMs > maxDuration) {
+      maxDuration = durationMs;
       maxDurationDescription = description;
     }
     totalNumberRecorded++;
-    register(duration);
+    register(durationMs);
   }
 
   public String statistics() {
