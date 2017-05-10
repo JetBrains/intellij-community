@@ -19,7 +19,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -35,7 +34,6 @@ import com.intellij.util.AsynchConsumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -44,121 +42,31 @@ import org.zmlx.hg4idea.ui.HgVersionFilterComponent;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.awt.datatransfer.StringSelection;
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-public class HgCachingCommittedChangesProvider implements CachingCommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
+public class HgCommittedChangesProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
 
-  private static final Logger LOG = Logger.getInstance(HgCachingCommittedChangesProvider.class);
+  private static final Logger LOG = Logger.getInstance(HgCommittedChangesProvider.class);
   private final Project project;
   private final HgVcs myVcs;
-  public final static int VERSION_WITH_REPOSITORY_BRANCHES = 2;
-
-  public HgCachingCommittedChangesProvider(Project project, HgVcs vcs) {
-    this.project = project;
-    myVcs = vcs;
-  }
-
-  public int getFormatVersion() {
-    return VERSION_WITH_REPOSITORY_BRANCHES;
-  }
-
-  public CommittedChangeList readChangeList(RepositoryLocation repositoryLocation, DataInput dataInput) throws IOException {
-    HgRevisionNumber revision = HgRevisionNumber.getInstance(dataInput.readUTF(), dataInput.readUTF());
-    String branch = dataInput.readUTF();
-    String committerName = dataInput.readUTF();
-    String comment = dataInput.readUTF();
-    Date commitDate = new Date(dataInput.readLong());
-    int changesCount = dataInput.readInt();
-    List<Change> changes = new ArrayList<>();
-    for (int i = 0; i < changesCount; i++) {
-      HgContentRevision beforeRevision = readRevision(repositoryLocation, dataInput);
-      HgContentRevision afterRevision = readRevision(repositoryLocation, dataInput);
-      changes.add(new Change(beforeRevision, afterRevision));
+  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
+    public String getTitle() {
+      return HgVcsMessages.message("hg4idea.changelist.column.branch");
     }
-    return new HgCommittedChangeList(myVcs, revision, branch, comment, committerName, commitDate, changes);
-  }
 
-  public void writeChangeList(DataOutput dataOutput, CommittedChangeList committedChangeList) throws IOException {
-    HgCommittedChangeList changeList = (HgCommittedChangeList)committedChangeList;
-    writeRevisionNumber(dataOutput, changeList.getRevisionNumber());
-    dataOutput.writeUTF(changeList.getBranch());
-    dataOutput.writeUTF(changeList.getCommitterName());
-    dataOutput.writeUTF(changeList.getComment());
-    dataOutput.writeLong(changeList.getCommitDate().getTime());
-    dataOutput.writeInt(changeList.getChanges().size());
-    for (Change change : changeList.getChanges()) {
-      writeRevision(dataOutput, (HgContentRevision)change.getBeforeRevision());
-      writeRevision(dataOutput, (HgContentRevision)change.getAfterRevision());
+    public Object getValue(final HgCommittedChangeList changeList) {
+      final String branch = changeList.getBranch();
+      return branch.isEmpty() ? "default" : branch;
     }
-  }
 
-  private HgContentRevision readRevision(RepositoryLocation repositoryLocation, DataInput dataInput) throws IOException {
-    String revisionPath = dataInput.readUTF();
-    HgRevisionNumber revisionNumber = readRevisionNumber(dataInput);
-
-    if (!StringUtil.isEmpty(revisionPath)) {
-      VirtualFile root = ((HgRepositoryLocation)repositoryLocation).getRoot();
-      return HgContentRevision.create(project, new HgFile(root, new File(revisionPath)), revisionNumber);
+    @NotNull
+    @Override
+    public Comparator<HgCommittedChangeList> getComparator() {
+      return BRANCH_COLUMN_COMPARATOR;
     }
-    else {
-      return null;
-    }
-  }
-
-  private void writeRevision(DataOutput dataOutput, HgContentRevision revision) throws IOException {
-    if (revision == null) {
-      dataOutput.writeUTF("");
-      writeRevisionNumber(dataOutput, HgRevisionNumber.getInstance("", ""));
-    }
-    else {
-      dataOutput.writeUTF(revision.getFile().getIOFile().toString());
-      writeRevisionNumber(dataOutput, revision.getRevisionNumber());
-    }
-  }
-
-  private HgRevisionNumber readRevisionNumber(DataInput dataInput) throws IOException {
-    String revisionRevision = dataInput.readUTF();
-    String revisionChangeset = dataInput.readUTF();
-    return HgRevisionNumber.getInstance(revisionRevision, revisionChangeset);
-  }
-
-  private void writeRevisionNumber(DataOutput dataOutput, HgRevisionNumber revisionNumber) throws IOException {
-    dataOutput.writeUTF(revisionNumber.getRevision());
-    dataOutput.writeUTF(revisionNumber.getChangeset());
-  }
-
-  public boolean isMaxCountSupported() {
-    return true;
-  }
-
-  public Collection<FilePath> getIncomingFiles(RepositoryLocation repositoryLocation) throws VcsException {
-    return null;
-  }
-
-  public boolean refreshCacheByNumber() {
-    return true;
-  }
-
-  @Nls
-  public String getChangelistTitle() {
-    return null;
-  }
-
-  public boolean isChangeLocallyAvailable(FilePath filePath,
-                                          @Nullable VcsRevisionNumber localRevision,
-                                          VcsRevisionNumber changeRevision,
-                                          CommittedChangeList committedChangeList) {
-    return localRevision != null && localRevision.compareTo(changeRevision) >= 0;
-  }
-
-  public boolean refreshIncomingWithCommitted() {
-    return false;
-  }
+  };
 
   @NotNull
   public ChangeBrowserSettings createDefaultSettings() {
@@ -370,22 +278,10 @@ public class HgCachingCommittedChangesProvider implements CachingCommittedChange
     }
   };
 
-  private static final ChangeListColumn<HgCommittedChangeList> BRANCH_COLUMN = new ChangeListColumn<HgCommittedChangeList>() {
-    public String getTitle() {
-      return HgVcsMessages.message("hg4idea.changelist.column.branch");
-    }
-
-    public Object getValue(final HgCommittedChangeList changeList) {
-      final String branch = changeList.getBranch();
-      return branch.isEmpty() ? "default" : branch;
-    }
-
-    @Nullable
-    @Override
-    public Comparator<HgCommittedChangeList> getComparator() {
-      return BRANCH_COLUMN_COMPARATOR;
-    }
-  };
+  public HgCommittedChangesProvider(Project project, HgVcs vcs) {
+    this.project = project;
+    myVcs = vcs;
+  }
 
   private static class HgLogArgsBuilder {
 
