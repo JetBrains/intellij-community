@@ -188,7 +188,7 @@ public class EduCoursesPanel extends JPanel {
     HideableDecorator decorator = new HideableDecorator(myAdvancedSettingsPlaceholder, "Advanced Settings", false);
     decorator.setContentComponent(myAdvancedSettings);
     myAdvancedSettings.setBorder(IdeBorderFactory.createEmptyBorder(0, IdeBorderFactory.TITLED_BORDER_INDENT, 5, 0));
-    UIUtil.setBackgroundRecursively(myCoursesList, LIST_COLOR);
+    myCoursesList.setBackground(LIST_COLOR);
     myDescriptionTextArea.setBackground(UIUtil.getPanelBackground());
     myAdvancedSettingsPlaceholder.setVisible(false);
     myErrorLabel.addMouseListener(new MouseAdapter() {
