@@ -28,6 +28,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -35,7 +36,6 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.LinearGradientPaint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
@@ -60,14 +60,13 @@ import static javax.swing.SwingUtilities.layoutCompoundLabel;
  */
 public class Breadcrumbs extends JComponent {
   private static final int LEFT_RIGHT = 5;
-  private static final int TOP_BOTTOM = 2;
+  private static final int TOP_BOTTOM = 3;
 
   private BiConsumer<Crumb, InputEvent> hover = ((crumb, event) -> hovered = crumb);
   private BiConsumer<Crumb, InputEvent> select = ((crumb, event) -> selected = crumb);
 
   private final ArrayList<CrumbView> views = new ArrayList<>();
   private final Font[] cache = new Font[4];
-  private LinearGradientPaint gradient;
   private Crumb hovered;
   private Crumb selected;
 
@@ -261,16 +260,6 @@ public class Breadcrumbs extends JComponent {
         bounds.x += view.preferred.width;
       }
     }
-    if (Registry.is("editor.breadcrumbs.marker")) {
-      gradient = null;
-    }
-    else {
-      Color color = getForeground();
-      Color alpha = ColorUtil.toAlpha(color, 0);
-      Color[] colors = {alpha, color, alpha};
-      float[] floats = {.2f, .5f, .8f};
-      gradient = new LinearGradientPaint(0, bounds.y, 0, bounds.y + bounds.height, floats, colors);
-    }
   }
 
   private void updatePreferredSize(Dimension size, int scale) {
@@ -443,9 +432,14 @@ public class Breadcrumbs extends JComponent {
           g.setColor(background);
           g.fill(path);
         }
-        if (parent != null && parent.background == background && gradient != null) {
-          g.setPaint(gradient);
-          g.draw(createPath(scale, false));
+        if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
+          Graphics2D g2 = (Graphics2D)g.create();
+          int delta = bounds.height / 4;
+          g2.clipRect(0, bounds.y + delta, Short.MAX_VALUE, bounds.height - delta - delta);
+          g2.setPaint(getForeground());
+          g2.setStroke(new BasicStroke(scale));
+          g2.draw(createPath(scale, false));
+          g2.dispose();
         }
       }
       if (effectType == EffectType.ROUNDED_BOX && effectColor != null) {
