@@ -141,7 +141,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 0);
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
       }
 
       @Override
@@ -417,7 +417,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
   public void testSubtest() throws Exception {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
@@ -446,7 +446,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
   public void testSubtestSkipped() throws Exception {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,

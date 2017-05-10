@@ -23,6 +23,7 @@ import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
 import com.jetbrains.extensions.getQName
+import com.jetbrains.extenstions.getElementAndResolvableName
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.PythonRunConfiguration
@@ -230,8 +231,11 @@ data class ConfigurationTarget(@com.jetbrains.python.testing.ConfigField var tar
       // Try to set path relative to work dir (better than path from closest root)
       // If we can resolve element by this path relative to working directory then use it
       val qNameInsideOfDirectory = qualifiedNameParts.getElementNamePrependingFile()
-      if (qNameInsideOfDirectory.resolveToElement(qNameResolveContext.copy(allowInaccurateResult = false)) != null) {
-        return listOf("--target", qNameInsideOfDirectory.toString())
+      val elementAndName = qNameInsideOfDirectory.getElementAndResolvableName(qNameResolveContext.copy(allowInaccurateResult = false))
+      if (elementAndName != null) {
+        // qNameInsideOfDirectory may contain redundant elements like subtests so we use name that was really resolved
+        // element.qname can't be used because inherited test resolves to parent
+        return listOf("--target",elementAndName.name.toString())
       }
       // Use "full" (path from closest root) otherwise
       val name = (element.containingFile as? com.jetbrains.python.psi.PyFile)?.getQName()?.append(qualifiedNameParts.elementName) ?:
