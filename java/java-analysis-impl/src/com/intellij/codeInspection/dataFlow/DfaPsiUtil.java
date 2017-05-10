@@ -30,6 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -129,9 +130,16 @@ public class DfaPsiUtil {
     if(nullness != Nullness.UNKNOWN) {
       return nullness;
     }
-    PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(function.getFunctionalInterfaceType());
+    PsiClassType type = ObjectUtils.tryCast(function.getFunctionalInterfaceType(), PsiClassType.class);
+    PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (sam != null && index < sam.getParameterList().getParametersCount()) {
-      return getElementNullability(null, sam.getParameterList().getParameters()[index]);
+      PsiParameter parameter = sam.getParameterList().getParameters()[index];
+      nullness = getElementNullability(null, parameter);
+      if(nullness != Nullness.UNKNOWN) {
+        return nullness;
+      }
+      PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
+      return getTypeNullability(parameterType);
     }
     return Nullness.UNKNOWN;
   }
