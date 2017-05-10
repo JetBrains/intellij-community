@@ -131,6 +131,35 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  // Ensure failed and error subtests work
+  @Test
+  @EnvTestTagsRequired(tags = "python3")
+  public void testSubTestError() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals("subtest error reported as success", "Test tree:\n" +
+                                                          "[root]\n" +
+                                                          ".test_test\n" +
+                                                          "..TestThis\n" +
+                                                          "...test_this\n" +
+                                                          "....[test](-)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+
   /**
    * subtest names may have dots and shall not break test tree
    */
