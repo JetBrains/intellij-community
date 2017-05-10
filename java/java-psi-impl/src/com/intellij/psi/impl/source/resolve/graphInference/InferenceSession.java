@@ -866,7 +866,7 @@ public class InferenceSession {
             return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor(), inferParent);
           }
 
-          final JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
+          final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);
           final PsiElement element = result.getElement();
           if (element == null) {
             errorMessage.set("Overload resolution failed");

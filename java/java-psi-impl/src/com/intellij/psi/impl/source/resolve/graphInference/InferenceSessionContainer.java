@@ -172,7 +172,7 @@ public class InferenceSessionContainer {
             if (initialInferenceState != null) {
               final PsiExpressionList argumentList = call.getArgumentList();
               final int idx = LambdaUtil.getLambdaIdx(argumentList, gParent);
-              final JavaResolveResult result = call.resolveMethodGenerics();
+              final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(call);
               final PsiElement method = result.getElement();
               if (method instanceof PsiMethod && idx > -1) {
                 LOG.assertTrue(argumentList != null);
@@ -244,7 +244,7 @@ public class InferenceSessionContainer {
 
   @Nullable
   private static InferenceSession startTopLevelInference(final PsiCall topLevelCall, final ParameterTypeInferencePolicy policy) {
-    final JavaResolveResult result = topLevelCall.resolveMethodGenerics();
+    final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult(topLevelCall);
     if (result instanceof MethodCandidateInfo) {
       final PsiMethod method = ((MethodCandidateInfo)result).getElement();
       final PsiParameter[] topLevelParameters = method.getParameterList().getParameters();
