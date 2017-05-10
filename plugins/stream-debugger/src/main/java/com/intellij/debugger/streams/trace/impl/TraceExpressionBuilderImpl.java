@@ -26,11 +26,13 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
+import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl;
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElementFactory;
@@ -123,6 +125,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     }
 
     newIntermediateCalls.addAll(terminatorHandler.additionalCallsBefore());
+    final GenericType typeBefore = chain.getTerminationCall().getTypeBefore();
+    newIntermediateCalls.add(new IntermediateStreamCallImpl("sequential", "()", typeBefore, typeBefore, TextRange.EMPTY_RANGE));
 
     return new StreamChainImpl(producerCall, newIntermediateCalls, chain.getTerminationCall(), chain.getContext());
   }
