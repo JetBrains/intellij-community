@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
     public Collection<VirtualFile> detectRoots(@NotNull VirtualFile rootCandidate, @NotNull ProgressIndicator progressIndicator) {
       List<VirtualFile> result = new ArrayList<>();
       collectJavadocRoots(rootCandidate, result, progressIndicator);
+      JavadocQuarantineStatusCleaner.cleanIfNeeded(VfsUtilCore.toVirtualFileArray(result));
       return result;
     }
 
@@ -118,7 +119,6 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
           progressIndicator.checkCanceled();
           if (file.isDirectory() && file.findChild("allclasses-frame.html") != null && file.findChild("allclasses-noframe.html") != null) {
             result.add(file);
-            JavadocQuarantineStatusCleaner.cleanIfNeeded(file);
             return false;
           }
           return true;
