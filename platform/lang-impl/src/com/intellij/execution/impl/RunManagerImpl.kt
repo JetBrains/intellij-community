@@ -127,7 +127,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   @Suppress("LeakingThis")
   private val workspaceSchemeManager = SchemeManagerFactory.getInstance(project).create("workspace", RunConfigurationSchemeManager(this, false), streamProvider = schemeManagerProvider, autoSave = false)
 
-  internal var projectSchemeManager: SchemeManager<RunnerAndConfigurationSettingsImpl>? = null
+  @Suppress("LeakingThis")
+  private var projectSchemeManager = if (isUseProjectSchemeManager()) SchemeManagerFactory.getInstance(project).create("runConfigurations", RunConfigurationSchemeManager(this, true), isUseOldFileNameSanitize = true) else null
 
   private val isFirstLoadState = AtomicBoolean()
 
@@ -600,11 +601,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   override fun noStateLoaded() {
     isFirstLoadState.set(false)
+    projectSchemeManager?.loadSchemes()
   }
 
   override fun loadState(parentNode: Element) {
     val oldSelectedConfigurationId: String?
-    if (isFirstLoadState.compareAndSet(true, false)) {
+    val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
+    if (isFirstLoadState) {
       oldSelectedConfigurationId = null
     }
     else {
@@ -626,13 +629,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       name
     }
 
-    try {
-      eventPublisher.beginUpdate()
-      workspaceSchemeManager.reload()
-    }
-    finally {
-      eventPublisher.endUpdate()
-    }
+    workspaceSchemeManager.reload()
 
     val order = ArrayList<String>()
     @Suppress("DEPRECATION")
@@ -661,6 +658,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       immutableSortedSettingsList = null
 
       selectedConfigurationId = parentNode.getAttributeValue(SELECTED_ATTR)
+    }
+
+    if (isFirstLoadState) {
+      projectSchemeManager?.loadSchemes()
     }
 
     fireBeforeRunTasksUpdated()
@@ -1157,3 +1158,5 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 }
 
 internal fun createRunManagerEventPublisher(project: Project) = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
+
+private fun isUseProjectSchemeManager() = Registry.`is`("runManager.use.schemeManager", false)
