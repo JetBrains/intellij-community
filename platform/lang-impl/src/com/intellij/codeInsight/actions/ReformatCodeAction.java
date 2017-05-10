@@ -51,6 +51,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   private static final @NonNls String HELP_ID = "editing.codeReformatting";
   protected static ReformatFilesOptions myTestOptions;
 
+  public ReformatCodeAction() {
+    setEnabledInModalContext(true);
+  }
 
   @Override
   public void actionPerformed(AnActionEvent event) {
@@ -256,6 +259,8 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     return PsiUtilCore.toPsiFileArray(result);
   }
+
+
 
   @Override
   public void update(AnActionEvent event){
