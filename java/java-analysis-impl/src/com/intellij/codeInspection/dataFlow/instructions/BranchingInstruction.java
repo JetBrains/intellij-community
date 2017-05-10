@@ -25,7 +25,9 @@
 package com.intellij.codeInspection.dataFlow.instructions;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,7 @@ public abstract class BranchingInstruction extends Instruction {
     myIsTrueReachable = false;
     myIsFalseReachable = false;
     myExpression = psiAnchor;
-    isConstTrue = psiAnchor != null && isBoolConst(psiAnchor);
+    isConstTrue = psiAnchor instanceof PsiExpression && isBoolConst(PsiUtil.skipParenthesizedExprDown((PsiExpression)psiAnchor));
   }
 
   public boolean isTrueReachable() {

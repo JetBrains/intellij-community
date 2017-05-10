@@ -146,7 +146,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitIfStatement(PsiIfStatement statement) {
-        PsiExpression condition = statement.getCondition();
+        PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (BranchingInstruction.isBoolConst(condition)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
@@ -163,7 +163,13 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         checkLoopCondition(statement.getCondition());
       }
 
+      @Override
+      public void visitForStatement(PsiForStatement statement) {
+        checkLoopCondition(statement.getCondition());
+      }
+
       private void checkLoopCondition(PsiExpression condition) {
+        condition = PsiUtil.skipParenthesizedExprDown(condition);
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
           holder.registerProblem(condition, "Condition is always false", createSimplifyBooleanExpressionFix(condition, false));
         }

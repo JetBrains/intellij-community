@@ -435,6 +435,16 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     checkIntentionResult("Unwrap 'do-while' statement");
   }
 
+  public void testFalseForConditionNoInitialization() {
+    doTest();
+    checkIntentionResult("Remove 'for' statement");
+  }
+
+  public void testFalseForConditionWithInitialization() {
+    doTest();
+    checkIntentionResult("Remove 'for' statement");
+  }
+
   //https://youtrack.jetbrains.com/issue/IDEA-162184
   public void testNullLiteralAndInferredMethodContract() {
     doTest();
