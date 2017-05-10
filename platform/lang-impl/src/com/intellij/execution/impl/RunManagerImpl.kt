@@ -40,7 +40,7 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.*
@@ -422,7 +422,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
             }
           }
 
-          folderNames.sortWith(StringUtil.NATURAL_COMPARATOR)
+          folderNames.sortWith(NaturalComparator.INSTANCE)
           folderNames.add(null)
 
           list.sortWith(Comparator { o1, o2 ->

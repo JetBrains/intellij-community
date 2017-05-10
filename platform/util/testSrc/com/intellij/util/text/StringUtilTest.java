@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.LineSeparator;
 import com.intellij.xml.util.XmlStringUtil;
@@ -184,32 +185,32 @@ public class StringUtilTest {
   public void testNaturalCompare() {
 
     final List<String> numbers = Arrays.asList("1a000001", "000001a1", "001a0001", "0001A001" , "00001a01", "01a00001");
-    numbers.sort(StringUtil.NATURAL_COMPARATOR);
+    numbers.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("1a000001", "01a00001", "001a0001", "0001A001" , "00001a01", "000001a1"), numbers);
 
     final List<String> test = Arrays.asList("test011", "test10", "test10a", "test010");
-    test.sort(StringUtil.NATURAL_COMPARATOR);
+    test.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("test10", "test10a", "test010", "test011"), test);
 
     final List<String> strings = Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
                     "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1");
-    strings.sort(StringUtil.NATURAL_COMPARATOR);
+    strings.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("1.2.9.1", "1.2.10.5", "tes0", "test", "test0", "test1", "test2", "test 3", "test10", "test10a",
                                "test011", "Test99", "test99", "testing"), strings);
 
     final List<String> strings2 = Arrays.asList("t1", "t001", "T2", "T002", "T1", "t2");
-    strings2.sort(StringUtil.NATURAL_COMPARATOR);
+    strings2.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("T1", "t1", "t001", "T2", "t2", "T002"), strings2);
     assertEquals(1 ,StringUtil.naturalCompare("7403515080361171695", "07403515080361171694"));
     assertEquals(-14, StringUtil.naturalCompare("_firstField", "myField1"));
     //idea-80853
     final List<String> strings3 =
       Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain");
-    strings3.sort(StringUtil.NATURAL_COMPARATOR);
+    strings3.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("C148A_InsomniaCure", "C148B_Escape", "C148C_TersePrincess", "C148D_BagOfMice", "C148E_Porcelain"), strings3);
 
     final List<String> l = Arrays.asList("a0002", "a0 2", "a001");
-    l.sort(StringUtil.NATURAL_COMPARATOR);
+    l.sort(NaturalComparator.INSTANCE);
     assertEquals(Arrays.asList("a0 2", "a001", "a0002"), l);
   }
 

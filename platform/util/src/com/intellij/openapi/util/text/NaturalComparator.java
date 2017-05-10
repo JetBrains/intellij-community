@@ -27,6 +27,10 @@ import java.util.Comparator;
  */
 public class NaturalComparator implements Comparator<String> {
 
+  public static final Comparator<String> INSTANCE = new NaturalComparator();
+
+  private NaturalComparator() {}
+
   @Override
   public int compare(String s1, String s2) {
     //noinspection StringEquality

@@ -2715,11 +2715,9 @@ public class StringUtil extends StringUtilRt {
     return res;
   }
 
-  public static final Comparator<String> NATURAL_COMPARATOR = new NaturalComparator();
-
   @Contract(pure = true)
   public static int naturalCompare(@Nullable String string1, @Nullable String string2) {
-    return NATURAL_COMPARATOR.compare(string1, string2);
+    return NaturalComparator.INSTANCE.compare(string1, string2);
   }
 
   @Contract(pure = true)
