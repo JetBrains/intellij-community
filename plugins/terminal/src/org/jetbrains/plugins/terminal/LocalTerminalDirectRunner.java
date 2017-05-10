@@ -17,7 +17,6 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -114,11 +113,14 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<>(EnvironmentUtil.getEnvironmentMap());
+    Map<String, String> envs = new HashMap<>(System.getenv());
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
+
+    if (SystemInfo.isMac) {
+      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
+    }
 
     String[] command = getCommand(envs);
 
