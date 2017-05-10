@@ -35,4 +35,6 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
     @Test fun testEnumValueMembers() = doTest("Simple/EnumValueMembers.java")
 
     @Test fun testQualifiedConstructorCall() = doTest("Simple/QualifiedConstructorCall.java")
+
+    @Test fun testAnonymousClassWithParameters() = doTest("Simple/AnonymousClassWithParameters.java")
 }
