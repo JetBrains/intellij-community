@@ -1703,6 +1703,17 @@ public class PyTypeTest extends PyTestCase {
            "expr = min(l)");
   }
 
+  // PY-21906
+  public void testSOFOnTransitiveNamedTupleFields() {
+    final PyExpression expression = parseExpr("from collections import namedtuple\n" +
+                                              "class C:\n" +
+                                              "    FIELDS = ('a', 'b')\n" +
+                                              "FIELDS = C.FIELDS\n" +
+                                              "expr = namedtuple('Tup', FIELDS)");
+
+    getTypeEvalContexts(expression).forEach(context -> context.getType(expression));
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
