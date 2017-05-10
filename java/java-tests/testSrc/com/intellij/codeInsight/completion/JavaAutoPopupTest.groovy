@@ -60,6 +60,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
+
 /**
  * @author peter
  */
@@ -995,7 +996,6 @@ class Foo {
             if (e.newFragment.toString().contains("a")) {
               fail(e.toString())
             }
-            super.documentChanged(e)
           }
         })
         myFixture.type 'i'
