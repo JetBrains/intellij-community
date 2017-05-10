@@ -108,8 +108,10 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myRegexCheckbox.getModel().addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        // TODO: no need to re-filter if the text field is empty anyway
-        myFilterComponent.filter();
+        // no need to re-filter if the filter text is empty
+        if (!myFilterComponent.getFilter().isEmpty()) {
+          myFilterComponent.filter();
+        }
       }
     });
     toolbarPanel.add(myFilterComponent);

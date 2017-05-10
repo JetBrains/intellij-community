@@ -57,8 +57,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeModel;
@@ -119,11 +117,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myDetailsView = new RepositoryChangesBrowser(project, Collections.emptyList());
     myDetailsView.getViewerScrollPane().setBorder(RIGHT_BORDER);
 
-    myChangesTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      public void valueChanged(TreeSelectionEvent e) {
-        updateBySelectionChange();
-      }
-    });
+    myChangesTree.getSelectionModel().addTreeSelectionListener(e -> updateBySelectionChange());
 
     final TreeLinkMouseListener linkMouseListener = new TreeLinkMouseListener(new CommittedChangeListRenderer(project, myDecorators));
     linkMouseListener.installOn(myChangesTree);
@@ -189,7 +183,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private TreeModel buildTreeModel(final List<CommittedChangeList> filteredChangeLists) {
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+    ImprovedMutableTreeNode root = new ImprovedMutableTreeNode(null);
     DefaultTreeModel model = new DefaultTreeModel(root);
     Collections.sort(filteredChangeLists, myGroupingStrategy.getComparator());
     myGroupingStrategy.beforeStart();
@@ -199,11 +193,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
       String groupName = StringUtil.notNullize(myGroupingStrategy.getGroupName(list));
       if (!Comparing.equal(groupName, lastGroupName)) {
         lastGroupName = groupName;
-        lastGroupNode = new DefaultMutableTreeNode(lastGroupName);
+        lastGroupNode = new ImprovedMutableTreeNode(lastGroupName);
         root.add(lastGroupNode);
       }
       assert lastGroupNode != null;
-      lastGroupNode.add(new DefaultMutableTreeNode(list));
+      lastGroupNode.add(new ImprovedMutableTreeNode(list));
     }
     return model;
   }
@@ -246,6 +240,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myChangesTree.setModel(buildTreeModel(filteredChangeLists));
     TreeUtil.expandAll(myChangesTree);
     myChangesTree.setSelectionPaths(paths);
+    myChangesTree.scrollPathToVisible(myChangesTree.getSelectionModel().getLeadSelectionPath());
   }
 
   public void setGroupingStrategy(@NotNull ChangeListGroupingStrategy strategy) {
@@ -494,10 +489,41 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     myFilteringStrategy.appendFilterBase(list);
 
     myChangesTree.setModel(buildTreeModel(myFilteringStrategy.filterChangeLists(myChangeLists)));
-    state.applyTo(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
+    state.applyTo(myChangesTree, myChangesTree.getModel().getRoot());
     TreeUtil.expandAll(myChangesTree);
     myProject.getMessageBus().syncPublisher(ITEMS_RELOADED).itemsReloaded();
   }
+
+  /**
+   * Adds a proper <code>equals()</code> and <code>hashCode()</code> implementation to tree nodes.
+   * (used e.g. when checking if specific <code>TreePath</code> is selected)
+   * The calls are delegated to the "user object".
+   */
+  private static class ImprovedMutableTreeNode extends DefaultMutableTreeNode {
+    public ImprovedMutableTreeNode(Object userObject) {
+      super(userObject);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) {
+        return true;
+      }
+      if (obj instanceof DefaultMutableTreeNode) {
+        if (userObject == null) {
+          return ((DefaultMutableTreeNode)obj).getUserObject() == null;
+        }
+        return userObject.equals(((DefaultMutableTreeNode)obj).getUserObject());
+      }
+      return false;
+    }
+
+    @Override
+    public int hashCode() {
+      return userObject == null ? 0 : userObject.hashCode();
+    }
+  }
+
 
   public static class MoreLauncher implements Runnable {
     private final Project myProject;
