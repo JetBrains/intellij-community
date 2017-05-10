@@ -835,7 +835,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                      @NotNull final ProjectConnectionDataNodeFunction projectConnectionDataNodeFunction) {
 
     final String projectPath = projectConnectionDataNodeFunction.myResolverContext.getProjectPath();
-    if (!new File(projectPath).isDirectory()) {
+    File projectPathFile = new File(projectPath);
+    if (!projectPathFile.isDirectory() || ArrayUtil.isEmpty(projectPathFile.list())) {
       return;
     }
 
