@@ -86,6 +86,7 @@ public class PausesStat {
                 + "\n; description: " + description
                 + (description.equals(startDescription) ? "" : "\n; startDescription: " + startDescription)
       );
+      return;
     }
 
     durationMs = Math.min(durationMs, Short.MAX_VALUE);
