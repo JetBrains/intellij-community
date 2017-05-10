@@ -516,10 +516,22 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     final String qualifiedName = psiClass.getQualifiedName();
     final boolean annotationType = psiClass.isAnnotationType() && qualifiedName != null;
 
+    PsiElement[] topElementsToDelete = Arrays.stream(allElementsToDelete).map(element -> {
+      if (element instanceof PsiClass) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiClassOwner) {
+          PsiClass[] classes = ((PsiClassOwner)parent).getClasses();
+          if (classes.length == 1 && classes[0] == element) {
+            return element.getContainingFile();
+          }
+        }
+      }
+      return element;
+    }).toArray(PsiElement[]::new);
     ReferencesSearch.search(psiClass).forEach(reference -> {
       final PsiElement element = reference.getElement();
 
-      if (!isInside(element, allElementsToDelete)) {
+      if (!isInside(element, topElementsToDelete)) {
         PsiElement parent = element.getParent();
         if (parent instanceof PsiReferenceList) {
           final PsiElement pparent = parent.getParent();
