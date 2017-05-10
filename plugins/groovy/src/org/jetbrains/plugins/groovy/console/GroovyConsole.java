@@ -28,6 +28,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -77,7 +78,9 @@ public class GroovyConsole {
       myConsoleView.print(line, ConsoleViewContentType.USER_INPUT);
       myConsoleView.print("\n", ConsoleViewContentType.NORMAL_OUTPUT);
     }
-    send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"));
+    ApplicationManager.getApplication().executeOnPooledThread(
+      () -> send(myProcessHandler, StringUtil.replace(command, "\n", "###\\n"))
+    );
   }
 
   public void execute(@NotNull String command) {
