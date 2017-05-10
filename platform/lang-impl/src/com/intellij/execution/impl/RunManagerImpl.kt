@@ -625,7 +625,14 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
       name
     }
-    workspaceSchemeManager.reload()
+
+    try {
+      eventPublisher.beginUpdate()
+      workspaceSchemeManager.reload()
+    }
+    finally {
+      eventPublisher.endUpdate()
+    }
 
     val order = ArrayList<String>()
     @Suppress("DEPRECATION")

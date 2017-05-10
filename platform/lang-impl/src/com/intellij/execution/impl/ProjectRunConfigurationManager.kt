@@ -22,6 +22,7 @@ import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashSet
@@ -33,17 +34,7 @@ internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAwa
       return
     }
 
-    val eventPublisher = createRunManagerEventPublisher(project)
-    eventPublisher.beginUpdate()
-    try {
-      RunManagerImpl.getInstanceImpl(project)
-      ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
-      // important, especially for AppCode ("hack" (projectOpened listener) in the OCWorkspaceRunConfigurationListener removed in favour of platform fix)
-      eventPublisher.runConfigurationSelected()
-    }
-    finally {
-      eventPublisher.endUpdate()
-    }
+    requestLoadWorkspaceAndProjectRunConfiguration(project)
 
     if (!Registry.`is`("runManager.use.schemeManager", false)) {
       return
@@ -54,6 +45,28 @@ internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAwa
     manager.projectSchemeManager = schemeManager
     schemeManager.loadSchemes()
     manager.requestSort()
+  }
+}
+
+private val isInitializedKey = Key.create<Boolean>("RunManagerInitialized")
+
+fun requestLoadWorkspaceAndProjectRunConfiguration(project: Project) {
+  if (isInitializedKey.isIn(project)) {
+    return
+  }
+
+  isInitializedKey.set(project, true)
+
+  val eventPublisher = createRunManagerEventPublisher(project)
+  eventPublisher.beginUpdate()
+  try {
+    RunManagerImpl.getInstanceImpl(project)
+    ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
+    // important, especially for AppCode ("hack" (projectOpened listener) in the OCWorkspaceRunConfigurationListener removed in favour of platform fix)
+    eventPublisher.runConfigurationSelected()
+  }
+  finally {
+    eventPublisher.endUpdate()
   }
 }
 
