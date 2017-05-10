@@ -64,7 +64,7 @@ public abstract class OutputLineSplitter {
           inMessageBlockPosition = 0;
         }
       } else {
-        inMessageBlockPosition = 0;
+        inMessageBlockPosition = (currentChar == TEAMCITY_SERVICE_MESSAGE_PREFIX.charAt(0) ? 1 : 0);
         justFlushed = false;
       }
     }

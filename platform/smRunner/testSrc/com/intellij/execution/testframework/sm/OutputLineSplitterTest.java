@@ -67,20 +67,21 @@ public class OutputLineSplitterTest extends PlatformTestCase {
    * When tc message is in the middle of line it should reported as separate line like if it has \n before it
    */
   public void testMessageInTheMiddleOfLine() throws Exception {
-    final String prefix = "......        ";
-    final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
-    final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
+    for(String prefix: new String[]{"...", "", "... ", "##", " ##", "##team##teamcity["}) {
+      final String testStarted = ServiceMessageBuilder.testStarted("myTest").toString() + "\n";
+      final String testEnded = ServiceMessageBuilder.testFinished("myTest").toString() + "\n";
 
-    mySplitter.process(prefix, ProcessOutputTypes.SYSTEM);
-    mySplitter.process(prefix + testStarted, ProcessOutputTypes.SYSTEM);
-    mySplitter.process(testEnded, ProcessOutputTypes.SYSTEM);
+      mySplitter.process(prefix, ProcessOutputTypes.SYSTEM);
+      mySplitter.process(prefix + testStarted, ProcessOutputTypes.SYSTEM);
+      mySplitter.process(testEnded, ProcessOutputTypes.SYSTEM);
 
-    mySplitter.flush();
+      mySplitter.flush();
 
-    final List<String> output = myOutput.get(ProcessOutputTypes.SYSTEM);
-    final String messagePrefix = ServiceMessage.SERVICE_MESSAGE_START;
-    Assert.assertThat(output, everyItem(either(startsWith(messagePrefix)).or(not(containsString(messagePrefix)))));
-    Assert.assertThat(output, hasItems(testStarted, testEnded));
+      final List<String> output = myOutput.get(ProcessOutputTypes.SYSTEM);
+      final String messagePrefix = ServiceMessage.SERVICE_MESSAGE_START;
+      Assert.assertThat(output, everyItem(either(startsWith(messagePrefix)).or(not(containsString(messagePrefix)))));
+      Assert.assertThat(output, hasItems(testStarted, testEnded));
+    }
   }
 
   public void testReadingSeveralStreams() throws Exception {
