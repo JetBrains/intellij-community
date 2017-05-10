@@ -385,7 +385,13 @@ public class NameUtil {
     if (!Character.isLetter(c)) {
       return false;
     }
-    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i);
+  }
+
+  private static boolean isHardCodedWordStart(String text, int i) {
+    return text.charAt(i) == 'l' &&
+           i < text.length() - 1 && text.charAt(i + 1) == 'n' &&
+           (text.length() == i + 2 || isWordStart(text, i + 2));
   }
 
   /**

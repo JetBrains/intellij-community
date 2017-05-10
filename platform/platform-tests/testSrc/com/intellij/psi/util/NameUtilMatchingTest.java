@@ -711,4 +711,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("GEN", "GetName", "GetExtendedName");
     assertPreference("*GEN", "GetName", "GetExtendedName");
   }
+
+  public void testPrintln() {
+    assertMatches("pl", "println");
+    assertMatches("pl", "printlnFoo");
+    assertDoesntMatch("pl", "printlnx");
+  }
+
 }
