@@ -1255,4 +1255,14 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "String", "StringBuffer", "StringBuilder");
   }
+
+  public void testStaticBuilder() { doTest(); }
+  public void testStaticBuilderWithArguments() { doTest(); }
+
+  public void testStaticBuilderWithGenerics() {
+    configureByTestName();
+    assertEquals("Map.builder().get(...)", LookupElementPresentation.renderElement(myItems[0]).getItemText());
+    myFixture.type('\t');
+    checkResultByTestName();
+  }
 }
