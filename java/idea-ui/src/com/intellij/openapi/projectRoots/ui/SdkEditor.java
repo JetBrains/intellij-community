@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,30 +39,26 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
 
 /**
- * @author: MYakovlev
+ * @author MYakovlev
  * @since Aug 15, 2002
  */
 public class SdkEditor implements Configurable, Place.Navigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.SdkEditor");
-  @NonNls private static final String SDK_TAB = "sdkTab";
+  private static final String SDK_TAB = "sdkTab";
 
   private Sdk mySdk;
   private final Map<OrderRootType, SdkPathEditor> myPathEditors = new HashMap<>();
@@ -144,44 +140,26 @@ public class SdkEditor implements Configurable, Place.Navigator {
       }
     }
 
-    myTabbedPane.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(final ChangeEvent e) {
-        myHistory.pushQueryPlace();
-      }
-    });
+    myTabbedPane.addChangeListener(e -> myHistory.pushQueryPlace());
 
     myHomeComponent = createHomeComponent();
     myHomeComponent.getTextField().setEditable(false);
-
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
-    final int leftInset = 10;
-    final int rightInset = 10;
-    myMainPanel.add(myHomeFieldLabel,
-                    new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE,
-                                           JBUI.insets(2, leftInset, 2, 2), 0, 0));
-    myMainPanel.add(myHomeComponent, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                                            GridBagConstraints.HORIZONTAL,
-                                                            JBUI.insets(2, 2, 2, rightInset), 0, 0));
+    myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(
+      0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 10, 2, 2), 0, 0));
+    myMainPanel.add(myHomeComponent, new GridBagConstraints(
+      1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, JBUI.insets(2, 2, 2, 10), 0, 0));
 
     myAdditionalDataPanel = new JPanel(new BorderLayout());
-    myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-                                                                  GridBagConstraints.BOTH,
-                                                                  JBUI.insets(2, leftInset, 0, rightInset), 0, 0));
+    myMainPanel.add(myAdditionalDataPanel, new GridBagConstraints(
+      0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insets(2, 10, 0, 10), 0, 0));
 
-    myMainPanel.add(myTabbedPane.getComponent(),
-                    new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER,
-                                           GridBagConstraints.BOTH,
-                                           JBUI.insetsTop(2), 0, 0));
+    myMainPanel.add(myTabbedPane.getComponent(), new GridBagConstraints(
+      0, GridBagConstraints.RELATIVE, 2, 1, 1.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.insetsTop(2), 0, 0));
   }
 
   protected TextFieldWithBrowseButton createHomeComponent() {
-    return new TextFieldWithBrowseButton(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        doSelectHomePath();
-      }
-    });
+    return new TextFieldWithBrowseButton(e -> doSelectHomePath());
   }
 
   protected boolean showTabForType(@NotNull OrderRootType type) {
@@ -189,10 +167,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   private String getHomeFieldLabelValue() {
-    if (mySdk != null) {
-      return ((SdkType)mySdk.getSdkType()).getHomeFieldLabel();
-    }
-    return ProjectBundle.message("sdk.configure.general.home.path");
+    return mySdk != null ? ((SdkType)mySdk.getSdkType()).getHomeFieldLabel() : ProjectBundle.message("sdk.configure.general.home.path");
   }
 
   @Override
@@ -220,7 +195,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       myInitialName = mySdk.getName();
       myInitialPath = mySdk.getHomePath();
       final SdkModificator sdkModificator = mySdk.getSdkModificator();
-      sdkModificator.setHomePath(getHomeValue().replace(File.separatorChar, '/'));
+      sdkModificator.setHomePath(FileUtil.toSystemDependentName(getHomeValue()));
       for (SdkPathEditor pathEditor : myPathEditors.values()) {
         pathEditor.apply(sdkModificator);
       }
@@ -247,7 +222,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
         myPathEditors.get(type).reset(sdkModificator);
       }
       sdkModificator.commitChanges();
-      setHomePathValue(mySdk.getHomePath().replace('/', File.separatorChar));
+      setHomePathValue(FileUtil.toSystemDependentName(ObjectUtils.notNull(mySdk.getHomePath(), "")));
     }
     myVersionString = null;
     myHomeFieldLabel.setText(getHomeFieldLabelValue());
@@ -463,9 +438,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     @Override
     public VirtualFile[] getRoots(OrderRootType rootType) {
       final PathEditor editor = myPathEditors.get(rootType);
-      if (editor == null) {
-        throw new IllegalStateException("no editor for root type " + rootType);
-      }
+      if (editor == null) throw new IllegalStateException("no editor for root type " + rootType);
       return editor.getRoots();
     }
 
@@ -492,8 +465,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
 
     @Override
-    public void commitChanges() {
-    }
+    public void commitChanges() { }
 
     @Override
     public boolean isWritable() {
@@ -514,6 +486,5 @@ public class SdkEditor implements Configurable, Place.Navigator {
   }
 
   @Override
-  public void setHistory(final History history) {
-  }
+  public void setHistory(final History history) { }
 }
