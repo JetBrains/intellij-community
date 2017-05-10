@@ -25,7 +25,6 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
   private final SelectionCalculator myCalculator;
@@ -62,22 +61,12 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
 
   @Override
   protected boolean isLeftContentAvailable(RevisionProcessingProgress p) {
-    try {
-      return myCalculator.canCalculateFor(myLeftRevision, p);
-    }
-    catch (FilesTooBigForDiffException e) {
-      return false;
-    }
+    return myCalculator.canCalculateFor(myLeftRevision, p);
   }
 
   @Override
   protected boolean isRightContentAvailable(RevisionProcessingProgress p) {
-    try {
-      return myCalculator.canCalculateFor(myRightRevision, p);
-    }
-    catch (FilesTooBigForDiffException e) {
-      return false;
-    }
+    return myCalculator.canCalculateFor(myRightRevision, p);
   }
 
   @Override
@@ -105,11 +94,6 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   private String getContentOf(Revision r, RevisionProcessingProgress p) {
-    try {
-      return myCalculator.getSelectionFor(r, p).getBlockContent();
-    }
-    catch (FilesTooBigForDiffException e) {
-      return "";
-    }
+    return myCalculator.getSelectionFor(r, p).getBlockContent();
   }
 }
