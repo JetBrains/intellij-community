@@ -17,6 +17,7 @@ package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hints.*;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -53,6 +54,7 @@ import static com.intellij.codeInsight.hints.HintUtilsKt.getBlackListInvalidLine
 import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
+  private static String LAST_EDITED_LANGUAGE_ID_KEY = "param.hints.settings.last.edited.language";
 
   private JPanel myConfigurable;
   private ComboBox<Language> myCurrentLanguageCombo;
@@ -135,7 +137,15 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     });
     
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
+    saveLastEditedLanguage();
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
+  }
+
+  private void saveLastEditedLanguage() {
+    Arrays.stream(myPanel.getComponents())
+      .filter(Component::isVisible)
+      .findFirst()
+      .ifPresent(component -> saveLastEditedLanguage(component.getName()));
   }
 
   private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {
@@ -163,7 +173,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     myIsValidPatterns = ContainerUtil.newHashMap();
 
     List<Language> allLanguages = getBaseLanguagesWithProviders();
-    Language selected = allLanguages.get(0);
+    Language lastEditedLanguage = lastEditedLanguage();
+
+    Language selected = lastEditedLanguage != null ? lastEditedLanguage : allLanguages.get(0);
 
     initLanguageCombo(selected, allLanguages);
 
@@ -172,10 +184,22 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
     allLanguages.forEach((language -> {
       JPanel panel = createLanguagePanel(language);
-      myPanel.add(panel, language.getDisplayName());
+      panel.setName(language.getID());
+      myPanel.add(panel, language.getID());
     }));
 
-    myCardLayout.show(myPanel, selected.getDisplayName());
+    myCardLayout.show(myPanel, selected.getID());
+  }
+
+  @Nullable
+  private static Language lastEditedLanguage() {
+    String id = PropertiesComponent.getInstance().getValue(LAST_EDITED_LANGUAGE_ID_KEY);
+    if (id == null) return null;
+    return Language.findLanguageByID(id);
+  }
+
+  private static void saveLastEditedLanguage(@NotNull String id) {
+    PropertiesComponent.getInstance().setValue(LAST_EDITED_LANGUAGE_ID_KEY, id);
   }
 
   @NotNull
@@ -285,7 +309,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   private void showLanguagePanel(@NotNull Language language) {
-    myCardLayout.show(myPanel, language.getDisplayName());
+    myCardLayout.show(myPanel, language.getID());
   }
   
   private static List<Option> getOptions(Language language) {
