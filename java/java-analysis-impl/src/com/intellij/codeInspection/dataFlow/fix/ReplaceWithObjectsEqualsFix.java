@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInspection.dataFlow;
+package com.intellij.codeInspection.dataFlow.fix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
+public class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   private final String myQualifierText;
   private final String myReplacementText;
 
@@ -67,7 +67,8 @@ class ReplaceWithObjectsEqualsFix implements LocalQuickFix {
   }
 
   @Nullable
-  static ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call, @NotNull PsiReferenceExpression methodExpression) {
+  public static ReplaceWithObjectsEqualsFix createFix(@NotNull PsiMethodCallExpression call,
+                                                      @NotNull PsiReferenceExpression methodExpression) {
     if (!"equals".equals(methodExpression.getReferenceName()) ||
         call.getArgumentList().getExpressions().length != 1 ||
         !PsiUtil.getLanguageLevel(call).isAtLeast(LanguageLevel.JDK_1_7)) {

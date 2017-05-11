@@ -24,6 +24,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
+import com.intellij.codeInspection.dataFlow.fix.SimplifyToAssignmentFix;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
@@ -42,7 +46,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -532,38 +535,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         continue;
       }
 
-      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'", new LocalQuickFix() {
-        @NotNull
-        @Override
-        public String getName() {
-          return "Replace with '" + presentableName + "'";
-        }
-
-        @NotNull
-        @Override
-        public String getFamilyName() {
-          return "Replace with constant value";
-        }
-
-        @Override
-        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          PsiElement problemElement = descriptor.getPsiElement();
-          if (problemElement == null) return;
-
-          PsiMethodCallExpression call = problemElement.getParent() instanceof PsiExpressionList &&
-                                         problemElement.getParent().getParent() instanceof PsiMethodCallExpression ?
-                                         (PsiMethodCallExpression)problemElement.getParent().getParent() :
-                                         null;
-          PsiMethod targetMethod = call == null ? null : call.resolveMethod();
-
-          JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-          problemElement.replace(facade.getElementFactory().createExpressionFromText(exprText, null));
-
-          if (targetMethod != null) {
-            ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, call);
-          }
-        }
-      });
+      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
+                             new ReplaceWithConstantValueFix(presentableName, exprText));
     }
   }
 
@@ -933,36 +906,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   @NotNull
   protected static LocalQuickFix createSimplifyToAssignmentFix() {
-    return new LocalQuickFix() {
-      @NotNull
-      @Override
-      public String getName() {
-        return InspectionsBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement psiElement = descriptor.getPsiElement();
-        if (psiElement == null) return;
-
-        final PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(psiElement, PsiAssignmentExpression.class);
-        if (assignmentExpression == null) {
-          return;
-        }
-
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final String lExpressionText = assignmentExpression.getLExpression().getText();
-        final PsiExpression rExpression = assignmentExpression.getRExpression();
-        final String rExpressionText = rExpression != null ? rExpression.getText() : "";
-        assignmentExpression.replace(factory.createExpressionFromText(lExpressionText + " = " + rExpressionText, psiElement));
-      }
-    };
+    return new SimplifyToAssignmentFix();
   }
 
   private static SimplifyBooleanExpressionFix createIntention(PsiElement element, boolean value) {
@@ -980,24 +924,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       return null;
     }
     return fix;
-  }
-
-  private static class RedundantInstanceofFix implements LocalQuickFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiInstanceOfExpression) {
-        PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
-          createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null", psiElement.getParent());
-        psiElement.replace(compareToNull);
-      }
-    }
   }
 
 
