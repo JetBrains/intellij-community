@@ -22,7 +22,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -35,6 +35,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -168,7 +169,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
       return !newSupers.equals(m.getSecond());
     }).map(m -> m.getFirst());
 
-    List<PsiMethod> toDelete = getOverridenMethodsToDelete(memberInfos, newSuperClass.getName());
+    List<PsiMethod> toDelete = getOverridenMethodsToDelete(memberInfos, newSuperClass.getName(), aClass.getProject());
     WriteAction.run(() -> {
       for (PsiMethod method : toDelete) {
         method.delete();
@@ -182,16 +183,29 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   }
 
   @NotNull
-  private static List<PsiMethod> getOverridenMethodsToDelete(Stream<PsiMethod> candidates, String newClassName) {
-    DialogBuilder dlg = new DialogBuilder();
-    MemberSelectionPanel panel = new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
-                                                          candidates.map(m -> {
-      MemberInfo info = new MemberInfo(m);
-      info.setChecked(true);
-      return info;
-    }).collect(Collectors.toList()), null);
-    dlg.setCenterPanel(panel);
-    dlg.setTitle("Choose Members");
+  private static List<PsiMethod> getOverridenMethodsToDelete(Stream<PsiMethod> candidates,
+                                                             String newClassName,
+                                                             Project project) {
+    MemberSelectionPanel panel =
+      new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
+                               candidates.map(m -> {
+                                 MemberInfo info = new MemberInfo(m);
+                                 info.setChecked(true);
+                                 return info;
+                               }).collect(Collectors.toList()), null);
+    DialogWrapper dlg = new DialogWrapper(project, false) {
+
+      {
+        setOKButtonText("Remove");
+        setTitle("Choose Members");
+      }
+      @NotNull
+      @Override
+      protected JComponent createCenterPanel() {
+
+        return panel;
+      }
+    };
     return dlg.showAndGet()
            ? panel.getTable().getSelectedMemberInfos().stream().map(info -> (PsiMethod)info.getMember()).collect(Collectors.toList())
            : Collections.emptyList();
