@@ -39,7 +39,6 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -643,27 +642,20 @@ class RunConfigurable extends BaseConfigurable {
     try {
       updateActiveConfigurationFromSelected();
 
-      List<ConfigurationType> configurationTypes = new ArrayList<>();
+      Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<>(manager.getAllSettings());
+      RunnerAndConfigurationSettings selectedSettings = getSelectedSettings();
       for (int i = 0; i < myRoot.getChildCount(); i++) {
-        Object userObject = ((DefaultMutableTreeNode)myRoot.getChildAt(i)).getUserObject();
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
+        Object userObject = node.getUserObject();
         if (userObject instanceof ConfigurationType) {
-          configurationTypes.add((ConfigurationType)userObject);
+          applyByType(node, (ConfigurationType)userObject, selectedSettings, toDeleteSettings);
         }
       }
+      manager.removeConfigurations(toDeleteSettings);
 
-      for (ConfigurationType type : manager.getConfigurationFactories()) {
-        if (!configurationTypes.contains(type)) {
-          configurationTypes.add(type);
-        }
-      }
-
-      for (ConfigurationType configurationType : configurationTypes) {
-        applyByType(configurationType);
-      }
-
-      int i = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, StringUtil.parseInt(myRecentsLimit.getText(), 0));
-      if (manager.getConfig().getRecentsLimit() != i) {
-        manager.getConfig().setRecentsLimit(i);
+      int recentLimit = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, StringUtil.parseInt(myRecentsLimit.getText(), 0));
+      if (manager.getConfig().getRecentsLimit() != recentLimit) {
+        manager.getConfig().setRecentsLimit(recentLimit);
         manager.checkRecentsLimit();
       }
       manager.getConfig().setRestartRequiresConfirmation(myConfirmation.isSelected());
@@ -694,69 +686,59 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private void applyByType(@NotNull ConfigurationType type) throws ConfigurationException {
-    RunnerAndConfigurationSettings selectedSettings = getSelectedSettings();
+  private void applyByType(@NotNull DefaultMutableTreeNode typeNode, @NotNull ConfigurationType type, @Nullable RunnerAndConfigurationSettings selectedSettings, @NotNull Set<RunnerAndConfigurationSettings> toDeleteSettings) throws ConfigurationException {
     int indexToMove = -1;
 
-    DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
-    final RunManagerImpl manager = getRunManager();
     final List<RunConfigurationBean> stableConfigurations = new ArrayList<>();
-    if (typeNode != null) {
-      final Set<String> names = new THashSet<>();
-      List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
-      collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
-      for (DefaultMutableTreeNode node : configurationNodes) {
-        final Object userObject = node.getUserObject();
-        RunConfigurationBean configurationBean = null;
-        RunnerAndConfigurationSettings settings = null;
-        if (userObject instanceof SingleConfigurationConfigurable) {
-          final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-          settings = (RunnerAndConfigurationSettings)configurable.getSettings();
-          applyConfiguration(typeNode, configurable);
-          configurationBean = new RunConfigurationBean(configurable);
-        }
-        else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-          settings = (RunnerAndConfigurationSettings)userObject;
-          configurationBean = new RunConfigurationBean(settings, settings.isShared());
+    final Set<String> names = new THashSet<>();
+    List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
+    collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
+    for (DefaultMutableTreeNode node : configurationNodes) {
+      final Object userObject = node.getUserObject();
+      RunConfigurationBean configurationBean = null;
+      RunnerAndConfigurationSettings settings = null;
+      if (userObject instanceof SingleConfigurationConfigurable) {
+        final SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+        settings = (RunnerAndConfigurationSettings)configurable.getSettings();
+        applyConfiguration(typeNode, configurable);
+        configurationBean = new RunConfigurationBean(configurable);
+      }
+      else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
+        settings = (RunnerAndConfigurationSettings)userObject;
+        configurationBean = new RunConfigurationBean(settings, settings.isShared());
 
+      }
+      if (configurationBean != null) {
+        final SingleConfigurationConfigurable configurable = configurationBean.getConfigurable();
+        final String nameText = configurable != null ? configurable.getNameText() : configurationBean.getSettings().getName();
+        if (!names.add(nameText)) {
+          TreeUtil.selectNode(myTree, node);
+          throw new ConfigurationException(type.getDisplayName() + " with name \'" + nameText + "\' already exists");
         }
-        if (configurationBean != null) {
-          final SingleConfigurationConfigurable configurable = configurationBean.getConfigurable();
-          final String nameText = configurable != null ? configurable.getNameText() : configurationBean.getSettings().getName();
-          if (!names.add(nameText)) {
-            TreeUtil.selectNode(myTree, node);
-            throw new ConfigurationException(type.getDisplayName() + " with name \'" + nameText + "\' already exists");
-          }
-          stableConfigurations.add(configurationBean);
-          if (settings == selectedSettings) {
-            indexToMove = stableConfigurations.size()-1;
-          }
+        stableConfigurations.add(configurationBean);
+        if (settings == selectedSettings) {
+          indexToMove = stableConfigurations.size()-1;
         }
       }
-      List<DefaultMutableTreeNode> folderNodes = new ArrayList<>();
-      collectNodesRecursively(typeNode, folderNodes, FOLDER);
-      names.clear();
-      for (DefaultMutableTreeNode node : folderNodes) {
-        String folderName = (String)node.getUserObject();
-        if (folderName.isEmpty()) {
-          TreeUtil.selectNode(myTree, node);
-          throw new ConfigurationException("Folder name shouldn't be empty");
-        }
-        if (!names.add(folderName)) {
-          TreeUtil.selectNode(myTree, node);
-          throw new ConfigurationException("Folders name \'" + folderName + "\' is duplicated");
-        }
+    }
+    List<DefaultMutableTreeNode> folderNodes = new ArrayList<>();
+    collectNodesRecursively(typeNode, folderNodes, FOLDER);
+    names.clear();
+    for (DefaultMutableTreeNode node : folderNodes) {
+      String folderName = (String)node.getUserObject();
+      if (folderName.isEmpty()) {
+        TreeUtil.selectNode(myTree, node);
+        throw new ConfigurationException("Folder name shouldn't be empty");
+      }
+      if (!names.add(folderName)) {
+        TreeUtil.selectNode(myTree, node);
+        throw new ConfigurationException("Folders name \'" + folderName + "\' is duplicated");
       }
     }
     // try to apply all
     for (RunConfigurationBean bean : stableConfigurations) {
       applyConfiguration(typeNode, bean.getConfigurable());
-    }
-
-    // if apply succeeded, update the list of configurations in RunManager
-    Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<>();
-    for (RunConfiguration each : manager.getConfigurationsList(type)) {
-      ContainerUtil.addIfNotNull(toDeleteSettings, manager.getSettings(each));
+      toDeleteSettings.remove(bean.getSettings());
     }
 
     //Just saved as 'stable' configuration shouldn't stay between temporary ones (here we order model to save)
@@ -767,11 +749,6 @@ class RunConfigurable extends BaseConfigurable {
     if (shift != 0 && indexToMove != -1) {
       stableConfigurations.add(indexToMove-shift, stableConfigurations.remove(indexToMove));
     }
-    for (RunConfigurationBean each : stableConfigurations) {
-      toDeleteSettings.remove(each.getSettings());
-    }
-
-    manager.removeConfigurations(toDeleteSettings);
   }
 
   static void collectNodesRecursively(DefaultMutableTreeNode parentNode, List<DefaultMutableTreeNode> nodes, NodeKind... allowed) {
@@ -1361,8 +1338,6 @@ class RunConfigurable extends BaseConfigurable {
    * Just saved as 'stable' configuration shouldn't stay between temporary ones (here we order nodes in JTree only)
    * @return shift (positive) for move configuration "up" to other stable configurations. Zero means "there is nothing to change"
    */
-
-
   private int adjustOrder() {
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null)
