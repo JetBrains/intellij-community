@@ -19,7 +19,6 @@ public class EduStartCourseAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     EduCoursesPanel panel = new EduCoursesPanel();
     DialogBuilder dialogBuilder = new DialogBuilder().title("Select Course").centerPanel(panel);
-    dialogBuilder.removeAllActions();
     dialogBuilder.addOkAction().setText("Join");
     panel.addCourseValidationListener(new EduCoursesPanel.CourseValidationListener() {
       @Override
