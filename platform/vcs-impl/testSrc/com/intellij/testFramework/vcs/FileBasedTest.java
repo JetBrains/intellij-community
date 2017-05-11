@@ -23,12 +23,6 @@ import com.intellij.util.ui.UIUtil;
 import org.junit.After;
 import org.junit.Before;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/19/12
- * Time: 8:25 PM
- */
 public abstract class FileBasedTest {
   protected LocalFileSystem myLocalFileSystem;
   protected IdeaProjectTestFixture myProjectFixture;

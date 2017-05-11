@@ -74,9 +74,6 @@ import java.util.Vector;
 
 import static java.util.Locale.ENGLISH;
 
-/**
- * User: spLeaner
- */
 public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   private UiInspector myInspector;

@@ -23,9 +23,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 
-/**
-* User: anna
-*/
 public abstract class TextFieldAction extends LinkLabel implements LinkListener {
   public TextFieldAction() {
     super("", null);

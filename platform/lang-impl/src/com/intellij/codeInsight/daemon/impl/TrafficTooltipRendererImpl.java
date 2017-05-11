@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.EventObject;
 
-/**
- * User: cdr
- */
 class TrafficTooltipRendererImpl extends ComparableObject.Impl implements TrafficTooltipRenderer {
   private TrafficProgressPanel myPanel;
   private final Runnable onHide;

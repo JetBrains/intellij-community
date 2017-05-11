@@ -17,12 +17,6 @@ package com.intellij.openapi.vcs;
 
 import java.util.EventListener;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 3:47 PM
- */
 public interface ProcessEventListener extends EventListener {
   /**
    * This method is invoked when git process is terminated

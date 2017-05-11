@@ -33,9 +33,6 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Map;
 
-/**
- * Created by Max Medvedev on 9/8/13
- */
 public class GroovyShellCodeFragment extends GroovyCodeFragment {
 
   private final Map<String, PsiVariable> myVariables = ContainerUtil.newHashMap();

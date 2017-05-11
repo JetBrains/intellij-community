@@ -37,10 +37,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/7/11
- */
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static final String[] EXTENSION_TAG_NAMES = new String[]{

@@ -21,11 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 28.04.11
-*/
 public class XPathTypedHandler extends TypedHandlerDelegate {
   @Override
   public Result checkAutoPopup(char charTyped, Project project, Editor editor, PsiFile file) {

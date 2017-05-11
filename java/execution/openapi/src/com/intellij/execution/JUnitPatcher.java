@@ -21,10 +21,6 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: Mar 4, 2005
- */
 public abstract class JUnitPatcher implements PluginAware {
   private PluginDescriptor myPlugin;
 

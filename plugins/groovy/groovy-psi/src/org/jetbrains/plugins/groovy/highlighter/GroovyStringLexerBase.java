@@ -24,9 +24,6 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by Max Medvedev on 10/22/13
- */
 public abstract class GroovyStringLexerBase extends LexerBase {
   private static final Logger LOG = Logger.getInstance(GroovyStringLexerBase.class);
   private final IElementType myContentElementType;

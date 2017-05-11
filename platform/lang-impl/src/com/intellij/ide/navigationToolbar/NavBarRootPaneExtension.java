@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Nov-2007
- */
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;

@@ -38,9 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- */
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance(InferenceSession.class);
   private static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");

@@ -12,9 +12,6 @@ import com.intellij.util.Function;
 
 import java.util.List;
 
-/**
- * User: anna
- */
 public class LambdaExpressionCompatibilityConstraint implements ConstraintFormula {
   private static final Logger LOG = Logger.getInstance(LambdaExpressionCompatibilityConstraint.class);
   private final PsiLambdaExpression myExpression;

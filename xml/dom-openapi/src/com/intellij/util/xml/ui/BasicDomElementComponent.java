@@ -38,10 +38,6 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- * Date: Nov 17, 2005
- */
 public abstract class BasicDomElementComponent<T extends DomElement> extends AbstractDomElementComponent<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.ui.editors.BasicDomElementComponent");
   private final Map<JComponent, DomUIControl> myBoundComponents = new HashMap<>();

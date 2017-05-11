@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 04-Mar-2008
- */
 package com.theoryinpractice.testng.intention;
 
 import com.intellij.codeInsight.intention.IntentionAction;

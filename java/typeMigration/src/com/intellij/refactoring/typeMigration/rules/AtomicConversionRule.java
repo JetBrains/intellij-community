@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 18-Aug-2009
- */
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.diagnostic.Logger;

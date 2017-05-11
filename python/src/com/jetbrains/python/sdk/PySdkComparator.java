@@ -18,9 +18,6 @@ package com.jetbrains.python.sdk;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.projectRoots.Sdk;
 
-/**
- * Created by kirylch on 3/29/2017.
- */
 public interface PySdkComparator {
   ExtensionPointName<PySdkComparator> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkComparator");
 

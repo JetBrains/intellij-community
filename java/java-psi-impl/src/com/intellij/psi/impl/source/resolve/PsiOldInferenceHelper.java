@@ -30,9 +30,6 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class PsiOldInferenceHelper implements PsiInferenceHelper {
   private static final Logger LOG = Logger.getInstance(PsiOldInferenceHelper.class);
     public static final Pair<PsiType,ConstraintType> RAW_INFERENCE = new Pair<>(null, ConstraintType.EQUALS);

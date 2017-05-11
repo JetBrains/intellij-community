@@ -35,9 +35,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 
-/**
- * User: cdr
- */
 public class LeakHunter {
   @TestOnly
   public static void checkProjectLeak() throws Exception {

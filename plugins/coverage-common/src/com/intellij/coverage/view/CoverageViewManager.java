@@ -35,10 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 @State(
     name = "CoverageViewManager",
     storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}

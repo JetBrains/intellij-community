@@ -22,10 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/27/11
- */
 public interface BatchQuickFix<D extends CommonProblemDescriptor> {
   /**
    * Called to apply the cumulative fix. Is invoked in WriteAction

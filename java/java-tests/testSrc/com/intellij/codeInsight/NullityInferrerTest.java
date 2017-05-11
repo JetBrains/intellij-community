@@ -23,10 +23,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/**
- * User: anna
- * Date: Sep 2, 2010
- */
 public class NullityInferrerTest extends CodeInsightTestCase {
   @Override
   protected String getTestDataPath() {

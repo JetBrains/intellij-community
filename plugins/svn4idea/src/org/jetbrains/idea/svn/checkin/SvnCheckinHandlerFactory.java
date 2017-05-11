@@ -46,12 +46,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/16/12
- * Time: 6:51 PM
- */
 public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   public SvnCheckinHandlerFactory() {
     super(SvnVcs.getKey());

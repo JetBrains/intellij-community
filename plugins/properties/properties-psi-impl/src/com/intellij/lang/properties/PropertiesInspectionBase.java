@@ -18,9 +18,6 @@ package com.intellij.lang.properties;
 import com.intellij.codeInspection.LocalInspectionTool;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 public abstract class PropertiesInspectionBase extends LocalInspectionTool {
   @Override
   @NotNull

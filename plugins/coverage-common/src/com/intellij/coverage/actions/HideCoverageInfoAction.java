@@ -6,10 +6,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 
-/**
-* User: anna
-* Date: 2/14/12
-*/
 public class HideCoverageInfoAction extends AnAction {
   public HideCoverageInfoAction() {
     super("&Hide Coverage Data", "Hide coverage data", AllIcons.Actions.Cancel);

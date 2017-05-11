@@ -24,10 +24,6 @@ import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 3/16/11
- */
 public class InplaceIntroduceFieldTest extends AbstractJavaInplaceIntroduceTest {
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceField/";

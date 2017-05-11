@@ -20,9 +20,6 @@ import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public interface PsiInferenceHelper {
   /**
    * @return {@link PsiType#NULL} iff no type could be inferred

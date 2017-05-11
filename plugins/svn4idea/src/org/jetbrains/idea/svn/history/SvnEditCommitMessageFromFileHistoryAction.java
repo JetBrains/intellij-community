@@ -29,12 +29,6 @@ import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/25/12
- * Time: 10:22 AM
- */
 public class SvnEditCommitMessageFromFileHistoryAction extends AnAction {
   public SvnEditCommitMessageFromFileHistoryAction() {
     super("Edit Revision Comment", "Edit revision comment. Previous message is rewritten.", AllIcons.Actions.Edit);

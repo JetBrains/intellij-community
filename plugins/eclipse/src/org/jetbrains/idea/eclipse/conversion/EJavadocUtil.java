@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Mar-2010
- */
 package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.module.Module;

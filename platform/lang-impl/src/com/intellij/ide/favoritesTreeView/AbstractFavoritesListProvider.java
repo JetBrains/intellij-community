@@ -28,9 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public abstract class AbstractFavoritesListProvider<T> implements FavoritesListProvider {
   public static final int BOOKMARKS_WEIGHT = 100;
   public static final int BREAKPOINTS_WEIGHT = 200;

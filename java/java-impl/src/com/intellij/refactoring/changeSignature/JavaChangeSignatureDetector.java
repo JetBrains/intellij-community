@@ -32,10 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Sep 6, 2010
- */
 public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetector<DetectedJavaChangeInfo> {
   private static final Logger LOG = Logger.getInstance(JavaChangeSignatureDetector.class);
 

@@ -41,10 +41,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 13.11.2007
- */
 public class IntentionUtils {
 
   private static final Logger LOG = Logger.getInstance(IntentionUtils.class);

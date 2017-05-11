@@ -32,9 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class CheckedExceptionCompatibilityConstraint extends InputOutputConstraintFormula {
   private static final Logger LOG = Logger.getInstance(CheckedExceptionCompatibilityConstraint.class);
   private final PsiExpression myExpression;

@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomTemplateRunnerImpl extends DomTemplateRunner {
   private final Project myProject;
 

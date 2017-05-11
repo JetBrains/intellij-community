@@ -21,11 +21,6 @@ import org.intellij.lang.xpath.xslt.psi.XsltTemplate;
 import org.intellij.lang.xpath.xslt.validation.DeclarationChecker;
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.01.2008
-*/
 public class XsltDeclarationInspection extends XsltInspection {
     private XsltElementFactory myXsltElementFactory;
     private NamesValidator myNamesValidator;

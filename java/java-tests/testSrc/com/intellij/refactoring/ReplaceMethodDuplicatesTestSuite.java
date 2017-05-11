@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 11-Jun-2009
- */
 package com.intellij.refactoring;
 
 import junit.framework.Test;

@@ -14,11 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Sep 20, 2002
- */
 package com.intellij.psi.controlFlow;
 
 import com.intellij.util.containers.IntArrayList;

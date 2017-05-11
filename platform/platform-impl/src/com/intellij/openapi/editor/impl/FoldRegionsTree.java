@@ -27,9 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
-* User: cdr
-*/
 abstract class FoldRegionsTree {
   private static final Key<Boolean> VISIBLE = Key.create("visible.fold.region");
   

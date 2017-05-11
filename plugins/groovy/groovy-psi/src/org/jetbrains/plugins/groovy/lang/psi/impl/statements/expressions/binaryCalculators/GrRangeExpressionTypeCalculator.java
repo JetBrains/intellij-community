@@ -20,9 +20,6 @@ import com.intellij.psi.PsiType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 
-/**
-* Created by Max Medvedev on 12/20/13
-*/
 public class GrRangeExpressionTypeCalculator extends GrBinaryExpressionTypeCalculator {
   public static final GrBinaryExpressionTypeCalculator INSTANCE = new GrRangeExpressionTypeCalculator();
 

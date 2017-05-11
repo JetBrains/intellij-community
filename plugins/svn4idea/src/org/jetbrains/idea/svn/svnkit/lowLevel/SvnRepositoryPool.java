@@ -20,12 +20,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 3:18 PM
- */
 public interface SvnRepositoryPool extends Disposable {
   SVNRepository getRepo(SVNURL url, boolean mayReuse) throws SVNException;
   void returnRepo(SVNRepository repo);

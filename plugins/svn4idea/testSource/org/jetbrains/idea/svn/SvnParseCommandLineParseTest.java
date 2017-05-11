@@ -42,12 +42,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/9/12
- * Time: 7:03 PM
- */
 public class SvnParseCommandLineParseTest extends TestCase {
 
   public static final String LINUX_ROOT = "/c7181320/";

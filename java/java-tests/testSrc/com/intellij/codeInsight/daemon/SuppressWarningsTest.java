@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 03-Sep-2007
- */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;

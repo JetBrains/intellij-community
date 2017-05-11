@@ -35,10 +35,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 2/27/11
- */
 public abstract class IntroduceParameterSettingsUI {
   protected final boolean myIsInvokedOnDeclaration;
   protected final boolean myHasInitializer;

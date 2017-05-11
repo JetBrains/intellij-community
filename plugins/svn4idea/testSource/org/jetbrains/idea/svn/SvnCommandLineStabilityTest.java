@@ -27,12 +27,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/19/13
- * Time: 11:45 AM
- */
 // TODO: Rather strange test - probably it should be removed
 public class SvnCommandLineStabilityTest extends Svn17TestCase {
 

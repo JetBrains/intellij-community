@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-Apr-2010
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.CantRunException;

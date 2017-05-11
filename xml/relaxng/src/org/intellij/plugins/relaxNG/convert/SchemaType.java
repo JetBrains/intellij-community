@@ -16,11 +16,6 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 17.11.2007
- */
 public enum SchemaType {
   RNG, RNC, DTD,
   XSD, // output only

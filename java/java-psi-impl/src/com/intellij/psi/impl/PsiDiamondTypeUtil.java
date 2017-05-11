@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: anna
- */
 public class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
 

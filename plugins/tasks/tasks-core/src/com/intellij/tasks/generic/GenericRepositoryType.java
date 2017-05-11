@@ -33,10 +33,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Evgeny.Zakrevsky
- * Date: 10/4/12
- */
 public class GenericRepositoryType extends BaseRepositoryType<GenericRepository> {
 
   @NotNull

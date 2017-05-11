@@ -32,10 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: anna
- * Date: 02-Jun-2006
- */
 public class LibraryConfigurable extends ProjectStructureElementConfigurable<Library> {
   private LibraryRootsComponent myLibraryEditorComponent;
   private final Library myLibrary;

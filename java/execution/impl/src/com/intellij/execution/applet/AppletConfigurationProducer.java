@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 13-May-2010
- */
 package com.intellij.execution.applet;
 
 import com.intellij.execution.JavaExecutionUtil;

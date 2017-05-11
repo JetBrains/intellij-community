@@ -36,10 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 12/4/11
- */
 public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
   private static final String BASE_PATH = "/refactoring/renameInplace/";
 

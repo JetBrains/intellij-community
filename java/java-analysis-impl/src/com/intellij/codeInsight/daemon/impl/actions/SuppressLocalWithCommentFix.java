@@ -23,9 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class SuppressLocalWithCommentFix extends SuppressByJavaCommentFix {
   public SuppressLocalWithCommentFix(@NotNull HighlightDisplayKey key) {
     super(key);

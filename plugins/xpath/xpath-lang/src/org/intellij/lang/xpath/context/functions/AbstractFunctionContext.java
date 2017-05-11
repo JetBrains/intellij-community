@@ -27,11 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.01.11
-*/
 public abstract class AbstractFunctionContext implements FunctionContext {
   private static final Map<ContextType, FunctionContext> ourInstances = new HashMap<>();
 

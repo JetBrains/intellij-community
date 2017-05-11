@@ -34,11 +34,6 @@ import org.intellij.plugins.relaxNG.references.FileReferenceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.08.2007
- */
 abstract class RncFileReferenceImpl extends RncElementImpl implements RncFileReference {
   public RncFileReferenceImpl(ASTNode node) {
     super(node);

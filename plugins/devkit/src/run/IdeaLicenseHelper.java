@@ -23,10 +23,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * User: anna
- * Date: Dec 3, 2004
- */
 public class IdeaLicenseHelper {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.devkit.run.IdeaLicenseHelper");
 

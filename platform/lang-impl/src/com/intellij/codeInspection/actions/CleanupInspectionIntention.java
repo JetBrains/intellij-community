@@ -44,10 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 21-Feb-2006
- */
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
   private final static Logger LOG = Logger.getInstance(CleanupInspectionIntention.class);
 

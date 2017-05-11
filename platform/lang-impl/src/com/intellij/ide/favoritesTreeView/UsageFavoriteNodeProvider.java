@@ -43,12 +43,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/6/12
- * Time: 6:51 PM
- */
 public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
   private final static Map<String, TreeSet<WorkingSetSerializable>> ourSerializables = new HashMap<>();
   private final static Comparator<VirtualFile> VIRTUAL_FILE_COMPARATOR = (o1, o2) -> o1.getPath().compareTo(o2.getPath());

@@ -52,9 +52,6 @@ import java.util.Objects;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus.UNKNOWN;
 
-/**
- * User: anna
- */
 public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(StreamApiMigrationInspection.class);
 

@@ -18,9 +18,6 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConstructorCall;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public abstract class ConstructorCallInfoBase<T extends GrConstructorCall> extends CallInfoBase<T> implements ConstructorCallInfo<T> {
   public ConstructorCallInfoBase(T call) {
     super(call);

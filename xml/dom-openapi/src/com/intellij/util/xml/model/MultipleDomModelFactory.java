@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: Sergey.Vasiliev
- */
 public interface MultipleDomModelFactory<Scope extends UserDataHolder, T extends DomElement, M extends DomModel<T>> {
   @NotNull
   List<M> getAllModels(@NotNull Scope scope);

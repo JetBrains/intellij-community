@@ -22,10 +22,6 @@ import com.intellij.refactoring.IntroduceVariableTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-/**
- * User: anna
- * Date: 3/9/11
- */
 public class DiamondSuite {
   private DiamondSuite() {
   }

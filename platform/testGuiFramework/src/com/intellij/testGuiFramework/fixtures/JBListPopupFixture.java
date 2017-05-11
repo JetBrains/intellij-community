@@ -33,9 +33,6 @@ import java.awt.*;
 import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.swing.timing.Pause.pause;
 
-/**
- * Created by jetbrains on 29/08/16.
- */
 public class JBListPopupFixture extends JComponentFixture<JBListPopupFixture, JBList> {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tests.gui.fixtures.JBListPopupFixture");

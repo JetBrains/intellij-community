@@ -28,10 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Aug 26, 2010
- */
 public class ResourceBundleMoveProvider extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance(ResourceBundleMoveProvider.class);
 

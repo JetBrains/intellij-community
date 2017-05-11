@@ -34,10 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 04-Jun-2006
- */
 
 public class LibrariesModifiableModel implements LibraryTableBase.ModifiableModel {
   //todo[nik] remove LibraryImpl#equals method instead of using identity maps

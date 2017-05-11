@@ -29,9 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-/**
- * Created by Max Medvedev on 25/03/14
- */
 public class BaseScriptAnnotationChecker extends CustomAnnotationChecker {
   @Override
   public boolean checkApplicability(@NotNull AnnotationHolder holder, @NotNull GrAnnotation annotation) {

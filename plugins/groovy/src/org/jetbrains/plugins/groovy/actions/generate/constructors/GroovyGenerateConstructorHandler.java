@@ -35,10 +35,6 @@ import org.jetbrains.plugins.groovy.refactoring.convertToJava.GroovyToJavaGenera
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 21.05.2008
- */
 public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler {
   private static final Logger LOG = Logger.getInstance(GroovyGenerateConstructorHandler.class);
 

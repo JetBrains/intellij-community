@@ -21,12 +21,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 3:24 PM
- */
 public class NoKeepConnectionPool implements SvnRepositoryPool {
   private final ThrowableConvertor<SVNURL, SVNRepository, SVNException> myCreator;
 

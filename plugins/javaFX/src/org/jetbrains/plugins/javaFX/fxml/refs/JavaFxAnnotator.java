@@ -49,9 +49,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class JavaFxAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull final PsiElement element, @NotNull AnnotationHolder holder) {

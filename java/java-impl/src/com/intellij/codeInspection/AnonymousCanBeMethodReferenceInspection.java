@@ -34,9 +34,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: anna
- */
 public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(AnonymousCanBeMethodReferenceInspection.class);
 

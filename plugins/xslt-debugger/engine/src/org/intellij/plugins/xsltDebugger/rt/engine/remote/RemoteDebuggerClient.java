@@ -28,11 +28,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 23.05.2007
- */
 public class RemoteDebuggerClient implements Debugger {
   private final RemoteDebugger myRemote;
   private final BreakpointManager myBreakpointManager;

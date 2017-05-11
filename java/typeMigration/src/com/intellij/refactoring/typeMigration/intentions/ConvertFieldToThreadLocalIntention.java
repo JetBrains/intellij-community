@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 26-Aug-2009
- */
 package com.intellij.refactoring.typeMigration.intentions;
 
 import com.intellij.codeInsight.FileModificationService;

@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 
-/**
- * Created by Max Medvedev on 14/03/14
- */
 class GrClosureParameterImpl implements GrClosureParameter {
 
   private final PsiParameter myParameter;

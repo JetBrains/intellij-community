@@ -30,10 +30,6 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxNamespaceDataProvider;
 import java.io.StringReader;
 import java.util.*;
 
-/**
-* User: anna
-* Date: 3/14/13
-*/
 public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileContent> {
   @Override
   @NotNull

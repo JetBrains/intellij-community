@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 08-Dec-2008
- */
 
 package com.maddyhome.idea.copyright.actions;
 

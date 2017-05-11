@@ -22,9 +22,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.parameter.PyIntroduceParameterHandler;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceParameter/")
 public class PyIntroduceParameterTest extends PyIntroduceTestCase {
   public void testSimple() {

@@ -26,11 +26,6 @@ import org.kohsuke.rngom.parse.compact.CompactSyntaxConstants;
 import java.lang.reflect.Field;
 import java.util.Locale;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 04.08.2007
- */
 public class RncTokenTypes {
   private static final TIntObjectHashMap<IElementType> ourTokenTypes = new TIntObjectHashMap<>();
 

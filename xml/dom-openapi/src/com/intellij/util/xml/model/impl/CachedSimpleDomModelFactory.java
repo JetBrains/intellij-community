@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class CachedSimpleDomModelFactory<T extends DomElement, M extends DomModel<T>, Scope extends UserDataHolder> extends
                                                                                                                              SimpleDomModelFactory<T, M>
     implements CachedDomModelFactory<T,M,Scope> {

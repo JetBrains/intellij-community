@@ -25,10 +25,6 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolve
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/10/13
- */
 public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQuickFixTest {
 
   @Override

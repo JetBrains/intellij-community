@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * Created by Max Medvedev on 8/23/13
- */
 public class GroovyScriptClassSearcher implements ClassSearcher {
   @Nullable
   @Override

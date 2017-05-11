@@ -28,9 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private final PsiExpression myExpression;
   private PsiType myT;

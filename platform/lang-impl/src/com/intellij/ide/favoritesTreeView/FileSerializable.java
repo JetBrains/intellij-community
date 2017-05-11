@@ -20,12 +20,6 @@ import com.intellij.openapi.project.Project;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/8/12
- * Time: 12:43 PM
- */
 public class FileSerializable implements WorkingSetSerializable<File, File> {
   @Override
   public String getId() {

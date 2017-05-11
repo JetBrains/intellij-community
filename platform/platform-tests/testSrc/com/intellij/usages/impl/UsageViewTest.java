@@ -49,9 +49,6 @@ import javax.swing.tree.TreeNode;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: cdr
- */
 public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testUsageViewDoesNotHoldPsiFilesOrDocuments() throws Exception {
     boolean[] foundLeaksBeforeTest = new boolean[1];

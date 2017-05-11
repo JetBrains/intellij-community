@@ -24,10 +24,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-/**
- * User: anna
- * Date: Sep 3, 2010
- */
 @Test
 public class TestNGDataProviderTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod

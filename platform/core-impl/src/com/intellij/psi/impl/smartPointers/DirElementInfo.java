@@ -25,9 +25,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: cdr
-*/
 class DirElementInfo extends SmartPointerElementInfo {
   private final VirtualFile myVirtualFile;
   private final Project myProject;

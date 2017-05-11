@@ -23,9 +23,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: ktisha
- */
 public class PyDocstringFile extends PyFileImpl {
 
   public PyDocstringFile(FileViewProvider viewProvider) {

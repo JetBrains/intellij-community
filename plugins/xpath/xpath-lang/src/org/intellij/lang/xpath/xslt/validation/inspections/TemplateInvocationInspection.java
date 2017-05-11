@@ -22,11 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 24.01.2008
-*/
 public class TemplateInvocationInspection extends XsltInspection {
 
   @NotNull

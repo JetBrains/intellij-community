@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 22-Jun-2009
- */
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.project.Project;

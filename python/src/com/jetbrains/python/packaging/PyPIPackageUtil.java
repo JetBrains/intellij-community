@@ -55,9 +55,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-/**
- * User: catherine
- */
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
   private static final Gson GSON = new GsonBuilder().create();

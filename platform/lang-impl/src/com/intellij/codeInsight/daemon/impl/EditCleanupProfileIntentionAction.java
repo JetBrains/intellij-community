@@ -27,9 +27,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* Created by anna on 5/13/2014.
-*/
 class EditCleanupProfileIntentionAction implements IntentionAction {
   static final EditCleanupProfileIntentionAction INSTANCE = new EditCleanupProfileIntentionAction();
   private EditCleanupProfileIntentionAction() {}

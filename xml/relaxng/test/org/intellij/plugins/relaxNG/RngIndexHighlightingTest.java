@@ -18,11 +18,6 @@ package org.intellij.plugins.relaxNG;
 
 import org.intellij.plugins.testUtil.CopyFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
- */
 @CopyFile("*.rng")
 public class RngIndexHighlightingTest extends AbstractIndexTest {
 

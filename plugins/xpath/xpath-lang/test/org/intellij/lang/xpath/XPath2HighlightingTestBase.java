@@ -17,11 +17,6 @@ package org.intellij.lang.xpath;
 
 import org.intellij.lang.xpath.validation.inspections.RedundantTypeConversion;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 10.03.11
-*/
 public abstract class XPath2HighlightingTestBase extends TestBase {
   @Override
   protected void setUp() throws Exception {

@@ -55,10 +55,6 @@ import java.util.List;
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBasedTextAttributes;
 
-/**
- * User: anna
- * Date: 24-Feb-2006
- */
 public class SeverityEditorDialog extends DialogWrapper {
   private final JPanel myPanel;
 

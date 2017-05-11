@@ -75,10 +75,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 02-Jun-2006
- */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
     final NamedConfigurable configurable1 = o1.getConfigurable();

@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class ClassArrayConverterImpl extends ClassArrayConverter {
   private static final JavaClassReferenceProvider REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 

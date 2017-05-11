@@ -80,9 +80,6 @@ import static java.awt.event.MouseEvent.BUTTON1;
 import static java.awt.event.MouseEvent.MOUSE_CLICKED;
 import static java.util.Locale.ENGLISH;
 
-/**
- * User: karashevich
- */
 public class UiDropperAction extends ToggleAction implements DumbAware {
 
 

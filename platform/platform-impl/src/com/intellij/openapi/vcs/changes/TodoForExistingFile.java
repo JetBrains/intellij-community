@@ -26,12 +26,6 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/28/12
- * Time: 4:48 PM
- */
 public class TodoForExistingFile extends TodoForRanges {
   private final VirtualFile myFile;
 

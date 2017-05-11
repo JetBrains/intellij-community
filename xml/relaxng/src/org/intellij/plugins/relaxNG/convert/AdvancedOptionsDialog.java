@@ -24,11 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 16.11.2007
-*/
 public class AdvancedOptionsDialog extends DialogWrapper {
   private AdvancedOptions myInputOptions;
   private AdvancedOptions myOutputOptions;

@@ -24,11 +24,6 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 24.05.2007
- */
 public interface RemoteDebugger extends Remote {
   boolean ping() throws RemoteException;
 

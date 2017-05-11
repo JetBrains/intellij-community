@@ -35,11 +35,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 23.05.2007
- */
 public class DebuggerServer extends PortableRemoteObject implements RemoteDebugger {
   private static final String XSLT_DEBUGGER = "XsltDebugger";
   public static final int PORT = 34275;

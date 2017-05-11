@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-May-2010
- */
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;

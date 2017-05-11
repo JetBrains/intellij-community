@@ -26,9 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: anna
- */
 public class TestIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {

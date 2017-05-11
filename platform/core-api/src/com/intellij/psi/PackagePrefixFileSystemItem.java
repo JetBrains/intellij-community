@@ -17,10 +17,6 @@ package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 7/15/13
- */
 public interface PackagePrefixFileSystemItem extends PsiFileSystemItem {
   @NotNull
   PsiDirectory getDirectory();

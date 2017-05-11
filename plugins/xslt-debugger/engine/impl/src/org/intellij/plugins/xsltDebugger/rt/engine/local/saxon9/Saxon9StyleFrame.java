@@ -47,11 +47,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 02.06.2007
- */
 class Saxon9StyleFrame<N extends StyleElement> extends AbstractSaxon9Frame<Debugger.StyleFrame, N> implements Debugger.StyleFrame {
 
   private final XPathContext myXPathContext;

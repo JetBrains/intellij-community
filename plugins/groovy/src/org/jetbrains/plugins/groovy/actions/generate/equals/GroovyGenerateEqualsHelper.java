@@ -38,10 +38,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 02.06.2008
- */
 public class GroovyGenerateEqualsHelper {
   private static final Logger LOG = Logger.getInstance(GroovyGenerateEqualsHelper.class);
 

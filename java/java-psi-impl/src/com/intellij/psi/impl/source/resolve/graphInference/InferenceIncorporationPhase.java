@@ -29,9 +29,6 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
-/**
- * User: anna
- */
 public class InferenceIncorporationPhase {
   private static final Logger LOG = Logger.getInstance(InferenceIncorporationPhase.class);
   private final InferenceSession mySession;

@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 19-Feb-2010
- */
 package com.intellij.coverage.listeners;
 
 public abstract class CoverageListener {

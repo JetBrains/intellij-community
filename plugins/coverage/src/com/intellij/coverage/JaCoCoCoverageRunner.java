@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 20-May-2008
- */
 package com.intellij.coverage;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;

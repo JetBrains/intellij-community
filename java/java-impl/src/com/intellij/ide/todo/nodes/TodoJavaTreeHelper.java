@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Jan-2008
- */
 package com.intellij.ide.todo.nodes;
 
 import com.intellij.ide.projectView.impl.nodes.PackageElement;

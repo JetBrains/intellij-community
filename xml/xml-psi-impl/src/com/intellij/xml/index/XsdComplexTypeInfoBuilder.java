@@ -27,12 +27,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/4/12
- * Time: 6:37 PM
- */
 public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   private final static String SIGN = "";
   public static final String HTTP_WWW_W3_ORG_2001_XMLSCHEMA = "http://www.w3.org/2001/XMLSchema";

@@ -31,10 +31,6 @@ import java.awt.event.ActionEvent;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 11/27/10
- */
 public class CoverageSuiteChooserDialog extends DialogWrapper {
   @NonNls private static final String LOCAL = "Local";
   private final Project myProject;

@@ -36,11 +36,6 @@ import org.intellij.plugins.relaxNG.compact.psi.impl.RncElementImpl;
 import org.intellij.plugins.relaxNG.compact.psi.impl.RncFileImpl;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 10.08.2007
- */
 public class RncParserDefinition implements ParserDefinition {
   public static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
   private static final TokenSet myCommentTypes = TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);

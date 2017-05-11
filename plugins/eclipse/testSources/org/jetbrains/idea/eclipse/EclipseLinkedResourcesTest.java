@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Mar-2010
- */
 package org.jetbrains.idea.eclipse;
 
 public class EclipseLinkedResourcesTest extends EclipseVarsTest{

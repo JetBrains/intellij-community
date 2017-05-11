@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jan-2007
- */
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;

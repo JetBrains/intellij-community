@@ -17,10 +17,6 @@ package com.intellij.codeInspection.ex;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 4/17/13
- */
 public interface PairedUnfairLocalInspectionTool extends UnfairLocalInspectionTool {
   /**
    * @return {@link com.intellij.codeInspection.LocalInspectionTool#getShortName()} of

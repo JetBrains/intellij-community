@@ -51,9 +51,6 @@ import java.util.Map;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
 import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 
-/**
- * Created by Yuli Fiterman on 9/13/2016.
- */
 public interface PydevConsoleRunner {
 
   Key<ConsoleCommunication> CONSOLE_KEY = new Key<>("PYDEV_CONSOLE_KEY");

@@ -23,10 +23,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 11/22/11
- */
 public class CompletionContributorForInplaceRename extends CompletionContributor {
 
   @Override

@@ -21,9 +21,6 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyAttributeOutsideInitInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMoveAttributeToInitQuickFixTest")
 public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
 

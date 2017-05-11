@@ -26,10 +26,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 
-/**
- * User: anna
- * Date: 2/24/12
- */
 public class DumpDirectoryInfoAction extends AnAction {
   public static final Logger LOG = Logger.getInstance(DumpDirectoryInfoAction.class);
 

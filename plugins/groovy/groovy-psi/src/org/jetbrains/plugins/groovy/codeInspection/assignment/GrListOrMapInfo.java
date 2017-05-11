@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class GrListOrMapInfo implements ConstructorCallInfo<GrListOrMap> {
   private final GrListOrMap myListOrMap;
   private final LiteralConstructorReference myReference;

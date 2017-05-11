@@ -36,12 +36,6 @@ import java.util.Set;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/12/12
- * Time: 10:24 AM
- */
 public class SvnExternalTest extends Svn17TestCase {
   private ChangeListManagerImpl clManager;
   private SvnVcs myVcs;

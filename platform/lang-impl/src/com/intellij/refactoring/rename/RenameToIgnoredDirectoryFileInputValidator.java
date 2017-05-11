@@ -25,10 +25,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 4/5/11
- */
 public class RenameToIgnoredDirectoryFileInputValidator implements RenameInputValidatorEx {
   @Nullable
   @Override

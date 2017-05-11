@@ -52,11 +52,6 @@ import org.kohsuke.rngom.nc.NameClass;
 import javax.xml.namespace.QName;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.07.2007
- */
 public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
   private final Map<QName, CachedValue<XmlElementDescriptor>> myDescriptorsMap =
     Collections.synchronizedMap(new HashMap<QName, CachedValue<XmlElementDescriptor>>());

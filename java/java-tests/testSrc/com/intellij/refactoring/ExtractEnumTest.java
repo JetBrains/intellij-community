@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 02-Jun-2010
- */
 package com.intellij.refactoring;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;

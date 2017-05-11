@@ -10,10 +10,6 @@ import com.intellij.util.ui.ColumnInfo;
 
 import java.util.Comparator;
 
-/**
-* User: anna
-* Date: 1/9/12
-*/
 class PercentageCoverageColumnInfo extends ColumnInfo<NodeDescriptor, String> {
   private final int myColumnIdx;
   private final Comparator<NodeDescriptor> myComparator;

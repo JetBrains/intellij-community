@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Dec-2007
- */
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExceptionUtil;

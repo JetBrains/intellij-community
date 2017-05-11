@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 30-Nov-2009
- */
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.execution.junit.JUnitUtil;

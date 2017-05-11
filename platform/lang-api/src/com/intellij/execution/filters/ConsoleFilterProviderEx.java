@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Aug-2007
- */
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.project.Project;

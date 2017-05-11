@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 01-Feb-2008
- */
 package com.intellij.codeInsight.hint;
 
 import com.intellij.psi.PsiElement;

@@ -28,10 +28,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 
-/**
- * User: anna
- * Date: 12/7/11
- */
 public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
   private static final String TEST_ROOT = "/codeInsight/externalJavadoc/";
 

@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * User: catherine
- */
 public class PythonNoseTestRunConfigurationEditor extends SettingsEditor<PythonNoseTestRunConfiguration> {
   private PythonNoseTestRunConfigurationForm myForm;
 

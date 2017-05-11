@@ -23,11 +23,6 @@ import org.intellij.lang.xpath.psi.XPathVariable;
 import org.intellij.lang.xpath.psi.XPathVariableDeclaration;
 import org.jetbrains.annotations.Nullable;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 10.01.11
-*/
 public class XPath2VariableDeclarationImpl extends XPath2ElementImpl implements XPathVariableDeclaration {
   public XPath2VariableDeclarationImpl(ASTNode node) {
     super(node);

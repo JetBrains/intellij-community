@@ -41,11 +41,6 @@ import javax.swing.*;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaOwner {
   public RncDefineImpl(ASTNode node) {
     super(node);

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 13-May-2010
- */
 package com.jetbrains.python.testing.unittestLegacy;
 
 import com.intellij.execution.Location;

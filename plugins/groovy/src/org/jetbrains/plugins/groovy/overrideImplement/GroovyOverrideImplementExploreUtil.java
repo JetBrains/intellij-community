@@ -34,9 +34,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * Created by Max Medvedev on 16/05/14
- */
 public class GroovyOverrideImplementExploreUtil {
 
   @NotNull

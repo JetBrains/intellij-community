@@ -39,10 +39,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 05-Jun-2006
- */
 public abstract class ModuleJdkConfigurable implements Disposable {
   private JdkComboBox myCbModuleJdk;
   private JPanel myJdkPanel;

@@ -26,11 +26,6 @@ import org.intellij.plugins.relaxNG.compact.psi.util.EscapeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.08.2007
- */
 public class RncRefImpl extends RncElementImpl implements RncRef {
   public RncRefImpl(ASTNode node) {
     super(node);

@@ -24,9 +24,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 
-/**
- * User: catherine
- */
 public class PythonNoseTestRunConfigurationForm implements PythonNoseTestRunConfigurationParams {
   private JPanel myRootPanel;
 

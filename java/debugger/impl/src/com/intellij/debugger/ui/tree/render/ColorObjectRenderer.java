@@ -26,9 +26,6 @@ import com.sun.jdi.*;
 import javax.swing.*;
 import java.awt.*;
 
-/**
-* Created by Egor on 04.10.2014.
-*/
 class ColorObjectRenderer extends CompoundReferenceRenderer {
   public ColorObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Color", null, null);

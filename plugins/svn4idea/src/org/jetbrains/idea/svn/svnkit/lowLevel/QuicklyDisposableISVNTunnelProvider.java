@@ -19,12 +19,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.io.svn.ISVNConnector;
 import org.tmatesoft.svn.core.io.ISVNTunnelProvider;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:16 PM
- */
 public class QuicklyDisposableISVNTunnelProvider extends QuicklyDisposableProxy<ISVNTunnelProvider> implements ISVNTunnelProvider {
   public QuicklyDisposableISVNTunnelProvider(ISVNTunnelProvider provider) {
     super(provider);

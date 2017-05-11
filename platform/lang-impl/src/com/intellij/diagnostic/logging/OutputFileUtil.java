@@ -43,10 +43,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 
-/**
- * User: anna
- * Date: 10/20/11
- */
 public class OutputFileUtil {
   private static final String CONSOLE_OUTPUT_FILE_MESSAGE = "Console output is saving to: ";
 

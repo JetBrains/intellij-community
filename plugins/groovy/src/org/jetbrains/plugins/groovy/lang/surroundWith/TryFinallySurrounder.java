@@ -21,10 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrTryCatchStatement;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class TryFinallySurrounder extends TrySurrounder {
   @Override
   protected GroovyPsiElement doSurroundElements(PsiElement[] elements, PsiElement context) throws IncorrectOperationException {

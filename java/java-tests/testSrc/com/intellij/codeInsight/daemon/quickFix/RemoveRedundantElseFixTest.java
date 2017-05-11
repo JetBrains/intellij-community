@@ -17,10 +17,6 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.siyeh.ig.controlflow.ConfusingElseInspection;
 
-/**
- * User: anna
- * Date: Aug 30, 2010
- */
 public class RemoveRedundantElseFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {

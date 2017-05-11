@@ -23,9 +23,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by Max Medvedev on 10/25/13
- */
 public class PsiClassReferenceTypePointerFactory implements ClassTypePointerFactory {
   private static final Logger LOG = Logger.getInstance(PsiClassReferenceTypePointerFactory.class);
 

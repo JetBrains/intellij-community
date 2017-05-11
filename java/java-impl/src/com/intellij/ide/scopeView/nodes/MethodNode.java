@@ -21,10 +21,6 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
 
-/**
- * User: anna
- * Date: 30-Jan-2006
- */
 public class MethodNode extends MemberNode<PsiMethod> {
 
   public MethodNode(final PsiMethod element) {

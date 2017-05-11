@@ -25,12 +25,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-/**
-* Created by IntelliJ IDEA.
-* User: maximmossienko
-* Date: 7/12/11
-* Time: 1:34 PM
-*/
 public class IntToIntBtree {
   public static int version() {
     return 4 + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0xFF : 0);

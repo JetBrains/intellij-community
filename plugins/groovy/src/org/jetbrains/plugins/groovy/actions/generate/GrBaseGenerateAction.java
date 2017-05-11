@@ -25,10 +25,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 21.05.2008
- */
 public abstract class GrBaseGenerateAction extends BaseGenerateAction {
   public GrBaseGenerateAction(CodeInsightActionHandler handler) {
     super(handler);

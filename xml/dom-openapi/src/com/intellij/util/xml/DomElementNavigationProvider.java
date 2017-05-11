@@ -16,9 +16,6 @@
 
 package com.intellij.util.xml;
 
-/**
- * User: Sergey.Vasiliev
- */
 public abstract class DomElementNavigationProvider {
   public abstract String getProviderName();
 

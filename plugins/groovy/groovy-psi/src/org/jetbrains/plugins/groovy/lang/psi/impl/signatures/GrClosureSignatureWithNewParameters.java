@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 
-/**
- * Created by Max Medvedev on 14/03/14
- */
 public class GrClosureSignatureWithNewParameters implements GrClosureSignature {
   private final GrClosureSignature myDelegate;
   private final GrClosureParameter[] myParams;

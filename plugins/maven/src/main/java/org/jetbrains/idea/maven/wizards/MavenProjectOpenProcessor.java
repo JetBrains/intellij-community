@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 13-Jul-2007
- */
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.WizardContext;

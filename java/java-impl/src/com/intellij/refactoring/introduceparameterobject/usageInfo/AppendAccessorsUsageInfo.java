@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 02-Nov-2009
- */
 package com.intellij.refactoring.introduceparameterobject.usageInfo;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;

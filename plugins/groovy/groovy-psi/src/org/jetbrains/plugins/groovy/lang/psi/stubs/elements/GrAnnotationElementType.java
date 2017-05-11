@@ -25,9 +25,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
 
 import java.io.IOException;
 
-/**
- * Created by Max Medvedev on 12/6/13
- */
 public class GrAnnotationElementType extends GrStubElementType<GrAnnotationStub, GrAnnotation> {
   public GrAnnotationElementType(@NotNull String name) {
     super(name);

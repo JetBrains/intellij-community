@@ -24,9 +24,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by Max Medvedev on 12/05/14
- */
 public class LazyFqnClassType extends GrLiteralClassType {
 
   private final String myFqn;

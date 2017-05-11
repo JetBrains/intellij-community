@@ -7,10 +7,6 @@ package com.intellij.ide.search;
 import com.intellij.ide.ui.search.PorterStemmerUtil;
 import junit.framework.TestCase;
 
-/**
- * User: anna
- * Date: 15-Feb-2006
- */
 public class PorterStemmerTest extends TestCase {
   public void test() throws Exception {
     assertEquals("name", PorterStemmerUtil.stem("names"));

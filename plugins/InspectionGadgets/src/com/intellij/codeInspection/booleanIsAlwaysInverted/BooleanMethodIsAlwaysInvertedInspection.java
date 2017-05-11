@@ -19,10 +19,6 @@ import com.intellij.codeInspection.QuickFix;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.fixes.InvertBooleanFix;
 
-/**
- * User: anna
- * Date: 06-Jan-2006
- */
 public class BooleanMethodIsAlwaysInvertedInspection extends BooleanMethodIsAlwaysInvertedInspectionBase {
 
   @Override

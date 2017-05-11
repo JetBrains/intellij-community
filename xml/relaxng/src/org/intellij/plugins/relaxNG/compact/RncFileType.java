@@ -27,11 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 01.08.2007
-*/
 public class RncFileType extends LanguageFileType  {
   public static final String RNC_EXT = "rnc";
 

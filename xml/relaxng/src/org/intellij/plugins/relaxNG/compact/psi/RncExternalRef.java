@@ -16,11 +16,6 @@
 
 package org.intellij.plugins.relaxNG.compact.psi;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 11.08.2007
- */
 public interface RncExternalRef extends RncFileReference {
 
 }

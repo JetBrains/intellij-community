@@ -24,9 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrBinaryExpressionTypeCalculator implements NullableFunction<GrOperatorExpression, PsiType> {
   public static final Function<GrOperatorExpression, PsiType> INSTANCE = new GrBinaryExpressionTypeCalculator();
 

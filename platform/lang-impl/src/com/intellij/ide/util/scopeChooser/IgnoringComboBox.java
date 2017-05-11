@@ -17,9 +17,6 @@ package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.ui.ComboBox;
 
-/**
-* User: anna
-*/
 public abstract class IgnoringComboBox extends ComboBox {
 
   @Override

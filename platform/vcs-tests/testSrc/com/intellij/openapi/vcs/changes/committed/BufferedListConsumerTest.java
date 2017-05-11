@@ -26,12 +26,6 @@ import org.junit.Test;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/17/13
- * Time: 4:35 PM
- */
 public class BufferedListConsumerTest extends FileBasedTest {
 
   @Test

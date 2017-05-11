@@ -38,9 +38,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * User: anna
- */
 public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
   protected AbstractPopup myPopup;
   protected T myComponent;

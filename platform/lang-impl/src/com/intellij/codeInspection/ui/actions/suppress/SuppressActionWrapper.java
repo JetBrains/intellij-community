@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 29-Jan-2007
- */
 package com.intellij.codeInspection.ui.actions.suppress;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;

@@ -36,10 +36,6 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/14/10
- */
 // Please do not make this class concrete<PsiElement>.
 // This prevents languages with polyadic expressions or sequences
 // from reusing it, use simpleChooser instead.

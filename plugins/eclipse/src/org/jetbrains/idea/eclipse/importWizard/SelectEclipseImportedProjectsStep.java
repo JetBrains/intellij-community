@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 12-Jul-2007
- */
 package org.jetbrains.idea.eclipse.importWizard;
 
 import com.intellij.icons.AllIcons;

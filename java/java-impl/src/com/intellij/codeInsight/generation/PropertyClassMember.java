@@ -19,10 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 3/4/13
- */
 public interface PropertyClassMember extends EncapsulatableClassMember {
   /**
    * @return PsiElement or TemplateGenerationInfo

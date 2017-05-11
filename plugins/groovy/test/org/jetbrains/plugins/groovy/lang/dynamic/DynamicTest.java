@@ -35,10 +35,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 01.04.2008
- */                                  
 public class DynamicTest extends JavaCodeInsightFixtureTestCase {
 
   @Override

@@ -55,10 +55,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: Jan 31, 2005
- */
 public class CyclicDependenciesPanel extends JPanel implements Disposable, DataProvider {
   private static final HashSet<PsiFile> EMPTY_FILE_SET = new HashSet<>(0);
 

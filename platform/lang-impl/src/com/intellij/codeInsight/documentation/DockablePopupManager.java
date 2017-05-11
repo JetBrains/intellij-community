@@ -45,10 +45,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 5/7/12
- */
 public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected ToolWindow myToolWindow;
   private boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());

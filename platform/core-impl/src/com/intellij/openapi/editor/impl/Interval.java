@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.editor.impl;
 
-/**
- * User: cdr
- */
 public interface Interval {
   int intervalStart();
   int intervalEnd();

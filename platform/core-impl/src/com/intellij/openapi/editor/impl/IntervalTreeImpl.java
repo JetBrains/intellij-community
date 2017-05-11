@@ -41,9 +41,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-/**
- * User: cdr
- */
 abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
   static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal());

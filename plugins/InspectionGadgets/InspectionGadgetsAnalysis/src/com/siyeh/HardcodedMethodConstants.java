@@ -18,10 +18,6 @@ package com.siyeh;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * User: anna
- * Date: 30-Aug-2005
- */
 @NonNls
 public class HardcodedMethodConstants {
   public static final String CLONE = "clone";

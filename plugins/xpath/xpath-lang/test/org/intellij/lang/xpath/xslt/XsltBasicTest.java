@@ -21,11 +21,6 @@ import com.intellij.psi.xml.XmlFile;
 import org.intellij.lang.xpath.TestBase;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 17.12.2008
-*/
 public class XsltBasicTest extends TestBase {
   public void testSupportedXslt10() throws Throwable {
     doTestXsltSupport();

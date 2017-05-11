@@ -1,9 +1,5 @@
 package com.intellij.tasks;
 
-/**
- * User: evgeny.zakrevsky
- * Date: 11/8/12
- */
 public class TaskListenerAdapter implements TaskListener {
   @Override
   public void taskDeactivated(final LocalTask task) {

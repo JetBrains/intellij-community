@@ -61,10 +61,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 12/8/10
- */
 public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer {
 
   private SmartPsiElementPointer<PsiDeclarationStatement> myPointer;

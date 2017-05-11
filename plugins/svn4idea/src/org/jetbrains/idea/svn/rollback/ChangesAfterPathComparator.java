@@ -22,12 +22,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 
 import java.util.Comparator;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 12/3/12
- * Time: 4:40 PM
- */
 public class ChangesAfterPathComparator implements Comparator<Change> {
   private final static ChangesAfterPathComparator ourInstance = new ChangesAfterPathComparator();
   private final static Comparator<ContentRevision> ourComparator =

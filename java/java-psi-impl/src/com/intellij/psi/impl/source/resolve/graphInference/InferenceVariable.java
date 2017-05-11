@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiFunction;
 
-/**
- * User: anna
- */
 public class InferenceVariable extends LightTypeParameter {
   private final PsiElement myContext;
 

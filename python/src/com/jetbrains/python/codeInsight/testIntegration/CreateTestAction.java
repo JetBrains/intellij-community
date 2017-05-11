@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class CreateTestAction extends PsiElementBaseIntentionAction {
   @NotNull
   public String getFamilyName() {

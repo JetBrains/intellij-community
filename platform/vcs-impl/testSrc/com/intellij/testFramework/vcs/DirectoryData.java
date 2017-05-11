@@ -24,12 +24,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/19/12
- * Time: 7:56 PM
- */
 public class DirectoryData {
   private final VirtualFile myBase;
   private IOException myException;

@@ -21,12 +21,6 @@ import org.junit.Test;
 
 import javax.net.ssl.SSLProtocolException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/25/13
- * Time: 6:09 PM
- */
 public class SSLExceptionParserTest {
   @Test
   public void testRealLifeCase() throws Exception {

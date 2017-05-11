@@ -53,12 +53,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/11/13
- * Time: 3:48 PM
- */
 public class SvnProtocolsTest extends Svn17TestCase {
   // todo correct URL
   private final static String ourSSH_URL = "svn+ssh://unit-069:222/home/irina/svnrepo";

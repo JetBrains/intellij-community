@@ -23,11 +23,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.05.2007
- */
 class RemoteBreakpointImpl extends PortableRemoteObject implements RemoteBreakpoint {
   private final Breakpoint myBreakpoint;
 

@@ -46,9 +46,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 abstract public class PythonTestLegacyConfigurationProducer<T extends AbstractPythonLegacyTestRunConfiguration<T>>
   extends AbstractPythonTestConfigurationProducer<AbstractPythonLegacyTestRunConfiguration<T>> {
 

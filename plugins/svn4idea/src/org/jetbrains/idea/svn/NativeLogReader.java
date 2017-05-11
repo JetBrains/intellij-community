@@ -21,12 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/2/12
- * Time: 4:05 PM
- */
 public class NativeLogReader {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.NativeLogReader");
 

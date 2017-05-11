@@ -25,10 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 
-/**
- * User: anna
- * Date: 4/1/13
- */
 public class JavaFxWrapWithDefineIntention extends PsiElementBaseIntentionAction {
   private final XmlTag myTag;
   private final String myId;

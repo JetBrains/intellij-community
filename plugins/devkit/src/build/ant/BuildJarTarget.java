@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Dec-2006
- */
 package org.jetbrains.idea.devkit.build.ant;
 
 import com.intellij.compiler.ant.*;

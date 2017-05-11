@@ -17,11 +17,6 @@ package org.intellij.lang.xpath.psi;
 
 import org.jetbrains.annotations.NotNull;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 08.01.11
-*/
 public class XPath2SequenceType extends XPath2Type {
   public enum Cardinality {
     OPTIONAL("?"), ONE_OR_MORE("+"), ZERO_OR_MORE("*"), UNDEFINED(null);

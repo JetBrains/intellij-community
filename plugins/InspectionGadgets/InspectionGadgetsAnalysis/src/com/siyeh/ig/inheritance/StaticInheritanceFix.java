@@ -39,9 +39,6 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: cdr
- */
 class StaticInheritanceFix extends InspectionGadgetsFix {
   private final boolean myReplaceInWholeProject;
 

@@ -24,10 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 27-Dec-2005
- */
 class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myManager;
   public static long CAN_BE_FINAL_MASK;

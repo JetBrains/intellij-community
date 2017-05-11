@@ -79,9 +79,6 @@ import org.jetbrains.plugins.groovy.refactoring.NameValidator;
 
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 10/29/13
- */
 public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSettings, Scope extends PsiElement> implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GrIntroduceHandlerBase.class);
 

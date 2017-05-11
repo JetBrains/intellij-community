@@ -38,10 +38,6 @@ import org.jetbrains.plugins.groovy.actions.generate.GroovyGenerationInfo;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 28.05.2008
- */
 public class GroovyGenerateEqualsHandler extends GenerateMembersHandlerBase {
 
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.actions.generate.equals.EqualsGenerateHandler");

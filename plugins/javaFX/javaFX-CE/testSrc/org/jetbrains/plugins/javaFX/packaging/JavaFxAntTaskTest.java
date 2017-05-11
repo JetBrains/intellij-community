@@ -25,10 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: anna
- * Date: 3/28/13
- */
 public class JavaFxAntTaskTest extends TestCase {
 
   private static final String PRELOADER_CLASS = "preloaderClass";

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 30-Jan-2008
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionUtil;

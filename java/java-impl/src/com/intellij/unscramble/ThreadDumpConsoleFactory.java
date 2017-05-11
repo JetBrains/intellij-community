@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import javax.swing.*;
 import java.util.List;
 
-/**
-* Created by Irina.Chernushina on 7/13/13.
-*/
 public class ThreadDumpConsoleFactory implements AnalyzeStacktraceUtil.ConsoleFactory {
   private final Project myProject;
   private final List<ThreadState> myThreadDump;

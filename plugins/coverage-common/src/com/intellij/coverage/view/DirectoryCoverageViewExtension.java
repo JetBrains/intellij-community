@@ -16,10 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/9/12
- */
 public class DirectoryCoverageViewExtension extends CoverageViewExtension {
   private final CoverageAnnotator myAnnotator;
 

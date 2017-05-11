@@ -26,12 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/8/12
- * Time: 12:23 PM
- */
 public class FileGroupingProjectNode extends ProjectViewNodeWithChildrenList<File> {
   private VirtualFile myVirtualFile;
 

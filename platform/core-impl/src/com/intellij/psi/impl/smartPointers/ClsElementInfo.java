@@ -24,9 +24,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
-* User: cdr
-*/
 public class ClsElementInfo extends SmartPointerElementInfo {
   private final PsiAnchor.StubIndexReference myStubIndexReference;
 

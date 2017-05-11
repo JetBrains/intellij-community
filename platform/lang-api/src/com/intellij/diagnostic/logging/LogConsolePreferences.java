@@ -41,10 +41,6 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * User: anna
- * Date: 06-Feb-2006
- */
 @State(name = "LogFilters", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {

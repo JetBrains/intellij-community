@@ -24,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by Max Medvedev on 28/02/14
- */
 public abstract class ParamHintProcessor extends SignatureHintProcessor {
   private final int myParam;
   private final int myGeneric;

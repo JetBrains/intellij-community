@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 20-Aug-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;

@@ -31,9 +31,6 @@ import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: catherine
- */
 public class PythonNoseTestRunConfiguration extends AbstractPythonLegacyTestRunConfiguration<PythonNoseTestRunConfiguration>
                                           implements PythonNoseTestRunConfigurationParams {
   private String myParams = ""; // parameters for nosetests

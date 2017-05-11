@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
-/**
- * User: cdr
- */
 class CanItBeNullAction extends AnAction {
   private final SliceTreeBuilder myTreeBuilder;
   private static final String TEXT = "Group by leaf expression nullness";

@@ -34,11 +34,6 @@ import org.intellij.plugins.relaxNG.ApplicationLoader;
 import org.intellij.plugins.relaxNG.xml.dom.RngGrammar;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 17.07.2007
- */
 // XXX: the tests rely on this still being an intention action
 class CreatePatternFix implements IntentionAction, LocalQuickFix {
   private final PsiReference myReference;

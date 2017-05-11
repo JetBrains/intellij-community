@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-/**
- * User: cdr
- */
 public abstract class RedBlackTree<K> {
   public static boolean VERIFY;
   private static final int INDENT_STEP = 4;

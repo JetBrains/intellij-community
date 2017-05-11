@@ -15,9 +15,6 @@
  */
 package com.intellij.ui;
 
-/**
- * Created by denis on 28/01/14.
- */
 public class MessageException extends RuntimeException {
   public MessageException(final String message) {
     super(message);

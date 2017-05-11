@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 26-Mar-2008
- */
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.application.ApplicationManager;

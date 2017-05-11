@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 07-Nov-2008
- */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.actionSystem.AnAction;

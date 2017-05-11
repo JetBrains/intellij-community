@@ -32,10 +32,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/12/13
- */
 public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance(AbstractJavaFxPackager.class);
   private static final String JB_JFX_JKS = "jb-jfx.jks";

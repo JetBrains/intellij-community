@@ -91,10 +91,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 1/11/12
- */
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
   @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";

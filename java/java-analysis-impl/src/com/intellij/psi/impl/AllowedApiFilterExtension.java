@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 28-May-2010
- */
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.extensions.ExtensionPointName;

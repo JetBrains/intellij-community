@@ -28,9 +28,6 @@ import com.intellij.psi.xml.XmlTagChild;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
-/**
-* User: anna
-*/
 public class UnwrapTagFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(UnwrapTagFix.class);
   private final String myTagName;

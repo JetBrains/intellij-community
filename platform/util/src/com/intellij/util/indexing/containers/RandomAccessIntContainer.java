@@ -17,9 +17,6 @@ package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
 
-/**
-* Created by Maxim.Mossienko on 5/27/2014.
-*/
 interface RandomAccessIntContainer {
   Object clone();
   boolean add(int value);

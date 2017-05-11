@@ -25,9 +25,6 @@ import com.intellij.util.xml.DomElementsNavigationManager;
 import com.intellij.util.xml.tree.BaseDomElementNode;
 import com.intellij.util.xml.tree.DomModelTreeView;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class GotoDomElementDeclarationAction extends BaseDomTreeAction {
 
   @Override

@@ -40,10 +40,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 3/18/11
- */
 public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceFieldPopup {
 
   private final String myInitializerText;

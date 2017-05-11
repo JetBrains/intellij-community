@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class SPIFile extends PsiFileBase {
   public SPIFile(@NotNull FileViewProvider viewProvider) {
     super(viewProvider, SPILanguage.INSTANCE);

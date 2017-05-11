@@ -35,12 +35,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/13/12
- * Time: 1:59 PM
- */
 public class CompositeDiffPanel implements DiffViewer {
   private final static String FICTIVE_KEY = "FICTIVE_KEY";
   private final static int ourBadHackMagicContentsNumber = 101;

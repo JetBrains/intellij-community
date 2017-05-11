@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 19-Aug-2008
- */
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.AnnotationUtil;

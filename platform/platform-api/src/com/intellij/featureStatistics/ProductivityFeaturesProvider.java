@@ -21,10 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: anna
- * Date: Jan 30, 2005
- */
 public abstract class ProductivityFeaturesProvider {
   public static final ExtensionPointName<ProductivityFeaturesProvider> EP_NAME = ExtensionPointName.create("com.intellij.productivityFeaturesProvider");
   

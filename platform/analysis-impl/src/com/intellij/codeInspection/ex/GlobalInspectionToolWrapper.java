@@ -23,10 +23,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 28-Dec-2005
- */
 public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalInspectionTool, InspectionEP> {
   public GlobalInspectionToolWrapper(@NotNull GlobalInspectionTool globalInspectionTool) {
     super(globalInspectionTool);

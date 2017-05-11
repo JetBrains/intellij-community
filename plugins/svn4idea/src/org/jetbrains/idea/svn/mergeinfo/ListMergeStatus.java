@@ -21,12 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* Created with IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 3/30/13
-* Time: 2:41 PM
-*/
 public enum ListMergeStatus {
   COMMON(SvnIcons.Common),
   MERGED(SvnIcons.Integrated),

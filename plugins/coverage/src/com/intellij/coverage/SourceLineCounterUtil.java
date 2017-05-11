@@ -22,10 +22,6 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: 12/30/11
- */
 public class SourceLineCounterUtil {
   public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo,
                                                    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo,

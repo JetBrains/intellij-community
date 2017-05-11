@@ -33,12 +33,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.File;
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/27/12
- * Time: 1:00 PM
- */
 public class SvnInfoHandler extends DefaultHandler {
   @Nullable private final File myBase;
   private final Consumer<org.jetbrains.idea.svn.info.Info> myInfoConsumer;

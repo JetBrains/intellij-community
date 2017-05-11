@@ -28,12 +28,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/5/12
- * Time: 12:52 PM
- */
 public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
   private final static String ourNs = "http://www.omg.org/spec/BPMN/20100524/MODEL";
 

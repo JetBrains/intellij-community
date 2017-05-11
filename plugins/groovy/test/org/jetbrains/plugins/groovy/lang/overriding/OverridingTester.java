@@ -9,10 +9,6 @@ import org.jetbrains.plugins.groovy.util.TestUtils;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 31.07.2007
- */
 public abstract class OverridingTester extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {

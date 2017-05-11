@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 25-Sep-2007
- */
 package com.intellij.openapi.project.impl;
 
 import com.intellij.openapi.application.Application;

@@ -21,12 +21,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 5:41 PM
- */
 public class SVNStoppableOutputStream extends OutputStream {
   private final OutputStream myLogStream;
 

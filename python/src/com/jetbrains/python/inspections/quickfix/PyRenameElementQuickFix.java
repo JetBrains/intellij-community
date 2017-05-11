@@ -43,9 +43,6 @@ import com.jetbrains.python.psi.PyTargetExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: ktisha
- */
 public class PyRenameElementQuickFix implements LocalQuickFix {
 
   @NotNull

@@ -40,10 +40,6 @@ import java.awt.event.ItemListener;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 3/16/11
- */
 public abstract class IntroduceFieldCentralPanel {
    protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceField.IntroduceFieldDialog");
 

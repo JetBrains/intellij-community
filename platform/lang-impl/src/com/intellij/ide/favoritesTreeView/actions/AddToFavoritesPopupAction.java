@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- * Date: Feb 24, 2005
- */
 public class AddToFavoritesPopupAction extends QuickSwitchSchemeAction implements DumbAware {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {

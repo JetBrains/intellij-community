@@ -18,10 +18,6 @@ package org.jetbrains.idea.devkit.testAssistant;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.TestDataPath;
 
-/**
- * User: zolotov
- * Date: 9/23/13
- */
 @TestDataPath("$CONTENT_ROOT/testData/completionTestDataPath")
 public class TestDataPathCompletionTest extends TestDataPathTestCase {
   public void testProjectRoot() throws Exception {

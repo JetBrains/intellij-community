@@ -31,10 +31,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * User: anna
- * Date: 06-Jun-2006
- */
 public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
   private LanguageLevelCombo myLanguageLevelCombo;
   private JPanel myPanel = new JPanel(new GridBagLayout());

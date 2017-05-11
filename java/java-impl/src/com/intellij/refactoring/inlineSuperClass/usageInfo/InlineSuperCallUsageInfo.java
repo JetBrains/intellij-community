@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Oct-2009
- */
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
 import com.intellij.psi.*;

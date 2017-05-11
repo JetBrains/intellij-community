@@ -23,9 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class PythonDocTestCommandLineState extends PythonTestCommandLineStateBase {
   private final PythonDocTestRunConfiguration myConfig;
 

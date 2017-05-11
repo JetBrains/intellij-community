@@ -36,9 +36,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
   public PyMakeFunctionFromMethodQuickFix() {
   }

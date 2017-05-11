@@ -24,10 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * User: zolotov
- * Date: 1/25/13
- */
 public abstract class EmmetParser {
   private final List<ZenCodingToken> myTokens;
   protected final CustomTemplateCallback myCallback;

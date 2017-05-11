@@ -38,10 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-/**
-* User: anna
-* Date: 4/21/11
-*/
 class TestDirectory extends TestPackage {
   public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);

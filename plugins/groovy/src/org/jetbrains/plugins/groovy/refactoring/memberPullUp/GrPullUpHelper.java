@@ -62,9 +62,6 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrClassMemberRefere
 
 import java.util.*;
 
-/**
- * Created by Max Medvedev on 10/4/13
- */
 public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GrPullUpHelper.class);
 

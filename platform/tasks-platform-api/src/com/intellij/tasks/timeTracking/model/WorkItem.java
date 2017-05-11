@@ -20,10 +20,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 
 import java.util.Date;
 
-/**
- * User: evgeny.zakrevsky
- * Date: 12/27/12
- */
 @Tag("workItem")
 public class WorkItem {
   @Attribute("from")

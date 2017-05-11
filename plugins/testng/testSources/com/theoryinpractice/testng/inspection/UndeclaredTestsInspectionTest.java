@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 18-Jun-2007
- */
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.openapi.application.PluginPathManager;

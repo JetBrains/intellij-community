@@ -5,9 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.tasks.config.TaskRepositoriesConfigurable;
 
-/**
- * User: Evgeny Zakrevsky
- */
 
 public class ConfigureServersAction extends BaseTaskAction {
 

@@ -36,9 +36,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * User: cdr
- */
 class SliceNullnessAnalyzer {
   private static void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = createNewTree(result, oldRoot, map);

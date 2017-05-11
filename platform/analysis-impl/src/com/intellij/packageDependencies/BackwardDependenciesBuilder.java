@@ -34,10 +34,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Jan 16, 2005
- */
 public class BackwardDependenciesBuilder extends DependenciesBuilder {
   private final AnalysisScope myForwardScope;
 

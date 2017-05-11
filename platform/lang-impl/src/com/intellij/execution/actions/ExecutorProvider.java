@@ -17,9 +17,6 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.Executor;
 
-/**
-* User: Vassiliy.Kudryashov
-*/
 public interface ExecutorProvider {
   Executor getExecutor();
 }

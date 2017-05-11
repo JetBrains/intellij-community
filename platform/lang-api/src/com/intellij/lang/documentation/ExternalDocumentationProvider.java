@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 02-Mar-2010
- */
 package com.intellij.lang.documentation;
 
 import com.intellij.openapi.project.Project;

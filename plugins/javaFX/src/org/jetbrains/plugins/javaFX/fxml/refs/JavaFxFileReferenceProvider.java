@@ -12,10 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
-* User: anna
-* Date: 4/3/13
-*/
 public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
 
   private final String myAcceptedExtension;

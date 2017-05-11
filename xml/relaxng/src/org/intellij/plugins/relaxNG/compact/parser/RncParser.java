@@ -23,11 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 07.08.2007
-*/
 public class RncParser implements PsiParser {
 
   @Override

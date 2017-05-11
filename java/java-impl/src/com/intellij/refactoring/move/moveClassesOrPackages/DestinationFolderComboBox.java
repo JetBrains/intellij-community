@@ -43,10 +43,6 @@ import java.awt.event.ActionListener;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 9/13/11
- */
 public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton {
   private static final String LEAVE_IN_SAME_SOURCE_ROOT = "Leave in same source root";
   private static final DirectoryChooser.ItemWrapper NULL_WRAPPER = new DirectoryChooser.ItemWrapper(null, null);

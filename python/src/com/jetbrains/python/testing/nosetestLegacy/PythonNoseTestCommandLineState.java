@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class PythonNoseTestCommandLineState extends PythonTestCommandLineStateBase {
   private final PythonNoseTestRunConfiguration myConfig;
 

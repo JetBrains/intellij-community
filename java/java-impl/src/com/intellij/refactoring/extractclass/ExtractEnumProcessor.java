@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 08-Jun-2010
- */
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;

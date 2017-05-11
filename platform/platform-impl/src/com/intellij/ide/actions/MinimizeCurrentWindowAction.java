@@ -21,9 +21,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: spLeaner
- */
 public class MinimizeCurrentWindowAction extends MacWindowActionBase {
   @Override
   public void actionPerformed(final AnActionEvent e) {

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 06-Jun-2007
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.execution.Location;

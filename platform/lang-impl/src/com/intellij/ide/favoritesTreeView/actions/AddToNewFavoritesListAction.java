@@ -27,10 +27,6 @@ import com.intellij.openapi.project.Project;
 
 import java.util.Collection;
 
-/**
- * User: anna
- * Date: Feb 28, 2005
- */
 class AddToNewFavoritesListAction extends AnAction implements DumbAware {
   public AddToNewFavoritesListAction() {
     super(IdeBundle.message("action.add.to.new.favorites.list"),

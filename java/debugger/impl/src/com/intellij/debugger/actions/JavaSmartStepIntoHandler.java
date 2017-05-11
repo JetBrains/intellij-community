@@ -55,10 +55,6 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 
-/**
- * User: Alexander Podkhalyuzin
- * Date: 22.11.11
- */
 public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
 

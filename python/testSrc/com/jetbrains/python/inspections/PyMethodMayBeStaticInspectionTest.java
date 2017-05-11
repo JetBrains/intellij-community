@@ -22,9 +22,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.Arrays;
 
-/**
- * User: ktisha
- */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/PyMethodMayBeStaticInspection/")
 public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
 

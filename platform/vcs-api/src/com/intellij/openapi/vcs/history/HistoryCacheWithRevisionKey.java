@@ -19,12 +19,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import org.jetbrains.annotations.NotNull;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 8/8/11
-* Time: 7:01 PM
-*/
 public class HistoryCacheWithRevisionKey extends HistoryCacheBaseKey {
   private final VcsRevisionNumber myRevisionNumber;
 

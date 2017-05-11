@@ -12,10 +12,6 @@ import com.intellij.psi.PsiElement;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 09-Jan-2006
- */
 public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
   public static final Key<Set<Module>> DEPENDENCIES = Key.create("inspection.dependencies");
 

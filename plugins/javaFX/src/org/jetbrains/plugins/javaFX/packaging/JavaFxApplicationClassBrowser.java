@@ -30,10 +30,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import java.util.Collections;
 import java.util.Set;
 
-/**
-* User: anna
-* Date: 3/19/13
-*/
 public class JavaFxApplicationClassBrowser extends ClassBrowser {
 
   private final Artifact myArtifact;

@@ -17,12 +17,6 @@ package com.intellij.ide.favoritesTreeView;
 
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/31/12
- * Time: 8:47 PM
- */
 public class NoteNode {
   private PercentDone myPercentDone = PercentDone._0;
   private Set<Flag> myFlags;

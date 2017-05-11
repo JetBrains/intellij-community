@@ -55,10 +55,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * User: anna
- * Date: 1/2/12
- */
 public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";

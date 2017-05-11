@@ -22,10 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 30.11.2007
- */
 public class DRootElement {
   public Map<String, DClassElement> containingClasses = new HashMap<>();
 

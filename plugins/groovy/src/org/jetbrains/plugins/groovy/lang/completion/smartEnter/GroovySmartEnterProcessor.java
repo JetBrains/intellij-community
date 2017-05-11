@@ -50,10 +50,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 29.07.2008
- */
 public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
   public GroovySmartEnterProcessor() {
     final List<SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor>> ourFixers = Arrays.asList(

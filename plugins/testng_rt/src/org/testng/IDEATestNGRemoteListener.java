@@ -10,10 +10,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 5/22/13
- */
 public class IDEATestNGRemoteListener {
 
   private final PrintStream myPrintStream;

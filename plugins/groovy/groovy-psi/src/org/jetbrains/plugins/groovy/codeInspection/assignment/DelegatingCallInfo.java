@@ -26,9 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArg
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
-/**
- * Created by Max Medvedev on 05/02/14
- */
 public class DelegatingCallInfo<T extends GroovyPsiElement> implements CallInfo<T> {
   private final CallInfo<T> myDelegate;
 

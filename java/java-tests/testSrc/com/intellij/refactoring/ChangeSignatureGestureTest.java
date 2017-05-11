@@ -33,10 +33,6 @@ import com.intellij.refactoring.changeSignature.inplace.InplaceChangeSignature;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-/**
- * User: anna
- * Date: Sep 9, 2010
- */
 @PlatformTestCase.WrapInCommand
 public class ChangeSignatureGestureTest extends LightCodeInsightFixtureTestCase {
 

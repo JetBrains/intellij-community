@@ -42,12 +42,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.BiFunction;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/5/12
- * Time: 5:34 PM
- */
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
   public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<PsiElement> consumer) {

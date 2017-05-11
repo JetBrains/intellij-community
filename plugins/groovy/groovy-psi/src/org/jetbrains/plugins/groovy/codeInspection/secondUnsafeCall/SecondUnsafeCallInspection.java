@@ -32,10 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 13.11.2007
- */
 public class SecondUnsafeCallInspection extends GroovySuppressableInspectionTool {
   @Override
   @NotNull

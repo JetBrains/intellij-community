@@ -62,9 +62,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: catherine
- */
 public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private JComboBox myTestRunnerComboBox;

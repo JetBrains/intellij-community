@@ -31,9 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * User: cdr
- */
 public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
   private final PrioritizedDocumentListener myListener;
   private final Document myDocument;

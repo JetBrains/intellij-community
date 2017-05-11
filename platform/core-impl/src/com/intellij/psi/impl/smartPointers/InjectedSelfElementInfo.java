@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-/**
-* User: cdr
-*/
 class InjectedSelfElementInfo extends SmartPointerElementInfo {
   private final SmartPsiFileRange myInjectedFileRangeInHostFile;
   @Nullable private final AffixOffsets myAffixOffsets;

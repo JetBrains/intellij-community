@@ -18,12 +18,6 @@ package org.jetbrains.idea.svn.svnkit.lowLevel;
 import org.tmatesoft.svn.core.io.ISVNConnectionListener;
 import org.tmatesoft.svn.core.io.SVNRepository;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:05 PM
- */
 public class QuicklyDisposableISVNConnectionListener extends QuicklyDisposableProxy<ISVNConnectionListener> implements ISVNConnectionListener {
   public QuicklyDisposableISVNConnectionListener(ISVNConnectionListener o) {
     super(o);

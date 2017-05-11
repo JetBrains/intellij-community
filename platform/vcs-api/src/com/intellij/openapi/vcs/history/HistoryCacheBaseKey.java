@@ -18,12 +18,6 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 
-/**
-* Created by IntelliJ IDEA.
-* User: Irina.Chernushina
-* Date: 8/8/11
-* Time: 7:01 PM
-*/
 public class HistoryCacheBaseKey {
   private final FilePath myFilePath;
   private final VcsKey myVcsKey;

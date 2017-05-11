@@ -12,11 +12,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 27.03.2008
-*/
 public class ResourceUtil {
   public static <TC extends TestCase & IdeaCodeInsightTestCase> void copyFiles(TC test) throws IOException {
     try {

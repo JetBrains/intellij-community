@@ -30,9 +30,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 
-/**
-* Created by Maxim.Mossienko on 8/14/13.
-*/
 public abstract class IdFilter {
   public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");

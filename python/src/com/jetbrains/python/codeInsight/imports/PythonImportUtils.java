@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Mar-2008
- */
 package com.jetbrains.python.codeInsight.imports;
 
 import com.intellij.openapi.extensions.Extensions;

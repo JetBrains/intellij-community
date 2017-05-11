@@ -23,9 +23,6 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class SPIRenameTest extends MultiFileTestCase {
   public void testRenameProviderImplementation() throws Exception {
     doRenameTest("Test1", "foo/Test.java");

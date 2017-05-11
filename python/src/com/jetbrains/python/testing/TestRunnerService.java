@@ -25,9 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: catherine
- */
 @State(name = "TestRunnerService")
 public class TestRunnerService implements PersistentStateComponent<TestRunnerService> {
   private List<String> myConfigurations = new ArrayList<>();

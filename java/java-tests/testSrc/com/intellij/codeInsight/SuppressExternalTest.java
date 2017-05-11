@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 17-Jun-2010
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.IntentionAction;

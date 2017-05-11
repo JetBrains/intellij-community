@@ -57,10 +57,6 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/15/11
- */
 public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner, E extends PsiElement> extends
                                                                                                         InplaceVariableIntroducer<E> {
   protected V myLocalVariable;

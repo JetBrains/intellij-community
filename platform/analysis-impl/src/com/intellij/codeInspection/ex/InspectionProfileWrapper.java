@@ -28,10 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 import java.util.function.Function;
 
-/**
- * User: anna
- * Date: 15-Feb-2006
- */
 public class InspectionProfileWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileWrapper");
 

@@ -37,10 +37,6 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule> {
   private static final Logger LOG = Logger.getInstance(JpsEclipseClasspathReader.class);
   private final Map<String, String> myLibLevels;

@@ -31,9 +31,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public abstract class AbstractJavaInplaceIntroduceTest extends AbstractInplaceIntroduceTest {
 
   @Nullable

@@ -31,12 +31,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Set;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/6/12
- * Time: 7:53 PM
- */
 public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   private String mySelectedURL;
   private boolean myCheckout;

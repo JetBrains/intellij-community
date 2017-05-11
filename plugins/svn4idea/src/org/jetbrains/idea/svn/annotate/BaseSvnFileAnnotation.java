@@ -34,12 +34,6 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/20/12
- * Time: 11:33 AM
- */
 public abstract class BaseSvnFileAnnotation extends FileAnnotation {
   protected final String myContents;
   protected final VcsRevisionNumber myBaseRevision;

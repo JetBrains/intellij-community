@@ -22,9 +22,6 @@ import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- */
 public class PsiMethodReferenceUtil {
   private static final Logger LOG = Logger.getInstance(PsiMethodReferenceUtil.class);
 

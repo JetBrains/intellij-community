@@ -27,10 +27,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-/**
- * User: anna
- * Date: 12/14/10
- */
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
   private CoverageEngine myEngine;

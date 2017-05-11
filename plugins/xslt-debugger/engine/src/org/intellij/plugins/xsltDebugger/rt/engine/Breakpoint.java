@@ -16,11 +16,6 @@
 
 package org.intellij.plugins.xsltDebugger.rt.engine;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 29.05.2007
- */
 public interface Breakpoint {
   String getUri();
 

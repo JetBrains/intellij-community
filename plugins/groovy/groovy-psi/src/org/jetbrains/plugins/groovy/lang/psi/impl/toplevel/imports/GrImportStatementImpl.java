@@ -383,9 +383,7 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
     }
   }
 
-  /**
-   * Created by Max Medvedev on 26/03/14
-   */
+
   private abstract static class StaticAccessorProcessor extends GrDelegatingScopeProcessorWithHints {
     private final String myPropertyName;
 

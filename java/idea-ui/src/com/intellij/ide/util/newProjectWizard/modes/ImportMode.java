@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 10-Jul-2007
- */
 package com.intellij.ide.util.newProjectWizard.modes;
 
 import com.intellij.ide.util.newProjectWizard.StepSequence;

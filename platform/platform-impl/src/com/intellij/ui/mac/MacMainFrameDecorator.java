@@ -46,9 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
-/**
- * User: spLeaner
- */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 

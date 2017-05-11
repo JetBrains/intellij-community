@@ -8,9 +8,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.psi.*;
 
-/**
-* User: anna
-*/
 public class FinalListener {
   private final Editor myEditor;
   private static final Logger LOG = Logger.getInstance(FinalListener.class);

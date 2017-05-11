@@ -22,9 +22,6 @@ import com.intellij.refactoring.util.DocCommentPolicy;
 
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 10/3/13
- */
 public interface PullUpData {
   PsiClass getSourceClass();
 

@@ -49,11 +49,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.07.2007
- */
 public abstract class HighlightingTestBase extends UsefulTestCase implements IdeaCodeInsightTestCase {
   protected CodeInsightTestFixture myTestFixture;
 

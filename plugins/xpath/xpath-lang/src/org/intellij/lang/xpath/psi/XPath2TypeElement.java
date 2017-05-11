@@ -15,11 +15,6 @@
  */
 package org.intellij.lang.xpath.psi;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 04.01.11
-*/
 public interface XPath2TypeElement extends XPathElement, QNameElement {
   XPathType getDeclaredType();
 }

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * User: anna
- */
 public class TypeCompatibilityConstraint implements ConstraintFormula {
   private PsiType myT;
   private PsiType myS;

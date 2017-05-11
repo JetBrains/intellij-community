@@ -32,9 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
-* User: cdr
-*/
 public class SelfElementInfo extends SmartPointerElementInfo {
   private static final FileDocumentManager ourFileDocManager = FileDocumentManager.getInstance();
   private volatile Identikit myIdentikit;

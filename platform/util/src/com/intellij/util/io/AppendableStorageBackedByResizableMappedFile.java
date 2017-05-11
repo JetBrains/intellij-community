@@ -23,9 +23,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.ByteBuffer;
 
-/**
- * Created by Maxim.Mossienko on 1/9/14.
- */
 public class AppendableStorageBackedByResizableMappedFile extends ResizeableMappedFile {
   private final MyDataIS myReadStream;
   private byte[] myAppendBuffer;

@@ -46,10 +46,6 @@ import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 21.02.2008
- */
 public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrDynamicImplicitElement {
   private static final Logger LOG = Logger.getInstance(GrDynamicImplicitMethod.class);
 

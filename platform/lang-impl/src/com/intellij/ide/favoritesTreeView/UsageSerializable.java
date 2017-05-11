@@ -31,12 +31,6 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 6/7/12
- * Time: 1:58 PM
- */
 public class UsageSerializable implements WorkingSetSerializable<UsageInfo, InvalidUsageNoteNode> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.favoritesTreeView.UsageSerializable");
   private final static String separator = "<>";

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 07-May-2010
- */
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;

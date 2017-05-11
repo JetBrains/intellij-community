@@ -37,11 +37,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 25.11.2007
- */
 class NoNamespaceConfigPanel extends HectorComponentPanel {
   private final NoNamespaceConfig myConfig;
   private final PsiFile myFile;

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
 
-/**
- * Created by Maxim.Mossienko on 11/23/2015.
- */
 public class IndexAccessValidator {
   private final ThreadLocal<ID<?, ?>> ourAlreadyProcessingIndices = new ThreadLocal<>();
 

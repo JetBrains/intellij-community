@@ -24,10 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 3/14/12
- */
 public abstract class CustomScopesProviderEx implements CustomScopesProvider {
   @Nullable
   public NamedScope getCustomScope(@NotNull String name) {

@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
-* Created by Egor on 04.10.2014.
-*/
 class IconObjectRenderer extends CompoundReferenceRenderer implements FullValueEvaluatorProvider {
   public IconObjectRenderer(final NodeRendererSettings rendererSettings) {
     super(rendererSettings, "Icon", null, null);

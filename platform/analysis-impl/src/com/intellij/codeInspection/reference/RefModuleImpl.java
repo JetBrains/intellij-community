@@ -25,10 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 
-/**
- * User: anna
- * Date: 09-Jan-2006
- */
 class RefModuleImpl extends RefEntityImpl implements RefModule {
   private final Module myModule;
 

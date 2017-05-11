@@ -38,9 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Created by Max Medvedev on 07/04/14
- */
 public class GrMapTypeFromNamedArgs extends GrMapType {
 
   private final LinkedHashMap<String, GrExpression> myStringEntries;

@@ -32,9 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.ErrorUtil;
 
 import java.util.Arrays;
 
-/**
- * Created by Max Medvedev on 10/01/14
- */
 public class GrSortMapKeysIntention extends Intention {
 
   @Override

@@ -30,10 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 
-/**
-* User: anna
-* Date: 4/21/11
-*/
 class TestCategory extends TestPackage {
   public TestCategory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);

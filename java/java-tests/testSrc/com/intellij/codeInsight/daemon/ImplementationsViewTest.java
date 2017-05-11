@@ -14,9 +14,6 @@ import org.junit.Assert;
 
 import java.util.*;
 
-/**
- * User: anna
- */
 public class ImplementationsViewTest extends LightCodeInsightFixtureTestCase {
   public void testFromCompletion() {
     myFixture.configureByText("a.java", "public class Foo {\n" +

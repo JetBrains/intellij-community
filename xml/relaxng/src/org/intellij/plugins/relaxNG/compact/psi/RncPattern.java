@@ -18,10 +18,5 @@ package org.intellij.plugins.relaxNG.compact.psi;
 
 import org.intellij.plugins.relaxNG.model.Pattern;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 05.09.2007
- */
 public interface RncPattern extends RncElement, Pattern<RncElement> {
 }

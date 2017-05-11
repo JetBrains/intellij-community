@@ -7,10 +7,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 04-Jan-2006
- */
 public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
   private static final Logger LOG = Logger.getInstance(CommonProblemDescriptorImpl.class);
   private final QuickFix[] myFixes;

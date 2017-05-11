@@ -27,10 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 11.09.2007
- */
 public class GroovyOverrideMethodsHandler implements LanguageCodeInsightActionHandler {
   @Override
   public boolean isValidFor(Editor editor, PsiFile psiFile) {

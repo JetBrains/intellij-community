@@ -21,10 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-/**
- * User: Sergey.Vasiliev
- * Date: Nov 21, 2004
- */
 public class MockConfirmation extends ListPopupImpl {
   String myOnYesText;
   public MockConfirmation(ListPopupStep aStep, String onYesText) {

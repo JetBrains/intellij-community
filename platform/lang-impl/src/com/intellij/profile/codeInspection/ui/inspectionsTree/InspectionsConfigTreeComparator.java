@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 14-May-2009
- */
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;

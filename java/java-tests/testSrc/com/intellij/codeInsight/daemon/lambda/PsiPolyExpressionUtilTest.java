@@ -21,9 +21,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
-/**
- * User: anna
- */
 public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
   public void testPrefixExpression() throws Exception {
     final PsiExpression psiExpression = findExpression("     int j = i<caret>++;");

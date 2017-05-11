@@ -21,10 +21,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.IncorrectOperationException;
 
-/**
- * User: anna
- * Date: 7/22/13
- */
 public class SafeDeleteOverrideAnnotation extends SafeDeleteUsageInfo implements SafeDeleteCustomUsageInfo {
   public SafeDeleteOverrideAnnotation(PsiElement element, PsiElement referencedElement) {
     super(element, referencedElement);

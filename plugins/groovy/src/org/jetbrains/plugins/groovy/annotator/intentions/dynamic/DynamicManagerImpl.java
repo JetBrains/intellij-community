@@ -38,10 +38,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 23.11.2007
- */
 @State(name = "DynamicElementsStorage", storages = @Storage("dynamic.xml"))
 
 public class DynamicManagerImpl extends DynamicManager {

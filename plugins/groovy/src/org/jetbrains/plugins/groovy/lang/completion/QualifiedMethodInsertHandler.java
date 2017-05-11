@@ -23,9 +23,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-/**
-* Created by Max Medvedev on 14/05/14
-*/
 class QualifiedMethodInsertHandler implements InsertHandler<JavaGlobalMemberLookupElement> {
   public static final InsertHandler<JavaGlobalMemberLookupElement> INSTANCE = new QualifiedMethodInsertHandler();
 

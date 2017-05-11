@@ -32,9 +32,6 @@ import com.intellij.util.Function;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class DomElementsHighlightingUtil {
   private DomElementsHighlightingUtil() {
   }

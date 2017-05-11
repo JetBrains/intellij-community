@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 11-Sep-2007
- */
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;

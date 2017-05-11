@@ -34,11 +34,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 18.11.2007
- */
 public class AdvancedDtdOptions implements AdvancedOptions {
   @NonNls
   private static final String COLON_REPLACEMENT = "colon-replacement";

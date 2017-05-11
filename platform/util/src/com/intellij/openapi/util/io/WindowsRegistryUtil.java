@@ -24,9 +24,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class WindowsRegistryUtil {
   private WindowsRegistryUtil() {
   }

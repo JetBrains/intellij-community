@@ -25,12 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 4/23/12
- * Time: 4:53 PM
- */
 public class ClearCommittedAction extends AnAction implements DumbAware {
   public ClearCommittedAction() {
     super("Clear", "Clears cached revisions", AllIcons.Vcs.Remove);

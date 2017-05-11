@@ -23,10 +23,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-/**
- * User: anna
- * Date: Sep 3, 2010
- */
 @Test
 public class TestNGSuiteTest extends LightCodeInsightFixtureTestCase {
   @BeforeMethod

@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * User: Sergey.Vasiliev
- */
 public class GenerateDomElementAction extends CodeInsightAction {
 
   protected final GenerateDomElementProvider myProvider;

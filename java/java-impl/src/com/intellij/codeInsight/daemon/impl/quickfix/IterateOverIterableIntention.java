@@ -34,9 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
-/**
- * User: anna
- */
 public class IterateOverIterableIntention implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(IterateOverIterableIntention.class);
 

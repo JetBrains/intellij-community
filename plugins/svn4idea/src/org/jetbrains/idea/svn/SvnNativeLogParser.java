@@ -15,12 +15,6 @@
  */
 package org.jetbrains.idea.svn;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/2/12
- * Time: 4:14 PM
- */
 public class SvnNativeLogParser {
 
   public static final String CALLED = "CALLED ";

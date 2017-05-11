@@ -58,10 +58,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 14.09.2007
- */
 public class GroovyOverrideImplementUtil {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.overrideImplement.GroovyOverrideImplementUtil");
 

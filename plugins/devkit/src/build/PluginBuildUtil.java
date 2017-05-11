@@ -35,10 +35,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Nov 24, 2004
- */
 public class PluginBuildUtil {
   private PluginBuildUtil() {
   }

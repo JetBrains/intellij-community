@@ -19,9 +19,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableDialog;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 
-/**
- * Created by Max Medvedev on 12/1/13
- */
 public class MockGrIntroduceVariableDialog extends GroovyIntroduceVariableDialog {
   private final MockSettings mySettings;
 

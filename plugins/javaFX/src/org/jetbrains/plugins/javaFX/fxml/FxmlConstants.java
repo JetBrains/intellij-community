@@ -22,10 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-/**
- * User: anna
- * Date: 1/14/13
- */
 public class FxmlConstants {
   @NonNls public static final String FX_CONTROLLER = "fx:controller";
   @NonNls public static final String FX_ID = "fx:id";

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 23-Jan-2008
- */
 package com.intellij.psi.impl.file;
 
 import com.intellij.icons.AllIcons;

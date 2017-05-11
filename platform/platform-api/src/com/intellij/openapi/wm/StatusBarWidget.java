@@ -26,9 +26,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.event.MouseEvent;
 
-/**
- * User: spLeaner
- */
 public interface StatusBarWidget extends Disposable {
   enum PlatformType {
     DEFAULT, MAC

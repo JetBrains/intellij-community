@@ -24,12 +24,6 @@ import java.io.IOException;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 5:33 PM
- */
 public class SvnClientRunnerImpl implements SvnClientRunner {
   private final TestClientRunner myTestClientRunner;
 

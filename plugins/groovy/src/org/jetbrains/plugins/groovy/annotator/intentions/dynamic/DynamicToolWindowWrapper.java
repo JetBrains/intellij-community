@@ -75,10 +75,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 09.01.2008
- */
 public class DynamicToolWindowWrapper {
   private static final Logger LOG = Logger.getInstance(DynamicToolWindowWrapper.class);
 

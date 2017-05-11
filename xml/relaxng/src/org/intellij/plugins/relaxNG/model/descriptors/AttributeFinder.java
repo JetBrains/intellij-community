@@ -24,11 +24,6 @@ import javax.xml.namespace.QName;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 30.07.2007
-*/
 class AttributeFinder extends RecursionSaveWalker {
   private int depth;
   private int optional;

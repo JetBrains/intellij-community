@@ -19,11 +19,6 @@ package org.intellij.plugins.xsltDebugger.rt.engine;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 31.05.2007
- */
 public interface Value extends Serializable {
   interface Type extends Serializable {
     String getName();

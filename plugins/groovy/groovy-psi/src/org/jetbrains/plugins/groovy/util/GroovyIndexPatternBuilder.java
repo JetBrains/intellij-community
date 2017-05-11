@@ -26,10 +26,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 16.07.2008
- */
 public class GroovyIndexPatternBuilder implements IndexPatternBuilder {
     @Override
     public Lexer getIndexingLexer(@NotNull PsiFile file) {

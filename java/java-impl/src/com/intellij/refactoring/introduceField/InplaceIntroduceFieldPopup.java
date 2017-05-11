@@ -38,10 +38,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
-/**
- * User: anna
- * Date: 3/15/11
- */
 public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPopup {
 
   private final boolean myStatic;

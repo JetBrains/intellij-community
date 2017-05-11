@@ -21,11 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.kohsuke.rngom.digested.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 19.07.2007
-*/
 public class RecursionSaveWalker extends DPatternWalker {
   private THashSet<DPattern> myVisited;
 

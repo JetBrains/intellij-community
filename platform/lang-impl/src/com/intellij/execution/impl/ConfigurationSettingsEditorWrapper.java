@@ -37,10 +37,6 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 27-Mar-2006
- */
 public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAndConfigurationSettings>
   implements BeforeRunStepsPanel.StepsBeforeRunListener {
   public static final DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");

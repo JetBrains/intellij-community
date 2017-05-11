@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 05-Jun-2009
- */
 package com.intellij.rt.execution.junit;
 
 import java.util.ArrayList;

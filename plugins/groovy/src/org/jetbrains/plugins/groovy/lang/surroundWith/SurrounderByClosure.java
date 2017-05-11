@@ -28,10 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 22.05.2007
- */
 public class SurrounderByClosure extends GroovyManyStatementsSurrounder {
   private static final Key<GroovyResolveResult> REF_RESOLVE_RESULT_KEY = Key.create("REF_RESOLVE_RESULT");
 

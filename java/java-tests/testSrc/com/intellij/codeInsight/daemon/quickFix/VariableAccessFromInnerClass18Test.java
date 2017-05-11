@@ -15,9 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-/**
- * User: anna
- */
 public class VariableAccessFromInnerClass18Test extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception {
     doAllTests();

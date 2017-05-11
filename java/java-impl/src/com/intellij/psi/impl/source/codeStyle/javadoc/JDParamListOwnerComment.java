@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 30-Apr-2010
- */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.formatting.IndentInfo;

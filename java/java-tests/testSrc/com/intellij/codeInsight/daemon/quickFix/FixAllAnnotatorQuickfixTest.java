@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 17-Jun-2007
- */
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitorBasedInspection;

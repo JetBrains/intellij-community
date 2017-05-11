@@ -34,12 +34,6 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import java.io.File;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 11:13 AM
- */
 public class IdeaCommitHandler implements CommitEventHandler, ProgressTracker {
 
   private static final Logger LOG = Logger.getInstance(IdeaCommitHandler.class);

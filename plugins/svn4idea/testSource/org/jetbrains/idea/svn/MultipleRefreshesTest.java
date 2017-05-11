@@ -23,12 +23,6 @@ import org.junit.runners.Parameterized;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 1/25/12
- * Time: 12:37 PM
- */
 @org.junit.runner.RunWith(org.junit.runners.Parameterized.class)
 public class MultipleRefreshesTest {
 

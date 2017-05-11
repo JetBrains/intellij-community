@@ -26,10 +26,6 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import java.awt.*;
 
-/**
- * User: anna
- * Date: 18-Nov-2005
- */
 public class RequiredAttributesInspection extends RequiredAttributesInspectionBase {
   @Override
   @Nullable

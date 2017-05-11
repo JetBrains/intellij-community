@@ -22,10 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 10/29/12
- */
 public class EPathCommonUtil {
   /**
    * @param path path in format /module_root/relative_path

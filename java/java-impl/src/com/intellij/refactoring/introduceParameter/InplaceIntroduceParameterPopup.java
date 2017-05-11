@@ -48,10 +48,6 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 2/25/11
- */
 public class InplaceIntroduceParameterPopup extends AbstractJavaInplaceIntroducer {
   private static final Logger LOG = Logger.getInstance(InplaceIntroduceParameterPopup.class);
 

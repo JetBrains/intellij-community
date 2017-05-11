@@ -21,9 +21,6 @@ import java.awt.*;
 
 import static com.intellij.ui.ColorUtil.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class ColorUtilTest extends TestCase {
   public void testColorMix() {
     assertEquals(Color.GRAY, mix(Color.BLACK, Color.WHITE, .5));

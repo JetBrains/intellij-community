@@ -13,9 +13,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 
-/**
- * Created by Max Medvedev on 08/06/14
- */
 public class TraitMethodImplementor implements MethodImplementor {
   @NotNull
   @Override

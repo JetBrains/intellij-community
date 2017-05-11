@@ -28,12 +28,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import junit.framework.Assert;
 import org.junit.Test;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/27/12
- * Time: 5:15 PM
- */
 public class SvnHistoryTest extends Svn17TestCase {
   private volatile int myCnt;
 

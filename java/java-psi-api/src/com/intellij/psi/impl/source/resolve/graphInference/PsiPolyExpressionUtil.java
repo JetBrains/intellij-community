@@ -25,9 +25,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
     if (expression instanceof PsiFunctionalExpression ||

@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 29-Oct-2008
- */
 package com.intellij.refactoring;
 
 import com.intellij.openapi.editor.Editor;

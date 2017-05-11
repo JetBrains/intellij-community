@@ -22,9 +22,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import java.util.List;
 import java.util.Map;
 
-/**
- * User: catherine
- */
 @State(name = "PyPackageService", storages = @Storage(value = "packages.xml", roamingType = RoamingType.DISABLED))
 public class PyPackageService implements
                               PersistentStateComponent<PyPackageService> {

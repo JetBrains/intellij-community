@@ -27,10 +27,6 @@ import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 14.10.2008
- */
 public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
   private final DefaultListModel myDataModel;
 

@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 28-Feb-2008
- */
 package com.intellij.refactoring;
 
 public class FindMethodDuplicatesTest extends FindMethodDuplicatesBaseTest{

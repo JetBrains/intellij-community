@@ -35,9 +35,6 @@ import java.util.Set;
 import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by Yuli Fiterman on 5/10/2016.
- */
 public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test

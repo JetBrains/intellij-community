@@ -19,10 +19,6 @@ import com.intellij.coverage.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 
-/**
-* User: anna
-* Date: 1/5/12
-*/
 public class CoverageViewSuiteListener implements CoverageSuiteListener {
   private final CoverageDataManager myDataManager;
   private final Project myProject;

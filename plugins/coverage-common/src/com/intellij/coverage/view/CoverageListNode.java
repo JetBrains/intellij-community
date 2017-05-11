@@ -20,10 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.Collection;
 
-/**
-* User: anna
-* Date: 1/2/12
-*/
 public class CoverageListNode extends AbstractTreeNode {
   protected CoverageSuitesBundle myBundle;
   protected CoverageViewManager.StateBean myStateBean;

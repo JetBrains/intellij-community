@@ -20,12 +20,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/15/12
- * Time: 3:03 PM
- */
 public abstract class QuicklyDisposableProxy<T> implements Disposable {
   private final AtomicReference<T> myRef;
 

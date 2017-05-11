@@ -32,9 +32,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- */
 class JavaFxLocationReferenceProvider extends PsiReferenceProvider {
   private boolean mySupportCommaInValue = false;
   private final Set<FileType> myAcceptedFileTypes;

@@ -31,12 +31,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/31/12
- * Time: 6:19 PM
- */
 public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, ApplicationLevelNumberConnectionsGuard {
   public static final int DELAY = 20000;
 

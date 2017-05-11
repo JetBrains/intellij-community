@@ -36,9 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-/**
- * User: ktisha
- */
 public class PyIntroduceParameterHandler extends IntroduceHandler {
   public PyIntroduceParameterHandler() {
     super(new VariableValidator(), PyBundle.message("refactoring.introduce.parameter.dialog.title"));

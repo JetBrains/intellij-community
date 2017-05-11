@@ -27,10 +27,6 @@ import com.intellij.refactoring.introduceParameter.IntroduceParameterHandler;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 3/16/11
- */
 public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceTest {
 
   private static final String BASE_PATH = "/refactoring/inplaceIntroduceParameter/";

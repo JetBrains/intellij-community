@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 
-/**
- * User: cdr
- */
 class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   private final String myClassName;
 

@@ -30,9 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- */
 public class LambdaHighlightingUtil {
   private static final Logger LOG = Logger.getInstance(LambdaHighlightingUtil.class);
 

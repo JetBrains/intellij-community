@@ -35,9 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: cdr
- */
 public class DiffLog implements DiffTreeChangeBuilder<ASTNode,ASTNode> {
   public DiffLog() { }
 

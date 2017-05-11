@@ -13,10 +13,6 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 1/8/13
- */
 public class JavaFxTagNameReference extends TagNameReference{
   private static final Logger LOGGER = Logger.getInstance(JavaFxTagNameReference.class);
 

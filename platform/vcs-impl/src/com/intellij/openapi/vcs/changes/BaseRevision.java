@@ -19,12 +19,6 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/19/12
- * Time: 4:39 PM
- */
 public class BaseRevision {
   private final FilePath myPath;
   private VcsRevisionNumber myRevision;

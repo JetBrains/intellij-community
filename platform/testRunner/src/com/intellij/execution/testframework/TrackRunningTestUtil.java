@@ -30,10 +30,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
-/**
- * User: anna
- * Date: 10/19/11
- */
 public class TrackRunningTestUtil {
   private TrackRunningTestUtil() {
   }

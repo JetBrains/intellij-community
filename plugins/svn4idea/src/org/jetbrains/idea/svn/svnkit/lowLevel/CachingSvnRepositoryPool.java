@@ -31,12 +31,6 @@ import org.tmatesoft.svn.core.io.SVNRepository;
 
 import java.util.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 3:39 PM
- */
 public class CachingSvnRepositoryPool implements SvnRepositoryPool {
   private static final long DEFAULT_IDLE_TIMEOUT = 60*1000;
 

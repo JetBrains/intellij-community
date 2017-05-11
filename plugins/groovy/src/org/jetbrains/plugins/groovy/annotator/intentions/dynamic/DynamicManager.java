@@ -28,10 +28,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ui.DynamicEleme
 import java.util.Collection;
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 23.11.2007
- */
 public abstract class DynamicManager implements PersistentStateComponent<DRootElement> {
 
   @NotNull

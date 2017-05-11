@@ -100,10 +100,6 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 25-Jan-2006
- */
 public class ScopeTreeViewPanel extends JPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.ScopeTreeViewPanel");
   private final IdeView myIdeView = new MyIdeView();

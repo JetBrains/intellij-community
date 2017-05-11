@@ -22,11 +22,6 @@ import org.intellij.lang.xpath.psi.XPathType;
 
 import static org.intellij.lang.xpath.psi.XPath2Type.*;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 10.03.11
-*/
 public class XPath2ExpressionTest extends TestBase {
   @Override
   protected void setUp() throws Exception {

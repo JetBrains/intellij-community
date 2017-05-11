@@ -18,9 +18,6 @@ package com.intellij.ui.components;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * User: Vassiliy.Kudryashov
- */
 public class JBLayeredPane extends JLayeredPane {
 
   @Override

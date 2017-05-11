@@ -45,10 +45,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
-/**
- * User: anna
- * Date: Feb 15, 2005
- */
 public class AddToFavoritesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.favoritesTreeView.actions.AddToFavoritesAction");
 

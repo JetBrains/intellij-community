@@ -27,10 +27,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 
-/**
-* User: anna
-* Date: 11/29/11
-*/
 class MacGestureAdapter extends GestureAdapter {
   double magnification;
   private final IdeFrame myFrame;

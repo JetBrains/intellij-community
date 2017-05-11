@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 21-Mar-2008
- */
 package com.intellij.codeInsight.daemon.quickFix;
 
 public class ReplaceAddAllArrayToCollectionsFixTest extends LightQuickFixParameterizedTestCase {

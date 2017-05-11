@@ -17,9 +17,6 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- */
 public class UnknownFeature {
   private final String myFeatureType;
   private final String myFeatureDisplayName;

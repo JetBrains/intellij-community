@@ -23,10 +23,6 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 import java.io.IOException;
 
-/**
- * User: zolotov
- * Date: 9/23/13
- */
 abstract public class TestDataPathTestCase extends JavaCodeInsightFixtureTestCase {
   protected VirtualFile myContentRoot;
   protected VirtualFile myContentRootSubdir;

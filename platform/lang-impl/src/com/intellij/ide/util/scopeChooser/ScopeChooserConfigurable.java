@@ -56,10 +56,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: 01-Jul-2006
- */
 public class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
   @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   public static final String PROJECT_SCOPES = "project.scopes";

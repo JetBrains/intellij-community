@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: catherine
- */
 package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.Location;

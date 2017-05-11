@@ -21,10 +21,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: 3/28/12
- */
 public class JavaSdkVersionUtil {
   public static boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion minVersion) {
     JavaSdkVersion version = getJavaSdkVersion(element);

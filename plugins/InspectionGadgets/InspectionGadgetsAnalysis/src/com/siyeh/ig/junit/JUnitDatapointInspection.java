@@ -26,10 +26,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: ddt
- * Date: 5/22/13
- */
 public class JUnitDatapointInspection extends BaseInspection {
   public static final String DATAPOINT_FQN = "org.junit.experimental.theories.DataPoint";
 

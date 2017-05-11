@@ -69,11 +69,6 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.StringReader;
 import java.util.concurrent.ConcurrentMap;
 
-/*
-* Created by IntelliJ IDEA.
-* User: sweinreuter
-* Date: 19.07.2007
-*/
 public class RngParser {
   private static final Logger LOG = Logger.getInstance("#org.intellij.plugins.relaxNG.validation.RngParser");
 

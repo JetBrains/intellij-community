@@ -25,10 +25,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * User: anna
- * Date: 9/1/11
- */
 public class ImportsUtil {
   private ImportsUtil() {
   }

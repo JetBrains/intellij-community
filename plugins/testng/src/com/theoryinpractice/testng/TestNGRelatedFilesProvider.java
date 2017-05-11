@@ -36,9 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * User: anna
- */
 public class TestNGRelatedFilesProvider extends GotoRelatedProvider {
 
   @NotNull

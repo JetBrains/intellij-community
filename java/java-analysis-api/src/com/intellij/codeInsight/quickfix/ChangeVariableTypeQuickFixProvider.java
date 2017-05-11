@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * User: anna
- * Date: 27-Aug-2009
- */
 package com.intellij.codeInsight.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;

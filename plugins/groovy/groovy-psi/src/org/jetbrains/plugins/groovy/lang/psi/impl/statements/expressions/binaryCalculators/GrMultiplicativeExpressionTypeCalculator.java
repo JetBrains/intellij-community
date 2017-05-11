@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression;
 
-/**
- * Created by Max Medvedev on 12/20/13
- */
 public class GrMultiplicativeExpressionTypeCalculator extends GrNumericBinaryExpressionTypeCalculator {
   public static final GrMultiplicativeExpressionTypeCalculator INSTANCE = new GrMultiplicativeExpressionTypeCalculator();
 

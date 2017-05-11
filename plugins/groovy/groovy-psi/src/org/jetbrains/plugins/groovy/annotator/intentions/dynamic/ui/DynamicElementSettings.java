@@ -19,10 +19,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 
 import java.util.List;
 
-/**
- * User: Dmitry.Krasilschikov
- * Date: 28.04.2008
- */
 public class DynamicElementSettings {
   private String myName;
   private String myContainingClassName;

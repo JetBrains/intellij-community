@@ -21,10 +21,6 @@ import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * User: anna
- * Date: Aug 27, 2010
- */
 public class PropertyKeyManipulator extends AbstractElementManipulator<PropertyKeyImpl>{
   @Override
   public PropertyKeyImpl handleContentChange(@NotNull PropertyKeyImpl element, @NotNull TextRange range, String newContent)

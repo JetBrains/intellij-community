@@ -20,9 +20,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by Max Medvedev on 10/25/13
- */
 public interface ClassTypePointerFactory {
   ExtensionPointName<ClassTypePointerFactory> EP_NAME = ExtensionPointName.create("com.intellij.classTypePointerFactory");
 

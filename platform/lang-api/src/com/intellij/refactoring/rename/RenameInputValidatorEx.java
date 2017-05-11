@@ -21,10 +21,6 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 3/14/11
- */
 public interface RenameInputValidatorEx extends RenameInputValidator {
   /**
    * Called only if all input validators ({@link RenameInputValidator}) accept

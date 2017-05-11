@@ -24,10 +24,6 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: anna
- * Date: 1/18/12
- */
 public class RemoveTypeArgumentsFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   private static final Logger LOGGER = Logger.getInstance(RemoveTypeArgumentsFix.class);
 

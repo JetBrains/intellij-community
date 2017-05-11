@@ -19,11 +19,6 @@ package org.intellij.plugins.relaxNG.compact.psi;
 import org.intellij.plugins.relaxNG.model.Grammar;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: sweinreuter
- * Date: 13.08.2007
- */
 public interface RncGrammar extends RncElement, Grammar<RncPattern, RncElement> {
   @Override
   @Nullable

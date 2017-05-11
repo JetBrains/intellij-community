@@ -41,10 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * User: anna
- * Date: Jan 18, 2005
- */
 public class UsagesInAnalyzingDependenciesTest extends PsiTestCase {
   @Override
   protected void setUp() throws Exception {

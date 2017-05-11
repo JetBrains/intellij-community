@@ -19,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Array;
 
-/**
- * User: cdr
- */
 @Deprecated // use one of com.intellij.util.containers.Concurrent* class instead
 public abstract class StripedLockHolder<T> {
   private static final int NUM_LOCKS = 256;
