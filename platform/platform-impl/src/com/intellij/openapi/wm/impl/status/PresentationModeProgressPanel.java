@@ -15,14 +15,12 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TransparentPanel;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -31,19 +29,18 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class PresentationModeProgressPanel {
   private final InlineProgressIndicator myProgress;
+  private final JBIterable<ProgressButton> myEastButtons;
   private JLabel myText;
   private JProgressBar myProgressBar;
-  private InplaceButton myCancelButton;
   private JLabel myText2;
   private JPanel myRootPanel;
+  private JPanel myButtonPanel;
   private MergingUpdateQueue myUpdateQueue;
   private Update myUpdate;
 
@@ -61,6 +58,8 @@ public class PresentationModeProgressPanel {
         updateImpl();
       }
     };
+    myEastButtons = myProgress.createEastButtons();
+    myButtonPanel.add(InlineProgressIndicator.createButtonPanel(myEastButtons.map(b -> b.button)));
   }
 
   public void update() {
@@ -92,6 +91,8 @@ public class PresentationModeProgressPanel {
     if (!myProgressBar.isIndeterminate()) {
       myProgressBar.setValue((int)(myProgress.getFraction() * 99) + 1);
     }
+
+    myEastButtons.forEach(b -> b.updateAction.run());
   }
 
   @NotNull
@@ -107,14 +108,5 @@ public class PresentationModeProgressPanel {
         return ui.getPresentationMode() || !ui.getShowStatusBar() && Registry.is("ide.show.progress.without.status.bar");
       }
     };
-    IconButton iconButton = new IconButton(myProgress.getInfo().getCancelTooltipText(),
-                                                 AllIcons.Process.Stop,
-                                                 AllIcons.Process.StopHovered);
-    myCancelButton = new InplaceButton(iconButton, new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myProgress.cancelRequest();
-      }
-    }).setFillBg(false);
   }
 }
