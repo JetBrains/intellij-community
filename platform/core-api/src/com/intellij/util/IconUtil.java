@@ -30,6 +30,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
+import com.intellij.util.ui.JBUI.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -439,9 +441,22 @@ public class IconUtil {
 
   /**
    * Returns a scaled icon instance.
-   *
+   * <p>
    * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
    * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * In the following example:
+   * <code>
+   * Icon myIcon = new MyIcon();
+   * Icon scaledIcon = IconUtil.scale(myIcon, myComp, 2f);
+   * Icon anotherScaledIcon = IconUtil.scale(scaledIcon, myComp, 2f);
+   * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth); // compare the scale of the icons
+   * </code>
+   * The result of the assertion depends on MyIcon implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
+   * then {@code anotherScaledIcon} should be scaled according to the {@link ScalableIcon} javadoc, and the assertion should pass.
+   * Otherwise, {@code anotherScaledIcon} should be 2 times bigger than {@code scaledIcon}, and 4 times bigger than {@code myIcon}.
+   * So, prior to scale the icon recursively, the returned icon should be inspected for its type to understand the result.
+   * But recursive scale should better be avoided.
    *
    * @param icon the icon to scale
    * @param ancestor the component (or its ancestor) painting the icon, or null when not available
@@ -451,8 +466,37 @@ public class IconUtil {
   @NotNull
   public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
     if (icon instanceof ScalableIcon) {
-      if (icon instanceof JBUI.JBUIScaleTrackable && ancestor != null) {
-        ((JBUI.JBUIScaleTrackable)icon).updateJBUIScale(ancestor.getGraphicsConfiguration());
+      if (icon instanceof JBUIScaleTrackable) {
+        ((JBUIScaleTrackable)icon).updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+      }
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, scale);
+  }
+
+  /**
+   * Returns a scaled icon instance, in scale of the provided font size.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * Refer to {@link #scale(Icon, Component, float)} for more details.
+   *
+   * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
+   * @param fontSize the reference font size
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
+    float scale = fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof JBUIScaleTrackable) {
+        JBUIScaleTrackable jbuiIcon = (JBUIScaleTrackable)icon;
+        jbuiIcon.updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+        // take into account the user scale of the icon
+        float usrScale = jbuiIcon.getJBUIScale(ScaleType.USR);
+        scale /= usrScale;
       }
       return ((ScalableIcon)icon).scale(scale);
     }
