@@ -145,4 +145,4 @@ tailrec fun UElement.getLanguagePlugin(): UastLanguagePlugin {
     return (uastParent ?: error("PsiElement should exist at least for UFile")).getLanguagePlugin()
 }
 
-fun Collection<UElement>.toPsiElements() = mapNotNull { it.psi }
+fun Collection<UElement?>.toPsiElements() = mapNotNull { it?.psi }
