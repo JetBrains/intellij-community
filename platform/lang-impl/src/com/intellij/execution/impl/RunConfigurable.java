@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
@@ -66,7 +65,6 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
-
   @NonNls private static final Object DEFAULTS = new Object() {
     @Override
     public String toString() {
@@ -253,11 +251,9 @@ class RunConfigurable extends BaseConfigurable {
                 drawPressAddButtonMessage(userObject == DEFAULTS ? null : (ConfigurationType)userObject);
               }
               else {
-                final ConfigurationType type = (ConfigurationType)userObject;
-                ConfigurationFactory[] factories = type.getConfigurationFactories();
+                ConfigurationFactory[] factories = ((ConfigurationType)userObject).getConfigurationFactories();
                 if (factories.length == 1) {
-                  final ConfigurationFactory factory = factories[0];
-                  showTemplateConfigurable(factory);
+                  showTemplateConfigurable(factories[0]);
                 }
                 else {
                   drawPressAddButtonMessage((ConfigurationType)userObject);
@@ -824,7 +820,10 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public boolean isModified() {
-    if (super.isModified()) return true;
+    if (super.isModified()) {
+      return true;
+    }
+
     final RunManagerImpl runManager = getRunManager();
     final List<RunConfiguration> allConfigurations = runManager.getAllConfigurationsList();
     final List<RunConfiguration> currentConfigurations = new ArrayList<>();
@@ -832,14 +831,14 @@ class RunConfigurable extends BaseConfigurable {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
       if (object instanceof ConfigurationType) {
-        final List<RunnerAndConfigurationSettings> configurationSettings = runManager.getConfigurationSettingsList(
-          (ConfigurationType)object);
         List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
         collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
-        if (configurationSettings.size() != configurationNodes.size()) return true;
+        if (runManager.getConfigurationSettingsList((ConfigurationType)object).size() != configurationNodes.size()) {
+          return true;
+        }
+
         for (int j = 0; j < configurationNodes.size(); j++) {
-          DefaultMutableTreeNode configurationNode = configurationNodes.get(j);
-          final Object userObject = configurationNode.getUserObject();
+          final Object userObject = configurationNodes.get(j).getUserObject();
           if (userObject instanceof SingleConfigurationConfigurable) {
             SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
             if (configurable.isModified()) return true;
