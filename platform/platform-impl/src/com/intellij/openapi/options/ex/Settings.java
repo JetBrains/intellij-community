@@ -60,7 +60,7 @@ public abstract class Settings {
   @NotNull
   public final ActionCallback select(Configurable configurable, String option) {
     ActionCallback callback = select(configurable);
-    if (configurable instanceof SearchableConfigurable) {
+    if (option != null && configurable instanceof SearchableConfigurable) {
       SearchableConfigurable searchable = (SearchableConfigurable)configurable;
       Runnable search = searchable.enableSearch(option);
       if (search != null) callback.doWhenDone(search);

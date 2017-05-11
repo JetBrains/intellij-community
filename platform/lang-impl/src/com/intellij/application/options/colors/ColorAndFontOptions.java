@@ -79,7 +79,7 @@ import java.util.function.Function;
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
 
-public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
+public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   implements EditorOptionsProvider, SchemesModel<EditorColorsScheme> {
   public static final String ID = "reference.settingsdialog.IDE.editor.colors";
   public static final String FONT_CONFIGURABLE_NAME = "Font";
@@ -216,11 +216,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   public static boolean isReadOnly(@NotNull final EditorColorsScheme scheme) {
     return ((MyColorScheme)scheme).isReadOnly();
   }
-  
+
   public static boolean canBeDeleted(@NotNull final EditorColorsScheme scheme) {
     return scheme instanceof  MyColorScheme && ((MyColorScheme)scheme).canBeDeleted();
   }
-  
+
   @NotNull
   public Collection<EditorColorsScheme> getOrderedSchemes() {
     List<EditorColorsScheme> schemes = new ArrayList<>(mySchemes.values());
@@ -291,8 +291,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       (DefaultColorsScheme)EditorColorsManager.getInstance().getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME);
     selectScheme(defaultScheme.getEditableCopyName());
   }
-  
-  
+
+
   void resetSchemeToOriginal(@NotNull String name) {
     MyColorScheme schemeToReset = mySchemes.get(name);
     schemeToReset.resetToOriginal();
@@ -1237,7 +1237,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
       return false;
     }
-    
+
     public void resetToOriginal() {
       if (myParentScheme instanceof AbstractColorsScheme) {
         AbstractColorsScheme originalScheme = ((AbstractColorsScheme)myParentScheme).getOriginal();
@@ -1419,11 +1419,39 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
   }
 
-  public static boolean selectOrEditColor(DataContext context, String search, String name) {
+  /**
+   * Shows a requested page to edit a color settings.
+   * If current data context represents a setting dialog that can open a requested page,
+   * it will be opened. Otherwise, the new dialog will be opened.
+   * The simplest way to get a data context is
+   * <pre>DataManager.getInstance().getDataContext(myComponent)</pre>
+   * where is {@code myComponent} is a {@link JComponent} in a Swing hierarchy.
+   * A specific color can be requested by the {@code search} text.
+   *
+   * @param context a data context to find {@link Settings} or a parent for dialog
+   * @param search  a text to find on the found page
+   * @param name    a name of a page to find via {@link #findSubConfigurable(String)}
+   * @return {@code true} if a color was shown to edit, {@code false} if a requested page does not exist
+   */
+  public static boolean selectOrEditColor(@NotNull DataContext context, @Nullable String search, @NotNull String name) {
     return selectOrEdit(context, search, options -> options.findSubConfigurable(name));
   }
 
-  public static boolean selectOrEditColor(DataContext context, String search, Class<?> type) {
+  /**
+   * Shows a requested page to edit a color settings.
+   * If current data context represents a setting dialog that can open a requested page,
+   * it will be opened. Otherwise, the new dialog will be opened.
+   * The simplest way to get a data context is
+   * <pre>DataManager.getInstance().getDataContext(myComponent)</pre>
+   * where is {@code myComponent} is a {@link JComponent} in a Swing hierarchy.
+   * A specific color can be requested by the {@code search} text.
+   *
+   * @param context a data context to find {@link Settings} or a parent for dialog
+   * @param search  a text to find on the found page
+   * @param type    a type of a page to find via {@link #findSubConfigurable(Class)}
+   * @return {@code true} if a color was shown to edit, {@code false} if a requested page does not exist
+   */
+  public static boolean selectOrEditColor(@NotNull DataContext context, @Nullable String search, @NotNull Class<?> type) {
     return selectOrEdit(context, search, options -> options.findSubConfigurable(type));
   }
 
