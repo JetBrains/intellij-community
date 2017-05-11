@@ -49,6 +49,11 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertToPythonAction" id="IpnbConvertToPythonAction"
             text="Convert to Python Script"/>
 
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertFromPythonAction" id="IpnbConvertFromPythonAction"
+            text="Convert to Jupyter Notebook">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellDownAction" id="IpnbMoveCellDownAction" text="Move Cell Down">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift DOWN"/>
     </action>
