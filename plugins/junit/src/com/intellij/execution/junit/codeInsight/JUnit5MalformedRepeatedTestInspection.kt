@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit.codeInsight
 
+import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
@@ -49,10 +50,10 @@ class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool()
         val modifierList = method.modifierList
         val repeatedAnno = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_REPEATED_TEST)
         if (repeatedAnno != null) {
-          val testAnno = MetaAnnotationUtil.findMetaAnnotations(method, JUnitUtil.TEST5_ANNOTATIONS).findFirst().orElse(null)
-          if (testAnno != null) {
-            holder.registerProblem(testAnno, "Suspicious combination @Test and @RepeatedTest",
-                                   DeleteElementFix(testAnno))
+          val testAnno = AnnotationUtil.findAnnotations(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)
+          if (testAnno.isNotEmpty()) {
+            holder.registerProblem(testAnno[0], "Suspicious combination @Test and @RepeatedTest",
+                                   DeleteElementFix(testAnno[0]))
           }
           val repeatedNumber = repeatedAnno.findDeclaredAttributeValue("value")
           if (repeatedNumber is PsiExpression) {
@@ -67,7 +68,7 @@ class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool()
           val repetitionType = JavaPsiFacade.getElementFactory(holder.project).createType(repetitionInfo!!)
           val repetitionInfoParam = method.parameterList.parameters.find { it.type.isAssignableFrom(repetitionType) }
           if (repetitionInfoParam != null) {
-            if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+            if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)) {
               holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam, "RepetitionInfo is injected for @RepeatedTest only")
             }
             else {

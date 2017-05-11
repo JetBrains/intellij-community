@@ -60,18 +60,18 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
     return object : JavaElementVisitor() {
 
       override fun visitMethod(method: PsiMethod) {
-        val parameterizedAnnotation = MetaAnnotationUtil.findMetaAnnotations(method, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)).findFirst().orElse(null)
-        val testAnnotation = MetaAnnotationUtil.findMetaAnnotations(method, JUnitUtil.TEST5_ANNOTATIONS).findFirst().orElse(null)
-        if (parameterizedAnnotation != null) {
-          if (testAnnotation != null && method.parameterList.parametersCount > 0) {
-            holder.registerProblem(testAnnotation,
+        val parameterizedAnnotation = AnnotationUtil.findAnnotations(method, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+        val testAnnotation = AnnotationUtil.findAnnotations(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)
+        if (parameterizedAnnotation.isNotEmpty()) {
+          if (testAnnotation.isNotEmpty() && method.parameterList.parametersCount > 0) {
+            holder.registerProblem(testAnnotation[0],
                                    "Suspicious combination @Test and @ParameterizedTest",
-                                   DeleteElementFix(testAnnotation))
+                                   DeleteElementFix(testAnnotation[0]))
           }
 
           var noMultiArgsProvider = true
           var source : PsiAnnotation? = null
-          MetaAnnotationUtil.findMetaAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
+          AnnotationUtil.findAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
             when (it.qualifiedName) {
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
                 checkMethodSource(method, it)
@@ -95,17 +95,17 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
 
           if (noMultiArgsProvider) {
             if (source == null) {
-              holder.registerProblem(parameterizedAnnotation, "No sources are provided, the suite would be empty")
+              holder.registerProblem(parameterizedAnnotation[0], "No sources are provided, the suite would be empty")
             }
             else if (hasMultipleParameters(method)) {
                 holder.registerProblem(source!!, "Multiple parameters are not supported by this source")
             }
           }
         }
-        else if (testAnnotation != null && MetaAnnotationUtil.isMetaAnnotated(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS)) {
-          holder.registerProblem(testAnnotation,
+        else if (testAnnotation.isNotEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS)) {
+          holder.registerProblem(testAnnotation[0],
                                  "Suspicious combination @Test and parameterized source",
-                                 ChangeAnnotationFix(testAnnotation, JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+                                 ChangeAnnotationFix(testAnnotation[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
         }
       }
 
@@ -258,7 +258,7 @@ class ChangeAnnotationFix(testAnnotation: PsiAnnotation, val targetAnnotation: S
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
     val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + targetAnnotation, startElement)
-    JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation));
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation))
   }
 
   override fun getText() = "Change to " + StringUtil.getShortName(targetAnnotation)
