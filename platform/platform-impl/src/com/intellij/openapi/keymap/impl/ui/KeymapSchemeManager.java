@@ -257,7 +257,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     Keymap active = selected == null ? null : selected.getOriginal();
     if (!Objects.equals(active, KeymapManager.getInstance().getActiveKeymap())) return true;
 
-    Iterator<Keymap> keymaps = getKeymaps().iterator();
+    Iterator<Keymap> keymaps = getKeymaps().stream().sorted(KEYMAP_COMPARATOR).iterator();
     Iterator<KeymapScheme> schemes = this.list.iterator();
     while (keymaps.hasNext() && schemes.hasNext()) {
       if (!Objects.equals(keymaps.next(), schemes.next().getCurrent())) return true;
@@ -266,20 +266,17 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
   }
 
   List<KeymapScheme> getSchemes() {
-    list.sort(COMPARATOR);
+    list.sort(SCHEME_COMPARATOR);
     return list;
   }
 
-  static final Comparator<KeymapScheme> COMPARATOR = (scheme1, scheme2) -> {
-    if (scheme1 == scheme2) return 0;
-    if (scheme1 == null) return -1;
-    if (scheme2 == null) return 1;
+  private static final Comparator<Keymap> KEYMAP_COMPARATOR = (keymap1, keymap2) -> {
+    if (keymap1 == keymap2) return 0;
+    if (keymap1 == null) return -1;
+    if (keymap2 == null) return 1;
 
-    Keymap keymap1 = scheme1.getCurrent();
-    Keymap keymap2 = scheme2.getCurrent();
-
-    Keymap parent1 = scheme1.getParent();
-    Keymap parent2 = scheme2.getParent();
+    Keymap parent1 = !keymap1.canModify() ? null : keymap1.getParent();
+    Keymap parent2 = !keymap2.canModify() ? null : keymap2.getParent();
 
     if (parent1 == null) parent1 = keymap1;
     if (parent2 == null) parent2 = keymap2;
@@ -293,5 +290,12 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     else {
       return naturalCompare(parent1.getPresentableName(), parent2.getPresentableName());
     }
+  };
+
+  private static final Comparator<KeymapScheme> SCHEME_COMPARATOR = (scheme1, scheme2) -> {
+    if (scheme1 == scheme2) return 0;
+    if (scheme1 == null) return -1;
+    if (scheme2 == null) return 1;
+    return KEYMAP_COMPARATOR.compare(scheme1.getCurrent(), scheme2.getCurrent());
   };
 }
