@@ -11,14 +11,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.ui.*;
@@ -164,8 +163,7 @@ public class EduCoursesPanel extends JPanel {
           }
 
         };
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        FileChooser.chooseFile(fileChooser, null, projects.length == 0 ? null : projects[0].getBaseDir(),
+        FileChooser.chooseFile(fileChooser, null, VfsUtil.getUserHomeDir(),
                                file -> {
                                  String fileName = file.getPath();
                                  Course course = new StudyProjectGenerator().addLocalCourse(fileName);
