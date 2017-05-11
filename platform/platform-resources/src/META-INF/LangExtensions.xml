@@ -254,6 +254,7 @@
 
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
+    <moduleService serviceImplementation="com.intellij.facet.FacetFromExternalSourcesStorage"/>
 
     <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
                         serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
