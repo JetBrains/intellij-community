@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -54,6 +55,7 @@ import java.util.stream.Collectors;
 public class EduCoursesPanel extends JPanel {
   private static final JBColor LIST_COLOR = new JBColor(Gray.xFF, Gray.x39);
   public static final Color COLOR = new Color(70, 130, 180, 70);
+  private static final Logger LOG = Logger.getInstance(EduCoursesPanel.class);
   private JPanel myMainPanel;
   private JPanel myCourseListPanel;
   private JPanel myCoursePanel;
@@ -380,6 +382,9 @@ public class EduCoursesPanel extends JPanel {
   private static DirectoryProjectGenerator getGenerator(@NotNull Course course) {
     EduCourseProjectGenerator projectGenerator =
       EduPluginConfigurator.INSTANCE.forLanguage(course.getLanguageById()).getEduCourseProjectGenerator();
+    if (projectGenerator == null) {
+      LOG.info("project generator is null, language: " + course.getLanguageById().getDisplayName());
+    }
     return projectGenerator == null ? null : projectGenerator.getDirectoryProjectGenerator();
   }
 
