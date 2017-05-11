@@ -15,7 +15,7 @@
  */
 package com.intellij.execution.impl
 
-import com.intellij.execution.IS_RUN_MANAGER_INIT_ALLOWED
+import com.intellij.execution.IS_RUN_MANAGER_INITIALIZED
 import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.UnknownRunConfiguration
 import com.intellij.openapi.components.*
@@ -39,14 +39,14 @@ internal class ProjectRunConfigurationInitializer(project: Project) {
   }
 
   private fun requestLoadWorkspaceAndProjectRunConfiguration(project: Project) {
-    if (IS_RUN_MANAGER_INIT_ALLOWED.isIn(project)) {
+    if (IS_RUN_MANAGER_INITIALIZED.get(project) ?: false) {
       return
     }
 
-    IS_RUN_MANAGER_INIT_ALLOWED.set(project, true)
+    IS_RUN_MANAGER_INITIALIZED.set(project, true)
     // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages (and, so, SOE may occur because all other projectOpened will be processed before us)
     // simply, you should not listen changes until project opened
-    ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
+    project.service<ProjectRunConfigurationManager>()
   }
 }
 
