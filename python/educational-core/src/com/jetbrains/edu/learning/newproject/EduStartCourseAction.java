@@ -20,7 +20,7 @@ public class EduStartCourseAction extends AnAction {
     EduCoursesPanel panel = new EduCoursesPanel();
     DialogBuilder dialogBuilder = new DialogBuilder().title("Select Course").centerPanel(panel);
     dialogBuilder.removeAllActions();
-    dialogBuilder.addOkAction().setText("Start");
+    dialogBuilder.addOkAction().setText("Join");
     panel.addCourseValidationListener(new EduCoursesPanel.CourseValidationListener() {
       @Override
       public void validationStatusChanged(boolean canStartCourse) {
