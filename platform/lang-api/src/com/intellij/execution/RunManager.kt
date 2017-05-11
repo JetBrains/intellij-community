@@ -36,7 +36,7 @@ abstract class RunManager {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunManager {
-      if (!IS_RUN_MANAGER_INIT_ALLOWED.isIn(project)) {
+      if (!(IS_RUN_MANAGER_INITIALIZED.get(project) ?: false)) {
         // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
         LOG.debug("Must be not called before project components initialized")
       }
@@ -216,5 +216,5 @@ abstract class RunManager {
 
 private val UNNAMED = "Unnamed"
 
-val IS_RUN_MANAGER_INIT_ALLOWED = Key.create<Boolean>("RunManagerInitialized")
+val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
 private  val LOG = Logger.getInstance(RunManager::class.java)
