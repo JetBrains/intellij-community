@@ -728,9 +728,7 @@ class RunConfigurable extends BaseConfigurable {
         }
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
           settings = (RunnerAndConfigurationSettings)userObject;
-          configurationBean = new RunConfigurationBean(settings,
-                                                       settings.isShared(),
-                                                       manager.getBeforeRunTasks(settings.getConfiguration()));
+          configurationBean = new RunConfigurationBean(settings, settings.isShared());
 
         }
         if (configurationBean != null) {
@@ -1642,24 +1640,18 @@ class RunConfigurable extends BaseConfigurable {
   private static class RunConfigurationBean {
     private final RunnerAndConfigurationSettings mySettings;
     private final boolean myShared;
-    private final List<BeforeRunTask> myStepsBeforeLaunch;
     private final SingleConfigurationConfigurable myConfigurable;
 
-    public RunConfigurationBean(final RunnerAndConfigurationSettings settings,
-                                final boolean shared,
-                                final List<BeforeRunTask<?>> stepsBeforeLaunch) {
+    public RunConfigurationBean(@NotNull RunnerAndConfigurationSettings settings, boolean shared) {
       mySettings = settings;
       myShared = shared;
-      myStepsBeforeLaunch = Collections.unmodifiableList(stepsBeforeLaunch);
       myConfigurable = null;
     }
 
     public RunConfigurationBean(final SingleConfigurationConfigurable configurable) {
       myConfigurable = configurable;
       mySettings = (RunnerAndConfigurationSettings)myConfigurable.getSettings();
-      final ConfigurationSettingsEditorWrapper editorWrapper = (ConfigurationSettingsEditorWrapper)myConfigurable.getEditor();
       myShared = configurable.isStoreProjectConfiguration();
-      myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
     }
 
     public RunnerAndConfigurationSettings getSettings() {
@@ -1676,7 +1668,7 @@ class RunConfigurable extends BaseConfigurable {
 
     @Override
     public String toString() {
-      return String.valueOf(mySettings);
+      return mySettings.toString();
     }
   }
 
