@@ -36,17 +36,6 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="git4idea-rt" />
     <orderEntry type="module" module-name="images" />
-    <orderEntry type="module-library">
-      <library name="ini4j-0.5.2-patched">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/ini4j/ini4j-0.5.2-patched.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/ini4j/ini4j-0.5.2-patched-sources.zip!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="dvcs-impl" exported="" />
     <orderEntry type="library" scope="TEST" name="cucumber-core" level="project" />
@@ -64,5 +53,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" exported="" scope="TEST" name="cucumber-testing" level="project" />
     <orderEntry type="module" module-name="testGuiFramework" scope="TEST" />
+    <orderEntry type="library" name="ini4j" level="project" />
   </component>
 </module>
