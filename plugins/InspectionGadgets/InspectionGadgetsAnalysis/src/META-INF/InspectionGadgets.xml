@@ -2546,6 +2546,11 @@
                      key="single.element.annotation.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.annotation.SingleElementAnnotationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="MetaAnnotationWithoutRuntimeRetention"
+                     bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="meta.annotation.without.runtime.retention" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.reflective.access.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.annotation.MetaAnnotationWithoutRuntimeRetentionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ArrayCreationWithoutNewKeyword" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="array.creation.without.new.keyword.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
