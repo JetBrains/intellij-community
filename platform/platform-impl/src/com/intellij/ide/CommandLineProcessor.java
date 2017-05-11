@@ -54,12 +54,7 @@ public class CommandLineProcessor {
 
   @Nullable
   private static Project doOpenFileOrProject(VirtualFile file, String path) {
-    ProjectOpenProcessor provider = ProjectOpenProcessor.getImportProvider(file);
-    if (provider instanceof PlatformProjectOpenProcessor && !file.isDirectory()) {
-      // HACK: PlatformProjectOpenProcessor agrees to open anything
-      provider = null;
-    }
-    if (provider != null || ProjectKt.isValidProjectPath(path)) {
+    if (ProjectKt.isValidProjectPath(path) || ProjectOpenProcessor.getImportProvider(file) != null) {
       Project project = ProjectUtil.openOrImport(path, null, true);
       if (project == null) {
         Messages.showErrorDialog("Cannot open project '" + path + "'", "Cannot Open Project");
@@ -75,17 +70,16 @@ public class CommandLineProcessor {
   private static Project doOpenFile(VirtualFile file, int line, boolean tempProject) {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     if (projects.length == 0 || tempProject) {
-      PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
-      if (processor != null) {
-        EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-        if (tempProject) {
-          options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
-          options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
-        }
-        return PlatformProjectOpenProcessor.doOpenProject(file, null, line, null, options);
+      EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
+      if (tempProject) {
+        options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
+        options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
       }
-      Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
-      return null;
+      Project project = PlatformProjectOpenProcessor.doOpenProject(file, null, line, null, options);
+      if (project == null) {
+        Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
+      }
+      return project;
     }
     else {
       NonProjectFileWritingAccessProvider.allowWriting(file);
