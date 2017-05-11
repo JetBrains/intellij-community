@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
@@ -277,7 +278,7 @@ public class GeneralCommandLineTest {
       if (argument.trim().isEmpty()) continue;  // would report "ECHO is on"
       GeneralCommandLine commandLine = new GeneralCommandLine(ExecUtil.getWindowsShellName(), "/D", "/C", "echo", argument);
       String output = execAndGetOutput(commandLine);
-      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput(argument) + "\n", output);
+      assertEquals(commandLine.getPreparedCommandLine(), argument + "\n", output);
     }
   }
 
@@ -291,7 +292,7 @@ public class GeneralCommandLineTest {
     for (String argument : ARGUMENTS) {
       GeneralCommandLine commandLine = createCommandLine(cygwinPrintf.getPath(), "[%s]\\\\n", argument);
       String output = execAndGetOutput(commandLine);
-      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput("[" + argument + "]") + "\n", output);
+      assertEquals(commandLine.getPreparedCommandLine(), filterExpectedOutput("[" + argument + "]\n"), output);
     }
   }
 
