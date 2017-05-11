@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -592,6 +593,9 @@ public class EquivalenceChecker {
     if (expression1 instanceof PsiPostfixExpression) {
       return postfixExpressionsMatch((PsiPostfixExpression)expression1, (PsiPostfixExpression)expression2);
     }
+    if (expression1 instanceof PsiBinaryExpression) {
+      return binaryExpressionsMatch((PsiBinaryExpression)expression1, (PsiBinaryExpression)expression2);
+    }
     if (expression1 instanceof PsiPolyadicExpression) {
       return polyadicExpressionsMatch((PsiPolyadicExpression)expression1, (PsiPolyadicExpression)expression2);
     }
@@ -884,6 +888,25 @@ public class EquivalenceChecker {
     final PsiExpression[] operands1 = polyadicExpression1.getOperands();
     final PsiExpression[] operands2 = polyadicExpression2.getOperands();
     return expressionsAreEquivalent(operands1, operands2);
+  }
+
+  protected Match binaryExpressionsMatch(@NotNull PsiBinaryExpression binaryExpression1, @NotNull PsiBinaryExpression binaryExpression2) {
+    final IElementType tokenType1 = binaryExpression1.getOperationTokenType();
+    final IElementType tokenType2 = binaryExpression2.getOperationTokenType();
+    final PsiExpression left1 = binaryExpression1.getLOperand();
+    final PsiExpression left2 = binaryExpression2.getLOperand();
+    final PsiExpression right1 = binaryExpression1.getROperand();
+    final PsiExpression right2 = binaryExpression2.getROperand();
+    if (!tokenType1.equals(tokenType2)) {
+      // process matches like "a < b" and "b > a"
+      DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
+      DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(tokenType2);
+      if(rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
+        return expressionsMatch(left1, right2).combine(expressionsMatch(right1, left2));
+      }
+      return EXACT_MISMATCH;
+    }
+    return expressionsMatch(left1, left2).combine(expressionsMatch(right1, right2));
   }
 
   protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1, @NotNull PsiAssignmentExpression assignmentExpression2) {
