@@ -738,7 +738,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
       try {
-        if (!listener.canCloseProject(project)) {
+        //noinspection deprecation
+        boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
+        if (!canClose) {
           LOG.debug("close canceled by " + listener);
           return false;
         }
