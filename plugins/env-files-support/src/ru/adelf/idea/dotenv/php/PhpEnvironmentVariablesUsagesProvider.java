@@ -8,6 +8,7 @@ import com.jetbrains.php.lang.PhpFileType;
 import com.jetbrains.php.lang.psi.PhpFile;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
+import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,31 +22,14 @@ public class PhpEnvironmentVariablesUsagesProvider implements EnvironmentVariabl
 
     @NotNull
     @Override
-    public Collection<String> getKeys(FileContent fileContent) {
-
-        PsiFile psiFile = fileContent.getPsiFile();
-
+    public Collection<KeyUsagePsiElement> getUsages(PsiFile psiFile) {
         if(psiFile instanceof PhpFile) {
             PhpEnvironmentCallsVisitor visitor = new PhpEnvironmentCallsVisitor();
             psiFile.acceptChildren(visitor);
 
-            return visitor.getKeys();
+            return visitor.getCollectedItems();
         }
 
         return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public Set<PsiElement> getTargetsByKey(String key, PsiFile psiFile) {
-
-        if(psiFile instanceof PhpFile) {
-            PhpEnvironmentCallsVisitor visitor = new PhpEnvironmentCallsVisitor();
-            psiFile.acceptChildren(visitor);
-
-            return visitor.getTargets(key);
-        }
-
-        return Collections.emptySet();
     }
 }

@@ -5,12 +5,13 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.jetbrains.php.lang.psi.elements.FunctionReference;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import ru.adelf.idea.dotenv.util.PsiUtil;
 
 import java.util.*;
 
-public class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
-    final private Map<String, Set<PsiElement>> collectedKeys = new HashMap<>();
+class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
+    final private Collection<KeyUsagePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitElement(PsiElement element) {
@@ -33,20 +34,11 @@ public class PhpEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
 
         String key = ((StringLiteralExpression)parameters[0]).getContents();
 
-        if(collectedKeys.containsKey(key)) {
-            collectedKeys.get(key).add(parameters[0]);
-        } else {
-            collectedKeys.put(key, new HashSet<>(Collections.singletonList(parameters[0])));
-        }
+        collectedItems.add(new KeyUsagePsiElement(key, parameters[0]));
     }
 
     @NotNull
-    public Set<String> getKeys() {
-        return collectedKeys.keySet();
-    }
-
-    @NotNull
-    public Set<PsiElement> getTargets(String key) {
-        return collectedKeys.get(key);
+    Collection<KeyUsagePsiElement> getCollectedItems() {
+        return collectedItems;
     }
 }

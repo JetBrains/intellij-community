@@ -1,17 +1,13 @@
 package ru.adelf.idea.dotenv.indexing;
 
-import com.intellij.psi.PsiFile;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
-import com.jetbrains.php.lang.PhpFileType;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesUsagesProvider;
-import ru.adelf.idea.dotenv.php.PhpEnvironmentCallsVisitor;
+import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 
 import java.util.HashMap;
@@ -35,8 +31,8 @@ public class DotEnvUsagesIndex extends FileBasedIndexExtension<String, Void> {
             final Map<String, Void> map = new HashMap<>();
 
             for(EnvironmentVariablesUsagesProvider provider : EnvironmentVariablesProviderUtil.USAGES_PROVIDERS) {
-                for(String key : provider.getKeys(fileContent)) {
-                    map.put(key, null);
+                for(KeyUsagePsiElement keyUsagePsiElement : provider.getUsages(fileContent.getPsiFile())) {
+                    map.put(keyUsagePsiElement.getKey(), null);
                 }
             }
 

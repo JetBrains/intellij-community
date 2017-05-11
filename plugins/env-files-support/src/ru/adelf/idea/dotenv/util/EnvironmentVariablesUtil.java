@@ -3,6 +3,7 @@ package ru.adelf.idea.dotenv.util;
 import com.intellij.psi.PsiElement;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.models.KeyUsagePsiElement;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
 import java.util.Collection;
@@ -55,5 +56,12 @@ public class EnvironmentVariablesUtil {
         return items.stream().filter(item -> {
             return item.getKey().equals(key);
         }).map(KeyValuePsiElement::getElement).collect(Collectors.toSet());
+    }
+
+    @NotNull
+    public static Set<PsiElement> getUsagesElementsByKey(String key, Collection<KeyUsagePsiElement> items) {
+        return items.stream().filter(item -> {
+            return item.getKey().equals(key);
+        }).map(KeyUsagePsiElement::getElement).collect(Collectors.toSet());
     }
 }
