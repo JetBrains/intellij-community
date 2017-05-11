@@ -44,11 +44,10 @@ public abstract class OutputLineSplitter {
 
   public void process(final String text, final Key outputType) {
     int from = 0;
-    int to = 0;
     // new line char and teamcity message start are two reasons to flush previous line
     int inMessageBlockPosition = 0;
     boolean justFlushed = true;
-    for (; to < text.length(); to++) {
+    for (int to = 0; to < text.length(); to++) {
       final char currentChar = text.charAt(to);
       if (currentChar == '\n') {
         processLine(text.substring(from, to + 1), outputType);
