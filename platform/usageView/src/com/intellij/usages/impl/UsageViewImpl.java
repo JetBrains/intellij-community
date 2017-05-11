@@ -169,9 +169,9 @@ public class UsageViewImpl implements UsageView {
   private Usage myOriginUsage;
 
   public UsageViewImpl(@NotNull final Project project,
-                @NotNull UsageViewPresentation presentation,
-                @NotNull UsageTarget[] targets,
-                Factory<UsageSearcher> usageSearcherFactory) {
+                       @NotNull UsageViewPresentation presentation,
+                       @NotNull UsageTarget[] targets,
+                       Factory<UsageSearcher> usageSearcherFactory) {
     // fire events every 50 ms, not more often to batch requests
     myFireEventsFuture = EdtExecutorService.getScheduledExecutorInstance().scheduleWithFixedDelay(this::fireEvents, 50, 50, TimeUnit.MILLISECONDS);
     Disposer.register(this, ()-> myFireEventsFuture.cancel(false));
@@ -1875,7 +1875,7 @@ public class UsageViewImpl implements UsageView {
   }
 
   @TestOnly
-  public String getNodeText(TreeNode node) {
+  String getNodeText(@NotNull TreeNode node) {
     return myUsageViewTreeCellRenderer.getPlainTextForNode(node);
   }
 
