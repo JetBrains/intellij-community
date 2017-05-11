@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -22,7 +23,6 @@ import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -180,8 +180,7 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
   private static Sdk addDetectedSdk(@NotNull Sdk sdk, @NotNull Project project) {
     final ProjectSdksModel model = PyConfigurableInterpreterList.getInstance(project).getModel();
     final String name = sdk.getName();
-    VirtualFile sdkHome = ApplicationManager.getApplication().runWriteAction((Computable<VirtualFile>)() -> LocalFileSystem
-      .getInstance().refreshAndFindFileByPath(name));
+    VirtualFile sdkHome = WriteAction.compute(() -> LocalFileSystem.getInstance().refreshAndFindFileByPath(name));
     sdk = SdkConfigurationUtil.createAndAddSDK(sdkHome.getPath(), PythonSdkType.getInstance());
     if (sdk != null) {
       PythonSdkUpdater.updateOrShowError(sdk, null, project, null);
