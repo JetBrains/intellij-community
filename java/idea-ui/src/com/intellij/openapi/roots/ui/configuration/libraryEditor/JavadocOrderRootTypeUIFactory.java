@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.DumbAwareActionButton;
@@ -98,6 +99,20 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     @Override
     protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
       JavadocQuarantineStatusCleaner.cleanIfNeeded(files);
+
+      for (int i = 0; i < files.length; i++) {
+        VirtualFile file = files[i], docRoot = null;
+
+        if (file.getName().equalsIgnoreCase("docs")) {
+          docRoot = file.findChild("api");
+        }
+        else if (file.getFileSystem() instanceof ArchiveFileSystem && file.getParent() == null) {
+          docRoot = file.findFileByRelativePath("docs/api");
+        }
+
+        if (docRoot != null) files[i] = docRoot;
+      }
+
       return super.adjustAddedFileSet(component, files);
     }
   }
