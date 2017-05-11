@@ -95,7 +95,6 @@ public class EduCoursesPanel extends JPanel {
     myCoursesList = new JBList<>();
     myCourses = getCourses();
     updateModel(myCourses, null);
-    updateCourseInfoPanel(myCoursesList.getSelectedValue());
     myErrorLabel.setVisible(false);
     myErrorLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 0, 0));
 
@@ -139,13 +138,6 @@ public class EduCoursesPanel extends JPanel {
           return;
         }
         updateCourseInfoPanel(selectedCourse);
-        updateAdvancedSettings(selectedCourse);
-        if (!isLoggedIn()) {
-          myErrorLabel.setVisible(true);
-          myErrorLabel.setText(UIUtil.toHtml("<u><b>Log in</b></u> " + (selectedCourse.isAdaptive() ? "to start adaptive course" :"to see more courses")));
-          myErrorLabel.setForeground((selectedCourse.isAdaptive() ? MessageType.ERROR : MessageType.WARNING).getTitleForeground());
-          notifyListeners(!selectedCourse.isAdaptive());
-        }
       }
     });
     DefaultActionGroup group = new DefaultActionGroup(new AnAction("Import Course", "import local course", AllIcons.ToolbarDecorator.Import) {
@@ -224,6 +216,19 @@ public class EduCoursesPanel extends JPanel {
         }
       }
     });
+    updateCourseInfoPanel(myCoursesList.getSelectedValue());
+  }
+
+  private void updateCourseInfoPanel(Course selectedCourse) {
+    updateCourseDescriptionPanel(selectedCourse);
+    updateAdvancedSettings(selectedCourse);
+    if (!isLoggedIn()) {
+      myErrorLabel.setVisible(true);
+      myErrorLabel.setText(
+        UIUtil.toHtml("<u><b>Log in</b></u> " + (selectedCourse.isAdaptive() ? "to start adaptive course" : "to see more courses")));
+      myErrorLabel.setForeground((selectedCourse.isAdaptive() ? MessageType.ERROR : MessageType.WARNING).getTitleForeground());
+      notifyListeners(!selectedCourse.isAdaptive());
+    }
   }
 
   @NotNull
@@ -258,7 +263,7 @@ public class EduCoursesPanel extends JPanel {
     myAdvancedSettings.repaint();
   }
 
-  private void updateCourseInfoPanel(@Nullable Course selectedCourse) {
+  private void updateCourseDescriptionPanel(@Nullable Course selectedCourse) {
     if (selectedCourse == null) {
       myInfoScroll.setVisible(false);
       myAdvancedSettingsPlaceholder.setVisible(false);
@@ -318,7 +323,7 @@ public class EduCoursesPanel extends JPanel {
     if (myCoursesList.getItemsCount() > 0) {
       myCoursesList.setSelectedIndex(0);
     } else {
-      updateCourseInfoPanel(null);
+      updateCourseDescriptionPanel(null);
     }
     if (courseToSelect == null) {
       return;
