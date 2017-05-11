@@ -41,10 +41,16 @@ object JavaInlayHintsProvider {
     val resultSet = results
       .filter { it.element != null }
       .map { methodHints(callExpression, it) }
-      
-    if (resultSet.isEmpty() || resultSet.any { it.isEmpty() }) return emptySet()
-    
+
+    if (resultSet.isEmpty()) return emptySet()
+    if (resultSet.size == 1) {
+      return resultSet.first()
+    }
+
+    //we can show hints for same named parameters of overloaded methods, even if don't know exact method
     return resultSet.reduce { left, right -> left.intersect(right) }
+      .map { InlayInfo(it.text, it.offset, isShowOnlyIfExistedBefore = true) }
+      .toSet()
   }
 
   private fun methodHints(callExpression: PsiCallExpression, resolveResult: ResolveResult): Set<InlayInfo> {
