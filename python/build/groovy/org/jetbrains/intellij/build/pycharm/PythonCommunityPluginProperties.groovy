@@ -21,7 +21,7 @@ import org.jetbrains.intellij.build.CommunityRepositoryModules
  * @author vlan
  */
 class PythonCommunityPluginProperties extends PythonPluginPropertiesBase {
-  PythonCommunityPluginProperties(String pluginVersion) {
+  PythonCommunityPluginProperties() {
     super()
     productCode = "PC"
     platformPrefix = "PyCharmCore"
@@ -29,7 +29,7 @@ class PythonCommunityPluginProperties extends PythonPluginPropertiesBase {
     productLayout.pluginModulesToPublish = [pythonCommunityPluginModule]
 
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
-      pythonCommunityPluginLayout(pluginVersion)
+      pythonCommunityPluginLayout()
     ]
   }
 }

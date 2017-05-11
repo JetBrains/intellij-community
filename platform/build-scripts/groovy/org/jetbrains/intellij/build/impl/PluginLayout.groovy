@@ -16,6 +16,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import org.jetbrains.intellij.build.BuildContext
+
+import java.util.function.Function
 
 /**
  * Described layout of a plugin in the product distribution
@@ -27,7 +30,7 @@ class PluginLayout extends BaseLayout {
   String directoryName
   final Set<String> optionalModules = new LinkedHashSet<>()
   private boolean doNotCreateSeparateJarForLocalizableResources
-  String version
+  Function<BuildContext, String> versionEvaluator = { BuildContext context -> context.buildNumber } as Function<BuildContext, String>
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -49,7 +52,9 @@ class PluginLayout extends BaseLayout {
     body.delegate = spec
     body()
     layout.directoryName = spec.directoryName
-    layout.version = spec.version
+    if (spec.version != null) {
+      layout.versionEvaluator = { BuildContext context -> spec.version } as Function<BuildContext, String>
+    }
     spec.withModule(mainModuleName, spec.mainJarName)
     if (layout.doNotCreateSeparateJarForLocalizableResources) {
       layout.modulesWithLocalizableResourcesInCommonJar.clear()
@@ -84,9 +89,9 @@ class PluginLayout extends BaseLayout {
      * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.
      */
     String mainJarName
+
     /**
-     * Version of the plugin if it differs from the global build number.
-     * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
+     * @deprecated use {@link #withCustomVersion(java.util.function.Function)} instead
      */
     String version
 
@@ -132,6 +137,14 @@ class PluginLayout extends BaseLayout {
 
     void withJpsModule(String moduleName) {
       withModule(moduleName, "jps/${moduleName}.jar")
+    }
+
+    /**
+     * By default version of a plugin is equal to the version of the IDE it's built with. This method allows to specify custom version evaluator.
+     * <strong>Don't use this for new plugins</strong>; it is temporary added to keep versioning scheme for some old plugins.
+     */
+    void withCustomVersion(Function<BuildContext, String> versionEvaluator) {
+      layout.versionEvaluator = versionEvaluator
     }
 
     /**

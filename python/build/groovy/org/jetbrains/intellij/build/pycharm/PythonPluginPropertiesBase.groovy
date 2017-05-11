@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
@@ -44,13 +45,13 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
     super()
   }
 
-  PluginLayout pythonCommunityPluginLayout(String pluginVersion, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
+  PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     def pluginXmlModules = [
       "IntelliLang-python",
       "ipnb",
     ]
     pythonPlugin(pythonCommunityPluginModule, "python-ce", "python-community-plugin-build-patches",
-                 communityModules, pluginVersion) {
+                 communityModules) {
       withProjectLibrary("markdown4j-2.2")  // Required for ipnb
       pluginXmlModules.each { module ->
         excludeFromModule(module, "META-INF/plugin.xml")
@@ -62,16 +63,20 @@ abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
   }
 
   static PluginLayout pythonPlugin(String mainModuleName, String name, String buildPatchesModule, List<String> modules,
-                                   String pluginVersion, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
+                                   @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
     return PluginLayout.plugin(mainModuleName) {
       directoryName = name
       mainJarName = "${name}.jar"
-      version = pluginVersion
       modules.each { module ->
         withModule(module, mainJarName, false)
       }
       withModule(buildPatchesModule, mainJarName, false)
       withResourceFromModule("python-helpers", "", "helpers")
+      withCustomVersion { BuildContext context ->
+        // TODO: Make the Python plugin follow the conventional scheme for plugin versioning, build the plugin together with the IDE
+        def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
+        "$context.applicationInfo.majorVersion.$context.applicationInfo.minorVersionMainPart.$pluginBuildNumber"
+      }
       doNotCreateSeparateJarForLocalizableResources()
       body.delegate = delegate
       body()

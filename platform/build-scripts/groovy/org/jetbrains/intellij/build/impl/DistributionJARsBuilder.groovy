@@ -286,7 +286,7 @@ class DistributionJARsBuilder {
   }
 
   private String getPluginVersion(PluginLayout plugin) {
-    return plugin.version != null ? plugin.version : buildContext.buildNumber
+    return plugin.versionEvaluator.apply(buildContext)
   }
 
   private List<PluginLayout> getPluginsByModules(Collection<String> modules) {
