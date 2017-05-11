@@ -170,10 +170,17 @@ abstract class BaseIdeaProperties extends ProductProperties {
     }
 
     if ("true".equalsIgnoreCase(System.getProperty("bundle.kotlin.plugin"))) {
-      def currentVersion = "kotlin-plugin-1.1.2-release-Studio2.4-3.zip"
+      def currentVersion = "kotlin-for-as30.zip"
       context.ant.unzip(
         src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-plugin/$currentVersion",
         dest: "$targetDirectory/plugins")
+
+       // Gradle plugin
+      def currentGradleVersion = "kotlin-m2repository.zip"
+      context.ant.unzip(
+        src: "$context.paths.communityHome/../../prebuilts/tools/common/kotlin-gradle-plugin/$currentGradleVersion",
+        dest: "$targetDirectory/gradle/m2repository")
+
     }
 
     /* Disabled in Android Studio:
