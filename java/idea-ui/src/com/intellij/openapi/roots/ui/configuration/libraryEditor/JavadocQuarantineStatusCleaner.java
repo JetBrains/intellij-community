@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 
 /**
  * Files downloaded from Internet are marked as 'quarantined' by OS X.
- * For such files opening urls of type file://path#fragment via
+ * For such files, opening URLs of type file://path#fragment via
  * <a href="https://developer.apple.com/library/mac/documentation/Carbon/Conceptual/LaunchServicesConcepts/LSCIntro/LSCIntro.html">
  *   Launch Services API
  * </a>
@@ -56,10 +56,10 @@ public class JavadocQuarantineStatusCleaner {
 
   private static final String QUARANTINE_ATTRIBUTE = "com.apple.quarantine";
 
-  public static void cleanIfNeeded(@NotNull VirtualFile... files) {
-    if (files.length > 0 && SystemInfo.isMac) {
+  public static void cleanIfNeeded(@NotNull VirtualFile... docFolders) {
+    if (docFolders.length > 0 && SystemInfo.isMac) {
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<String> quarantined = Stream.of(files)
+        List<String> quarantined = Stream.of(docFolders)
           .filter(f -> f.isInLocalFileSystem() && f.isDirectory() && XAttrUtil.getXAttr(f.getPath(), QUARANTINE_ATTRIBUTE) != null)
           .map(VirtualFile::getPath)
           .collect(Collectors.toList());
