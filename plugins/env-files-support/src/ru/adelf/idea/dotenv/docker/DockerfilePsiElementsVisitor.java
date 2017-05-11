@@ -6,14 +6,15 @@ import com.intellij.psi.PsiRecursiveElementVisitor;
 import javafx.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
-    final private Set<DockerFileEnvRegularDeclaration> collectedDeclarations = new HashSet<>();
+class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
+    private final Collection<KeyValuePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitElement(PsiElement element) {
@@ -26,21 +27,11 @@ public class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
 
     private void visitProperty(DockerFileEnvRegularDeclaration envRegularDeclaration) {
         if(StringUtils.isNotBlank(envRegularDeclaration.getDeclaredName().getText())) {
-            collectedDeclarations.add(envRegularDeclaration);
+            collectedItems.add(new KeyValuePsiElement(envRegularDeclaration.getDeclaredName().getText(), envRegularDeclaration.getEnvRegularValue().getText(), envRegularDeclaration.getDeclaredName()));
         }
     }
 
-    @NotNull
-    public Collection<Pair<String, String>> getKeyValues() {
-        return this.collectedDeclarations.stream().map(declaration -> {
-            return new Pair<>(declaration.getDeclaredName().getText(), declaration.getEnvRegularValue().getText());
-        }).collect(Collectors.toList());
-    }
-
-    @NotNull
-    public Set<PsiElement> getElementsByKey(String key) {
-        return this.collectedDeclarations.stream().filter(declaration -> {
-            return declaration.getDeclaredName().getText().equals(key);
-        }).collect(Collectors.toSet());
+    Collection<KeyValuePsiElement> getCollectedItems() {
+        return collectedItems;
     }
 }

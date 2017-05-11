@@ -8,6 +8,7 @@ import com.intellij.util.io.VoidDataExternalizer;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
 
 import java.util.HashMap;
@@ -23,8 +24,8 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
             final Map<String, Void> map = new HashMap<>();
 
             for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
-                for(Pair<String, String> keyValue : provider.getKeyValues(fileContent)) {
-                    map.put(getIndexKey(keyValue), null);
+                for(KeyValuePsiElement keyValueElement : provider.getElements(fileContent.getPsiFile())) {
+                    map.put(getIndexKey(keyValueElement), null);
                 }
             }
 
@@ -33,7 +34,7 @@ abstract public class EnvironmentVariablesIndex extends FileBasedIndexExtension<
     }
 
     @NotNull
-    abstract String getIndexKey(Pair<String, String> keyValue);
+    abstract String getIndexKey(KeyValuePsiElement keyValueElement);
 
     @NotNull
     @Override

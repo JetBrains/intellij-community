@@ -1,16 +1,14 @@
 package ru.adelf.idea.dotenv;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.indexing.FileContent;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.psi.DotEnvFile;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.Collections;
 
 public class DotEnvVariablesProvider implements EnvironmentVariablesProvider {
     @Override
@@ -20,23 +18,14 @@ public class DotEnvVariablesProvider implements EnvironmentVariablesProvider {
 
     @NotNull
     @Override
-    public Collection<Pair<String, String>> getKeyValues(FileContent fileContent) {
-        return getVisitorForFile(fileContent.getPsiFile()).getKeyValues();
-    }
-
-    @NotNull
-    @Override
-    public Set<PsiElement> getTargetsByKey(String key, PsiFile psiFile) {
-        return getVisitorForFile(psiFile).getElementsByKey(key);
-    }
-
-    private DotEnvPsiElementsVisitor getVisitorForFile(PsiFile psiFile) {
-        DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
-
+    public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
         if(psiFile instanceof DotEnvFile) {
+            DotEnvPsiElementsVisitor visitor = new DotEnvPsiElementsVisitor();
             psiFile.acceptChildren(visitor);
+
+            return visitor.getCollectedItems();
         }
 
-        return visitor;
+        return Collections.emptyList();
     }
 }

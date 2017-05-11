@@ -9,8 +9,10 @@ import com.intellij.util.indexing.FileContent;
 import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Set;
 
 public class DockerfileVariablesProvider implements EnvironmentVariablesProvider {
@@ -21,23 +23,14 @@ public class DockerfileVariablesProvider implements EnvironmentVariablesProvider
 
     @NotNull
     @Override
-    public Collection<Pair<String, String>> getKeyValues(FileContent fileContent) {
-        return getVisitorForFile(fileContent.getPsiFile()).getKeyValues();
-    }
-
-    @NotNull
-    @Override
-    public Set<PsiElement> getTargetsByKey(String key, PsiFile psiFile) {
-        return getVisitorForFile(psiFile).getElementsByKey(key);
-    }
-
-    private DockerfilePsiElementsVisitor getVisitorForFile(PsiFile psiFile) {
-        DockerfilePsiElementsVisitor visitor = new DockerfilePsiElementsVisitor();
-
+    public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
         if(psiFile instanceof DockerPsiFile) {
+            DockerfilePsiElementsVisitor visitor = new DockerfilePsiElementsVisitor();
             psiFile.acceptChildren(visitor);
+
+            return visitor.getCollectedItems();
         }
 
-        return visitor;
+        return Collections.emptyList();
     }
 }

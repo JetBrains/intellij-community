@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.psi.YAMLFile;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collection;
@@ -27,31 +28,15 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
 
     @NotNull
     @Override
-    public Collection<Pair<String, String>> getKeyValues(FileContent fileContent) {
-
-        PsiFile psiFile = fileContent.getPsiFile();
+    public Collection<KeyValuePsiElement> getElements(PsiFile psiFile) {
 
         if(psiFile instanceof YAMLFile) {
             DockerComposeYamlPsiElementsVisitor visitor = new DockerComposeYamlPsiElementsVisitor();
             psiFile.acceptChildren(visitor);
 
-            return EnvironmentVariablesUtil.getKeyValues(visitor.getItems());
+            return visitor.getCollectedItems();
         }
 
         return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public Set<PsiElement> getTargetsByKey(String key, PsiFile psiFile) {
-
-        if(psiFile instanceof YAMLFile) {
-            DockerComposeYamlPsiElementsVisitor visitor = new DockerComposeYamlPsiElementsVisitor();
-            psiFile.acceptChildren(visitor);
-
-            return EnvironmentVariablesUtil.getElementsByKey(key, visitor.getItems());
-        }
-
-        return Collections.emptySet();
     }
 }

@@ -57,7 +57,7 @@ public class EnvironmentVariablesApi {
 
             for(EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 if(provider.acceptFile(virtualFile)) {
-                    targets.addAll(provider.getTargetsByKey(key, psiFileTarget));
+                    targets.addAll(EnvironmentVariablesUtil.getElementsByKey(key, provider.getElements(psiFileTarget)));
                 }
             }
 

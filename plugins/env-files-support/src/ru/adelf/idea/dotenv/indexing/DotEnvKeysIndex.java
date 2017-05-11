@@ -1,8 +1,8 @@
 package ru.adelf.idea.dotenv.indexing;
 
 import com.intellij.util.indexing.ID;
-import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 
 public class DotEnvKeysIndex extends EnvironmentVariablesIndex {
 
@@ -16,7 +16,7 @@ public class DotEnvKeysIndex extends EnvironmentVariablesIndex {
 
     @NotNull
     @Override
-    String getIndexKey(Pair<String, String> keyValue) {
+    String getIndexKey(KeyValuePsiElement keyValue) {
         return keyValue.getKey();
     }
 }

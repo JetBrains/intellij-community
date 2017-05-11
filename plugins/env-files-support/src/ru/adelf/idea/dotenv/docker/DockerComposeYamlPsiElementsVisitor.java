@@ -25,7 +25,7 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
         super.visitElement(element);
     }
 
-    Collection<KeyValuePsiElement> getItems() {
+    Collection<KeyValuePsiElement> getCollectedItems() {
         return collectedItems;
     }
 
