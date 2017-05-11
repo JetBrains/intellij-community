@@ -2320,6 +2320,46 @@ public class PyRequirementTest extends PyTestCase {
     assertEquals(negativeLocalVersion, negativeRequirement.match(Collections.singletonList(negativeLocalVersion)));
   }
 
+  // https://www.python.org/dev/peps/pep-0440/#compatible-release
+  // PY-20522
+  public void testMatchingCompatible() {
+    final PyRequirement requirement = PyRequirement.fromLine("foo~=2.2");
+    final PyPackage release = new PyPackage("foo", "2.3", null, Collections.emptyList());
+    final PyPackage pre = new PyPackage("foo", "2.3a1", null, Collections.emptyList());
+    final PyPackage post = new PyPackage("foo", "2.3.post1", null, Collections.emptyList());
+    final PyPackage dev = new PyPackage("foo", "2.3.dev1", null, Collections.emptyList());
+    final PyPackage localVersion = new PyPackage("foo", "2.3+local.version", null, Collections.emptyList());
+
+    assertEquals(release, requirement.match(Collections.singletonList(release)));
+    assertEquals(pre, requirement.match(Collections.singletonList(pre)));
+    assertEquals(post, requirement.match(Collections.singletonList(post)));
+    assertEquals(dev, requirement.match(Collections.singletonList(dev)));
+    assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
+
+    final PyRequirement moreModernRequirement = PyRequirement.fromLine("foo~=2.4");
+    assertNull(moreModernRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
+  }
+
+  // https://www.python.org/dev/peps/pep-0440/#compatible-release
+  // PY-20522
+  public void testMatchingCompatibleWithTrailingZero() {
+    final PyRequirement requirement = PyRequirement.fromLine("foo~=2.20.0");
+    final PyPackage release = new PyPackage("foo", "2.20.3", null, Collections.emptyList());
+    final PyPackage pre = new PyPackage("foo", "2.20.3a1", null, Collections.emptyList());
+    final PyPackage post = new PyPackage("foo", "2.20.3.post1", null, Collections.emptyList());
+    final PyPackage dev = new PyPackage("foo", "2.20.3.dev1", null, Collections.emptyList());
+    final PyPackage localVersion = new PyPackage("foo", "2.20.3+local.version", null, Collections.emptyList());
+
+    assertEquals(release, requirement.match(Collections.singletonList(release)));
+    assertEquals(pre, requirement.match(Collections.singletonList(pre)));
+    assertEquals(post, requirement.match(Collections.singletonList(post)));
+    assertEquals(dev, requirement.match(Collections.singletonList(dev)));
+    assertEquals(localVersion, requirement.match(Collections.singletonList(localVersion)));
+
+    final PyRequirement moreModernRequirement = PyRequirement.fromLine("foo~=2.21.0");
+    assertNull(moreModernRequirement.match(Arrays.asList(release, pre, post, dev, localVersion)));
+  }
+
   // OPTIONS
   public void testOptions() {
     assertEmpty(

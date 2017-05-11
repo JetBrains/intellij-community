@@ -99,7 +99,10 @@ public class PyRequirementVersionSpec {
       case NE:
         return VERSION_COMPARATOR.compare(version, myVersion) != 0;
       case COMPATIBLE:
-        return false; // TODO: implement matching version against compatible relation
+        Objects.requireNonNull(myParsedVersion);
+
+        return new PyRequirementVersionSpec(PyRequirementRelation.GTE, myParsedVersion).matches(version) &&
+               new PyRequirementVersionSpec(PyRequirementRelation.EQ, toEqPartOfCompatibleRelation(myParsedVersion)).matches(version);
       case STR_EQ:
         return version.equals(myVersion);
       default:
@@ -123,5 +126,15 @@ public class PyRequirementVersionSpec {
     final String localVersion = publicAndLocalVersions.length == 1 ? "" : publicAndLocalVersions[1];
 
     return Pair.createNonNull(publicVersion, localVersion);
+  }
+
+  @NotNull
+  private static PyRequirementVersion toEqPartOfCompatibleRelation(@NotNull PyRequirementVersion version) {
+    final String release = version.getRelease();
+    final int lastPoint = release.lastIndexOf(".");
+
+    if (lastPoint == -1) return version;
+
+    return new PyRequirementVersion(version.getEpoch(), release.substring(0, lastPoint) + "*", null, null, null, null);
   }
 }
