@@ -78,7 +78,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.DocumentCommitThread;
@@ -607,7 +606,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    if (CodeStyleSchemes.getInstance().getCurrentScheme() == null) return new CodeStyleSettings();
     return CodeStyleSettingsManager.getSettings(getProject());
   }
 
