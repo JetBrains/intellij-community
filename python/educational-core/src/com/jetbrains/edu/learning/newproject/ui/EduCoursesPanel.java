@@ -227,7 +227,7 @@ public class EduCoursesPanel extends JPanel {
     if (!isLoggedIn()) {
       myErrorLabel.setVisible(true);
       myErrorLabel.setText(
-        UIUtil.toHtml("<u><b>Log in</b></u> " + (selectedCourse.isAdaptive() ? "to start adaptive course" : "to see more courses")));
+        UIUtil.toHtml("<u><b>Log in</b></u> to Stepik " + (selectedCourse.isAdaptive() ? "to start adaptive course" : "to see more courses")));
       myErrorLabel.setForeground((selectedCourse.isAdaptive() ? MessageType.ERROR : MessageType.WARNING).getTitleForeground());
       notifyListeners(!selectedCourse.isAdaptive());
     }
