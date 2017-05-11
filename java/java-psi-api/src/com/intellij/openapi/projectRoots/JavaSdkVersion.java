@@ -93,6 +93,10 @@ public enum JavaSdkVersion {
     throw new IllegalArgumentException("Can't map " + languageLevel + " to any of " + Arrays.toString(values()));
   }
 
+  /**
+   * Version string could be an actual version (like {@code "1.8.0_131"}),
+   * or a string returned by "java -version" command (like {@code "java version \"9-ea\""}).
+   */
   @Nullable
   public static JavaSdkVersion fromVersionString(@NotNull String versionString) {
     Matcher matcher = JAVA_VERSION.matcher(versionString.trim());
