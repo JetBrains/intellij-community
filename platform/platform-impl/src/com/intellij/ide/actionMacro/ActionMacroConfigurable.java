@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,31 +25,33 @@ import javax.swing.*;
 public class ActionMacroConfigurable implements Configurable {
   private ActionMacroConfigurationPanel myPanel;
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.edit.macros");
   }
 
-  public String getHelpTopic() {
-    return null;
-  }
-
+  @Override
   public JComponent createComponent() {
     myPanel = new ActionMacroConfigurationPanel();
     return myPanel.getPanel();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public boolean isModified() {
     return myPanel.isModified();
   }
 
+  @Override
   public void disposeUIResources() {
     Disposer.dispose(myPanel);
     myPanel = null;
