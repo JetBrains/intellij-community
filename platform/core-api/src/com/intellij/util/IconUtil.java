@@ -446,13 +446,13 @@ public class IconUtil {
    * otherwise defaults to {@link #scale(Icon, double)}
    * <p>
    * In the following example:
-   * <code>
+   * <pre>
    * Icon myIcon = new MyIcon();
    * Icon scaledIcon = IconUtil.scale(myIcon, myComp, 2f);
    * Icon anotherScaledIcon = IconUtil.scale(scaledIcon, myComp, 2f);
-   * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth); // compare the scale of the icons
-   * </code>
-   * The result of the assertion depends on MyIcon implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
+   * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth()); // compare the scale of the icons
+   * </pre>
+   * The result of the assertion depends on {@code MyIcon} implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
    * then {@code anotherScaledIcon} should be scaled according to the {@link ScalableIcon} javadoc, and the assertion should pass.
    * Otherwise, {@code anotherScaledIcon} should be 2 times bigger than {@code scaledIcon}, and 4 times bigger than {@code myIcon}.
    * So, prior to scale the icon recursively, the returned icon should be inspected for its type to understand the result.
