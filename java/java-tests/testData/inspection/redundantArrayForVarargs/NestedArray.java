@@ -1,3 +1,5 @@
+import java.util.*;
+
 public class NestedArray {
     public NestedArray() {}
 
@@ -12,5 +14,23 @@ public class NestedArray {
         method(new Object[]{params});
         method(<warning descr="Redundant array creation for calling varargs method">new Object[]{"2", params}</warning>);
         method(<warning descr="Redundant array creation for calling varargs method">new Object[]{params, params}</warning>);
+    }
+
+    public static Collection quickFixErrorIDEA165068() {
+        return Arrays.asList(new String[][]{
+          {"bla", " bla"},
+          {"bla", " bla"},
+          {"bla", " bla"},
+          {"bla", " bla"},
+        });
+    }
+
+    public static Collection quickFixError2() {
+        return Arrays.asList(<warning descr="Redundant array creation for calling varargs method">new String[][]{
+          new String[] {"bla", " bla"},
+          new String[] {"bla", " bla"},
+          new String[] {"bla", " bla"},
+          new String[] {"bla", " bla"},
+        }</warning>);
     }
 }
