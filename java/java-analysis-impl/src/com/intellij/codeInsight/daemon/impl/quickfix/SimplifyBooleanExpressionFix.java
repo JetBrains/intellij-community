@@ -31,6 +31,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -174,32 +175,57 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       removeFollowingStatements(orig, (PsiCodeBlock)parent);
     }
 
-    if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock &&
-        !DeclarationSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
-      // See IDEADEV-24277
-      // Code block can only be inlined into another (parent) code block.
-      // Code blocks, which are if or loop statement branches should not be inlined.
-      PsiCodeBlock codeBlock = ((PsiBlockStatement)statement).getCodeBlock();
-      PsiJavaToken lBrace = codeBlock.getLBrace();
-      PsiJavaToken rBrace = codeBlock.getRBrace();
-      if (lBrace == null || rBrace == null) return;
-
-
-      final PsiElement[] children = codeBlock.getChildren();
-      if (children.length > 2) {
-        final PsiElement added =
-          parent.addRangeBefore(
-            children[1],
-            children[children.length - 2],
-            orig);
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
-        codeStyleManager.reformat(added);
+    if (parent instanceof PsiCodeBlock) {
+      if (statement instanceof PsiBlockStatement &&
+          !DeclarationSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
+        inlineBlockStatements(orig, (PsiBlockStatement)statement, parent);
+        return;
       }
-      orig.delete();
+      if (hasConflictingDeclarations(statement, (PsiCodeBlock)parent)) {
+        orig.replace(wrapWithCodeBlock(statement));
+        return;
+      }
     }
-    else {
-      orig.replace(statement);
+    orig.replace(statement);
+  }
+
+  private static boolean hasConflictingDeclarations(@Nullable PsiStatement statement, PsiCodeBlock parent) {
+    return statement instanceof PsiDeclarationStatement &&
+           ContainerUtil.exists(((PsiDeclarationStatement)statement).getDeclaredElements(), e -> isConflictingLocalVariable(parent, e));
+  }
+
+  private static boolean isConflictingLocalVariable(PsiCodeBlock parent, PsiElement declaration) {
+    if (!(declaration instanceof PsiLocalVariable)) return false;
+    String name = ((PsiLocalVariable)declaration).getName();
+    return name != null && PsiResolveHelper.SERVICE.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
+  }
+
+  private static PsiCodeBlock wrapWithCodeBlock(PsiStatement replacement) {
+    PsiCodeBlock newBlock = JavaPsiFacade.getElementFactory(replacement.getProject()).createCodeBlock();
+    newBlock.add(replacement);
+    return newBlock;
+  }
+
+  private static void inlineBlockStatements(@NotNull PsiStatement orig, @NotNull PsiBlockStatement statement, PsiElement parent) {
+    // See IDEADEV-24277
+    // Code block can only be inlined into another (parent) code block.
+    // Code blocks, which are if or loop statement branches should not be inlined.
+    PsiCodeBlock codeBlock = statement.getCodeBlock();
+    PsiJavaToken lBrace = codeBlock.getLBrace();
+    PsiJavaToken rBrace = codeBlock.getRBrace();
+    if (lBrace == null || rBrace == null) return;
+
+    final PsiElement[] children = codeBlock.getChildren();
+    if (children.length > 2) {
+      final PsiElement added =
+        parent.addRangeBefore(
+          children[1],
+          children[children.length - 2],
+          orig);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+      codeStyleManager.reformat(added);
     }
+    orig.delete();
   }
 
   private static boolean blockAlwaysReturns(@NotNull PsiStatement statement) {
