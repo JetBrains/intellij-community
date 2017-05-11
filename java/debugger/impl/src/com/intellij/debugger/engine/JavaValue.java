@@ -378,22 +378,22 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
           @Override
           public void addChildren(List<DebuggerTreeNode> nodes, boolean last) {
-            if (nodes.isEmpty()) {
-              node.addChildren(XValueChildrenList.EMPTY, last);
-            }
-            else {
-              nodes.stream().map(DebuggerTreeNode::getDescriptor).forEach(descriptor -> {
+            XValueChildrenList childrenList = XValueChildrenList.EMPTY;
+            if (!nodes.isEmpty()) {
+              childrenList = new XValueChildrenList(nodes.size());
+              for (DebuggerTreeNode treeNode : nodes) {
+                NodeDescriptor descriptor = treeNode.getDescriptor();
                 if (descriptor instanceof ValueDescriptorImpl) {
                   // Value is calculated already in NodeManagerImpl
-                  node.addChildren(XValueChildrenList.singleton(
-                    create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false)), last);
+                  childrenList.add(create(JavaValue.this, (ValueDescriptorImpl)descriptor, myEvaluationContext, myNodeManager, false));
                 }
                 else if (descriptor instanceof MessageDescriptor) {
-                  node.addChildren(XValueChildrenList.singleton(
-                    new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), DebuggerTreeRenderer.getDescriptorIcon(descriptor))), last);
+                  childrenList.add(
+                    new JavaStackFrame.DummyMessageValueNode(descriptor.getLabel(), DebuggerTreeRenderer.getDescriptorIcon(descriptor)));
                 }
-              });
+              }
             }
+            node.addChildren(childrenList, last);
           }
 
           @Override
