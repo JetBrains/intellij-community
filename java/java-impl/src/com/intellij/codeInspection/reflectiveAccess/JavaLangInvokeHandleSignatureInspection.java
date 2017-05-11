@@ -38,6 +38,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.ARRAY_ELEMENT_VAR_HANDLE;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.JAVA_LANG_INVOKE_METHOD_HANDLES;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
@@ -50,6 +53,16 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
   static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
     ContainerUtil.union(Arrays.asList(HANDLE_FACTORY_METHOD_NAMES), Collections.singletonList(FIND_CONSTRUCTOR)));
 
+  private interface CallChecker {
+    boolean checkCall(@NotNull PsiMethodCallExpression callExpression, @NotNull ProblemsHolder holder);
+  }
+
+  private static final CallChecker[] CALL_CHECKERS = {
+    JavaLangInvokeHandleSignatureInspection::checkHandlerFactoryCall,
+    JavaLangReflectHandleInvocationChecker::checkMethodHandleInvocation,
+    JavaLangReflectVarHandleInvocationChecker::checkVarHandleAccess,
+  };
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -58,24 +71,35 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
       public void visitMethodCallExpression(PsiMethodCallExpression callExpression) {
         super.visitMethodCallExpression(callExpression);
 
-        final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        if (methodName != null && KNOWN_METHOD_NAMES.contains(methodName)) {
-          final PsiMethod method = callExpression.resolveMethod();
-          final PsiClass psiClass = method != null ? method.getContainingClass() : null;
-          if (psiClass != null && JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP.equals(psiClass.getQualifiedName())) {
-            final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
-            checkHandlerFactory(methodName, methodExpression, arguments, holder);
-          }
+        for (CallChecker checker : CALL_CHECKERS) {
+          if (checker.checkCall(callExpression, holder)) return;
         }
       }
     };
   }
 
-  private static void checkHandlerFactory(@NotNull String factoryMethodName,
-                                          @NotNull PsiReferenceExpression factoryMethodExpression,
-                                          @NotNull PsiExpression[] arguments,
-                                          @NotNull ProblemsHolder holder) {
+  private static boolean checkHandlerFactoryCall(@NotNull PsiMethodCallExpression callExpression, @NotNull ProblemsHolder holder) {
+    final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    if (methodName != null && KNOWN_METHOD_NAMES.contains(methodName)) {
+      final PsiMethod method = callExpression.resolveMethod();
+      if (method != null && isClassWithName(method.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)) {
+        final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
+        checkHandleFactory(methodName, methodExpression, arguments, holder);
+      }
+      return true;
+    }
+    if (isCallToMethod(callExpression, JAVA_LANG_INVOKE_METHOD_HANDLES, ARRAY_ELEMENT_VAR_HANDLE)) {
+      checkArrayElementVarHandle(callExpression, holder);
+      return true;
+    }
+    return false;
+  }
+
+  private static void checkHandleFactory(@NotNull String factoryMethodName,
+                                         @NotNull PsiReferenceExpression factoryMethodExpression,
+                                         @NotNull PsiExpression[] arguments,
+                                         @NotNull ProblemsHolder holder) {
     if (arguments.length == 2) {
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {
         final PsiClass ownerClass = getReflectiveClass(arguments[0]);
@@ -231,6 +255,26 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     }
   }
 
+  private static void checkArrayElementVarHandle(PsiMethodCallExpression factoryCallExpression, ProblemsHolder holder) {
+    final PsiExpressionList argumentList = factoryCallExpression.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length != 1) {
+      holder.registerProblem(argumentList, InspectionsBundle.message("inspection.reflection.invocation.argument.count", 1));
+      return;
+    }
+    final ReflectiveType argumentType = getReflectiveType(arguments[0]);
+    if (argumentType == null || argumentType.getType() instanceof PsiArrayType) {
+      return;
+    }
+    if (!argumentType.isPrimitive()) {
+      final String name = argumentType.getQualifiedName();
+      if (JAVA_LANG_OBJECT.equals(name) || "java.io.Serializable".equals(name) || "java.lang.Cloneable".equals(name)) {
+        return;
+      }
+    }
+    holder.registerProblem(arguments[0], InspectionsBundle.message("inspection.reflect.handle.invocation.argument.not.array"));
+  }
+
   @NotNull
   private static String getMethodDeclarationText(@NotNull String methodName, @NotNull ReflectiveSignature methodSignature) {
     final String returnType = methodSignature.getShortReturnType();
@@ -329,13 +373,13 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     final boolean finalArray = signature.getSecond();
 
     final List<String> typeNames = new ArrayList<>();
-    typeNames.add(CommonClassNames.JAVA_LANG_OBJECT); // return type
+    typeNames.add(JAVA_LANG_OBJECT); // return type
 
     for (int i = 0; i < objectArgCount; i++) {
-      typeNames.add(CommonClassNames.JAVA_LANG_OBJECT);
+      typeNames.add(JAVA_LANG_OBJECT);
     }
     if (finalArray) {
-      typeNames.add(CommonClassNames.JAVA_LANG_OBJECT + "[]");
+      typeNames.add(JAVA_LANG_OBJECT + "[]");
     }
     return ReflectiveSignature.create(typeNames);
   }

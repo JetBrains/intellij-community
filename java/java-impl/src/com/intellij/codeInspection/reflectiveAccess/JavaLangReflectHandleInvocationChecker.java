@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.reflectiveAccess;
 
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,15 +33,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.checkVarHandleAccess;
 import static com.intellij.psi.CommonClassNames.JAVA_UTIL_LIST;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
  * @author Pavel.Dolgov
  */
-public class JavaLangReflectHandleInvocationInspection extends BaseJavaBatchLocalInspectionTool {
-  private static final Logger LOG = Logger.getInstance(JavaLangReflectHandleInvocationInspection.class);
+class JavaLangReflectHandleInvocationChecker {
+  private static final Logger LOG = Logger.getInstance(JavaLangReflectHandleInvocationChecker.class);
 
   private static final String INVOKE = "invoke";
   private static final String INVOKE_EXACT = "invokeExact";
@@ -51,95 +49,86 @@ public class JavaLangReflectHandleInvocationInspection extends BaseJavaBatchLoca
 
   private static final Set<String> METHOD_HANDLE_INVOKE_NAMES = ContainerUtil.set(INVOKE, INVOKE_EXACT, INVOKE_WITH_ARGUMENTS);
 
-  @NotNull
-  @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
-      @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression methodCall) {
-        super.visitMethodCallExpression(methodCall);
-
-        final String referenceName = methodCall.getMethodExpression().getReferenceName();
-        if (METHOD_HANDLE_INVOKE_NAMES.contains(referenceName)) {
-          final PsiMethod method = methodCall.resolveMethod();
-          if (method != null && isClassWithName(method.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLE)) {
-            if (isWithDynamicArguments(methodCall)) {
-              return;
-            }
-            final PsiExpression qualifierDefinition = findDefinition(methodCall.getMethodExpression().getQualifierExpression());
-            if (qualifierDefinition instanceof PsiMethodCallExpression) {
-              checkMethodHandleInvocation((PsiMethodCallExpression)qualifierDefinition, methodCall);
-            }
-          }
+  static boolean checkMethodHandleInvocation(@NotNull PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
+    final String referenceName = methodCall.getMethodExpression().getReferenceName();
+    if (METHOD_HANDLE_INVOKE_NAMES.contains(referenceName)) {
+      final PsiMethod method = methodCall.resolveMethod();
+      if (method != null && isClassWithName(method.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLE)) {
+        if (isWithDynamicArguments(methodCall)) {
+          return true;
         }
-        else {
-          checkVarHandleAccess(methodCall, holder);
+        final PsiExpression qualifierDefinition = findDefinition(methodCall.getMethodExpression().getQualifierExpression());
+        if (qualifierDefinition instanceof PsiMethodCallExpression) {
+          checkMethodHandleInvocation((PsiMethodCallExpression)qualifierDefinition, methodCall, holder);
         }
       }
+      return true;
+    }
+    return false;
+  }
 
-      private void checkMethodHandleInvocation(@NotNull PsiMethodCallExpression handleFactoryCall,
-                                               @NotNull PsiMethodCallExpression invokeCall) {
-        final String factoryMethodName = handleFactoryCall.getMethodExpression().getReferenceName();
-        if (factoryMethodName != null && JavaLangInvokeHandleSignatureInspection.KNOWN_METHOD_NAMES.contains(factoryMethodName)) {
+  private static void checkMethodHandleInvocation(@NotNull PsiMethodCallExpression handleFactoryCall,
+                                                  @NotNull PsiMethodCallExpression invokeCall,
+                                                  @NotNull ProblemsHolder holder) {
+    final String factoryMethodName = handleFactoryCall.getMethodExpression().getReferenceName();
+    if (factoryMethodName != null && JavaLangInvokeHandleSignatureInspection.KNOWN_METHOD_NAMES.contains(factoryMethodName)) {
 
-          final PsiExpression[] handleFactoryArguments = handleFactoryCall.getArgumentList().getExpressions();
-          final boolean isFindConstructor = FIND_CONSTRUCTOR.equals(factoryMethodName);
-          if (handleFactoryArguments.length == 3 && !isFindConstructor ||
-              handleFactoryArguments.length == 2 && isFindConstructor ||
-              handleFactoryArguments.length == 4 && FIND_SPECIAL.equals(factoryMethodName)) {
+      final PsiExpression[] handleFactoryArguments = handleFactoryCall.getArgumentList().getExpressions();
+      final boolean isFindConstructor = FIND_CONSTRUCTOR.equals(factoryMethodName);
+      if (handleFactoryArguments.length == 3 && !isFindConstructor ||
+          handleFactoryArguments.length == 2 && isFindConstructor ||
+          handleFactoryArguments.length == 4 && FIND_SPECIAL.equals(factoryMethodName)) {
 
-            final PsiMethod factoryMethod = handleFactoryCall.resolveMethod();
-            if (factoryMethod != null && isClassWithName(factoryMethod.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)) {
-              final ReflectiveType receiverType = getReflectiveType(handleFactoryArguments[0]);
-              final boolean isExact = INVOKE_EXACT.equals(invokeCall.getMethodExpression().getReferenceName());
+        final PsiMethod factoryMethod = handleFactoryCall.resolveMethod();
+        if (factoryMethod != null && isClassWithName(factoryMethod.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)) {
+          final ReflectiveType receiverType = getReflectiveType(handleFactoryArguments[0]);
+          final boolean isExact = INVOKE_EXACT.equals(invokeCall.getMethodExpression().getReferenceName());
 
-              if (isFindConstructor) {
-                if (!checkMethodSignature(invokeCall, handleFactoryArguments[1], isExact, true, 0, holder)) return;
-                checkReturnType(invokeCall, receiverType, isExact, holder);
-                return;
-              }
+          if (isFindConstructor) {
+            if (!checkMethodSignature(invokeCall, handleFactoryArguments[1], isExact, true, 0, holder)) return;
+            checkReturnType(invokeCall, receiverType, isExact, holder);
+            return;
+          }
 
-              final PsiExpression typeExpression = handleFactoryArguments[2];
-              switch (factoryMethodName) {
-                case FIND_VIRTUAL:
-                case FIND_SPECIAL:
-                  if (!checkMethodSignature(invokeCall, typeExpression, isExact, false, 1, holder)) return;
-                  checkCallReceiver(invokeCall, receiverType, holder);
-                  break;
+          final PsiExpression typeExpression = handleFactoryArguments[2];
+          switch (factoryMethodName) {
+            case FIND_VIRTUAL:
+            case FIND_SPECIAL:
+              if (!checkMethodSignature(invokeCall, typeExpression, isExact, false, 1, holder)) return;
+              checkCallReceiver(invokeCall, receiverType, holder);
+              break;
 
-                case FIND_STATIC:
-                  checkMethodSignature(invokeCall, typeExpression, isExact, false, 0, holder);
-                  break;
+            case FIND_STATIC:
+              checkMethodSignature(invokeCall, typeExpression, isExact, false, 0, holder);
+              break;
 
-                case FIND_GETTER:
-                  if (!checkGetter(invokeCall, typeExpression, isExact, 1, holder)) return;
-                  checkCallReceiver(invokeCall, receiverType, holder);
-                  break;
+            case FIND_GETTER:
+              if (!checkGetter(invokeCall, typeExpression, isExact, 1, holder)) return;
+              checkCallReceiver(invokeCall, receiverType, holder);
+              break;
 
-                case FIND_SETTER:
-                  if (!checkSetter(invokeCall, typeExpression, isExact, 1, holder)) return;
-                  checkCallReceiver(invokeCall, receiverType, holder);
-                  break;
+            case FIND_SETTER:
+              if (!checkSetter(invokeCall, typeExpression, isExact, 1, holder)) return;
+              checkCallReceiver(invokeCall, receiverType, holder);
+              break;
 
-                case FIND_STATIC_GETTER:
-                  checkGetter(invokeCall, typeExpression, isExact, 0, holder);
-                  break;
+            case FIND_STATIC_GETTER:
+              checkGetter(invokeCall, typeExpression, isExact, 0, holder);
+              break;
 
-                case FIND_STATIC_SETTER:
-                  checkSetter(invokeCall, typeExpression, isExact, 0, holder);
-                  break;
+            case FIND_STATIC_SETTER:
+              checkSetter(invokeCall, typeExpression, isExact, 0, holder);
+              break;
 
-                case FIND_VAR_HANDLE:
-                  break;
+            case FIND_VAR_HANDLE:
+              break;
 
-                case FIND_STATIC_VAR_HANDLE:
-                  break;
-              }
-            }
+            case FIND_STATIC_VAR_HANDLE:
+              break;
           }
         }
       }
-    };
+    }
   }
 
   static void checkCallReceiver(@NotNull PsiMethodCallExpression invokeCall,

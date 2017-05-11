@@ -16,7 +16,7 @@
 package com.intellij.codeInspection
 
 import com.intellij.JavaTestUtil
-import com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationInspection
+import com.intellij.codeInspection.reflectiveAccess.JavaLangInvokeHandleSignatureInspection
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.LightProjectDescriptor
@@ -51,7 +51,7 @@ abstract class JavaLangReflectHandleInvocationTestBase(val languageLevel: Langua
   override fun setUp() {
     super.setUp()
     LanguageLevelProjectExtension.getInstance(project).languageLevel = languageLevel
-    myFixture.enableInspections(JavaLangReflectHandleInvocationInspection())
+    myFixture.enableInspections(JavaLangInvokeHandleSignatureInspection())
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor = descriptor

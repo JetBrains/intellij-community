@@ -26,18 +26,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Set;
 
-import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationInspection.*;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectHandleInvocationChecker.*;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
  * @author Pavel.Dolgov
  */
-public class JavaLangReflectVarHandleInvocationChecker {
+class JavaLangReflectVarHandleInvocationChecker {
   private static final Logger LOG = Logger.getInstance(JavaLangReflectVarHandleInvocationChecker.class);
 
-  private static final String ARRAY_ELEMENT_VAR_HANDLE = "arrayElementVarHandle";
-  private static final String JAVA_LANG_INVOKE_VAR_HANDLE = "java.lang.invoke.VarHandle";
-  private static final String JAVA_LANG_INVOKE_METHOD_HANDLES = "java.lang.invoke.MethodHandles";
+  static final String ARRAY_ELEMENT_VAR_HANDLE = "arrayElementVarHandle";
+  static final String JAVA_LANG_INVOKE_VAR_HANDLE = "java.lang.invoke.VarHandle";
+  static final String JAVA_LANG_INVOKE_METHOD_HANDLES = "java.lang.invoke.MethodHandles";
 
   private static final String GET = "get";
   private static final String GET_VOLATILE = "getVolatile";
@@ -110,7 +110,7 @@ public class JavaLangReflectVarHandleInvocationChecker {
                       COMPARE_AND_EXCHANGE, COMPARE_AND_EXCHANGE_ACQUIRE, COMPARE_AND_EXCHANGE_RELEASE);
 
 
-  static void checkVarHandleAccess(PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
+  static boolean checkVarHandleAccess(PsiMethodCallExpression methodCall, @NotNull ProblemsHolder holder) {
     if (isVarHandleAccessMethod(methodCall)) {
       final PsiExpression qualifierDefinition = findDefinition(methodCall.getMethodExpression().getQualifierExpression());
       if (qualifierDefinition instanceof PsiMethodCallExpression) {
@@ -144,7 +144,9 @@ public class JavaLangReflectVarHandleInvocationChecker {
           }
         }
       }
+      return true;
     }
+    return false;
   }
 
   private static void checkVarHandleAccessSignature(@NotNull PsiMethodCallExpression accessCall,

@@ -318,7 +318,7 @@ class Main {
 
   void compare() throws Throwable {
     MethodHandles.Lookup lookup = MethodHandles.lookup();
-    final VarHandle handle = lookup.findVarHandle(Test.class, "myS", String.class);
+    final VarHandle handle = lookup.findVarHandle(Test.class, "s", String.class);
     final Test instance = new Test();
 
     boolean exactCAS = handle.compareAndSet(instance, "a", "b");
@@ -343,7 +343,7 @@ class Main {
 
   void weakCompare() throws Throwable {
     MethodHandles.Lookup lookup = MethodHandles.lookup();
-    final VarHandle handle = lookup.findVarHandle(Test.class, "myS", String.class);
+    final VarHandle handle = lookup.findVarHandle(Test.class, "s", String.class);
     final Test instance = new Test();
 
     boolean exactCAS = handle.weakCompareAndSet(instance, "a", "b");
