@@ -137,7 +137,8 @@ public class Breadcrumbs extends JComponent {
     while (index < views.size()) {
       views.get(index++).initialize(null);
     }
-    select.accept(view == null ? null : view.crumb, null);
+    if (hovered != null) hover.accept(null, null);
+    if (selected != null) select.accept(null, null);
     revalidate();
     repaint();
   }
