@@ -70,6 +70,7 @@ import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
+import static com.intellij.util.ui.UIUtil.getLabelFont;
 
 /**
  * @author spleaner
@@ -169,7 +170,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     breadcrumbs.onHover(this::itemHovered);
     breadcrumbs.onSelect(this::itemSelected);
-    breadcrumbs.setFont(getEditorFont(myEditor));
+    breadcrumbs.setFont(getNewFont(myEditor));
 
     JScrollPane pane = createScrollPane(breadcrumbs, true);
     pane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
@@ -191,7 +192,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
         @Override
         public void componentResized(ComponentEvent event) {
           breadcrumbs.updateBorder(gutterComponent.getWhitespaceSeparatorOffset());
-          breadcrumbs.setFont(getEditorFont(myEditor));
+          breadcrumbs.setFont(getNewFont(myEditor));
         }
       };
 
@@ -216,7 +217,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateCrumbs() {
     if (breadcrumbs != null && myEditor != null && !myEditor.isDisposed()) {
-      breadcrumbs.setFont(getEditorFont(myEditor));
+      breadcrumbs.setFont(getNewFont(myEditor));
       updateCrumbs(myEditor.getCaretModel().getLogicalPosition());
     }
   }
@@ -514,6 +515,11 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private void updateEditorFont(PropertyChangeEvent event) {
     if (EditorEx.PROP_FONT_SIZE.equals(event.getPropertyName())) queueUpdate();
+  }
+
+  private static Font getNewFont(Editor editor) {
+    Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? getLabelFont() : getEditorFont(editor);
+    return font == null || !Registry.is("editor.breadcrumbs.small.font") ? font : font.deriveFont(font.getSize2D() / 1.09f);
   }
 
   private static Font getEditorFont(Editor editor) {
