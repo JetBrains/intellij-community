@@ -48,6 +48,7 @@ import javax.swing.Icon;
 import javax.swing.JComponent;
 
 import static com.intellij.ide.ui.AntialiasingType.getKeyForCurrentScope;
+import static com.intellij.util.ui.UIUtil.DEF_SYSTEM_FONT_SIZE;
 import static java.util.stream.Collectors.toList;
 import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingConstants.RIGHT;
@@ -290,6 +291,10 @@ public class Breadcrumbs extends JComponent {
     return 1;
   }
 
+  private static float getFontSize(Font font) {
+    return font == null ? DEF_SYSTEM_FONT_SIZE : font.getSize2D();
+  }
+
   private static final AbstractLayoutManager STATELESS_LAYOUT = new AbstractLayoutManager() {
     @Override
     public Dimension preferredLayoutSize(Container container) {
@@ -349,8 +354,6 @@ public class Breadcrumbs extends JComponent {
     private Icon icon;
     private String text;
     private Path2D path;
-
-    private int scale;
     private Font font;
     private Color foreground;
     private Color background;
@@ -364,44 +367,47 @@ public class Breadcrumbs extends JComponent {
 
     void initialize(Crumb crumb) {
       this.crumb = crumb;
-      icon = crumb == null ? null : crumb.getIcon();
-      text = crumb == null ? null : crumb.getText();
+      icon = null;
+      text = null;
       path = null;
       font = null;
+      foreground = null;
+      background = null;
+      effectColor = null;
     }
 
     private void update() {
+      icon = crumb.getIcon();
+      text = crumb.getText();
+      font = getFont(crumb);
       foreground = getForeground(crumb);
       background = getBackground(crumb);
       effectType = getEffectType(crumb);
       effectColor = getEffectColor(crumb);
 
-      Font font = getFont(crumb);
+      // use shared foreground and font if not set
+      if (foreground == null) foreground = getForeground();
       if (font == null) font = getFont();
 
+      // scale loaded icon by font
+      if (icon != null) icon = IconUtil.scaleByFont(icon, Breadcrumbs.this, getFontSize(font));
+
+      // calculate preferred size
       int scale = getScale();
-      if (this.scale != scale && icon != null) {
-        icon = IconUtil.scale(icon, Breadcrumbs.this, scale);
+      preferred.width = scale * (LEFT_RIGHT + LEFT_RIGHT + getLeftGap() + getRightGap());
+      preferred.height = scale * (TOP_BOTTOM + TOP_BOTTOM);
+
+      if (font != null && !StringUtil.isEmpty(text)) {
+        FontMetrics fm = getFontMetrics(font);
+        Rectangle iconR = new Rectangle();
+        Rectangle textR = new Rectangle();
+        layout(fm, iconR, textR, new Rectangle(Short.MAX_VALUE, Short.MAX_VALUE));
+        preferred.width += Math.max(iconR.x + iconR.width, textR.x + textR.width) - Math.min(iconR.x, textR.x);
+        preferred.height += Math.max(iconR.y + iconR.height, textR.y + textR.height) - Math.min(iconR.y, textR.y);
       }
-      if (this.scale != scale || this.font != font) {
-        this.scale = scale;
-        this.font = font;
-
-        preferred.width = scale * (LEFT_RIGHT + LEFT_RIGHT + getLeftGap() + getRightGap());
-        preferred.height = scale * (TOP_BOTTOM + TOP_BOTTOM);
-
-        if (font != null && !StringUtil.isEmpty(text)) {
-          FontMetrics fm = getFontMetrics(font);
-          Rectangle iconR = new Rectangle();
-          Rectangle textR = new Rectangle();
-          layout(fm, iconR, textR, new Rectangle(Short.MAX_VALUE, Short.MAX_VALUE));
-          preferred.width += Math.max(iconR.x + iconR.width, textR.x + textR.width) - Math.min(iconR.x, textR.x);
-          preferred.height += Math.max(iconR.y + iconR.height, textR.y + textR.height) - Math.min(iconR.y, textR.y);
-        }
-        else if (icon != null) {
-          preferred.width += icon.getIconWidth();
-          preferred.height += icon.getIconHeight();
-        }
+      else if (icon != null) {
+        preferred.width += icon.getIconWidth();
+        preferred.height += icon.getIconHeight();
       }
     }
 
@@ -434,10 +440,11 @@ public class Breadcrumbs extends JComponent {
         }
         if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
           Graphics2D g2 = (Graphics2D)g.create();
+          float stroke = getFontSize(getFont()) / DEF_SYSTEM_FONT_SIZE;
           int delta = bounds.height / 4;
           g2.clipRect(0, bounds.y + delta, Short.MAX_VALUE, bounds.height - delta - delta);
           g2.setPaint(getForeground());
-          g2.setStroke(new BasicStroke(scale));
+          if (stroke > 1) g2.setStroke(new BasicStroke(stroke));
           g2.draw(createPath(scale, false));
           g2.dispose();
         }
