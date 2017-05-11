@@ -12,7 +12,7 @@ import icons.EducationalCoreIcons;
 
 public class EduStartCourseAction extends AnAction {
   public EduStartCourseAction() {
-    super("Start Course", "Start new course", EducationalCoreIcons.Course);
+    super("Browse Courses", "Browse list of available courses", EducationalCoreIcons.Course);
   }
 
   @Override
