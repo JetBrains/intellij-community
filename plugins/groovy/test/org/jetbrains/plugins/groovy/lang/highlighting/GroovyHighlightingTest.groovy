@@ -2020,7 +2020,7 @@ package a.b.c.trait.d.as.e.def.f.in.g;
 public class Foo {} 
 '''
     testHighlighting '''\
-<info>import</info> a.b.c.trait.d.as.e.def.f.in.g.*
+import a.b.c.<info>trait</info>.d.<info>as</info>.e.<info>def</info>.f.<info>in</info>.g.*
 ''', false, true
   }
 

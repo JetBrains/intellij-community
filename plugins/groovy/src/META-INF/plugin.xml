@@ -395,6 +395,7 @@
     <!-- Groovy language -->
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
 
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyKeywordAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedTransformationAnnotator"/>
@@ -1779,9 +1780,6 @@
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
-    </component>
-    <component>
-      <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyKeywordHighlightingPassFactory</implementation-class>
     </component>
     <component>
       <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory</implementation-class>
