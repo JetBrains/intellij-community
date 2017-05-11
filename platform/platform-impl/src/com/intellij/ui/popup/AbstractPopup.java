@@ -69,6 +69,11 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 public class AbstractPopup implements JBPopup {
   public static final String SHOW_HINTS = "ShowHints";
 
+  // Popup size stored with DimensionService is null first time
+  // In this case you can put Dimension in content client properties to adjust size
+  // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
+  public static final String FIRST_TIME_SIZE = "FirstTimeSize";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
   private static final Object SUPPRESS_MAC_CORNER = new Object();
@@ -767,7 +772,16 @@ public class AbstractPopup implements JBPopup {
 
     Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
     if (myLocateWithinScreen) {
-      Dimension size = sizeToSet != null ? sizeToSet : myContent.getPreferredSize();
+      Dimension preferredSize = myContent.getPreferredSize();
+      Object o = myContent.getClientProperty(FIRST_TIME_SIZE);
+      if (sizeToSet == null && o instanceof Dimension) {
+        int w = ((Dimension)o).width;
+        int h = ((Dimension)o).height;
+        if (w > 0) preferredSize.width = w;
+        if (h > 0) preferredSize.height = h;
+        sizeToSet = preferredSize;
+      }
+      Dimension size = sizeToSet != null ? sizeToSet : preferredSize;
       if (size.width > screen.width) {
         size.width = screen.width;
         sizeToSet = size;
