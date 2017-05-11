@@ -826,7 +826,7 @@ class RunConfigurable extends BaseConfigurable {
 
     final RunManagerImpl runManager = getRunManager();
     final List<RunnerAndConfigurationSettings> allSettings = runManager.getAllSettings();
-    final List<RunnerAndConfigurationSettings> currentSettings = new ArrayList<>();
+    int currentSettingCount = 0;
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
@@ -842,19 +842,29 @@ class RunConfigurable extends BaseConfigurable {
 
       for (DefaultMutableTreeNode configurationNode : configurationNodes) {
         final Object userObject = configurationNode.getUserObject();
+        RunnerAndConfigurationSettings settings;
         if (userObject instanceof SingleConfigurationConfigurable) {
           SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
           if (configurable.isModified()) {
             return true;
           }
-          currentSettings.add((RunnerAndConfigurationSettings)configurable.getSettings());
+          settings = (RunnerAndConfigurationSettings)configurable.getSettings();
         }
         else if (userObject instanceof RunnerAndConfigurationSettings) {
-          currentSettings.add(((RunnerAndConfigurationSettings)userObject));
+          settings = (RunnerAndConfigurationSettings)userObject;
+        }
+        else {
+          continue;
+        }
+
+        int index = currentSettingCount++;
+        // we compare by instance, equals is not implemented and in any case object modification is checked by other logic
+        if (allSettings.size() <= index || allSettings.get(index) != settings) {
+          return true;
         }
       }
     }
-    if (allSettings.size() != currentSettings.size() || !allSettings.containsAll(currentSettings)) {
+    if (allSettings.size() != currentSettingCount) {
       return true;
     }
 
