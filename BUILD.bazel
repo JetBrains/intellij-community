@@ -294,7 +294,7 @@ iml_module(
         "java/java-analysis-impl/src",
         "plugins/InspectionGadgets/InspectionGadgetsAnalysis/src",
     ],
-    javacopts = ["-Xep:MissingCasesInEnumSwitch:WARN"],
+    javacopts = ["-XepAllErrorsAsWarnings"],
     tags = ["managed"],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order

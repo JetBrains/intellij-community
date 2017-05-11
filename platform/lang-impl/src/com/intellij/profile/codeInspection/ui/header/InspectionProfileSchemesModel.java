@@ -192,7 +192,8 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
 
   public static List<InspectionProfileImpl> getSortedProfiles(InspectionProfileManager appManager,
                                                               InspectionProfileManager projectManager) {
-    return ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),
-                                ContainerUtil.sorted(projectManager.getProfiles()));
+    List<InspectionProfileImpl> app = ContainerUtil.sorted(appManager.getProfiles());
+    List<InspectionProfileImpl> project = ContainerUtil.sorted(projectManager.getProfiles());
+    return ContainerUtil.concat(app, project);
   }
 }
