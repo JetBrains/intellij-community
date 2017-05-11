@@ -97,7 +97,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.ImmutableList.of",
       "*.ImmutableMultiset.of",
       "*.ImmutableSortedMultiset.of",
-      "*.ImmutableSortedSet.of"
+      "*.ImmutableSortedSet.of",
+      "*.Arrays.asList"
   )
   
   val isDoNotShowIfMethodNameContainsParameterName = Option("java.method.name.contains.parameter.name", 
