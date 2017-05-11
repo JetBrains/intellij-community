@@ -38,10 +38,6 @@
     <pluginConfigurator implementationClass="com.jetbrains.edu.learning.PyEduPluginConfigurator" language="Python"/>
   </extensions>
   <actions>
-    <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"
-            icon="InteractiveLearningPythonIcons.EducationalProjectType">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </action>
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>
