@@ -1,8 +1,8 @@
 import java.lang.invoke.MethodHandle;
 
-public class Test {
+public class PolymorphicSignature {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Throwable {
     MethodHandle meh = null;
     meh.invokeExact(new Object[] {});
   }

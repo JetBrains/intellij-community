@@ -1,5 +1,5 @@
 
-public class Test {
+public class IDEADEV15215 {
 
     public static void main(String[] args) {
         foo(new byte[]{ 1, 2, 3 });
@@ -15,6 +15,6 @@ public class Test {
 
     
     public static void extra(String... args) {
-      extra(new String[]{"vvv","aaa"});
+      extra(<warning descr="Redundant array creation for calling varargs method">new String[]{"vvv","aaa"}</warning>);
     }
 }
