@@ -154,9 +154,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     final FlatView flatView = new FlatView(controllers, context);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
-    final JComponent panel = getContentPanel();
-    panel.revalidate();
-    panel.repaint();
+    myCenterPane.revalidate();
+    myCenterPane.repaint();
   }
 
   public void setFailMessage(@NotNull String reason) {
