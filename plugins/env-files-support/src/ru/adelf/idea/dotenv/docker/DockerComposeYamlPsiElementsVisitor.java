@@ -6,16 +6,15 @@ import javafx.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.psi.*;
+import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
 
-public class DockerComposeYamlPsiElementsVisitor  extends PsiRecursiveElementVisitor {
-    private final Set<YAMLScalar> collectedDeclarations = new HashSet<>();
+class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
+    private final Collection<KeyValuePsiElement> collectedItems = new HashSet<>();
 
     @Override
     public void visitElement(PsiElement element) {
@@ -26,19 +25,25 @@ public class DockerComposeYamlPsiElementsVisitor  extends PsiRecursiveElementVis
         super.visitElement(element);
     }
 
+    Collection<KeyValuePsiElement> getItems() {
+        return collectedItems;
+    }
+
     private void visitKeyValue(YAMLKeyValue yamlKeyValue) {
         if("environment".equals(yamlKeyValue.getKeyText())) {
             for(YAMLSequenceItem yamlSequenceItem : getSequenceItems(yamlKeyValue)) {
-                YAMLValue value = yamlSequenceItem.getValue();
-                if(value instanceof YAMLScalar) {
-                    String textValue = ((YAMLScalar) value).getTextValue();
-                    if(StringUtils.isNotBlank(textValue)) {
-                        String[] split = textValue.split("=");
-                        if(split.length > 1) {
-                            collectedDeclarations.add((YAMLScalar) value);
-                        }
+                YAMLValue el = yamlSequenceItem.getValue();
+                if(el instanceof YAMLScalar) {
+                    Pair<String, String> keyValue = EnvironmentVariablesUtil.getKeyValueFromString(((YAMLScalar) el).getTextValue());
+
+                    if(StringUtils.isNotBlank(keyValue.getKey())) {
+                        collectedItems.add(new KeyValuePsiElement(keyValue.getKey(), keyValue.getValue(), el));
                     }
                 }
+            }
+
+            for(YAMLKeyValue keyValue : getMappingItems(yamlKeyValue)) {
+                collectedItems.add(new KeyValuePsiElement(keyValue.getKeyText(), keyValue.getValueText(), keyValue.getKey()));
             }
         }
     }
@@ -60,18 +65,18 @@ public class DockerComposeYamlPsiElementsVisitor  extends PsiRecursiveElementVis
         return Collections.emptyList();
     }
 
+    /**
+     * FOO:
+     *   bar: true
+     */
     @NotNull
-    public Collection<Pair<String, String>> getKeyValues() {
-        return this.collectedDeclarations.stream()
-                .map(declaration -> EnvironmentVariablesUtil.getKeyValueFromString(declaration.getTextValue()))
-                .filter(stringStringPair -> !StringUtils.isBlank(stringStringPair.getKey()))
-                .collect(Collectors.toList());
-    }
+    private Collection<YAMLKeyValue> getMappingItems(@NotNull YAMLKeyValue yamlKeyValue) {
+        PsiElement yamlMapping = yamlKeyValue.getLastChild();
 
-    @NotNull
-    public Set<PsiElement> getElementsByKey(String key) {
-        return this.collectedDeclarations.stream()
-                .filter(declaration -> EnvironmentVariablesUtil.getKeyFromString(declaration.getTextValue()).equals(key))
-                .collect(Collectors.toSet());
+        if(yamlMapping instanceof YAMLMapping) {
+            return ((YAMLMapping) yamlMapping).getKeyValues();
+        }
+
+        return Collections.emptyList();
     }
 }

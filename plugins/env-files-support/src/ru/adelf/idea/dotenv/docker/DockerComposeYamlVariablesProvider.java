@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.psi.YAMLFile;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
+import ru.adelf.idea.dotenv.util.EnvironmentVariablesUtil;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
             DockerComposeYamlPsiElementsVisitor visitor = new DockerComposeYamlPsiElementsVisitor();
             psiFile.acceptChildren(visitor);
 
-            return visitor.getKeyValues();
+            return EnvironmentVariablesUtil.getKeyValues(visitor.getItems());
         }
 
         return Collections.emptyList();
@@ -48,7 +49,7 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
             DockerComposeYamlPsiElementsVisitor visitor = new DockerComposeYamlPsiElementsVisitor();
             psiFile.acceptChildren(visitor);
 
-            return visitor.getElementsByKey(key);
+            return EnvironmentVariablesUtil.getElementsByKey(key, visitor.getItems());
         }
 
         return Collections.emptySet();
