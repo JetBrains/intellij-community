@@ -52,6 +52,12 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
     return getManager();
   }
 
+  @Nullable
+  @Override
+  protected String getComboBoxLabel() {
+    return null;
+  }
+
   @Override
   protected String getSchemeTypeName() {
     return "Keymap";

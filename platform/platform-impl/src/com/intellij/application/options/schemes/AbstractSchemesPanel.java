@@ -70,8 +70,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   private void createUIComponents() {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
-    controlsPanel.add(new JLabel(getSchemeTypeName() + ":"));
-    controlsPanel.add(Box.createRigidArea(new JBDimension(10, 0)));
+    String label = getComboBoxLabel();
+    if (label != null) {
+      controlsPanel.add(new JLabel(label));
+      controlsPanel.add(Box.createRigidArea(new JBDimension(10, 0)));
+    }
     myActions = createSchemeActions();
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
@@ -171,6 +174,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   @NotNull
   protected abstract InfoComponent createInfoComponent();
+
+  /**
+   * @return a string label to place before the combobox or {@code null} if it is not needed
+   */
+  @Nullable
+  protected String getComboBoxLabel() {
+    return getSchemeTypeName() + ":";
+  }
 
   protected String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
