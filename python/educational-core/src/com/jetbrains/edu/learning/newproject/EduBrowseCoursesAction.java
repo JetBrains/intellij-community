@@ -10,8 +10,8 @@ import com.jetbrains.edu.learning.newproject.ui.EduCoursesPanel;
 import com.jetbrains.edu.learning.newproject.ui.EduCreateNewProjectDialog;
 import icons.EducationalCoreIcons;
 
-public class EduStartCourseAction extends AnAction {
-  public EduStartCourseAction() {
+public class EduBrowseCoursesAction extends AnAction {
+  public EduBrowseCoursesAction() {
     super("Browse Courses", "Browse list of available courses", EducationalCoreIcons.Course);
   }
 
