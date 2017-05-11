@@ -19,7 +19,6 @@
   <depends>com.jetbrains.edu.interactivelearning</depends>
   
   <extensions defaultExtensionNs="com.intellij">
-    <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
     <localInspection shortName="PyStudyInterpreterInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyInterpreterInspection"/>
 
     <localInspection shortName="PyStudyLanguageLevelInspection" suppressId="PyStudyLanguageLevelInspection" enabledByDefault="true"
