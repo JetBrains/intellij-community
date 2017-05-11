@@ -147,8 +147,7 @@ public class ExecUtil {
     final GeneralCommandLine sudoCommandLine;
     if (SystemInfo.isWinVistaOrNewer) {
       // launcher.exe process with elevated permissions on UAC.
-      final File launcherExe = PathManager.findBinFile("launcher.exe");
-      assert launcherExe != null && launcherExe.exists(): "Can't find launcher.exe";
+      final File launcherExe = PathManager.findBinFileWithException("launcher.exe");
       sudoCommandLine = new GeneralCommandLine(launcherExe.getPath());
       sudoCommandLine.setWorkDirectory(commandLine.getWorkDirectory());
       sudoCommandLine.addParameter(commandLine.getExePath());
