@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.debugger;
 
+import com.google.common.collect.Lists;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.options.Configurable;
@@ -32,8 +33,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
@@ -51,7 +50,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
   private JBCheckBox mySupportQt;
   private JBLabel warningIcon;
   private ComboBox<String> myPyQtBackend;
-  private List<String> myPyQtBackendsList = new ArrayList<>(Arrays.asList("Auto", "PyQt4", "PyQt5", "PySide"));
+  private List<String> myPyQtBackendsList = Lists.newArrayList("Auto", "PyQt4", "PyQt5", "PySide");
 
   private final Project myProject;
 
@@ -96,7 +95,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
            mySaveSignatures.isSelected() != mySettings.isSaveCallSignatures() ||
            mySupportGevent.isSelected() != mySettings.isSupportGeventDebugging() ||
            mySupportQt.isSelected() != mySettings.isSupportQtDebugging() ||
-           !myPyQtBackend.getSelectedItem().equals(mySettings.getPyQtBackend());
+           (myPyQtBackend.getSelectedItem() != null && !myPyQtBackend.getSelectedItem().equals(mySettings.getPyQtBackend()));
   }
 
   public void apply() throws ConfigurationException {
