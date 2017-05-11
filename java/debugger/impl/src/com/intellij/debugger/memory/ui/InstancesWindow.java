@@ -504,6 +504,7 @@ public class InstancesWindow extends DialogWrapper {
       super(project, null);
     }
 
+    @NotNull
     @Override
     public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
       return new DebuggerTreeNodeImpl(null, descriptor);
@@ -514,6 +515,7 @@ public class InstancesWindow extends DialogWrapper {
       return new DebuggerTreeNodeImpl(null, descriptor);
     }
 
+    @NotNull
     @Override
     public DebuggerTreeNodeImpl createMessageNode(String message) {
       return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));

@@ -117,9 +117,6 @@ public class ArrayRenderer extends NodeRendererImpl{
 
           DebuggerTreeNode arrayItemNode =
             nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
-          if (arrayItemNode == null) {
-            continue;
-          }
 
           builder.addChildren(Collections.singletonList(arrayItemNode), false);
           added++;
