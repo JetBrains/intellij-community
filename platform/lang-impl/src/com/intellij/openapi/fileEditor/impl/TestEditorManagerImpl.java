@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +67,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     myProject = project;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
+    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(Project project) {
         if (project == myProject) {
@@ -230,7 +230,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
   @Override
   public void closeAllFiles() {
-    for (VirtualFile file : new LinkedList<VirtualFile>(myVirtualFile2Editor.keySet())) {
+    for (VirtualFile file : new LinkedList<>(myVirtualFile2Editor.keySet())) {
       closeFile(file);
     }
   }

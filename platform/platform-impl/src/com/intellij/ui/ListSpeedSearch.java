@@ -31,8 +31,6 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-import static javax.swing.ListSelectionModel.MULTIPLE_INTERVAL_SELECTION;
-
 public class ListSpeedSearch extends SpeedSearchBase<JList> {
   private final Convertor<Object, String> myToStringConvertor;
 
@@ -51,6 +49,7 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
   }
 
+  @Override
   protected void selectElement(Object element, String selectedText) {
     if (element != null) {
       ScrollingUtil.selectItem(myComponent, element);
@@ -60,10 +59,12 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     }
   }
 
+  @Override
   protected int getSelectedIndex() {
     return myComponent.getSelectedIndex();
   }
 
+  @Override
   protected Object[] getAllElements() {
     return getAllListElements(myComponent);
   }
@@ -82,6 +83,7 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     }
   }
 
+  @Override
   protected String getElementText(Object element) {
     if (myToStringConvertor != null) {
       return myToStringConvertor.convert(element);
@@ -106,7 +108,7 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     @NotNull private final JList myList;
     @NotNull private final ListSpeedSearch mySearch;
 
-    public MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
+    MySelectAllAction(@NotNull JList list, @NotNull ListSpeedSearch search) {
       myList = list;
       mySearch = search;
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_SELECT_ALL);
@@ -119,7 +121,7 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
     @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(mySearch.isPopupActive() &&
-                                     myList.getSelectionModel().getSelectionMode() == MULTIPLE_INTERVAL_SELECTION);
+                                     myList.getSelectionModel().getSelectionMode() == ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     @Override

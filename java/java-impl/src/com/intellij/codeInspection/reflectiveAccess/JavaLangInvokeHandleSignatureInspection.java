@@ -23,6 +23,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -37,6 +38,9 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.ARRAY_ELEMENT_VAR_HANDLE;
+import static com.intellij.codeInspection.reflectiveAccess.JavaLangReflectVarHandleInvocationChecker.JAVA_LANG_INVOKE_METHOD_HANDLES;
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceUtil.*;
 
 /**
@@ -46,9 +50,18 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
   public static final Key<ReflectiveSignature> DEFAULT_SIGNATURE = Key.create("DEFAULT_SIGNATURE");
   public static final Key<List<LookupElement>> POSSIBLE_SIGNATURES = Key.create("POSSIBLE_SIGNATURES");
 
-  private static final String FIND_CONSTRUCTOR = "findConstructor";
-  private static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
+  static final Set<String> KNOWN_METHOD_NAMES = Collections.unmodifiableSet(
     ContainerUtil.union(Arrays.asList(HANDLE_FACTORY_METHOD_NAMES), Collections.singletonList(FIND_CONSTRUCTOR)));
+
+  private interface CallChecker {
+    boolean checkCall(@NotNull PsiMethodCallExpression callExpression, @NotNull ProblemsHolder holder);
+  }
+
+  private static final CallChecker[] CALL_CHECKERS = {
+    JavaLangInvokeHandleSignatureInspection::checkHandlerFactoryCall,
+    JavaLangReflectHandleInvocationChecker::checkMethodHandleInvocation,
+    JavaLangReflectVarHandleInvocationChecker::checkVarHandleAccess,
+  };
 
   @NotNull
   @Override
@@ -58,24 +71,35 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
       public void visitMethodCallExpression(PsiMethodCallExpression callExpression) {
         super.visitMethodCallExpression(callExpression);
 
-        final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        if (methodName != null && KNOWN_METHOD_NAMES.contains(methodName)) {
-          final PsiMethod method = callExpression.resolveMethod();
-          final PsiClass psiClass = method != null ? method.getContainingClass() : null;
-          if (psiClass != null && JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP.equals(psiClass.getQualifiedName())) {
-            final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
-            checkHandlerFactory(methodName, methodExpression, arguments, holder);
-          }
+        for (CallChecker checker : CALL_CHECKERS) {
+          if (checker.checkCall(callExpression, holder)) return;
         }
       }
     };
   }
 
-  private static void checkHandlerFactory(@NotNull String factoryMethodName,
-                                          @NotNull PsiReferenceExpression factoryMethodExpression,
-                                          @NotNull PsiExpression[] arguments,
-                                          @NotNull ProblemsHolder holder) {
+  private static boolean checkHandlerFactoryCall(@NotNull PsiMethodCallExpression callExpression, @NotNull ProblemsHolder holder) {
+    final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
+    final String methodName = methodExpression.getReferenceName();
+    if (methodName != null && KNOWN_METHOD_NAMES.contains(methodName)) {
+      final PsiMethod method = callExpression.resolveMethod();
+      if (method != null && isClassWithName(method.getContainingClass(), JAVA_LANG_INVOKE_METHOD_HANDLES_LOOKUP)) {
+        final PsiExpression[] arguments = callExpression.getArgumentList().getExpressions();
+        checkHandleFactory(methodName, methodExpression, arguments, holder);
+      }
+      return true;
+    }
+    if (isCallToMethod(callExpression, JAVA_LANG_INVOKE_METHOD_HANDLES, ARRAY_ELEMENT_VAR_HANDLE)) {
+      checkArrayElementVarHandle(callExpression, holder);
+      return true;
+    }
+    return false;
+  }
+
+  private static void checkHandleFactory(@NotNull String factoryMethodName,
+                                         @NotNull PsiReferenceExpression factoryMethodExpression,
+                                         @NotNull PsiExpression[] arguments,
+                                         @NotNull ProblemsHolder holder) {
     if (arguments.length == 2) {
       if (FIND_CONSTRUCTOR.equals(factoryMethodName)) {
         final PsiClass ownerClass = getReflectiveClass(arguments[0]);
@@ -184,11 +208,9 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
 
     final ReflectiveType reflectiveType = getReflectiveType(fieldTypeExpression);
     if (reflectiveType != null && !reflectiveType.isEqualTo(field.getType())) {
-      final String expectedTypeText = getTypeText(field.getType(), field);
-      if (expectedTypeText != null) {
-        final String message = InspectionsBundle.message("inspection.handle.signature.field.type", fieldName, expectedTypeText);
-        holder.registerProblem(fieldTypeExpression, message, new FieldTypeQuickFix(expectedTypeText));
-      }
+      final String expectedTypeText = getTypeText(field.getType());
+      final String message = InspectionsBundle.message("inspection.handle.signature.field.type", fieldName, expectedTypeText);
+      holder.registerProblem(fieldTypeExpression, message, new FieldTypeQuickFix(expectedTypeText));
     }
   }
 
@@ -231,6 +253,26 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
         ReplaceSignatureQuickFix.createFix(methodTypeExpression, methodName, validSignatures, false, holder.isOnTheFly());
       holder.registerProblem(methodTypeExpression, JavaErrorMessages.message("cannot.resolve.method", declarationText), fix);
     }
+  }
+
+  private static void checkArrayElementVarHandle(PsiMethodCallExpression factoryCallExpression, ProblemsHolder holder) {
+    final PsiExpressionList argumentList = factoryCallExpression.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    if (arguments.length != 1) {
+      holder.registerProblem(argumentList, InspectionsBundle.message("inspection.reflection.invocation.argument.count", 1));
+      return;
+    }
+    final ReflectiveType argumentType = getReflectiveType(arguments[0]);
+    if (argumentType == null || argumentType.getType() instanceof PsiArrayType) {
+      return;
+    }
+    if (!argumentType.isPrimitive()) {
+      final String name = argumentType.getQualifiedName();
+      if (JAVA_LANG_OBJECT.equals(name) || "java.io.Serializable".equals(name) || "java.lang.Cloneable".equals(name)) {
+        return;
+      }
+    }
+    holder.registerProblem(arguments[0], InspectionsBundle.message("inspection.reflect.handle.invocation.argument.not.array"));
   }
 
   @NotNull
@@ -301,11 +343,8 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     return ReflectiveSignature.create(typeTexts);
   }
 
-  /**
-   * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
-   */
   @Nullable
-  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
+  static Pair.NonNull<Integer, Boolean> getGenericSignature(@NotNull PsiExpression[] genericSignatureShape) {
     if (genericSignatureShape.length == 0 || genericSignatureShape.length > 2) {
       return null;
     }
@@ -320,15 +359,27 @@ public class JavaLangInvokeHandleSignatureInspection extends BaseJavaBatchLocalI
     if (finalArray == null || finalArray && objectArgCount > 254) {
       return null;
     }
+    return Pair.createNonNull(objectArgCount, finalArray);
+  }
+
+  /**
+   * All the types in the method signature are either unbounded type parameters or java.lang.Object (with possible vararg)
+   */
+  @Nullable
+  private static ReflectiveSignature composeGenericMethodSignature(@NotNull PsiExpression[] genericSignatureShape) {
+    final Pair.NonNull<Integer, Boolean> signature = getGenericSignature(genericSignatureShape);
+    if (signature == null) return null;
+    final int objectArgCount = signature.getFirst();
+    final boolean finalArray = signature.getSecond();
 
     final List<String> typeNames = new ArrayList<>();
-    typeNames.add(CommonClassNames.JAVA_LANG_OBJECT); // return type
+    typeNames.add(JAVA_LANG_OBJECT); // return type
 
     for (int i = 0; i < objectArgCount; i++) {
-      typeNames.add(CommonClassNames.JAVA_LANG_OBJECT);
+      typeNames.add(JAVA_LANG_OBJECT);
     }
     if (finalArray) {
-      typeNames.add(CommonClassNames.JAVA_LANG_OBJECT + "[]");
+      typeNames.add(JAVA_LANG_OBJECT + "[]");
     }
     return ReflectiveSignature.create(typeNames);
   }

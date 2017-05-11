@@ -78,9 +78,9 @@ interface ULabeled : UElement {
 
 /**
  * In some cases (user typing, syntax error) elements, which are supposed to exist, are missing.
- * The obvious example — the lack of the condition expression in [UIfExpression], e.g. `if () return`.
+ * The obvious example - the lack of the condition expression in [UIfExpression], e.g. 'if () return'.
  * [UIfExpression.condition] is required to return not-null values,
- *  and Uast implementation should return something instead of `null` in this case.
+ *  and Uast implementation should return something instead of 'null' in this case.
  *
  * Use [UastEmptyExpression] in this case.
  */

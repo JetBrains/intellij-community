@@ -25,13 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: lex
- * Date: Dec 27, 2003
- * Time: 7:56:13 PM
- * To change this template use Options | File Templates.
- */
 public abstract class CachedEvaluator {
   private final CodeFragmentFactory myDefaultFragmentFactory;
 

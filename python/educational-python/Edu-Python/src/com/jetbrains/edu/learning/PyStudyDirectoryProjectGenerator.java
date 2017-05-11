@@ -13,6 +13,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -30,7 +31,9 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
+import com.jetbrains.edu.learning.stepic.EduAdaptiveStepicConnector;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyNewProjectPanel;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
@@ -54,6 +57,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyNewProjectSettings>
   implements EduCourseProjectGenerator {
@@ -200,7 +204,32 @@ public class PyStudyDirectoryProjectGenerator extends PythonProjectGenerator<PyN
       @Override
       public void mouseClicked(MouseEvent e) {
         if (isCourseAdaptiveAndNotLogged()) {
-          mySettingsPanel.showLoginDialog(false, "Signing In");
+          StudySettings studySettings = StudySettings.getInstance();
+          StepicUser oldUser = studySettings.getUser();
+
+          EduStepicConnector.doAuthorize(() -> mySettingsPanel.showLoginDialog());
+
+          ProgressManager.getInstance()
+            .runProcessWithProgressSynchronously(() -> {
+                                                   ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                                                   StepicUser user = StudyUtils.execCancelable(() -> {
+                                                     StepicUser newUser = studySettings.getUser();
+                                                     while (newUser == null || newUser.equals(oldUser)) {
+                                                       TimeUnit.MILLISECONDS.sleep(500);
+                                                       newUser = studySettings.getUser();
+                                                     }
+                                                     myGenerator.setEnrolledCoursesIds(EduAdaptiveStepicConnector.getEnrolledCoursesIds(newUser));
+
+
+                                                     return newUser;
+                                                   });
+
+                                                   if (user != null) {
+                                                     mySettingsPanel.setOK();
+                                                   }
+                                                 }, "Authorizing",
+                                                 true,
+                                                 DefaultProjectFactory.getInstance().getDefaultProject());
         }
       }
 

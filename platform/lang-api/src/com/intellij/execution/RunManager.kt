@@ -19,7 +19,10 @@ import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.RunProfile
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 import java.util.regex.Pattern
@@ -31,11 +34,13 @@ import java.util.regex.Pattern
  */
 abstract class RunManager {
   companion object {
-    private val UNNAMED = "Unnamed"
-
     @JvmStatic
     fun getInstance(project: Project): RunManager {
-      return project.getComponent(RunManager::class.java)
+      if (!IS_RUN_MANAGER_INIT_ALLOWED.isIn(project)) {
+        // https://gist.github.com/develar/5bcf39b3f0ec08f507ec112d73375f2b
+        LOG.debug("Must be not called before project components initialized")
+      }
+      return ServiceManager.getService(project, RunManager::class.java)
     }
 
     @JvmStatic
@@ -197,4 +202,19 @@ abstract class RunManager {
     configuration.name = suggestUniqueName(StringUtil.notNullize(oldName, UNNAMED), configuration.type)
     return oldName != configuration.name
   }
+
+  abstract fun getConfigurationType(typeName: String): ConfigurationType?
+
+  abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
+
+  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+
+  abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
+
+  abstract fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?)
 }
+
+private val UNNAMED = "Unnamed"
+
+val IS_RUN_MANAGER_INIT_ALLOWED = Key.create<Boolean>("RunManagerInitialized")
+private  val LOG = Logger.getInstance(RunManager::class.java)

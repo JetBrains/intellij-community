@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -118,6 +119,9 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
         }
         PsiExpression[] initializers = getInitializers((PsiNewExpression)lastArg);
         if (initializers == null) {
+          return;
+        }
+        if (Arrays.stream(initializers).anyMatch(expr -> expr instanceof PsiArrayInitializerExpression)) {
           return;
         }
         if (!isSafeToFlatten(expression, method, initializers)) {

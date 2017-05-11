@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public abstract class ProjectLocator {
    * @return project which probably contains the file, or null if couldn't guess (for example, there are no open projects).
    */
   @Nullable
-  public abstract Project guessProjectForFile(VirtualFile file);
+  public abstract Project guessProjectForFile(@Nullable VirtualFile file);
 
   /**
   * Gets all open projects containing the given file.

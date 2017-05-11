@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -139,19 +139,23 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     init();
   }
 
+  @Override
   @Nullable
   public String getMemberVisibility() {
     return myVisibilityPanel.getVisibility();
   }
 
+  @Override
   public boolean makeEnumConstant() {
     return myIntroduceEnumConstants.isVisible() && myIntroduceEnumConstants.isEnabled() && myIntroduceEnumConstants.isSelected();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.move.moveMembers.MoveMembersDialog";
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
@@ -176,7 +180,8 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     _panel.add(myIntroduceEnumConstants, BorderLayout.SOUTH);
     box.add(_panel);
 
-    myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentAdapter() {
+    myTfTargetClassName.getChildComponent().getDocument().addDocumentListener(new DocumentListener() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         myMemberInfoModel.updateTargetClass();
         validateButtons();
@@ -190,6 +195,7 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     final String title = RefactoringBundle.message("move.members.members.to.be.moved.border.title");
@@ -209,10 +215,12 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTfTargetClassName.getChildComponent();
   }
 
+  @Override
   public PsiMember[] getSelectedMembers() {
     final Collection<MemberInfo> selectedMemberInfos = myTable.getSelectedMemberInfos();
     ArrayList<PsiMember> list = new ArrayList<>();
@@ -222,10 +230,12 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     return list.toArray(new PsiMember[list.size()]);
   }
 
+  @Override
   public String getTargetClassName() {
     return myTfTargetClassName.getText();
   }
 
+  @Override
   protected void doAction() {
     String message = validateInputData();
 
@@ -241,18 +251,22 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     }
 
     invokeRefactoring(new MoveMembersProcessor(getProject(), myMoveCallback, new MoveMembersOptions() {
+      @Override
       public String getMemberVisibility() {
         return MoveMembersDialog.this.getMemberVisibility();
       }
 
+      @Override
       public boolean makeEnumConstant() {
         return MoveMembersDialog.this.makeEnumConstant();
       }
 
+      @Override
       public PsiMember[] getSelectedMembers() {
         return MoveMembersDialog.this.getSelectedMembers();
       }
 
+      @Override
       public String getTargetClassName() {
         return MoveMembersDialog.this.getTargetClassName();
       }
@@ -371,14 +385,17 @@ public class MoveMembersDialog extends MoveDialogBase implements MoveMembersOpti
     return newClass;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.MOVE_MEMBERS);
   }
 
   private class ChooseClassAction implements ActionListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(
         RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new ClassFilter() {
+        @Override
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }

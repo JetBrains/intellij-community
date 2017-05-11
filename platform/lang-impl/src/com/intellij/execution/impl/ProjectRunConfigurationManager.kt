@@ -15,36 +15,49 @@
  */
 package com.intellij.execution.impl
 
+import com.intellij.execution.IS_RUN_MANAGER_INIT_ALLOWED
+import com.intellij.execution.RunManager
 import com.intellij.execution.configurations.UnknownRunConfiguration
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.StateSplitterEx
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.options.SchemeManagerFactory
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.project.impl.ProjectLifecycleListener
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashSet
 import org.jdom.Element
 
-internal class ProjectRunConfigurationStartupActivity : StartupActivity, DumbAware {
-  override fun runActivity(project: Project) {
-    if (project.isDefault || !Registry.`is`("runManager.use.schemeManager", false)) {
+internal class ProjectRunConfigurationInitializer(project: Project) {
+  init {
+    val connection = project.messageBus.connect()
+    connection.subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
+      override fun projectComponentsInitialized(eventProject: Project) {
+        if (project === eventProject) {
+          requestLoadWorkspaceAndProjectRunConfiguration(project)
+        }
+      }
+    })
+  }
+
+  private fun requestLoadWorkspaceAndProjectRunConfiguration(project: Project) {
+    if (IS_RUN_MANAGER_INIT_ALLOWED.isIn(project)) {
       return
     }
 
-    val manager = RunManagerImpl.getInstanceImpl(project)
-    val schemeManager = SchemeManagerFactory.getInstance(manager.project).create("runConfigurations", RunConfigurationSchemeManager(manager, true), isUseOldFileNameSanitize = true)
-    manager.projectSchemeManager = schemeManager
-    schemeManager.loadSchemes()
-    manager.requestSort()
+    IS_RUN_MANAGER_INIT_ALLOWED.set(project, true)
+
+    // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages (and, so, SOE may occur because all other projectOpened will be processed before us)
+    // simply, you should not listen changes until project opened
+    ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
+    // fire in a a post-startup activity to be sure that all clients that register handlers in the ProjectManager.TOPIC.projectOpened, are listening
+    StartupManager.getInstance(project).runWhenProjectIsInitialized { createRunManagerEventPublisher(project).runConfigurationSelected() }
   }
 }
 
 @State(name = "ProjectRunConfigurationManager", storages = arrayOf(Storage(value = "runConfigurations", stateSplitter = ProjectRunConfigurationManager.RunConfigurationStateSplitter::class)))
-internal class ProjectRunConfigurationManager(private val manager: RunManagerImpl) : PersistentStateComponent<Element> {
+internal class ProjectRunConfigurationManager(manager: RunManager) : PersistentStateComponent<Element> {
+  private val manager = manager as RunManagerImpl
+
   override fun getState(): Element? {
     if (Registry.`is`("runManager.use.schemeManager", false)) {
       return null

@@ -25,11 +25,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.Value;
 
-/**
- * User: lex
- * Date: Oct 8, 2003
- * Time: 5:08:07 PM
- */
 public class ThisDescriptorImpl extends ValueDescriptorImpl{
 
   public ThisDescriptorImpl(Project project) {

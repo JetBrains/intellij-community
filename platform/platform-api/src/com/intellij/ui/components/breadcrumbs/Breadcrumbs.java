@@ -18,54 +18,63 @@ package com.intellij.ui.components.breadcrumbs;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.RectanglePainter;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Insets;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.function.Predicate;
+import javax.swing.Icon;
 import javax.swing.JComponent;
-import javax.swing.border.AbstractBorder;
 
+import static com.intellij.ide.ui.AntialiasingType.getKeyForCurrentScope;
+import static com.intellij.util.ui.UIUtil.DEF_SYSTEM_FONT_SIZE;
+import static java.util.stream.Collectors.toList;
+import static javax.swing.SwingConstants.LEFT;
+import static javax.swing.SwingConstants.RIGHT;
+import static javax.swing.SwingConstants.CENTER;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
+import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 /**
  * @author Sergey.Malenkov
  */
 public class Breadcrumbs extends JComponent {
-  @SuppressWarnings("FieldCanBeLocal")
-  private final MouseHandler containerMouseHandler = new MouseHandler(event -> getCrumb(event.getX(), event.getY()));
-  private final MouseHandler componentMouseHandler = new MouseHandler(event -> getCrumb(event.getComponent()));
+  private static final int LEFT_RIGHT = 5;
+  private static final int TOP_BOTTOM = 3;
 
   private BiConsumer<Crumb, InputEvent> hover = ((crumb, event) -> hovered = crumb);
   private BiConsumer<Crumb, InputEvent> select = ((crumb, event) -> selected = crumb);
 
+  private final ArrayList<CrumbView> views = new ArrayList<>();
   private final Font[] cache = new Font[4];
-
-  private Crumb last;
   private Crumb hovered;
   private Crumb selected;
 
   public Breadcrumbs() {
-    addMouseListener(containerMouseHandler);
-    addMouseMotionListener(containerMouseHandler);
+    MouseHandler handler = new MouseHandler();
+    addMouseListener(handler);
+    addMouseMotionListener(handler);
     setLayout(STATELESS_LAYOUT);
     setOpaque(true);
   }
@@ -87,47 +96,56 @@ public class Breadcrumbs extends JComponent {
   }
 
   public boolean isAfterSelected(Crumb crumb) {
-    if (last == null || isSelected(last)) return false;
-    for (Crumb current : getCrumbs()) {
-      if (current == crumb) return false;
-      if (isSelected(current)) break;
+    for (CrumbView view : views) {
+      if (view.crumb != null) {
+        if (view.crumb == crumb) return false;
+        if (isSelected(view.crumb)) break;
+      }
     }
     return true;
   }
 
+  public Crumb getCrumbAt(int x, int y) {
+    for (CrumbView view : views) {
+      if (view.contains(x, y)) return view.crumb;
+    }
+    return null;
+  }
+
   public Iterable<Crumb> getCrumbs() {
-    return getComponents(this, Breadcrumbs::getCrumb);
+    return views.stream().map(view -> view.crumb).filter(crumb -> crumb != null).collect(toList());
   }
 
   public void setCrumbs(Iterable<? extends Crumb> crumbs) {
-    ArrayList<CrumbLabel> labels = getComponents(this, Breadcrumbs::toCrumbLabel);
-    last = null;
+    CrumbView view = null;
     int index = 0;
     if (crumbs != null) {
       for (Crumb crumb : crumbs) {
         if (crumb != null) {
-          last = crumb;
-          if (index < labels.size()) {
-            labels.get(index++).setCrumb(crumb);
+          if (index < views.size()) {
+            view = views.get(index++);
+            view.initialize(crumb);
           }
           else {
-            CrumbLabel label = new CrumbLabel();
-            label.setCrumb(crumb);
-            label.setBorder(STATELESS_BORDER);
-            label.addMouseListener(componentMouseHandler);
-            label.addMouseMotionListener(componentMouseHandler);
-            add(label);
+            view = new CrumbView(view, crumb);
+            views.add(view);
             index++;
           }
         }
       }
     }
-    while (index < labels.size()) {
-      labels.get(index++).setCrumb(null);
+    while (index < views.size()) {
+      views.get(index++).initialize(null);
     }
-    select.accept(last, null);
+    if (hovered != null) hover.accept(null, null);
+    if (selected != null) select.accept(null, null);
     revalidate();
     repaint();
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    return hovered == null ? null : hovered.getTooltip();
   }
 
   @Override
@@ -138,57 +156,17 @@ public class Breadcrumbs extends JComponent {
       g.setColor(getBackground());
       g.fillRect(0, 0, getWidth(), getHeight());
     }
-    super.paintComponent(g);
-  }
-
-  protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb) {
-    int scale = getScale(this);
-    EffectType type = getEffectType(crumb);
-    Color color = getEffectColor(crumb);
-    Color background = getBackground(crumb);
-    if (color != null && type != null) {
-      EffectPainter painter = getEffectPainter(type);
-      if (painter != null) {
-        if (background != null) {
-          g.setColor(background);
-          g.fillRect(x + 2 * scale, y + 2 * scale, width - 4 * scale, height - 4 * scale);
-        }
-        Font font = getFont(crumb);
-        if (font != null) {
-          FontMetrics metrics = g.getFontMetrics(font);
-          if (metrics != null) {
-            int descent = metrics.getDescent();
-            int baseline = y + height - 2 * scale - descent;
-            if (painter == EffectPainter.STRIKE_THROUGH) descent = metrics.getAscent();
-
-            g.setColor(color);
-            painter.paint(g, x + 5 * scale, baseline, width - 10 * scale, descent, font);
-          }
-        }
+    if (g instanceof Graphics2D) {
+      Graphics2D g2d = (Graphics2D)g;
+      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, getKeyForCurrentScope(!Registry.is("editor.breadcrumbs.system.font")));
+      for (CrumbView view : views) {
+        if (view.crumb != null) view.paint(g2d);
       }
-      else if (type == EffectType.ROUNDED_BOX) {
-        RectanglePainter.paint(g, x + scale, y + scale, width - 2 * scale, height - 2 * scale, height / 2, background, color);
-      }
-      else if (type == EffectType.BOXED) {
-        RectanglePainter.paint(g, x + scale, y + scale, width - 2 * scale, height - 2 * scale, 0, background, color);
-      }
-    }
-    else if (background != null) {
-      g.setColor(background);
-      g.fillRect(x, y, width, height);
-      if (isSelected(crumb)) {
-        paint(g, x, y, width, height, crumb, scale * 2);
-      }
-    }
-    else if (isSelected(crumb)) {
-      paint(g, x, y, width, height, crumb, scale * 2);
-    }
-    else if (isHovered(crumb)) {
-      paint(g, x, y, width, height, crumb, scale);
     }
   }
 
-  protected void paint(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
+  protected void paintMarker(Graphics2D g, int x, int y, int width, int height, Crumb crumb, int thickness) {
     if (thickness > 0) {
       Color foreground = getMarkerForeground(crumb);
       if (foreground != null) {
@@ -200,7 +178,8 @@ public class Breadcrumbs extends JComponent {
 
   protected Color getMarkerForeground(Crumb crumb) {
     if (!Registry.is("editor.breadcrumbs.marker")) return null;
-    Color foreground = getForeground(crumb);
+    CrumbView found = getCrumbView(view -> view.crumb == crumb);
+    Color foreground = found == null ? null : found.foreground;
     if (foreground == null) return null;
     double alpha = Registry.doubleValue("editor.breadcrumbs.marker.alpha");
     return ColorUtil.toAlpha(foreground, (int)(alpha * foreground.getAlpha()));
@@ -267,144 +246,78 @@ public class Breadcrumbs extends JComponent {
     return null;
   }
 
-  private Crumb getCrumb(int x, int y) {
-    return getCrumb(getComponentAt(x, y));
+  private CrumbView getCrumbView(Predicate<CrumbView> predicate) {
+    for (CrumbView view : views) if (view.crumb != null && predicate.test(view)) return view;
+    return null;
   }
 
-  private static Crumb getCrumb(Component component) {
-    CrumbLabel label = toCrumbLabel(component);
-    return label == null ? null : label.crumb;
-  }
-
-  private static CrumbLabel toCrumbLabel(Component component) {
-    return component instanceof CrumbLabel ? (CrumbLabel)component : null;
-  }
-
-  private static Component toVisible(Component component) {
-    return component.isVisible() ? component : null;
-  }
-
-  private static Component toVisibleAndValid(Component component) {
-    return component.isVisible() && component.isValid() ? component : null;
-  }
-
-  private static <T> ArrayList<T> getComponents(Container container, Function<Component, T> function) {
-    synchronized (container.getTreeLock()) {
-      int count = container.getComponentCount();
-      ArrayList<T> components = new ArrayList<>(count);
-      for (int i = 0; i < count; i++) {
-        T component = function.apply(container.getComponent(i));
-        if (component != null) components.add(component);
-      }
-      return components;
-    }
-  }
-
-  private static Dimension getPreferredSize(Iterable<Component> components) {
-    Dimension size = new Dimension();
-    for (Component component : components) {
-      Dimension preferred = component.getPreferredSize();
-      size.width += preferred.width;
-      if (size.height < preferred.height) {
-        size.height = preferred.height;
+  private void layout(boolean update) {
+    Rectangle bounds = new Rectangle(getWidth(), getHeight());
+    JBInsets.removeFrom(bounds, getInsets());
+    int scale = getScale();
+    for (CrumbView view : views) {
+      if (view.crumb != null) {
+        if (update || view.font == null) view.update();
+        view.setBounds(bounds.x, bounds.y, view.preferred.width, bounds.height, scale);
+        bounds.x += view.preferred.width;
       }
     }
-    return size;
   }
 
-  private static int getPreferredHeight(Component component) {
-    Font font = component.getFont();
-    if (font == null) return 0;
-
-    FontMetrics metrics = component.getFontMetrics(font);
-    int height = metrics != null ? metrics.getHeight() : font.getSize();
-
-    Insets insets = getCrumbInsets(null, getScale(font));
-    return insets.top + insets.bottom + height;
-  }
-
-  @SuppressWarnings("UseDPIAwareInsets")
-  private static Insets getCrumbInsets(Insets insets, int scale) {
-    if (insets == null) insets = new Insets(0, 0, 0, 0);
-    insets.top += 2 * scale;
-    insets.left += 5 * scale;
-    insets.right += 5 * scale;
-    insets.bottom += 2 * scale;
-    return insets;
-  }
-
-  private static int getGap(Component component) {
-    return 10 * getScale(component);
-  }
-
-  private static int getScale(Component component) {
-    return component == null ? 1 : getScale(component.getFont());
-  }
-
-  private static int getScale(Font font) {
-    return font == null ? 1 : getScale(font.getSize());
-  }
-
-  private static int getScale(int height) {
-    return height <= 10 ? 1 : (height / 10);
-  }
-
-  private static final AbstractBorder STATELESS_BORDER = new AbstractBorder() {
-    @Override
-    public Insets getBorderInsets(Component component, Insets insets) {
-      return getCrumbInsets(insets, component == null ? 1 : getScale(component.getParent()));
+  private void updatePreferredSize(Dimension size, int scale) {
+    for (CrumbView view : views) {
+      if (view.crumb != null) {
+        if (view.font == null) view.update();
+        size.width += view.preferred.width;
+        if (size.height < view.preferred.height) {
+          size.height = view.preferred.height;
+        }
+      }
     }
-  };
+    if (size.height == 0) {
+      Font font = getFont();
+      if (font != null) {
+        FontMetrics fm = getFontMetrics(font);
+        size.height = scale * (TOP_BOTTOM + TOP_BOTTOM) + (fm != null ? fm.getHeight() : font.getSize());
+      }
+    }
+  }
+
+  private int getScale() {
+    Font font = getFont();
+    if (font != null) {
+      int size = font.getSize();
+      if (size > 10) return size / 10;
+    }
+    return 1;
+  }
+
+  private static float getFontSize(Font font) {
+    return font == null ? DEF_SYSTEM_FONT_SIZE : font.getSize2D();
+  }
 
   private static final AbstractLayoutManager STATELESS_LAYOUT = new AbstractLayoutManager() {
     @Override
-    public void invalidateLayout(Container container) {
-      getComponents(container, Breadcrumbs::toVisibleAndValid).forEach(Component::invalidate);
-    }
-
-    @Override
     public Dimension preferredLayoutSize(Container container) {
-      ArrayList<Component> components = getComponents(container, Breadcrumbs::toVisible);
-      Dimension size = getPreferredSize(components);
-      size.width += components.size() * getGap(container);
-      if (size.height == 0) size.height = getPreferredHeight(container);
+      Dimension size = new Dimension();
+      if (container instanceof Breadcrumbs) {
+        Breadcrumbs breadcrumbs = (Breadcrumbs)container;
+        breadcrumbs.updatePreferredSize(size, breadcrumbs.getScale());
+      }
       JBInsets.addTo(size, container.getInsets());
       return size;
     }
 
     @Override
     public void layoutContainer(Container container) {
-      ArrayList<Component> components = getComponents(container, Breadcrumbs::toVisible);
-      if (!components.isEmpty()) {
-        Dimension size = getPreferredSize(components);
-        Rectangle bounds = new Rectangle(container.getWidth(), container.getHeight());
-        JBInsets.removeFrom(bounds, container.getInsets());
-        int count = components.size();
-        if (count == 1) {
-          if (bounds.width > size.width) bounds.width = size.width;
-          components.get(0).setBounds(bounds);
-        }
-        else /*if (bounds.width < size.width) {
-            }
-            else*/ {
-          int gap = getGap(container);
-          for (Component component : components) {
-            Dimension preferred = component.getPreferredSize();
-            component.setBounds(bounds.x, bounds.y, preferred.width, bounds.height);
-            bounds.x += preferred.width + gap;
-          }
-        }
+      if (container instanceof Breadcrumbs) {
+        Breadcrumbs breadcrumbs = (Breadcrumbs)container;
+        breadcrumbs.layout(false);
       }
     }
   };
 
   private final class MouseHandler extends MouseEventHandler {
-    private final Function<MouseEvent, Crumb> function;
-
-    MouseHandler(Function<MouseEvent, Crumb> function) {
-      this.function = function;
-    }
-
     @Override
     protected void handle(MouseEvent event) {
       if (!event.isConsumed()) {
@@ -413,22 +326,211 @@ public class Breadcrumbs extends JComponent {
         switch (event.getID()) {
           case MouseEvent.MOUSE_MOVED:
           case MouseEvent.MOUSE_ENTERED:
-            crumb = function.apply(event);
+            crumb = getCrumbAt(event.getX(), event.getY());
           case MouseEvent.MOUSE_EXITED:
             if (!isHovered(crumb)) consumer = hover;
             break;
           case MouseEvent.MOUSE_CLICKED:
             if (!isLeftMouseButton(event)) break;
-            crumb = function.apply(event);
+            crumb = getCrumbAt(event.getX(), event.getY());
             if (crumb != null) consumer = select;
             break;
         }
         if (consumer != null) {
           consumer.accept(crumb, event);
           event.consume();
+          layout(true);
           repaint();
         }
       }
+    }
+  }
+
+  private final class CrumbView {
+    private final Rectangle bounds = new Rectangle();
+    private final Dimension preferred = new Dimension();
+
+    private final CrumbView parent;
+    private Crumb crumb;
+    private Icon icon;
+    private String text;
+    private Path2D path;
+    private Font font;
+    private Color foreground;
+    private Color background;
+    private Color effectColor;
+    private EffectType effectType;
+
+    CrumbView(CrumbView parent, Crumb crumb) {
+      this.parent = parent;
+      initialize(crumb);
+    }
+
+    void initialize(Crumb crumb) {
+      this.crumb = crumb;
+      icon = null;
+      text = null;
+      path = null;
+      font = null;
+      foreground = null;
+      background = null;
+      effectColor = null;
+    }
+
+    private void update() {
+      icon = crumb.getIcon();
+      text = crumb.getText();
+      font = getFont(crumb);
+      foreground = getForeground(crumb);
+      background = getBackground(crumb);
+      effectType = getEffectType(crumb);
+      effectColor = getEffectColor(crumb);
+
+      // use shared foreground and font if not set
+      if (foreground == null) foreground = getForeground();
+      if (font == null) font = getFont();
+
+      // scale loaded icon by font
+      if (icon != null) icon = IconUtil.scaleByFont(icon, Breadcrumbs.this, getFontSize(font));
+
+      // calculate preferred size
+      int scale = getScale();
+      preferred.width = scale * (LEFT_RIGHT + LEFT_RIGHT + getLeftGap() + getRightGap());
+      preferred.height = scale * (TOP_BOTTOM + TOP_BOTTOM);
+
+      if (font != null && !StringUtil.isEmpty(text)) {
+        FontMetrics fm = getFontMetrics(font);
+        Rectangle iconR = new Rectangle();
+        Rectangle textR = new Rectangle();
+        layout(fm, iconR, textR, new Rectangle(Short.MAX_VALUE, Short.MAX_VALUE));
+        preferred.width += Math.max(iconR.x + iconR.width, textR.x + textR.width) - Math.min(iconR.x, textR.x);
+        preferred.height += Math.max(iconR.y + iconR.height, textR.y + textR.height) - Math.min(iconR.y, textR.y);
+      }
+      else if (icon != null) {
+        preferred.width += icon.getIconWidth();
+        preferred.height += icon.getIconHeight();
+      }
+    }
+
+    private String layout(FontMetrics fm, Rectangle iconR, Rectangle textR, Rectangle viewR) {
+      int gap = icon == null ? 0 : icon.getIconWidth() / 4;
+      return layoutCompoundLabel(fm, text, icon, CENTER, LEFT, CENTER, RIGHT, viewR, iconR, textR, gap);
+    }
+
+    private Rectangle getBounds(int dx, int dy) {
+      return new Rectangle(bounds.x + dx, bounds.y + dy, bounds.width - dx - dx, bounds.height - dy - dy);
+    }
+
+    private void setBounds(int x, int y, int width, int height, int scale) {
+      int left = scale * getLeftGap();
+      int right = scale * getRightGap();
+      bounds.setBounds(x + left, y, width - left - right, height);
+      path = Registry.is("editor.breadcrumbs.marker") ? null : createPath(scale, true);
+    }
+
+    private boolean contains(int x, int y) {
+      return crumb != null && (path != null ? path.contains(x, y) : bounds.contains(x, y));
+    }
+
+    private void paint(Graphics2D g) {
+      int scale = getScale();
+      if (path != null) {
+        if (background != null) {
+          g.setColor(background);
+          g.fill(path);
+        }
+        if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
+          Graphics2D g2 = (Graphics2D)g.create();
+          float stroke = getFontSize(getFont()) / DEF_SYSTEM_FONT_SIZE;
+          int delta = bounds.height / 4;
+          g2.clipRect(0, bounds.y + delta, Short.MAX_VALUE, bounds.height - delta - delta);
+          g2.setPaint(getForeground());
+          if (stroke > 1) g2.setStroke(new BasicStroke(stroke));
+          g2.draw(createPath(scale, false));
+          g2.dispose();
+        }
+      }
+      if (effectType == EffectType.ROUNDED_BOX && effectColor != null) {
+        Rectangle bounds = getBounds(scale, scale);
+        RectanglePainter.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, bounds.height / 2, background, effectColor);
+      }
+      else if (effectType == EffectType.BOXED && effectColor != null) {
+        Rectangle bounds = getBounds(scale, scale);
+        RectanglePainter.paint(g, bounds.x, bounds.y, bounds.width, bounds.height, 0, background, effectColor);
+      }
+      else if (background != null) {
+        g.setColor(background);
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        if (isSelected(crumb)) {
+          paintMarker(g, bounds.x, bounds.y, bounds.width, bounds.height, crumb, scale * 2);
+        }
+      }
+      else if (isSelected(crumb)) {
+        paintMarker(g, bounds.x, bounds.y, bounds.width, bounds.height, crumb, scale * 2);
+      }
+      else if (isHovered(crumb)) {
+        paintMarker(g, bounds.x, bounds.y, bounds.width, bounds.height, crumb, scale);
+      }
+      if (font != null) {
+        g.setFont(font);
+        FontMetrics fm = g.getFontMetrics(font);
+        if (fm != null) {
+          Rectangle iconR = new Rectangle();
+          Rectangle textR = new Rectangle();
+          Rectangle viewR = getBounds(scale * LEFT_RIGHT, scale * TOP_BOTTOM);
+          String text = layout(fm, iconR, textR, viewR);
+          if (!StringUtil.isEmpty(text)) {
+            g.setColor(foreground != null ? foreground : getForeground());
+            g.drawString(text, textR.x, textR.y += fm.getAscent());
+            if (effectColor != null && effectType != null) {
+              EffectPainter painter = getEffectPainter(effectType);
+              if (painter != null) {
+                g.setColor(effectColor);
+                textR.height = painter == EffectPainter.STRIKE_THROUGH ? fm.getAscent() : fm.getDescent();
+                painter.paint(g, textR.x, textR.y, textR.width, textR.height, font);
+              }
+            }
+          }
+          if (icon != null) {
+            icon.paintIcon(Breadcrumbs.this, g, iconR.x, iconR.y);
+          }
+        }
+      }
+    }
+
+    private int getLeftGap() {
+      return !Registry.is("editor.breadcrumbs.marker")
+             ? Registry.intValue("editor.breadcrumbs.gap.left", 5)
+             : parent != null ? 10 : 0;
+    }
+
+    private int getRightGap() {
+      return !Registry.is("editor.breadcrumbs.marker")
+             ? Registry.intValue("editor.breadcrumbs.gap.right", 9)
+             : 0;
+    }
+
+    private Path2D createPath(int scale, boolean closed) {
+      Path2D path = new Path2D.Double();
+
+      int left = scale * getLeftGap();
+      int right = scale * getRightGap();
+      if (parent != null) {
+        left += right;
+        path.moveTo(bounds.x - left, bounds.y);
+        path.lineTo(bounds.x - left + right, bounds.y + bounds.height * 0.5);
+      }
+      else {
+        path.moveTo(bounds.x - left, bounds.y);
+      }
+      path.lineTo(bounds.x - left, bounds.y + bounds.height);
+      if (closed) {
+        path.lineTo(bounds.x + bounds.width, bounds.y + bounds.height);
+        path.lineTo(bounds.x + bounds.width + right, bounds.y + bounds.height * 0.5);
+        path.lineTo(bounds.x + bounds.width, bounds.y);
+        path.closePath();
+      }
+      return path;
     }
   }
 }

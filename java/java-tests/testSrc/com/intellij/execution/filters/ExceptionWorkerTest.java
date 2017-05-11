@@ -62,18 +62,28 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
 
   public void testAnomalyParenthesisParsing() {
     String[][] data = new String[][]{
-      {"at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)", "youtrack.jetbrains.com.Issue", "IDEA_125137()",
+      {"at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()",
         "FooTest.groovy:2"},
-      {"at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm",
+      {"at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm",
         "FooTest.groovy:2"},
-      {"p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)", "p1.Cl", "mee", "p1.Cl.java:87"}
+      {"p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)\n", "p1.Cl", "mee", "p1.Cl.java:87"}
     };
     for (String[] datum : data) {
-      Trinity<TextRange, TextRange, TextRange> trinity = ExceptionWorker.parseExceptionLine(datum[0]);
-      assertNotNull(trinity);
-      assertEquals(datum[1], trinity.first.subSequence(datum[0]));
-      assertEquals(datum[2], trinity.second.subSequence(datum[0]));
-      assertEquals(datum[3], trinity.third.subSequence(datum[0]));
+      assertParsed(datum[0], datum[1], datum[2], datum[3]);
     }
+  }
+
+  private static void assertParsed(String line, String className, String methodName, String fileLine) {
+    assertTrue(line.endsWith("\n"));
+    Trinity<TextRange, TextRange, TextRange> trinity = ExceptionWorker.parseExceptionLine(line);
+    assertNotNull(trinity);
+    assertEquals(className, trinity.first.subSequence(line));
+    assertEquals(methodName, trinity.second.subSequence(line));
+    assertEquals(fileLine, trinity.third.subSequence(line));
+  }
+
+  public void testYourKitFormat() {
+    assertParsed("com.intellij.util.concurrency.Semaphore.waitFor(long) Semaphore.java:89\n",
+                 "com.intellij.util.concurrency.Semaphore", "waitFor", "Semaphore.java:89");
   }
 }

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 25.10.2006
- * Time: 17:24:41
- */
 package com.intellij.ide.impl;
 
 import com.intellij.openapi.actionSystem.DataKey;

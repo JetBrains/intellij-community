@@ -2,20 +2,22 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.testFramework.InspectionTestCase;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author cdr
  */
-public class RedundantArrayForVarargsCallInspectionTest extends InspectionTestCase {
+public class RedundantArrayForVarargsCallInspectionTest extends LightInspectionTestCase {
   @Override
   protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
+    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantArrayForVarargs/";
   }
 
-  private void doTest() throws Exception {
-    doTest("redundantArrayForVarargs/" + getTestName(true), new LocalInspectionToolWrapper(new RedundantArrayForVarargsCallInspection()),"java 1.5");
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new RedundantArrayForVarargsCallInspection();
   }
 
   public void testIDEADEV15215() throws Exception { doTest(); }

@@ -451,7 +451,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
   }
 
-  private class MyDocumentListener extends DocumentAdapter {
+  private class MyDocumentListener implements DocumentListener {
     @Override
     public void beforeDocumentChange(DocumentEvent e) {
       for (Bookmark bookmark : myBookmarks) {

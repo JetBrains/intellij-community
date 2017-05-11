@@ -44,8 +44,8 @@ import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -53,7 +53,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -252,10 +252,9 @@ public class BuildManager implements Disposable {
       myFallbackJdkParams.add("-D" + GlobalOptions.FALLBACK_JDK_VERSION + "=" + SystemProperties.getJavaVersion());
     }
 
-    projectManager.addProjectManagerListener(new ProjectWatcher());
-
-    final MessageBusConnection conn = application.getMessageBus().connect();
-    conn.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+    MessageBusConnection connection = application.getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectWatcher());
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         if (!IS_UNIT_TEST_MODE && shouldTriggerMake(events)) {
@@ -302,7 +301,7 @@ public class BuildManager implements Disposable {
 
     });
 
-    conn.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
+    connection.subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener.Adapter() {
       @Override
       public void batchChangeStarted(Project project) {
         myFileChangeCounter++;
@@ -315,7 +314,7 @@ public class BuildManager implements Disposable {
       }
     });
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         final Document document = e.getDocument();
@@ -1562,7 +1561,7 @@ public class BuildManager implements Disposable {
     }
   }
 
-  private class ProjectWatcher extends ProjectManagerAdapter {
+  private class ProjectWatcher implements ProjectManagerListener {
     private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
 
     @Override
@@ -1694,9 +1693,8 @@ public class BuildManager implements Disposable {
     }
 
     @Override
-    public boolean canCloseProject(Project project) {
+    public void projectClosingBeforeSave(@NotNull Project project) {
       cancelAutoMakeTasks(project);
-      return super.canCloseProject(project);
     }
 
     @Override

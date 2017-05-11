@@ -256,6 +256,9 @@ public class OverloadResolutionTest extends LightDaemonAnalyzerTestCase {
     doTest(false);
   }
 
+  public void testInferenceErrorInArgumentWhenWrongOverloadWasChosen() throws Exception {
+    doTest(false);
+  }
 
   private void doTest() {
     doTest(true);

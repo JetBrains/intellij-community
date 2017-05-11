@@ -485,12 +485,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   @Override
   @NotNull
   public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    final ResolveResult[] results = TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
-    if (results.length == 0) {
-      return GroovyResolveResult.EMPTY_ARRAY;
-    }
-
-    return (GroovyResolveResult[])results;
+    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
   }
 
   @NotNull

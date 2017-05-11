@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 7, 2002
- * Time: 2:33:28 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.*;
@@ -30,7 +22,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.containers.FactoryMap;
@@ -72,7 +63,9 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
-    type = TypeConversionUtil.erasure(type);
+    if (type instanceof PsiClassType) {
+      type = ((PsiClassType)type).rawType();
+    }
     if (type == null) return DfaUnknownValue.getInstance();
     return getTypeFactory().createTypeValue(internType(type), nullability);
   }

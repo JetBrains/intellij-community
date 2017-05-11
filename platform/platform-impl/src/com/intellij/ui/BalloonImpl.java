@@ -119,10 +119,19 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         final MouseEvent me = (MouseEvent)e;
         final boolean insideBalloon = isInsideBalloon(me);
 
-        if (myHideOnMouse && id == MouseEvent.MOUSE_PRESSED) {
-          if (!insideBalloon && !isWithinChildWindow(me)) {
+        boolean forcedExit = id == MouseEvent.MOUSE_EXITED && me.getButton() != MouseEvent.NOBUTTON && !myBlockClicks;
+        if (myHideOnMouse && (id == MouseEvent.MOUSE_PRESSED || forcedExit)) {
+          if ((!insideBalloon || forcedExit) && !isWithinChildWindow(me)) {
             if (myHideListener == null) {
               hide();
+              if (forcedExit) {
+                int[] ids = {MouseEvent.MOUSE_ENTERED, MouseEvent.MOUSE_PRESSED, MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED};
+                for (int id_ : ids) {
+                  IdeEventQueue.getInstance()
+                    .dispatchEvent(new MouseEvent(me.getComponent(), id_, me.getWhen(), me.getModifiers(), me.getX(), me
+                      .getY(), me.getClickCount(), me.isPopupTrigger(), me.getButton()));
+                }
+              }
             }
             else {
               myHideListener.run();

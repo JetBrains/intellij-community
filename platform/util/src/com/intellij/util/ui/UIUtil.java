@@ -4011,6 +4011,8 @@ public class UIUtil {
     });
   }
 
+  public static final String CHECKBOX_ROLLOVER_PROPERTY = "CheckBoxRenderer.rolloverRow";
+
   public static void resetEnabledRollOver(JTable table, int column) {
     if (!Registry.is("ide.intellij.laf.win10.ui")) return;
 
@@ -4020,10 +4022,10 @@ public class UIUtil {
 
     //noinspection EmptyCatchBlock
     try {
-      lastRow = Integer.valueOf(String.valueOf(rc.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow")));
+      lastRow = Integer.valueOf(String.valueOf(rc.getClientProperty(CHECKBOX_ROLLOVER_PROPERTY)));
     } catch (NumberFormatException nfe) {}
 
-    rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", null);
+    rc.putClientProperty(CHECKBOX_ROLLOVER_PROPERTY, null);
 
     if (lastRow >= 0) {
       tm.fireTableCellUpdated(lastRow, column);
@@ -4034,7 +4036,7 @@ public class UIUtil {
     if (!Registry.is("ide.intellij.laf.win10.ui")) return;
 
     try {
-      Object cv = cellRenderer.getClientProperty("ThreeStateCheckBoxRenderer.rolloverRow");
+      Object cv = cellRenderer.getClientProperty(CHECKBOX_ROLLOVER_PROPERTY);
       Integer rr = Integer.valueOf(String.valueOf(cv));
       cellRenderer.getModel().setRollover(rr == row);
     } catch (NumberFormatException ex) {

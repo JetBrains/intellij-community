@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexey
- * Date: 08.07.2006
- * Time: 0:07:45
- */
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
@@ -199,6 +193,16 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
     myFixture.addClass("package javax.annotation.constraints; public @interface NotNull{}");
     DataFlowInspection8Test.setCustomAnnotations(getProject(), getTestRootDisposable(), "javax.annotation.constraints.NotNull", "javax.annotation.constraints.Nullable");
     myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    doTest();
+  }
+
+  public void testForeachParameterNullability() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
+  public void testPassingNullableCollectionWhereNotNullIsExpected() {
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 

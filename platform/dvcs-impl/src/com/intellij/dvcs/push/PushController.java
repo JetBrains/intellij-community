@@ -227,9 +227,15 @@ public class PushController implements Disposable {
     final RepositoryNode repoNode = mySingleRepoProject
                                     ? new SingleRepositoryNode(repoPanel, checkBoxModel)
                                     : new RepositoryNode(repoPanel, checkBoxModel, target != null);
-    pushTargetPanel.setFireOnChangeAction(() -> {
-      repoPanel.fireOnChange();
-      ((DefaultTreeModel)myPushLog.getTree().getModel()).nodeChanged(repoNode); // tell the tree to repaint the changed node
+    // TODO: Implement IDEA-136937, until that do not change below class to avoid breakage of Gerrit plugin
+    // (https://github.com/uwolfer/gerrit-intellij-plugin/issues/275)
+    //noinspection Convert2Lambda
+    pushTargetPanel.setFireOnChangeAction(new Runnable() {
+      @Override
+      public void run() {
+        repoPanel.fireOnChange();
+        ((DefaultTreeModel)myPushLog.getTree().getModel()).nodeChanged(repoNode); // tell the tree to repaint the changed node
+      }
     });
     myView2Model.put(repoNode, model);
     repoPanel.addRepoNodeListener(new RepositoryNodeListener<T>() {

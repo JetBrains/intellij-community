@@ -19,12 +19,6 @@ import com.intellij.execution.filters.ExceptionFilterFactory;
 import com.intellij.execution.filters.Filter;
 import com.intellij.psi.search.GlobalSearchScope;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 8/5/11
- * Time: 8:03 PM
- */
 public class VcsContentAnnotationExceptionFilterFactory implements ExceptionFilterFactory {
   @Override
   public Filter create(GlobalSearchScope searchScope) {

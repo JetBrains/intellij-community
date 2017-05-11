@@ -32,11 +32,6 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 26, 2003
- * Time: 7:35:09 PM
- */
 public class InterruptThreadAction extends DebuggerAction{
   
   public void actionPerformed(final AnActionEvent e) {

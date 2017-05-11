@@ -21,13 +21,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ReflectionUtil;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 04.02.2003
- * Time: 12:40:51
- * To change this template use Options | File Templates.
- */
 public class AssignableFromContextFilter implements ElementFilter{
 
   @Override

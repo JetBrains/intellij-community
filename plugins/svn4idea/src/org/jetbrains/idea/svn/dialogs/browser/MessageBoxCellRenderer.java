@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Alexander.Kitaev
- * Date: 24.07.2006
- * Time: 16:58:22
- */
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import javax.swing.*;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -399,6 +400,16 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
   public void testDocumentationForJdkClassWithReferencesToClassesFromJavaLang() throws Exception {
     doTestAtCaret();
   }
+
+  public void testDumbMode() throws Exception {
+    DumbServiceImpl.getInstance(myProject).setDumb(true);
+    try {
+      doTestAtCaret();
+    }
+    finally {
+      DumbServiceImpl.getInstance(myProject).setDumb(false);
+    }
+   }
 
   private void doTestAtCaret() throws Exception {
     configureByFile();

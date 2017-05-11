@@ -1042,12 +1042,13 @@
         <option name="BREADCRUMBS_HOVERED">
            <value>
              <option name="FOREGROUND" value="585858"/>
-             <option name="BACKGROUND" value="dedede"/>
+             <option name="BACKGROUND" value="e0e0e0"/>
            </value>
         </option>
         <option name="BREADCRUMBS_CURRENT">
            <value>
              <option name="FOREGROUND" value="585858"/>
+             <option name="BACKGROUND" value="d6d6d6"/>
            </value>
         </option>
         <option name="BREADCRUMBS_INACTIVE">
@@ -2146,12 +2147,13 @@
       <option name="BREADCRUMBS_HOVERED">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
-           <option name="BACKGROUND" value="44474a"/>
+           <option name="BACKGROUND" value="3a3c3e"/>
          </value>
       </option>
       <option name="BREADCRUMBS_CURRENT">
          <value>
            <option name="FOREGROUND" value="bbbbbb"/>
+           <option name="BACKGROUND" value="44474a"/>
          </value>
       </option>
       <option name="BREADCRUMBS_INACTIVE">

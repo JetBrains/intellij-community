@@ -22,8 +22,6 @@ import com.intellij.openapi.util.Pair;
 import java.util.*;
 
 public class SearchInitializer {
-  private final static int CHAIN_SEARCH_MAGIC_RATIO = 10;
-
   private final LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>> myChains;
   private final ChainCompletionContext myContext;
 
@@ -43,7 +41,7 @@ public class SearchInitializer {
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;
         }
-        else if (bestOccurrences > occurrences * CHAIN_SEARCH_MAGIC_RATIO) {
+        else if (bestOccurrences > occurrences * ChainSearchMagicConstants.FILTER_RATIO) {
           return;
         }
       }

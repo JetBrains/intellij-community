@@ -19,15 +19,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public interface ModifiableFontPreferences extends FontPreferences {
-  void clear();
-  void clearFonts();
-  void setUseLigatures(boolean useLigatures);
-  void addFontFamily(String family);
-  void register(String family, int size);
-  void setEffectiveFontFamilies(List<String> fontFamilies);
-  void setRealFontFamilies(List<String> fontFamilies);
-  void setTemplateFontSize(int size);
-  void resetFontSizes();
-  void setFontSize(@NotNull String fontFamily, int size);
+public abstract class ModifiableFontPreferences extends FontPreferences {
+  public abstract void clear();
+  public abstract void clearFonts();
+  public abstract void setUseLigatures(boolean useLigatures);
+  public abstract void addFontFamily(String family);
+  public abstract void register(String family, int size);
+  public abstract void setEffectiveFontFamilies(List<String> fontFamilies);
+  public abstract void setRealFontFamilies(List<String> fontFamilies);
+  public abstract void setTemplateFontSize(int size);
+  public abstract void setLineSpacing(float lineSpacing);
+  public abstract void resetFontSizes();
+  public abstract void setFontSize(@NotNull String fontFamily, int size);
 }

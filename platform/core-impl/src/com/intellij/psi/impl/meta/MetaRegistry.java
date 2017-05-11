@@ -40,13 +40,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 07.05.2003
- * Time: 3:31:09
- * To change this template use Options | File Templates.
- */
 public class MetaRegistry extends MetaDataRegistrar {
 
   private static final Logger LOG = Logger.getInstance(MetaRegistry.class);

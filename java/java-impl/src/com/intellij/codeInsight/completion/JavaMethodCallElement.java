@@ -39,8 +39,8 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Inlay;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Disposer;
@@ -53,6 +53,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -336,6 +337,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     caretModel.moveToLogicalPosition(editor.offsetToLogicalPosition(braceOffset + 1).leanForward(true));
 
     Project project = context.getProject();
+    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     handler.findElementForParameterInfo(infoContext);
@@ -352,7 +354,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
   private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {
     AtomicInteger maxEditedVariable = new AtomicInteger(-1);
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+    editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         maxEditedVariable.set(Math.max(maxEditedVariable.get(), templateState.getCurrentVariableNumber()));
@@ -409,7 +411,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   private void insertExplicitTypeParameters(InsertionContext context, OffsetKey refStart) {
     context.commitDocument();
 
-    final String typeParams = getTypeParamsText(false);
+    final String typeParams = getTypeParamsText(false, getObject(), getInferenceSubstitutor());
     if (typeParams != null) {
       context.getDocument().insertString(context.getOffset(refStart), typeParams);
       JavaCompletionUtil.shortenReference(context.getFile(), context.getOffset(refStart));
@@ -435,30 +437,19 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Nullable
-  private String getTypeParamsText(boolean presentable) {
-    final PsiMethod method = getObject();
-    final PsiSubstitutor substitutor = getInferenceSubstitutor();
-    final PsiTypeParameter[] parameters = method.getTypeParameters();
-    assert parameters.length > 0;
-    final StringBuilder builder = new StringBuilder("<");
-    boolean first = true;
-    for (final PsiTypeParameter parameter : parameters) {
-      if (!first) builder.append(", ");
-      first = false;
+  public static String getTypeParamsText(boolean presentable, PsiTypeParameterListOwner owner, PsiSubstitutor substitutor) {
+    PsiTypeParameter[] parameters = owner.getTypeParameters();
+    if (parameters.length == 0) return null;
+
+    List<PsiType> substituted = ContainerUtil.map(parameters, parameter -> {
       PsiType type = substitutor.substitute(parameter);
-      if (type instanceof PsiWildcardType) {
-        type = ((PsiWildcardType)type).getExtendsBound();
-      }
+      return type instanceof PsiWildcardType ? ((PsiWildcardType)type).getExtendsBound() : type;
+    });
+    if (ContainerUtil.exists(substituted, t -> t == null || t instanceof PsiCapturedWildcardType)) return null;
+    if (substituted.equals(ContainerUtil.map(parameters, TypeConversionUtil::typeParameterErasure))) return null;
 
-      if (type == null || type instanceof PsiCapturedWildcardType) return null;
-      if (type.equals(TypeConversionUtil.typeParameterErasure(parameter))) return null;
-
-      final String text = presentable ? type.getPresentableText() : type.getCanonicalText();
-      if (text.indexOf('?') >= 0) return null;
-
-      builder.append(text);
-    }
-    return builder.append(">").toString();
+    String result = "<" + StringUtil.join(substituted, presentable ? PsiType::getPresentableText : PsiType::getCanonicalText, ", ") + ">";
+    return result.contains("?") ? null : result;
   }
 
   @Override
@@ -479,7 +470,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     if (shouldInsertTypeParameters()) {
-      String typeParamsText = getTypeParamsText(true);
+      String typeParamsText = getTypeParamsText(true, getObject(), getInferenceSubstitutor());
       if (typeParamsText != null) {
         if (typeParamsText.length() > 10) {
           typeParamsText = typeParamsText.substring(0, 10) + "...>";

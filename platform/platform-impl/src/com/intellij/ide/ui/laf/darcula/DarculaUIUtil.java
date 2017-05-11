@@ -18,6 +18,9 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
+import com.intellij.openapi.editor.event.EditorMouseAdapter;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
@@ -33,11 +36,14 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 import static com.intellij.util.ui.MacUIUtil.MAC_FILL_BORDER;
 import static javax.swing.SwingConstants.EAST;
 import static javax.swing.SwingConstants.WEST;
@@ -136,7 +142,7 @@ public class DarculaUIUtil {
 
   @SuppressWarnings("SuspiciousNameCombination")
   private static void doPaint(Graphics2D g, int width, int height, int arc, boolean symmetric) {
-    double bw = UIUtil.isRetina(g) ? 0.5 : 1.0;
+    double bw = UIUtil.isUnderDefaultMacTheme() ? (UIUtil.isRetina(g) ? 0.5 : 1.0) : 0.0;
     double lw = JBUI.scale(UIUtil.isUnderDefaultMacTheme() ? 3 : 2);
 
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -195,11 +201,9 @@ public class DarculaUIUtil {
     return -1;
   }
 
-  public static class EditorTextFieldBorder extends DarculaEditorTextFieldBorder {
-    private final JComponent myEnabledComponent;
-
-    public EditorTextFieldBorder(JComponent enabledComponent) {
-      myEnabledComponent = enabledComponent;
+  public static class MacEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+    public MacEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
+      super(editorTextField, editor);
     }
 
     @Override
@@ -225,8 +229,8 @@ public class DarculaUIUtil {
         g2.setColor(c.getBackground());
         g2.fill(rect);
 
-        if (!myEnabledComponent.isEnabled()) {
-          ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
+        if (!editorTextField.isEnabled()) {
+          g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
         }
 
         double bw = UIUtil.isRetina(g2) ? 0.5 : 1.0;
@@ -239,7 +243,7 @@ public class DarculaUIUtil {
         g2.setColor(Gray.xBC);
         g2.fill(outline);
 
-        if (myEnabledComponent.isEnabled() && myEnabledComponent.isVisible() && hasFocus(myEnabledComponent)) {
+        if (editorTextField.isEnabled() && editorTextField.isVisible() && hasFocus(editorTextField)) {
           g2.translate(x, y);
           paintFocusBorder(g2, width, height, 0, true);
         }
@@ -251,6 +255,74 @@ public class DarculaUIUtil {
     @Override
     public Insets getBorderInsets(Component c) {
       return isComboBoxEditor(c) ? new InsetsUIResource(1, 3, 2, 3) : new InsetsUIResource(6, 7, 6, 7);
+    }
+  }
+
+  public static class WinEditorTextFieldBorder extends DarculaEditorTextFieldBorder {
+    private final JComponent editorComponent;
+
+    public WinEditorTextFieldBorder(EditorTextField editorTextField, EditorEx editor) {
+      super(editorTextField, editor);
+      editorComponent = editor.getComponent();
+
+      editor.addEditorMouseListener(new EditorMouseAdapter() {
+        @Override
+        public void mouseEntered(EditorMouseEvent e) {
+          JComponent c = e.getEditor().getComponent();
+          c.putClientProperty(HOVER_PROPERTY, Boolean.TRUE);
+          editorTextField.repaint();
+        }
+
+        @Override
+        public void mouseExited(EditorMouseEvent e) {
+          JComponent c = e.getEditor().getComponent();
+          c.putClientProperty(HOVER_PROPERTY, Boolean.FALSE);
+          editorTextField.repaint();
+        }
+      });
+    }
+
+    @Override
+    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+      g.setColor(c.getBackground());
+      g.fillRect(x, y, width, height);
+
+      if (!isComboBoxEditor(c) && UIUtil.getParentOfType(EditorTextField.class, c) != null) {
+        Graphics2D g2 = (Graphics2D)g.create();
+        try {
+          g2.translate(x, y);
+
+          if (hasFocus(editorTextField)) {
+            g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
+          } else if (editorTextField.isEnabled() &&
+                     editorComponent != null && editorComponent.getClientProperty(HOVER_PROPERTY) == Boolean.TRUE) {
+            g2.setColor(UIManager.getColor("TextField.hoverBorderColor"));
+          } else {
+            g2.setColor(UIManager.getColor("TextField.borderColor"));
+          }
+
+          if (!editorTextField.isEnabled()) {
+            g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+          }
+
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
+          int bw = JBUI.scale(1);
+          Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+          border.append(new Rectangle2D.Double(0, 0, width, height), false);
+          border.append(new Rectangle2D.Double(bw, bw, width - bw*2, height - bw*2), false);
+
+          g2.fill(border);
+        } finally {
+          g2.dispose();
+        }
+      }
+    }
+
+    @Override
+    public Insets getBorderInsets(Component c) {
+      return isComboBoxEditor(c) ? JBUI.insets(0, 5).asUIResource() : JBUI.insets(4, 5).asUIResource();
     }
   }
 
@@ -270,5 +342,29 @@ public class DarculaUIUtil {
     }
 
     return false;
+  }
+
+  public static class MouseHoverPropertyTrigger extends MouseAdapter {
+    private final JComponent repaintComponent;
+    private final String     hoverProperty;
+
+    public MouseHoverPropertyTrigger(@NotNull JComponent repaintComponent, @NotNull String hoverProperty) {
+      this.repaintComponent = repaintComponent;
+      this.hoverProperty = hoverProperty;
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      JComponent c = (JComponent)e.getComponent();
+      c.putClientProperty(hoverProperty, Boolean.TRUE);
+      repaintComponent.repaint();
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      JComponent c = (JComponent)e.getComponent();
+      c.putClientProperty(hoverProperty, Boolean.FALSE);
+      repaintComponent.repaint();
+    }
   }
 }

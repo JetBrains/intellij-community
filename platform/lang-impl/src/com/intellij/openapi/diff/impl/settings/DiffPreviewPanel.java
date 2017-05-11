@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,14 +190,6 @@ class DiffPreviewPanel implements PreviewPanel {
     @Override
     public void caretPositionChanged(CaretEvent e) {
       selectChange(getChange(mySide, e.getNewPosition().line));
-    }
-
-    @Override
-    public void caretAdded(CaretEvent e) {
-    }
-
-    @Override
-    public void caretRemoved(CaretEvent e) {
     }
   }
 

@@ -30,6 +30,8 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
+import com.intellij.util.ui.JBUI.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +134,7 @@ public class IconUtil {
 
   private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
     final VirtualFile file = key.getFile();
-    final int flags = key.getFlags();
+    final int flags = filterFileIconFlags(file, key.getFlags());
     final Project project = key.getProject();
 
     if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
@@ -162,6 +164,15 @@ public class IconUtil {
 
     return icon;
   };
+
+  @Iconable.IconFlags
+  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
+    UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
+    int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
+    int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
+    //noinspection MagicConstant
+    return flags & ~flagIgnoreMask;
+  }
 
   public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
@@ -430,15 +441,63 @@ public class IconUtil {
 
   /**
    * Returns a scaled icon instance.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * In the following example:
+   * <pre>
+   * Icon myIcon = new MyIcon();
+   * Icon scaledIcon = IconUtil.scale(myIcon, myComp, 2f);
+   * Icon anotherScaledIcon = IconUtil.scale(scaledIcon, myComp, 2f);
+   * assert(scaledIcon.getIconWidth() == anotherScaledIcon.getIconWidth()); // compare the scale of the icons
+   * </pre>
+   * The result of the assertion depends on {@code MyIcon} implementation. When {@code scaledIcon} is an instance of {@link ScalableIcon},
+   * then {@code anotherScaledIcon} should be scaled according to the {@link ScalableIcon} javadoc, and the assertion should pass.
+   * Otherwise, {@code anotherScaledIcon} should be 2 times bigger than {@code scaledIcon}, and 4 times bigger than {@code myIcon}.
+   * So, prior to scale the icon recursively, the returned icon should be inspected for its type to understand the result.
+   * But recursive scale should better be avoided.
    *
    * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
    * @param scale the scale factor
-   * @param smartScale whether to scale via {@link ScalableIcon#scale(float)} when applicable
    * @return the scaled icon
    */
   @NotNull
-  public static Icon scale(@NotNull Icon icon, float scale, boolean smartScale) {
-    if (smartScale && icon instanceof ScalableIcon) {
+  public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof JBUIScaleTrackable) {
+        ((JBUIScaleTrackable)icon).updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+      }
+      return ((ScalableIcon)icon).scale(scale);
+    }
+    return scale(icon, scale);
+  }
+
+  /**
+   * Returns a scaled icon instance, in scale of the provided font size.
+   * <p>
+   * The method delegates to {@link ScalableIcon#scale(float)} when applicable,
+   * otherwise defaults to {@link #scale(Icon, double)}
+   * <p>
+   * Refer to {@link #scale(Icon, Component, float)} for more details.
+   *
+   * @param icon the icon to scale
+   * @param ancestor the component (or its ancestor) painting the icon, or null when not available
+   * @param fontSize the reference font size
+   * @return the scaled icon
+   */
+  @NotNull
+  public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
+    float scale = fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    if (icon instanceof ScalableIcon) {
+      if (icon instanceof JBUIScaleTrackable) {
+        JBUIScaleTrackable jbuiIcon = (JBUIScaleTrackable)icon;
+        jbuiIcon.updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+        // take into account the user scale of the icon
+        float usrScale = jbuiIcon.getJBUIScale(ScaleType.USR);
+        scale /= usrScale;
+      }
       return ((ScalableIcon)icon).scale(scale);
     }
     return scale(icon, scale);

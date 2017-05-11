@@ -38,11 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Dec 19, 2003
- * Time: 1:25:15 PM
- */
 public final class EnumerationChildrenRenderer extends TypeRenderer implements ChildrenRenderer{
   public static final @NonNls String UNIQUE_ID = "EnumerationChildrenRenderer";
 

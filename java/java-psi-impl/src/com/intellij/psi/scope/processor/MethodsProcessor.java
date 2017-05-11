@@ -30,13 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: igork
- * Date: Dec 12, 2002
- * Time: 8:24:29 PM
- * To change this template use Options | File Templates.
- */
 public abstract class MethodsProcessor extends ConflictFilterProcessor implements ElementClassHint {
   private static final ElementFilter ourFilter = ElementClassFilter.METHOD;
 

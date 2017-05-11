@@ -19,11 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * User: Lepenkin Y.
- * Date: 7/1/13
- * Time: 4:15 PM
- */
 public enum JDTag {
   SEE("see"),
   AUTHOR("author"),

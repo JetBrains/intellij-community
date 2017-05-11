@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,7 +63,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   public BaseExternalAnnotationsManager(@NotNull PsiManager psiManager) {
     myPsiManager = psiManager;
-    LowMemoryWatcher.register(() -> dropCache(), psiManager.getProject());
+    LowMemoryWatcher.register(this::dropCache, psiManager.getProject());
   }
 
   @Nullable
@@ -154,14 +153,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
       saxParser.parse(new InputSource(new CharSequenceReader(escapeAttributes(file.getViewProvider().getContents()))), handler);
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    catch (ParserConfigurationException e) {
-      LOG.error(e);
-    }
-    catch (SAXException e) {
-      LOG.error(e);
+    catch (IOException | ParserConfigurationException | SAXException e) {
+      LOG.error(file.getViewProvider().getVirtualFile().getPath(), e);
     }
 
     MostlySingularMultiMap<String, AnnotationData> result = handler.getResult();
@@ -389,12 +382,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
-  private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
-    @Override
-    public void parse(final PsiBuilder builder) {
-      JavaParser.INSTANCE.getDeclarationParser().parseAnnotation(builder);
-    }
-  };
+  private static final JavaParserUtil.ParserWrapper ANNOTATION = JavaParser.INSTANCE.getDeclarationParser()::parseAnnotation;
 
   private class DataParsingSaxHandler extends DefaultHandler {
     private final MostlySingularMultiMap<String, AnnotationData> myData = new MostlySingularMultiMap<>();

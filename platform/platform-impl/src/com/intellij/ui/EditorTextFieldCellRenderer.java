@@ -414,11 +414,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull
     @Override
-    public String getText() { return myString; }
-
-    @NotNull
-    @Override
-    public String getText(@NotNull TextRange range) { return range.substring(getText()); }
+    public CharSequence getImmutableCharSequence() {
+      return myString;
+    }
 
     @NotNull
     @Override

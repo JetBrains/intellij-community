@@ -191,6 +191,17 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
 
   /**
+   * Returns an indent to calculate a left margin for the scheme name in the combo box.
+   * By default, all names are aligned to the left.
+   *
+   * @param scheme the scheme to calculate its indent
+   * @return an indent that shows a nesting level for the specified scheme
+   */
+  protected int getIndent(@NotNull T scheme) {
+    return 0;
+  }
+
+  /**
    * @return True if the panel supports project-level schemes along with IDE ones. In this case there will be
    *         additional "Copy to Project" and "Copy to IDE" actions for IDE and project schemes respectively and Project/IDE schemes
    *         separators.

@@ -32,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.Place;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,20 +200,8 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
 
   @NotNull
   @Override
-  public String getText(@NotNull TextRange range) {
-    return range.substring(getText());
-  }
-
-  @NotNull
-  @Override
   public CharSequence getImmutableCharSequence() {
     return ImmutableCharSequence.asImmutable(getText());
-  }
-
-  @Override
-  @NotNull
-  public char[] getChars() {
-    return CharArrayUtil.fromSequence(getText());
   }
 
   @Override

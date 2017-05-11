@@ -1,11 +1,3 @@
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jun 14, 2002
- * Time: 8:05:58 PM
- * To change template for new class use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.psi.util;
 
 import com.intellij.psi.*;

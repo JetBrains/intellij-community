@@ -107,7 +107,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
   public void documentChanged(DocumentEvent event) {
     super.documentChanged(event);
     // optimisation: avoid documents piling up during batch processing
-    if (FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
+    if (isUncommited(event.getDocument()) && FileDocumentManagerImpl.areTooManyDocumentsInTheQueue(myUncommittedDocuments)) {
       if (myUnitTestMode) {
         myStopTrackingDocuments = true;
         try {

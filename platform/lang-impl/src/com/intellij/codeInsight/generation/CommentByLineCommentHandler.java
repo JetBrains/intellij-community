@@ -494,6 +494,10 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
     if (commenter == null) return;
 
     final int startOffset = block.startOffsets[line - block.startLine];
+    final int endOffset = block.endOffsets[line - block.startLine];
+    if (startOffset == endOffset) {
+      return;
+    }
 
     if (commenter instanceof SelfManagingCommenter) {
       final SelfManagingCommenter selfManagingCommenter = (SelfManagingCommenter)commenter;
@@ -501,10 +505,6 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
       return;
     }
 
-    final int endOffset = block.endOffsets[line - block.startLine];
-    if (startOffset == endOffset) {
-      return;
-    }
     RangeMarker marker = endOffset > startOffset ? block.editor.getDocument().createRangeMarker(startOffset, endOffset) : null;
     try {
       if (doUncommentLine(line, document, commenter, startOffset, endOffset, removeSpace)) return;

@@ -28,9 +28,10 @@ import com.intellij.openapi.components.impl.ServiceManagerImpl
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.impl.stores.StoreUtil
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ex.ProjectNameProvider
@@ -107,7 +108,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
     defaultProject.save()
 
     val element = (defaultProject.stateStore as DefaultProjectStoreImpl).getStateCopy() ?: return
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       normalizeDefaultProjectElement(defaultProject, element, if (isDirectoryBased) Paths.get(storageManager.expandMacro(PROJECT_CONFIG_DIR)) else null)
     }
     (storageManager.getOrCreateStorage(PROJECT_FILE) as XmlElementStorage).setDefaultState(element)
@@ -277,7 +278,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val baseDir = projectBasePath
     val nameFile = nameFile
     if (nameFile.exists()) {
-      LOG.catchAndLog {
+      LOG.runAndLogException {
         nameFile.inputStream().reader().useLines { it.firstOrNull { !it.isEmpty() }?.trim() }?.let {
           lastSavedProjectName = it
           return it
@@ -286,7 +287,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
 
     return ProjectNameProvider.EP_NAME.extensions.computeIfAny {
-      LOG.catchAndLog { it.getDefaultName(project) }
+      LOG.runAndLogException { it.getDefaultName(project) }
     } ?: PathUtilRt.getFileName(baseDir).replace(":", "")
   }
 
@@ -450,7 +451,7 @@ private fun removeWorkspaceComponentConfiguration(defaultProject: Project, eleme
 
 // public only to test
 fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, projectConfigDir: Path?) {
-  LOG.catchAndLog {
+  LOG.runAndLogException {
     removeWorkspaceComponentConfiguration(defaultProject, element)
   }
 
@@ -458,7 +459,7 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
     return
   }
 
-  LOG.catchAndLog {
+  LOG.runAndLogException {
     val iterator = element.getChildren("component").iterator()
     for (component in iterator) {
       val componentName = component.getAttributeValue("name")
@@ -481,11 +482,16 @@ fun normalizeDefaultProjectElement(defaultProject: Project, element: Element, pr
           component.removeChild("version")
           writeProfileSettings(schemeDir)
         }
+
         "CopyrightManager" -> {
           iterator.remove()
           val schemeDir = projectConfigDir.resolve("copyright")
           convertProfiles(component.getChildren("copyright").iterator(), componentName, schemeDir)
           writeProfileSettings(schemeDir)
+        }
+
+        ModuleManagerImpl.COMPONENT_NAME -> {
+          iterator.remove()
         }
       }
     }

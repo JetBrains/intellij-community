@@ -53,11 +53,6 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperti
 
 import javax.swing.*;
 
-/**
- * User: lex
- * Date: Sep 2, 2003
- * Time: 3:22:55 PM
- */
 public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperties> extends Breakpoint<P> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter");
 

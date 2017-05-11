@@ -26,6 +26,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -908,7 +909,15 @@ public class JavaDocInfoGenerator {
     for (PsiAnnotation annotation : annotations) {
       final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
       if (nameReferenceElement == null) continue;
-      final PsiElement resolved = nameReferenceElement.resolve();
+      PsiElement resolved = null;
+      boolean resolveNotPossible = false;
+      try {
+        resolved = nameReferenceElement.resolve();
+      }
+      catch (IndexNotReadyException e) {
+        LOG.debug(e);
+        resolveNotPossible = true;
+      }
       if (isNonDocumentedAnnotation(annotation, resolved)) continue;
 
       boolean inferred = AnnotationUtil.isInferredAnnotation(annotation);
@@ -933,7 +942,7 @@ public class JavaDocInfoGenerator {
         if (inferred) buffer.append("</i>");
         buffer.append("&nbsp;");
       }
-      else if (external) {
+      else if (external || resolveNotPossible) {
         if (inferred) buffer.append("<i>");
         String annoText = inferred ? "@" + annotation.getNameReferenceElement().getReferenceName() + annotation.getParameterList().getText()
                                    : annotation.getText();
@@ -995,7 +1004,13 @@ public class JavaDocInfoGenerator {
                                        boolean generateLink) {
     if (generateLink && memberValue instanceof PsiQualifiedReferenceElement) {
       String text = ((PsiQualifiedReferenceElement)memberValue).getCanonicalText();
-      PsiElement resolve = ((PsiQualifiedReferenceElement)memberValue).resolve();
+      PsiElement resolve = null;
+      try {
+        resolve = ((PsiQualifiedReferenceElement)memberValue).resolve();
+      }
+      catch (IndexNotReadyException e) {
+        LOG.debug(e);
+      }
 
       if (resolve instanceof PsiField) {
         PsiField field = (PsiField)resolve;
@@ -1467,7 +1482,13 @@ public class JavaDocInfoGenerator {
       if (text.indexOf('#') == -1) {
         text = "#" + text;
       }
-      PsiElement target = JavaDocUtil.findReferenceTarget(PsiManager.getInstance(myProject), text, myElement);
+      PsiElement target = null;
+      try {
+        target = JavaDocUtil.findReferenceTarget(PsiManager.getInstance(myProject), text, myElement);
+      }
+      catch (IndexNotReadyException e) {
+        LOG.debug(e);
+      }
       if (target instanceof PsiField) {
         valueField = (PsiField) target;
       }
@@ -1846,8 +1867,19 @@ public class JavaDocInfoGenerator {
       label = JavaDocUtil.getLabelText(manager.getProject(), manager, refText, context);
     }
     LOG.assertTrue(refText != null, "refText appears to be null.");
-    PsiElement target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context);
-    if (target == null) {
+    PsiElement target = null;
+    boolean resolveNotPossible = false;
+    try {
+      target = JavaDocUtil.findReferenceTarget(context.getManager(), refText, context);
+    }
+    catch (IndexNotReadyException e) {
+      LOG.debug(e);
+      resolveNotPossible = true;
+    }
+    if (resolveNotPossible) {
+      buffer.append(label);
+    }
+    else if (target == null) {
       buffer.append("<font color=red>").append(label).append("</font>");
     }
     else {
@@ -1911,7 +1943,16 @@ public class JavaDocInfoGenerator {
     }
 
     if (type instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType)type).resolveGenerics();
+      PsiClassType.ClassResolveResult result;
+      try {
+        result = ((PsiClassType)type).resolveGenerics();
+      }
+      catch (IndexNotReadyException e) {
+        LOG.debug(e);
+        String text = ((PsiClassType)type).getClassName();
+        buffer.append(StringUtil.escapeXml(text));
+        return text.length();
+      }
       PsiClass psiClass = result.getElement();
       PsiSubstitutor psiSubst = result.getSubstitutor();
 
@@ -2080,24 +2121,28 @@ public class JavaDocInfoGenerator {
                                                                   PsiMethod method,
                                                                   DocTagLocator<T> loc,
                                                                   Set<PsiClass> visitedClasses) {
-    for (PsiClassType superType : supers) {
-      PsiClass aSuper = superType.resolve();
-      if (aSuper != null) {
-        Pair<T, InheritDocProvider<T>> tag = searchDocTagInOverriddenMethod(method, aSuper, loc);
-        if (tag != null) return tag;
+    try {
+      for (PsiClassType superType : supers) {
+        PsiClass aSuper = superType.resolve();
+        if (aSuper != null) {
+          Pair<T, InheritDocProvider<T>> tag = searchDocTagInOverriddenMethod(method, aSuper, loc);
+          if (tag != null) return tag;
+        }
       }
-    }
 
-    for (PsiClassType superType : supers) {
-      PsiClass aSuper = superType.resolve();
-      if (aSuper != null && visitedClasses.add(aSuper)) {
-        Pair<T, InheritDocProvider<T>> tag = findInheritDocTagInClass(method, aSuper, loc, visitedClasses);
-        if (tag != null) {
-          return tag;
+      for (PsiClassType superType : supers) {
+        PsiClass aSuper = superType.resolve();
+        if (aSuper != null && visitedClasses.add(aSuper)) {
+          Pair<T, InheritDocProvider<T>> tag = findInheritDocTagInClass(method, aSuper, loc, visitedClasses);
+          if (tag != null) {
+            return tag;
+          }
         }
       }
     }
-
+    catch (IndexNotReadyException e) {
+      LOG.debug(e);
+    }
     return null;
   }
 

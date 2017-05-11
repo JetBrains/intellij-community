@@ -25,11 +25,14 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
@@ -122,6 +125,12 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         artifactState.setOutputPath(artifact.getOutputPath());
         artifactState.setRootElement(serializePackagingElement(artifact.getRootElement()));
         artifactState.setArtifactType(artifact.getArtifactType().getId());
+        ProjectModelExternalSource externalSource = artifact.getExternalSource();
+        if (externalSource != null && Registry.is("store.imported.project.elements.separately")) {
+          //we can add this attribute only if the artifact configuration will be stored separately, otherwise we will get modified files in .idea/artifacts.
+          artifactState.setExternalSystemId(externalSource.getId());
+        }
+
         for (ArtifactPropertiesProvider provider : artifact.getPropertiesProviders()) {
           final ArtifactPropertiesState propertiesState = serializeProperties(provider, artifact.getProperties(provider));
           if (propertiesState != null) {
@@ -210,8 +219,9 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   private ArtifactImpl loadArtifact(ArtifactState state) {
     ArtifactType type = ArtifactType.findById(state.getArtifactType());
+    ProjectModelExternalSource externalSource = findExternalSource(state.getExternalSystemId());
     if (type == null) {
-      return createInvalidArtifact(state, "Unknown artifact type: " + state.getArtifactType());
+      return createInvalidArtifact(state, externalSource, "Unknown artifact type: " + state.getArtifactType());
     }
 
     final Element element = state.getRootElement();
@@ -222,14 +232,15 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         rootElement = (CompositePackagingElement<?>)deserializeElement(element);
       }
       catch (UnknownPackagingElementTypeException e) {
-        return createInvalidArtifact(state, "Unknown element: " + e.getTypeId());
+        return createInvalidArtifact(state, externalSource, "Unknown element: " + e.getTypeId());
       }
     }
     else {
       rootElement = type.createRootElement(artifactName);
     }
 
-    final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath());
+    final ArtifactImpl artifact = new ArtifactImpl(artifactName, type, state.isBuildOnMake(), rootElement, state.getOutputPath(),
+                                                   externalSource);
     final List<ArtifactPropertiesState> propertiesList = state.getPropertiesList();
     for (ArtifactPropertiesState propertiesState : propertiesList) {
       final ArtifactPropertiesProvider provider = ArtifactPropertiesProvider.findById(propertiesState.getId());
@@ -237,17 +248,22 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
         deserializeProperties(artifact.getProperties(provider), propertiesState);
       }
       else {
-        return createInvalidArtifact(state, "Unknown artifact properties: " + propertiesState.getId());
+        return createInvalidArtifact(state, externalSource, "Unknown artifact properties: " + propertiesState.getId());
       }
     }
     return artifact;
   }
 
-  private InvalidArtifact createInvalidArtifact(ArtifactState state, String errorMessage) {
-    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage);
+  private InvalidArtifact createInvalidArtifact(ArtifactState state, ProjectModelExternalSource externalSource, String errorMessage) {
+    final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
     UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature("com.intellij.packaging.artifacts.ArtifactType", state.getArtifactType(), "Artifact");
     return artifact;
+  }
+
+  @Nullable
+  private static ProjectModelExternalSource findExternalSource(@Nullable String externalSourceId) {
+    return externalSourceId != null ? ExternalProjectSystemRegistry.getInstance().getSourceById(externalSourceId) : null;
   }
 
   private static <S> void deserializeProperties(ArtifactProperties<S> artifactProperties, ArtifactPropertiesState propertiesState) {

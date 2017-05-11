@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 24.11.2006
- * Time: 20:20:04
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.diagnostic.Logger;

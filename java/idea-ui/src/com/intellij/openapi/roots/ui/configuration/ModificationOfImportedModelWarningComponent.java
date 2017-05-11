@@ -42,7 +42,12 @@ public class ModificationOfImportedModelWarningComponent {
     myLabel.setVisible(true);
     myLabel.setBorder(JBUI.Borders.empty(5, 5));
     myLabel.setIcon(AllIcons.General.Warning);
-    myLabel.setText(UIUtil.toHtml(elementDescription + " is imported from " + externalSource.getDisplayName() + ". Any changes made in its configuration may be lost after reimporting."));
+    myLabel.setText(UIUtil.toHtml(getWarningText(elementDescription, externalSource)));
+  }
+
+  @NotNull
+  public static String getWarningText(@NotNull String elementDescription, @NotNull ProjectModelExternalSource externalSource) {
+    return elementDescription + " is imported from " + externalSource.getDisplayName() + ". Any changes made in its configuration may be lost after reimporting.";
   }
 
   public void hideWarning() {

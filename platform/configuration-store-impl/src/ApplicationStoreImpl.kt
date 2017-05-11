@@ -23,7 +23,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
-import com.intellij.openapi.diagnostic.catchAndLog
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NamedJDOMExternalizable
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -91,7 +91,7 @@ class ApplicationStorageManager(application: Application, pathMacroManager: Path
       return
     }
 
-    LOG.catchAndLog {
+    LOG.runAndLogException {
       if (element == null) {
         storage.file.delete()
       }

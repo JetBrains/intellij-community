@@ -39,12 +39,18 @@ public class JavaSurroundWithStatementRangeAdjuster implements SurroundWithRange
       int startOffset = selectedRange.getStartOffset();
       int endOffset = selectedRange.getEndOffset();
       if (CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset).length == 0) {
-        PsiElement elementAtLineStart = PsiTreeUtil.skipSiblingsForward(file.findElementAt(startOffset), PsiWhiteSpace.class);
-        if (elementAtLineStart instanceof PsiStatement) {
-          return elementAtLineStart.getTextRange();
+        PsiElement elementAtLineStart = findNonWhiteSpaceElement(file, startOffset);
+        PsiElement statement = PsiTreeUtil.getParentOfType(elementAtLineStart, PsiStatement.class, false);
+        if (statement != null && statement.getTextRange().getStartOffset() == elementAtLineStart.getTextRange().getStartOffset()) {
+          return statement.getTextRange();
         }
       }
     }
     return selectedRange;
+  }
+
+  private static PsiElement findNonWhiteSpaceElement(PsiFile file, int startOffset) {
+    PsiElement leaf = file.findElementAt(startOffset);
+    return leaf instanceof PsiWhiteSpace ? PsiTreeUtil.skipSiblingsForward(leaf, PsiWhiteSpace.class) : leaf;
   }
 }

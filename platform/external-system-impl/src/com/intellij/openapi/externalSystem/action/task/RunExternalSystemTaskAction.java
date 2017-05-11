@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.action.task;
 
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -50,7 +50,7 @@ public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskDa
     final DataContext dataContext = e.getDataContext();
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     RunnerAndConfigurationSettings configuration = context.findExisting();
-    RunManagerEx runManager = (RunManagerEx)context.getRunManager();
+    RunManager runManager = context.getRunManager();
     if (configuration == null) {
       configuration = context.getConfiguration();
       if (configuration == null) {

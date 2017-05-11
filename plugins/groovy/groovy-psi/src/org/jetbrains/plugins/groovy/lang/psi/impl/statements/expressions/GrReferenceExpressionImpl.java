@@ -194,11 +194,15 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return "Reference expression";
   }
 
-
   @Override
   @Nullable
   public PsiType getNominalType() {
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(multiResolve(false, true));
+    return getNominalType(false);
+  }
+
+  @Nullable
+  private PsiType getNominalType(boolean rValue) {
+    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(multiResolve(false, rValue));
     PsiElement resolved = resolveResult.getElement();
 
     for (GrReferenceTypeEnhancer enhancer : GrReferenceTypeEnhancer.EP_NAME.getExtensions()) {
@@ -387,7 +391,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
-    final PsiType nominal = refExpr.getNominalType();
+    final PsiType nominal = refExpr.getNominalType(true);
 
     Boolean reassigned = GrReassignedLocalVarsChecker.isReassignedVar(refExpr);
     if (reassigned != null && reassigned.booleanValue()) {

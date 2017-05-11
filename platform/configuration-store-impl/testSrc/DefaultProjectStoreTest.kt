@@ -161,6 +161,15 @@ internal class DefaultProjectStoreTest {
           </state>
         </states>
       </component>
+      <component name="ProjectModuleManager">
+        <modules>
+          <module fileurl="file://USER_HOME$/PycharmProjects/ttt002/.idea/ttt002.iml" filepath="USER_HOME$/PycharmProjects/ttt002/.idea/ttt002.iml" />
+        </modules>
+      </component>
+      <component name="PropertiesComponent">
+        <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+        <property name="settings.editor.splitter.proportion" value="0.2" />
+      </component>
     </state>""")
 
     val tempDir = fsRule.fs.getPath("")

@@ -28,7 +28,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PathManagerExKt;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
@@ -80,7 +80,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -223,8 +222,7 @@ public class MavenUtil {
 
   @NotNull
   public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
-    // PathManager.getSystemPath() may return relative path
-    return Paths.get(PathManager.getSystemPath()).toAbsolutePath().resolve("Maven").resolve(folder);
+    return PathManagerExKt.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {

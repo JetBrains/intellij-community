@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.startup.StartupManager;
@@ -417,6 +418,8 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
+    ProgressSuspender.markSuspendable(visibleIndicator);
+
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();
     try {
@@ -538,7 +541,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   private void completeWhenProjectClosed(CompletableFuture<Pair<DumbModeTask, ProgressIndicatorEx>> result) {
-    ProjectManagerAdapter listener = new ProjectManagerAdapter() {
+    ProjectManagerListener listener = new ProjectManagerListener() {
       @Override
       public void projectClosed(Project project) {
         result.completeExceptionally(new ProcessCanceledException());

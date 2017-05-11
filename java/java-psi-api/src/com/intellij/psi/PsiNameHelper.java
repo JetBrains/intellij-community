@@ -111,8 +111,7 @@ public abstract class PsiNameHelper {
       }
     }
 
-    String sub = referenceText.substring(i + 1, lessPos).trim();
-    return sub.length() == referenceText.length() ? sub : new String(sub);
+    return referenceText.substring(i + 1, lessPos).trim();
   }
 
   @NotNull

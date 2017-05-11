@@ -47,6 +47,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.content.Content;
@@ -147,6 +148,7 @@ public class JavaDebugProcess extends XDebugProcess {
     });
 
     myNodeManager = new NodeManagerImpl(session.getProject(), null) {
+      @NotNull
       @Override
       public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
         return new DebuggerTreeNodeImpl(null, descriptor);
@@ -157,6 +159,7 @@ public class JavaDebugProcess extends XDebugProcess {
         return new DebuggerTreeNodeImpl(null, descriptor);
       }
 
+      @NotNull
       @Override
       public DebuggerTreeNodeImpl createMessageNode(String message) {
         return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
@@ -357,7 +360,7 @@ public class JavaDebugProcess extends XDebugProcess {
       }
 
       private void registerMemoryViewPanel(@NotNull RunnerLayoutUi ui) {
-        if (!MemoryViewManager.getInstance().isEnabled()) return;
+        if (!Registry.get("debugger.enable.memory.view").asBoolean()) return;
         final XDebugSession session = getSession();
         final DebugProcessImpl process = myJavaSession.getProcess();
         final InstancesTracker tracker = InstancesTracker.getInstance(myJavaSession.getProject());

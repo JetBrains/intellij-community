@@ -158,21 +158,21 @@
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.DefaultCallExpressionTypeCalculator"
         order="last"/>
     <callExpressionTypeCalculator
-        implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
-    <callExpressionTypeCalculator
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDGMTypeCalculator"/>
+
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.GrClosureDelegateTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
-    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"
-                    order="last"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall"
-                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"
-                    order="last"/>
+                    implementationClass="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrDescriptorReturnTypeCalculator"/>
+
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultListOrMapTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultIndexAccessTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.ReferenceExpressionTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.MethodCallTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
@@ -395,6 +395,7 @@
     <!-- Groovy language -->
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
 
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyKeywordAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedTransformationAnnotator"/>
@@ -1193,9 +1194,6 @@
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.findUsages.GrImplicitUsageProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedImplicitUsageProvider"/>
 
-    <scratch.rootType implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRootType"/>
-    <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleResolveScopeProvider"/>
-
     <!-- control flow -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1632,7 +1630,6 @@
     <equivalenceDescriptorProvider implementation="com.intellij.structuralsearch.GroovyEquivalenceDescriptorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.dsl.DslActivationStatus"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.groovy.console.GroovyConsoleStateService"/>
 
     <refactoring.introduceParameterObject language="Groovy"
                                           implementationClass="org.jetbrains.plugins.groovy.refactoring.introduceParameterObject.GroovyIntroduceParameterObjectDelegate"/>
@@ -1739,13 +1736,6 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <action id="Groovy.Console"
-            class="org.jetbrains.plugins.groovy.console.actions.GrNewConsoleAction"
-            text="Groovy Console..." description="Launch Groovy Console"
-            icon="JetgroovyIcons.Groovy.Groovy_16x16">
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
-    </action>
-
     <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.shell.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
@@ -1792,9 +1782,6 @@
       <implementation-class>org.jetbrains.plugins.groovy.codeInspection.local.GroovyUnusedImportsPassFactory</implementation-class>
     </component>
     <component>
-      <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyKeywordHighlightingPassFactory</implementation-class>
-    </component>
-    <component>
       <implementation-class>org.jetbrains.plugins.groovy.highlighter.GroovyDeclarationHighlightingPassFactory</implementation-class>
     </component>
     <component>
@@ -1805,6 +1792,7 @@
     </component>
   </project-components>
 
+  <xi:include href="groovy-console.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-templates.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-dynamic-members.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="groovy-indexed-property-support.xml" xpointer="xpointer(/idea-plugin/*)"/>

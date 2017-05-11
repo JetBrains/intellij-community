@@ -324,6 +324,11 @@
     <extensionPoint name="java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
 
     <extensionPoint name="repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"/>
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
+    </extensionPoint>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -810,11 +815,11 @@
     <localInspection groupPath="Java" language="JAVA" shortName="MagicConstant" displayName="Magic Constant"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="SuperClassHasFrequentlyUsedInheritors"
+    <localInspection groupPath="Java" language="JAVA" shortName="FrequentlyUsedInheritorInspection"
                      groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
-                     displayName="Class may extend a commonly used base class instead of implementing interface"/>
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.intellij.compiler.inspection.FrequentlyUsedInheritorInspection"
+                     displayName="Class may extend a commonly used base class"/>
     <localInspection language="UAST" shortName="ImplicitSubclassInspection"
                      bundle="messages.InspectionsBundle" key="inspection.implicit.subclass.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues"
@@ -1962,6 +1967,7 @@
     <projectService serviceInterface="org.jetbrains.uast.UastContext" serviceImplementation="org.jetbrains.uast.UastContext"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <smartPointer.anchorProvider implementation="com.intellij.uast.UastElementAnchorProvider"/>
+    <codeInsight.intention.jvmCommonIntentionActionsFactory language="JAVA" implementationClass="com.intellij.codeInsight.intention.impl.JavaCommonIntentionActionsFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

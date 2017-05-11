@@ -24,4 +24,5 @@ interface IntervalTree<T extends Interval> {
   boolean processContaining(int offset, @NotNull Processor<? super T> processor);
 
   boolean removeInterval(@NotNull T interval);
+  boolean processOverlappingWithOutside(int start, int end, @NotNull Processor<? super T> processor);
 }

@@ -27,12 +27,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/17/11
- * Time: 7:35 PM
- */
 public class CharsetEP implements PatchEP {
   private final static Key<Map<String, String>> ourName = Key.create("Charset");
   

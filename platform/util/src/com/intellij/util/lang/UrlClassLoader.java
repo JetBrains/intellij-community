@@ -41,7 +41,7 @@ import java.util.*;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader {
-  public static final String CLASS_EXTENSION = ".class";
+  static final String CLASS_EXTENSION = ".class";
 
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
@@ -86,15 +86,15 @@ public class UrlClassLoader extends ClassLoader {
 
   public static final class Builder {
     private List<URL> myURLs = ContainerUtil.emptyList();
-    private ClassLoader myParent = null;
-    private boolean myLockJars = false;
-    private boolean myUseCache = false;
-    private boolean myUsePersistentClasspathIndex = false;
-    private boolean myAcceptUnescaped = false;
+    private ClassLoader myParent;
+    private boolean myLockJars;
+    private boolean myUseCache;
+    private boolean myUsePersistentClasspathIndex;
+    private boolean myAcceptUnescaped;
     private boolean myPreload = true;
-    private boolean myAllowBootstrapResources = false;
-    @Nullable private CachePoolImpl myCachePool = null;
-    @Nullable private CachingCondition myCachingCondition = null;
+    private boolean myAllowBootstrapResources;
+    @Nullable private CachePoolImpl myCachePool;
+    @Nullable private CachingCondition myCachingCondition;
 
     private Builder() { }
 
@@ -213,7 +213,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
     if (res == null) {
       throw new ClassNotFoundException(name);
     }
@@ -228,7 +228,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected Class _findClass(@NotNull String name) {
-    Resource res = getClassPath().getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
     if (res == null) {
       return null;
     }
@@ -347,6 +347,7 @@ public class UrlClassLoader extends ClassLoader {
   // called by a parent class on Java 7+
   @SuppressWarnings("unused")
   protected Object getClassLoadingLock(String className) {
+    //noinspection RedundantStringConstructorCall
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;
   }
 

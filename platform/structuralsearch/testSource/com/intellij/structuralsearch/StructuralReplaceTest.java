@@ -2236,4 +2236,21 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replacer.testReplace(in, what, by, options));
   }
+
+  public void testReplaceExpressionStatement() {
+    String in = "class A {" +
+                "  void m() {" +
+                "    new Object();" +
+                "  }" +
+                "}";
+    String what = "'_expr;";
+    String by = "$expr$.toString();";
+    assertEquals("too many semicolons",
+                 "class A {" +
+                 "  void m() {" +
+                 "    new Object().toString();" +
+                 "  }" +
+                 "}",
+                 replacer.testReplace(in, what, by, options, true));
+  }
 }

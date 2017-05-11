@@ -98,7 +98,7 @@ public class IndexCacheManagerImpl implements CacheManager{
           final FileIndexFacade index = FileIndexFacade.getInstance(myProject);
 
           @Override
-          public boolean process(final VirtualFile file, final Integer value) {
+          public boolean process(@NotNull final VirtualFile file, final Integer value) {
             ProgressIndicatorProvider.checkCanceled();
             final int mask = value.intValue();
             if ((mask & occurrenceMask) != 0 && index.shouldBeFound(scope, file)) {

@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 11.10.2006
- * Time: 17:53:16
- */
 package com.intellij.uiDesigner.binding;
 
 import org.jetbrains.annotations.Nullable;

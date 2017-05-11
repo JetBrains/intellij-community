@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jun 6, 2002
- * Time: 8:37:03 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -989,13 +981,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private Icon scaleIcon(Icon icon) {
     float scale = getEditorScaleFactor();
-    if (icon instanceof ScalableIcon && scale != 1f) {
-      if (icon instanceof JBUIScaleTrackable) {
-        ((JBUIScaleTrackable)icon).updateJBUIScale(getGraphicsConfiguration());
-      }
-      return ((ScalableIcon)icon).scale(scale);
-    }
-    return icon;
+    return scale == 1 ? icon : IconUtil.scale(icon, this, scale);
   }
 
   private int scaleWidth(int width) {

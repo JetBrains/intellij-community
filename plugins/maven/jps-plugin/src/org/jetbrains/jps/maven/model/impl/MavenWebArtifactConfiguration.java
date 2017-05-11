@@ -39,6 +39,15 @@ public class MavenWebArtifactConfiguration {
   @AbstractCollection(surroundWithTag = false, elementTag = "resource")
   public List<ResourceRootConfiguration> webResources = new ArrayList<>();
 
+  @Tag("packaging-includes")
+  public List<String> packagingIncludes = new ArrayList<>();
+
+  @Tag("packaging-excludes")
+  public List<String> packagingExcludes = new ArrayList<>();
+
+  @Tag("war-root")
+  public String warSourceDirectory;
+
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;
 

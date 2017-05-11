@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: sher
- * Date: 08.04.14
- * Time: 17:04
- */
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;

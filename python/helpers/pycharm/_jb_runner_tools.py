@@ -239,7 +239,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         # closing subtest
         test_name = ".".join(TREE_MANAGER.current_branch)
-        if self._latest_subtest_result == "Failure":
+        if self._latest_subtest_result in set(["Failure", "Error"]):
             self.testFailed(test_name)
         if self._latest_subtest_result == "Skip":
             self.testIgnored(test_name)

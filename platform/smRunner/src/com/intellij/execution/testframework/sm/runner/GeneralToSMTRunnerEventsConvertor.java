@@ -123,7 +123,6 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
         testProxy.setLocator(myLocator);
       }
       SMTestProxy currentSuite = getCurrentSuite();
-      currentSuite.setTreeBuildBeforeStart();
       currentSuite.addChild(testProxy);
       myEventPublisher.onSuiteTreeNodeAdded(testProxy);
       for (SMTRunnerEventsListener adapter : myListenerAdapters) {
@@ -141,6 +140,7 @@ public class GeneralToSMTRunnerEventsConvertor extends GeneralTestEventsProcesso
       if (myLocator != null) {
         newSuite.setLocator(myLocator);
       }
+      newSuite.setTreeBuildBeforeStart();
       parentSuite.addChild(newSuite);
 
       mySuitesStack.pushSuite(newSuite);

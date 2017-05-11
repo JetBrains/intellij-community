@@ -56,7 +56,16 @@ class ChooseByNameTest extends LightCodeInsightFixtureTestCase {
     def camelMatch = myFixture.addClass("class UberInstructionUxTopicInterface {}")
     def middleMatch = myFixture.addClass("class BaseUiUtil {}")
     def elements = getPopupElements(new GotoClassModel2(project), "uiuti")
-    assert elements == [startMatch, wordSkipMatch, camelMatch, ChooseByNameBase.NON_PREFIX_SEPARATOR, middleMatch]
+    assert elements == [startMatch, wordSkipMatch, camelMatch, middleMatch]
+  }
+
+  void "test disprefer start matches when prefix starts with asterisk"() {
+    def startMatch = myFixture.addClass('class ITable {}')
+    def endMatch = myFixture.addClass('class HappyHippoIT {}')
+    def camelStartMatch = myFixture.addClass('class IntelligentTesting {}')
+    def camelMiddleMatch = myFixture.addClass('class VeryIntelligentTesting {}')
+
+    assert getPopupElements(new GotoClassModel2(project), "*IT") == [endMatch, startMatch, camelStartMatch, camelMiddleMatch]
   }
 
   void "test annotation syntax"() {
@@ -122,7 +131,7 @@ class Intf {
       xxx1 = intf.findMethodsByName('_xxx1', false)
       xxx2 = intf.findMethodsByName('xxx2', false)
     }
-    assert elements == [xxx2, ChooseByNameBase.NON_PREFIX_SEPARATOR, xxx1]
+    assert elements == [xxx2, xxx1]
   }
 
   void "test prefer exact extension matches"() {
@@ -242,6 +251,7 @@ class Intf {
     assert getPopupElements(model, 'Bar at line 2') == [file]
     assert getPopupElements(model, 'Bar 2:39') == [file]
     assert getPopupElements(model, 'Bar#L2') == [file]
+    assert getPopupElements(model, 'Bar?l=2') == [file]
   }
 
   void "test dollar"() {
@@ -342,7 +352,7 @@ class Intf {
     def popup = createPopup(new GotoClassModel2(project))
     def popupElements = calcPopupElements(popup, 'PsiCl', false)
 
-    assert popupElements == [wanted, ChooseByNameBase.NON_PREFIX_SEPARATOR, smth]
+    assert popupElements == [wanted, smth]
     assert popup.calcSelectedIndex(popupElements.toArray(), 'PsiCl') == 0
   }
 

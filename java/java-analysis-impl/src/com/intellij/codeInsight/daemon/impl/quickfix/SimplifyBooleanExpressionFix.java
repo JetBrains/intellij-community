@@ -31,8 +31,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpression");
@@ -57,12 +60,21 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   @NotNull
   public String getText() {
-    PsiExpression expression = getSubExpression();
-    assert expression != null;
-    if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiIfStatement) {
-      return mySubExpressionValue ? "Unwrap 'if' statement" : "Remove 'if' statement";
+    return getIntentionText(Objects.requireNonNull(getSubExpression()), mySubExpressionValue);
+  }
+
+  @NotNull
+  public static String getIntentionText(@NotNull PsiExpression expression, boolean constantValue) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    if (parent instanceof PsiIfStatement) {
+      return constantValue ? "Unwrap 'if' statement" : "Remove 'if' statement";
     }
-    return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(),  mySubExpressionValue);
+    if (!constantValue) {
+      if (parent instanceof PsiWhileStatement) return "Remove 'while' statement";
+      if (parent instanceof PsiDoWhileStatement) return "Unwrap 'do-while' statement";
+      if (parent instanceof PsiForStatement) return "Remove 'for' statement";
+    }
+    return QuickFixBundle.message("simplify.boolean.expression.text", expression.getText(), constantValue);
   }
 
   @Override
@@ -102,13 +114,42 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     simplifyExpression(expression);
   }
 
-  public static boolean simplifyIfStatement(final PsiExpression expression) throws IncorrectOperationException {
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiIfStatement) || ((PsiIfStatement)parent).getCondition() != expression) return false;
-    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+  public static boolean simplifyIfOrLoopStatement(final PsiExpression expression) throws IncorrectOperationException {
     boolean condition = Boolean.parseBoolean(expression.getText());
-    PsiIfStatement ifStatement = (PsiIfStatement)parent;
-    if (condition) {
+    if (!(expression instanceof PsiLiteralExpression) || !PsiType.BOOLEAN.equals(expression.getType())) return false;
+
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression) {
+      simplifyIfStatement(condition, (PsiIfStatement)parent);
+      return true;
+    }
+    if (parent instanceof PsiWhileStatement && !condition) {
+      parent.delete();
+      return true;
+    }
+    if (parent instanceof PsiDoWhileStatement && !condition) {
+      replaceWithStatements((PsiDoWhileStatement)parent, ((PsiDoWhileStatement)parent).getBody());
+      return true;
+    }
+    if (parent instanceof PsiForStatement && !condition) {
+      simplifyForStatement(parent);
+      return true;
+    }
+
+    return false;
+  }
+
+  private static void simplifyForStatement(PsiElement parent) {
+    PsiStatement initialization = ((PsiForStatement)parent).getInitialization();
+    if (initialization != null && !SyntaxTraverser.psiTraverser(initialization).filter(PsiExpression.class).filter(SideEffectChecker::mayHaveSideEffects).isEmpty()) {
+      replaceWithStatements((PsiForStatement)parent, initialization);
+    } else {
+      parent.delete();
+    }
+  }
+
+  private static void simplifyIfStatement(boolean conditionAlwaysTrue, PsiIfStatement ifStatement) {
+    if (conditionAlwaysTrue) {
       replaceWithStatements(ifStatement, ifStatement.getThenBranch());
     }
     else {
@@ -120,10 +161,9 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         replaceWithStatements(ifStatement, elseBranch);
       }
     }
-    return true;
   }
 
-  private static void replaceWithStatements(@NotNull PsiIfStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
+  private static void replaceWithStatements(@NotNull PsiStatement orig, @Nullable PsiStatement statement) throws IncorrectOperationException {
     if (statement == null) {
       orig.delete();
       return;
@@ -135,32 +175,57 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
       removeFollowingStatements(orig, (PsiCodeBlock)parent);
     }
 
-    if (statement instanceof PsiBlockStatement && parent instanceof PsiCodeBlock &&
-        !DeclarationSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
-      // See IDEADEV-24277
-      // Code block can only be inlined into another (parent) code block.
-      // Code blocks, which are if or loop statement branches should not be inlined.
-      PsiCodeBlock codeBlock = ((PsiBlockStatement)statement).getCodeBlock();
-      PsiJavaToken lBrace = codeBlock.getLBrace();
-      PsiJavaToken rBrace = codeBlock.getRBrace();
-      if (lBrace == null || rBrace == null) return;
-
-
-      final PsiElement[] children = codeBlock.getChildren();
-      if (children.length > 2) {
-        final PsiElement added =
-          parent.addRangeBefore(
-            children[1],
-            children[children.length - 2],
-            orig);
-        final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
-        codeStyleManager.reformat(added);
+    if (parent instanceof PsiCodeBlock) {
+      if (statement instanceof PsiBlockStatement &&
+          !DeclarationSearchUtils.containsConflictingDeclarations(((PsiBlockStatement)statement).getCodeBlock(), (PsiCodeBlock)parent)) {
+        inlineBlockStatements(orig, (PsiBlockStatement)statement, parent);
+        return;
       }
-      orig.delete();
+      if (hasConflictingDeclarations(statement, (PsiCodeBlock)parent)) {
+        orig.replace(wrapWithCodeBlock(statement));
+        return;
+      }
     }
-    else {
-      orig.replace(statement);
+    orig.replace(statement);
+  }
+
+  private static boolean hasConflictingDeclarations(@Nullable PsiStatement statement, PsiCodeBlock parent) {
+    return statement instanceof PsiDeclarationStatement &&
+           ContainerUtil.exists(((PsiDeclarationStatement)statement).getDeclaredElements(), e -> isConflictingLocalVariable(parent, e));
+  }
+
+  private static boolean isConflictingLocalVariable(PsiCodeBlock parent, PsiElement declaration) {
+    if (!(declaration instanceof PsiLocalVariable)) return false;
+    String name = ((PsiLocalVariable)declaration).getName();
+    return name != null && PsiResolveHelper.SERVICE.getInstance(declaration.getProject()).resolveAccessibleReferencedVariable(name, parent) != null;
+  }
+
+  private static PsiCodeBlock wrapWithCodeBlock(PsiStatement replacement) {
+    PsiCodeBlock newBlock = JavaPsiFacade.getElementFactory(replacement.getProject()).createCodeBlock();
+    newBlock.add(replacement);
+    return newBlock;
+  }
+
+  private static void inlineBlockStatements(@NotNull PsiStatement orig, @NotNull PsiBlockStatement statement, PsiElement parent) {
+    // See IDEADEV-24277
+    // Code block can only be inlined into another (parent) code block.
+    // Code blocks, which are if or loop statement branches should not be inlined.
+    PsiCodeBlock codeBlock = statement.getCodeBlock();
+    PsiJavaToken lBrace = codeBlock.getLBrace();
+    PsiJavaToken rBrace = codeBlock.getRBrace();
+    if (lBrace == null || rBrace == null) return;
+
+    final PsiElement[] children = codeBlock.getChildren();
+    if (children.length > 2) {
+      final PsiElement added =
+        parent.addRangeBefore(
+          children[1],
+          children[children.length - 2],
+          orig);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(orig.getManager());
+      codeStyleManager.reformat(added);
     }
+    orig.delete();
   }
 
   private static boolean blockAlwaysReturns(@NotNull PsiStatement statement) {
@@ -172,7 +237,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     }
   }
 
-  private static void removeFollowingStatements(@NotNull PsiIfStatement anchor, @NotNull PsiCodeBlock parentBlock) {
+  private static void removeFollowingStatements(@NotNull PsiStatement anchor, @NotNull PsiCodeBlock parentBlock) {
     PsiStatement[] siblingStatements = parentBlock.getStatements();
     int ifIndex = Arrays.asList(siblingStatements).indexOf(anchor);
     if (ifIndex >= 0 && ifIndex < siblingStatements.length - 1) {
@@ -226,7 +291,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
         return;
       }
     }
-    if (!simplifyIfStatement(newExpression)) {
+    if (!simplifyIfOrLoopStatement(newExpression)) {
       ParenthesesUtils.removeParentheses(newExpression, false);
     }
   }

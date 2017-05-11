@@ -82,8 +82,8 @@ public class IpnbParser {
   }
 
   private static boolean validateSource(IpnbCellRaw cell) {
-    if (cell.source == null) {
-      final String error = VALIDATION_ERROR_TEXT + "\n" + "\"source\" is required property:\n" + cell;
+    if (cell.source == null && cell.input == null) {
+      final String error = VALIDATION_ERROR_TEXT + "\n" + "\"source\" or \"input\" is required property:\n" + cell;
       myErrors.add(error);
       LOG.warn(error);
       return false;
@@ -157,7 +157,7 @@ public class IpnbParser {
     final JsonWriter writer = new JsonWriter(stringWriter);
     writer.setIndent(" ");
     gson.toJson(fileRaw, fileRaw.getClass(), writer);
-    return stringWriter.toString();
+    return stringWriter.toString() +"\n";
   }
 
   private static void writeToFile(@NotNull final String path, @NotNull final String json) {
@@ -579,7 +579,12 @@ public class IpnbParser {
       }
       final JsonElement number = object.get("prompt_number");
       if (number != null) {
-        cellRaw.prompt_number = number.getAsInt();
+        if ("*".equals(number.getAsString())) {
+          cellRaw.prompt_number = null;
+        }
+        else {
+          cellRaw.prompt_number = number.getAsInt();
+        }
       }
       return cellRaw;
     }
@@ -593,7 +598,15 @@ public class IpnbParser {
       final JsonObject object = json.getAsJsonObject();
       final OutputDataRaw dataRaw = new OutputDataRaw();
       final JsonElement png = object.get("image/png");
-      if (png != null) {
+      if (png instanceof JsonArray) {
+        final JsonArray array = png.getAsJsonArray();
+        StringBuilder pngString = new StringBuilder();
+        for (int i = 0; i != array.size(); ++i) {
+          pngString.append(array.get(i).getAsString());
+        }
+        dataRaw.png = pngString.toString();
+      }
+      else if (png instanceof JsonPrimitive) {
         dataRaw.png = png.getAsString();
       }
       dataRaw.html = getStringOrArray("text/html", object);

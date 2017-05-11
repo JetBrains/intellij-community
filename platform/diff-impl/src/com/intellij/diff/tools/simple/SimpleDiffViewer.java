@@ -749,7 +749,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       gg.setColor(DiffDrawUtil.getDividerColor(getEditor1()));
       gg.fill(gg.getClipBounds());
 
-      //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), getEditor1(), getEditor2(), this);
 
       myFoldingModel.paintOnDivider(gg, divider);

@@ -133,7 +133,7 @@ public class ConstExprent extends Exprent {
         String ret = CHAR_ESCAPES.get(val);
         if (ret == null) {
           char c = (char)val.intValue();
-          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
+          if (isPrintableAscii(c) || !ascii && TextUtil.isPrintableUnicode(c)) {
             ret = String.valueOf(c);
           }
           else {
@@ -278,7 +278,7 @@ public class ConstExprent extends Exprent {
         //  buffer.append("\\\'");
         //  break;
         default:
-          if (c >= 32 && c < 127 || !ascii && TextUtil.isPrintableUnicode(c)) {
+          if (isPrintableAscii(c) || !ascii && TextUtil.isPrintableUnicode(c)) {
             buffer.append(c);
           }
           else {
@@ -371,7 +371,8 @@ public class ConstExprent extends Exprent {
     // BYTECHAR and SHORTCHAR => CHAR in the CHAR context
     if (expectedType.equals(VarType.VARTYPE_CHAR) &&
             (constType.equals(VarType.VARTYPE_BYTECHAR) || constType.equals(VarType.VARTYPE_SHORTCHAR))) {
-      if (getIntValue() != 0) {
+      int intValue = getIntValue();
+      if (isPrintableAscii(intValue) || CHAR_ESCAPES.containsKey(intValue)) {
         setConstType(VarType.VARTYPE_CHAR);
       }
     }
@@ -381,6 +382,11 @@ public class ConstExprent extends Exprent {
       setConstType(VarType.VARTYPE_INT);
     }
   }
+
+  private static boolean isPrintableAscii(int c) {
+    return c >= 32 && c < 127;
+  }
+
 
   public Object getValue() {
     return value;

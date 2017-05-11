@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiModificationTrackerImpl;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -154,7 +154,7 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
     app.invokeLater(() -> {
       for (Project project : ProjectManager.getInstance().getOpenProjects()) {
         project.putUserData(SCRIPTS_CACHE, null);
-        ((PsiModificationTrackerImpl)PsiManager.getInstance(project).getModificationTracker()).incCounter();
+        PsiManagerEx.getInstanceEx(project).dropPsiCaches();
       }
     }, app.getDisposed());
   }

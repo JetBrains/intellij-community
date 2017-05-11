@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 16, 2002
- * Time: 7:14:37 PM
- * To change template for new interface use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.openapi.projectRoots.ex;
 
 import com.intellij.openapi.roots.OrderRootType;

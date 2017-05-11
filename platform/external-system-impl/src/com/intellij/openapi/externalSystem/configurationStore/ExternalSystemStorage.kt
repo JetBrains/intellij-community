@@ -20,26 +20,24 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.ByteSequence
 import org.jdom.Element
-import java.io.ByteArrayInputStream
 
 internal class ExternalProjectStorage(private val module: Module, storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, null, storageManager.macroSubstitutor, RoamingType.DISABLED) {
   private val manager = StreamProviderFactory.EP_NAME.getExtensions(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
 
-  override public fun loadLocalData(): Element? {
-    val data = manager.nameToData.get(module.name) ?: return null
-    return ByteArrayInputStream(data).use { deserializeElementFromBinary(it) }
-  }
+  override fun loadLocalData() = manager.readModuleData(module.name)
 
   override fun createSaveSession(states: StateMap) = object : XmlElementStorageSaveSession<ExternalProjectStorage>(states, this) {
     override fun saveLocally(element: Element?) {
+      // our customizeStorageSpecs on write will not return our storage for not applicable module, so, we don't need to check it here
       if (element == null) {
-        manager.nameToData.remove(module.name)
+        manager.moduleStorage.remove(module.name)
       }
       else {
         val byteOut = BufferExposingByteArrayOutputStream()
         serializeElementToBinary(element, byteOut)
-        manager.nameToData.put(module.name, byteOut.toByteArray())
+        manager.moduleStorage.put(module.name, ByteSequence(byteOut.internalBuffer, 0, byteOut.size()))
       }
     }
   }

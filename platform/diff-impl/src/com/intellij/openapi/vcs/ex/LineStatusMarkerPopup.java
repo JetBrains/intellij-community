@@ -241,7 +241,7 @@ public abstract class LineStatusMarkerPopup {
       }
     });
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(actions), true);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
   }
 
   private static class PopupPanel extends JPanel {

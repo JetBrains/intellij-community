@@ -1,8 +1,13 @@
 package com.jetbrains.edu.coursecreator.stepik;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -10,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudySerializationUtils;
+import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -17,10 +23,7 @@ import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
-import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
-import com.jetbrains.edu.learning.stepic.EduStepicNames;
-import com.jetbrains.edu.learning.stepic.StepicUser;
-import com.jetbrains.edu.learning.stepic.StepicWrappers;
+import com.jetbrains.edu.learning.stepic.*;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -37,6 +40,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import static com.jetbrains.edu.learning.StudyUtils.showOAuthDialog;
 
 public class CCStepicConnector {
   private static final Logger LOG = Logger.getInstance(CCStepicConnector.class.getName());
@@ -68,6 +73,8 @@ public class CCStepicConnector {
   }
 
   private static void postCourse(final Project project, @NotNull Course course) {
+    if (!checkIfAuthorized(project, "post course")) return;
+
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText("Uploading course to " + EduStepicNames.STEPIC_URL);
@@ -130,10 +137,20 @@ public class CCStepicConnector {
       }
       ApplicationManager.getApplication().runReadAction(() -> postAdditionalFiles(course, project, postedCourse.getId()));
       StudyTaskManager.getInstance(project).setCourse(postedCourse);
+      showNotification(project, "Course published");
     }
     catch (IOException e) {
       LOG.error(e.getMessage());
     }
+  }
+
+  private static boolean checkIfAuthorized(@NotNull Project project, @NotNull String failedActionName) {
+    boolean isAuthorized = StudySettings.getInstance().getUser() != null;
+    if (!isAuthorized) {
+      showStepicNotification(project, NotificationType.ERROR, failedActionName);
+      return false;
+    }
+    return true;
   }
 
   private static void postAdditionalFiles(Course course, @NotNull final Project project, int id) {
@@ -150,6 +167,8 @@ public class CCStepicConnector {
   }
 
   public static void postUnit(int lessonId, int position, int sectionId, Project project) {
+    if (!checkIfAuthorized(project, "postTask")) return;
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + EduStepicNames.UNITS);
     final StepicWrappers.UnitWrapper unitWrapper = new StepicWrappers.UnitWrapper();
     final StepicWrappers.Unit unit = new StepicWrappers.Unit();
@@ -214,6 +233,7 @@ public class CCStepicConnector {
   }
 
   public static int updateTask(@NotNull final Project project, @NotNull final Task task) {
+    if (!checkIfAuthorized(project, "update task")) return -1;
     final Lesson lesson = task.getLesson();
     final int lessonId = lesson.getId();
 
@@ -238,6 +258,9 @@ public class CCStepicConnector {
           LOG.error(message + responseString);
           showErrorNotification(project, message, responseString);
         }
+        else {
+          showNotification(project, "Task updated");
+        }
       }
       catch (IOException e) {
         LOG.error(e.getMessage());
@@ -247,6 +270,8 @@ public class CCStepicConnector {
   }
 
   public static int updateLesson(@NotNull final Project project, @NotNull final Lesson lesson) {
+    if(!checkIfAuthorized(project, "update lesson")) return -1;
+
     final HttpPut request = new HttpPut(EduStepicNames.STEPIC_API_URL + EduStepicNames.LESSONS + String.valueOf(lesson.getId()));
 
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
@@ -266,6 +291,10 @@ public class CCStepicConnector {
         showErrorNotification(project, message, responseString);
         return -1;
       }
+      else {
+        showNotification(project, "Lesson updated");
+      }
+
       final Lesson postedLesson = new Gson().fromJson(responseString, RemoteCourse.class).getLessons().get(0);
       for (Integer step : postedLesson.steps) {
         deleteTask(step, project);
@@ -294,7 +323,31 @@ public class CCStepicConnector {
     notification.notify(project);
   }
 
+  private static void showNotification(@NotNull Project project, String message) {
+    final Notification notification =
+      new Notification("Push.course", message, message, NotificationType.INFORMATION);
+    notification.notify(project);
+  }
+
+  private static void showStepicNotification(@NotNull Project project,
+                                             @NotNull NotificationType notificationType, @NotNull String failedActionName) {
+    String text = "Authorize on Stepik to " + failedActionName;
+    Notification notification = new Notification("Stepik", "Failed to " + failedActionName, text, notificationType);
+    notification.addAction(new AnAction("Authorize") {
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        EduStepicConnector.doAuthorize(() -> showOAuthDialog());
+        notification.expire();
+      }
+    });
+
+    notification.notify(project);
+  }
+
   public static int postLesson(@NotNull final Project project, @NotNull final Lesson lesson) {
+    if (!checkIfAuthorized(project, "postLesson")) return -1;
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/lessons");
 
     String requestBody = new Gson().toJson(new StepicWrappers.LessonWrapper(lesson));
@@ -354,6 +407,8 @@ public class CCStepicConnector {
   }
 
   public static void postTask(final Project project, @NotNull final Task task, final int lessonId) {
+    if (!checkIfAuthorized(project, "postTask")) return;
+
     final HttpPost request = new HttpPost(EduStepicNames.STEPIC_API_URL + "/step-sources");
     final Gson gson = new GsonBuilder().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().
       registerTypeAdapter(AnswerPlaceholder.class, new StudySerializationUtils.Json.StepicAnswerPlaceholderAdapter()).create();

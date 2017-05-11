@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 23.11.2006
- * Time: 13:40:27
- */
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.CommonBundle;

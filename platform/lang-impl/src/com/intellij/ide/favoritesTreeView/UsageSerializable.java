@@ -104,10 +104,10 @@ public class UsageSerializable implements WorkingSetSerializable<UsageInfo, Inva
       int idxNext = is.indexOf(separator, idx);
       if (idxNext == -1) {
         if (allowEnd) {
-          return StringUtil.unescapeXml(new String(is.substring(idx)));
+          return StringUtil.unescapeXml(is.substring(idx));
         }
       }
-      final String s = new String(is.substring(idx, idxNext));
+      final String s = is.substring(idx, idxNext);
       idx = idxNext + separator.length();
       return s;
     }

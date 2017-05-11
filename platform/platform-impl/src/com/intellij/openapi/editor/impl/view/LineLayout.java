@@ -23,9 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.bidi.BidiRegionsSeparator;
 import com.intellij.openapi.editor.bidi.LanguageBidiRegionsSeparator;
-import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
@@ -39,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.awt.font.FontRenderContext;
 import java.text.Bidi;
 import java.util.*;
 import java.util.List;
@@ -127,14 +125,18 @@ abstract class LineLayout {
   private static List<BidiRun> createFragments(@NotNull EditorView view, @NotNull CharSequence text, 
                                                 @JdkConstants.FontStyle int fontStyle) {
     if (text.length() == 0) return Collections.emptyList();
-    FontRenderContext fontRenderContext = view.getFontRenderContext();
-    FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
+
+    FontFallbackIterator ffi = new FontFallbackIterator()
+      .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
+      .setFontStyle(fontStyle)
+      .setFontRenderContext(view.getFontRenderContext());
+    
     char[] chars = CharArrayUtil.fromSequence(text);
     List<BidiRun> runs = createRuns(view, chars, -1);
     for (BidiRun run : runs) {
       for (Chunk chunk : run.getChunks(text, 0)) {
         chunk.fragments = new ArrayList<>();
-        addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, fontStyle, fontPreferences, fontRenderContext, null);
+        addFragments(run, chunk, chars, chunk.startOffset, chunk.endOffset, null, ffi);
       }
     }
     return runs;
@@ -260,44 +262,37 @@ abstract class LineLayout {
   }
   
   @SuppressWarnings("AssignmentToForLoopParameter")
-  private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, int fontStyle,
-                                   FontPreferences fontPreferences, FontRenderContext fontRenderContext,
-                                   @Nullable TabFragment tabFragment) {
+  private static void addFragments(BidiRun run, Chunk chunk, char[] text, int start, int end, @Nullable TabFragment tabFragment, 
+                                   FontFallbackIterator it) {
     assert start < end;
-    FontInfo currentFontInfo = null;
-    int currentIndex = start;
-    for(int i = start; i < end; i++) {
-      char c = text[i];
-      if (c == '\t' && tabFragment != null) {
-        assert run.level == 0;
-        addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, false);
-        chunk.fragments.add(tabFragment);
-        currentFontInfo = null;
-        currentIndex = i + 1;
-      }
-      else {
-        boolean surrogatePair = false;
-        int codePoint = c;
-        if (Character.isHighSurrogate(c) && (i + 1 < end)) {
-          char nextChar = text[i + 1];
-          if (Character.isLowSurrogate(nextChar)) {
-            codePoint = Character.toCodePoint(c, nextChar);
-            surrogatePair = true;
-          }
-        }
-        FontInfo fontInfo = ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, fontPreferences, fontRenderContext);
-        if (!fontInfo.equals(currentFontInfo)) {
-          addTextFragmentIfNeeded(chunk, text, currentIndex, i, currentFontInfo, run.isRtl());
-          currentFontInfo = fontInfo;
-          currentIndex = i;
-        }
-        if (surrogatePair) i++;
-      }
+    if (tabFragment == null) {
+      addFragmentsNoTabs(run, chunk, text, start, end, it);
     }
-    addTextFragmentIfNeeded(chunk, text, currentIndex, end, currentFontInfo, run.isRtl());
+    else {
+      int last = start;
+      for (int i = start; i < end; i++) {
+        if (text[i] == '\t') {
+          assert run.level == 0;
+          addFragmentsNoTabs(run, chunk, text, last, i, it);
+          chunk.fragments.add(tabFragment);
+          last = i + 1;
+        }
+      }
+      addFragmentsNoTabs(run, chunk, text, last, end, it);
+    }
     assert !chunk.fragments.isEmpty();
   }
   
+  private static void addFragmentsNoTabs(BidiRun run, Chunk chunk, char[] text, int start, int end, FontFallbackIterator it) {
+    if (start < end) {
+      it.start(text, start, end);
+      while (!it.atEnd()) {
+        addTextFragmentIfNeeded(chunk, text, it.getStart(), it.getEnd(), it.getFontInfo(), run.isRtl());
+        it.advance();
+      }
+    }
+  }
+
   private static void addTextFragmentIfNeeded(Chunk chunk, char[] chars, int from, int to, FontInfo fontInfo, boolean isRtl) {
     if (to > from) {
       assert fontInfo != null;
@@ -625,7 +620,11 @@ abstract class LineLayout {
       int end = lineStartOffset + endOffset;
       if (LOG.isDebugEnabled()) LOG.debug("Text layout for " + view.getEditor().getVirtualFile() + " (" + start + "-" + end + ")");
       IterationState it = new IterationState(view.getEditor(), start, end, null, false, true, false, false);
-      FontPreferences fontPreferences = view.getEditor().getColorsScheme().getFontPreferences();
+      
+      FontFallbackIterator ffi = new FontFallbackIterator()
+        .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
+        .setFontRenderContext(view.getFontRenderContext());
+      
       char[] chars = CharArrayUtil.fromSequence(view.getEditor().getDocument().getImmutableCharSequence(), start, end);
       int currentFontType = 0;
       Color currentColor = null;
@@ -636,18 +635,16 @@ abstract class LineLayout {
         if (fontType != currentFontType || !color.equals(currentColor)) {
           int tokenStart = it.getStartOffset();
           if (tokenStart > currentStart) {
-            addFragments(run, this, chars, currentStart - start, tokenStart - start,
-                         currentFontType, fontPreferences, view.getFontRenderContext(), view.getTabFragment());
+            addFragments(run, this, chars, currentStart - start, tokenStart - start, view.getTabFragment(), ffi);
           }
           currentStart = tokenStart;
-          currentFontType = fontType;
           currentColor = color;
+          ffi.setFontStyle(currentFontType = fontType);
         }
         it.advance();
       }
       if (end > currentStart) {
-        addFragments(run, this, chars, currentStart - start, end - start,
-                     currentFontType, fontPreferences, view.getFontRenderContext(), view.getTabFragment());
+        addFragments(run, this, chars, currentStart - start, end - start, view.getTabFragment(), ffi);
       }
       view.getSizeManager().textLayoutPerformed(start, end);
       assert !fragments.isEmpty();

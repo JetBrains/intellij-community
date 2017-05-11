@@ -20,7 +20,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Do not use and do not extends — use DefaultProgramRunner instead.
+ * @deprecated Do not use and do not extend. Use DefaultProgramRunner instead.
  */
 @Deprecated
 public class BasicProgramRunner extends DefaultProgramRunner {

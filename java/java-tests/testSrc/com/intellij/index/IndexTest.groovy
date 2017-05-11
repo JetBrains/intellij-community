@@ -574,7 +574,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       FileBasedIndex.instance.
         processValues(IdIndex.NAME, new IdIndexEntry("Foo", true), null, new FileBasedIndex.ValueProcessor<Integer>() {
           @Override
-          boolean process(VirtualFile file, Integer value) {
+          boolean process(@NotNull VirtualFile file, Integer value) {
             foundId[0] = true
             FileBasedIndex.instance.processValues(
               StubUpdatingIndex.INDEX_ID,
@@ -582,7 +582,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
               null,
               new FileBasedIndex.ValueProcessor<SerializedStubTree>() {
                 @Override
-                boolean process(VirtualFile file2, SerializedStubTree value2) {
+                boolean process(@NotNull VirtualFile file2, SerializedStubTree value2) {
                   foundStub[0] = true
                   return true
                 }
@@ -617,7 +617,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     def vfsEventMerger = new VfsEventsMerger()
 
     @Override
-    protected void iterateIndexableFiles(VirtualFile file, ContentIterator iterator) {
+    protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
       VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
         @Override
         boolean visitFile(@NotNull VirtualFile visitedFile) {
@@ -627,12 +627,12 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       })
     }
 
-    protected void doInvalidateIndicesForFile(VirtualFile file, boolean contentChange) {
+    protected void doInvalidateIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
       vfsEventMerger.recordBeforeFileEvent(((VirtualFileWithId)file).id, file, contentChange)
     }
 
     @Override
-    protected void buildIndicesForFile(VirtualFile file, boolean contentChange) {
+    protected void buildIndicesForFile(@NotNull VirtualFile file, boolean contentChange) {
       vfsEventMerger.recordFileEvent(((VirtualFileWithId)file).id, file, contentChange)
     }
 
@@ -640,7 +640,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       Ref<String> operation = new Ref<>()
       vfsEventMerger.processChanges(new VfsEventsMerger.VfsEventProcessor() {
         @Override
-        boolean process(VfsEventsMerger.ChangeInfo info) {
+        boolean process(@NotNull VfsEventsMerger.ChangeInfo info) {
           operation.set(info.toString())
           return true
         }

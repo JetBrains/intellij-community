@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -168,15 +168,18 @@ class IntroduceConstantDialog extends DialogWrapper {
     return myTypeSelector.getSelectedType();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.INTRODUCE_CONSTANT);
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myTypeSelector = myTypeSelectorManager.getTypeSelector();
     myTypePanel.setLayout(new BorderLayout());
@@ -207,13 +210,15 @@ class IntroduceConstantDialog extends DialogWrapper {
       myTfTargetClassName.prependItem(possibleClassName);
     }
     myTfTargetClassName.getChildComponent().setSelectedItem(myParentClass.getQualifiedName());
-    myTfTargetClassName.getChildComponent().addDocumentListener(new DocumentAdapter() {
+    myTfTargetClassName.getChildComponent().addDocumentListener(new DocumentListener() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         targetClassChanged();
         enableEnumDependant(introduceEnumConstant());
       }
     });
     myIntroduceEnumConstantCb.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         enableEnumDependant(introduceEnumConstant());
       }
@@ -237,6 +242,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     //////////
     if (myOccurrencesCount > 1) {
       myCbReplaceAll.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           updateTypeSelector();
 
@@ -258,6 +264,7 @@ class IntroduceConstantDialog extends DialogWrapper {
         updateCbDeleteVariable();
         myCbReplaceAll.addItemListener(
           new ItemListener() {
+          @Override
           public void itemStateChanged(ItemEvent e) {
             updateCbDeleteVariable();
           }
@@ -275,6 +282,7 @@ class IntroduceConstantDialog extends DialogWrapper {
       final PropertiesComponent component = PropertiesComponent.getInstance(myProject);
       myCbNonNls.setSelected(component.getBoolean(NONNLS_SELECTED_PROPERTY));
       myCbNonNls.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           component.setValue(NONNLS_SELECTED_PROPERTY, myCbNonNls.isSelected());
         }
@@ -300,6 +308,7 @@ class IntroduceConstantDialog extends DialogWrapper {
                                                                           final JavaCodeStyleManager codeStyleManager,
                                                                           final String enteredName, final PsiClass parentClass) {
     return new NameSuggestionsGenerator() {
+      @Override
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         SuggestedNameInfo nameInfo =
             codeStyleManager.suggestVariableName(VariableKind.STATIC_FINAL_FIELD, propertyName, psiExpression, type);
@@ -346,6 +355,7 @@ class IntroduceConstantDialog extends DialogWrapper {
     myCbNonNls.setEnabled(!enable);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return new JPanel();
   }
@@ -423,11 +433,12 @@ class IntroduceConstantDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected void doOKAction() {
     final String targetClassName = getTargetClassName();
     PsiClass newClass = myParentClass;
 
-    if (!"".equals (targetClassName) && !Comparing.strEqual(targetClassName, myParentClass.getQualifiedName())) {
+    if (!targetClassName.isEmpty() && !Comparing.strEqual(targetClassName, myParentClass.getQualifiedName())) {
       newClass = JavaPsiFacade.getInstance(myProject).findClass(targetClassName, GlobalSearchScope.projectScope(myProject));
       if (newClass == null) {
         if (Messages.showOkCancelDialog(myProject, RefactoringBundle.message("class.does.not.exist.in.the.project"), IntroduceConstantHandler.REFACTORING_NAME, Messages.getErrorIcon()) != Messages.OK) {
@@ -441,7 +452,7 @@ class IntroduceConstantDialog extends DialogWrapper {
 
     String fieldName = getEnteredName();
     String errorString = null;
-    if ("".equals(fieldName)) {
+    if (fieldName != null && fieldName.isEmpty()) {
       errorString = RefactoringBundle.message("no.field.name.specified");
     } else if (!PsiNameHelper.getInstance(myProject).isIdentifier(fieldName)) {
       errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(fieldName);
@@ -479,13 +490,16 @@ class IntroduceConstantDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameField.getFocusableComponent();
   }
 
   private class ChooseClassAction implements ActionListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
       TreeClassChooser chooser = TreeClassChooserFactory.getInstance(myProject).createWithInnerClassesScopeChooser(RefactoringBundle.message("choose.destination.class"), GlobalSearchScope.projectScope(myProject), new ClassFilter() {
+        @Override
         public boolean isAccepted(PsiClass aClass) {
           return aClass.getParent() instanceof PsiJavaFile || aClass.hasModifierProperty(PsiModifier.STATIC);
         }

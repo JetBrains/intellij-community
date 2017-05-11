@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "ExecutionTargetManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "ExecutionTargetManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements PersistentStateComponent<Element> {
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();
@@ -39,10 +39,10 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
 
   @Nullable private String mySavedActiveTargetId;
 
-  public ExecutionTargetManagerImpl(@NotNull Project project, @NotNull RunManager runManager) {
+  public ExecutionTargetManagerImpl(@NotNull Project project) {
     myProject = project;
 
-    ((RunManagerEx)runManager).addRunManagerListener(new RunManagerListener() {
+    project.getMessageBus().connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
         if (settings == RunManager.getInstance(myProject).getSelectedConfiguration()) {
@@ -80,7 +80,6 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   @NotNull
   @Override
   public ExecutionTarget getActiveTarget() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     synchronized (myActiveTargetLock) {
       if (myActiveTarget == null) {
         updateActiveTarget();
@@ -148,13 +147,16 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   @NotNull
   @Override
   public List<ExecutionTarget> getTargetsFor(@Nullable RunnerAndConfigurationSettings settings) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    if (settings == null) return Collections.emptyList();
+    if (settings == null) {
+      return Collections.emptyList();
+    }
 
     List<ExecutionTarget> result = new ArrayList<>();
     for (ExecutionTargetProvider eachTargetProvider : Extensions.getExtensions(ExecutionTargetProvider.EXTENSION_NAME)) {
       for (ExecutionTarget eachTarget : eachTargetProvider.getTargets(myProject, settings)) {
-        if (canRun(settings, eachTarget)) result.add(eachTarget);
+        if (canRun(settings, eachTarget)) {
+          result.add(eachTarget);
+        }
       }
     }
     return Collections.unmodifiableList(result);

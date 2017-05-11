@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Aug 20, 2002
- * Time: 5:04:04 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.template.actions;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -40,13 +32,16 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 
 import java.util.*;
 
@@ -161,7 +156,15 @@ public class SaveAsTemplateAction extends AnAction {
     }
 
     final LiveTemplatesConfigurable configurable = new LiveTemplatesConfigurable();
-    ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.getTemplateListPanel().addTemplate(template));
+    SingleConfigurableEditor dialog = new SingleConfigurableEditor(project, configurable, DialogWrapper.IdeModalityType.MODELESS);
+    new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        configurable.getTemplateListPanel().addTemplate(template);
+      }
+    });
+    dialog.setTitle(e.getPresentation().getText());
+    dialog.show();
   }
 
   @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.action;
 
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -125,7 +125,6 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
       ExternalSystemNotificationManager.getInstance(project).showNotification(GradleConstants.SYSTEM_ID, notificationData);
       return;
     }
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
     ExternalSystemUtil.runTask(taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), project, GradleConstants.SYSTEM_ID);
 
@@ -134,10 +133,12 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
                                                                             project, GradleConstants.SYSTEM_ID);
     if (configuration == null) return;
 
+    RunManager runManager = RunManager.getInstance(project);
     final RunnerAndConfigurationSettings existingConfiguration = runManager.findConfigurationByName(configuration.getName());
-    if(existingConfiguration == null) {
+    if (existingConfiguration == null) {
       runManager.setTemporaryConfiguration(configuration);
-    } else {
+    }
+    else {
       runManager.setSelectedConfiguration(existingConfiguration);
     }
   }

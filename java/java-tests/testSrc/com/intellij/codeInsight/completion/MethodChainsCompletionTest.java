@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
 import com.intellij.compiler.chainsSearch.completion.MethodsChainsCompletionContributor;
@@ -117,7 +118,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testMethodsWithSameName() {
-    assertAdvisorLookupElementEquals("f.createType", 1, 5, 1, 0, assertOneElement(doCompletion()));
+    assertAdvisorLookupElementEquals("f.createType", 1, 10, 1, 0, assertOneElement(doCompletion()));
   }
 
   public void testBigrams2() {
@@ -251,7 +252,14 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
       .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(true));
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
-    myFixture.complete(CompletionType.BASIC);
+    for (LookupElement element : myFixture.complete(CompletionType.BASIC)) {
+      if (element instanceof WeightableChainLookupElement) {
+        myFixture.getLookup().setCurrentItem(element);
+        myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
+        break;
+      }
+    }
+
     PropertiesComponent.getInstance(getProject())
       .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(false));
     myFixture.checkResultByFile(getAfterCompletionFilePath());

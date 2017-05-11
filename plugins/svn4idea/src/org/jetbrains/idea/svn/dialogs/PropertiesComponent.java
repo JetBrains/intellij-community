@@ -55,12 +55,6 @@ import java.util.TreeMap;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
- * Created by IntelliJ IDEA.
- * User: alex
- * Date: Jun 20, 2006
- * Time: 4:39:46 PM
- */
 public class PropertiesComponent extends JPanel {
   public static final String ID = "SVN Properties";
   private JTable myTable;

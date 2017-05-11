@@ -21,13 +21,6 @@ import com.intellij.util.IncorrectOperationException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 05.12.2003
- * Time: 14:02:59
- * To change this template use Options | File Templates.
- */
 public class ThisGetter {
 
   public static List<PsiExpression> getThisExpressionVariants(PsiElement context) {

@@ -18,12 +18,6 @@ package com.intellij.openapi.editor.highlighter;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 9/8/11
- * Time: 12:18 PM
- */
 public class LightHighlighterClient implements HighlighterClient {
   private final Project myProject;
   private final Document myDocument;

@@ -17,8 +17,8 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 
 import java.util.ArrayList;
@@ -161,6 +161,13 @@ public abstract class InstructionVisitor {
   }
 
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.push(instruction.getValue());
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.pop(); // index
+    memState.pop(); // array reference
     memState.push(instruction.getValue());
     return nextInstruction(instruction, runner, memState);
   }

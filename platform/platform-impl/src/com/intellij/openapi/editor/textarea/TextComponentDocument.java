@@ -36,7 +36,7 @@ public class TextComponentDocument extends UserDataHolderBase implements com.int
 
   @NotNull
   @Override
-  public String getText() {
+  public CharSequence getImmutableCharSequence() {
     try {
       final Document document = myTextComponent.getDocument();
       return document.getText(0, document.getLength());
@@ -56,12 +56,6 @@ public class TextComponentDocument extends UserDataHolderBase implements com.int
     catch (BadLocationException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  @NotNull
-  public char[] getChars() {
-    throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
@@ -140,6 +134,11 @@ public class TextComponentDocument extends UserDataHolderBase implements com.int
 
   @Override
   public void setText(@NotNull CharSequence text) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public long getModificationStamp() {
     throw new UnsupportedOperationException("Not implemented");
   }
 }

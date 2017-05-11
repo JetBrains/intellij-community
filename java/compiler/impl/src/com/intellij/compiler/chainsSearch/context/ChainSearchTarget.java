@@ -15,6 +15,7 @@
  */
 package com.intellij.compiler.chainsSearch.context;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -108,7 +109,7 @@ public class ChainSearchTarget {
       if (resolvedClass == null) return null;
       iteratorKind = SignatureData.ITERATOR_ONE_DIM;
     }
-    if (resolvedClass.hasTypeParameters() || resolvedClass instanceof PsiTypeParameter || LambdaUtil.isFunctionalClass(resolvedClass)) return null;
+    if (resolvedClass.hasTypeParameters() || resolvedClass instanceof PsiTypeParameter || AnnotationUtil.isAnnotated(resolvedClass, CommonClassNames.JAVA_LANG_FUNCTIONAL_INTERFACE, false, false)) return null;
     String packageName = JavaHierarchyUtil.getPackageName(resolvedClass);
     if (packageName == null || EXCLUDED_PACKAGES.contains(packageName)) return null;
 

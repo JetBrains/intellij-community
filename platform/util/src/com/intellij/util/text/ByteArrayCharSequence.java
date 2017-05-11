@@ -20,31 +20,40 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class ByteArrayCharSequence implements CharSequenceWithStringHash {
+  private final int myStart;
+  private final int myEnd;
   private transient int hash;
   private final byte[] myChars;
 
   private ByteArrayCharSequence(@NotNull byte[] chars) {
+    this(chars, 0, chars.length);
+  }
+  public ByteArrayCharSequence(@NotNull byte[] chars, int start, int end) {
     myChars = chars;
+    myStart = start;
+    myEnd = end;
   }
 
   @Override
   public int hashCode() {
     int h = hash;
     if (h == 0) {
-      hash = h = StringUtil.stringHashCode(this, 0, length());
+      hash = h = StringUtil.stringHashCode(this, myStart, myEnd);
     }
     return h;
   }
 
   @Override
   public final int length() {
-    return myChars.length;
+    return myEnd - myStart;
   }
 
   @Override
   public final char charAt(int index) {
-    return (char)myChars[index];
+    return (char)myChars[index + myStart];
   }
 
   @NotNull
@@ -56,7 +65,7 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
   @Override
   @NotNull
   public String toString() {
-    return new String(myChars, CharsetToolkit.US_ASCII_CHARSET);
+    return new String(myChars, myStart, length(), CharsetToolkit.US_ASCII_CHARSET);
   }
 
   @NotNull
@@ -80,5 +89,10 @@ public class ByteArrayCharSequence implements CharSequenceWithStringHash {
       bytes[i] = (byte)c;
     }
     return new ByteArrayCharSequence(bytes);
+  }
+
+  @NotNull
+  byte[] getBytes() {
+    return myStart == 0 && myEnd == myChars.length ? myChars : Arrays.copyOfRange(myChars, myStart , myEnd);
   }
 }

@@ -17,13 +17,14 @@ package com.intellij.codeInsight.hints.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hints.*;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,6 +37,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdesktop.swingx.combobox.ListComboBoxModel;
 import org.jetbrains.annotations.NotNull;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
@@ -53,6 +56,7 @@ import static com.intellij.codeInsight.hints.HintUtilsKt.getBlackListInvalidLine
 import static com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES;
 
 public class ParameterNameHintsConfigurable extends DialogWrapper {
+  private static String LAST_EDITED_LANGUAGE_ID_KEY = "param.hints.settings.last.edited.language";
 
   private JPanel myConfigurable;
   private ComboBox<Language> myCurrentLanguageCombo;
@@ -135,7 +139,15 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     });
     
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
+    saveLastEditedLanguage();
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
+  }
+
+  private void saveLastEditedLanguage() {
+    Arrays.stream(myPanel.getComponents())
+      .filter(Component::isVisible)
+      .findFirst()
+      .ifPresent(component -> saveLastEditedLanguage(component.getName()));
   }
 
   private static void storeBlackListDiff(@NotNull Language language, @NotNull String text) {
@@ -163,7 +175,9 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     myIsValidPatterns = ContainerUtil.newHashMap();
 
     List<Language> allLanguages = getBaseLanguagesWithProviders();
-    Language selected = allLanguages.get(0);
+    Language lastEditedLanguage = lastEditedLanguage();
+
+    Language selected = lastEditedLanguage != null ? lastEditedLanguage : allLanguages.get(0);
 
     initLanguageCombo(selected, allLanguages);
 
@@ -172,10 +186,22 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
     allLanguages.forEach((language -> {
       JPanel panel = createLanguagePanel(language);
-      myPanel.add(panel, language.getDisplayName());
+      panel.setName(language.getID());
+      myPanel.add(panel, language.getID());
     }));
 
-    myCardLayout.show(myPanel, selected.getDisplayName());
+    myCardLayout.show(myPanel, selected.getID());
+  }
+
+  @Nullable
+  private static Language lastEditedLanguage() {
+    String id = PropertiesComponent.getInstance().getValue(LAST_EDITED_LANGUAGE_ID_KEY);
+    if (id == null) return null;
+    return Language.findLanguageByID(id);
+  }
+
+  private static void saveLastEditedLanguage(@NotNull String id) {
+    PropertiesComponent.getInstance().setValue(LAST_EDITED_LANGUAGE_ID_KEY, id);
   }
 
   @NotNull
@@ -206,7 +232,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     String blackList = getLanguageBlackList(language);
 
     EditorTextField editorTextField = createBlacklistEditorField(blackList);
-    editorTextField.addDocumentListener(new DocumentAdapter() {
+    editorTextField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         updateOkEnabled(language, editorTextField);
@@ -223,9 +249,34 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     blacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
     
     blacklistPanel.add(new JBLabel(getBlacklistExplanationHTML(language)));
+
+    blacklistPanel.add(createResetPanel(language));
     blacklistPanel.add(editorTextField);
 
     return blacklistPanel;
+  }
+
+  @NotNull
+  private JComponent createResetPanel(@NotNull Language language) {
+    SwingActionLink link = new SwingActionLink(new AbstractAction("Reset") {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        setLanguageBlacklistToDefault(language);
+      }
+    });
+
+    Box box = Box.createHorizontalBox();
+    box.add(Box.createHorizontalGlue());
+    box.add(link);
+
+    return box;
+  }
+
+  private void setLanguageBlacklistToDefault(Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    Set<String> defaultBlacklist = provider.getDefaultBlackList();
+    EditorTextField editor = myEditors.get(language);
+    editor.setText(StringUtil.join(defaultBlacklist, "\n"));
   }
 
   @NotNull
@@ -285,7 +336,7 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
   }
 
   private void showLanguagePanel(@NotNull Language language) {
-    myCardLayout.show(myPanel, language.getDisplayName());
+    myCardLayout.show(myPanel, language.getID());
   }
   
   private static List<Option> getOptions(Language language) {

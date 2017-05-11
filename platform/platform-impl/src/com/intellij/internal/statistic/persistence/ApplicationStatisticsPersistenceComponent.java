@@ -24,8 +24,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 )
 public class ApplicationStatisticsPersistenceComponent extends ApplicationStatisticsPersistence implements
                                                                                                 PersistentStateComponent<Element>,
-                                                                                                ApplicationComponent {
+                                                                                                BaseComponent {
   private boolean persistOnClosing = !ApplicationManager.getApplication().isUnitTestMode();
 
   private static final String TOKENIZER = ",";
@@ -159,7 +160,8 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
 
   @Override
   public void initComponent() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         persistOpenedProjects();
@@ -167,7 +169,7 @@ public class ApplicationStatisticsPersistenceComponent extends ApplicationStatis
       }
     });
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
         if (persistOnClosing && project != null) {

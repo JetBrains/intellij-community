@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.intellij.injected.editor;
 
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.event.CaretAdapter;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -104,7 +103,7 @@ public class CaretModelWindow implements CaretModel {
   private final ListenerWrapperMap<CaretListener> myCaretListeners = new ListenerWrapperMap<>();
   @Override
   public void addCaretListener(@NotNull final CaretListener listener) {
-    CaretListener wrapper = new CaretAdapter() {
+    CaretListener wrapper = new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         if (!myEditorWindow.getDocument().isValid()) return; // injected document can be destroyed by now

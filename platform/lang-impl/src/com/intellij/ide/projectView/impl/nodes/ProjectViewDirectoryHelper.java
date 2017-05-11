@@ -24,15 +24,11 @@ import com.intellij.ide.projectView.ProjectViewSettings;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
@@ -40,7 +36,6 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +43,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
-import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -168,9 +162,7 @@ public class ProjectViewDirectoryHelper {
                                                            final ViewSettings settings,
                                                            final boolean withSubDirectories,
                                                            @Nullable PsiFileSystemItemFilter filter) {
-    return calculateYieldingToWriteAction(
-      () -> doGetDirectoryChildren(psiDirectory, settings, withSubDirectories, filter)
-    );
+    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doGetDirectoryChildren(psiDirectory, settings, withSubDirectories, filter));
   }
 
   @NotNull
@@ -371,23 +363,5 @@ public class ProjectViewDirectoryHelper {
       }
       addAllSubpackages(container, subdir, moduleFileIndex, viewSettings, filter);
     }
-  }
-
-  public static <T> T calculateYieldingToWriteAction(Producer<T> producer) throws ProcessCanceledException {
-    if (!Registry.is("ide.projectView.ProjectViewPaneTreeStructure.BuildChildrenInBackgroundYieldingToWriteAction") ||
-        ApplicationManager.getApplication().isDispatchThread()) {
-      return producer.produce();
-    }
-    Ref<T> result = new Ref<>();
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    boolean succeeded = ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
-      () -> result.set(producer.produce()),
-      indicator
-    );
-
-    if (!succeeded || indicator != null && indicator.isCanceled()) {
-      throw new ProcessCanceledException();
-    }
-    return result.get();
   }
 }

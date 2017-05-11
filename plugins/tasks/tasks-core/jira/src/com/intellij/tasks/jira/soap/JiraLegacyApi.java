@@ -8,7 +8,6 @@ import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.jira.JiraRemoteApi;
 import com.intellij.tasks.jira.JiraRepository;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.NameValuePair;

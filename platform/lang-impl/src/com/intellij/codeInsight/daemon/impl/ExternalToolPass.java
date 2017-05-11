@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
@@ -201,7 +202,19 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     for (ExternalAnnotator annotator : myAnnotator2DataMap.keySet()) {
       final MyData data = myAnnotator2DataMap.get(annotator);
       if (data != null && data.myAnnotationResult != null) {
-        annotator.apply(data.myPsiRoot, data.myAnnotationResult, myAnnotationHolder);
+        PsiFile file = data.myPsiRoot;
+
+        if (!file.isValid()) {
+          // the document wasn't changed, so probably PSI was invalidated after reparse; makes sense to find the new root
+          VirtualFile vFile = file.getVirtualFile();
+          if (vFile != null) {
+            file = file.getManager().findFile(vFile);
+          }
+        }
+
+        if (file != null && file.isValid()) {
+          annotator.apply(file, data.myAnnotationResult, myAnnotationHolder);
+        }
       }
     }
   }

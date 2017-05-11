@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 28-Jun-2006
- * Time: 19:03:32
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.util.BrowseFilesListener;

@@ -62,6 +62,10 @@ public class JavaMembersGetter extends MembersGetter {
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(myExpectedType);
     processMembers(results, psiClass, PsiTreeUtil.getParentOfType(myPlace, PsiAnnotation.class) == null, searchInheritors);
+
+    if (psiClass != null && myExpectedType instanceof PsiClassType) {
+      new BuilderCompletion((PsiClassType)myExpectedType, psiClass, myPlace).suggestBuilderVariants().forEach(results::consume);
+    }
   }
 
   private void addConstantsFromReferencedClassesInSwitch(final Consumer<LookupElement> results) {

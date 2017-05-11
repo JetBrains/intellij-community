@@ -26,13 +26,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 20:29:25
- * To change this template use Options | File Templates.
- */
 public class ModifierFilter extends ClassFilter{
   public final List<ModifierRestriction> myModifierRestrictions = new ArrayList<>();
 

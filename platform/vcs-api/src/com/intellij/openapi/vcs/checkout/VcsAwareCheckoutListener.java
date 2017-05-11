@@ -22,12 +22,6 @@ import com.intellij.openapi.vcs.VcsKey;
 
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/19/11
- * Time: 1:48 PM
- */
 public interface VcsAwareCheckoutListener {
   ExtensionPointName<VcsAwareCheckoutListener> EP_NAME = ExtensionPointName.create("com.intellij.vcsAwareCheckoutListener");
   boolean processCheckedOutDirectory(final Project project, final File directory, final VcsKey vcsKey);

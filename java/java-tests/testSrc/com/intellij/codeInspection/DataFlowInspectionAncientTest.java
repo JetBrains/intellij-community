@@ -53,7 +53,6 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testExceptionCFG() { doTest(true); }
   public void testInst() { doTest(true); }
   public void testWrongEqualTypes() { doTest(true); }
-  public void testSCR13702() { doTest(); }
   public void testSCR13626() { doTest(); }
   public void testSCR13871() { doTest(); }
   public void testInstanceof() { doTest(); }

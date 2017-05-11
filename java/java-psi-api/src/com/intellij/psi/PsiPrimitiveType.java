@@ -158,6 +158,7 @@ public class PsiPrimitiveType extends PsiType.Stub {
   @Nullable
   public PsiClassType getBoxedType(@NotNull PsiElement context) {
     PsiFile file = context.getContainingFile();
+    if (file == null) return null;
     LanguageLevel languageLevel = PsiUtil.getLanguageLevel(file);
     if (!languageLevel.isAtLeast(LanguageLevel.JDK_1_5)) return null;
 

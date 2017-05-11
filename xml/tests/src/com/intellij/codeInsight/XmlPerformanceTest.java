@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Sep 8, 2006
- * Time: 3:40:30 PM
- */
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;

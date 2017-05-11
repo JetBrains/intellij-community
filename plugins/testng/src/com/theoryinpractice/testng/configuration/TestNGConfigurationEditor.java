@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 3, 2005
- * Time: 6:15:22 PM
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.application.options.ModulesComboBox;

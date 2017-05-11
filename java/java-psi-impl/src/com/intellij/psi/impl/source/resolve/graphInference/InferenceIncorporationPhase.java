@@ -25,7 +25,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompa
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
@@ -350,9 +349,9 @@ public class InferenceIncorporationPhase {
 
 
   /**
-   * If two bounds have the form α <: S and α <: T, and if for some generic class or interface, G, 
+   * If two bounds have the form alpha <: S and alpha <: T, and if for some generic class or interface, G,
    * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
-   * then for all i, 1 ≤ i ≤ n, if Si and Ti are types (not wildcards), the constraint ⟨Si = Ti⟩ is implied.
+   * then for all i, 1 <= i <= n, if Si and Ti are types (not wildcards), the constraint (Si = Ti) is implied.
    */
   private boolean upUp(List<PsiType> upperBounds) {
     return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, pair -> {

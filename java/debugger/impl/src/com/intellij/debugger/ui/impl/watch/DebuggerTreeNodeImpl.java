@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -246,12 +247,14 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     myProperties.put(key, data);
   }
 
+  @NotNull
   public static DebuggerTreeNodeImpl createNodeNoUpdate(DebuggerTree tree, NodeDescriptor descriptor) {
     DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     node.updateCaches();
     return node;
   }
 
+  @NotNull
   protected static DebuggerTreeNodeImpl createNode(DebuggerTree tree, NodeDescriptorImpl descriptor, EvaluationContextImpl evaluationContext) {
     final DebuggerTreeNodeImpl node = new DebuggerTreeNodeImpl(tree, descriptor);
     descriptor.updateRepresentationNoNotify(evaluationContext, new DescriptorLabelListener() {

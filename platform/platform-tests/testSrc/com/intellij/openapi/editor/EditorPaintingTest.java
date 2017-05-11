@@ -17,7 +17,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -373,12 +372,6 @@ public class EditorPaintingTest extends AbstractEditorTest {
     public void setEditor(@NotNull HighlighterClient editor) {
       myDocument = editor.getDocument();
     }
-
-    @Override
-    public void setColorScheme(@NotNull EditorColorsScheme scheme) {}
-
-    @Override
-    public void beforeDocumentChange(DocumentEvent event) {}
 
     @Override
     public void documentChanged(DocumentEvent event) {}

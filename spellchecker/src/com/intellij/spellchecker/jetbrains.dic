@@ -308,6 +308,7 @@ keymap
 keymaps
 keystore
 kotlin
+kryo
 labeler
 labelers
 lcov
@@ -500,6 +501,9 @@ precompile
 precompiled
 precompiler
 precompilers
+preconfigure
+preconfigured
+preconfigures
 prefetch
 premain
 prepend

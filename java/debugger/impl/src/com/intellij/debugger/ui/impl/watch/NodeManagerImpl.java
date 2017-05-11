@@ -32,6 +32,7 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -59,6 +60,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return ourNodeComparator;
   }
 
+  @NotNull
   public DebuggerTreeNodeImpl createNode(NodeDescriptor descriptor, EvaluationContext evaluationContext) {
     ((NodeDescriptorImpl)descriptor).setContext((EvaluationContextImpl)evaluationContext);
     return DebuggerTreeNodeImpl.createNode(getTree(), (NodeDescriptorImpl)descriptor, (EvaluationContextImpl)evaluationContext);
@@ -72,6 +74,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), descriptor);
   }
 
+  @NotNull
   public DebuggerTreeNodeImpl createMessageNode(String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }

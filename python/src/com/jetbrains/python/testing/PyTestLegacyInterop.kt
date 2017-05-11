@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.testing
 
+import com.google.common.base.Preconditions
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.RunConfiguration
@@ -41,6 +42,7 @@ import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguratio
 import com.jetbrains.python.testing.pytestLegacy.PyTestRunConfiguration
 import com.jetbrains.python.testing.unittestLegacy.PythonUnitTestRunConfiguration
 import org.jdom.Element
+import javax.swing.SwingUtilities
 
 /**
  * Module to support legacy configurations.
@@ -84,7 +86,10 @@ class PyTestLegacyInteropInitializer {
  */
 private fun projectInitialized(project: Project) {
   assert(project.isInitialized, { "Project is not initialized yet" })
-  RunManager.getInstance(project).allConfigurationsList.filterIsInstance(PyAbstractTestConfiguration::class.java).forEach {
+
+  val manager = RunManager.getInstance(project)
+  val configurations = factories.map { manager.getConfigurationTemplate(it) } + manager.allConfigurationsList
+  configurations.filterIsInstance(PyAbstractTestConfiguration::class.java).forEach {
     it.legacyConfigurationAdapter.copyFromLegacyIfNeeded()
   }
 }
@@ -196,10 +201,10 @@ class PyTestLegacyConfigurationAdapter<in T : PyAbstractTestConfiguration>(newCo
 
   fun copyFromLegacyIfNeeded() {
     assert(project.isInitialized, { "Initialized project required" })
-    if (containsLegacyInformation ?: return && !(legacyInformationCopiedToNew ?: false)) {
-      configManager.copyFromLegacy()
-      legacyInformationCopiedToNew = true
-    }
+    if (containsLegacyInformation ?: return && !(legacyInformationCopiedToNew ?: false) && SwingUtilities.isEventDispatchThread()) {
+        configManager.copyFromLegacy()
+        legacyInformationCopiedToNew = true
+      }
   }
 }
 
@@ -239,10 +244,13 @@ private abstract class LegacyConfigurationManager<
   fun isLoaded() = getFieldsToCheckForEmptiness().find { !it.isNullOrBlank() } != null
 
   /**
+   * This method should be called from AWT thread only
+   *
    * Copies config from legacy to new configuration.
    * Used by all runners but py.test which has very different settings
    */
   open fun copyFromLegacy() {
+    Preconditions.checkState(SwingUtilities.isEventDispatchThread(), "Run on AWT thread only")
     when (legacyConfig.testType) {
       TestType.TEST_CLASS, TestType.TEST_FUNCTION, TestType.TEST_METHOD -> {
         val virtualFile = getVirtualFileByPath(legacyConfig.scriptName) ?: return

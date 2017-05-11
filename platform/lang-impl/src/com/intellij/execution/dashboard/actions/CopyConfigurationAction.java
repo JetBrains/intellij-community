@@ -17,7 +17,6 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -55,7 +54,7 @@ public class CopyConfigurationAction extends RunConfigurationTreeAction {
   @Override
   @SuppressWarnings("unchecked")
   protected void doActionPerformed(DashboardRunConfigurationNode node) {
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(node.getProject());
+    RunManager runManager = RunManager.getInstance(node.getProject());
     RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
 
     RunnerAndConfigurationSettings copiedSettings = ((RunnerAndConfigurationSettingsImpl)settings).clone();

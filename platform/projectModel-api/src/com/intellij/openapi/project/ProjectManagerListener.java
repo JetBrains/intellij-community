@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.openapi.project;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -32,10 +34,7 @@ public interface ProjectManagerListener extends EventListener {
   }
 
   /**
-   * Checks whether the project can be closed.
-   *
-   * @param project project to check
-   * @return true or false
+   * @deprecated Please use {@link VetoableProjectManagerListener}
    */
   default boolean canCloseProject(Project project) {
     return true;
@@ -53,5 +52,8 @@ public interface ProjectManagerListener extends EventListener {
    * Invoked on project close before any closing activities
    */
   default void projectClosing(Project project) {
+  }
+
+  default void projectClosingBeforeSave(@NotNull Project project) {
   }
 }

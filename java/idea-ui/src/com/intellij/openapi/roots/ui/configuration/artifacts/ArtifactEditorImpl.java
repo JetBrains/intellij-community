@@ -64,6 +64,7 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -114,6 +115,12 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
                                                    CompilerBundle.message("chooser.description.select.output.directory.for.0.artifact",
                                                                           getArtifact().getName()), myProject,
                                                    FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myOutputDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        queueValidation();
+      }
+    });
     myShowSpecificContentOptionsGroup = createShowSpecificContentOptionsGroup();
     myShowSpecificContentOptionsButton.addActionListener(new ActionListener() {
       @Override
@@ -489,6 +496,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
         myLayoutTreeComponent.updateRootNode();
       }
     }
+    queueValidation();
   }
 
   @Override

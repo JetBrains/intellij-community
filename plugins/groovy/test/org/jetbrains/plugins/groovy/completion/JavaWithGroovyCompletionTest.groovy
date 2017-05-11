@@ -15,7 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.completion
 
-import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.psi.PsiMethod;
 
 /**
  * @author peter
@@ -33,5 +34,16 @@ class Foo {
     myFixture.complete(CompletionType.BASIC, 2)
     assert !(myFixture.lookupElementStrings.contains('const'))
     assert !(myFixture.lookupElementStrings.contains('continue'))
+  }
+
+  void "test using java expression keywords in member names"() {
+    myFixture.addFileToProject 'a.groovy', '''
+class Foo {
+  static void "this"() {}
+}
+'''
+    myFixture.configureByText 'a.java', 'class Bar {{ this<caret> }}'
+    myFixture.complete(CompletionType.BASIC, 2)
+    assert !myFixture.lookupElements.find { it.lookupString == 'this' && it.object instanceof PsiMethod }
   }
 }

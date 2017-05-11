@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Feb 3, 2002
- * Time: 9:49:29 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -61,16 +57,9 @@ class DfaVariableState {
     DfaVariableValue qualifier = var.getQualifier();
     if(qualifier != null) {
       PsiModifierListOwner owner = var.getPsiVariable();
-      boolean arrayLength =
-        owner instanceof PsiField && "length".equals(((PsiField)owner).getName()) && qualifier.getVariableType() instanceof PsiArrayType;
-      if(arrayLength) {
-        return LongRangeSet.indexRange();
-      }
-      if (owner instanceof PsiMethod) {
-        for (SpecialField sf : SpecialField.values()) {
-          if(sf.isMyMethod((PsiMethod)owner)) {
-            return sf.getRange();
-          }
+      for (SpecialField sf : SpecialField.values()) {
+        if(sf.isMyAccessor(owner)) {
+          return sf.getRange();
         }
       }
     }
@@ -261,10 +250,12 @@ class DfaVariableState {
     return null;
   }
 
+  @NotNull
   public Set<DfaPsiType> getInstanceofValues() {
     return myInstanceofValues;
   }
 
+  @NotNull
   public Set<DfaPsiType> getNotInstanceofValues() {
     return myNotInstanceofValues;
   }

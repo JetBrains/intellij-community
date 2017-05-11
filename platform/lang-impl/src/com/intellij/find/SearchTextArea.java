@@ -479,16 +479,12 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     String getHistoryButtonConstraints() {
-      return "ay top, gaptop " + JBUI.scale(getIconTopGap());//Double scaling inside but it looks not bad
-    }
-
-    private int getIconTopGap() {
-      return Math.max(2, (UIUtil.getLineHeight(myTextArea) + myTextArea.getInsets().top + myTextArea.getInsets().bottom - JBUI.scale(16)) / 2);
+      return "ay baseline";
     }
 
     @Override
     String getIconsPanelConstraints() {
-      return "gaptop " + getIconTopGap() + ",ay top";
+      return "ay baseline";
     }
 
     @Override

@@ -137,6 +137,10 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
         if (!ResolveUtil.processClassDeclarations(it, processor, resolveState, null, place)) return false
       }
     }
+    else if (qualifierType is PsiPrimitiveType) {
+      val boxedType = qualifierType.getBoxedType(place) ?: return true
+      return processQualifierType(boxedType, state)
+    }
     else if (qualifierType is PsiArrayType) {
       GroovyPsiManager.getInstance(place.project).getArrayClass(qualifierType.componentType)?.let {
         if (!ResolveUtil.processClassDeclarations(it, processor, state, null, place)) return false

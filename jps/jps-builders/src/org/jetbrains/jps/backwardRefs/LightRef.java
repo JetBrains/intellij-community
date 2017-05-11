@@ -41,6 +41,8 @@ public interface LightRef extends RW.Savable {
   }
 
   interface LightClassHierarchyElementDef extends NamedLightRef {
+    LightClassHierarchyElementDef[] EMPTY_ARRAY = new LightClassHierarchyElementDef[0];
+
   }
 
   interface LightAnonymousClassDef extends LightClassHierarchyElementDef {

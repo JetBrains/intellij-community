@@ -17,7 +17,7 @@ package com.intellij.tasks.bugzilla;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
-import icons.TasksIcons;
+import icons.TasksCoreIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +65,7 @@ public class BugzillaTask extends Task {
   @NotNull
   @Override
   public Icon getIcon() {
-    return TasksIcons.Bugzilla;
+    return TasksCoreIcons.Bugzilla;
   }
 
   @NotNull

@@ -33,13 +33,6 @@ import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: stathik
- * Date: Dec 11, 2003
- * Time: 4:19:20 PM
- * To change this template use Options | File Templates.
- */
 public class PluginTable extends JBTable {
   public PluginTable(final PluginTableModel model) {
     super(model);

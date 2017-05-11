@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
@@ -34,14 +33,8 @@ public class MockDocument extends UserDataHolderBase implements DocumentEx {
 
   @NotNull
   @Override
-  public String getText() {
+  public CharSequence getImmutableCharSequence() {
     return myText.toString();
-  }
-
-  @NotNull
-  @Override
-  public String getText(@NotNull TextRange range) {
-    return range.substring(myText.toString());
   }
 
   @Override
@@ -58,12 +51,6 @@ public class MockDocument extends UserDataHolderBase implements DocumentEx {
 
   public CharSequence textToCharArray() {
     return getText();
-  }
-
-  @Override
-  @NotNull
-  public char[] getChars() {
-    return getText().toCharArray();
   }
 
   @Override

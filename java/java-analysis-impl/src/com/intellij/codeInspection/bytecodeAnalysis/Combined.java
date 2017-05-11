@@ -19,8 +19,8 @@ import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.util.SingletonSet;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Handle;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -33,9 +33,9 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
-import static org.jetbrains.org.objectweb.asm.Opcodes.*;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 // additional data structures for combined analysis
 interface CombinedData {
@@ -527,59 +527,65 @@ final class CombinedInterpreter extends BasicInterpreter {
   @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
     int opCode = insn.getOpcode();
-    int shift = opCode == INVOKESTATIC ? 0 : 1;
     int origin = insnIndex(insn);
-    switch (opCode) {
-      case INVOKESPECIAL:
-      case INVOKEINTERFACE:
-      case INVOKEVIRTUAL:
-        BasicValue receiver = values.get(0);
-        if (receiver instanceof NthParamValue) {
-          dereferencedParams[((NthParamValue)receiver).n] = true;
-        }
-        if (receiver instanceof Trackable) {
-          dereferencedValues[((Trackable)receiver).getOriginInsnIndex()] = true;
-        }
-      default:
-    }
 
     switch (opCode) {
       case INVOKESTATIC:
       case INVOKESPECIAL:
       case INVOKEVIRTUAL:
-      case INVOKEINTERFACE:
-        boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
+      case INVOKEINTERFACE: {
         MethodInsnNode mNode = (MethodInsnNode)insn;
         Method method = new Method(mNode.owner, mNode.name, mNode.desc);
-        Type retType = Type.getReturnType(mNode.desc);
-
-        for (int i = shift; i < values.size(); i++) {
-          if (values.get(i) instanceof NthParamValue) {
-            int n = ((NthParamValue)values.get(i)).n;
-            if (opCode == INVOKEINTERFACE) {
-              notNullableParams[n] = true;
-            }
-            else {
-              Set<ParamKey> npKeys = parameterFlow[n];
-              if (npKeys == null) {
-                npKeys = new HashSet<>();
-                parameterFlow[n] = npKeys;
-              }
-              npKeys.add(new ParamKey(method, i - shift, stable));
-            }
-          }
-        }
-        BasicValue receiver = null;
-        if (shift == 1) {
-          receiver = values.remove(0);
-        }
-        boolean thisCall = (opCode == INVOKEINTERFACE || opCode == INVOKEVIRTUAL) && receiver == ThisValue;
-        return new TrackableCallValue(origin, retType, method, values, stable, thisCall);
+        return methodCall(opCode, origin, method, values);
+      }
+      case INVOKEDYNAMIC: {
+        LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
+        if (lambda == null) break;
+        int targetOpCode = lambda.getAssociatedOpcode();
+        if (targetOpCode == -1) break;
+        methodCall(targetOpCode, origin, lambda.getMethod(), lambda.getLambdaMethodArguments(values, this::newValue));
+        return new NotNullValue(lambda.getFunctionalInterfaceType());
+      }
       case MULTIANEWARRAY:
         return new NotNullValue(super.naryOperation(insn, values).getType());
       default:
     }
     return track(origin, super.naryOperation(insn, values));
+  }
+
+  @NotNull
+  private BasicValue methodCall(int opCode, int origin, Method method, List<? extends BasicValue> values) {
+    Type retType = Type.getReturnType(method.methodDesc);
+    boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
+    boolean thisCall = false;
+    if (opCode != INVOKESTATIC) {
+      BasicValue receiver = values.remove(0);
+      if (receiver instanceof NthParamValue) {
+        dereferencedParams[((NthParamValue)receiver).n] = true;
+      }
+      if (receiver instanceof Trackable) {
+        dereferencedValues[((Trackable)receiver).getOriginInsnIndex()] = true;
+      }
+      thisCall = receiver == ThisValue;
+    }
+
+    for (int i = 0; i < values.size(); i++) {
+      if (values.get(i) instanceof NthParamValue) {
+        int n = ((NthParamValue)values.get(i)).n;
+        if (opCode == INVOKEINTERFACE) {
+          notNullableParams[n] = true;
+        }
+        else {
+          Set<ParamKey> npKeys = parameterFlow[n];
+          if (npKeys == null) {
+            npKeys = new HashSet<>();
+            parameterFlow[n] = npKeys;
+          }
+          npKeys.add(new ParamKey(method, i, stable));
+        }
+      }
+    }
+    return new TrackableCallValue(origin, retType, method, values, stable, thisCall);
   }
 }
 

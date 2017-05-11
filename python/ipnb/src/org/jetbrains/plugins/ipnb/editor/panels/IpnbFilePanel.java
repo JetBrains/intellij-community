@@ -9,8 +9,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -33,6 +33,7 @@ import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction;
 import org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbToggleLineNumbersAction;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
 
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
-  private final DocumentAdapter myDocumentListener;
+  private final DocumentListener myDocumentListener;
   private final Document myDocument;
   private final MessageBusConnection myBusConnection;
   private IpnbFile myIpnbFile;
@@ -77,7 +78,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     setBackground(IpnbEditorUtil.getBackground());
 
     final Alarm alarm = new Alarm();
-    myDocumentListener = new DocumentAdapter() {
+    myDocumentListener = new DocumentListener() {
       public void documentChanged(final DocumentEvent e) {
         if (mySynchronize) {
           alarm.cancelAllRequests();
@@ -196,8 +197,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     IpnbEditablePanel panel;
     if (cell instanceof IpnbCodeCell) {
       panel = new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)cell);
-      add(panel);
-      myIpnbPanels.add(panel);
+      addComponent(panel);
     }
     else if (cell instanceof IpnbMarkdownCell) {
       panel = new IpnbMarkdownPanel((IpnbMarkdownCell)cell, this);
@@ -567,7 +567,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         mySelectedCellPanel.switchToEditing();
         repaint();
       }
-
       if (e.getKeyCode() == KeyEvent.VK_UP) {
         selectPrev(mySelectedCellPanel);
       }
@@ -577,6 +576,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
         if (!mySelectedCellPanel.isEditing()) {
           IpnbDeleteCellAction.deleteCell(this);
+        }
+      }
+      else if (e.getKeyCode() == KeyEvent.VK_L) {
+        if (mySelectedCellPanel instanceof IpnbCodePanel && !mySelectedCellPanel.isEditing()) {
+          IpnbToggleLineNumbersAction.toggleLineNumbers((IpnbCodePanel)mySelectedCellPanel);
         }
       }
       else if (e.getModifiers() == Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) {
@@ -692,7 +696,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public void revalidateAndRepaint() {
     revalidate();
-    UIUtil.requestFocus(this);
     repaint();
   }
 

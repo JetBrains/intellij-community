@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,10 +27,8 @@ import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.CompilationStatusListener;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -57,6 +55,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentEnumeratorBase;
+import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +101,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
   @Override
   public void projectOpened() {
     if (isEnabled()) {
-      myProject.getMessageBus().connect(myProject).subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
+      MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+      connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
         @Override
         public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
           if (project == myProject) {
@@ -111,8 +111,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         }
       });
 
-      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-      compilerManager.addCompilationStatusListener(new CompilationStatusListener() {
+      connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
           compilationFinished(compileContext);
@@ -141,9 +140,11 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
       myDirtyScopeHolder.installVFSListener();
 
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        CompilerManager compilerManager = CompilerManager.getInstance(myProject);
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           boolean isUpToDate;
-          if (CompilerReferenceReader.exists(myProject)) {
+          boolean indexExist = CompilerReferenceReader.exists(myProject);
+          if (indexExist) {
             CompileScope projectCompileScope = compilerManager.createProjectCompileScope(myProject);
             isUpToDate = compilerManager.isUpToDate(projectCompileScope);
           } else {
@@ -153,7 +154,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
             if (isUpToDate) {
               openReaderIfNeed(IndexOpenReason.UP_TO_DATE_CACHE);
             } else {
-              markAsOutdated();
+              markAsOutdated(indexExist);
             }
           });
         });
@@ -235,7 +236,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .filter(r -> r instanceof LightRef.JavaLightMethodRef)
           .map(r -> (LightRef.JavaLightMethodRef) r)
           .flatMap(r -> {
-            LightRef.NamedLightRef[] hierarchy = myReader.getWholeHierarchy(r.getOwner(), false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
+            LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(r.getOwner(), false, false, ChainSearchMagicConstants.MAX_HIERARCHY_SIZE);
             return hierarchy == null ? Stream.empty() : Arrays.stream(hierarchy).map(c -> r.override(c.getName()));
           })
           .distinct()
@@ -246,6 +247,10 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
               count);
           }))
           .filter(Objects::nonNull)
+          .collect(Collectors.groupingBy(x -> x.getUnderlying(), Collectors.summarizingInt(x -> x.getOccurrences())))
+          .entrySet()
+          .stream()
+          .map(e -> new OccurrencesAware<>(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {
@@ -278,7 +283,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
         return false;
       }
       catch (Exception e) {
-        onException(e, "correlation");
+        onException(e, "conditional probability");
         return false;
       }
     } finally {
@@ -293,6 +298,58 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     try {
       if (myReader == null) throw new ReferenceIndexUnavailableException();
       return myReader.getNameEnumerator().getName(idx);
+    } catch (Exception e) {
+        onException(e, "find methods");
+        throw new ReferenceIndexUnavailableException();
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      int id;
+      try {
+        id = myReader.getNameEnumerator().tryEnumerate(name);
+      }
+      catch (Exception e) {
+        onException(e, "get name-id");
+        throw new ReferenceIndexUnavailableException();
+      }
+      return id;
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @NotNull
+  @Override
+  public LightRef.LightClassHierarchyElementDef[] getDirectInheritors(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      return myReader.getDirectInheritors(baseClass);
+    } catch (Exception e) {
+      onException(e, "find methods");
+      throw new ReferenceIndexUnavailableException();
+    } finally {
+      myReadDataLock.unlock();
+    }
+  }
+
+  @Override
+  public int getInheritorCount(@NotNull LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException {
+    myReadDataLock.lock();
+    try {
+      if (myReader == null) throw new ReferenceIndexUnavailableException();
+      LightRef.NamedLightRef[] hierarchy = myReader.getHierarchy(baseClass, false, true, -1);
+      return hierarchy == null ? -1 : hierarchy.length;
+    } catch (Exception e) {
+      onException(e, "inheritor count");
+      throw new ReferenceIndexUnavailableException();
     } finally {
       myReadDataLock.unlock();
     }
@@ -533,10 +590,12 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
     }
   }
 
-  private void markAsOutdated() {
+  private void markAsOutdated(boolean decrementBuildCount) {
     myOpenCloseLock.lock();
     try {
-      --myActiveBuilds;
+      if (decrementBuildCount) {
+        --myActiveBuilds;
+      }
       myDirtyScopeHolder.upToDateChecked(false);
     } finally {
       myOpenCloseLock.unlock();
@@ -703,8 +762,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @Nullable
   private <T> T onException(@NotNull Exception e, @NotNull String actionName) {
-    if (e instanceof ProcessCanceledException) {
-      throw (ProcessCanceledException)e;
+    if (e instanceof ControlFlowException) {
+      throw (RuntimeException)e;
     }
 
     LOG.error("an exception during " + actionName + " calculation", e);

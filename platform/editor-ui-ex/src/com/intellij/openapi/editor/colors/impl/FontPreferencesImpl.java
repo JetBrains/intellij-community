@@ -36,7 +36,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 12/20/12 9:37 PM
  */
-public class FontPreferencesImpl implements ModifiableFontPreferences {
+public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @NotNull private final TObjectIntHashMap<String> myFontSizes    = new TObjectIntHashMap<>();
   @NotNull private final List<String> myEffectiveFontFamilies = ContainerUtilRt.newArrayList();

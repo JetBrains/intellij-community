@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: mike
- * Date: Jul 23, 2002
- * Time: 2:18:55 PM
- * To change template for new interface use 
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.extensions.ExtensionPointName;

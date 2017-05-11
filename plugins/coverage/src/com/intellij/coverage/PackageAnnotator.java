@@ -34,6 +34,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
@@ -308,7 +309,7 @@ public class PackageAnnotator {
               JavaPsiFacade.getInstance(myManager.getProject()).findClass(toplevelClassSrcFQName, GlobalSearchScope.moduleScope(module));
             if (aClass == null || !aClass.isValid()) return Boolean.FALSE;
             psiClassRef.set(aClass);
-            containingFileRef.set(aClass.getNavigationElement().getContainingFile().getVirtualFile());
+            containingFileRef.set(PsiUtilCore.getVirtualFile(aClass.getNavigationElement()));
             if (containingFileRef.isNull()) {
               LOG.info("No virtual file found for: " + aClass);
               return null;

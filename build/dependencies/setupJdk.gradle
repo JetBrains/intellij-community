@@ -1,5 +1,3 @@
-import org.jetbrains.intellij.build.DependenciesBuildUtils
-
 /*
  * Copyright 2000-2016 JetBrains s.r.o.
  *
@@ -18,7 +16,9 @@ import org.jetbrains.intellij.build.DependenciesBuildUtils
 task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
 
-def checkoutDir = DependenciesBuildUtils.intellijProjectDir(file('.'))
+def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net' : 'https://dl.bintray.com/jetbrains/'
+
+def checkoutDir = intellijProjectDir()
 def jdkDir = "$checkoutDir/build/jdk"
 
 project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", "$jdkDir/1.8")}"
@@ -35,9 +35,9 @@ task downloadJdk18 {
   inputs.property('build', jdkBuild)
   outputs.file(outputFile)
   doLast {
-    logger.info("Downloading up JDK 1.8 to compile (using $DependenciesBuildUtils.jdkRepo repo)")
+    logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
     download {
-      src "$DependenciesBuildUtils.jdkRepo/${artifactName}"
+      src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
       onlyIfNewer true
     }
@@ -108,7 +108,10 @@ dependencies {
 }
 
 task setupJdk16(dependsOn: configurations.jdk16) {
-  onlyIf { DependenciesBuildUtils.inJetBrainsNetwork }
+  if (!inJetBrainsNetwork) {
+    return
+  }
+
   def jdkArchive = { configurations.jdk16.singleFile }
   def outputDir = "$jdkDir/1.6"
   inputs.file(jdkArchive)
@@ -129,6 +132,13 @@ private void deleteBrokenSymlink(def outputDir) {
       pluginJar.delete()
     }
   }
+}
+
+setupJdk16.onlyIf { inJetBrainsNetwork }
+
+def intellijProjectDir() {
+  def communityDir = project.file("../..")
+  communityDir.name == 'community' ? communityDir.parent : communityDir
 }
 
 static def jdk16Version() {

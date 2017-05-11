@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,6 +30,7 @@ import java.util.regex.Pattern;
  */
 public class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\\s*\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([^\\[]*)]");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
   private static final Pattern ourWaitingForLockPattern = Pattern.compile("- waiting (on|to lock) <(.+)>");
@@ -193,6 +193,16 @@ public class ThreadDumpParser {
     if (m.find()) {
       final ThreadState state = new ThreadState(m.group(1), m.group(3));
       if (line.contains(" daemon ")) {
+        state.setDaemon(true);
+      }
+      return state;
+    }
+
+    String noDaemon = StringUtil.trimEnd(line, " [DAEMON]");
+    m = ourYourkitThreadStartPattern.matcher(noDaemon);
+    if (m.find()) {
+      ThreadState state = new ThreadState(m.group(1), m.group(2));
+      if (noDaemon.length() < line.length()) {
         state.setDaemon(true);
       }
       return state;

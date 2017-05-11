@@ -22,13 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 03.09.2003
- * Time: 19:32:51
- * To change this template use Options | File Templates.
- */
 public class FetchExternalResourcesFixTest extends LightQuickFixParameterizedTestCase {
   public void test() throws Exception { doAllTests(); }
 

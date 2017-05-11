@@ -183,7 +183,8 @@ class DistributionJARsBuilder {
     if (productProperties.generateLibrariesLicensesTable) {
       buildContext.messages.block("Generate table of licenses for used third-party libraries") {
         def generator = new LibraryLicensesListGenerator(buildContext.projectBuilder, buildContext.project, productProperties.allLibraryLicenses)
-        generator.generateLicensesTable("$buildContext.paths.artifacts/${buildContext.applicationInfo.productName}-third-party-libraries.txt", usedModules)
+        def artifactNamePrefix = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
+        generator.generateLicensesTable("$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.txt", usedModules)
       }
     }
 
@@ -209,7 +210,7 @@ class DistributionJARsBuilder {
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
     def buildTasks = new BuildTasksImpl(buildContext)
-    buildTasks.buildSearchableOptions(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
+    buildTasks.buildSearchableOptionsIndex(searchableOptionsDir, productLayout.mainModules, productLayout.licenseFilesToBuildSearchableOptions)
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }

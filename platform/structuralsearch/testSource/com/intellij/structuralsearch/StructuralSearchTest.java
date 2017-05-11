@@ -721,7 +721,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String in = "class D<T> {}\n" +
                       "class T {}";
-    assertEquals("search for class should not find type parameters", 1, findMatchesCount(in, "class T {}"));
+    assertEquals("search for class should not find type parameters", 2, findMatchesCount(in, "class 'A {}"));
   }
 
   public void testParameterlessConstructorSearch() {
@@ -901,19 +901,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     final String s133_2 = "class C { int a() {} int A() { a(1); }}";
     assertEquals("find sym finds declaration", 2, findMatchesCount(s133_2, s134, true));
-
-    final String in = "class C {" +
-                      "  {" +
-                      "    int i = 0;" +
-                      "    i += 1;" +
-                      "    (i) = 3;" +
-                      "    int j = i;" +
-                      "    i();" +
-                      "  }" +
-                      "  void i() {}" +
-                      "}";
-    assertEquals("Find reads of symbol (including operator assignment)", 2, findMatchesCount(in, "'_:[read]"));
-    assertEquals("Find writes of symbol", 3, findMatchesCount(in, "'_:[write && regex( i )]"));
 
     final String source = "class A {" +
                           "  static A a() {};" +
@@ -1231,11 +1218,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     final String s112 = "'_";
     assertEquals("symbol match", 17, findMatchesCount(s111,s112));
 
-    final String s113 = "class B {int c; void d() {} } int a; B b; a = 1; b.d(); ++a; int c=a; System.out.println(a); " +
-                        "b.c = 1; System.out.println(b.c); b.c++;";
-    assertEquals("read symbol match", 11, findMatchesCount(s113, "'_:[read]"));
-    assertEquals("write symbol match", 5, findMatchesCount(s113, "'_:[write]"));
-
     final String s115 = "class B {} public class C {}";
     assertEquals("public modifier for class", 1, findMatchesCount(s115, "public class '_ {}"));
 
@@ -1243,8 +1225,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                         "System.out.println(e); " +
                         "System.out.println(b); System.out.println(this.b);} }";
     assertEquals("fields of class", 4, findMatchesCount(s117, "this.'Field"));
-    assertEquals("fields of class read", 2, findMatchesCount(s117, "this.'Field:[read]"));
-    assertEquals("fields of class written", 2, findMatchesCount(s117, "this.'Field:[write]"));
 
     final String s119 = "try { a.b(); } catch(IOException e) { c(); } catch(Exception ex) { d(); }";
     assertEquals("catches loose matching", 1, findMatchesCount(s119, "try { '_; } catch('_ '_) { '_; }"));
@@ -1822,8 +1802,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     Matcher testMatcher = new Matcher(getProject());
     MatchOptions options = new MatchOptions();
-    options.setSearchPattern("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
-    MatcherImplUtil.transform(options);
+    options.fillSearchCriteria("try  { '_st*; } catch('_Type 't+) { '_st2*; }");
     options.setFileType(StdFileTypes.JAVA);
 
     List<MatchResult> results = new ArrayList<>();
@@ -1844,8 +1823,7 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     results.clear();
 
     options.clearVariableConstraints();
-    options.setSearchPattern("try  { '_st*; } catch('Type:Type2 '_t) { '_st2*; }");
-    MatcherImplUtil.transform(options);
+    options.fillSearchCriteria("try  { '_st*; } catch('Type:Type2 '_t) { '_st2*; }");
 
     for(PsiVariable var:vars) {
       final PsiTypeElement typeElement = var.getTypeElement();

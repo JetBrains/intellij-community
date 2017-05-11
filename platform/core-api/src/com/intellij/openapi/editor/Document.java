@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,11 +53,15 @@ public interface Document extends UserDataHolder {
    */
   @NotNull
   @Contract(pure=true)
-  String getText();
+  default String getText() {
+    return getImmutableCharSequence().toString();
+  }
 
   @NotNull
   @Contract(pure=true)
-  String getText(@NotNull TextRange range);
+  default String getText(@NotNull TextRange range) {
+    return range.substring(getText());
+  }
 
   /**
    * Use this method instead of {@link #getText()} if you do not need to create a copy of the content.
@@ -70,7 +75,7 @@ public interface Document extends UserDataHolder {
   @Contract(pure=true)
   @NotNull
   default CharSequence getCharsSequence() {
-    return getText();
+    return getImmutableCharSequence();
   }
 
   /**
@@ -79,15 +84,15 @@ public interface Document extends UserDataHolder {
    */
   @NotNull
   @Contract(pure=true)
-  default CharSequence getImmutableCharSequence() {
-    return getText();
-  }
+  CharSequence getImmutableCharSequence();
 
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
   @Deprecated
-  @NotNull char[] getChars();
+  default @NotNull char[] getChars() {
+    return CharArrayUtil.fromSequence(getImmutableCharSequence());
+  }
 
   /**
    * Returns the length of the document text.

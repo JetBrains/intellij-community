@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 03.11.2006
- * Time: 14:53:10
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.openapi.project.Project;

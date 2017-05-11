@@ -35,12 +35,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Jul 7, 2003
- * Time: 11:13:52 PM
- */
-
 public class BatchEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.BatchEvaluator");
 

@@ -15,17 +15,31 @@
  */
 package com.jetbrains.edu.learning.builtInServer;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.AppIcon;
+import com.jetbrains.edu.learning.StudySettings;
+import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
+import com.jetbrains.edu.learning.stepic.EduStepicConnector;
+import com.jetbrains.edu.learning.stepic.StepicUser;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.QueryStringDecoder;
+import io.netty.handler.codec.http.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.RestService;
+import org.jetbrains.io.Responses;
 
+import javax.swing.*;
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,6 +51,8 @@ import static com.jetbrains.edu.learning.stepic.EduStepicNames.STEP_ID;
 public class EduStepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(EduStepikRestService.class.getName());
   private static final Pattern OPEN_COURSE_PATTERN = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "/course/(\\d+)");
+  private static final Pattern
+    OAUTH_CODE_PATTERN = Pattern.compile("/" + RestService.PREFIX + "/" + EDU_STEPIK_SERVICE_NAME + "/oauth" + "\\?code=(\\w+)");
 
   @NotNull
   @Override
@@ -52,6 +68,16 @@ public class EduStepikRestService extends RestService {
   @Override
   protected boolean isPrefixlessAllowed() {
     return true;
+  }
+
+  @Override
+  protected boolean isHostTrusted(@NotNull FullHttpRequest request) throws InterruptedException, InvocationTargetException {
+    String uri = request.uri();
+    Matcher codeMatcher = OAUTH_CODE_PATTERN.matcher(uri);
+    if (request.method() == HttpMethod.GET && codeMatcher.matches()) {
+      return true;
+    }
+    return super.isHostTrusted(request);
   }
 
   @Nullable
@@ -88,10 +114,50 @@ public class EduStepikRestService extends RestService {
       LOG.info(message);
       return message;
     }
+    Matcher codeMatcher = OAUTH_CODE_PATTERN.matcher(urlDecoder.uri());
+    if (codeMatcher.matches()) {
+      String code = getStringParameter("code", urlDecoder);
+      if (code != null) {
+        StepicUser stepicUser = EduStepicAuthorizedClient.login(code, EduStepicConnector.getOAuthRedirectUrl());
+        if (stepicUser != null) {
+          StudySettings.getInstance().setUser(stepicUser);
+          sendHtmlResponse(request, context, "/oauthResponsePages/okPage.html");
+          showStepicNotification(NotificationType.INFORMATION, "Authorized as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
+          JFrame frame = WindowManager.getInstance().findVisibleFrame();
+          ApplicationManager.getApplication().invokeLater(() -> AppIcon.getInstance().requestFocus((IdeFrame)frame));
+          return null;
+        }
+      }
+
+      sendHtmlResponse(request, context, "/oauthResponsePages/errorPage.html");
+      showStepicNotification(NotificationType.ERROR, "Failed to authorize");
+      return "Couldn't find code parameter for Stepik OAuth";
+    }
 
     RestService.sendStatus(HttpResponseStatus.BAD_REQUEST, false, context.channel());
     String message = "Unknown command: " + path;
     LOG.info(message);
     return message;
+  }
+
+  private void sendHtmlResponse(@NotNull HttpRequest request, @NotNull ChannelHandlerContext context, String pagePath) throws IOException {
+    BufferExposingByteArrayOutputStream byteOut = new BufferExposingByteArrayOutputStream();
+    InputStream pageStream = getClass().getResourceAsStream(pagePath);
+    try {
+      byteOut.write(StreamUtil.loadFromStream(pageStream));
+      HttpResponse response = Responses.response("text/html", Unpooled.wrappedBuffer(byteOut.getInternalBuffer(), 0, byteOut.size()));
+      Responses.addNoCache(response);
+      response.headers().set("X-Frame-Options", "Deny");
+      Responses.send(response, context.channel(), request);
+    }
+    finally {
+      byteOut.close();
+      pageStream.close();
+    }
+  }
+
+  private static void showStepicNotification(@NotNull NotificationType notificationType, @NotNull String text) {
+    Notification notification = new Notification("Stepik", "Stepik", text, notificationType);
+    notification.notify(null);
   }
 }

@@ -107,6 +107,7 @@ public class ChangeDiffRequestProducer implements DiffRequestProducer {
     }
 
     if (!Comparing.equal(change1.getClass(), change2.getClass())) return false;
+    if (!Comparing.equal(change1.getFileStatus(), change2.getFileStatus())) return false;
     if (!isEquals(change1.getBeforeRevision(), change2.getBeforeRevision())) return false;
     if (!isEquals(change1.getAfterRevision(), change2.getAfterRevision())) return false;
 

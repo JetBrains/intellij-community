@@ -26,13 +26,6 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import java.io.File;
 import java.io.IOException;
 
-/**
- * Created by IntelliJ IDEA.
- * User: maxim.mossienko
- * Date: Oct 11, 2005
- * Time: 10:10:48 PM
- * To change this template use File | Settings | File Templates.
- */
 abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   protected Replacer replacer;
   protected ReplaceOptions options;

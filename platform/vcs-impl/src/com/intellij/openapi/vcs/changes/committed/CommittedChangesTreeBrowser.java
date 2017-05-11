@@ -241,11 +241,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
   }
 
   private void updateModel() {
+    TreeState state = TreeState.createOn(myChangesTree, (DefaultMutableTreeNode)myChangesTree.getModel().getRoot());
     final List<CommittedChangeList> filteredChangeLists = myFilteringStrategy.filterChangeLists(myChangeLists);
-    final TreePath[] paths = myChangesTree.getSelectionPaths();
     myChangesTree.setModel(buildTreeModel(filteredChangeLists));
+    state.applyTo(myChangesTree);
     TreeUtil.expandAll(myChangesTree);
-    myChangesTree.setSelectionPaths(paths);
   }
 
   public void setGroupingStrategy(@NotNull ChangeListGroupingStrategy strategy) {

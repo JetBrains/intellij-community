@@ -15,62 +15,83 @@
  */
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.openapi.Disposable
+import com.intellij.configurationStore.deserializeElementFromBinary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.catchAndLog
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.io.*
-import java.io.DataInput
-import java.io.DataOutput
-import java.io.IOException
-import java.io.InputStream
+import com.intellij.util.Function
+import com.intellij.util.io.ByteSequenceDataExternalizer
+import org.jdom.Element
+import java.io.ByteArrayInputStream
 import java.util.*
 
 private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
 private val LOG = logger<ExternalSystemStreamProviderFactory>()
 
-private fun isEnabled() = Registry.`is`("store.imported.project.elements.separately", false)
+private fun isEnabled() = Registry.`is`("store.imported.project.elements.separately", false) || IS_ENABLED
+
+// test only
+internal var IS_ENABLED = false
 
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val nameToData by lazy { createStorage(project) }
+  val moduleStorage = PersistentMapManager("modules", ExternalProjectsDataStorage.getProjectConfigurationDir(project), ByteSequenceDataExternalizer.INSTANCE, project, 0) {
+    StartupManager.getInstance(project).runWhenProjectIsInitialized {
+      val externalProjectsManager = ServiceManager.getService(project, ExternalProjectsManager::class.java)
+      externalProjectsManager.runWhenInitialized {
+        externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+      }
+    }
+  }
 
   private var isStorageFlushInProgress = false
 
   init {
-    if (isEnabled()) {
-      Disposer.register(project, Disposable { nameToData.close() })
-
-      // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
-      ApplicationManager.getApplication().messageBus
-        .connect(project)
-        .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
-          if (it === project && !isStorageFlushInProgress && nameToData.isDirty) {
-            isStorageFlushInProgress = true
-            ApplicationManager.getApplication().executeOnPooledThread {
-              try {
-                LOG.catchAndLog { nameToData.force() }
-              }
-              finally {
-                isStorageFlushInProgress = false
-              }
+    // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
+    ApplicationManager.getApplication().messageBus
+      .connect(project)
+      .subscribe(ProjectEx.ProjectSaved.TOPIC, ProjectEx.ProjectSaved {
+        if (it === project && !isStorageFlushInProgress && moduleStorage.isDirty) {
+          isStorageFlushInProgress = true
+          ApplicationManager.getApplication().executeOnPooledThread {
+            try {
+              LOG.runAndLogException { moduleStorage.forceSave() }
+            }
+            finally {
+              isStorageFlushInProgress = false
             }
           }
-        })
-    }
+        }
+      })
+    project.messageBus.connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+      override fun moduleRemoved(project: Project, module: Module) {
+        moduleStorage.remove(module.name)
+      }
+
+      override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
+        for (module in modules) {
+          val oldName = oldNameProvider.`fun`(module)
+          moduleStorage.get(oldName)?.let {
+            moduleStorage.remove(oldName)
+            moduleStorage.put(module.name, it)
+          }
+        }
+      }
+    })
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
@@ -98,49 +119,9 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     // todo we can return on StateStorageOperation.WRITE default iml storage and then somehow using StateStorageChooserEx return Resolution.CLEAR to remove data from iml
     return listOf(EXTERNAL_STORAGE_ANNOTATION)
   }
-}
 
-private val MODULE_FILE_FORMAT_VERSION = 0
-
-private fun createStorage(project: Project): PersistentHashMap<String, ByteArray> {
-  val dir = ExternalProjectsDataStorage.getProjectConfigurationDir(project)
-  val versionFile = dir.resolve("modules.version")
-  val file = dir.resolve("modules")
-
-  fun createMap() = PersistentHashMap<String, ByteArray>(file.toFile(), EnumeratorStringDescriptor.INSTANCE, object : DataExternalizer<ByteArray> {
-    override fun read(`in`: DataInput): ByteArray {
-      val available = (`in` as InputStream).available()
-      val result = ByteArray(available)
-      `in`.readFully(result)
-      return result
-    }
-
-    override fun save(out: DataOutput, value: ByteArray) {
-      out.write(value)
-    }
-  })
-
-  fun deleteFileAndWriteLatestFormatVersion() {
-    file.delete()
-    versionFile.outputStream().use { it.write(MODULE_FILE_FORMAT_VERSION) }
-
-    StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      val externalProjectsManager = ExternalProjectsManagerImpl.getInstance(project)
-      externalProjectsManager.init()
-      externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
-    }
+  fun readModuleData(name: String): Element? {
+    val data = moduleStorage.get(name) ?: return null
+    return ByteArrayInputStream(data.bytes, data.offset, data.length).use { deserializeElementFromBinary(it) }
   }
-
-  try {
-    val fileVersion = versionFile.inputStreamIfExists()?.use { it.read() } ?: -1
-    if (fileVersion != MODULE_FILE_FORMAT_VERSION) {
-      deleteFileAndWriteLatestFormatVersion()
-    }
-    return createMap()
-  }
-  catch (e: IOException) {
-    LOG.info(e)
-    deleteFileAndWriteLatestFormatVersion()
-  }
-  return createMap()
 }

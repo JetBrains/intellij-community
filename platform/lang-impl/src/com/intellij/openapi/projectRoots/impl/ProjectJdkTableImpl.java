@@ -56,7 +56,8 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
   private final Map<String, ProjectJdkImpl> myCachedProjectJdks = new HashMap<>();
   private final MessageBus myMessageBus;
 
-  ProjectJdkTableImpl() {
+  // constructor is public because it is accessed from Upsource
+  public ProjectJdkTableImpl() {
     myMessageBus = ApplicationManager.getApplication().getMessageBus();
     myListenerList = new MessageListenerList<>(myMessageBus, JDK_TABLE_TOPIC);
     // support external changes to jdk libraries (Endorsed Standards Override)

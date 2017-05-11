@@ -344,69 +344,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   protected ListCellRenderer<T> createListCellRenderer() {
-    return new ColoredListCellRenderer<T>() {
-
-      public Component getListCellRendererComponent(JList list,
-                                                    Object value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
-        mySelected = isSelected;
-        myForeground = UIUtil.getTreeTextForeground();
-        mySelectionForeground = cellHasFocus ? list.getSelectionForeground() : UIUtil.getTreeTextForeground();
-
-        clear();
-        setFont(UIUtil.getListFont());
-
-        //noinspection unchecked
-        final T t = (T)value;
-        try {
-          setIcon(getItemIcon(t));
-          append(getItemText(t));
-          setToolTipText(getItemTooltipText(t));
-        }
-        catch (IndexNotReadyException e) {
-          append("loading...");
-        }
-
-        try {
-          doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
-        }
-        catch (IndexNotReadyException ignored) {
-          // ignore
-        }
-
-        Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
-        if (!isSelected) {
-          VirtualFile file = getContainingFile(t);
-          Color bgColor = file == null ? null : EditorTabbedContainer.calcTabColor(myProject, file);
-          bg = bgColor == null ? bg : bgColor;
-        }
-        setBackground(bg);
-
-        if (hasChildren(t)) {
-          JPanel result = new JPanel(new BorderLayout());
-          JLabel childrenLabel = new JLabel();
-          childrenLabel.setOpaque(true);
-          childrenLabel.setVisible(true);
-          childrenLabel.setBackground(bg);
-
-          final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
-          childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
-                                                    : AllIcons.Icons.Ide.NextStep
-                                           : AllIcons.Icons.Ide.NextStepGrayed);
-          result.add(this, BorderLayout.CENTER);
-          result.add(childrenLabel, BorderLayout.EAST);
-          result.setToolTipText(getToolTipText());
-          return result;
-        }
-        return this;
-      }
-
-      @Override
-      protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-      }
-    };
+    return new MyListCellRenderer();
   }
 
   protected void doCustomizeCellRenderer(SimpleColoredComponent comp, JList list, T value, int index, boolean selected, boolean hasFocus) {
@@ -672,5 +610,86 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
 
   protected int getFirstComponentPreferredSize() {
     return 200;
+  }
+
+  private class MyListCellRenderer extends ColoredListCellRenderer<T> {
+    private static final String ITEM_PROPERTY = "FINDER_RECURSIVE_PANEL_ITEM_PROPERTY";
+
+    @Override
+    public String getToolTipText(MouseEvent event) {
+      String toolTipText = getToolTipText();
+      if (toolTipText != null) {
+        return toolTipText;
+      }
+      @SuppressWarnings("unchecked")
+      T value = (T)getClientProperty(ITEM_PROPERTY);
+      return FinderRecursivePanel.this.getItemTooltipText(value);
+    }
+
+    public Component getListCellRendererComponent(JList list,
+                                                  Object value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      mySelected = isSelected;
+      myForeground = UIUtil.getTreeTextForeground();
+      mySelectionForeground = cellHasFocus ? list.getSelectionForeground() : UIUtil.getTreeTextForeground();
+
+      clear();
+      setFont(UIUtil.getListFont());
+
+      //noinspection unchecked
+      final T t = (T)value;
+      try {
+        putClientProperty(ITEM_PROPERTY, t);
+        setIcon(getItemIcon(t));
+        append(getItemText(t));
+      }
+      catch (IndexNotReadyException e) {
+        append("loading...");
+      }
+
+      try {
+        doCustomizeCellRenderer(this, list, t, index, isSelected, cellHasFocus);
+      }
+      catch (IndexNotReadyException ignored) {
+        // ignore
+      }
+
+      Color bg = isSelected ? UIUtil.getTreeSelectionBackground(cellHasFocus) : UIUtil.getTreeTextBackground();
+      if (!isSelected) {
+        VirtualFile file = getContainingFile(t);
+        Color bgColor = file == null ? null : EditorTabbedContainer.calcTabColor(myProject, file);
+        bg = bgColor == null ? bg : bgColor;
+      }
+      setBackground(bg);
+
+      if (hasChildren(t)) {
+        final JComponent rendererComponent = this;
+        JPanel result = new JPanel(new BorderLayout()) {
+          @Override
+          public String getToolTipText(MouseEvent event) {
+            return rendererComponent.getToolTipText(event);
+          }
+        };
+        JLabel childrenLabel = new JLabel();
+        childrenLabel.setOpaque(true);
+        childrenLabel.setVisible(true);
+        childrenLabel.setBackground(bg);
+
+        final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
+        childrenLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                                  : AllIcons.Icons.Ide.NextStep
+                                         : AllIcons.Icons.Ide.NextStepGrayed);
+        result.add(this, BorderLayout.CENTER);
+        result.add(childrenLabel, BorderLayout.EAST);
+        return result;
+      }
+      return this;
+    }
+
+    @Override
+    protected final void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
+    }
   }
 }

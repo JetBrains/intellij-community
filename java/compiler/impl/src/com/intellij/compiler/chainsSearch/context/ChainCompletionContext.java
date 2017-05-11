@@ -16,7 +16,6 @@
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
-import com.intellij.compiler.chainsSearch.ChainCompletionStringUtil;
 import com.intellij.compiler.chainsSearch.MethodChainsSearchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -27,6 +26,7 @@ import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +38,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ChainCompletionContext {
+  private static final String[] WIDE_USED_CLASS_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,
+                                                                  CommonClassNames.JAVA_LANG_OBJECT,
+                                                                  CommonClassNames.JAVA_LANG_CLASS};
+  private static final Set<String> WIDE_USED_SHORT_NAMES = ContainerUtil.set("String", "Object", "Class");
+
   @NotNull
   private final ChainSearchTarget myTarget;
   @NotNull
@@ -208,7 +213,7 @@ public class ChainCompletionContext {
         if (type == null) {
           return false;
         }
-        if (ChainCompletionStringUtil.isPrimitiveOrArrayOfPrimitives(type)) {
+        if (isWidelyUsed(type)) {
           if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
             myContextStrings.add((PsiNamedElement)element);
           }
@@ -249,5 +254,22 @@ public class ChainCompletionContext {
       return ((PsiMethod)element).getReturnType();
     }
     throw new AssertionError(element);
+  }
+
+  public static boolean isWidelyUsed(@NotNull PsiType type) {
+    type = type.getDeepComponentType();
+    if (type instanceof PsiPrimitiveType) return true;
+    if (!(type instanceof PsiClassType)) return false;
+    if (WIDE_USED_SHORT_NAMES.contains(((PsiClassType)type).getClassName())) return false;
+    final PsiClass resolvedClass = ((PsiClassType)type).resolve();
+    if (resolvedClass == null) return false;
+    final String qName = resolvedClass.getQualifiedName();
+    if (qName == null) return false;
+    for (String name : WIDE_USED_CLASS_NAMES) {
+      if (name.equals(qName)) {
+        return true;
+      }
+    }
+    return false;
   }
 }

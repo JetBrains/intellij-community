@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch;
 
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -277,8 +292,6 @@ class JavaPredefinedConfigurations {
 
       // interesting types
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.symbol"),"'Symbol",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields.variables.read"),"'Symbol:[read]",INTERESTING_TYPE),
-      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.fields_variables.with.given.name.pattern.updated"),"'Symbol:[regex( name ) && write]",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.usage.of.derived.type.in.cast"),"('CastType:*[regex( Base )]) '_Expr",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.boxing.in.declarations"),"'_Type:Object|Integer|Boolean|Long|Character|Short|Byte 'Var = '_Value:[exprtype( int|boolean|long|char|short|byte )];",INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.declarations"),"'_Type:int|boolean|long|char|short|byte 'Var = '_Value:[exprtype( Integer|Boolean|Long|Character|Short|Byte )];",INTERESTING_TYPE),

@@ -20,10 +20,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Type;
-import org.jetbrains.org.objectweb.asm.tree.AbstractInsnNode;
-import org.jetbrains.org.objectweb.asm.tree.JumpInsnNode;
-import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
-import org.jetbrains.org.objectweb.asm.tree.TypeInsnNode;
+import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
@@ -700,38 +697,50 @@ abstract class NullityInterpreter extends BasicInterpreter {
   @Override
   public BasicValue naryOperation(AbstractInsnNode insn, List<? extends BasicValue> values) throws AnalyzerException {
     int opcode = insn.getOpcode();
-    boolean isStaticInvoke = opcode == INVOKESTATIC;
-    int shift = isStaticInvoke ? 0 : 1;
-    if ((opcode == INVOKESPECIAL || opcode ==INVOKEINTERFACE || opcode == INVOKEVIRTUAL) && values.get(0) instanceof ParamValue) {
-      subResult = NPE;
-    }
     switch (opcode) {
       case INVOKEINTERFACE:
-        if (nullableAnalysis) {
-          for (int i = shift; i < values.size(); i++) {
-            if (values.get(i) instanceof ParamValue) {
-                top = true;
-                return super.naryOperation(insn, values);
-            }
-          }
-        }
-        break;
-      case INVOKESTATIC:
       case INVOKESPECIAL:
+      case INVOKESTATIC:
       case INVOKEVIRTUAL:
-        boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
-        MethodInsnNode methodNode = (MethodInsnNode) insn;
-        Method method = new Method(methodNode.owner, methodNode.name, methodNode.desc);
-        for (int i = shift; i < values.size(); i++) {
-          BasicValue value = values.get(i);
-          if (value instanceof ParamValue || (NullValue == value && nullityMask == In.NULLABLE_MASK && "<init>".equals(methodNode.name))) {
-            subResult = combine(subResult, new ConditionalNPE(new Key(method, new In(i - shift, nullityMask), stable)));
+        MethodInsnNode methodNode = (MethodInsnNode)insn;
+        methodCall(opcode, new Method(methodNode.owner, methodNode.name, methodNode.desc), values);
+        break;
+      case INVOKEDYNAMIC:
+        LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
+        if (lambda != null) {
+          int targetOpcode = lambda.getAssociatedOpcode();
+          if(targetOpcode != -1) {
+            methodCall(targetOpcode, lambda.getMethod(), lambda.getLambdaMethodArguments(values, this::newValue));
           }
         }
-        break;
       default:
     }
     return super.naryOperation(insn, values);
+  }
+
+  private void methodCall(int opcode, Method method, List<? extends BasicValue> values) throws AnalyzerException {
+    if (opcode != INVOKESTATIC && values.remove(0) instanceof ParamValue) {
+      subResult = NPE;
+    }
+
+    if(opcode == INVOKEINTERFACE) {
+      if (nullableAnalysis) {
+        for (BasicValue value : values) {
+          if (value instanceof ParamValue) {
+            top = true;
+            break;
+          }
+        }
+      }
+    } else {
+      boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
+      for (int i = 0; i < values.size(); i++) {
+        BasicValue value = values.get(i);
+        if (value instanceof ParamValue || (NullValue == value && nullityMask == In.NULLABLE_MASK && "<init>".equals(method.methodName))) {
+          subResult = combine(subResult, new ConditionalNPE(new Key(method, new In(i, nullityMask), stable)));
+        }
+      }
+    }
   }
 }
 

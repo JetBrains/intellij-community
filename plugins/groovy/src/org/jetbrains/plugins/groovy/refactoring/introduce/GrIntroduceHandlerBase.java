@@ -222,7 +222,6 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   }
 
   public static boolean expressionIsIncorrect(@Nullable GrExpression expression, boolean acceptVoidCalls) {
-    if (expression instanceof GrTupleExpression) return true;
     if (expression instanceof GrParenthesizedExpression) return true;
     if (PsiUtil.isSuperReference(expression)) return true;
     if (expression instanceof GrAssignmentExpression) return true;

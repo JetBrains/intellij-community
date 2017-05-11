@@ -342,7 +342,9 @@ public class AllIcons {
     public static final Icon ArrowLeftDown = IconLoader.getIcon("/diff/arrowLeftDown.png"); // 11x11
     public static final Icon ArrowRight = IconLoader.getIcon("/diff/arrowRight.png"); // 11x11
     public static final Icon ArrowRightDown = IconLoader.getIcon("/diff/arrowRightDown.png"); // 11x11
-    public static final Icon BranchDiff = IconLoader.getIcon("/diff/branchDiff.png"); // 16x16
+    public static final Icon Compare3LeftMiddle = IconLoader.getIcon("/diff/compare3LeftMiddle.png"); // 16x16
+    public static final Icon Compare3LeftRight = IconLoader.getIcon("/diff/compare3LeftRight.png"); // 16x16
+    public static final Icon Compare3MiddleRight = IconLoader.getIcon("/diff/compare3MiddleRight.png"); // 16x16
     public static final Icon Compare4LeftBottom = IconLoader.getIcon("/diff/compare4LeftBottom.png"); // 16x16
     public static final Icon Compare4LeftMiddle = IconLoader.getIcon("/diff/compare4LeftMiddle.png"); // 16x16
     public static final Icon Compare4LeftRight = IconLoader.getIcon("/diff/compare4LeftRight.png"); // 16x16
@@ -354,10 +356,8 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Diff = IconLoader.getIcon("/diff/Diff.png"); // 16x16
-    public static final Icon LeftDiff = IconLoader.getIcon("/diff/leftDiff.png"); // 16x16
     public static final Icon MagicResolve = IconLoader.getIcon("/diff/magicResolve.png"); // 12x12
     public static final Icon Remove = IconLoader.getIcon("/diff/remove.png"); // 11x11
-    public static final Icon RightDiff = IconLoader.getIcon("/diff/rightDiff.png"); // 16x16
 
   }
   
@@ -1110,6 +1110,7 @@ public class AllIcons {
   public static class Providers {
     public static final Icon Apache = IconLoader.getIcon("/providers/apache.png"); // 16x16
     public static final Icon ApacheDerby = IconLoader.getIcon("/providers/apacheDerby.png"); // 16x16
+    public static final Icon Azure = IconLoader.getIcon("/providers/azure.png"); // 16x16
     public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
     public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 16x16
     public static final Icon DB2 = IconLoader.getIcon("/providers/DB2.png"); // 16x16
@@ -1122,6 +1123,7 @@ public class AllIcons {
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); // 16x16
     public static final Icon Oracle = IconLoader.getIcon("/providers/oracle.png"); // 16x16
     public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.png"); // 16x16
+    public static final Icon Redshift = IconLoader.getIcon("/providers/redshift.png"); // 16x16
     public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.png"); // 16x16
     public static final Icon SqlServer = IconLoader.getIcon("/providers/sqlServer.png"); // 16x16
     public static final Icon Sun = IconLoader.getIcon("/providers/sun.png"); // 16x16
@@ -1175,6 +1177,7 @@ public class AllIcons {
 
     }
     public static final Icon TestTerminated = IconLoader.getIcon("/runConfigurations/testTerminated.png"); // 16x16
+    public static final Icon TestUnknown = IconLoader.getIcon("/runConfigurations/testUnknown.png"); // 16x16
     public static final Icon Tomcat = IconLoader.getIcon("/runConfigurations/tomcat.png"); // 16x16
     public static final Icon TrackCoverage = IconLoader.getIcon("/runConfigurations/trackCoverage.png"); // 16x16
     public static final Icon TrackTests = IconLoader.getIcon("/runConfigurations/trackTests.png"); // 16x16

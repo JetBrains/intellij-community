@@ -7,13 +7,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 9, 2005
- * Time: 2:47:49 PM
- * To change this template use File | Settings | File Templates.
- */
 public class UsageViewContext {
 
   protected final SearchContext mySearchContext;

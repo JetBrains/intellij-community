@@ -17,8 +17,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -110,7 +110,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
       support.installSearch(myNameTextField, myDescriptionTextArea);
       myConsumer = support.addControls(myAdditionalControlsPanel, initial);
     }
-    myNameTextField.getDocument().addDocumentListener(new DocumentAdapter() {
+    myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         nameChangedImpl(myProject, initial);
@@ -156,10 +156,9 @@ public abstract class NewEditChangelistPanel extends JPanel {
     return this;
   }
 
+  @Override
   public void requestFocus() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myNameTextField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameTextField, true));
   }
 
   public JComponent getPreferredFocusedComponent() {

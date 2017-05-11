@@ -24,12 +24,14 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -79,21 +81,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
    */
   private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>(); // do not supply initial value to conserve memory
 
-  public CoreProgressManager() {
-    HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
-      @Override
-      public void processStarted() {
-        updateShouldCheckCanceled();
-      }
-
-      @Override
-      public void processFinished() {
-        updateShouldCheckCanceled();
-      }
-
-    }, this);
-  }
-
   // must be under threadsUnderIndicator lock
   private void startBackgroundNonStandardIndicatorsPing() {
     if (myCheckCancelledFuture == null) {
@@ -125,9 +112,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
-  public static boolean runCheckCanceledHooks() {
+  static boolean isThreadUnderIndicator(@NotNull ProgressIndicator indicator, @NotNull Thread thread) {
+    synchronized (threadsUnderIndicator) {
+      Set<Thread> threads = threadsUnderIndicator.get(indicator);
+      return threads != null && threads.contains(thread);
+    }
+  }
+
+  public static boolean runCheckCanceledHooks(@Nullable ProgressIndicator indicator) {
     CheckCanceledHook hook = ourCheckCanceledHook;
-    return hook != null && hook.runHook();
+    return hook != null && hook.runHook(indicator);
   }
 
   @Override
@@ -139,7 +133,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       progress.checkCanceled();
     }
     else {
-      runCheckCanceledHooks();
+      runCheckCanceledHooks(progress);
     }
   }
 
@@ -587,7 +581,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private void updateShouldCheckCanceled() {
+  protected final void updateShouldCheckCanceled() {
     ourCheckCanceledHook = createCheckCanceledHook();
     if (ourCheckCanceledHook != null) {
       shouldCheckCanceled = true;
@@ -742,9 +736,10 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   protected interface CheckCanceledHook {
     /**
+     * @param indicator the indicator whose {@link ProgressIndicator#checkCanceled()} was called, or null if a non-progressive thread performed {@link ProgressManager#checkCanceled()}
      * @return true if the hook has done anything that might take some time.
      */
-    boolean runHook();
+    boolean runHook(@Nullable ProgressIndicator indicator);
   }
 
 }

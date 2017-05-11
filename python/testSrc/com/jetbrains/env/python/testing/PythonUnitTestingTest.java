@@ -131,6 +131,35 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     });
   }
 
+
+  // Ensure failed and error subtests work
+  @Test
+  @EnvTestTagsRequired(tags = "python3")
+  public void testSubTestError() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/subtestError", "test_test.py") {
+
+      @NotNull
+      @Override
+      protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        assertEquals("subtest error reported as success", "Test tree:\n" +
+                                                          "[root]\n" +
+                                                          ".test_test\n" +
+                                                          "..TestThis\n" +
+                                                          "...test_this\n" +
+                                                          "....[test](-)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+
   /**
    * subtest names may have dots and shall not break test tree
    */
@@ -388,7 +417,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
   public void testSubtest() throws Exception {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,
@@ -417,7 +446,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   @EnvTestTagsRequired(tags = "python3") // No subtest in py2
   @Test
   public void testSubtestSkipped() throws Exception {
-    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py") {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/", "test_skipped_subtest.py", 1) {
       @Override
       protected void checkTestResults(@NotNull PyUnitTestProcessRunner runner,
                                       @NotNull String stdout,

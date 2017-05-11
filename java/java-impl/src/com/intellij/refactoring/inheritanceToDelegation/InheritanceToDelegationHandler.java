@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 06.08.2002
- * Time: 17:17:27
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.lang.ContextAwareActionHandler;

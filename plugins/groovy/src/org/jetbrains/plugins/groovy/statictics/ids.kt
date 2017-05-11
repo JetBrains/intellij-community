@@ -19,3 +19,6 @@ package org.jetbrains.plugins.groovy.statictics
 
 @JvmField
 val CONVERT_GROOVY_TO_JAVA_ID = "refactoring.convert.groovyToJava"
+
+@JvmField
+val GROOVY_NEW_CONSOLE = "groovy.new.console"

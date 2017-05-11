@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author Dmitry Avdeev
- *         Date: 7/25/11
+ * An interface representing a generic property. It can be a property inside xml file or a property inside .properties-file
+ *
  */
 public interface IProperty extends Navigatable, Iconable {
   DataKey<IProperty[]> ARRAY_KEY = DataKey.create("IProperty.array");

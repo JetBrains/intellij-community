@@ -1059,7 +1059,7 @@ public class PluginManagerCore {
 
     // http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
     // If a plugin does not include any module dependency tags in its plugin.xml,
-    // it’s assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
+    // it's assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
     final boolean checkModuleDependencies = !ourModulesToContainingPlugins.isEmpty() && !ourModulesToContainingPlugins.containsKey("com.intellij.modules.all");
     if (checkModuleDependencies && !hasModuleDependencies(descriptor)) {
       return "Plugin does not include any module dependency tags in its plugin.xml therefore is assumed legacy and can be loaded only in IntelliJ IDEA";

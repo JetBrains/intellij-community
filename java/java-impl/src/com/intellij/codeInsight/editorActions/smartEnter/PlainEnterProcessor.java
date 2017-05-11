@@ -32,13 +32,6 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Sep 5, 2003
- * Time: 10:54:59 PM
- * To change this template use Options | File Templates.
- */
 public class PlainEnterProcessor implements EnterProcessor {
   @Override
   public boolean doEnter(Editor editor, PsiElement psiElement, boolean isModified) {

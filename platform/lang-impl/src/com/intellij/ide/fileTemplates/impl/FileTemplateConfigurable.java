@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.ide.fileTemplates.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -32,8 +31,8 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.LayerDescriptor;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
@@ -77,11 +76,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 
-/*
- * @author: MYakovlev
- * Date: Jul 26, 2002
- * Time: 12:46:00 PM
- */
 public class FileTemplateConfigurable implements Configurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable");
   @NonNls private static final String EMPTY_HTML = "<html></html>";
@@ -96,7 +90,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private JCheckBox myLiveTemplateBox;
   private JPanel myTopPanel;
   private JEditorPane myDescriptionComponent;
-  private boolean myModified = false;
+  private boolean myModified;
   private URL myDefaultDescriptionUrl;
   private final Project myProject;
 
@@ -123,7 +117,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
   }
 
-  public void setShowInternalMessage(String message) {
+  void setShowInternalMessage(String message) {
     myTopPanel.removeAll();
     if (message == null) {
       myTopPanel.add(new JLabel(IdeBundle.message("label.name")),
@@ -144,7 +138,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myTopPanel.repaint();
   }
 
-  public void setShowAdjustCheckBox(boolean show) {
+  void setShowAdjustCheckBox(boolean show) {
     myAdjustBox.setEnabled(show);
   }
 
@@ -232,7 +226,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     editorSettings.setAdditionalLinesCount(3);
     editorSettings.setCaretRowShown(false);
 
-    editor.getDocument().addDocumentListener(new DocumentAdapter() {
+    editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         onTextChanged();
@@ -256,10 +250,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myModified = true;
   }
 
-  public String getNameValue() {
-    return myNameField.getText();
-  }
-
   private void onNameChanged() {
     ChangeEvent event = new ChangeEvent(this);
     for (ChangeListener changeListener : myChangeListeners) {
@@ -267,7 +257,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
   }
 
-  public void addChangeListener(ChangeListener listener) {
+  void addChangeListener(@NotNull ChangeListener listener) {
     if (!myChangeListeners.contains(listener)) {
       myChangeListeners.add(listener);
     }
@@ -282,8 +272,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (myModified) {
       return true;
     }
-    String name = (myTemplate == null) ? "" : myTemplate.getName();
-    String extension = (myTemplate == null) ? "" : myTemplate.getExtension();
+    String name = myTemplate == null ? "" : myTemplate.getName();
+    String extension = myTemplate == null ? "" : myTemplate.getExtension();
     if (!Comparing.equal(name, myNameField.getText())) {
       return true;
     }
@@ -331,12 +321,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   @Override
   public void reset() {
-    final String text = (myTemplate == null) ? "" : myTemplate.getText();
-    String name = (myTemplate == null) ? "" : myTemplate.getName();
-    String extension = (myTemplate == null) ? "" : myTemplate.getExtension();
-    String description = (myTemplate == null) ? "" : myTemplate.getDescription();
+    final String text = myTemplate == null ? "" : myTemplate.getText();
+    String name = myTemplate == null ? "" : myTemplate.getName();
+    String extension = myTemplate == null ? "" : myTemplate.getExtension();
+    String description = myTemplate == null ? "" : myTemplate.getDescription();
 
-    if ((description.length() == 0) && (myDefaultDescriptionUrl != null)) {
+    if (description.isEmpty() && myDefaultDescriptionUrl != null) {
       try {
         description = UrlUtil.loadText(myDefaultDescriptionUrl);
       }
@@ -367,8 +357,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myDescriptionComponent.setText(description);
     myDescriptionComponent.setCaretPosition(0);
 
-    myNameField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
-    myExtensionField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
+    myNameField.setEditable(myTemplate != null && !myTemplate.isDefault());
+    myExtensionField.setEditable(myTemplate != null && !myTemplate.isDefault());
     myModified = false;
   }
 
@@ -451,15 +441,11 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   public void focusToNameField() {
     myNameField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myNameField, true));
   }
 
   public void focusToExtensionField() {
     myExtensionField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myExtensionField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myExtensionField, true));
   }
 }

@@ -17,13 +17,6 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.ui.update.ComparableObject;
 
-/**
- * Created by IntelliJ IDEA.
- * User: kirillk
- * Date: 9/30/11
- * Time: 6:12 PM
- * To change this template use File | Settings | File Templates.
- */
 public abstract class IdRunnable extends ComparableObject.Impl implements Runnable {
 
   public IdRunnable(Object object) {

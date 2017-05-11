@@ -106,7 +106,13 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         final RegExpPattern pattern = (RegExpPattern)element;
         final String text = buildReplacementText(pattern);
         final RegExpBranch branch = RegExpFactory.createBranchFromText(text, element);
-        pattern.replace(branch.getAtoms()[0]);
+        final PsiElement parent = pattern.getParent();
+        if (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) {
+          parent.replace(branch.getAtoms()[0]);
+        }
+        else {
+          pattern.replace(branch.getAtoms()[0]);
+        }
       }
     }
   }

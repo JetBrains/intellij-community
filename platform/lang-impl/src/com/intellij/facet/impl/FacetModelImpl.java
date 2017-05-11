@@ -21,6 +21,7 @@ import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.FacetManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +58,12 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
 
     myFacets.add(facet);
     facetsChanged();
+  }
+
+  @Override
+  public void addFacet(Facet facet, @Nullable ProjectModelExternalSource externalSource) {
+    addFacet(facet);
+    myManager.setExternalSource(facet, externalSource);
   }
 
   @Override

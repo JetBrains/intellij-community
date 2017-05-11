@@ -17,9 +17,11 @@ package com.jetbrains.edu.learning.stepic;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.DocumentAdapter;
+import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.ui.HoverHyperlinkLabel;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.settings.StudyOptionsProvider;
@@ -27,51 +29,79 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.Document;
-import javax.swing.text.PlainDocument;
+import javax.swing.event.HyperlinkEvent;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 public class StepicStudyOptions implements StudyOptionsProvider {
-  private JTextField myLoginTextField;
-  private JPasswordField myPasswordField;
   private JPanel myPane;
   private JBCheckBox myEnableTestingFromSamples;
+  private JBLabel myUsernameLabel;
+  private HoverHyperlinkLabel myHoverHyperlinkLabel;
+  private StepicUser myStepicUser;
+  private HyperlinkAdapter myListener;
 
   public StepicStudyOptions() {
-    myLoginTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        erasePassword();
-      }
-    });
-    myEnableTestingFromSamples.setEnabled(false);
   }
 
-  private void erasePassword() {
-    setPassword("");
+  @NotNull
+  private HyperlinkAdapter createLogoutListener() {
+    return new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        removeCredentials();
+        updateLoginLabels(null);
+      }
+    };
+  }
+
+  @NotNull
+  private HyperlinkAdapter createAuthorizeListener() {
+    return new HyperlinkAdapter() {
+
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        StudySettings studySettings = StudySettings.getInstance();
+        StepicUser oldUser = studySettings.getUser();
+        EduStepicConnector.doAuthorize(() -> showDialog());
+
+        ProgressManager.getInstance()
+          .runProcessWithProgressSynchronously(() -> {
+                                                 ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
+                                                 StudyUtils.execCancelable(waitForUserToBeSet(studySettings, oldUser));
+                                               }, "Authorizing",
+                                               true,
+                                               DefaultProjectFactory.getInstance().getDefaultProject());
+      }
+
+      @NotNull
+      private Callable<Object> waitForUserToBeSet(StudySettings studySettings, StepicUser oldUser) {
+        return () -> {
+          StepicUser newUser = studySettings.getUser();
+          while (newUser == null || newUser.equals(oldUser)) {
+            TimeUnit.MILLISECONDS.sleep(500);
+            newUser = studySettings.getUser();
+          }
+          StudySettings.getInstance().setUser(myStepicUser);
+          myStepicUser = newUser;
+          updateLoginLabels(myStepicUser);
+          return null;
+        };
+      }
+    };
+  }
+
+  private void showDialog() {
+    OAuthDialog dialog = new OAuthDialog();
+    if (dialog.showAndGet()) {
+      myStepicUser = dialog.getStepicUser();
+      updateLoginLabels(myStepicUser);
+    }
   }
 
   @NotNull
   public JComponent getPanel() {
     return myPane;
-  }
-
-  @NotNull
-  public String getLogin() {
-    return myLoginTextField.getText().trim();
-  }
-
-  public void setLogin(@Nullable final String login) {
-    myLoginTextField.setText(login);
-  }
-
-  @NotNull
-  private String getPassword() {
-    return String.valueOf(myPasswordField.getPassword());
-  }
-
-  private void setPassword(@NotNull final String password) {
-    myPasswordField.setText(password);
   }
 
   private boolean isTestingFromSamplesEnabled() {
@@ -82,11 +112,40 @@ public class StepicStudyOptions implements StudyOptionsProvider {
   public void reset() {
     final StudySettings stepikSettings = StudySettings.getInstance();
     myEnableTestingFromSamples.setSelected(stepikSettings.isEnableTestingFromSamples());
-    final StepicUser user = stepikSettings.getUser();
-    if (user != null) {
-      setLogin(user.getEmail());
-      setPassword(user.getPassword());
+    updateLoginLabels(stepikSettings.getUser());
+  }
+
+  private void updateLoginLabels(@Nullable StepicUser stepicUser) {
+    if (myListener != null) {
+      myHoverHyperlinkLabel.removeHyperlinkListener(myListener);
     }
+
+    if (stepicUser == null) {
+      myUsernameLabel.setText("You're not logged in");
+      myHoverHyperlinkLabel.setText("Authorize on Stepik");
+
+      myListener = createAuthorizeListener();
+      myHoverHyperlinkLabel.addHyperlinkListener(myListener);
+    }
+    else {
+      String firstName = stepicUser.getFirstName();
+      String lastName = stepicUser.getLastName();
+      String loggedInText = "You're logged in";
+      if (firstName == null || lastName == null || firstName.isEmpty() || lastName.isEmpty()) {
+        myUsernameLabel.setText(loggedInText);
+      }
+      else {
+        myUsernameLabel.setText(loggedInText + " as " + firstName + " " + lastName);
+      }
+
+      myHoverHyperlinkLabel.setText("Log out");
+      myListener = createLogoutListener();
+      myHoverHyperlinkLabel.addHyperlinkListener(myListener);
+    }
+  }
+
+  public void createUIComponents() {
+    myHoverHyperlinkLabel = new HoverHyperlinkLabel("");
   }
 
   @Override
@@ -102,37 +161,16 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     }
 
     final StepicUser user = stepikSettings.getUser();
-    String savedEmail = user == null ? "" : user.getEmail();
-    String savedPassword = user == null ? "" : user.getPassword();
-    final boolean isCredentialsModified = !getLogin().equals(savedEmail) || !getPassword().equals(savedPassword);
-    if (isCredentialsModified) {
-      final String login = getLogin();
-      final String password = getPassword();
-      if (!StringUtil.isEmptyOrSpaces(login) && !StringUtil.isEmptyOrSpaces(password)) {
-        // login to post credentials
-        final StepicUser[] stepicUser = new StepicUser[1];
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          () -> {
-            ProgressManager.getInstance().getProgressIndicator().setIndeterminate(true);
-            stepicUser[0] = StudyUtils.execCancelable(() -> EduStepicAuthorizedClient.login(login, password));
-          }, "Logging In", true,
-          null);
-
-        if (stepicUser[0] != null) {
-          stepikSettings.setUser(stepicUser[0]);
-        }
-        else {
-          throw new ConfigurationException("Unable to login");
-        }
-      }
-      else {
-        removeCredentials();
-      }
+    boolean userDeleted = myStepicUser == null && user != null;
+    boolean userModified = myStepicUser != null && !myStepicUser.equals(user);
+    if (userDeleted || userModified) {
+      stepikSettings.setUser(myStepicUser);
     }
+    reset();
   }
 
-  private static void removeCredentials() {
-    StudySettings.getInstance().setUser(null);
+  private void removeCredentials() {
+    myStepicUser = null;
     EduStepicAuthorizedClient.invalidateClient();
   }
 
@@ -147,16 +185,8 @@ public class StepicStudyOptions implements StudyOptionsProvider {
     boolean isTestOptionModified = !isTestingFromSamplesEnabled() == stepikSettings.isEnableTestingFromSamples();
     final StepicUser user = stepikSettings.getUser();
 
-    String email = user == null ? "" : user.getEmail();
-    String password = user == null ? "" : user.getPassword();
-
-    return !getLogin().equals(email)
-           || !getPassword().equals(password)
-           || isTestOptionModified;
-  }
-
-  private void createUIComponents() {
-    Document doc = new PlainDocument();
-    myPasswordField = new JPasswordField(doc, null, 0);
+    boolean userDeleted = myStepicUser == null && user != null;
+    boolean userModified = myStepicUser != null && !myStepicUser.equals(user);
+    return isTestOptionModified || (userDeleted || userModified);
   }
 }

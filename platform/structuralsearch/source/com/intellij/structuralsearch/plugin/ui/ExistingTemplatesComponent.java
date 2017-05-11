@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,20 +43,13 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Apr 2, 2004
- * Time: 1:27:54 PM
- * To change this template use File | Settings | File Templates.
- */
 public class ExistingTemplatesComponent {
   private final Tree patternTree;
   private final DefaultTreeModel patternTreeModel;
   private final DefaultMutableTreeNode userTemplatesNode;
   private final JComponent panel;
   private final CollectionListModel<Configuration> historyModel;
-  private final JList historyList;
+  private final JList<Configuration> historyList;
   private final JComponent historyPanel;
   private DialogWrapper owner;
   private final Project project;
@@ -150,7 +144,7 @@ public class ExistingTemplatesComponent {
     historyPanel = new JPanel(new BorderLayout());
     historyPanel.add(BorderLayout.NORTH, new JLabel(SSRBundle.message("used.templates")));
 
-    historyList = new JBList(historyModel);
+    historyList = new JBList<>(historyModel);
     historyPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(historyList));
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     historyList.setSelectedIndex(0);
@@ -158,6 +152,23 @@ public class ExistingTemplatesComponent {
     final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, (Convertor<Object, String>)o -> o instanceof Configuration ? ((Configuration)o).getName() : o.toString());
     historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
     configureSelectTemplateAction(historyList);
+  }
+
+  public void selectConfiguration(String name) {
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)patternTreeModel.getRoot();
+    final int count = root.getChildCount();
+    for (int i = 0; i < count; i++) {
+      final DefaultMutableTreeNode category = (DefaultMutableTreeNode)root.getChildAt(i);
+      final int count1 = category.getChildCount();
+      for (int j = 0; j < count1; j++ ) {
+        final DefaultMutableTreeNode leaf = (DefaultMutableTreeNode)category.getChildAt(j);
+        final Configuration configuration = (Configuration)leaf.getUserObject();
+        if (name.equals(configuration.getName())) {
+          TreeUtil.selectInTree(leaf, false, patternTree, false);
+          return;
+        }
+      }
+    }
   }
 
   public void setUserTemplates(ConfigurationManager configurationManager) {
@@ -226,7 +237,7 @@ public class ExistingTemplatesComponent {
     return ServiceManager.getService(project, ExistingTemplatesComponent.class);
   }
 
-  private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer {
+  private static class ExistingTemplatesListCellRenderer extends ColoredListCellRenderer<Configuration> {
 
     private final ListSpeedSearch mySpeedSearch;
 
@@ -235,18 +246,14 @@ public class ExistingTemplatesComponent {
     }
 
     @Override
-    protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean focus) {
-      if (!(value instanceof Configuration)) {
-        return;
-      }
-      final Configuration configuration = (Configuration)value;
+    protected void customizeCellRenderer(@NotNull JList list, Configuration value, int index, boolean selected, boolean focus) {
       final Color background = (selected && !focus) ?
                                UIUtil.getListUnfocusedSelectionBackground() : UIUtil.getListBackground(selected);
       final Color foreground = UIUtil.getListForeground(selected);
       setPaintFocusBorder(false);
-      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), configuration.getName(), SimpleTextAttributes.STYLE_PLAIN,
+      SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), value.getName(), SimpleTextAttributes.STYLE_PLAIN,
                                  foreground, background, this);
-      final long created = configuration.getCreated();
+      final long created = value.getCreated();
       if (created > 0) {
         final String createdString = DateFormatUtil.formatPrettyDateTime(created);
         append(" (" + createdString + ')',

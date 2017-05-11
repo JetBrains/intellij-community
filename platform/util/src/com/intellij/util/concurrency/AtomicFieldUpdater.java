@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 26, 2007
- * Time: 3:52:05 PM
- */
 package com.intellij.util.concurrency;
 
 import com.intellij.util.BitUtil;

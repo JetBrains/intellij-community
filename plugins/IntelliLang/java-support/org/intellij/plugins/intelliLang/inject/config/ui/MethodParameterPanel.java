@@ -21,8 +21,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -77,7 +77,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
 
     myClassField = new ReferenceEditorWithBrowseButton(new BrowseClassListener(project), project, s -> {
       final Document document = PsiUtilEx.createDocument(s, project);
-      document.addDocumentListener(new DocumentAdapter() {
+      document.addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(final DocumentEvent e) {
           updateParamTree();
@@ -89,7 +89,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     myClassPanel.add(myClassField, BorderLayout.CENTER);
     myParamsTable.getTree().setShowsRootHandles(true);
     myParamsTable.getTree().setCellRenderer(new ColoredTreeCellRenderer() {
-
+      @Override
       public void customizeCellRenderer(@NotNull JTree tree,
                                         Object value,
                                         boolean selected,
@@ -225,6 +225,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
   }
 
 
+  @Override
   protected void apply(final MethodParameterInjection other) {
     final boolean applyMethods = ReadAction.compute(() -> {
       other.setClassName(getClassName());
@@ -235,6 +236,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
+  @Override
   protected void resetImpl() {
     setPsiClass(myOrigInjection.getClassName());
 
@@ -263,6 +265,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
@@ -313,31 +316,38 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
         new ColumnInfo<DefaultMutableTreeNode, Boolean>(" ") { // "" for the first column's name isn't a good idea
           final BooleanTableCellRenderer myRenderer = new BooleanTableCellRenderer();
 
+          @Override
           public Boolean valueOf(DefaultMutableTreeNode o) {
             return isNodeSelected(o);
           }
 
+          @Override
           public int getWidth(JTable table) {
             return myRenderer.getPreferredSize().width;
           }
 
+          @Override
           public TableCellEditor getEditor(DefaultMutableTreeNode o) {
             return new DefaultCellEditor(new JCheckBox());
           }
 
+          @Override
           public TableCellRenderer getRenderer(DefaultMutableTreeNode o) {
             myRenderer.setEnabled(isCellEditable(o));
             return myRenderer;
           }
 
+          @Override
           public void setValue(DefaultMutableTreeNode o, Boolean value) {
             setNodeSelected(o, Boolean.TRUE.equals(value));
           }
 
+          @Override
           public Class<Boolean> getColumnClass() {
             return Boolean.class;
           }
 
+          @Override
           public boolean isCellEditable(DefaultMutableTreeNode o) {
             return valueOf(o) != null;
           }
@@ -353,6 +363,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       myProject = project;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final TreeClassChooserFactory factory = TreeClassChooserFactory.getInstance(myProject);
       final TreeClassChooser chooser = factory.createAllProjectScopeChooser("Select Class");
@@ -371,6 +382,7 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
       super(treeTableModel);
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
         final Collection selection = getSelection();

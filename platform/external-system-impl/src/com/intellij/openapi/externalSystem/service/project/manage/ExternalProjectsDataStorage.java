@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -36,6 +35,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModuleTypeId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Alarm;
@@ -51,7 +51,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -419,12 +418,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   @NotNull
   public static Path getProjectConfigurationDir(@NotNull Project project) {
-    return getExternalBuildSystemDir("Projects").resolve(project.getLocationHash());
-  }
-
-  @NotNull
-  private static Path getExternalBuildSystemDir(String folder) {
-    return Paths.get(PathManager.getSystemPath(), "external_build_system", folder).toAbsolutePath();
+    return ProjectUtil.getProjectCachePath(project, "external_build_system");
   }
 
   @Nullable

@@ -33,7 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
@@ -128,12 +128,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     // so we need resize window when it is shown
     doWhenFirstShown(this, this::pack);
 
-    ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         Disposer.dispose(FlatWelcomeFrame.this);
       }
-    }, this);
+    });
 
     myBalloonLayout = new WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8), myScreen.myEventListener, myScreen.myEventLocation);
 
@@ -488,11 +488,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           for (ListSelectionListener listener : listeners) {
             listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
           }
-          JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
+          JComponent toFocus = getPreferredFocusedComponent(panel);
           if (toFocus != null) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true);
-            });
+            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
           }
         };
         final String name = action.getClass().getName();
@@ -610,9 +608,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           } else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
             if (focusListOnLeft) {
               if (list != null) {
-                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-                  IdeFocusManager.getGlobalInstance().requestFocus(list, true);
-                });
+                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(list, true));
               }
             } else {
               focusPrev(comp);
@@ -643,9 +639,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (policy != null) {
         Component prev = policy.getComponentBefore(FlatWelcomeFrame.this, comp);
         if (prev != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(prev, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(prev, true));
         }
       }
     }
@@ -655,9 +649,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       if (policy != null) {
         Component next = policy.getComponentAfter(FlatWelcomeFrame.this, comp);
         if (next != null) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(next, true);
-          });
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(next, true));
         }
       }
     }

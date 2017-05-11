@@ -21,7 +21,7 @@ import com.intellij.psi.*;
 /**
  * Tree filter for searching symbols ('T)
  */
-public class SymbolNodeFilter extends JavaElementVisitor implements NodeFilter {
+public class SymbolNodeFilter implements NodeFilter {
 
   private static final NodeFilter INSTANCE = new SymbolNodeFilter();
 

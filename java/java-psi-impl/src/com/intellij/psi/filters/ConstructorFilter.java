@@ -18,13 +18,6 @@ package com.intellij.psi.filters;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 28.01.2003
- * Time: 21:22:31
- * To change this template use Options | File Templates.
- */
 public class ConstructorFilter extends ClassFilter {
   public ConstructorFilter(){
     super(PsiMethod.class);

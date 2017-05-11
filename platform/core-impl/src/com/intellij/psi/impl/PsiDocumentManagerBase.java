@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.DocumentRunnable;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -576,7 +575,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       whenAllCommitted.run();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(() -> performWhenAllCommitted(whenAllCommitted));
+      UIUtil.invokeLaterIfNeeded(() -> { if (!myProject.isDisposed()) performWhenAllCommitted(whenAllCommitted);});
     }
   }
 
@@ -1022,7 +1021,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     return mySynchronizer;
   }
 
-  private static class UncommittedInfo extends DocumentAdapter implements PrioritizedInternalDocumentListener {
+  private static class UncommittedInfo implements PrioritizedInternalDocumentListener, DocumentListener {
     private final DocumentImpl myOriginal;
     private final FrozenDocument myFrozen;
     private final List<DocumentEvent> myEvents = ContainerUtil.newArrayList();

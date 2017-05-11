@@ -701,7 +701,7 @@ public class GenerateMembersUtil {
     return generatePrototype(field, result);
   }
 
-  @Nullable
+  @NotNull
   private static PsiMethod generatePrototype(@NotNull PsiField field, PsiMethod result) {
     return setVisibility(field, annotateOnOverrideImplement(field.getContainingClass(), result));
   }

@@ -100,6 +100,9 @@ final class ImmutableText extends ImmutableCharSequence implements CharArrayExte
 
   @Nullable
   private static byte[] toBytesIfPossible(CharSequence seq) {
+    if (seq instanceof ByteArrayCharSequence) {
+      return ((ByteArrayCharSequence)seq).getBytes();
+    }
     byte[] bytes = new byte[seq.length()];
     char[] chars = CharArrayUtil.fromSequenceWithoutCopying(seq);
     if (chars == null) {

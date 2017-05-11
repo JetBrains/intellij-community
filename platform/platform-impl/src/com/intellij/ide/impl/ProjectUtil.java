@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import java.io.IOException;
  * @author Eugene Belyaev
  */
 public class ProjectUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.impl.ProjectUtil");
+  private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   private ProjectUtil() { }
 
@@ -283,11 +283,6 @@ public class ProjectUtil {
 
     IProjectStore projectStore = ProjectKt.getStateStore(project);
     String existingBaseDirPath = projectStore.getProjectBasePath();
-    if (existingBaseDirPath == null) {
-      // could be null if not yet initialized
-      return false;
-    }
-
     File projectFile = new File(projectFilePath);
     if (projectFile.isDirectory()) {
       return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);

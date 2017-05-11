@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Supplier;
 
-public class DelegatingFontPreferences implements FontPreferences {
+public class DelegatingFontPreferences extends FontPreferences {
   private Supplier<FontPreferences> myDelegateSupplier;
 
   public DelegatingFontPreferences(@NotNull Supplier<FontPreferences> delegateSupplier) {
@@ -70,9 +70,5 @@ public class DelegatingFontPreferences implements FontPreferences {
     return myDelegateSupplier.get().getLineSpacing();
   }
 
-  @Override
-  public void setLineSpacing(float lineSpacing) {
-    myDelegateSupplier.get().setLineSpacing(lineSpacing);
-  }
 
 }

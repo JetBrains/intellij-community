@@ -39,7 +39,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -92,11 +95,10 @@ public class TemplateState implements Disposable {
   private boolean myDocumentChanged = false;
 
   @Nullable private CommandListener myCommandListener;
-  @Nullable private CaretListener myCaretListener;
   @Nullable private LookupListener myLookupListener;
 
   private final List<TemplateEditingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private DocumentAdapter myEditorDocumentListener;
+  private DocumentListener myEditorDocumentListener;
   private final Map myProperties = new HashMap();
   private boolean myTemplateIndented = false;
   private Document myDocument;
@@ -113,7 +115,7 @@ public class TemplateState implements Disposable {
 
   private void initListeners() {
     if (isDisposed()) return;
-    myEditorDocumentListener = new DocumentAdapter() {
+    myEditorDocumentListener = new DocumentListener() {
       @Override
       public void beforeDocumentChange(DocumentEvent e) {
         myDocumentChanged = true;
@@ -167,7 +169,15 @@ public class TemplateState implements Disposable {
       }
     };
 
-    myCaretListener = new CaretAdapter() {
+    if (myEditor != null) {
+      installCaretListener(myEditor);
+    }
+    myDocument.addDocumentListener(myEditorDocumentListener, this);
+    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+  }
+
+  private void installCaretListener(@NotNull Editor editor) {
+    CaretListener listener = new CaretListener() {
       @Override
       public void caretAdded(CaretEvent e) {
         if (isMultiCaretMode()) {
@@ -183,11 +193,8 @@ public class TemplateState implements Disposable {
       }
     };
 
-    if (myEditor != null) {
-      myEditor.getCaretModel().addCaretListener(myCaretListener);
-    }
-    myDocument.addDocumentListener(myEditorDocumentListener, this);
-    CommandProcessor.getInstance().addCommandListener(myCommandListener, this);
+    editor.getCaretModel().addCaretListener(listener);
+    Disposer.register(this, () -> editor.getCaretModel().removeCaretListener(listener));
   }
 
   private boolean isCaretInsideNextVariable() {
@@ -231,7 +238,6 @@ public class TemplateState implements Disposable {
 
     myEditorDocumentListener = null;
     myCommandListener = null;
-    myCaretListener = null;
 
     myProcessor = null;
 

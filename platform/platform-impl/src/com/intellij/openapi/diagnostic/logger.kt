@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ inline fun Logger.debug(e: Exception? = null, lazyMessage: () -> String) {
   }
 }
 
-inline fun <T> Logger.catchAndLog(runnable: () -> T): T? {
+inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
   try {
     return runnable()
   }

@@ -22,11 +22,6 @@ import com.intellij.debugger.engine.SuspendContext;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
 import com.sun.jdi.Value;
 
-/**
- * User: lex
- * Date: Sep 16, 2003
- * Time: 10:58:26 AM
- */
 public abstract class ToStringCommand implements SuspendContextCommand {
   private final EvaluationContext myEvaluationContext;
   private final Value myValue;

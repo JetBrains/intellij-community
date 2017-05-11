@@ -72,8 +72,9 @@ public class JavacMain {
     }
 
     final boolean usingJavac = compilingTool instanceof JavacCompilerTool;
+    final boolean javacBefore9 = isJavacBefore9(compilingTool);
     final JavacFileManager fileManager = new JavacFileManager(
-      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, canUseOptimizedFileManager(compilingTool)), JavaSourceTransformer.getTransformers()
+      new ContextImpl(compiler, diagnosticConsumer, outputSink, canceledStatus, javacBefore9), JavaSourceTransformer.getTransformers()
     );
 
     if (!platformClasspath.isEmpty()) {
@@ -140,15 +141,19 @@ public class JavacMain {
         }
       }
 
-      try {
-        // ensure the source path is set;
-        // otherwise, if not set, javac attempts to search both classes and sources in classpath;
-        // so if some classpath jars contain sources, it will attempt to compile them
-        fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
-      }
-      catch (IOException e) {
-        fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
-        return false;
+      if (javacBefore9 || !sourcePath.isEmpty()) {
+        try {
+          // ensure the source path is set;
+          // otherwise, if not set, javac attempts to search both classes and sources in classpath;
+          // so if some classpath jars contain sources, it will attempt to compile them
+          // starting from javac9 it seems that setting empty source path may affect module compilation logic, so starting from javac9
+          // we avoid forcing empty sourcepath
+          fileManager.setLocation(StandardLocation.SOURCE_PATH, sourcePath);
+        }
+        catch (IOException e) {
+          fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
+          return false;
+        }
       }
 
       //noinspection IOResourceOpenedButNotSafelyClosed
@@ -227,7 +232,7 @@ public class JavacMain {
     });
   }
 
-  private static boolean canUseOptimizedFileManager(JavaCompilingTool compilingTool) {
+  private static boolean isJavacBefore9(JavaCompilingTool compilingTool) {
     // since java 9 internal API's used by the optimizedFileManager have changed
     return compilingTool instanceof JavacCompilerTool && (JAVA_RUNTIME_VERSION.startsWith("1.8.") || JAVA_RUNTIME_VERSION.startsWith("1.7.") || JAVA_RUNTIME_VERSION.startsWith("1.6."));
   }

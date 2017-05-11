@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.execution.impl;
 
 import com.intellij.execution.*;
@@ -66,7 +65,6 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
 class RunConfigurable extends BaseConfigurable {
-
   @NonNls private static final Object DEFAULTS = new Object() {
     @Override
     public String toString() {
@@ -135,7 +133,7 @@ class RunConfigurable extends BaseConfigurable {
     });
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
-      public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
+      public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
                                         boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode) {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
@@ -161,7 +159,6 @@ class RunConfigurable extends BaseConfigurable {
             setIcon(((ConfigurationFactory)userObject).getIcon());
           }
           else {
-            final RunManagerImpl runManager = getRunManager();
             RunnerAndConfigurationSettings configuration = null;
             if (userObject instanceof SingleConfigurationConfigurable) {
               final SingleConfigurationConfigurable<?> settings = (SingleConfigurationConfigurable)userObject;
@@ -245,7 +242,7 @@ class RunConfigurable extends BaseConfigurable {
             updateRightPanel((SingleConfigurationConfigurable<RunConfiguration>)userObject);
           }
           else if (userObject instanceof String) {
-            showFolderField(getSelectedConfigurationType(), node, (String)userObject);
+            showFolderField(node, (String)userObject);
           }
           else {
             if (userObject instanceof ConfigurationType || userObject == DEFAULTS) {
@@ -254,11 +251,9 @@ class RunConfigurable extends BaseConfigurable {
                 drawPressAddButtonMessage(userObject == DEFAULTS ? null : (ConfigurationType)userObject);
               }
               else {
-                final ConfigurationType type = (ConfigurationType)userObject;
-                ConfigurationFactory[] factories = type.getConfigurationFactories();
+                ConfigurationFactory[] factories = ((ConfigurationType)userObject).getConfigurationFactories();
                 if (factories.length == 1) {
-                  final ConfigurationFactory factory = factories[0];
-                  showTemplateConfigurable(factory);
+                  showTemplateConfigurable(factories[0]);
                 }
                 else {
                   drawPressAddButtonMessage((ConfigurationType)userObject);
@@ -335,7 +330,7 @@ class RunConfigurable extends BaseConfigurable {
     updateRightPanel(configurable);
   }
 
-  private void showFolderField(final ConfigurationType type, final DefaultMutableTreeNode node, final String folderName) {
+  private void showFolderField(final DefaultMutableTreeNode node, final String folderName) {
     myRightPanel.removeAll();
     JPanel p = new JPanel(new MigLayout("ins " + myToolbarDecorator.getActionsPanel().getHeight() + " 5 0 0, flowx"));
     final JTextField textField = new JTextField(folderName);
@@ -349,9 +344,7 @@ class RunConfigurable extends BaseConfigurable {
     textField.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          getGlobalInstance().requestFocus(myTree, true);
-        });
+        getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myTree, true));
       }
     });
     p.add(new JLabel("Folder name:"), "gapright 5");
@@ -363,9 +356,7 @@ class RunConfigurable extends BaseConfigurable {
     myRightPanel.repaint();
     if (isFolderCreating) {
       textField.selectAll();
-      getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        getGlobalInstance().requestFocus(textField, true);
-      });
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(textField, true));
     }
   }
 
@@ -644,10 +635,6 @@ class RunConfigurable extends BaseConfigurable {
     setModified(false);
   }
 
-  public Configurable getSelectedConfigurable() {
-    return mySelectedConfigurable;
-  }
-
   @Override
   public void apply() throws ConfigurationException {
     getRunManager().fireBeginUpdate();
@@ -737,9 +724,7 @@ class RunConfigurable extends BaseConfigurable {
         }
         else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
           settings = (RunnerAndConfigurationSettings)userObject;
-          configurationBean = new RunConfigurationBean(settings,
-                                                       settings.isShared(),
-                                                       manager.getBeforeRunTasks(settings.getConfiguration()));
+          configurationBean = new RunConfigurationBean(settings, settings.isShared());
 
         }
         if (configurationBean != null) {
@@ -835,34 +820,43 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public boolean isModified() {
-    if (super.isModified()) return true;
+    if (super.isModified()) {
+      return true;
+    }
+
     final RunManagerImpl runManager = getRunManager();
-    final List<RunConfiguration> allConfigurations = runManager.getAllConfigurationsList();
-    final List<RunConfiguration> currentConfigurations = new ArrayList<>();
+    final List<RunnerAndConfigurationSettings> allSettings = runManager.getAllSettings();
+    final List<RunnerAndConfigurationSettings> currentSettings = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
-      if (object instanceof ConfigurationType) {
-        final List<RunnerAndConfigurationSettings> configurationSettings = runManager.getConfigurationSettingsList(
-          (ConfigurationType)object);
-        List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
-        collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
-        if (configurationSettings.size() != configurationNodes.size()) return true;
-        for (int j = 0; j < configurationNodes.size(); j++) {
-          DefaultMutableTreeNode configurationNode = configurationNodes.get(j);
-          final Object userObject = configurationNode.getUserObject();
-          if (userObject instanceof SingleConfigurationConfigurable) {
-            SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-            if (configurable.isModified()) return true;
-            currentConfigurations.add(configurable.getConfiguration());
+      if (!(object instanceof ConfigurationType)) {
+        continue;
+      }
+
+      List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
+      collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
+      if (RunConfigurableHelperKt.countSettingsOfType(allSettings, (ConfigurationType)object) != configurationNodes.size()) {
+        return true;
+      }
+
+      for (DefaultMutableTreeNode configurationNode : configurationNodes) {
+        final Object userObject = configurationNode.getUserObject();
+        if (userObject instanceof SingleConfigurationConfigurable) {
+          SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+          if (configurable.isModified()) {
+            return true;
           }
-          else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-            currentConfigurations.add(((RunnerAndConfigurationSettings)userObject).getConfiguration());
-          }
+          currentSettings.add((RunnerAndConfigurationSettings)configurable.getSettings());
+        }
+        else if (userObject instanceof RunnerAndConfigurationSettings) {
+          currentSettings.add(((RunnerAndConfigurationSettings)userObject));
         }
       }
     }
-    if (allConfigurations.size() != currentConfigurations.size() || !allConfigurations.containsAll(currentConfigurations)) return true;
+    if (allSettings.size() != currentSettings.size() || !allSettings.containsAll(currentSettings)) {
+      return true;
+    }
 
     for (Configurable configurable : myStoredComponents.values()) {
       if (configurable.isModified()) return true;
@@ -1065,7 +1059,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
   SingleConfigurationConfigurable<RunConfiguration> createNewConfiguration(final ConfigurationFactory factory) {
-    DefaultMutableTreeNode node = null;
+    DefaultMutableTreeNode node;
     DefaultMutableTreeNode selectedNode = null;
     TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath != null) {
@@ -1651,24 +1645,18 @@ class RunConfigurable extends BaseConfigurable {
   private static class RunConfigurationBean {
     private final RunnerAndConfigurationSettings mySettings;
     private final boolean myShared;
-    private final List<BeforeRunTask> myStepsBeforeLaunch;
     private final SingleConfigurationConfigurable myConfigurable;
 
-    public RunConfigurationBean(final RunnerAndConfigurationSettings settings,
-                                final boolean shared,
-                                final List<BeforeRunTask<?>> stepsBeforeLaunch) {
+    public RunConfigurationBean(@NotNull RunnerAndConfigurationSettings settings, boolean shared) {
       mySettings = settings;
       myShared = shared;
-      myStepsBeforeLaunch = Collections.unmodifiableList(stepsBeforeLaunch);
       myConfigurable = null;
     }
 
     public RunConfigurationBean(final SingleConfigurationConfigurable configurable) {
       myConfigurable = configurable;
       mySettings = (RunnerAndConfigurationSettings)myConfigurable.getSettings();
-      final ConfigurationSettingsEditorWrapper editorWrapper = (ConfigurationSettingsEditorWrapper)myConfigurable.getEditor();
       myShared = configurable.isStoreProjectConfiguration();
-      myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
     }
 
     public RunnerAndConfigurationSettings getSettings() {
@@ -1679,17 +1667,13 @@ class RunConfigurable extends BaseConfigurable {
       return myShared;
     }
 
-    public List<BeforeRunTask> getStepsBeforeLaunch() {
-      return myStepsBeforeLaunch;
-    }
-
     public SingleConfigurationConfigurable getConfigurable() {
       return myConfigurable;
     }
 
     @Override
     public String toString() {
-      return String.valueOf(mySettings);
+      return mySettings.toString();
     }
   }
 
@@ -1934,18 +1918,6 @@ class RunConfigurable extends BaseConfigurable {
           }
         }
       }
-    }
-
-    @Nullable
-    private RunnerAndConfigurationSettings getSettings(@NotNull DefaultMutableTreeNode treeNode) {
-      Object userObject = treeNode.getUserObject();
-      if (userObject instanceof SingleConfigurationConfigurable) {
-        SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-        return (RunnerAndConfigurationSettings)configurable.getSettings();
-      } else if (userObject instanceof RunnerAndConfigurationSettings) {
-        return (RunnerAndConfigurationSettings)userObject;
-      }
-      return null;
     }
 
     @Nullable

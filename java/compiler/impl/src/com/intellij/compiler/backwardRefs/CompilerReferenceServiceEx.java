@@ -25,7 +25,7 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 import java.util.SortedSet;
 
 /**
- * The service is used for java relevant chain completion
+ * The service is used for java relevant chain completion / frequently used superclass inspection
  */
 public abstract class CompilerReferenceServiceEx extends CompilerReferenceService {
   protected CompilerReferenceServiceEx(Project project) {
@@ -43,4 +43,11 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
   @NotNull
   public abstract String getName(int idx)
     throws ReferenceIndexUnavailableException;
+
+  public abstract int getNameId(@NotNull String name) throws ReferenceIndexUnavailableException;
+
+  @NotNull
+  public abstract LightRef.LightClassHierarchyElementDef[] getDirectInheritors(LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException;
+
+  public abstract int getInheritorCount(LightRef.LightClassHierarchyElementDef baseClass) throws ReferenceIndexUnavailableException;
 }

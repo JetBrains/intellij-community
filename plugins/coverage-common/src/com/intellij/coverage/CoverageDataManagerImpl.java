@@ -44,7 +44,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -458,19 +458,18 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   @Override
   public void projectOpened() {
     EditorFactory.getInstance().addEditorFactoryListener(new CoverageEditorFactoryListener(), myProject);
-    ProjectManagerAdapter projectManagerListener = new ProjectManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
+        if (project != myProject) {
+          return;
+        }
+
         synchronized (myLock) {
           myIsProjectClosing = true;
         }
       }
-    };
-    ProjectManager.getInstance().addProjectManagerListener(myProject, projectManagerListener);
-  }
-
-  @Override
-  public void projectClosed() {
+    });
   }
 
   @Override

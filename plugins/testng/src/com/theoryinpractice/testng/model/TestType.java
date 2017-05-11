@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 24, 2005
- * Time: 9:54:02 PM
- */
 package com.theoryinpractice.testng.model;
 
 public enum TestType

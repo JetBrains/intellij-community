@@ -47,11 +47,6 @@ import org.jetbrains.annotations.NonNls;
 
 import java.util.Collections;
 
-/**
- * User: lex
- * Date: Sep 18, 2003
- * Time: 3:07:19 PM
- */
 public class ArrayRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ArrayRenderer");
 
@@ -122,9 +117,6 @@ public class ArrayRenderer extends NodeRendererImpl{
 
           DebuggerTreeNode arrayItemNode =
             nodeManager.createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
-          if (arrayItemNode == null) {
-            continue;
-          }
 
           builder.addChildren(Collections.singletonList(arrayItemNode), false);
           added++;

@@ -423,11 +423,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
 
     @Override
-    public boolean isModalityEntered() {
-      throw new RuntimeException();
-    }
-
-    @Override
     public void finish(@NotNull TaskInfo task) {
     }
 

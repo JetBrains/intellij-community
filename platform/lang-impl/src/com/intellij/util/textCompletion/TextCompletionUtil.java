@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -59,7 +59,7 @@ public class TextCompletionUtil {
     if (!StringUtil.isEmpty(completionShortcutText)) {
 
       final Ref<Boolean> toShowHintRef = new Ref<>(true);
-      editor.getDocument().addDocumentListener(new DocumentAdapter() {
+      editor.getDocument().addDocumentListener(new DocumentListener() {
         @Override
         public void documentChanged(DocumentEvent e) {
           toShowHintRef.set(false);

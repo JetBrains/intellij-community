@@ -40,6 +40,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     public int FONT_SIZE = FontPreferences.DEFAULT_FONT_SIZE;
     public @NotNull String FONT_FAMILY = FontPreferences.DEFAULT_FONT_NAME;
     public float FONT_SCALE = 1.0f;
+    public float LINE_SPACING = FontPreferences.DEFAULT_LINE_SPACING;
 
     /**
      * Serialization constructor.
@@ -52,6 +53,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
       FONT_FAMILY = fontPreferences.getFontFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
       FONT_SCALE = UISettings.getNormalizingScale();
+      LINE_SPACING = fontPreferences.getLineSpacing();
     }
   }
 
@@ -71,6 +73,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     myFontPreferences.clear();
     int fontSize = UISettings.restoreFontSize(state.FONT_SIZE, state.FONT_SCALE);
     myFontPreferences.register(state.FONT_FAMILY, fontSize);
+    myFontPreferences.setLineSpacing(state.LINE_SPACING);
     myFontPreferences.setChangeListener(() -> EditorFontCache.getInstance().reset());
   }
 

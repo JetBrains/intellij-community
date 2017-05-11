@@ -18,6 +18,7 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
@@ -56,7 +57,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Nullable
   public static DefaultActionGroup createActionGroup(Project project, Editor editor, PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+      SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
       if (!editor.getSelectionModel().hasSelection()) return null;
     }
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(editor, file, true);

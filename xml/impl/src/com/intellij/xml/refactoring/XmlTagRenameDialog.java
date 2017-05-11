@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: spleaner
- * Date: Aug 9, 2007
- * Time: 4:45:40 PM
- */
 package com.intellij.xml.refactoring;
 
 import com.intellij.codeInsight.completion.TagNameReferenceCompletionProvider;

@@ -36,7 +36,7 @@ import java.util.Locale;
   storages = @Storage(FileTemplateSettings.EXPORTABLE_SETTINGS_FILE)
 )
 public class FileTemplateSettings extends FileTemplatesLoader implements PersistentStateComponent<Element> {
-  public final static String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
+  public static final String EXPORTABLE_SETTINGS_FILE = "file.template.settings.xml";
 
   private static final String ELEMENT_TEMPLATE = "template";
   private static final String ATTRIBUTE_NAME = "name";

@@ -20,13 +20,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlTag;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 03.02.2003
- * Time: 18:29:13
- * To change this template use Options | File Templates.
- */
 public class RootTagFilter extends PositionElementFilter{
   public RootTagFilter(ElementFilter filter){
     setFilter(filter);

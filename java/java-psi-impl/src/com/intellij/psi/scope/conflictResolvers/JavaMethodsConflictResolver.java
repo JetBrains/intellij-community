@@ -41,13 +41,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 10.06.2003
- * Time: 19:41:51
- * To change this template use Options | File Templates.
- */
 public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver");
 
@@ -655,7 +648,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   }
 
   // 15.12.2.5
-  // A type S is more specific than a type T for any expression if S <: T (§4.10).
+  // A type S is more specific than a type T for any expression if S <: T (p4.10).
   // A functional interface type S is more specific than a functional interface type T for
   // an expression e if T is not a subtype of S and one of the following is true
   private boolean isTypeMoreSpecific(PsiType left, PsiType right, int argId) {

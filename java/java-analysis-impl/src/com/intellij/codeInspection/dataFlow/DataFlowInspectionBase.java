@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Dec 24, 2001
- * Time: 2:46:32 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -32,6 +24,10 @@ import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFi
 import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInsight.intention.impl.AddNullableAnnotationFix;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
+import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
+import com.intellij.codeInspection.dataFlow.fix.SimplifyToAssignmentFix;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
@@ -50,7 +46,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.extractMethod.ExtractMethodUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -65,6 +60,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 @SuppressWarnings("ConditionalExpressionWithIdenticalBranches")
 public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
@@ -145,13 +141,34 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
       @Override
       public void visitIfStatement(PsiIfStatement statement) {
-        PsiExpression condition = statement.getCondition();
+        PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (BranchingInstruction.isBoolConst(condition)) {
           LocalQuickFix fix = createSimplifyBooleanExpressionFix(condition, condition.textMatches(PsiKeyword.TRUE));
           holder.registerProblem(condition, "Condition is always " + condition.getText(), fix);
         }
       }
 
+      @Override
+      public void visitWhileStatement(PsiWhileStatement statement) {
+        checkLoopCondition(statement.getCondition());
+      }
+
+      @Override
+      public void visitDoWhileStatement(PsiDoWhileStatement statement) {
+        checkLoopCondition(statement.getCondition());
+      }
+
+      @Override
+      public void visitForStatement(PsiForStatement statement) {
+        checkLoopCondition(statement.getCondition());
+      }
+
+      private void checkLoopCondition(PsiExpression condition) {
+        condition = PsiUtil.skipParenthesizedExprDown(condition);
+        if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
+          holder.registerProblem(condition, "Condition is always false", createSimplifyBooleanExpressionFix(condition, false));
+        }
+      }
     };
   }
 
@@ -359,6 +376,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     reportMethodReferenceProblems(holder, visitor);
 
+    reportArrayAccessProblems(holder, visitor);
+
     if (REPORT_CONSTANT_REFERENCE_VALUES) {
       reportConstantReferenceValues(holder, visitor, reportedAnchors);
     }
@@ -366,6 +385,15 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     if (REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL && visitor.isAlwaysReturnsNotNull()) {
       reportAlwaysReturnsNotNull(holder, scope);
     }
+  }
+
+  private static void reportArrayAccessProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
+    visitor.outOfBoundsArrayAccesses().forEach(access -> {
+      PsiExpression indexExpression = access.getIndexExpression();
+      if (indexExpression != null) {
+        holder.registerProblem(indexExpression, InspectionsBundle.message("dataflow.message.array.index.out.of.bounds"));
+      }
+    });
   }
 
   private void reportMethodReferenceProblems(ProblemsHolder holder, DataFlowInstructionVisitor visitor) {
@@ -507,38 +535,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         continue;
       }
 
-      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'", new LocalQuickFix() {
-        @NotNull
-        @Override
-        public String getName() {
-          return "Replace with '" + presentableName + "'";
-        }
-
-        @NotNull
-        @Override
-        public String getFamilyName() {
-          return "Replace with constant value";
-        }
-
-        @Override
-        public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-          PsiElement problemElement = descriptor.getPsiElement();
-          if (problemElement == null) return;
-
-          PsiMethodCallExpression call = problemElement.getParent() instanceof PsiExpressionList &&
-                                         problemElement.getParent().getParent() instanceof PsiMethodCallExpression ?
-                                         (PsiMethodCallExpression)problemElement.getParent().getParent() :
-                                         null;
-          PsiMethod targetMethod = call == null ? null : call.resolveMethod();
-
-          JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-          problemElement.replace(facade.getElementFactory().createExpressionFromText(exprText, null));
-
-          if (targetMethod != null) {
-            ExtractMethodUtil.addCastsToEnsureResolveTarget(targetMethod, call);
-          }
-        }
-      });
+      holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
+                             new ReplaceWithConstantValueFix(presentableName, exprText));
     }
   }
 
@@ -657,11 +655,24 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
                                        PsiElement psiAnchor,
                                        boolean evaluatesToTrue) {
     if (!skipReportingConstantCondition(visitor, psiAnchor, evaluatesToTrue)) {
-      final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
-      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
-                                                 "dataflow.message.constant.condition.when.reached" :
-                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-      holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
+      if (psiAnchor.getParent() instanceof PsiForeachStatement) {
+        // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
+        if (!evaluatesToTrue) {
+          // loop on always non-empty collection -- nothing to report
+          return;
+        }
+        boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
+        holder.registerProblem(psiAnchor, array ?
+                                          InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
+                                          InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
+      }
+      else {
+        final LocalQuickFix fix = createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue);
+        String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                                   "dataflow.message.constant.condition.when.reached" :
+                                                   "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+        holder.registerProblem(psiAnchor, message, fix == null ? null : new LocalQuickFix[]{fix});
+      }
     }
   }
 
@@ -895,36 +906,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
   @NotNull
   protected static LocalQuickFix createSimplifyToAssignmentFix() {
-    return new LocalQuickFix() {
-      @NotNull
-      @Override
-      public String getName() {
-        return InspectionsBundle.message("inspection.data.flow.simplify.to.assignment.quickfix.name");
-      }
-
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
-      }
-
-      @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement psiElement = descriptor.getPsiElement();
-        if (psiElement == null) return;
-
-        final PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(psiElement, PsiAssignmentExpression.class);
-        if (assignmentExpression == null) {
-          return;
-        }
-
-        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        final String lExpressionText = assignmentExpression.getLExpression().getText();
-        final PsiExpression rExpression = assignmentExpression.getRExpression();
-        final String rExpressionText = rExpression != null ? rExpression.getText() : "";
-        assignmentExpression.replace(factory.createExpressionFromText(lExpressionText + " = " + rExpressionText, psiElement));
-      }
-    };
+    return new SimplifyToAssignmentFix();
   }
 
   private static SimplifyBooleanExpressionFix createIntention(PsiElement element, boolean value) {
@@ -942,24 +924,6 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       return null;
     }
     return fix;
-  }
-
-  private static class RedundantInstanceofFix implements LocalQuickFix {
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
-      if (psiElement instanceof PsiInstanceOfExpression) {
-        PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
-          createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null", psiElement.getParent());
-        psiElement.replace(compareToNull);
-      }
-    }
   }
 
 
@@ -989,6 +953,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     private final Map<PsiMethodCallExpression, ThreeState> myOptionalCalls = new HashMap<>();
     private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
     private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
+    private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
     private final List<PsiExpression> myOptionalQualifiers = new ArrayList<>();
     private boolean myAlwaysReturnsNotNull = true;
 
@@ -1017,6 +982,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
     Map<PsiMethodReferenceExpression, DfaValue> getMethodReferenceResults() {
       return myMethodReferenceResults;
+    }
+
+    Stream<PsiArrayAccessExpression> outOfBoundsArrayAccesses() {
+      return StreamEx.ofKeys(myOutOfBoundsArrayAccesses, ThreeState.YES::equals);
     }
 
     List<PsiExpression> getOptionalQualifiers() {
@@ -1082,6 +1051,11 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         }
         myBooleanCalls.merge(call, state, ThreeState::merge);
       }
+    }
+
+    @Override
+    protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
+      myOutOfBoundsArrayAccesses.merge(expression, ThreeState.fromBoolean(alwaysOutOfBounds), ThreeState::merge);
     }
 
     @Override

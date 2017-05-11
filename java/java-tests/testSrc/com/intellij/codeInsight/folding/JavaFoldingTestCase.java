@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.folding;
 
 import com.intellij.codeInsight.folding.impl.JavaCodeFoldingSettingsImpl;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -43,8 +44,12 @@ public abstract class JavaFoldingTestCase extends LightCodeInsightFixtureTestCas
 
   protected void configure(String text) {
     myFixture.configureByText("a.java", text);
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myFixture.getEditor());
-    ((FoldingModelEx)myFixture.getEditor().getFoldingModel()).rebuild();
+    performInitialFolding(myFixture.getEditor());
     myFixture.doHighlighting();
+  }
+
+  public static void performInitialFolding(Editor editor) {
+    CodeFoldingManager.getInstance(editor.getProject()).buildInitialFoldings(editor);
+    ((FoldingModelEx)editor.getFoldingModel()).rebuild();
   }
 }

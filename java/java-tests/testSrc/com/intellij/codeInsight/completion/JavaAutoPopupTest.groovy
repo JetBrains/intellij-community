@@ -42,8 +42,8 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
-import com.intellij.openapi.editor.event.DocumentAdapter
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
@@ -60,6 +60,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
+
 /**
  * @author peter
  */
@@ -989,13 +990,12 @@ class Foo {
     for (a1 in 0..actions) {
       for (a2 in 0..actions) {
         myFixture.configureByText("$a1 $a2 .java", src)
-        myFixture.editor.document.addDocumentListener(new DocumentAdapter() {
+        myFixture.editor.document.addDocumentListener(new DocumentListener() {
           @Override
           void documentChanged(DocumentEvent e) {
             if (e.newFragment.toString().contains("a")) {
               fail(e.toString())
             }
-            super.documentChanged(e)
           }
         })
         myFixture.type 'i'
@@ -1833,4 +1833,11 @@ ita<caret>
 
     myFixture.assertPreferredCompletionItems 0, 'KimeFamilyRange'
   }
+
+  void "test show autopopup when typing digit after letter"() {
+    myFixture.configureByText 'a.java', 'class Foo {{ int a42; a<caret> }}'
+    type '4'
+    assert lookup
+  }
+
 }

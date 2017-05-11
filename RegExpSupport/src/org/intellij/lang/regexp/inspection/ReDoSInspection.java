@@ -38,16 +38,9 @@ public class ReDoSInspection extends LocalInspectionTool {
     return "Exponential backtracking";
   }
 
-  @Override
-  public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
-    super.inspectionFinished(session, problemsHolder);
-  }
-
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new ReDoSVisitor(holder);
   }
 

@@ -131,7 +131,7 @@ public class DefaultXmlTagNameProvider implements XmlTagNameProvider {
       if (ns.startsWith("file://")) continue;
       fbi.processValues(XmlNamespaceIndex.NAME, ns, null, new FileBasedIndex.ValueProcessor<XsdNamespaceBuilder>() {
         @Override
-        public boolean process(final VirtualFile file, XsdNamespaceBuilder value) {
+        public boolean process(@NotNull final VirtualFile file, XsdNamespaceBuilder value) {
           List<String> tags = value.getRootTags();
           for (String s : tags) {
             elements.add(LookupElementBuilder.create(s).withTypeText(ns).withInsertHandler(new XmlTagInsertHandler() {

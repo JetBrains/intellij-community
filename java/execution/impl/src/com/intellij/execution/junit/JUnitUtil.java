@@ -64,9 +64,13 @@ public class JUnitUtil {
 
   public static final String AFTER_CLASS_ANNOTATION_NAME = "org.junit.AfterClass";
   public static final String BEFORE_CLASS_ANNOTATION_NAME = "org.junit.BeforeClass";
+  public static final Collection<String> TEST5_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(BEFORE_EACH_ANNOTATION_NAME,
+                                                                                                           AFTER_EACH_ANNOTATION_NAME));
 
   public static final String BEFORE_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.BeforeAll";
   public static final String AFTER_ALL_ANNOTATION_NAME = "org.junit.jupiter.api.AfterAll";
+  public static final Collection<String> TEST5_STATIC_CONFIG_METHODS = Collections.unmodifiableList(Arrays.asList(BEFORE_ALL_ANNOTATION_NAME,
+                                                                                                                  AFTER_ALL_ANNOTATION_NAME));
 
   private static final Collection<String> TEST_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST_ANNOTATION,
                                                                                                         TEST5_ANNOTATION,
@@ -74,6 +78,8 @@ public class JUnitUtil {
   public static final Collection<String> TEST5_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
                                                                                                         TEST5_FACTORY_ANNOTATION,
                                                                                                         CUSTOM_TESTABLE_ANNOTATION));
+  public static final Collection<String> TEST5_JUPITER_ANNOTATIONS = Collections.unmodifiableList(Arrays.asList(TEST5_ANNOTATION,
+                                                                                                        TEST5_FACTORY_ANNOTATION));
 
   private static final List<String> INSTANCE_CONFIGS = Arrays.asList(BEFORE_ANNOTATION_NAME, AFTER_ANNOTATION_NAME);
   private static final List<String> INSTANCE_5_CONFIGS = Arrays.asList(BEFORE_EACH_ANNOTATION_NAME, AFTER_EACH_ANNOTATION_NAME);
@@ -434,7 +440,7 @@ public class JUnitUtil {
     PsiElement element = location.getPsiElement();
     if (element instanceof PsiClassOwner) {
       PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      if (classes.length == 1) return classes[0];
+      if (classes.length == 1 && isTestClass(classes[0], false, true)) return classes[0];
     }
     return null;
   }

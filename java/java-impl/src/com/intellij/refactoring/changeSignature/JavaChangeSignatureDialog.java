@@ -24,8 +24,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
@@ -151,6 +151,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return true;
   }
 
+  @Override
   @NotNull
   protected List<Pair<String,JPanel>> createAdditionalPanels() {
     // this method is invoked before constructor body
@@ -162,7 +163,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.setRowHeight(20);
     table.getColumnModel().getColumn(0).setCellRenderer(new CodeFragmentTableCellRenderer(myProject));
     final JavaCodeFragmentTableCellEditor cellEditor = new JavaCodeFragmentTableCellEditor(myProject);
-    cellEditor.addDocumentListener(new DocumentAdapter() {
+    cellEditor.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         final int row = table.getSelectedRow();

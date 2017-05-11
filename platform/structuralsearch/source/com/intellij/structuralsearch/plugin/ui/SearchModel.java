@@ -1,12 +1,5 @@
 package com.intellij.structuralsearch.plugin.ui;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 25, 2004
- * Time: 1:33:10 PM
- * To change this template use File | Settings | File Templates.
- */
 public class SearchModel {
   private final Configuration config;
   private Configuration shadowConfig;

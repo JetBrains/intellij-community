@@ -103,7 +103,7 @@ public class JavaReflectionReferenceUtil {
     }
     if (context instanceof PsiClassObjectAccessExpression) { // special case for JDK 1.4
       final PsiTypeElement operand = ((PsiClassObjectAccessExpression)context).getOperand();
-      return ReflectiveType.create(operand.getType(), context);
+      return ReflectiveType.create(operand.getType());
     }
 
     if (context instanceof PsiMethodCallExpression) {
@@ -198,7 +198,7 @@ public class JavaReflectionReferenceUtil {
         }
       }
     }
-    return ReflectiveType.create(expression.getType(), expression);
+    return ReflectiveType.create(expression.getType());
   }
 
   @Contract("null,_->null")
@@ -212,7 +212,7 @@ public class JavaReflectionReferenceUtil {
   @Nullable
   public static PsiClass getReflectiveClass(PsiExpression context) {
     final ReflectiveType reflectiveType = getReflectiveType(context);
-    return reflectiveType != null ? reflectiveType.myPsiClass : null;
+    return reflectiveType != null ? reflectiveType.getPsiClass() : null;
   }
 
   @Nullable
@@ -319,7 +319,7 @@ public class JavaReflectionReferenceUtil {
   }
 
   @Contract("null, _ -> false")
-  private static boolean isClassWithName(@Nullable PsiClass aClass, @NotNull String name) {
+  public static boolean isClassWithName(@Nullable PsiClass aClass, @NotNull String name) {
     return aClass != null && name.equals(aClass.getQualifiedName());
   }
 
@@ -336,8 +336,7 @@ public class JavaReflectionReferenceUtil {
   static String getParameterTypesText(@NotNull PsiMethod method) {
     final StringJoiner joiner = new StringJoiner(", ");
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      final String typeText = getTypeText(parameter.getType(), method);
-      if (typeText == null) return null;
+      final String typeText = getTypeText(parameter.getType());
       joiner.add(typeText + ".class");
     }
     return joiner.toString();
@@ -398,10 +397,10 @@ public class JavaReflectionReferenceUtil {
     shortenArgumentsClassReferences(context);
   }
 
-  @Nullable
-  public static String getTypeText(@Nullable PsiType type, @NotNull PsiElement context) {
-    final ReflectiveType reflectiveType = ReflectiveType.create(type, context);
-    return reflectiveType != null ? reflectiveType.getQualifiedName() : null;
+  @NotNull
+  public static String getTypeText(@NotNull PsiType type) {
+    final ReflectiveType reflectiveType = ReflectiveType.create(type);
+    return reflectiveType.getQualifiedName();
   }
 
   @Nullable
@@ -415,11 +414,11 @@ public class JavaReflectionReferenceUtil {
   public static ReflectiveSignature getMethodSignature(@Nullable PsiMethod method) {
     if (method != null) {
       final List<String> types = new ArrayList<>();
-      final PsiType returnType = !method.isConstructor() ? method.getReturnType() : PsiType.VOID;
-      types.add(getTypeText(returnType, method));
+      final PsiType returnType = method.getReturnType();
+      types.add(getTypeText(returnType != null ? returnType : PsiType.VOID)); // null return type means it's a constructor
 
       for (PsiParameter parameter : method.getParameterList().getParameters()) {
-        types.add(getTypeText(parameter.getType(), method));
+        types.add(getTypeText(parameter.getType()));
       }
       final Icon icon = method.getIcon(Iconable.ICON_FLAG_VISIBILITY);
       return ReflectiveSignature.create(icon, types);
@@ -439,97 +438,49 @@ public class JavaReflectionReferenceUtil {
 
 
   public static class ReflectiveType {
-    final PsiClass myPsiClass;
-    final PsiPrimitiveType myPrimitiveType;
-    final int myArrayDimensions;
+    final PsiType myType;
 
-    public ReflectiveType(PsiClass psiClass, PsiPrimitiveType primitiveType, int arrayDimensions) {
-      myPsiClass = psiClass;
-      myPrimitiveType = primitiveType;
-      myArrayDimensions = arrayDimensions;
+    private ReflectiveType(@NotNull PsiType erasedType) {
+      myType = erasedType;
     }
 
-    @Nullable
+    @NotNull
     public String getQualifiedName() {
-      String text = null;
-      if (myPrimitiveType != null) {
-        text = myPrimitiveType.getCanonicalText();
-      }
-      else if (myPsiClass != null) {
-        text = myPsiClass.getQualifiedName();
-      }
-      if (myArrayDimensions == 0 || text == null) {
-        return text;
-      }
-      final StringBuilder sb = new StringBuilder(text);
-      for (int i = 0; i < myArrayDimensions; i++) {
-        sb.append("[]");
-      }
-      return sb.toString();
+      return myType.getCanonicalText();
     }
 
     @Override
     public String toString() {
-      final String name = getQualifiedName();
-      return name != null ? name : "null";
+      return myType.getCanonicalText();
     }
 
     public boolean isEqualTo(@Nullable PsiType otherType) {
-      if (otherType == null || myArrayDimensions != otherType.getArrayDimensions()) {
-        return false;
-      }
-      final PsiType otherComponentType = otherType.getDeepComponentType();
-      if (myPrimitiveType != null) {
-        return myPrimitiveType.equals(otherComponentType);
-      }
-      if (myPsiClass != null) {
-        final PsiClass otherClass = PsiUtil.resolveClassInType(otherComponentType);
-        if (otherClass != null) {
-          final String otherClassName = otherClass instanceof PsiTypeParameter
-                                        ? CommonClassNames.JAVA_LANG_OBJECT : otherClass.getQualifiedName();
-          if (otherClassName != null) {
-            return otherClassName.equals(myPsiClass.getQualifiedName());
-          }
-        }
-      }
-      return false;
+      return otherType != null && myType.equals(erasure(otherType));
     }
 
     public boolean isAssignableFrom(@NotNull PsiType type) {
-      if (type.equals(PsiType.NULL)) {
-        return myPsiClass != null || myArrayDimensions != 0;
-      }
-      PsiType otherType = type;
-      for (int i = 0; i < myArrayDimensions; i++) {
-        if (!(otherType instanceof PsiArrayType)) {
-          return false;
-        }
-        otherType = ((PsiArrayType)otherType).getComponentType();
-      }
-      if (myPrimitiveType != null) {
-        return myPrimitiveType.isAssignableFrom(otherType);
-      }
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
-      return factory.createType(myPsiClass).isAssignableFrom(otherType);
+      return myType.isAssignableFrom(type);
     }
 
-    @Contract("null, _ -> null")
+    public boolean isPrimitive() {
+      return myType instanceof PsiPrimitiveType;
+    }
+
+    @NotNull
+    public PsiType getType() {
+      return myType;
+    }
+
     @Nullable
-    public static ReflectiveType create(@Nullable PsiType originalType, @NotNull PsiElement context) {
-      if (originalType == null) {
-        return null;
-      }
-      final int arrayDimensions = originalType.getArrayDimensions();
-      final PsiType type = originalType.getDeepComponentType();
-      if (type instanceof PsiPrimitiveType) {
-        return new ReflectiveType(null, (PsiPrimitiveType)type, arrayDimensions);
-      }
-      PsiClass psiClass = PsiUtil.resolveClassInType(type);
-      if (psiClass instanceof PsiTypeParameter) {
-        psiClass = findClass(CommonClassNames.JAVA_LANG_OBJECT, context);
-      }
-      if (psiClass != null) {
-        return new ReflectiveType(psiClass, null, arrayDimensions);
+    public PsiClass getPsiClass() {
+      return PsiTypesUtil.getPsiClass(myType);
+    }
+
+    @Contract("!null -> !null; null -> null")
+    @Nullable
+    public static ReflectiveType create(@Nullable PsiType originalType) {
+      if (originalType != null) {
+        return new ReflectiveType(erasure(originalType));
       }
       return null;
     }
@@ -537,16 +488,29 @@ public class JavaReflectionReferenceUtil {
     @Contract("!null -> !null; null -> null")
     @Nullable
     public static ReflectiveType create(@Nullable PsiClass psiClass) {
-      return psiClass != null ? new ReflectiveType(psiClass, null, 0) : null;
+      if (psiClass != null) {
+        final PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+        return new ReflectiveType(factory.createType(psiClass));
+      }
+      return null;
     }
 
     @Contract("!null -> !null; null -> null")
     @Nullable
     public static ReflectiveType arrayOf(@Nullable ReflectiveType itemType) {
       if (itemType != null) {
-        return new ReflectiveType(itemType.myPsiClass, itemType.myPrimitiveType, itemType.myArrayDimensions + 1);
+        return new ReflectiveType(itemType.myType.createArrayType());
       }
       return null;
+    }
+
+    @NotNull
+    private static PsiType erasure(@NotNull PsiType type) {
+      final PsiType erasure = TypeConversionUtil.erasure(type);
+      if (erasure instanceof PsiEllipsisType) {
+        return ((PsiEllipsisType)erasure).toArrayType();
+      }
+      return erasure;
     }
   }
 

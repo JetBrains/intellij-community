@@ -19,6 +19,7 @@ package com.intellij.psi.util;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -700,8 +701,22 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testMatchingAllOccurrences() {
     String text = "some text";
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, true);
+    MinusculeMatcher matcher = new AllOccurrencesMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
     assertOrderedEquals(matcher.matchingFragments(text),
                         new TextRange(3, 4), new TextRange(6, 7));
   }
+
+  public void testCamelHumpWinsOverConsecutiveCaseMismatch() {
+    assertSize(3, NameUtil.buildMatcher("GEN", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments("GetExtendedName"));
+
+    assertPreference("GEN", "GetName", "GetExtendedName");
+    assertPreference("*GEN", "GetName", "GetExtendedName");
+  }
+
+  public void testPrintln() {
+    assertMatches("pl", "println");
+    assertMatches("pl", "printlnFoo");
+    assertDoesntMatch("pl", "printlnx");
+  }
+
 }

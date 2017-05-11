@@ -21,7 +21,6 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -459,7 +458,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
     }
 
     if (isReplaceDuplicates()) {
-      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), ModalityState.NON_MODAL, myProject.getDisposed());
+      ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), myProject.getDisposed());
     }
   }
 

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
@@ -35,12 +36,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class AsyncEditorLoader {
   private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader pool", 2);
   private static final Key<AsyncEditorLoader> ASYNC_LOADER = Key.create("ASYNC_LOADER");
   private static final int SYNCHRONOUS_LOADING_WAITING_TIME_MS = 200;
-  private static final int RETRY_TIME_MS = 10;
   @NotNull private final Editor myEditor;
   @NotNull private final Project myProject;
   @NotNull private final TextEditorImpl myTextEditor;
@@ -88,22 +89,22 @@ public class AsyncEditorLoader {
 
   private Future<Runnable> scheduleLoading() {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(myProject);
-    long startStamp = myEditor.getDocument().getModificationStamp();
+    Document document = myEditor.getDocument();
     return ourExecutor.submit(() -> {
+      AtomicLong docStamp = new AtomicLong();
       Ref<Runnable> ref = new Ref<>();
       try {
         while (!myEditorComponent.isDisposed()) {
-          ProgressIndicatorUtils.runWithWriteActionPriority(
-            () -> ref.set(psiDocumentManager.commitAndRunReadAction(() -> myProject.isDisposed() ? EmptyRunnable.INSTANCE
-                                                                                                 : myTextEditor.loadEditorInBackground())),
-            new ProgressIndicatorBase()
-          );
+          ProgressIndicatorUtils.runWithWriteActionPriority(() -> psiDocumentManager.commitAndRunReadAction(() -> {
+            docStamp.set(document.getModificationStamp());
+            ref.set(myProject.isDisposed() ? EmptyRunnable.INSTANCE : myTextEditor.loadEditorInBackground());
+          }), new ProgressIndicatorBase());
           Runnable continuation = ref.get();
           if (continuation != null) {
-            invokeLater(() -> {
-              if (startStamp == myEditor.getDocument().getModificationStamp()) loadingFinished(continuation);
-              else if (!myProject.isDisposed() && !myEditorComponent.isDisposed()) scheduleLoading();
-            });
+            psiDocumentManager.performLaterWhenAllCommitted(() -> {
+              if (docStamp.get() == document.getModificationStamp()) loadingFinished(continuation);
+              else if (!myEditorComponent.isDisposed()) scheduleLoading();
+            }, ModalityState.any());
             return continuation;
           }
           ProgressIndicatorUtils.yieldToPendingWriteActions();

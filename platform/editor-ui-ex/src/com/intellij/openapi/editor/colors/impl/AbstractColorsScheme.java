@@ -34,7 +34,6 @@ import com.intellij.util.JdomKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
-import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -221,7 +220,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setLineSpacing(float lineSpacing) {
-    myFontPreferences.setLineSpacing(lineSpacing);
+    ensureEditableFontPreferences().setLineSpacing(lineSpacing);
   }
 
   @NotNull
@@ -331,10 +330,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           readSettings(childNode, isDefault, fontScale);
           break;
         case EDITOR_FONT:
-          myFontPreferences = readFontSettings(childNode, isDefault, fontScale.get());
+          myFontPreferences = readFontSettings(childNode, isDefault, fontScale.get(), myFontPreferences.getLineSpacing());
           break;
         case CONSOLE_FONT:
-          myConsoleFontPreferences = readFontSettings(childNode, isDefault, fontScale.get());
+          myConsoleFontPreferences = readFontSettings(childNode, isDefault, fontScale.get(), myConsoleFontPreferences.getLineSpacing());
           break;
         case COLORS_ELEMENT:
           readColors(childNode);
@@ -512,7 +511,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   private FontPreferencesImpl readFontSettings(@NotNull Element element,
                                                boolean isDefaultScheme,
-                                               @Nullable Float fontScale) {
+                                               @Nullable Float fontScale,
+                                               float lineSpacing) {
     FontPreferencesImpl preferences = new FontPreferencesImpl();
     preferences.setChangeListener(() -> initFonts());
     List children = element.getChildren(OPTION_ELEMENT);
@@ -533,6 +533,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     else if (fontFamily != null) {
       preferences.addFontFamily(fontFamily);
     }
+    preferences.setLineSpacing(lineSpacing);
     return preferences;
   }
 
@@ -821,7 +822,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public void setConsoleLineSpacing(float lineSpacing) {
-    myConsoleFontPreferences.setLineSpacing(lineSpacing);
+    ensureEditableConsoleFontPreferences().setLineSpacing(lineSpacing);
   }
 
   protected TextAttributes getFallbackAttributes(@NotNull TextAttributesKey fallbackKey) {
@@ -908,7 +909,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
     
-    // parent is used only for default schemes (e.g. Darcula — bundled in all ide (opposite to IDE-specific, like Cobalt))
+    // parent is used only for default schemes (e.g. Darcula bundled in all ide (opposite to IDE-specific, like Cobalt))
     if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
     }

@@ -104,6 +104,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   private volatile InspectionResultsView myView;
   private Content myContent;
   private volatile boolean myViewClosed = true;
+  private long myInspectionStartedTimestamp;
 
   @NotNull
   private AnalysisUIOptions myUIOptions;
@@ -346,7 +347,8 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   protected void notifyInspectionsFinished(final AnalysisScope scope) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     UIUtil.invokeLaterIfNeeded(() -> {
-      LOG.info("Code inspection finished");
+      long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
+      LOG.info("Code inspection finished. Took "+elapsed+"ms");
       if (getProject().isDisposed()) return;
 
       InspectionResultsView view = myView == null ? new InspectionResultsView(this, createContentProvider()) : null;
@@ -372,6 +374,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
 
   @Override
   protected void runTools(@NotNull final AnalysisScope scope, boolean runGlobalToolsOnly, boolean isOfflineInspections) {
+    myInspectionStartedTimestamp = System.currentTimeMillis();
     final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     if (progressIndicator == null) {
       throw new IncorrectOperationException("Must be run under progress");

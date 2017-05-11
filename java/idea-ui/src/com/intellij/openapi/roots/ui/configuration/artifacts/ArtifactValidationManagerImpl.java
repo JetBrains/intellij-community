@@ -83,7 +83,7 @@ public class ArtifactValidationManagerImpl implements Disposable {
               showProblemInTree(artifactProblem);
             }
           }
-          myErrorPanel.showError(message, quickFixes);
+          myErrorPanel.showError(message, description.getSeverity(), quickFixes);
         }
       }
     }

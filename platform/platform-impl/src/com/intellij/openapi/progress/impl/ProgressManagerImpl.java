@@ -21,9 +21,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import org.jetbrains.annotations.NotNull;
@@ -34,10 +35,38 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
 public class ProgressManagerImpl extends CoreProgressManager implements Disposable {
-  private final Set<PingProgress> myEdtProgresses = ContainerUtil.newConcurrentSet();
+  private final Set<CheckCanceledHook> myHooks = ContainerUtil.newConcurrentSet();
+
+  public ProgressManagerImpl() {
+    HeavyProcessLatch.INSTANCE.addUIActivityListener(new HeavyProcessLatch.HeavyProcessListener() {
+      CheckCanceledHook sleepHook = indicator -> sleepIfNeededToGivePriorityToAnotherThread();
+      AtomicBoolean scheduled = new AtomicBoolean();
+      Runnable addHookLater = () -> {
+        scheduled.set(false);
+        if (HeavyProcessLatch.INSTANCE.hasPrioritizedThread()) {
+          addCheckCanceledHook(sleepHook);
+        }
+      };
+
+      @Override
+      public void processStarted() {
+        if (scheduled.compareAndSet(false, true)) {
+          AppExecutorUtil.getAppScheduledExecutorService().schedule(addHookLater, 5, TimeUnit.MILLISECONDS);
+        }
+      }
+
+      @Override
+      public void processFinished() {
+        removeCheckCanceledHook(sleepHook);
+      }
+
+    }, this);
+  }
 
   @Override
   public void setCancelButtonText(String cancelButtonText) {
@@ -56,15 +85,17 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
   public void executeProcessUnderProgress(@NotNull Runnable process, ProgressIndicator progress) throws ProcessCanceledException {
     if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.incrementAndGet();
 
-    boolean edtProgress = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread();
-    if (edtProgress) myEdtProgresses.add((PingProgress)progress);
+    CheckCanceledHook hook = progress instanceof PingProgress && ApplicationManager.getApplication().isDispatchThread() 
+                             ? p -> { ((PingProgress)progress).interact(); return true; } 
+                             : null;
+    if (hook != null) addCheckCanceledHook(hook);
 
     try {
       super.executeProcessUnderProgress(process, progress);
     }
     finally {
       if (progress instanceof ProgressWindow) myCurrentUnsafeProgressCount.decrementAndGet();
-      if (edtProgress) myEdtProgresses.remove(progress);
+      if (hook != null) removeCheckCanceledHook(hook);
     }
   }
 
@@ -167,29 +198,37 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
     return ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator);
   }
 
+  /**
+   * An absolutely guru method, very dangerous, don't use unless you're desperate,
+   * because hooks will be executed on every checkCanceled and can dramatically slow down everything in the IDE.
+   */
+  void addCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+    if (myHooks.add(hook)) {
+      updateShouldCheckCanceled();
+    }
+  }
+
+  void removeCheckCanceledHook(@NotNull CheckCanceledHook hook) {
+    if (myHooks.remove(hook)) {
+      updateShouldCheckCanceled();
+    }
+  }
+
   @Nullable
   @Override
   protected CheckCanceledHook createCheckCanceledHook() {
-    boolean shouldSleep = HeavyProcessLatch.INSTANCE.hasPrioritizedThread() && Registry.is("ide.prioritize.ui.thread", false);
-    boolean hasEdtProgresses = !myEdtProgresses.isEmpty();
-    if (shouldSleep && hasEdtProgresses) {
-      //noinspection NonShortCircuitBooleanExpression
-      return () -> pingProgresses() | sleepIfNeededToGivePriorityToAnotherThread();
-    }
-    if (shouldSleep) return ProgressManagerImpl::sleepIfNeededToGivePriorityToAnotherThread;
-    if (hasEdtProgresses) return this::pingProgresses;
-    return null;
-  }
+    if (myHooks.isEmpty()) return null;
 
-  private boolean pingProgresses() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) return false;
-
-    boolean hasProgresses = false;
-    for (PingProgress progress : myEdtProgresses) {
-      hasProgresses = true;
-      progress.interact();
-    }
-    return hasProgresses;
+    CheckCanceledHook[] activeHooks = ArrayUtil.stripTrailingNulls(myHooks.toArray(new CheckCanceledHook[0]));
+    return activeHooks.length == 1 ? activeHooks[0] : indicator -> {
+      boolean result = false;
+      for (CheckCanceledHook hook : activeHooks) {
+        if (hook.runHook(indicator)) {
+          result = true; // but still continue to other hooks
+        }
+      }
+      return result;
+    };
   }
 
   private static boolean sleepIfNeededToGivePriorityToAnotherThread() {

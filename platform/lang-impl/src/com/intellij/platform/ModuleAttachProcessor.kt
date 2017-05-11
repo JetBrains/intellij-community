@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.project.modifyModules
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.ui.Messages
@@ -33,8 +35,6 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ModuleAttachProcessor.Companion.getPrimaryModule
-import com.intellij.project.modifyModules
-import com.intellij.project.rootManager
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
 import com.intellij.util.io.directoryStreamIfExists
@@ -49,30 +49,19 @@ private val LOG = Logger.getInstance(ModuleAttachProcessor::class.java)
 class ModuleAttachProcessor : ProjectAttachProcessor() {
   companion object {
     @JvmStatic
-    fun getPrimaryModule(project: Project) = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
-
-    @JvmStatic
     fun findModuleInBaseDir(project: Project): Module? {
-      for (module in ModuleManager.getInstance(project).modules) {
-        for (root in module.rootManager.contentRoots) {
-          if (root == project.baseDir) {
-            return module
-          }
-        }
-      }
-      return null
+      val baseDir = project.baseDir
+      return ModuleManager.getInstance(project).modules.firstOrNull { it.rootManager.contentRoots.any { it == baseDir } }
     }
 
     @JvmStatic
+    fun getPrimaryModule(project: Project) = if (ProjectAttachProcessor.canAttachToProject()) findModuleInBaseDir(project) else null
+
+    @JvmStatic
     fun getSortedModules(project: Project): List<Module> {
-      val result = ArrayList<Module>()
       val primaryModule = getPrimaryModule(project)
-      val modules = ModuleManager.getInstance(project).modules
-      for (module in modules) {
-        if (module !== primaryModule) {
-          result.add(module)
-        }
-      }
+      val result = ArrayList<Module>()
+      ModuleManager.getInstance(project).modules.filterTo(result) { it !== primaryModule}
       result.sortBy(Module::getName)
       primaryModule?.let {
         result.add(0, it)
@@ -82,7 +71,6 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
 
     /**
      * @param project the project
-     * *
      * @return null if either multi-projects are not enabled or the project has only one module
      */
     @JvmStatic
@@ -96,8 +84,8 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
         return null
       }
 
-      val primaryModule = getPrimaryModule(project) ?: modules[0]
-      val result = StringBuilder(primaryModule!!.name)
+      val primaryModule = getPrimaryModule(project) ?: modules.first()
+      val result = StringBuilder(primaryModule.name)
       result.append(", ")
       for (module in modules) {
         if (module === primaryModule) {

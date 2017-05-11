@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 13-Jul-2006
- * Time: 12:07:39
- */
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;

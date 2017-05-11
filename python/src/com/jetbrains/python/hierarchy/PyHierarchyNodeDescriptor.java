@@ -27,12 +27,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Jul 31, 2009
- * Time: 6:26:37 PM
- */
 public class PyHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
   public PyHierarchyNodeDescriptor(final NodeDescriptor parentDescriptor, @NotNull final PsiElement element, final boolean isBase) {
     super(element.getProject(), parentDescriptor, element, isBase);

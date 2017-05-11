@@ -533,7 +533,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
 
   @Override
   public boolean hasReportedProblems() {
-    return !getProblemElements().isEmpty();
+    return !myProblemToElements.isEmpty();
   }
 
   @Override

@@ -27,7 +27,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
@@ -213,11 +212,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     if (ExecutionTargetManager.canRun(settings, env.getExecutionTarget())) {
       return env.getExecutionTarget();
     }
-
-    List<ExecutionTarget> targets =
-      ReadAction.compute(() -> ExecutionTargetManager.getTargetsFor(env.getProject(), settings));
-
-    return ContainerUtil.getFirstItem(targets);
+    return ContainerUtil.getFirstItem(ExecutionTargetManager.getInstance(env.getProject()).getTargetsFor(settings));
   }
 
   public static boolean doRunTask(final String executorId, final ExecutionEnvironment environment, ProgramRunner<?> runner) {
@@ -423,8 +418,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
         protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
           if (value instanceof RunnerAndConfigurationSettings) {
             RunnerAndConfigurationSettings settings = (RunnerAndConfigurationSettings)value;
-            RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
-            setIcon(runManager.getConfigurationIcon(settings));
+            setIcon(RunManagerEx.getInstanceEx(myProject).getConfigurationIcon(settings));
             RunConfiguration configuration = settings.getConfiguration();
             append(configuration.getName(), settings.isTemporary()
                                             ? SimpleTextAttributes.GRAY_ATTRIBUTES

@@ -344,9 +344,9 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
                                                 PsiType argType, 
                                                 PsiType parameterType) {
       if (conflict instanceof MethodCandidateInfo) {
-        ((MethodCandidateInfo)conflict).setInferenceError("Invalid " +
-                                   (referenceExpression.isConstructor() ? "constructor" :"method") +
-                                   " reference: " + argType.getPresentableText() + " cannot be converted to " + parameterType.getPresentableText());
+        ((MethodCandidateInfo)conflict).setApplicabilityError("Invalid " +
+                                                              (referenceExpression.isConstructor() ? "constructor" :"method") +
+                                                              " reference: " + argType.getPresentableText() + " cannot be converted to " + parameterType.getPresentableText());
       }
     }
 

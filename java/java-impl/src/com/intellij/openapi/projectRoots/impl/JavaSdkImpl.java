@@ -147,8 +147,7 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
-  }
+  public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) { }
 
   @Override
   public String getBinPath(@NotNull Sdk sdk) {
@@ -292,6 +291,7 @@ public class JavaSdkImpl extends JavaSdk {
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     List<String> pathsChecked = new ArrayList<>();
+
     // community idea under idea
     String path = FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations";
     VirtualFile root = lfs.findFileByPath(path);
@@ -302,18 +302,20 @@ public class JavaSdkImpl extends JavaSdk {
       root = lfs.findFileByPath(path);
       pathsChecked.add(path);
     }
+
     if (root == null) { // build
       String url = "jar://" + FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar!/";
       root = VirtualFileManager.getInstance().findFileByUrl(url);
       pathsChecked.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/lib/jdkAnnotations.jar");
     }
+
     if (root == null) {
-      String msg = "Paths checked:\n";
+      StringBuilder msg = new StringBuilder("Paths checked:\n");
       for (String p : pathsChecked) {
-        File file = new File(p);
-        msg += "Path: '"+p+"' "+(file.exists() ? "Found" : "Not found")+"; directory children: "+Arrays.toString(file.getParentFile().listFiles())+"\n";
+        File f = new File(p);
+        msg.append(p).append("; ").append(f.exists()).append("; ").append(Arrays.toString(f.getParentFile().list())).append('\n');
       }
-      LOG.error("JDK annotations not found", msg);
+      LOG.error("JDK annotations not found", msg.toString());
       return;
     }
 

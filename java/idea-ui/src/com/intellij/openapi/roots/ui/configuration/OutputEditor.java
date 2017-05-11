@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Anna.Kozlova
- * Date: 12-Aug-2006
- * Time: 20:14:02
- */
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.project.ProjectBundle;

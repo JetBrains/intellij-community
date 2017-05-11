@@ -363,7 +363,7 @@ public class InferenceSession {
       }
 
       if (properties != null && myErrorMessages != null) {
-        properties.getInfo().setInferenceError(StringUtil.join(myErrorMessages, "\n"));
+        properties.getInfo().setApplicabilityError(StringUtil.join(myErrorMessages, "\n"));
       }
     }
   }
@@ -527,7 +527,7 @@ public class InferenceSession {
     if (properties != null) {
       return properties.getMethod();
     }
-    final JavaResolveResult resolveResult = getResolveResult(arg);
+    final JavaResolveResult resolveResult = PsiDiamondType.getDiamondsAwareResolveResult(arg);
     if (resolveResult instanceof MethodCandidateInfo) {
       return (PsiMethod)resolveResult.getElement();
     }
@@ -587,7 +587,7 @@ public class InferenceSession {
     PsiExpressionList argumentList = callExpression.getArgumentList();
     if (argumentList != null) {
       MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
-      final JavaResolveResult result = properties != null ? null : getResolveResult(callExpression);
+      final JavaResolveResult result = properties != null ? null : PsiDiamondType.getDiamondsAwareResolveResult(callExpression);
       final PsiMethod method = properties != null ? properties.getMethod() : result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getElement() :  null;
       if (method != null) {
         final PsiExpression[] newArgs = argumentList.getExpressions();
@@ -598,33 +598,6 @@ public class InferenceSession {
         }
       }
     }
-  }
-
-  public static JavaResolveResult getResolveResult(final PsiCall callExpression) {
-    if (callExpression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)callExpression)) {
-      PsiUtilCore.ensureValid(callExpression);
-      return CachedValuesManager.getCachedValue(callExpression, () -> {
-        final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)callExpression).getClassOrAnonymousClassReference();
-        JavaResolveResult constructor = JavaResolveResult.EMPTY;
-        JavaResolveResult resolveResult = null;
-        if (classReference != null) {
-          resolveResult = classReference.advancedResolve(false);
-          final PsiElement psiClass = resolveResult.getElement();
-          if (psiClass != null) {
-            final JavaPsiFacade facade = JavaPsiFacade.getInstance(callExpression.getProject());
-            final PsiExpressionList argumentList = callExpression.getArgumentList();
-            if (argumentList != null) {
-              constructor = facade.getResolveHelper().resolveConstructor(facade.getElementFactory().createType((PsiClass)psiClass).rawType(),
-                                                                         argumentList,
-                                                                         callExpression);
-            }
-          }
-        }
-        return new CachedValueProvider.Result<>(constructor.getElement() == null && resolveResult != null ? resolveResult : constructor,
-                                                PsiModificationTracker.MODIFICATION_COUNT);
-      });
-    }
-    return callExpression.resolveMethodGenerics();
   }
 
   public static PsiSubstitutor chooseSiteSubstitutor(MethodCandidateInfo.CurrentCandidateProperties candidateProperties,
@@ -843,8 +816,8 @@ public class InferenceSession {
 
   /**
    * T is a reference type, but is not a wildcard-parameterized type, and either 
-   *  i)  B2 contains a bound of one of the forms α=S or S<:α, where S is a wildcard-parameterized type, or 
-   *  ii) B2 contains two bounds of the forms S1 <: α and S2 <: α,
+   *  i)  B2 contains a bound of one of the forms alpha=S or S<:alpha, where S is a wildcard-parameterized type, or
+   *  ii) B2 contains two bounds of the forms S1 <: alpha and S2 <: alpha,
    *      where S1 and S2 have supertypes that are two different parameterizations of the same generic class or interface. 
    */
   private static boolean hasWildcardParameterization(InferenceVariable inferenceVariable, PsiClassType targetType) {
@@ -890,10 +863,10 @@ public class InferenceSession {
         if (argumentList != null) {
           final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(argumentList);
           if (properties != null && properties.isApplicabilityCheck()) {
-            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor());
+            return getTypeByMethod(context, argumentList, properties.getMethod(), properties.isVarargs(), properties.getSubstitutor(), inferParent);
           }
 
-          final JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
+          final JavaResolveResult result = PsiDiamondType.getDiamondsAwareResolveResult((PsiCall)gParent);
           final PsiElement element = result.getElement();
           if (element == null) {
             errorMessage.set("Overload resolution failed");
@@ -901,7 +874,7 @@ public class InferenceSession {
           }
           if (element instanceof PsiMethod && (inferParent || !((PsiMethod)element).hasTypeParameters())) {
             final boolean varargs = result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
-            return getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor());
+            return getTypeByMethod(context, argumentList, result.getElement(), varargs, result.getSubstitutor(), inferParent);
           }
         }
       }
@@ -946,12 +919,13 @@ public class InferenceSession {
                                          PsiExpressionList argumentList,
                                          PsiElement parentMethod,
                                          boolean varargs,
-                                         PsiSubstitutor substitutor) {
+                                         PsiSubstitutor substitutor,
+                                         boolean inferParent) {
     if (parentMethod instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
       if (parameters.length == 0) return null;
       final PsiExpression[] args = argumentList.getExpressions();
-      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length) return null;
+      if (!((PsiMethod)parentMethod).isVarArgs() && parameters.length != args.length && !inferParent) return null;
       PsiElement arg = context;
       while (arg.getParent() instanceof PsiParenthesizedExpression) {
         arg = arg.getParent();
@@ -1591,7 +1565,7 @@ public class InferenceSession {
 
       if (method.isConstructor() && PsiUtil.isRawSubstitutor(containingClass, psiSubstitutor)) {
         //15.13.1 If ClassType is a raw type, but is not a non-static member type of a raw type,
-        //the candidate notional member methods are those specified in §15.9.3 for a
+        //the candidate notional member methods are those specified in p15.9.3 for a
         //class instance creation expression that uses <> to elide the type arguments to a class
         initBounds(containingClass.getTypeParameters());
         psiSubstitutor = PsiSubstitutor.EMPTY;

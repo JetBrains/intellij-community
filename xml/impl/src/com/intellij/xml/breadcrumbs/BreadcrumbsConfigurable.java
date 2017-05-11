@@ -35,7 +35,7 @@ import javax.swing.JPanel;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
-import static com.intellij.application.options.colors.ColorAndFontOptions.getColorSelector;
+import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.openapi.application.ApplicationBundle.message;
 
 /**
@@ -61,10 +61,7 @@ final class BreadcrumbsConfigurable implements Configurable {
       upper.add(box);
       upper.add(LinkLabel.create(message("configure.breadcrumbs.colors"), () -> {
         DataContext context = DataManager.getInstance().getDataContext(component);
-        Runnable select = getColorSelector(context, "Breadcrumbs//Current", GeneralColorsPage.class);
-        if (select != null) {
-          select.run();
-        }
+        selectOrEditColor(context, "Breadcrumbs//Current", GeneralColorsPage.class);
       }));
 
       JPanel boxes = new JPanel(new VerticalLayout(0));

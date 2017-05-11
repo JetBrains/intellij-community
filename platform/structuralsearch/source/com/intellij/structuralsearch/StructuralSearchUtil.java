@@ -22,7 +22,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.structuralsearch.impl.matcher.MatchUtils;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +34,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class StructuralSearchUtil {
+  private static final String REG_EXP_META_CHARS = ".$|()[{^?*+\\";
   private static final Key<StructuralSearchProfile> STRUCTURAL_SEARCH_PROFILE_KEY = new Key<>("Structural Search Profile");
   private static LanguageFileType ourDefaultFileType = null;
 
@@ -155,11 +155,19 @@ public class StructuralSearchUtil {
     return result.toArray(new FileType[result.size()]);
   }
 
-  public static String shieldSpecialChars(String word) {
+  public static boolean containsRegExpMetaChar(String s) {
+    return s.chars().anyMatch(StructuralSearchUtil::isRegExpMetaChar);
+  }
+
+  private static boolean isRegExpMetaChar(int ch) {
+    return REG_EXP_META_CHARS.indexOf(ch) >= 0;
+  }
+
+  public static String shieldRegExpMetaChars(String word) {
     final StringBuilder buf = new StringBuilder(word.length());
 
     for (int i = 0; i < word.length(); ++i) {
-      if (MatchUtils.SPECIAL_CHARS.indexOf(word.charAt(i)) != -1) {
+      if (isRegExpMetaChar(word.charAt(i))) {
         buf.append("\\");
       }
       buf.append(word.charAt(i));

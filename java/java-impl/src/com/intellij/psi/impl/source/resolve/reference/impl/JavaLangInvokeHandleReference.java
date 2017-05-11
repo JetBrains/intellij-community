@@ -186,11 +186,9 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     }
     else if (object instanceof PsiField) {
       final PsiField field = (PsiField)object;
-      final String typeText = getTypeText(field.getType(), field);
-      if (typeText != null) {
-        final String text = ", " + typeText + ".class";
-        replaceText(context, text);
-      }
+      final String typeText = getTypeText(field.getType());
+      final String text = ", " + typeText + ".class";
+      replaceText(context, text);
     }
   }
 

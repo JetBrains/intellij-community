@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 
 /**
  * @author peter
  */
-public abstract class RangeMarkerSpy extends DocumentAdapter {
+public abstract class RangeMarkerSpy implements DocumentListener {
   private final RangeMarker myMarker;
 
   public RangeMarkerSpy(RangeMarker marker) {

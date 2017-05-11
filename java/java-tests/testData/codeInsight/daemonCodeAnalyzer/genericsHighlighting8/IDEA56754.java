@@ -1,5 +1,6 @@
 class Foo<T extends Enum> {
   public T bar(Class<? extends T> type, String str) {
-    return Enum.valueOf(<error descr="'valueOf(java.lang.Class<T>, java.lang.String)' in 'java.lang.Enum' cannot be applied to '(java.lang.Class<capture<? extends T>>, java.lang.String)'">type</error>, str);
+    return <error descr="Incompatible types. Required T but 'valueOf' was inferred to T:
+Incompatible types: Enum is not convertible to T">Enum.valueOf(type, str);</error>
   }
 }

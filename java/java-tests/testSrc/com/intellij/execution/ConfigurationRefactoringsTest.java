@@ -155,7 +155,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
 
     checkConfigurationException("NotATest isn't test class", configuration);
 
-    RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
     runManager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(runManager, configuration, false));
     rename(psiClass, "NotATest2");
     JUnitConfiguration.Data data = configuration.getPersistentData();
@@ -244,7 +244,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   @Override
   protected <T extends RunConfiguration> T createConfiguration(@NotNull PsiElement psiClass, @NotNull MapDataContext dataContext) {
     T configuration = super.createConfiguration(psiClass, dataContext);
-    RunManagerImpl manager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    RunManagerImpl manager = (RunManagerImpl)RunManager.getInstance(myProject);
     manager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(manager, configuration, false));
     return configuration;
   }
@@ -254,7 +254,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
                                                         @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     final JUnitConfiguration configuration = super.createJUnitConfiguration(psiElement, producerClass, dataContext);
-    RunManagerImpl manager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    RunManagerImpl manager = (RunManagerImpl)RunManager.getInstance(myProject);
     manager.setTemporaryConfiguration(new RunnerAndConfigurationSettingsImpl(manager, configuration));
     return configuration;
   }

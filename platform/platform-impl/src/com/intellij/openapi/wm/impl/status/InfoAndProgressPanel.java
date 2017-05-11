@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.EventLog;
@@ -27,6 +28,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.MessageType;
@@ -42,12 +44,14 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.impl.ToolWindowsPane;
 import com.intellij.ui.BalloonLayoutImpl;
 import com.intellij.ui.Gray;
+import com.intellij.ui.InplaceButton;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -57,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
@@ -627,7 +633,8 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   private void updateProgressIcon() {
-    if (myOriginals.isEmpty() || PowerSaveMode.isEnabled()) {
+    if (myOriginals.isEmpty() || PowerSaveMode.isEnabled() ||
+        myOriginals.stream().map(ProgressSuspender::getSuspender).filter(Objects::nonNull).anyMatch(ProgressSuspender::isSuspended)) {
       myProgressIcon.suspend();
     } else {
       myProgressIcon.resume();
@@ -679,6 +686,44 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       Runnable updatePowerSaveStatus = () -> myProgress.setVisible(!PowerSaveMode.isEnabled());
       runOnPowerSaveChange(updatePowerSaveStatus, this);
       updatePowerSaveStatus.run();
+    }
+
+    @Override
+    protected JBIterable<ProgressButton> createEastButtons() {
+      return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
+    }
+
+    private ProgressButton createSuspendButton() {
+      InplaceButton suspendButton = new InplaceButton(
+        new IconButton("Pause", AllIcons.Actions.Pause, AllIcons.Actions.Pause, AllIcons.Actions.Pause),
+        new ActionListener() {
+          @Override
+          public void actionPerformed(final ActionEvent e) {
+            ProgressSuspender suspender = Objects.requireNonNull(getSuspender());
+            suspender.setSuspended(!suspender.isSuspended());
+            updateProgressNow();
+          }
+        }).setFillBg(false);
+      suspendButton.setVisible(false);
+
+      return new ProgressButton(suspendButton, () -> {
+        ProgressSuspender suspender = getSuspender();
+        suspendButton.setVisible(suspender != null);
+        if (suspender != null) {
+          String toolTipText = suspender.isSuspended() ? "Resume" : "Pause";
+          if (!toolTipText.equals(suspendButton.getToolTipText())) {
+            updateProgressIcon();
+          }
+          suspendButton.setIcon(suspender.isSuspended() ? AllIcons.Actions.Resume : AllIcons.Actions.Pause);
+          suspendButton.setToolTipText(toolTipText);
+        }
+      });
+    }
+
+    @Nullable
+    private ProgressSuspender getSuspender() {
+      ProgressIndicatorEx original = myOriginal;
+      return original == null ? null : ProgressSuspender.getSuspender(original);
     }
 
     @Override

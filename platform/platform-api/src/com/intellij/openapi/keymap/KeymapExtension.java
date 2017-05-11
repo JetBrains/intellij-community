@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: Vladislav.Kaznacheev
- * Date: Jul 4, 2007
- * Time: 3:59:52 PM
- */
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.AnAction;

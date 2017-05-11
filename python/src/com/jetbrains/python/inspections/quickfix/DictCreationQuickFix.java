@@ -31,12 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: 26.02.2010
- * Time: 13:29:02
- */
 public class DictCreationQuickFix implements LocalQuickFix {
   private final PyAssignmentStatement myStatement;
   public DictCreationQuickFix(@NotNull final PyAssignmentStatement statement) {

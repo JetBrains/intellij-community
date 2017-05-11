@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
                                                                            () -> {
                                                                              // do not start if there're no vcses
                                                                              if (! myVcsManager.hasActiveVcss() || ! vcsConfiguration. isChangedOnServerEnabled()) return;
-                                                                             myControlledCycle.startIfNotStarted(-1);
+                                                                             myControlledCycle.startIfNotStarted();
                                                                            });
     }
   }
@@ -111,7 +111,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     if ((! myProject.isDefault()) && myVcsManager.hasActiveVcss() && vcsConfiguration.isChangedOnServerEnabled()) {
       // will check whether is already started inside
       // interval is checked further, this is small and constant
-      myControlledCycle.startIfNotStarted(-1);
+      myControlledCycle.startIfNotStarted();
     } else {
       myControlledCycle.stop();
     }
@@ -129,6 +129,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
+  @Override
   public void directoryMappingChanged() {
     if (! VcsConfiguration.getInstance(myProject).isChangedOnServerEnabled()) {
       manageAlarm();
@@ -145,6 +146,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     }
   }
 
+  @Override
   public void plus(final Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {
@@ -180,6 +182,7 @@ public class RemoteRevisionsCache implements PlusMinus<Pair<String, AbstractVcs>
     myRemoteRevisionsNumbersCache.invalidate(newForUsual);
   }
 
+  @Override
   public void minus(Pair<String, AbstractVcs> pair) {
     final AbstractVcs vcs = pair.getSecond();
     if (RemoteDifferenceStrategy.ASK_TREE_PROVIDER.equals(vcs.getRemoteDifferenceStrategy())) {

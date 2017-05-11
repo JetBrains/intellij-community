@@ -17,17 +17,30 @@ package org.jetbrains.plugins.groovy.lang.typing;
 
 import com.intellij.openapi.util.ClassExtension;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 
+/**
+ * This API provides ability to plug into expression type calculation in Groovy.
+ * Each expression has its default implementation which is executed last.
+ * <p>
+ * The API is experimental at least until 2017.3.
+ *
+ * @param <T> expression class
+ * @see DefaultListOrMapTypeCalculator
+ * @see DefaultIndexAccessTypeCalculator
+ */
+@Experimental
 public interface GrTypeCalculator<T extends GrExpression> {
 
   ClassExtension<GrTypeCalculator> EP = new ClassExtension<>("org.intellij.groovy.typeCalculator");
 
-  @Nullable
-  PsiType getType(@NotNull T expression);
-
+  /**
+   * @return {@code expression} type if some implementation can calculate it, otherwise {@code null}. <br/>
+   * The result type is the first non-{@code null} value returned.
+   */
   @Nullable
   static PsiType getTypeFromCalculators(@NotNull GrExpression expression) {
     for (GrTypeCalculator calculator : EP.forKey(expression.getClass())) {
@@ -37,4 +50,10 @@ public interface GrTypeCalculator<T extends GrExpression> {
     }
     return null;
   }
+
+  /**
+   * @return {@code null} if expression type cannot be calculated.
+   */
+  @Nullable
+  PsiType getType(@NotNull T expression);
 }

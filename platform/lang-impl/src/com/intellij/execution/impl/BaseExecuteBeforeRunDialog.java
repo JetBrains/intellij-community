@@ -174,7 +174,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
 
   private boolean isConfigurationAssigned(ConfigurationType type) {
-    final RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
+    final RunManager runManager = RunManager.getInstance(myProject);
     for (ConfigurationFactory factory : type.getConfigurationFactories()) {
       final RunnerAndConfigurationSettings settings = ((RunManagerImpl)runManager).getConfigurationTemplate(factory);
       if (isConfigurationAssigned(settings.getConfiguration())) return true;
@@ -183,8 +183,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
   }
 
   private boolean isConfigurationAssigned(RunConfiguration configuration) {
-    final java.util.List<T> tasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskID());
-    for (T task : tasks) {
+    for (T task : RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(configuration, getTaskID())) {
       if (isRunning(task))
         return true;
     }
@@ -193,7 +192,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
 
   @Override
   protected void doOKAction() {
-    final RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
+    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(myProject);
     for (Enumeration nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)nodes.nextElement();
       final Descriptor descriptor = (Descriptor)node.getUserObject();

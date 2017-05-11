@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: amrk
- * Date: Jul 2, 2005
- * Time: 12:16:02 AM
- */
 package com.theoryinpractice.testng.configuration;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;

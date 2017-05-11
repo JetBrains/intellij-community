@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -44,12 +45,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
+  private final JBIterable<ProgressButton> myEastButtons;
 
   protected JProgressBar myProgress;
 
   private JPanel myComponent;
-
-  private final InplaceButton myCancelButton;
 
   private final boolean myCompact;
   private TaskInfo myInfo;
@@ -61,30 +61,16 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myCompact = compact;
     myInfo = processInfo;
 
-    myCancelButton = new InplaceButton(new IconButton(processInfo.getCancelTooltipText(),
-                                                      AllIcons.Process.Stop,
-                                                      AllIcons.Process.StopHovered) {
-    }, new ActionListener() {
-      @Override
-      public void actionPerformed(final ActionEvent e) {
-        cancelRequest();
-      }
-    }).setFillBg(true);
-
-    myCancelButton.setVisible(myInfo.isCancellable());
-    myCancelButton.setOpaque(false);
-    myCancelButton.setToolTipText(processInfo.getCancelTooltipText());
-    myCancelButton.setFillBg(false);
-
     myProgress = new JProgressBar(SwingConstants.HORIZONTAL);
     myProgress.putClientProperty("JComponent.sizeVariant", "mini");
 
     myComponent = new MyComponent(compact, myProcessName);
+    myEastButtons = createEastButtons();
+    myEastButtons.forEach(b -> b.button.setOpaque(false));
     if (myCompact) {
       myComponent.setOpaque(false);
       myComponent.setLayout(new BorderLayout(2, 0));
-      final JPanel textAndProgress = new JPanel(new BorderLayout());
-      textAndProgress.setOpaque(false);
+      JPanel textAndProgress = new NonOpaquePanel(new BorderLayout());
       textAndProgress.add(myText, BorderLayout.CENTER);
 
       final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
@@ -98,7 +84,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
       textAndProgress.add(progressWrapper, BorderLayout.EAST);
       myComponent.add(textAndProgress, BorderLayout.CENTER);
-      myComponent.add(myCancelButton, BorderLayout.EAST);
+      myComponent.add(createButtonPanel(myEastButtons.map(b -> b.button)), BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
     } else {
       myComponent.setLayout(new BorderLayout());
@@ -111,11 +97,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       content.setBorder(new EmptyBorder(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
       myComponent.add(content, BorderLayout.CENTER);
 
-      final Wrapper cancelWrapper = new Wrapper(myCancelButton);
-      cancelWrapper.setOpaque(false);
-      cancelWrapper.setBorder(new EmptyBorder(0, 3, 0, 2));
-
-      content.add(cancelWrapper, BorderLayout.EAST);
+      content.add(createButtonPanel(myEastButtons.map(b -> withBorder(b.button))), BorderLayout.EAST);
       content.add(myText, BorderLayout.NORTH);
       content.add(myProgress, BorderLayout.CENTER);
       content.add(myText2, BorderLayout.SOUTH);
@@ -129,6 +111,37 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText2.recomputeSize();
     }
 
+  }
+
+  static JPanel createButtonPanel(Iterable<JComponent> components) {
+    JPanel iconsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+    components.forEach(iconsPanel::add);
+    return iconsPanel;
+  }
+
+  private static Wrapper withBorder(InplaceButton button) {
+    Wrapper wrapper = new Wrapper(button);
+    wrapper.setBorder(new EmptyBorder(0, 3, 0, 2));
+    return wrapper;
+  }
+
+  protected JBIterable<ProgressButton> createEastButtons() {
+    return JBIterable.of(createCancelButton());
+  }
+
+  private ProgressButton createCancelButton() {
+    InplaceButton cancelButton = new InplaceButton(
+      new IconButton(myInfo.getCancelTooltipText(), AllIcons.Process.Stop, AllIcons.Process.StopHovered),
+      new ActionListener() {
+        @Override
+        public void actionPerformed(final ActionEvent e) {
+          cancelRequest();
+        }
+      }).setFillBg(false);
+
+    cancelButton.setVisible(myInfo.isCancellable());
+
+    return new ProgressButton(cancelButton, () -> cancelButton.setPainting(!isStopping()));
   }
 
   protected void cancelRequest() {
@@ -168,10 +181,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText.setText(myInfo.getTitle());
     }
 
-    myCancelButton.setPainting(isCancelable());
-
-    final boolean isStopping = wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
-    if (isStopping) {
+    if (isStopping()) {
       if (myCompact) {
         myText.setText("Stopping - " + myText.getText());
       } else {
@@ -180,14 +190,17 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText.setEnabled(false);
       myText2.setEnabled(false);
       myProgress.setEnabled(false);
-
-      myCancelButton.setPainting(false);
     } else {
       myText.setEnabled(true);
       myText2.setEnabled(true);
       myProgress.setEnabled(true);
-      myCancelButton.setPainting(true);
     }
+    
+    myEastButtons.forEach(b -> b.updateAction.run());
+  }
+
+  private boolean isStopping() {
+    return wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
   }
 
   protected boolean isFinished() {
@@ -295,5 +308,15 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private boolean isDisposed() {
     return myDisposed;
+  }
+}
+
+class ProgressButton {
+  final InplaceButton button;
+  final Runnable updateAction;
+
+  ProgressButton(InplaceButton button, Runnable updateAction) {
+    this.button = button;
+    this.updateAction = updateAction;
   }
 }

@@ -1,34 +1,31 @@
-buildscript {
-  repositories {
-    maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
-    maven { url "https://plugins.gradle.org/m2/" }
-  }
-  dependencies {
-    classpath "de.undercouch:gradle-download-task:3.2.0"
-  }
-}
-apply plugin: "de.undercouch.download"
-
-import de.undercouch.gradle.tasks.download.Download
-import org.jetbrains.intellij.build.DependenciesBuildUtils
-
 task setupJbre {}
+
+def jdkRepo = inJetBrainsNetwork ? 'http://repo.labs.intellij.net/intellij-jdk' : 'https://dl.bintray.com/jetbrains/intellij-jdk'
 
 jrePlatformsToDownload(targetOs).each { platform ->
   archToDownload(platform).each { arch ->
     def jbrexArtifactName = "jbrex8${jdkBuild}_${platform}_$arch"
     def jbreArtifactName = "jbre8${jdkBuild}_${platform}_$arch"
 
-    task("downloadJbrex_${platform}_$arch", type: Download, group: 'jbre') {
+    task("downloadJbrex_${platform}_$arch") {
+      def outputDir = "$project.buildDir/jbre"
+      def outputFile = "$outputDir/${jbrexArtifactName}_origin.tar.gz"
+
       inputs.property('build', jdkBuild)
-      src "$DependenciesBuildUtils.jdkRepo/${jbrexArtifactName}.tar.gz"
-      dest "$buildDir/jbre/${jbrexArtifactName}_origin.tar.gz"
-      onlyIfNewer true
+      outputs.file(outputFile)
+      doLast {
+        logger.info("Downloading $jbrexArtifactName to $outputFile")
+        download {
+          src "$jdkRepo/${jbrexArtifactName}.tar.gz"
+          dest outputFile
+          onlyIfNewer true
+        }
+      }
     }
     cleanSetupJbre.dependsOn("cleanDownloadJbrex_${platform}_$arch")
 
     if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-      task("untarJbrex_${platform}_$arch", type: Copy, dependsOn: "downloadJbrex_${platform}_$arch", group: 'jbre') {
+      task("untarJbrex_${platform}_$arch", type: Copy, dependsOn: "downloadJbrex_${platform}_$arch") {
         def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
         from tarTree(downloadOutputs.singleFile), {
           exclude 'lib/tools.jar'
@@ -42,7 +39,7 @@ jrePlatformsToDownload(targetOs).each { platform ->
       }
     }
     else {
-      task("untarJbrex_${platform}_$arch", type: Exec, dependsOn: "downloadJbrex_${platform}_$arch", group: 'jbre') {
+      task("untarJbrex_${platform}_$arch", type: Exec, dependsOn: "downloadJbrex_${platform}_$arch") {
         def downloadOutputs = tasks["downloadJbrex_${platform}_$arch"].outputs.files
         def outputDir = "${downloadOutputs.singleFile.absolutePath - '.tar.gz'}"
         inputs.file(downloadOutputs.singleFile)
@@ -50,11 +47,11 @@ jrePlatformsToDownload(targetOs).each { platform ->
         doFirst { exec { commandLine 'mkdir', '-p', outputDir } }
         commandLine 'tar', '-xpf', "${downloadOutputs.singleFile.absolutePath}", '--directory', outputDir
         if (platform != 'osx') {
-          doLast {
-            exec {
+          doLast { 
+            exec { 
               commandLine 'mv', "$outputDir/lib/tools.jar", "$outputDir/jre/lib/"
               ignoreExitValue = true
-            }
+            } 
           }
         }
       }
@@ -73,7 +70,7 @@ def createTarJbreTask(String taskName, String untarTaskName, String platform, St
   def dirToTar = platform == 'osx' ? 'jdk' : 'jre'
 
   if (org.gradle.internal.os.OperatingSystem.current().isWindows()) {
-    task(taskName, type: Tar, group: 'jbre') {
+    task(taskName, type: Tar) {
       def untarOutputs = tasks[untarTaskName].outputs.files
       inputs.file(untarOutputs)
       from "$untarOutputs.singleFile/$dirToTar"
@@ -87,7 +84,7 @@ def createTarJbreTask(String taskName, String untarTaskName, String platform, St
     }
   }
   else {
-    task(taskName, type: Exec, group: 'jbre') {
+    task(taskName, type: Exec) {
       def untarOutputs = tasks[untarTaskName].outputs.files
       def outputFile = "${untarOutputs.singleFile.parentFile}/${archiveName}.tar.gz"
       inputs.files(untarOutputs)

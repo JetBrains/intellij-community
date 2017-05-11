@@ -24,12 +24,6 @@ import git4idea.repo.GitRepository;
 
 import java.util.Collections;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 10/26/11
- * Time: 3:07 PM
- */
 public class GitCreateNewTag {
   private final Project myProject;
   private final GitRepository myRepository;

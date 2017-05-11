@@ -835,7 +835,7 @@
     </action>
 
     <action id="PyDebugger.ViewArray" class="com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction" text="View as Array">
-      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.Tree.AddToWatches"/>
+      <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
     </action>
 
     <action id="PyConvertModuleToPackage" class="com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction"

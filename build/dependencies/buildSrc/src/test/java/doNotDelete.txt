@@ -1,1 +1,0 @@
-The java dir is needed for IdeaUltimateProjectStructureTest

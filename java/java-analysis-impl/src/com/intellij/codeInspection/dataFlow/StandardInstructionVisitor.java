@@ -124,6 +124,39 @@ public class StandardInstructionVisitor extends InstructionVisitor {
   }
 
   @Override
+  public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    DfaValue index = memState.pop();
+    DfaValue array = memState.pop();
+    PsiArrayAccessExpression arrayExpression = instruction.getExpression();
+    if (!checkNotNullable(memState, array, NullabilityProblem.fieldAccessNPE, arrayExpression.getArrayExpression())) {
+      forceNotNull(runner, memState, array);
+    }
+    boolean alwaysOutOfBounds = false;
+    if (index != DfaUnknownValue.getInstance()) {
+      DfaValueFactory factory = runner.getFactory();
+      DfaValue indexNonNegative =
+        factory.createCondition(index, RelationType.GE, factory.getConstFactory().createFromValue(0, PsiType.INT, null));
+      if (!memState.applyCondition(indexNonNegative)) {
+        alwaysOutOfBounds = true;
+      }
+      DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(factory, array);
+      if(dfaLength != null) {
+        DfaValue indexLessThanLength = factory.createCondition(index, RelationType.LT, dfaLength);
+        if (!memState.applyCondition(indexLessThanLength)) {
+          alwaysOutOfBounds = true;
+        }
+      }
+    }
+    processArrayAccess(arrayExpression, alwaysOutOfBounds);
+    memState.push(instruction.getValue());
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  protected void processArrayAccess(PsiArrayAccessExpression expression, boolean alwaysOutOfBounds) {
+
+  }
+
+  @Override
   public DfaInstructionState[] visitFieldReference(FieldReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue qualifier = memState.pop();
     if (!checkNotNullable(memState, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getElementToAssert())) {

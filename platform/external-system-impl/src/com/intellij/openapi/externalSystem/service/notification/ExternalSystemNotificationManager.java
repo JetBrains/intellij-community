@@ -156,6 +156,8 @@ public class ExternalSystemNotificationManager implements Disposable {
   public void showNotification(@NotNull final ProjectSystemId externalSystemId,
                                @NotNull final NotificationData notificationData,
                                @Nullable Key<String> notificationKey) {
+    if(ApplicationManager.getApplication().isUnitTestMode()) return;
+
     if (notificationKey != null && isNotificationActive(notificationKey)) return;
     myUpdater.submit(() -> {
       if (myProject.isDisposed()) return;
@@ -221,6 +223,8 @@ public class ExternalSystemNotificationManager implements Disposable {
                                  @NotNull final NotificationSource notificationSource,
                                  @NotNull final ProjectSystemId externalSystemId) {
     myMessageCounter.remove(groupName, notificationSource, externalSystemId);
+    if(ApplicationManager.getApplication().isUnitTestMode()) return;
+
     myUpdater.submit(() -> {
       if (myProject.isDisposed()) return;
       for (Iterator<Notification> iterator = myNotifications.iterator(); iterator.hasNext(); ) {

@@ -21,10 +21,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -141,18 +143,20 @@ public class OptionalUtil {
         }
       }
       String suffix = null;
+      boolean java9 = PsiUtil.isLanguageLevel9OrHigher(trueExpression);
       if (isOptionalEmptyCall(falseExpression)) {
         suffix = "";
       }
-      else if (PsiUtil.isLanguageLevel9OrHigher(trueExpression) &&
-               InheritanceUtil.isInheritor(falseExpression.getType(), CommonClassNames.JAVA_UTIL_OPTIONAL) &&
+      else if (java9 && InheritanceUtil.isInheritor(falseExpression.getType(), CommonClassNames.JAVA_UTIL_OPTIONAL) &&
                LambdaGenerationUtil.canBeUncheckedLambda(falseExpression)) {
         suffix = ".or(() -> " + falseExpression.getText() + ")";
       }
       if (suffix != null) {
+        PsiMethodCallExpression mappedOptional =
+          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(trueExpression), PsiMethodCallExpression.class);
         // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
-        if (trueExpression instanceof PsiMethodCallExpression && OPTIONAL_OF.test((PsiMethodCallExpression)trueExpression)) {
-          PsiExpression arg = ((PsiMethodCallExpression)trueExpression).getArgumentList().getExpressions()[0];
+        if (OPTIONAL_OF.test(mappedOptional)) {
+          PsiExpression arg = mappedOptional.getArgumentList().getExpressions()[0];
           if (ExpressionUtils.isReferenceTo(arg, var)) {
             return qualifier + suffix;
           }
@@ -160,6 +164,35 @@ public class OptionalUtil {
         }
         if (suffix.isEmpty()) {
           return qualifier + ".flatMap(" + LambdaUtil.createLambda(var, trueExpression) + ")";
+        }
+      }
+      if (java9 && StreamApiUtil.isNullOrEmptyStream(falseExpression) && !ExpressionUtils.isNullLiteral(falseExpression)) {
+        PsiType elementType = StreamApiUtil.getStreamElementType(targetType);
+        if (elementType != null) {
+          PsiMethodCallExpression mappedStream =
+            ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(trueExpression), PsiMethodCallExpression.class);
+          if (mappedStream != null && "of".equals(mappedStream.getMethodExpression().getReferenceName())) {
+            PsiExpression[] args = mappedStream.getArgumentList().getExpressions();
+            if (args.length == 1) {
+              PsiMethod method = mappedStream.resolveMethod();
+              if(method != null && method.getContainingClass() != null) {
+                String className = method.getContainingClass().getQualifiedName();
+                if(className != null && className.startsWith("java.util.stream.")) {
+                  PsiExpression arg = args[0];
+                  if(ExpressionUtils.isReferenceTo(arg, var)) {
+                    return qualifier + ".stream()";
+                  }
+                  if(arg.getType() != null && elementType.isAssignableFrom(arg.getType())) {
+                    return qualifier + ".stream()" + StreamApiUtil.generateMapOperation(var, elementType, arg);
+                  }
+                }
+              }
+            }
+          }
+          String flatMapOperationName = StreamApiUtil.getFlatMapOperationName(var.getType(), elementType);
+          if(flatMapOperationName != null) {
+            return qualifier + ".stream()."+flatMapOperationName+"(" + LambdaUtil.createLambda(var, trueExpression) + ")";
+          }
         }
       }
       trueExpression =

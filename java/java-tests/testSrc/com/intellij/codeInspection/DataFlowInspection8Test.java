@@ -26,6 +26,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,7 +60,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testNullableVoidLambda() { doTest(); }
   public void testNullableForeachVariable() { doTestWithCustomAnnotations(); }
   public void testGenericParameterNullity() { doTestWithCustomAnnotations(); }
-  public void testMethodReferenceConstantValue() { doTest(); }
+  public void testMethodReferenceConstantValue() { doTestWithCustomAnnotations(); }
 
   public void testOptionalOfNullable() { doTest(); }
   public void testOptionalOrElse() { doTest(); }
@@ -128,9 +129,13 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   private void setupCustomAnnotations() {
-    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
-    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
-    setCustomAnnotations(getProject(), myFixture.getTestRootDisposable(), "foo.NotNull", "foo.Nullable");
+    setupTypeUseAnnotations("foo", myFixture);
+  }
+
+  static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
+    fixture.addClass("package " + pkg + ";\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
+    setCustomAnnotations(fixture.getProject(), fixture.getTestRootDisposable(), pkg + ".NotNull", pkg + ".Nullable");
   }
 
   static void setCustomAnnotations(Project project, Disposable parentDisposable, String notNull, String nullable) {

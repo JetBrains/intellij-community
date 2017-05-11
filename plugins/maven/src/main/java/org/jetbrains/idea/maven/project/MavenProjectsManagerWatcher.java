@@ -21,8 +21,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.externalSystem.service.project.autoimport.FileChangeListenerBase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
@@ -145,7 +145,7 @@ public class MavenProjectsManagerWatcher {
       }
     });
 
-    DocumentAdapter myDocumentListener = new DocumentAdapter() {
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent event) {
         Document doc = event.getDocument();
@@ -182,8 +182,7 @@ public class MavenProjectsManagerWatcher {
           }
         });
       }
-    };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myDocumentListener, myBusConnection);
+    }, myBusConnection);
 
     final MavenGeneralSettings.Listener mySettingsPathsChangesListener = new MavenGeneralSettings.Listener() {
       @Override

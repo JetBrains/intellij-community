@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Processor;
-import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,12 +140,6 @@ public class FrozenDocument implements DocumentEx {
     return myText;
   }
 
-  @NotNull
-  @Override
-  public char[] getChars() {
-    return CharArrayUtil.fromSequence(myText);
-  }
-
   @Override
   public int getLineCount() {
     return getLineSet().getLineCount();
@@ -202,9 +195,31 @@ public class FrozenDocument implements DocumentEx {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public void setReadOnly(boolean isReadOnly) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   @Override
   public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void removeGuardedBlock(@NotNull RangeMarker block) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public RangeMarker getOffsetGuard(int offset) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Nullable
+  @Override
+  public RangeMarker getRangeGuard(int start, int end) {
     throw new UnsupportedOperationException();
   }
 

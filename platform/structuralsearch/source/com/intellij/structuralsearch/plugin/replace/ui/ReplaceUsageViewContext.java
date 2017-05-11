@@ -21,13 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Maxim.Mossienko
- * Date: Mar 9, 2005
- * Time: 4:37:08 PM
- * To change this template use File | Settings | File Templates.
- */
 class ReplaceUsageViewContext extends UsageViewContext {
   private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
   private final Replacer replacer = new Replacer(mySearchContext.getProject(), ((ReplaceConfiguration)myConfiguration).getOptions());

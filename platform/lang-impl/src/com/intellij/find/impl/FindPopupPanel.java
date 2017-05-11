@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -173,11 +174,11 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         .setResizable(true)
         .setMayBeParent(true)
         .setCancelOnClickOutside(true)
-        .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
           if (!ApplicationManager.getApplication().isActive()) return false;
+          if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() == null) return false;
           List<JBPopup> popups = JBPopupFactory.getInstance().getChildPopups(this);
           if (!popups.isEmpty()) {
             for (JBPopup popup : popups) {
@@ -311,7 +312,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         }
       };
     myFileMaskField.setPreferredWidth(JBUI.scale(100));
-    myFileMaskField.addDocumentListener(new com.intellij.openapi.editor.event.DocumentAdapter() {
+    myFileMaskField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
         scheduleResultsUpdate();
@@ -805,7 +806,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
     ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
       @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
+      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) {
         final UsageViewPresentation presentation =
           FindInProjectUtil.setupViewPresentation(findSettings.isShowResultsInSeparateView(), /*findModel*/myHelper.getModel().clone());
         final boolean showPanelIfOnlyOneUsage = !findSettings.isSkipResultsWithOneUsage();
@@ -837,7 +838,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
             }
-
             int occurrences = resultsCount.get();
             int filesWithOccurrences = resultsFilesCount.get();
             if (occurrences == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
@@ -862,6 +862,12 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
           return resultsCount.incrementAndGet() < ShowUsagesAction.USAGES_PAGE_SIZE;
         }, processPresentation, filesToScanInitially);
+
+        return new Continuation(() -> {
+          if (!isCancelled()) {
+            if (resultsCount.get() == 0) myResultsPreviewTable.getEmptyText().setText(UIBundle.message("message.nothingToShow"));
+          }
+        }, state);
       }
 
       boolean isCancelled() {

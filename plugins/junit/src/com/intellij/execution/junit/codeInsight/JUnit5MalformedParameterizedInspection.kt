@@ -16,16 +16,24 @@
 package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.JavaVersionService
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
@@ -33,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.annotations.Nls
+import java.util.*
 
 class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool() {
 
@@ -51,42 +60,52 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
     return object : JavaElementVisitor() {
 
       override fun visitMethod(method: PsiMethod) {
-        val modifierList = method.modifierList
-        val parameterizedAnnotation = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
-        if (parameterizedAnnotation != null) {
-          val testAnnotation = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST)
-          if (testAnnotation != null && method.parameterList.parametersCount > 0) {
-            holder.registerProblem(testAnnotation,
+        val parameterizedAnnotation = AnnotationUtil.findAnnotations(method, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
+        val testAnnotation = AnnotationUtil.findAnnotations(method, JUnitUtil.TEST5_JUPITER_ANNOTATIONS)
+        if (parameterizedAnnotation.isNotEmpty()) {
+          if (testAnnotation.isNotEmpty() && method.parameterList.parametersCount > 0) {
+            holder.registerProblem(testAnnotation[0],
                                    "Suspicious combination @Test and @ParameterizedTest",
-                                   DeleteElementFix(testAnnotation))
-          }
-          val methodSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)
-          if (methodSource != null) {
-            checkMethodSource(method, methodSource)
+                                   DeleteElementFix(testAnnotation[0]))
           }
 
-          val valuesSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE)
-          if (valuesSource != null) {
-            checkValuesSource(method, valuesSource)
+          var noMultiArgsProvider = true
+          var source : PsiAnnotation? = null
+          AnnotationUtil.findAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
+            when (it.qualifiedName) {
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
+                checkMethodSource(method, it)
+                noMultiArgsProvider = false
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE -> {
+                checkValuesSource(method, it)
+                source = it
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE -> {
+                checkEnumSource(method, it)
+                source = it
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE,
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE -> {
+                noMultiArgsProvider = false
+              }
+            }
           }
 
-          val enumSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE)
-          if (enumSource != null) {
-            checkEnumSource(method, enumSource)
+          if (noMultiArgsProvider) {
+            if (source == null) {
+              holder.registerProblem(parameterizedAnnotation[0], "No sources are provided, the suite would be empty")
+            }
+            else if (hasMultipleParameters(method)) {
+                holder.registerProblem(source!!, "Multiple parameters are not supported by this source")
+            }
           }
-
-          val csvFileSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE)
-          val csvSource     = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE)
-          val argSources = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE)
-
-          val noMultiArgsProvider = methodSource == null && csvFileSource == null && csvSource == null && argSources == null
-
-          if (valuesSource == null && enumSource == null && noMultiArgsProvider) {
-            holder.registerProblem(parameterizedAnnotation, "No sources are provided, the suite would be empty")
-          }
-          else if (method.parameterList.parametersCount > 1 && noMultiArgsProvider) {
-            holder.registerProblem(valuesSource ?: enumSource!!, "Multiple parameters are not supported by this source")
-          }
+        }
+        else if (testAnnotation.isNotEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS)) {
+          holder.registerProblem(testAnnotation[0],
+                                 "Suspicious combination @Test and parameterized source",
+                                 ChangeAnnotationFix(testAnnotation[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
         }
       }
 
@@ -126,8 +145,15 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
             if (reference is MethodSourceReference) {
               val resolve = reference.resolve()
               if (resolve !is PsiMethod) {
+                val containingClass = method.containingClass
+                var createFix : CreateMethodQuickFix? = null
+                if (containingClass != null && holder.isOnTheFly)
+                  createFix = CreateMethodQuickFix.createFix(containingClass,
+                                                             "static Object[][] " + reference.value + "()",
+                                                             "return new Object[][] {};")
                 holder.registerProblem(attributeValue,
-                                       "Cannot resolve target method source: \'" + reference.value + "\'")
+                                       "Cannot resolve target method source: \'" + reference.value + "\'",
+                                       createFix)
               }
               else {
                 val sourceProvider : PsiMethod = resolve
@@ -147,7 +173,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                     holder.registerProblem(attributeValue,
                                            "Method source \'$providerName\' must have one of the following return type: Stream<?>, Iterator<?>, Iterable<?> or Object[]")
                   }
-                  else if (method.parameterList.parametersCount > 1 && !isArgumentsInheritor(componentType)) {
+                  else if (hasMultipleParameters(method) && !isArgumentsInheritor(componentType)) {
                     holder.registerProblem(attributeValue, "Multiple parameters have to be wrapped in Arguments")
                   }
                 }
@@ -214,4 +240,27 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
       }
     }
   }
+
+  private fun hasMultipleParameters(method: PsiMethod): Boolean {
+    return method.parameterList.parameters
+             .filter { it ->
+               !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INFO) &&
+               !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_REPORTER)
+             }
+             .count() > 1 && !MetaAnnotationUtil.isMetaAnnotated(method, Collections.singleton(
+      JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
+  }
+}
+
+
+class ChangeAnnotationFix(testAnnotation: PsiAnnotation, val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
+  override fun getFamilyName() = "Replace annotation"
+
+  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + targetAnnotation, startElement)
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation))
+  }
+
+  override fun getText() = "Change to " + StringUtil.getShortName(targetAnnotation)
+
 }

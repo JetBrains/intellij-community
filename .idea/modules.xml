@@ -68,7 +68,6 @@
       <module fileurl="file://$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" filepath="$PROJECT_DIR$/java/debugger/impl/debugger-impl.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" filepath="$PROJECT_DIR$/java/debugger/openapi/debugger-openapi.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/build/dependencies/dependencies.iml" filepath="$PROJECT_DIR$/build/dependencies/dependencies.iml" />
-      <module fileurl="file://$PROJECT_DIR$/build/dependencies/buildSrc/buildSrc.iml" filepath="$PROJECT_DIR$/build/dependencies/buildSrc/buildSrc.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/designer/designer.iml" filepath="$PROJECT_DIR$/android/designer/designer.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/devkit.iml" filepath="$PROJECT_DIR$/plugins/devkit/devkit.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" filepath="$PROJECT_DIR$/plugins/devkit/jps-plugin/devkit-jps-plugin.iml" group="plugins" />
@@ -268,6 +267,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-core/tasks-core.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-core/tasks-core.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-java/tasks-java.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-java/tasks-java.iml" group="plugins/tasks" />
+      <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-api/tasks-platform-api.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-api/tasks-platform-api.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/platform/tasks-platform-impl/tasks-platform-impl.iml" filepath="$PROJECT_DIR$/platform/tasks-platform-impl/tasks-platform-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-tests/tasks-tests.iml" group="plugins/tasks" />
       <module fileurl="file://$PROJECT_DIR$/plugins/terminal/terminal.iml" filepath="$PROJECT_DIR$/plugins/terminal/terminal.iml" group="plugins" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/extensions/testExtensions.iml" filepath="$PROJECT_DIR$/platform/testFramework/extensions/testExtensions.iml" group="platform" />

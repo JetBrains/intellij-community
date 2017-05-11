@@ -23,13 +23,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 20.01.2003
- * Time: 16:17:14
- * To change this template use Options | File Templates.
- */
 public class CompletionElement{
   private final Object myElement;
   private final PsiSubstitutor mySubstitutor;

@@ -329,10 +329,6 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
-  }
-
-  @Override
   public int getPriority() {
     return EditorDocumentPriorities.LEXER_EDITOR;
   }

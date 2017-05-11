@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 15.11.2006
- * Time: 20:20:15
- */
 package com.intellij.openapi.diff.impl.patch;
 
 import java.util.ArrayList;

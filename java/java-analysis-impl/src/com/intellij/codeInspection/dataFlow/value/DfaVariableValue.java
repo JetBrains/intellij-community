@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: max
- * Date: Jan 28, 2002
- * Time: 6:31:08 PM
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
@@ -276,7 +268,7 @@ public class DfaVariableValue extends DfaValue {
     if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
     boolean finalField = myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL);
     boolean specialFinalField = myVariable instanceof PsiMethod &&
-                           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isFinal() && sf.isMyMethod((PsiMethod)myVariable));
+                           Arrays.stream(SpecialField.values()).anyMatch(sf -> sf.isFinal() && sf.isMyAccessor(myVariable));
     if (finalField || specialFinalField) {
       return myQualifier != null && myQualifier.isFlushableByCalls();
     }

@@ -200,7 +200,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         // not variable arity
         if (psiMethod.isVarArgs()) return null;
 
-        //If this method/constructor is generic (§8.4.4), then the method reference expression provides TypeArguments.
+        //If this method/constructor is generic (p8.4.4), then the method reference expression provides TypeArguments.
         if (psiMethod.getTypeParameters().length > 0) {
           final PsiReferenceParameterList parameterList = getParameterList();
           return parameterList != null && parameterList.getTypeParameterElements().length > 0 ? psiMethod : null;

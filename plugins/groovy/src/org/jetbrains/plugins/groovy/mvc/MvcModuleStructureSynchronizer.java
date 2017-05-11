@@ -31,10 +31,7 @@ import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -108,11 +105,16 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     });
 
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
+
+      final ProjectFileIndex myFileIndex = ProjectFileIndex.getInstance(myProject);
+
       @Override
       public void fileCreated(@NotNull final VirtualFileEvent event) {
+        final VirtualFile file = event.getFile();
+        if (!myFileIndex.isInContent(file)) return;
+
         myModificationTracker.incModificationCount();
 
-        final VirtualFile file = event.getFile();
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName) || isApplicationDirectoryName(fileName)) {
           queue(SyncAction.UpdateProjectStructure, file);
@@ -180,9 +182,11 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
+        final VirtualFile file = event.getFile();
+        if (!myFileIndex.isInContent(file)) return;
+
         myModificationTracker.incModificationCount();
 
-        final VirtualFile file = event.getFile();
         if (isLibDirectory(file) || isLibDirectory(event.getParent())) {
           queue(SyncAction.UpdateProjectStructure, file);
         }
@@ -190,19 +194,24 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
 
       @Override
       public void contentsChanged(@NotNull VirtualFileEvent event) {
+        final VirtualFile file = event.getFile();
+        if (!myFileIndex.isInContent(file)) return;
+
         final String fileName = event.getFileName();
         if (MvcModuleStructureUtil.APPLICATION_PROPERTIES.equals(fileName)) {
-          queue(SyncAction.UpdateProjectStructure, event.getFile());
+          queue(SyncAction.UpdateProjectStructure, file);
         }
       }
 
       @Override
       public void fileMoved(@NotNull VirtualFileMoveEvent event) {
+        if (!myFileIndex.isInContent(event.getFile())) return;
         myModificationTracker.incModificationCount();
       }
 
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
+        if (!myFileIndex.isInContent(event.getFile())) return;
         if (VirtualFile.PROP_NAME.equals(event.getPropertyName())) {
           myModificationTracker.incModificationCount();
         }

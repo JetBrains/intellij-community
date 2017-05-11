@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -57,7 +57,7 @@ public abstract class AbstractExternalSystemRuntimeConfigurationProducer extends
     ExternalSystemTaskLocation taskLocation = (ExternalSystemTaskLocation)location;
     mySourceElement = taskLocation.getPsiElement();
 
-    RunManagerEx runManager = RunManagerEx.getInstanceEx(taskLocation.getProject());
+    RunManager runManager = RunManager.getInstance(taskLocation.getProject());
     RunnerAndConfigurationSettings settings = runManager.createConfiguration("", getConfigurationFactory());
     ExternalSystemRunConfiguration configuration = (ExternalSystemRunConfiguration)settings.getConfiguration();
     ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();

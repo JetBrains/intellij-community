@@ -420,21 +420,50 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiParameter parameter = statement.getIterationParameter();
     final PsiExpression iteratedValue = statement.getIteratedValue();
 
+    ControlFlow.ControlFlowOffset loopEndOffset = getEndOffset(statement);
+    boolean hasSizeCheck = false;
+
     if (iteratedValue != null) {
       iteratedValue.accept(this);
       addInstruction(new FieldReferenceInstruction(iteratedValue, "Collection iterator or array.length"));
+      DfaValue qualifier = myFactory.createValue(iteratedValue);
+
+      if (qualifier instanceof DfaVariableValue) {
+        PsiType type = iteratedValue.getType();
+        SpecialField length = null;
+        if (type instanceof PsiArrayType) {
+          length = SpecialField.ARRAY_LENGTH;
+        }
+        else if (InheritanceUtil.isInheritor(type, JAVA_UTIL_COLLECTION)) {
+          length = SpecialField.COLLECTION_SIZE;
+        }
+        if (length != null) {
+          addInstruction(new PushInstruction(length.createValue(myFactory, qualifier), null));
+          addInstruction(new PushInstruction(myFactory.getConstFactory().createFromValue(0, PsiType.INT, null), null));
+          addInstruction(new BinopInstruction(JavaTokenType.EQEQ, iteratedValue, myProject));
+          addInstruction(new ConditionalGotoInstruction(loopEndOffset, false, null));
+          hasSizeCheck = true;
+        }
+      }
     }
 
     ControlFlow.ControlFlowOffset offset = myCurrentFlow.getNextOffset();
     DfaVariableValue dfaVariable = myFactory.getVarFactory().createVariableValue(parameter, false);
     addInstruction(new FlushVariableInstruction(dfaVariable));
 
-    pushUnknown();
-    addInstruction(new ConditionalGotoInstruction(getEndOffset(statement), true, null));
+    if (!hasSizeCheck) {
+      pushUnknown();
+      addInstruction(new ConditionalGotoInstruction(loopEndOffset, true, null));
+    }
 
     final PsiStatement body = statement.getBody();
     if (body != null) {
       body.accept(this);
+    }
+
+    if (hasSizeCheck) {
+      pushUnknown();
+      addInstruction(new ConditionalGotoInstruction(loopEndOffset, true, null));
     }
 
     addInstruction(new GotoInstruction(offset));
@@ -929,17 +958,20 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(expression);
     PsiExpression arrayExpression = expression.getArrayExpression();
     arrayExpression.accept(this);
-    addInstruction(new FieldReferenceInstruction(expression, null));
 
     PsiExpression indexExpression = expression.getIndexExpression();
     if (indexExpression != null) {
       indexExpression.accept(this);
       generateBoxingUnboxingInstructionFor(indexExpression, PsiType.INT);
-      addInstruction(new PopInstruction());
+    } else {
+      addInstruction(new PushInstruction(DfaUnknownValue.getInstance(), null));
     }
 
     DfaValue toPush = myFactory.createValue(expression);
-    addInstruction(new PushInstruction(toPush != null ? toPush : myFactory.createTypeValue(expression.getType(), Nullness.UNKNOWN), null));
+    if (toPush == null) {
+      toPush = myFactory.createTypeValue(expression.getType(), Nullness.UNKNOWN);
+    }
+    addInstruction(new ArrayAccessInstruction(toPush, expression));
     finishElement(expression);
   }
 

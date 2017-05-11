@@ -83,26 +83,31 @@ public abstract class GuiTestBase {
 
     @Override
     protected void failed(Throwable e, Description description) {
-      String fileName = description.getTestClass().getSimpleName() + "." + description.getMethodName() + ".png";
-
-      try {
-        File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), fileName);
-        //noinspection ResultOfMethodCallIgnored
-        file.delete();
-        LOG.error(getHierarchy() + "\n" + "caused by:", e);
-        myScreenshotTaker.saveDesktopAsPng(file.getPath());
-        LOG.info("Screenshot: " + file);
-      }
-      catch (Throwable t) {
-        LOG.error("Screenshot failed. " + t.getMessage());
-      }
+      String screenshotName = description.getTestClass().getSimpleName() + "." + description.getMethodName();
+      takeScreenshotOnFailure(e, screenshotName);
     }
   };
+
+  protected void takeScreenshotOnFailure(Throwable e, String screenshotName) {
+
+
+    try {
+      File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), screenshotName + ".png");
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
+      LOG.error(getHierarchy() + "\n" + "caused by:", e);
+      myScreenshotTaker.saveDesktopAsPng(file.getPath());
+      LOG.info("Screenshot: " + file);
+    }
+    catch (Throwable t) {
+      LOG.error("Screenshot failed. " + t.getMessage());
+    }
+  }
 
   protected IdeFrameFixture myProjectFrame;
 
   /**
-   * @return the name of the test method being executed.
+   * @return the name of the test class being executed.
    */
   protected String getTestName() {
     return this.getClass().getSimpleName();

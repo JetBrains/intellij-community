@@ -129,7 +129,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (isCanceled() && isCancelable()) {
       throw new ProcessCanceledException();
     }
-    if (CoreProgressManager.runCheckCanceledHooks()) {
+    if (CoreProgressManager.runCheckCanceledHooks(this)) {
       if (isCanceled() && isCancelable()) {
         throw new ProcessCanceledException();
       }

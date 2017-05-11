@@ -66,8 +66,8 @@ public class ComparisonFailureData {
   public ComparisonFailureData(String expected, String actual, String filePath, String actualFilePath) {
     myExpected = expected;
     myActual = actual;
-    myFilePath = filePath;
-    myActualFilePath = actualFilePath;
+    myFilePath = filePath != null ? new File(filePath).getAbsolutePath() : null;
+    myActualFilePath = actualFilePath != null ? new File(actualFilePath).getAbsolutePath() : null;
   }
 
   public static void registerSMAttributes(ComparisonFailureData notification,

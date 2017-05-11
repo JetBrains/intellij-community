@@ -26,14 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: ik
- * Date: 02.04.2003
- * Time: 12:22:03
- * To change this template use Options | File Templates.
- */
-
 public class PsiMultiReference implements PsiPolyVariantReference {
   public static final Comparator<PsiReference> COMPARATOR = (ref1, ref2) -> {
     boolean soft1 = ref1.isSoft();

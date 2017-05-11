@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
-import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -136,7 +136,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     });
 
-    editorComboBox.addDocumentListener(new DocumentAdapter() {
+    editorComboBox.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
         JComboBox comboBox = getComboBox();

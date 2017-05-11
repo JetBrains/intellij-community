@@ -45,11 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * User: lex
- * Date: Sep 17, 2003
- * Time: 2:04:00 PM
- */
 public class ExpressionChildrenRenderer extends TypeRenderer implements ChildrenRenderer {
   public static final @NonNls String UNIQUE_ID = "ExpressionChildrenRenderer";
   private static final Key<Value> EXPRESSION_VALUE = new Key<>("EXPRESSION_VALUE");

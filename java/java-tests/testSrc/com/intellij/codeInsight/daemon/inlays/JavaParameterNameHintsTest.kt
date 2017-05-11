@@ -26,6 +26,12 @@ import org.assertj.core.api.Assertions.assertThat
 
 class JavaInlayParameterHintsTest : LightCodeInsightFixtureTestCase() {
 
+  override fun tearDown() {
+    val default = ParameterNameHintsSettings()
+    ParameterNameHintsSettings.getInstance().loadState(default.state)
+    super.tearDown()
+  }
+
   fun check(text: String) {
     myFixture.configureByText("A.java", text)
     myFixture.testInlays()
@@ -740,22 +746,33 @@ class Test {
   }
 
   fun `test show ambigous`() {
-    check("""
+    myFixture.configureByText(JavaFileType.INSTANCE, """
 class Test {
   void main() {
-    test(<hint text="a:"/>10, x);
+    test(10<selection>, 100</selection>);
   }
   void test(int a, String bS) {}
   void test(int a, int bI) {}
 }
 """)
+
+    myFixture.doHighlighting()
+    val hints = getHints()
+    assertThat(hints.size).isEqualTo(2)
+    assertThat(hints[0]).isEqualTo("a:")
+    assertThat(hints[1]).isEqualTo("bI:")
+
+    myFixture.type('\b')
+
+    myFixture.doHighlighting()
+    assertSingleInlayWithText("a:")
   }
 
   fun `test show ambiguous constructor`() {
-    check("""
+    myFixture.configureByText(JavaFileType.INSTANCE, """
 class Test {
   void main() {
-    new X(<hint text="a:"/>10, x);
+    new X(10<selection>, 100</selection>);
   }
 }
 
@@ -764,6 +781,17 @@ class X {
   X(int a, String bS) {}
 }
 """)
+
+    myFixture.doHighlighting()
+    val hints = getHints()
+    assertThat(hints.size).isEqualTo(2)
+    assertThat(hints[0]).isEqualTo("a:")
+    assertThat(hints[1]).isEqualTo("bI:")
+
+    myFixture.type('\b')
+    myFixture.doHighlighting()
+
+    assertSingleInlayWithText("a:")
   }
 
   fun `test preserved inlays`() {
@@ -800,6 +828,30 @@ class Test {
   void test(int fooo) {}
 }
 """)
+  }
+
+  fun `test do not show hints if method is unknown and one of them or both are blacklisted`() {
+    ParameterNameHintsSettings.getInstance().addIgnorePattern(JavaLanguage.INSTANCE, "*kee")
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+class Test {
+  void main() {
+    kee(100<caret>)
+  }
+
+  void kee(int a) {}
+  void kee(String a) {}
+}
+""")
+
+    myFixture.doHighlighting()
+    var hints = getHints()
+    assertThat(hints).hasSize(0)
+
+    myFixture.type('+')
+    myFixture.doHighlighting()
+
+    hints = getHints()
+    assertThat(hints).hasSize(0)
   }
 
   

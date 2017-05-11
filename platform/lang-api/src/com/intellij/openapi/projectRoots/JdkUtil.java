@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ public class JdkUtil {
   public static boolean checkForRuntime(@NotNull String homePath) {
     return new File(homePath, "jre/lib/rt.jar").exists() ||          // JDK
            new File(homePath, "lib/rt.jar").exists() ||              // JRE
-           new File(homePath, "lib/modules").exists() ||             // Jigsaw JDK/JRE
+           new File(homePath, "lib/jrt-fs.jar").exists() ||          // Jigsaw JDK/JRE
            new File(homePath, "../Classes/classes.jar").exists() ||  // Apple JDK
            new File(homePath, "jre/lib/vm.jar").exists() ||          // IBM JDK
            new File(homePath, "classes").isDirectory();              // custom build

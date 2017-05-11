@@ -1,6 +1,5 @@
 package com.intellij.tasks.integration;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManagerTestCase;

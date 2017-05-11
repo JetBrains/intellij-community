@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,9 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void initToolWindowListeners() {
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+
+    connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
         updateDashboardIfNeeded(settings);
@@ -104,7 +106,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         updateDashboardIfNeeded(settings);
       }
     });
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {

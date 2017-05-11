@@ -65,6 +65,7 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
     val aClass = resolveQualifier(project, resolveScope, accessValidator) ?: return PsiMethod.EMPTY_ARRAY
     return aClass.findMethodsByName(name, true)
       .filter { it.hasModifierProperty(PsiModifier.STATIC) == isStatic }
+      .filter { !it.isDeprecated }
       .filter { accessValidator.test(it) }
       .filter {
         val returnType = it.returnType
@@ -99,14 +100,16 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
 
     other as MethodIncompleteSignature
 
-    if (ref != other.ref) return false
+    if (ref.owner != other.ref.owner) return false
+    if (ref.name != other.ref.name) return false
     if (signatureData != other.signatureData) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = ref.hashCode()
+    var result = ref.owner.hashCode()
+    result = 31 * result + ref.name.hashCode()
     result = 31 * result + signatureData.hashCode()
     return result
   }

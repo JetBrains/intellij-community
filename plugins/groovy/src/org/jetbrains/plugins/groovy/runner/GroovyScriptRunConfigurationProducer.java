@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.jetbrains.plugins.groovy.runner;
 
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.Location;
-import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -125,7 +125,7 @@ public class GroovyScriptRunConfigurationProducer extends RuntimeConfigurationPr
     if (aClass == null) return null;
 
     final Project project = aClass.getProject();
-    RunnerAndConfigurationSettings settings = RunManagerEx.getInstanceEx(project).createConfiguration("", getConfigurationFactory());
+    RunnerAndConfigurationSettings settings = RunManager.getInstance(project).createConfiguration("", getConfigurationFactory());
     final GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)settings.getConfiguration();
     final PsiFile file = aClass.getContainingFile().getOriginalFile();
     final PsiDirectory dir = file.getContainingDirectory();

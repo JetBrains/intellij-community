@@ -16,6 +16,7 @@
 package com.intellij.execution.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -23,8 +24,11 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -46,22 +50,33 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   @NotNull
   private final Condition<RunnerAndConfigurationSettings> myModuleConfigCondition =
     settings -> settings != null && usesMyModule(settings.getConfiguration());
-  @NotNull
-  private final RunManagerImpl myManager;
 
-  public ModuleRunConfigurationManager(@NotNull final Module module, @NotNull final RunManagerImpl runManager) {
+  public ModuleRunConfigurationManager(@NotNull Module module) {
     myModule = module;
-    myManager = runManager;
-
     myModule.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
       @Override
       public void beforeModuleRemoved(@NotNull Project project, @NotNull Module module) {
         if (myModule.equals(module)) {
-          LOG.debug("time to remove something from project (" + project + ")");
-          myManager.removeConfigurations(getModuleRunConfigurationSettings());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("time to remove something from project (" + project + ")");
+          }
+          getRunManager().removeConfigurations(getModuleRunConfigurationSettings());
         }
       }
     });
+  }
+
+  static class ModuleRunConfigurationManagerStartupActivity implements StartupActivity {
+    @Override
+    public void runActivity(@NotNull Project project) {
+      if (!project.isDefault()) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
+          if (!module.isDisposed()) {
+            ModuleServiceManager.getService(module, ModuleRunConfigurationManager.class);
+          }
+        }
+      }
+    }
   }
 
   @Nullable
@@ -91,7 +106,12 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   @NotNull
   private Collection<? extends RunnerAndConfigurationSettings> getModuleRunConfigurationSettings() {
-    return ContainerUtil.filter(myManager.getAllSettings(), myModuleConfigCondition);
+    return ContainerUtil.filter(getRunManager().getAllSettings(), myModuleConfigCondition);
+  }
+
+  @NotNull
+  private RunManagerImpl getRunManager() {
+    return (RunManagerImpl)RunManager.getInstance(myModule.getProject());
   }
 
   private boolean usesMyModule(RunConfiguration config) {
@@ -101,7 +121,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
 
   public Element writeExternal(@NotNull final Element element, boolean isShared) throws WriteExternalException {
     LOG.debug("writeExternal(" + myModule + "); shared: " + isShared);
-    myManager.writeConfigurations(
+    getRunManager().writeConfigurations(
       element,
       getModuleRunConfigurationSettings().stream()
         .filter(settings -> settings.isShared() == isShared)
@@ -110,7 +130,7 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
     return element;
   }
 
-  public void readExternal(@NotNull final Element element) {
+  public void readExternal(@NotNull Element element) {
     Element sharedElement = element.getChild(SHARED);
     if (sharedElement != null) {
       doReadExternal(sharedElement, true);
@@ -124,10 +144,11 @@ public final class ModuleRunConfigurationManager implements PersistentStateCompo
   private void doReadExternal(@NotNull Element element, boolean isShared) {
     LOG.debug("readExternal(" + myModule + ");  shared: " + isShared);
 
+    RunManagerImpl runManager = getRunManager();
     for (final Element child : element.getChildren(RunManagerImpl.CONFIGURATION)) {
-      myManager.loadConfiguration(child, isShared);
+      runManager.loadConfiguration(child, isShared);
     }
 
-    myManager.requestSort();
+    runManager.requestSort();
   }
 }

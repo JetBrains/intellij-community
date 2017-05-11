@@ -21,12 +21,6 @@ import com.jetbrains.python.psi.PyFinallyPart;
 import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyTryExceptStatement;
 
-/**
- * Created by IntelliJ IDEA.
- * User: Alexey.Ivanov
- * Date: Aug 28, 2009
- * Time: 6:52:06 PM
- */
 public class PyWithTryFinallySurrounder extends PyWithTryExceptSurrounder {
   public String getTemplateDescription() {
     return CodeInsightBundle.message("surround.with.try.finally.template");

@@ -17,12 +17,14 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.AbstractLayoutManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 public class ExpandedItemRendererComponentWrapper extends JComponent {
   JComponent owner;
@@ -75,13 +77,49 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
 
   @Override
   public void setBorder(Border border) {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      rendererComponent.setBorder(border);
+      return;
+    }
+    super.setBorder(border);
+  }
+
+  @Override
+  public String getToolTipText() {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      return rendererComponent.getToolTipText();
+    }
+    return super.getToolTipText();
+  }
+
+  @Override
+  public String getToolTipText(MouseEvent event) {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      return rendererComponent.getToolTipText(event);
+    }
+    return super.getToolTipText(event);
+  }
+
+  @Override
+  public Point getToolTipLocation(MouseEvent event) {
+    JComponent rendererComponent = getRendererComponent();
+    if (rendererComponent != null) {
+      return rendererComponent.getToolTipLocation(event);
+    }
+    return super.getToolTipLocation(event);
+  }
+
+  @Nullable
+  private JComponent getRendererComponent() {
     if (getComponentCount() == 1) {
       Component component = getComponent(0);
       if (component instanceof JComponent) {
-        ((JComponent)component).setBorder(border);
-        return;
+        return ((JComponent)component);
       }
     }
-    super.setBorder(border);
+    return null;
   }
 }

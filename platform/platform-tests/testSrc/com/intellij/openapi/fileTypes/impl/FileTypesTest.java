@@ -291,7 +291,7 @@ public class FileTypesTest extends PlatformTestCase {
         detectorCalled.add(file);
         String text = firstCharsIfText.toString();
         FileType result = text.startsWith("TYPE:") ? fileTypeManager.findFileTypeByName(StringUtil.trimStart(text, "TYPE:")) : null;
-        log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName()));
+        log("T: my detector run for "+file.getName()+"; result: "+(result == null ? null : result.getName())+" (text="+text+")");
         return result;
       }
 

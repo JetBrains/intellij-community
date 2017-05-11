@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Jul 31, 2007
- * Time: 2:39:56 PM
- */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -33,7 +27,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -102,9 +96,7 @@ public class HighlightStressTest extends LightDaemonAnalyzerTestCase {
     long time = System.currentTimeMillis();
     for (int i = 0; i < 20/*00000*/; i++) {
       //System.out.println("i = " + i);
-      getPsiManager().dropResolveCaches();
-      ((PsiManagerEx)getPsiManager()).getFileManager().cleanupForNextTest();
-      DaemonCodeAnalyzer.getInstance(getProject()).restart();
+      ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
 
       configureFromFileText("Stress.java", text);
       List<HighlightInfo> infos = doHighlighting();

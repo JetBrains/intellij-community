@@ -5,15 +5,4 @@
       <implementation-class>com.intellij.execution.ExecutorRegistryImpl</implementation-class>
     </component>
   </application-components>
-
-  <project-components>
-    <component>
-      <interface-class>com.intellij.execution.RunManager</interface-class>
-      <implementation-class>com.intellij.execution.impl.RunManagerImpl</implementation-class>
-      <loadForDefaultProject/>
-    </component>
-    <component>
-      <implementation-class>com.intellij.execution.impl.ProjectRunConfigurationManager</implementation-class>
-    </component>
-  </project-components>
 </idea-plugin>

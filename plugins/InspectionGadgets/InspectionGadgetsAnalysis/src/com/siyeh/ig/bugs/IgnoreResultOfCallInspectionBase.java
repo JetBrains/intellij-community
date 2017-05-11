@@ -18,9 +18,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
@@ -228,7 +231,22 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
           if (aPackage == null) {
             return null;
           }
-          return AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
+          if(annotation != null) {
+            // Check that annotation actually belongs to the same library/source root
+            // which could be important in case of split-packages
+            VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
+            VirtualFile currentFile = classOwner.getVirtualFile();
+            if(annotationFile != null && currentFile != null) {
+              ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
+              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
+              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
+              if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
+                return null;
+              }
+            }
+          }
+          return annotation;
         }
 
         element = element.getContext();

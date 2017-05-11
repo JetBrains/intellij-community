@@ -174,6 +174,8 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDistinguishCapturedWildcardsByDifferentParameters() throws Exception { doTest(); }
   public void testConstructorRefOnClassWithRecursiveTypeParameter() throws Exception { doTest(); }
 
+  public void testPreferErrorOnTopLevelToFailedSubstitutorOnNestedLevel() { doTest(); }
+
   private void doTest() {
     doTest(false);
   }

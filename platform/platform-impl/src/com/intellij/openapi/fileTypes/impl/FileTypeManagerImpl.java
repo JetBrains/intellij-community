@@ -43,7 +43,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VFileProperty;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileSystemInterface;
@@ -72,7 +75,6 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
-import java.nio.charset.Charset;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -401,7 +403,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         FileType before = ObjectUtils.notNull(textOrBinaryFromCachedFlags(flags),
                                               ObjectUtils.notNull(file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY),
                                                                   PlainTextFileType.INSTANCE));
-        FileType after = getOrDetectByFile(file);
+        FileType after = getByFile(file);
 
         if (toLog()) {
           log("F: reDetect(" + file.getName() + ") prepare to redetect. flags: " + readableFlags(flags) +
@@ -531,7 +533,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   @NotNull
   public FileType getFileTypeByFile(@NotNull VirtualFile file) {
-    FileType fileType = getOrDetectByFile(file);
+    FileType fileType = getByFile(file);
 
     if (fileType == null) {
       fileType = file instanceof StubVirtualFile ? UnknownFileType.INSTANCE : getOrDetectFromContent(file);
@@ -541,12 +543,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
-  private FileType getOrDetectByFile(@NotNull VirtualFile file) {
+  public FileType getByFile(@NotNull VirtualFile file) {
     Pair<VirtualFile, FileType> fixedType = FILE_TYPE_FIXED_TEMPORARILY.get();
     if (fixedType != null && fixedType.getFirst().equals(file)) {
       FileType fileType = fixedType.getSecond();
       if (toLog()) {
-        log("F: getOrDetectByFile(" + file.getName() + ") was frozen to " + fileType.getName()+" in "+Thread.currentThread());
+        log("F: getByFile(" + file.getName() + ") was frozen to " + fileType.getName()+" in "+Thread.currentThread());
       }
       return fileType;
     }
@@ -561,7 +563,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     for (FileTypeIdentifiableByVirtualFile type : mySpecialFileTypes) {
       if (type.isMyFileType(file)) {
         if (toLog()) {
-          log("F: getOrDetectByFile(" + file.getName() + "): Special file type: " + type.getName());
+          log("F: getByFile(" + file.getName() + "): Special file type: " + type.getName());
         }
         return type;
       }
@@ -572,7 +574,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       fileType = null;
     }
     if (toLog()) {
-      log("F: getOrDetectByFile(" + file.getName() + ") By name file type: "+(fileType == null ? null : fileType.getName()));
+      log("F: getByFile(" + file.getName() + ") By name file type: "+(fileType == null ? null : fileType.getName()));
     }
     return fileType;
   }
@@ -800,46 +802,44 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       file.putUserData(IO_EXCEPTION_HAPPENED, null);
       r = processFirstBytes(inputStream, DETECT_BUFFER_SIZE, byteSequence -> {
-        boolean isText = guessIfText(file, byteSequence);
-        CharSequence text;
-        if (isText) {
-          byte[] bytes = Arrays.copyOf(byteSequence.getBytes(), byteSequence.getLength());
-          text = LoadTextUtil.getTextByBinaryPresentation(bytes, file, true, true, UnknownFileType.INSTANCE);
-        }
-        else {
-          text = null;
-        }
-
-        FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
-        if (toLog()) {
-          log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): byteSequence.length=" + byteSequence.getLength() +
-              "; isText=" + isText + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
-              ", detectors=" + Arrays.toString(detectors));
-        }
-        FileType detected = null;
-        for (FileTypeDetector detector : detectors) {
-          try {
-            detected = detector.detect(file, byteSequence, text);
-          }
-          catch (Exception e) {
-            LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
-          }
-          if (detected != null) {
+        // use PlainTextFileType because it doesn't supply its own charset detector
+        // help set charset in the process to avoid double charset detection from content
+        LoadTextUtil.processTextFromBinaryPresentationOrNull(byteSequence.getBytes(),
+                                                              byteSequence.getOffset(), byteSequence.getOffset()+byteSequence.getLength(),
+                                                              file, true, true,
+                                                              PlainTextFileType.INSTANCE, (@Nullable CharSequence text)->{
+            FileTypeDetector[] detectors = Extensions.getExtensions(FileTypeDetector.EP_NAME);
             if (toLog()) {
-              log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): detector " + detector + " type as " + detected.getName());
+              log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): byteSequence.length=" + byteSequence.getLength() +
+                  "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
+                  ", detectors=" + Arrays.toString(detectors));
             }
-            break;
-          }
-        }
+            FileType detected = null;
+            for (FileTypeDetector detector : detectors) {
+              try {
+                detected = detector.detect(file, byteSequence, text);
+              }
+              catch (Exception e) {
+                LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
+              }
+              if (detected != null) {
+                if (toLog()) {
+                  log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): detector " + detector + " type as " + detected.getName());
+                }
+                break;
+              }
+            }
 
-        if (detected == null) {
-          detected = isText ? PlainTextFileType.INSTANCE : UnknownFileType.INSTANCE;
-          if (toLog()) {
-            log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): " +
-                "no detector was able to detect. assigned " + detected.getName());
-          }
-        }
-        result.set(detected);
+            if (detected == null) {
+              detected = text == null ? UnknownFileType.INSTANCE : PlainTextFileType.INSTANCE;
+              if (toLog()) {
+                log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): " +
+                    "no detector was able to detect. assigned " + detected.getName());
+              }
+            }
+            result.set(detected);
+          });
+
         return true;
       });
     }
@@ -898,20 +898,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
              ", file.exists=" + file.exists() + ", file.content='" + FileUtil.loadFile(file) + "')";
     }
     return stream;
-  }
-
-  private static boolean guessIfText(@NotNull VirtualFile file, @NotNull ByteSequence byteSequence) {
-    byte[] bytes = byteSequence.getBytes();
-    Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, bytes, byteSequence.getLength());
-    if (guessed == null) return false;
-    file.setBOM(guessed.third);
-    if (guessed.first != null) {
-      // charset was detected unambiguously
-      return true;
-    }
-    // use wild guess
-    CharsetToolkit.GuessedEncoding guess = guessed.second;
-    return guess != null && (guess == CharsetToolkit.GuessedEncoding.VALID_UTF8 || guess == CharsetToolkit.GuessedEncoding.SEVEN_BIT);
   }
 
   @Override

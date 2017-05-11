@@ -17,14 +17,17 @@ package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -32,6 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import junit.framework.ComparisonFailure;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -99,7 +103,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
                               String testName,
                               QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
-                                                     () -> "Test: "+testFullPath+"\nInfos: "+quickFix.doHighlighting());
+                                                     () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
       String text = action.getText();
       quickFix.invoke(action);
@@ -119,6 +123,29 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
         fail("Action '" + text + "' provides empty family name which means that user would see action with empty presentable text in Inspection Results");
       }
     }
+  }
+
+  private static String getTestInfo(String testFullPath, QuickFixTestCase quickFix) {
+    String infos = StreamEx.of(quickFix.doHighlighting())
+      .filter(info -> info.getSeverity() != HighlightInfoType.SYMBOL_TYPE_SEVERITY)
+      .map(info -> {
+        String fixes = "";
+        if (info.quickFixActionRanges != null) {
+          fixes = StreamEx.of(info.quickFixActionRanges)
+            .map(p -> p.getSecond()+" "+p.getFirst())
+            .mapLastOrElse("|- "::concat, "\\- "::concat)
+            .map(str -> "        " + str + "\n")
+            .joining();
+        }
+        return info.getSeverity() +
+               ": (" + info.getStartOffset() + "," + info.getEndOffset() + ") '" +
+               info.getText() + "': " + info.getDescription() + "\n" + fixes;
+      })
+      .joining("       ");
+    return "Test: " + testFullPath + "\n" +
+           "Language level: " + PsiUtil.getLanguageLevel(getProject()) + "\n" +
+           "SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n" +
+           "Infos: " + infos;
   }
 
   protected void doAction(@NotNull ActionHint actionHint, final String testFullPath, final String testName)

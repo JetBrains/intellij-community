@@ -1740,6 +1740,24 @@ public class AbstractTreeUi {
     return rerunBecauseTreeIsHidden || getUpdater().isRerunNeededFor(pass);
   }
 
+  public static <T> T calculateYieldingToWriteAction(Producer<T> producer) throws ProcessCanceledException {
+    if (!Registry.is("ide.abstractTreeUi.BuildChildrenInBackgroundYieldingToWriteAction") ||
+        ApplicationManager.getApplication().isDispatchThread()) {
+      return producer.produce();
+    }
+    Ref<T> result = new Ref<>();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    boolean succeeded = ProgressManager.getInstance().runInReadActionWithWriteActionPriority(
+      () -> result.set(producer.produce()),
+      indicator
+    );
+
+    if (!succeeded || indicator != null && indicator.isCanceled()) {
+      throw new ProcessCanceledException();
+    }
+    return result.get();
+  }
+
   private abstract static class AsyncRunnable {
     @NotNull
     public abstract Promise<?> run();
@@ -2107,7 +2125,7 @@ public class AbstractTreeUi {
           setUpdaterState(oldState);
         }
 
-        if (!isReady()) return;
+        if (!isReady(true)) return;
       }
     }
 
@@ -2214,7 +2232,7 @@ public class AbstractTreeUi {
       boolean needToUpdate = false;
       NodeDescriptor loadedDesc = loadedChildren.getDescriptor(child);
       final NodeDescriptor childDescr;
-      if (!isValid(loadedDesc)) {
+      if (!isValid(loadedDesc, descriptor)) {
         childDescr = getTreeStructure().createDescriptor(child, descriptor);
         needToUpdate = true;
       }
@@ -2674,7 +2692,7 @@ public class AbstractTreeUi {
         final LoadedChildren loaded = new LoadedChildren(loadedElements);
         for (final Object each : loadedElements) {
           NodeDescriptor existingDesc = getDescriptorFrom(getNodeForElement(each, true));
-          final NodeDescriptor eachChildDescriptor = isValid(existingDesc) ? existingDesc : getTreeStructure().createDescriptor(each, updateInfo.getDescriptor());
+          final NodeDescriptor eachChildDescriptor = isValid(existingDesc, updateInfo.getDescriptor()) ? existingDesc : getTreeStructure().createDescriptor(each, updateInfo.getDescriptor());
           execute(new TreeRunnable("AbstractTreeUi.queueBackgroundUpdate") {
             @Override
             public void perform() {
@@ -3286,6 +3304,19 @@ public class AbstractTreeUi {
     }
   }
 
+  /**
+   * Indicates whether the given {@code descriptor} is valid
+   * and its parent is equal to the specified {@code parent}.
+   *
+   * @param descriptor a descriptor to test
+   * @param parent     an expected parent for the testing descriptor
+   * @return {@code true} if the specified descriptor is valid
+   */
+  private boolean isValid(NodeDescriptor descriptor, NodeDescriptor parent) {
+    if (descriptor == null) return false;
+    if (parent != null && parent != descriptor.getParentDescriptor()) return false;
+    return isValid(getElementFromDescriptor(descriptor));
+  }
 
   private boolean isValid(@Nullable NodeDescriptor descriptor) {
     return descriptor != null && isValid(getElementFromDescriptor(descriptor));

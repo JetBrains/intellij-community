@@ -17,6 +17,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
@@ -36,7 +37,7 @@ public class DeleteUtil {
     if (elements.length == 1) {
       String name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
       String type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);
-      return MessageFormat.format(messageTemplate, type + " \"" + name + "\"");
+      return MessageFormat.format(messageTemplate, type + (StringUtil.isEmptyOrSpaces(name) ? "" : " \"" + name + "\""));
     }
 
     FactoryMap<String, Integer> countMap = new FactoryMap<String, Integer>() {

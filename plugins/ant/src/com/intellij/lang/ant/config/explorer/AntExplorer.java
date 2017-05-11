@@ -15,9 +15,11 @@
  */
 package com.intellij.lang.ant.config.explorer;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunManagerListener;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.impl.RunDialog;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -108,8 +110,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }
   };
 
-  public AntExplorer(final Project project) {
+  public AntExplorer(@NotNull Project project) {
     super(true, true);
+
     setTransferHandler(new MyTransferHandler());
     myProject = project;
     myConfig = AntConfiguration.getInstance(project);
@@ -161,8 +164,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         myBuilder.queueUpdate();
       }
     }, this);
-    RunManagerEx.getInstanceEx(myProject).addRunManagerListener(new RunManagerListener() {
-      public void beforeRunTasksChanged() {
+
+    project.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
+      public void beforeRunTasksChanged () {
         myBuilder.queueUpdate();
       }
     });
@@ -630,7 +634,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
         return;
       }
 
-      RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(e.getProject());
+      RunManager runManager = RunManager.getInstance(myProject);
       RunnerAndConfigurationSettings settings =
         runManager.createRunConfiguration(name, AntRunConfigurationType.getInstance().getFactory());
       AntRunConfiguration configuration  = (AntRunConfiguration)settings.getConfiguration();

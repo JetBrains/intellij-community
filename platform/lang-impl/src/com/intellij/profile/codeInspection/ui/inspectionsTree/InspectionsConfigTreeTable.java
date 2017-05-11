@@ -115,45 +115,49 @@ public class InspectionsConfigTreeTable extends TreeTable {
     addMouseMotionListener(new MouseAdapter() {
       @Override
       public void mouseMoved(final MouseEvent e) {
-      Point point = e.getPoint();
-      int column = columnAtPoint(point);
-      int row = rowAtPoint(point);
+        Point point = e.getPoint();
+        int column = columnAtPoint(point);
+        int row = rowAtPoint(point);
 
-      UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
+        if (row < 0 || row >= getModel().getRowCount()) return;
 
-      switch (column) {
-        case SEVERITIES_COLUMN:
-          Object maybeIcon = getModel().getValueAt(row, column);
-          if (maybeIcon instanceof MultiScopeSeverityIcon) {
-            MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
-            LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
-              icon.getScopeToAverageSeverityMap();
-            JComponent component;
-            if (scopeToAverageSeverityMap.size() == 1 &&
-                icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
-              HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
-              JLabel label = new JLabel();
-              label.setIcon(level.getIcon());
-              label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
-              component = label;
-            } else {
-              component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
+        UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
+
+        switch (column) {
+          case SEVERITIES_COLUMN:
+            Object maybeIcon = getModel().getValueAt(row, column);
+            if (maybeIcon instanceof MultiScopeSeverityIcon) {
+              MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
+              LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
+                icon.getScopeToAverageSeverityMap();
+              JComponent component = null;
+              if (scopeToAverageSeverityMap.size() == 1 &&
+                  icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
+                HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
+                if (level != null) {
+                  JLabel label = new JLabel();
+                  label.setIcon(level.getIcon());
+                  label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
+                  component = label;
+                }
+              } else {
+                component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
+              }
+              IdeTooltipManager.getInstance().show(
+                new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
             }
-            IdeTooltipManager.getInstance().show(
-              new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
-          }
-          break;
+            break;
 
-        case IS_ENABLED_COLUMN:
-          if (Registry.is("ide.intellij.laf.win10.ui")) {
-            JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
-            rc.putClientProperty("ThreeStateCheckBoxRenderer.rolloverRow", row);
-            ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
-          }
-          break;
+          case IS_ENABLED_COLUMN:
+            if (Registry.is("ide.intellij.laf.win10.ui")) {
+              JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
+              rc.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, row);
+              ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
+            }
+            break;
 
-        default: break;
-      }
+          default: break;
+        }
       }
     });
 

@@ -35,7 +35,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerAdapter;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
@@ -146,7 +146,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
     myInitialization = new VcsInitialization(myProject);
     Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
-    projectManager.addProjectManagerListener(project, new ProjectManagerAdapter() {
+    projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
       @Override
       public void projectClosing(Project project) {
         Disposer.dispose(myInitialization);

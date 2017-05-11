@@ -136,4 +136,8 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
       configurationModule.setModule(modules.length == 1 ? modules[0] : null);
     }
   }
+
+  public boolean isModuleDirMacroSupported() {
+    return false;
+  }
 }

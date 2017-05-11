@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-<info descr="null">def</info> <info descr="null">method</info>(<info descr="null">int</info> <info descr="null">param1</info>, <info descr="null">int</info> <info descr="null">param2</info>) {
-<info descr="null">int</info> <info descr="null">var1</info> = 0
-<info descr="null">int</info> <info descr="null">var2</info> = 1
-<info descr="null">int</info> <info descr="null">var3</info> = 1
-<info descr="null">if</info> (<info descr="null">param1</info> == 1) {
+def <info descr="null">method</info>(int <info descr="null">param1</info>, int <info descr="null">param2</info>) {
+int <info descr="null">var1</info> = 0
+int <info descr="null">var2</info> = 1
+int <info descr="null">var3</info> = 1
+if (<info descr="null">param1</info> == 1) {
 <info descr="null">param2</info> = <info descr="null">var2</info> = 2
 <info descr="null">var3</info>++
   }
