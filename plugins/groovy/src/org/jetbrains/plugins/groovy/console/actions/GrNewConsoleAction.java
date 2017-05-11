@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.console.actions;
 
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.console.GroovyConsole;
 import org.jetbrains.plugins.groovy.console.GroovyConsoleRootType;
+import org.jetbrains.plugins.groovy.statictics.GroovyStatisticsIds;
 
 import static org.jetbrains.plugins.groovy.console.GroovyConsoleUtilKt.getAnyApplicableModule;
 
@@ -42,6 +44,7 @@ public class GrNewConsoleAction extends AnAction {
     final Module module = getModule(e);
     if (project == null || module == null) return;
 
+    UsageTrigger.trigger(GroovyStatisticsIds.GROOVY_NEW_CONSOLE);
     final VirtualFile contentFile = ConsoleHistoryController.getContentFile(
       GroovyConsoleRootType.getInstance(),
       GroovyConsoleRootType.CONTENT_ID,
