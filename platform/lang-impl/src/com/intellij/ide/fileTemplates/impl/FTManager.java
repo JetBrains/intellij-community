@@ -37,8 +37,8 @@ import java.util.*;
  */
 class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");
-  public static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
-  public static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
+  private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
+  static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;
   private static final String ENCODED_NAME_EXT_DELIMITER = "\u0F0Fext\u0F0F.";
 
   private final String myName;
@@ -75,7 +75,7 @@ class FTManager {
   }
 
   @NotNull
-  public Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
+  Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
     List<FileTemplateBase> sorted = mySortedTemplates;
     if (sorted == null) {
       sorted = new ArrayList<>(getTemplates().values());
@@ -98,18 +98,15 @@ class FTManager {
   }
 
   /**
-   * @param templateQname
    * @return template no matter enabled or disabled it is
    */
   @Nullable
-  public FileTemplateBase getTemplate(@NotNull String templateQname) {
+  FileTemplateBase getTemplate(@NotNull String templateQname) {
     return getTemplates().get(templateQname);
   }
 
   /**
    * Disabled templates are never returned
-   * @param templateName
-   * @return
    */
   @Nullable
   public FileTemplateBase findTemplateByName(@NotNull String templateName) {
@@ -161,7 +158,7 @@ class FTManager {
     }
   }
 
-  public void updateTemplates(@NotNull Collection<FileTemplate> newTemplates) {
+  void updateTemplates(@NotNull Collection<FileTemplate> newTemplates) {
     final Set<String> toDisable = new HashSet<>();
     for (DefaultTemplate template : myDefaultTemplates) {
       toDisable.add(template.getQualifiedName());
@@ -190,7 +187,7 @@ class FTManager {
     }
   }
 
-  public void addDefaultTemplate(DefaultTemplate template) {
+  void addDefaultTemplate(DefaultTemplate template) {
     myDefaultTemplates.add(template);
     createAndStoreBundledTemplate(template);
   }
@@ -245,7 +242,7 @@ class FTManager {
     Pair<String,String> nameExt = decodeFileName(fileName);
     final String extension = nameExt.second;
     final String templateQName = nameExt.first;
-    if (templateQName.length() == 0) {
+    if (templateQName.isEmpty()) {
       return;
     }
     try {
@@ -356,7 +353,7 @@ class FTManager {
   }
 
   @NotNull
-  public File getConfigRoot(boolean create) {
+  File getConfigRoot(boolean create) {
     if (create && !myTemplatesDir.mkdirs() && !myTemplatesDir.exists()) {
       LOG.info("Cannot create directory: " + myTemplatesDir.getAbsolutePath());
     }
@@ -368,12 +365,13 @@ class FTManager {
     return myName + " file template manager";
   }
 
-  public static String encodeFileName(String templateName, String extension) {
+  static String encodeFileName(String templateName, String extension) {
     String nameExtDelimiter = extension.contains(".") ? ENCODED_NAME_EXT_DELIMITER : ".";
     return templateName + nameExtDelimiter + extension;
   }
 
-  public static Pair<String,String> decodeFileName(String fileName) {
+  @NotNull
+  private static Pair<String,String> decodeFileName(@NotNull String fileName) {
     String name = fileName;
     String ext = "";
     String nameExtDelimiter = fileName.contains(ENCODED_NAME_EXT_DELIMITER) ? ENCODED_NAME_EXT_DELIMITER : ".";

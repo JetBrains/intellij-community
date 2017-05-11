@@ -357,7 +357,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
 
     String message = "Default template not found: " + name;
     LOG.error(message);
-    return null;
+    throw new RuntimeException(message);
   }
 
   @Override
@@ -407,7 +407,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     return myDefaultSettings.getDefaultTemplateDescription();
   }
 
-  public URL getDefaultIncludeDescription() {
+  URL getDefaultIncludeDescription() {
     return myDefaultSettings.getDefaultIncludeDescription();
   }
 

@@ -90,7 +90,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private JCheckBox myLiveTemplateBox;
   private JPanel myTopPanel;
   private JEditorPane myDescriptionComponent;
-  private boolean myModified = false;
+  private boolean myModified;
   private URL myDefaultDescriptionUrl;
   private final Project myProject;
 
@@ -117,7 +117,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
   }
 
-  public void setShowInternalMessage(String message) {
+  void setShowInternalMessage(String message) {
     myTopPanel.removeAll();
     if (message == null) {
       myTopPanel.add(new JLabel(IdeBundle.message("label.name")),
@@ -138,7 +138,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myTopPanel.repaint();
   }
 
-  public void setShowAdjustCheckBox(boolean show) {
+  void setShowAdjustCheckBox(boolean show) {
     myAdjustBox.setEnabled(show);
   }
 
@@ -250,10 +250,6 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myModified = true;
   }
 
-  public String getNameValue() {
-    return myNameField.getText();
-  }
-
   private void onNameChanged() {
     ChangeEvent event = new ChangeEvent(this);
     for (ChangeListener changeListener : myChangeListeners) {
@@ -261,7 +257,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     }
   }
 
-  public void addChangeListener(ChangeListener listener) {
+  void addChangeListener(@NotNull ChangeListener listener) {
     if (!myChangeListeners.contains(listener)) {
       myChangeListeners.add(listener);
     }
@@ -276,8 +272,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     if (myModified) {
       return true;
     }
-    String name = (myTemplate == null) ? "" : myTemplate.getName();
-    String extension = (myTemplate == null) ? "" : myTemplate.getExtension();
+    String name = myTemplate == null ? "" : myTemplate.getName();
+    String extension = myTemplate == null ? "" : myTemplate.getExtension();
     if (!Comparing.equal(name, myNameField.getText())) {
       return true;
     }
@@ -325,12 +321,12 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   @Override
   public void reset() {
-    final String text = (myTemplate == null) ? "" : myTemplate.getText();
-    String name = (myTemplate == null) ? "" : myTemplate.getName();
-    String extension = (myTemplate == null) ? "" : myTemplate.getExtension();
-    String description = (myTemplate == null) ? "" : myTemplate.getDescription();
+    final String text = myTemplate == null ? "" : myTemplate.getText();
+    String name = myTemplate == null ? "" : myTemplate.getName();
+    String extension = myTemplate == null ? "" : myTemplate.getExtension();
+    String description = myTemplate == null ? "" : myTemplate.getDescription();
 
-    if ((description.length() == 0) && (myDefaultDescriptionUrl != null)) {
+    if (description.isEmpty() && myDefaultDescriptionUrl != null) {
       try {
         description = UrlUtil.loadText(myDefaultDescriptionUrl);
       }
@@ -361,8 +357,8 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myDescriptionComponent.setText(description);
     myDescriptionComponent.setCaretPosition(0);
 
-    myNameField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
-    myExtensionField.setEditable((myTemplate != null) && (!myTemplate.isDefault()));
+    myNameField.setEditable(myTemplate != null && !myTemplate.isDefault());
+    myExtensionField.setEditable(myTemplate != null && !myTemplate.isDefault());
     myModified = false;
   }
 
