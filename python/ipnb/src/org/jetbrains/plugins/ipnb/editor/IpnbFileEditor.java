@@ -15,6 +15,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
@@ -110,6 +111,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     final JPanel savePanel = new JPanel(new GridBagLayout());
     savePanel.setBackground(IpnbEditorUtil.getBackground());
+    addConvertButton(savePanel);
     addSaveButton(savePanel);
     controlPanel.add(savePanel);
 
@@ -185,6 +187,15 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
         IpnbReloadKernelAction.reloadKernel(IpnbFileEditor.this);
       }
     }, AllIcons.Actions.Refresh, "Restart Kernel");
+  }
+
+  private void addConvertButton(@NotNull final JPanel controlPanel) {
+    addButton(controlPanel, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        IpnbConvertToPythonAction.convertToPythonScript(IpnbFileEditor.this);
+      }
+    }, PythonIcons.Python.Python, "Convert to Python Script");
   }
 
   private void addSaveButton(@NotNull final JPanel controlPanel) {

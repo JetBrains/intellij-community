@@ -46,6 +46,9 @@
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction" id="IpnbPasteCellAction" text="Paste Cell Below"/>
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction" id="IpnbDeleteCellAction" text="Delete Cell"/>
 
+    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertToPythonAction" id="IpnbConvertToPythonAction"
+            text="Convert to Python Script"/>
+
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellDownAction" id="IpnbMoveCellDownAction" text="Move Cell Down">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift DOWN"/>
     </action>
