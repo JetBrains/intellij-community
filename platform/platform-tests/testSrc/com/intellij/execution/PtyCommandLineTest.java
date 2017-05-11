@@ -21,14 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import static org.junit.Assume.assumeTrue;
-
 public class PtyCommandLineTest extends GeneralCommandLineTest {
-  @Override
-  public void redirectInput() {
-    assumeTrue(false);
-  }
-
   @NotNull
   @Override
   protected String filterExpectedOutput(@NotNull String output) {
