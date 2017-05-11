@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -193,6 +194,9 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   private static List<PsiMethod> getOverridenMethodsToDelete(List<MemberInfo> candidates,
                                                              String newClassName,
                                                              Project project) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return candidates.stream().map(c -> (PsiMethod)c.getMember()).collect(Collectors.toList());
+    }
     MemberSelectionPanel panel =
       new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
                                candidates,
