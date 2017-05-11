@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.labels.ActionLink;
@@ -637,38 +638,33 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    getRunManager().fireBeginUpdate();
+    final RunManagerImpl manager = getRunManager();
+    manager.fireBeginUpdate();
     try {
       updateActiveConfigurationFromSelected();
 
-      final RunManagerImpl manager = getRunManager();
       List<ConfigurationType> configurationTypes = new ArrayList<>();
       for (int i = 0; i < myRoot.getChildCount(); i++) {
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
-        Object userObject = node.getUserObject();
+        Object userObject = ((DefaultMutableTreeNode)myRoot.getChildAt(i)).getUserObject();
         if (userObject instanceof ConfigurationType) {
           configurationTypes.add((ConfigurationType)userObject);
         }
       }
+
       for (ConfigurationType type : manager.getConfigurationFactories()) {
-        if (!configurationTypes.contains(type))
+        if (!configurationTypes.contains(type)) {
           configurationTypes.add(type);
+        }
       }
 
       for (ConfigurationType configurationType : configurationTypes) {
         applyByType(configurationType);
       }
 
-      try {
-        int i = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, Integer.parseInt(myRecentsLimit.getText()));
-        int oldLimit = manager.getConfig().getRecentsLimit();
-        if (oldLimit != i) {
-          manager.getConfig().setRecentsLimit(i);
-          manager.checkRecentsLimit();
-        }
-      }
-      catch (NumberFormatException e) {
-        // ignore
+      int i = Math.max(RunManagerConfig.MIN_RECENT_LIMIT, StringUtil.parseInt(myRecentsLimit.getText(), 0));
+      if (manager.getConfig().getRecentsLimit() != i) {
+        manager.getConfig().setRecentsLimit(i);
+        manager.checkRecentsLimit();
       }
       manager.getConfig().setRestartRequiresConfirmation(myConfirmation.isSelected());
 
@@ -685,7 +681,7 @@ class RunConfigurable extends BaseConfigurable {
       manager.setOrder(null);
     }
     finally {
-      getRunManager().fireEndUpdate();
+      manager.fireEndUpdate();
     }
 
     setModified(false);
@@ -694,10 +690,7 @@ class RunConfigurable extends BaseConfigurable {
 
   protected void updateActiveConfigurationFromSelected() {
     if (mySelectedConfigurable != null && mySelectedConfigurable instanceof SingleConfigurationConfigurable) {
-      RunnerAndConfigurationSettings settings =
-        (RunnerAndConfigurationSettings)((SingleConfigurationConfigurable)mySelectedConfigurable).getSettings();
-
-      getRunManager().setSelectedConfiguration(settings);
+      getRunManager().setSelectedConfiguration((RunnerAndConfigurationSettings)((SingleConfigurationConfigurable)mySelectedConfigurable).getSettings());
     }
   }
 
@@ -707,9 +700,9 @@ class RunConfigurable extends BaseConfigurable {
 
     DefaultMutableTreeNode typeNode = getConfigurationTypeNode(type);
     final RunManagerImpl manager = getRunManager();
-    final ArrayList<RunConfigurationBean> stableConfigurations = new ArrayList<>();
+    final List<RunConfigurationBean> stableConfigurations = new ArrayList<>();
     if (typeNode != null) {
-      final Set<String> names = new HashSet<>();
+      final Set<String> names = new THashSet<>();
       List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
       collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
       for (DefaultMutableTreeNode node : configurationNodes) {
