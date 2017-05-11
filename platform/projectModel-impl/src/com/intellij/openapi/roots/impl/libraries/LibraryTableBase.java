@@ -69,6 +69,11 @@ public abstract class LibraryTableBase implements PersistentStateComponent<Eleme
   }
 
   @Override
+  public void noStateLoaded() {
+    myFirstLoad = false;
+  }
+
+  @Override
   public void loadState(final Element element) {
     if (myFirstLoad) {
       myModel.readExternal(element);
