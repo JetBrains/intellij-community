@@ -825,32 +825,38 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     final RunManagerImpl runManager = getRunManager();
-    final List<RunConfiguration> allConfigurations = runManager.getAllConfigurationsList();
-    final List<RunConfiguration> currentConfigurations = new ArrayList<>();
+    final List<RunnerAndConfigurationSettings> allSettings = runManager.getAllSettings();
+    final List<RunnerAndConfigurationSettings> currentSettings = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       DefaultMutableTreeNode typeNode = (DefaultMutableTreeNode)myRoot.getChildAt(i);
       final Object object = typeNode.getUserObject();
-      if (object instanceof ConfigurationType) {
-        List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
-        collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
-        if (runManager.getConfigurationSettingsList((ConfigurationType)object).size() != configurationNodes.size()) {
-          return true;
-        }
+      if (!(object instanceof ConfigurationType)) {
+        continue;
+      }
 
-        for (int j = 0; j < configurationNodes.size(); j++) {
-          final Object userObject = configurationNodes.get(j).getUserObject();
-          if (userObject instanceof SingleConfigurationConfigurable) {
-            SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
-            if (configurable.isModified()) return true;
-            currentConfigurations.add(configurable.getConfiguration());
+      List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
+      collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
+      if (RunConfigurableHelperKt.countSettingsOfType(allSettings, (ConfigurationType)object) != configurationNodes.size()) {
+        return true;
+      }
+
+      for (DefaultMutableTreeNode configurationNode : configurationNodes) {
+        final Object userObject = configurationNode.getUserObject();
+        if (userObject instanceof SingleConfigurationConfigurable) {
+          SingleConfigurationConfigurable configurable = (SingleConfigurationConfigurable)userObject;
+          if (configurable.isModified()) {
+            return true;
           }
-          else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
-            currentConfigurations.add(((RunnerAndConfigurationSettings)userObject).getConfiguration());
-          }
+          currentSettings.add((RunnerAndConfigurationSettings)configurable.getSettings());
+        }
+        else if (userObject instanceof RunnerAndConfigurationSettings) {
+          currentSettings.add(((RunnerAndConfigurationSettings)userObject));
         }
       }
     }
-    if (allConfigurations.size() != currentConfigurations.size() || !allConfigurations.containsAll(currentConfigurations)) return true;
+    if (allSettings.size() != currentSettings.size() || !allSettings.containsAll(currentSettings)) {
+      return true;
+    }
 
     for (Configurable configurable : myStoredComponents.values()) {
       if (configurable.isModified()) return true;
