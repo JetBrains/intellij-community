@@ -75,7 +75,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       if (ControlFlowUtils.isElseIf(statement)) {
         return;
       }
-      final Set<PsiExpression> conditions = new HashSet<>();
+      final Set<PsiExpression> conditions = new LinkedHashSet<>();
       collectConditionsForIfStatement(statement, conditions, 0);
       final int numConditions = conditions.size();
       if (numConditions < 2) {
