@@ -696,7 +696,6 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public void revalidateAndRepaint() {
     revalidate();
-    UIUtil.requestFocus(this);
     repaint();
   }
 
