@@ -21,7 +21,6 @@ import com.intellij.execution.configurations.UnknownRunConfiguration
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectLifecycleListener
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import gnu.trove.THashSet
@@ -45,12 +44,9 @@ internal class ProjectRunConfigurationInitializer(project: Project) {
     }
 
     IS_RUN_MANAGER_INIT_ALLOWED.set(project, true)
-
     // we must not fire beginUpdate here, because message bus will fire queued parent message bus messages (and, so, SOE may occur because all other projectOpened will be processed before us)
     // simply, you should not listen changes until project opened
     ServiceManager.getService(project, ProjectRunConfigurationManager::class.java)
-    // fire in a a post-startup activity to be sure that all clients that register handlers in the ProjectManager.TOPIC.projectOpened, are listening
-    StartupManager.getInstance(project).runWhenProjectIsInitialized { createRunManagerEventPublisher(project).runConfigurationSelected() }
   }
 }
 
