@@ -35,6 +35,10 @@ public class ReplaceExpressionUtil {
     if (!ElementType.EXPRESSION_BIT_SET.contains(oldParent.getElementType())) return false;
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldParent);
+    if (priority == -1 || parentPriority == -1) {
+      // Unknown element types: enclose with parentheses just for the case
+      return true;
+    }
     if (priority > parentPriority) return false;
     IElementType i = oldParent.getElementType();
     if (i == JavaElementType.ASSIGNMENT_EXPRESSION) {
@@ -164,7 +168,6 @@ public class ReplaceExpressionUtil {
       return 14;
     }
     else {
-      LOG.error("Unknown element type:" + i);
       return -1;
     }
   }
