@@ -395,6 +395,9 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
             if (myDefaultValueEditor != null) {
               focusable.add(myDefaultValueEditor.getFocusTarget());
             }
+            if (myDefaultInSignature != null) {
+              focusable.add(myDefaultInSignature);
+            }
             return focusable.toArray(new JComponent[focusable.size()]);
           }
         };
