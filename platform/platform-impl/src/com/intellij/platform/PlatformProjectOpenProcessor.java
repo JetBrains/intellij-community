@@ -81,6 +81,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return null;
   }
 
+  @Override
   public boolean canOpenProject(final VirtualFile file) {
     return file.isDirectory();
   }
@@ -96,6 +97,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Nullable
+  @Override
   public Project doOpenProject(@NotNull VirtualFile virtualFile, @Nullable Project projectToClose, boolean forceOpenInNewFrame) {
     EnumSet<Option> options = EnumSet.noneOf(Option.class);
     if (forceOpenInNewFrame) options.add(Option.FORCE_NEW_FRAME);
