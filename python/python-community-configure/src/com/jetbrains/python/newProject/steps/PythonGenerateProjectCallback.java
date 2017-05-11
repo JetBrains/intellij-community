@@ -116,7 +116,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   private static Project generateProject(@NotNull final ProjectSettingsStepBase settings) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final String location = FileUtil.expandUserHome(settings.getProjectLocation());
-    return AbstractNewProjectStep.doGenerateProject(ProjectManager.getInstance().getDefaultProject(), location, generator,
+    return AbstractNewProjectStep.doGenerateProject(null, location, generator,
                                                     file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
   }
 

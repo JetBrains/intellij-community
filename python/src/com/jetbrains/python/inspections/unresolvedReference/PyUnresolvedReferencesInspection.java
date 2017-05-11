@@ -47,6 +47,7 @@ import com.jetbrains.python.codeInsight.imports.AutoImportHintAction;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.codeInsight.imports.PythonImportUtils;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.docstrings.DocStringParameterReference;
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference;
@@ -68,6 +69,7 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -789,7 +791,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
       }
-      if (type instanceof PyClassTypeImpl) {
+      if (type instanceof PyClassType) {
         PyClass cls = ((PyClassType)type).getPyClass();
         if (PyTypeChecker.overridesGetAttr(cls, myTypeEvalContext)) {
           return true;
@@ -804,6 +806,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
         if (hasUnresolvedDynamicMember((PyClassType)type, reference, name, myTypeEvalContext)) return true;
+
+        if (isAwaitOnGeneratorBasedCoroutine(name, reference, cls)) return true;
       }
       if (type instanceof PyFunctionTypeImpl) {
         final PyCallable callable = ((PyFunctionTypeImpl)type).getCallable();
@@ -851,6 +855,25 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
       }
+      return false;
+    }
+
+    private boolean isAwaitOnGeneratorBasedCoroutine(@NotNull String name, @NotNull PsiReference reference, @NotNull PyClass cls) {
+      if (PyNames.DUNDER_AWAIT.equals(name) &&
+          reference instanceof PyOperatorReference &&
+          PyTypingTypeProvider.GENERATOR.equals(cls.getQualifiedName())) {
+        final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
+
+        if (receiver instanceof PyCallExpression) {
+          final boolean resolvedToGeneratorBasedCoroutine = StreamEx
+            .of(((PyCallExpression)receiver).multiResolveCalleeFunction(getResolveContext()))
+            .select(PyFunction.class)
+            .anyMatch(function -> PyKnownDecoratorUtil.hasGeneratorBasedCoroutineDecorator(function, myTypeEvalContext));
+
+          if (resolvedToGeneratorBasedCoroutine) return true;
+        }
+      }
+
       return false;
     }
 

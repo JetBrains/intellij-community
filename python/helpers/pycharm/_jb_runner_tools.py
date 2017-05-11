@@ -14,15 +14,24 @@ from teamcity import teamcity_presence_env_var, messages
 if teamcity_presence_env_var not in os.environ:
     os.environ[teamcity_presence_env_var] = "LOCAL"
 
+# Providing this env variable disables output buffering.
+# anything sent to stdout/stderr goes to IDE directly, not after test is over like it is done by default.
+# out and err are not in sync, so output may go to wrong test
+JB_DISABLE_BUFFERING = "JB_DISABLE_BUFFERING" in os.environ
+
 
 def _parse_parametrized(part):
     """
 
     Support nose generators / py.test parameters and other functions that provides names like foo(1,2)
     Until https://github.com/JetBrains/teamcity-messages/issues/121, all such tests are provided
-    with parentheses
+    with parentheses.
+    
+    Tests with docstring are reported in similar way but they have space before parenthesis and should be ignored
+    by this function
+    
     """
-    match = re.match("^(.+)(\\(.+\\))$", part)
+    match = re.match("^([^\\s)(]+)(\\(.+\\))$", part)
     if not match:
         return [part]
     else:
@@ -164,7 +173,14 @@ class NewTeamcityServiceMessages(_old_service_messages):
 
         try:
             # Report directory so Java site knows which folder to resolve names against
-            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), properties["name"])
+
+            # tests with docstrings are reported in format "test.name (some test here)".
+            # text should be part of name, but not location.
+            possible_location = str(properties["name"])
+            loc = possible_location.find("(")
+            if loc > 0:
+                possible_location = possible_location[:loc].strip()
+            properties["locationHint"] = "python<{0}>://{1}".format(os.getcwd(), possible_location)
         except KeyError:
             # If message does not have name, then it is not test
             # Simply pass it
@@ -219,7 +235,7 @@ class NewTeamcityServiceMessages(_old_service_messages):
         except AttributeError:
             return
 
-        # If we here that means we are closing subtest
+        # closing subtest
         test_name = ".".join(TREE_MANAGER.current_branch)
         if self._latest_subtest_result == "Failure":
             self.testFailed(test_name)
@@ -362,8 +378,13 @@ def jb_start_tests():
     del sys.argv[1:]  # Remove all args
     NewTeamcityServiceMessages().message('enteredTheMatrix')
 
-    # Working dir should be on path, that is how runners work when launched from command line
-    sys.path.insert(1, os.getcwd())
+    # PyCharm helpers dir is first dir in sys.path because helper is launched.
+    # But sys.path should be same as when launched with test runner directly
+    try:
+        if os.path.abspath(sys.path[0]) == os.path.abspath(os.environ["PYCHARM_HELPERS_DIR"]):
+            sys.path.pop(0)
+    except KeyError:
+        pass
     return namespace.path, namespace.target, additional_args
 
 

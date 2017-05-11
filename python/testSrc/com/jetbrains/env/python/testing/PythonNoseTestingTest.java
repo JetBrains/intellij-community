@@ -6,7 +6,6 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationCreationTask;
 import com.jetbrains.env.ut.PyNoseTestProcessRunner;
-import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.sdkTools.SdkCreationType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.universalTests.PyUniversalNoseTestConfiguration;
@@ -24,6 +23,34 @@ import static org.junit.Assert.assertEquals;
  */
 @EnvTestTagsRequired(tags = "nose")
 public final class PythonNoseTestingTest extends PyEnvTestCase {
+
+
+  @Test
+  public void testNoseGenerators() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyNoseTestProcessRunner>("/testRunner/env/nose/generators", SdkCreationType.EMPTY_SDK) {
+      @NotNull
+      @Override
+      protected PyNoseTestProcessRunner createProcessRunner() throws Exception {
+        return new PyNoseTestProcessRunner(toFullPath("test_nose_generator.py"), 1);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyNoseTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals("Nose genenerator produced bad tree", "Test tree:\n" +
+                                "[root]\n" +
+                                ".test_nose_generator\n" +
+                                "..test_evens\n" +
+                                "...(0, 0)(+)\n" +
+                                "...(1, 3)(-)\n" +
+                                "...(2, 6)(+)\n" +
+                                "...(3, 9)(-)\n" +
+                                "...(4, 12)(+)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
 
   // Ensures setup/teardown does not break anything
   @Test

@@ -205,11 +205,8 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
       return null;
     }
 
+    assert getFailedTestsCount() > 0: String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep);
     final Logger logger = Logger.getInstance(PyAbstractTestProcessRunner.class);
-    if (getFailedTestsCount() == 0) {
-      logger
-        .warn(String.format("No failed tests on iteration %d, not sure what to rerun", myCurrentRerunStep));
-    }
     logger.info(String.format("Starting iteration %s", myCurrentRerunStep));
 
     myCurrentRerunStep++;

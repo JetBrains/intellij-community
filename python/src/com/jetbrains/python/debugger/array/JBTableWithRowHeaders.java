@@ -32,6 +32,7 @@ import java.beans.PropertyChangeListener;
  * @author amarch
  */
 public class JBTableWithRowHeaders extends JBTable {
+  private final JBScrollPane myScrollPane;
   private RowHeaderTable myRowHeaderTable;
 
   public JBTableWithRowHeaders() {
@@ -42,12 +43,16 @@ public class JBTableWithRowHeaders extends JBTable {
     getTableHeader().setDefaultRenderer(new ColumnHeaderRenderer());
     getTableHeader().setReorderingAllowed(false);
 
-    JBScrollPane scrollPane = new JBScrollPane(this);
+    myScrollPane = new JBScrollPane(this);
     myRowHeaderTable = new JBTableWithRowHeaders.RowHeaderTable(this);
     myRowHeaderTable.getEmptyText().setText("");
-    scrollPane.setRowHeaderView(myRowHeaderTable);
-    scrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
+    myScrollPane.setRowHeaderView(myRowHeaderTable);
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                          myRowHeaderTable.getTableHeader());
+  }
+
+  public JBScrollPane getScrollPane() {
+    return myScrollPane;
   }
 
   public boolean getScrollableTracksViewportWidth() {

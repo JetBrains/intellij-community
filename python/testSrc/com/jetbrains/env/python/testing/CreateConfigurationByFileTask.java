@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  *
  * @author Ilya.Kazakevich
  */
-class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration> extends CreateConfigurationTestTask<T> {
+class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration<?>> extends CreateConfigurationTestTask<T> {
   @NotNull
   private final String[] myFileNames;
 
@@ -55,7 +55,7 @@ class CreateConfigurationByFileTask<T extends AbstractPythonTestRunConfiguration
    */
   CreateConfigurationByFileTask(@Nullable final String testRunnerName,
                                 @NotNull final Class<T> expectedConfigurationType) {
-    this(testRunnerName, expectedConfigurationType, "test_file.py", "test_class.py");
+    this(testRunnerName, expectedConfigurationType, "test_file.py", "test_class.py", "folder_with_word_tests_in_name");
   }
 
   @NotNull
