@@ -42,9 +42,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.JBListTable;
+import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
+import com.intellij.util.ui.table.JBTableRowRenderer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -54,6 +55,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -255,145 +257,159 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
   }
 
   @Override
-  protected JComponent getRowPresentation(ParameterTableModelItemBase<PyParameterInfo> item, boolean selected, final boolean focused) {
-    String text = item.parameter.getName();
-    final String defaultCallValue = item.defaultValueCodeFragment.getText();
-    PyParameterTableModelItem pyItem = (PyParameterTableModelItem)item;
-    final String defaultValue = pyItem.isDefaultInSignature()? pyItem.defaultValueCodeFragment.getText() : "";
-
-    if (StringUtil.isNotEmpty(defaultValue)) {
-      text += " = " + defaultValue;
-    }
-
-    String tail = "";
-    if (StringUtil.isNotEmpty(defaultCallValue)) {
-      tail += " default value = " + defaultCallValue;
-    }
-    if (!StringUtil.isEmpty(tail)) {
-      text += " //" + tail;
-    }
-    return JBListTable.createEditorTextFieldPresentation(getProject(), getFileType(), " " + text, selected, focused);
-  }
-
-  @Override
-  protected boolean isListTableViewSupported() {
-    return true;
-  }
-
-  @Override
-  protected JBTableRowEditor getTableEditor(final JTable t, final ParameterTableModelItemBase<PyParameterInfo> item) {
-    return new JBTableRowEditor() {
-      private EditorTextField myNameEditor;
-      private EditorTextField myDefaultValueEditor;
-      private JCheckBox myDefaultInSignature;
-
+  protected ParametersListTable createParametersListTable() {
+    return new ParametersListTable() {
       @Override
-      public void prepareEditor(JTable table, int row) {
-        setLayout(new GridLayout(1, 3));
-        final JPanel parameterPanel = createParameterPanel();
-        add(parameterPanel);
-        final JPanel defaultValuePanel = createDefaultValuePanel();
-        add(defaultValuePanel);
-        final JPanel defaultValueCheckBox = createDefaultValueCheckBox();
-        add(defaultValueCheckBox);
-
-        final String nameText = myNameEditor.getText();
-        myDefaultValueEditor.setEnabled(!nameText.startsWith("*")
-                                        && !PyNames.CANONICAL_SELF.equals(nameText));
-        myDefaultInSignature.setEnabled(!nameText.startsWith("*")
-                                        && !PyNames.CANONICAL_SELF.equals(nameText));
-      }
-
-      private JPanel createDefaultValueCheckBox() {
-        final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-
-        final JBLabel inSignatureLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
-                                                     UIUtil.ComponentStyle.SMALL);
-        IJSwingUtilities.adjustComponentsOnMac(inSignatureLabel,
-                                               myDefaultInSignature);
-        defaultValuePanel.add(inSignatureLabel, BorderLayout.WEST);
-        myDefaultInSignature = new JCheckBox();
-        myDefaultInSignature.setSelected(
-          ((PyParameterTableModelItem)item).isDefaultInSignature());
-        myDefaultInSignature.addItemListener(new ItemListener() {
+      protected JBTableRowRenderer getRowRenderer(int row) {
+        return new EditorTextFieldJBTableRowRenderer(getProject(), getFileType(), getDisposable()) {
           @Override
-          public void itemStateChanged(ItemEvent event) {
-            ((PyParameterTableModelItem)item)
-              .setDefaultInSignature(myDefaultInSignature.isSelected());
-          }
-        });
-        myDefaultInSignature.addChangeListener(mySignatureUpdater);
-        myDefaultInSignature.setEnabled(item.parameter.getOldIndex() == -1);
-        defaultValuePanel.add(myDefaultInSignature, BorderLayout.EAST);
-        return defaultValuePanel;
-      }
+          protected String getText(JTable table, int row) {
+            final PyParameterTableModelItem pyItem = getRowItem(row);
+            String text = pyItem.parameter.getName();
+            final String defaultCallValue = pyItem.defaultValueCodeFragment.getText();
+            final String defaultValue = pyItem.isDefaultInSignature() ? pyItem.defaultValueCodeFragment.getText() : "";
 
-      private JPanel createDefaultValuePanel() {
-        final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-        final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
-        myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
-        final JBLabel defaultValueLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.label"),
-                                                      UIUtil.ComponentStyle.SMALL);
-        IJSwingUtilities.adjustComponentsOnMac(defaultValueLabel, myDefaultValueEditor);
-        defaultValuePanel.add(defaultValueLabel);
-        defaultValuePanel.add(myDefaultValueEditor);
-        myDefaultValueEditor.setPreferredWidth(t.getWidth() / 2);
-        myDefaultValueEditor.addDocumentListener(mySignatureUpdater);
-        return defaultValuePanel;
-      }
-
-      private JPanel createParameterPanel() {
-        final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
-        myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
-        final JBLabel nameLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.name.label"),
-                                              UIUtil.ComponentStyle.SMALL);
-        IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameEditor);
-        namePanel.add(nameLabel);
-        namePanel.add(myNameEditor);
-        myNameEditor.setPreferredWidth(t.getWidth() / 2);
-        myNameEditor.addDocumentListener(new DocumentListener() {
-          @Override
-          public void documentChanged(DocumentEvent event) {
-            fireDocumentChanged(event, 0);
-            myDefaultValueEditor.setEnabled(!myNameEditor.getText().startsWith("*"));
-            myDefaultInSignature.setEnabled(!myNameEditor.getText().startsWith("*"));
-          }
-        });
-
-        myNameEditor.addDocumentListener(mySignatureUpdater);
-        return namePanel;
-      }
-
-      @Override
-      public JBTableRow getValue() {
-        return new JBTableRow() {
-          @Override
-          public Object getValueAt(int column) {
-            switch (column) {
-              case 0: return myNameEditor.getText().trim();
-              case 1: return new Pair<>(item.defaultValueCodeFragment,
-                                        ((PyParameterTableModelItem)item).isDefaultInSignature());
+            if (StringUtil.isNotEmpty(defaultValue)) {
+              text += " = " + defaultValue;
             }
-            return null;
+
+            String tail = "";
+            if (StringUtil.isNotEmpty(defaultCallValue)) {
+              tail += " default value = " + defaultCallValue;
+            }
+            if (!StringUtil.isEmpty(tail)) {
+              text += " //" + tail;
+            }
+            return text;
+          }
+        };
+      }
+
+      @NotNull
+      @Override
+      protected JBTableRowEditor getRowEditor(ParameterTableModelItemBase<PyParameterInfo> item) {
+        return new JBTableRowEditor() {
+          private EditorTextField myNameEditor;
+          private EditorTextField myDefaultValueEditor;
+          private JCheckBox myDefaultInSignature;
+
+          @Override
+          public void prepareEditor(JTable table, int row) {
+            setLayout(new GridLayout(1, 3));
+            final JPanel parameterPanel = createParameterPanel();
+            add(parameterPanel);
+            final JPanel defaultValuePanel = createDefaultValuePanel();
+            add(defaultValuePanel);
+            final JPanel defaultValueCheckBox = createDefaultValueCheckBox();
+            add(defaultValueCheckBox);
+
+            final String nameText = myNameEditor.getText();
+            myDefaultValueEditor.setEnabled(!nameText.startsWith("*") && !PyNames.CANONICAL_SELF.equals(nameText));
+            myDefaultInSignature.setEnabled(!nameText.startsWith("*") && !PyNames.CANONICAL_SELF.equals(nameText));
+          }
+
+          private JPanel createDefaultValueCheckBox() {
+            final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+
+            final JBLabel inSignatureLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.checkbox"),
+                                                         UIUtil.ComponentStyle.SMALL);
+            IJSwingUtilities.adjustComponentsOnMac(inSignatureLabel,
+                                                   myDefaultInSignature);
+            defaultValuePanel.add(inSignatureLabel, BorderLayout.WEST);
+            myDefaultInSignature = new JCheckBox();
+            myDefaultInSignature.setSelected(((PyParameterTableModelItem)item).isDefaultInSignature());
+            myDefaultInSignature.addItemListener(new ItemListener() {
+              @Override
+              public void itemStateChanged(ItemEvent event) {
+                ((PyParameterTableModelItem)item).setDefaultInSignature(myDefaultInSignature.isSelected());
+              }
+            });
+            myDefaultInSignature.addChangeListener(mySignatureUpdater);
+            myDefaultInSignature.setEnabled(item.parameter.getOldIndex() == -1);
+            defaultValuePanel.add(myDefaultInSignature, BorderLayout.EAST);
+            return defaultValuePanel;
+          }
+
+          private JPanel createDefaultValuePanel() {
+            final JPanel defaultValuePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+            final Document doc = PsiDocumentManager.getInstance(getProject()).getDocument(item.defaultValueCodeFragment);
+            myDefaultValueEditor = new EditorTextField(doc, getProject(), getFileType());
+            final JBLabel defaultValueLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.default.value.label"),
+                                                          UIUtil.ComponentStyle.SMALL);
+            IJSwingUtilities.adjustComponentsOnMac(defaultValueLabel, myDefaultValueEditor);
+            defaultValuePanel.add(defaultValueLabel);
+            defaultValuePanel.add(myDefaultValueEditor);
+            myDefaultValueEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myDefaultValueEditor.addDocumentListener(mySignatureUpdater);
+            return defaultValuePanel;
+          }
+
+          private JPanel createParameterPanel() {
+            final JPanel namePanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 4, 2, true, false));
+            myNameEditor = new EditorTextField(item.parameter.getName(), getProject(), getFileType());
+            final JBLabel nameLabel = new JBLabel(PyBundle.message("refactoring.change.signature.dialog.name.label"),
+                                                  UIUtil.ComponentStyle.SMALL);
+            IJSwingUtilities.adjustComponentsOnMac(nameLabel, myNameEditor);
+            namePanel.add(nameLabel);
+            namePanel.add(myNameEditor);
+            myNameEditor.setPreferredWidth(getTable().getWidth() / 2);
+            myNameEditor.addDocumentListener(new DocumentListener() {
+              @Override
+              public void documentChanged(DocumentEvent event) {
+                fireDocumentChanged(event, 0);
+                myDefaultValueEditor.setEnabled(!myNameEditor.getText().startsWith("*"));
+                myDefaultInSignature.setEnabled(!myNameEditor.getText().startsWith("*"));
+              }
+            });
+
+            myNameEditor.addDocumentListener(mySignatureUpdater);
+            return namePanel;
+          }
+
+          @Override
+          public JBTableRow getValue() {
+            return new JBTableRow() {
+              @Override
+              public Object getValueAt(int column) {
+                switch (column) {
+                  case 0:
+                    return myNameEditor.getText().trim();
+                  case 1:
+                    return new Pair<>(item.defaultValueCodeFragment,
+                                      ((PyParameterTableModelItem)item).isDefaultInSignature());
+                }
+                return null;
+              }
+            };
+          }
+
+          @Override
+          public JComponent getPreferredFocusedComponent() {
+            return myNameEditor.getFocusTarget();
+          }
+
+          @Override
+          public JComponent[] getFocusableComponents() {
+            final List<JComponent> focusable = new ArrayList<>();
+            focusable.add(myNameEditor.getFocusTarget());
+            if (myDefaultValueEditor != null) {
+              focusable.add(myDefaultValueEditor.getFocusTarget());
+            }
+            return focusable.toArray(new JComponent[focusable.size()]);
           }
         };
       }
 
       @Override
-      public JComponent getPreferredFocusedComponent() {
-        return myNameEditor.getFocusTarget();
-      }
-
-      @Override
-      public JComponent[] getFocusableComponents() {
-        final List<JComponent> focusable = new ArrayList<>();
-        focusable.add(myNameEditor.getFocusTarget());
-        if (myDefaultValueEditor != null) {
-          focusable.add(myDefaultValueEditor.getFocusTarget());
-        }
-        return focusable.toArray(new JComponent[focusable.size()]);
+      protected boolean isRowEmpty(int row) {
+        return false;
       }
     };
+  }
+  
+  @Override
+  protected boolean isListTableViewSupported() {
+    return true;
   }
 
   @Override
