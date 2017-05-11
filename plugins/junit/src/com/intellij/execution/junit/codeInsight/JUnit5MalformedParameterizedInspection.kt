@@ -25,6 +25,7 @@ import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -59,52 +60,52 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
     return object : JavaElementVisitor() {
 
       override fun visitMethod(method: PsiMethod) {
-        val modifierList = method.modifierList
-        val parameterizedAnnotation = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
-        val testAnnotation = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST)
+        val parameterizedAnnotation = MetaAnnotationUtil.findMetaAnnotations(method, Collections.singletonList(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)).findFirst().orElse(null)
+        val testAnnotation = MetaAnnotationUtil.findMetaAnnotations(method, JUnitUtil.TEST5_ANNOTATIONS).findFirst().orElse(null)
         if (parameterizedAnnotation != null) {
           if (testAnnotation != null && method.parameterList.parametersCount > 0) {
             holder.registerProblem(testAnnotation,
                                    "Suspicious combination @Test and @ParameterizedTest",
                                    DeleteElementFix(testAnnotation))
           }
-          val methodSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE)
-          if (methodSource != null) {
-            checkMethodSource(method, methodSource)
-          }
 
-          val valuesSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE)
-          if (valuesSource != null) {
-            checkValuesSource(method, valuesSource)
-          }
-
-          val enumSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE)
-          if (enumSource != null) {
-            checkEnumSource(method, enumSource)
-          }
-
-          val csvFileSource = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE)
-          val csvSource     = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE)
-          val argSources = modifierList.findAnnotation(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE)
-
-          val noMultiArgsProvider = methodSource == null && csvFileSource == null && csvSource == null && argSources == null
-
-          if (valuesSource == null && enumSource == null && noMultiArgsProvider) {
-            holder.registerProblem(parameterizedAnnotation, "No sources are provided, the suite would be empty")
-          }
-          else if (noMultiArgsProvider && hasMultipleParameters(method)) {
-              holder.registerProblem(valuesSource ?: enumSource!!, "Multiple parameters are not supported by this source")
-          }
-        }
-        else if (testAnnotation != null) {
-          for (annotation in JUnitCommonClassNames.SOURCE_ANNOTATIONS) {
-            if (modifierList.findAnnotation(annotation) != null) {
-              holder.registerProblem(testAnnotation,
-                                     "Suspicious combination @Test and parameterized source",
-                                     ChangeAnnotationFix(testAnnotation, JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
-              break;
+          var noMultiArgsProvider = true
+          var source : PsiAnnotation? = null
+          MetaAnnotationUtil.findMetaAnnotations(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS).forEach {
+            when (it.qualifiedName) {
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE -> {
+                checkMethodSource(method, it)
+                noMultiArgsProvider = false
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE -> {
+                checkValuesSource(method, it)
+                source = it
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE -> {
+                checkEnumSource(method, it)
+                source = it
+              }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE,
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE -> {
+                noMultiArgsProvider = false
+              }
             }
           }
+
+          if (noMultiArgsProvider) {
+            if (source == null) {
+              holder.registerProblem(parameterizedAnnotation, "No sources are provided, the suite would be empty")
+            }
+            else if (hasMultipleParameters(method)) {
+                holder.registerProblem(source!!, "Multiple parameters are not supported by this source")
+            }
+          }
+        }
+        else if (testAnnotation != null && MetaAnnotationUtil.isMetaAnnotated(method, JUnitCommonClassNames.SOURCE_ANNOTATIONS)) {
+          holder.registerProblem(testAnnotation,
+                                 "Suspicious combination @Test and parameterized source",
+                                 ChangeAnnotationFix(testAnnotation, JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST))
         }
       }
 

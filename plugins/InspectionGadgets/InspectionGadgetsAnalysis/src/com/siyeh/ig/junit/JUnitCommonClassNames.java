@@ -15,6 +15,9 @@
  */
 package com.siyeh.ig.junit;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 public class JUnitCommonClassNames {
   public static final String ORG_JUNIT_ASSERT = "org.junit.Assert";
   public static final String ORG_JUNIT_ASSUME = "org.junit.Assume";
@@ -33,13 +36,13 @@ public class JUnitCommonClassNames {
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE = "org.junit.jupiter.params.provider.CsvSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE = "org.junit.jupiter.params.provider.CsvFileSource";
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE = "org.junit.jupiter.params.provider.ArgumentsSource";
-  public static final String[] SOURCE_ANNOTATIONS = {
+  public static final Collection<String> SOURCE_ANNOTATIONS = Arrays.asList(
     ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE,
     ORG_JUNIT_JUPITER_PARAMS_VALUES_SOURCE,
     ORG_JUNIT_JUPITER_PARAMS_ENUM_SOURCE, ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
     ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE,
     ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE
-  };
+  );
   public static final String ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS = "org.junit.jupiter.params.provider.Arguments";
   public static final String ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH = "org.junit.jupiter.params.converter.ConvertWith";
   public static final String ORG_JUNIT_JUPITER_API_TEST = "org.junit.jupiter.api.Test";
