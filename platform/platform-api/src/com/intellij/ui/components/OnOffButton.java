@@ -61,7 +61,11 @@ public class OnOffButton extends JToggleButton {
   }
 
   @Override public void updateUI() {
-    setUI(UIManager.get(getUIClassID()) == null ?
+    // Check that class name is in the UI table before creating UI delegate from it.
+    // If the custom class name is not listed (like for example in system LaFs) then
+    // use the default delegate.
+    Object uiClassName = UIManager.get(getUIClassID());
+    setUI(uiClassName == null ?
           DefaultOnOffButtonUI.createUI(this) :
           UIManager.getUI(this));
   }
