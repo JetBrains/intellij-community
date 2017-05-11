@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,11 @@
 package com.jetbrains.python.packaging.requirement;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 import static com.intellij.webcore.packaging.PackageVersionComparator.VERSION_COMPARATOR;
 
@@ -25,11 +29,21 @@ public class PyRequirementVersionSpec {
   @NotNull
   private final PyRequirementRelation myRelation;
 
+  @Nullable
+  private final PyRequirementVersion myParsedVersion;
+
   @NotNull
   private final String myVersion;
 
-  public PyRequirementVersionSpec(@NotNull PyRequirementRelation relation, @NotNull String version) {
+  public PyRequirementVersionSpec(@NotNull PyRequirementRelation relation, @NotNull PyRequirementVersion version) {
     myRelation = relation;
+    myParsedVersion = version;
+    myVersion = myParsedVersion.getPresentableText();
+  }
+
+  public PyRequirementVersionSpec(@NotNull String version) {
+    myRelation = PyRequirementRelation.STR_EQ;
+    myParsedVersion = null;
     myVersion = version;
   }
 
@@ -73,7 +87,9 @@ public class PyRequirementVersionSpec {
       case GTE:
         return VERSION_COMPARATOR.compare(version, myVersion) >= 0;
       case EQ:
-        final Pair<String, String> publicAndLocalVersions = splitIntoPublicAndLocalVersions(myVersion);
+        Objects.requireNonNull(myParsedVersion);
+
+        final Pair<String, String> publicAndLocalVersions = splitIntoPublicAndLocalVersions(myParsedVersion);
         final Pair<String, String> otherPublicAndLocalVersions = splitIntoPublicAndLocalVersions(version);
         final boolean publicVersionsAreSame =
           VERSION_COMPARATOR.compare(otherPublicAndLocalVersions.first, publicAndLocalVersions.first) == 0;
@@ -91,6 +107,15 @@ public class PyRequirementVersionSpec {
     }
   }
 
+  @NotNull
+  private static Pair<String, String> splitIntoPublicAndLocalVersions(@NotNull PyRequirementVersion version) {
+    final PyRequirementVersion withoutLocal =
+      new PyRequirementVersion(version.getEpoch(), version.getRelease(), version.getPre(), version.getPost(), version.getDev(), null);
+
+    return Pair.createNonNull(withoutLocal.getPresentableText(), StringUtil.notNullize(version.getLocal()));
+  }
+
+  @NotNull
   private static Pair<String, String> splitIntoPublicAndLocalVersions(@NotNull String version) {
     final String[] publicAndLocalVersions = version.split("\\+", 2);
 
