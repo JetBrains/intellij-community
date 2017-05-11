@@ -38,6 +38,7 @@ import com.intellij.refactoring.ui.VisibilityPanelBase;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.HashSet;
@@ -54,7 +55,6 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,10 +70,10 @@ import java.util.Set;
  * User : ktisha
  */
 
-public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParameterInfo, PyFunction, String, PyMethodDescriptor, PyParameterTableModelItem, PyParameterTableModel> {
+public class PyChangeSignatureDialog extends
+                                     ChangeSignatureDialogBase<PyParameterInfo, PyFunction, String, PyMethodDescriptor, PyParameterTableModelItem, PyParameterTableModel> {
 
-  public PyChangeSignatureDialog(Project project,
-                                 PyMethodDescriptor method) {
+  public PyChangeSignatureDialog(Project project, PyMethodDescriptor method) {
     super(project, method, false, method.getMethod().getContext());
   }
 
@@ -109,9 +109,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
   public boolean isNameValid(final String name, final Project project) {
     final NamesValidator validator = LanguageNamesValidation.INSTANCE.forLanguage(PythonLanguage.getInstance());
-    return (name != null) &&
-           (validator.isIdentifier(name, project)) &&
-           !(validator.isKeyword(name, project));
+    return name != null && validator.isIdentifier(name, project) && !validator.isKeyword(name, project);
   }
 
   @Nullable
@@ -128,18 +126,18 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       }
     }
     final List<PyParameterTableModelItem> parameters = myParametersTableModel.getItems();
-    Set<String> parameterNames = new HashSet<>();
+    final Set<String> parameterNames = new HashSet<>();
     boolean hadPositionalContainer = false;
     boolean hadKeywordContainer = false;
     boolean hadDefaultValue = false;
     boolean hadSingleStar = false;
     boolean hadParamsAfterSingleStar = false;
-    LanguageLevel languageLevel = LanguageLevel.forElement(myMethod.getMethod());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(myMethod.getMethod());
 
-    int parametersLength = parameters.size();
+    final int parametersLength = parameters.size();
 
-    for (int index = 0; index != parametersLength; ++index) {
-      PyParameterTableModelItem info = parameters.get(index);
+    for (int index = 0; index < parametersLength; index++) {
+      final PyParameterTableModelItem info = parameters.get(index);
       final PyParameterInfo parameter = info.parameter;
       final String name = parameter.getName();
       final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
@@ -150,7 +148,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
       if (name.equals("*")) {
         hadSingleStar = true;
-        if (index == parametersLength-1) {
+        if (index == parametersLength - 1) {
           return PyBundle.message("ANN.named.arguments.after.star");
         }
       }
@@ -213,7 +211,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       }
       else if (myMethod.getParameters().get(parameter.getOldIndex()).getDefaultInSignature() &&
                StringUtil.isEmptyOrSpaces(parameter.getDefaultValue())) {
-          return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
+        return PyBundle.message("refactoring.change.signature.dialog.validation.default.missing");
       }
     }
 
@@ -223,29 +221,28 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
   @Override
   protected ValidationInfo doValidate() {
     final String message = validateAndCommitData();
-    SwingUtilities.invokeLater(() -> {
-      getRefactorAction().setEnabled(message == null);
-      getPreviewAction().setEnabled(message == null);
-    });
+    getRefactorAction().setEnabled(message == null);
+    getPreviewAction().setEnabled(message == null);
     if (message != null) return new ValidationInfo(message);
     return super.doValidate();
   }
 
   @Override
   protected String calculateSignature() {
-    @NonNls StringBuilder builder = new StringBuilder();
+    final StringBuilder builder = new StringBuilder();
     builder.append(getMethodName());
     builder.append("(");
     final List<PyParameterTableModelItem> parameters = myParametersTableModel.getItems();
-    for (int i = 0; i != parameters.size(); ++i) {
-      PyParameterTableModelItem parameterInfo = parameters.get(i);
+    for (int i = 0; i < parameters.size(); i++) {
+      final PyParameterTableModelItem parameterInfo = parameters.get(i);
       builder.append(parameterInfo.parameter.getName());
       final String defaultValue = parameterInfo.defaultValueCodeFragment.getText();
       if (!defaultValue.isEmpty() && parameterInfo.isDefaultInSignature()) {
-        builder.append(" = " + defaultValue);
+        builder.append(" = ").append(defaultValue);
       }
-      if (i != parameters.size()-1)
+      if (i != parameters.size() - 1) {
         builder.append(", ");
+      }
     }
     builder.append(")");
     return builder.toString();
@@ -253,7 +250,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
 
   @Override
   protected VisibilityPanelBase<String> createVisibilityControl() {
-    return new ComboBoxVisibilityPanel<>(new String[0]);
+    return new ComboBoxVisibilityPanel<>(ArrayUtil.EMPTY_STRING_ARRAY);
   }
 
   @Override
@@ -265,22 +262,18 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
           @Override
           protected String getText(JTable table, int row) {
             final PyParameterTableModelItem pyItem = getRowItem(row);
-            String text = pyItem.parameter.getName();
+            final StringBuilder text = new StringBuilder(pyItem.parameter.getName());
             final String defaultCallValue = pyItem.defaultValueCodeFragment.getText();
             final String defaultValue = pyItem.isDefaultInSignature() ? pyItem.defaultValueCodeFragment.getText() : "";
 
             if (StringUtil.isNotEmpty(defaultValue)) {
-              text += " = " + defaultValue;
+              text.append(" = ").append(defaultValue);
             }
 
-            String tail = "";
             if (StringUtil.isNotEmpty(defaultCallValue)) {
-              tail += " default value = " + defaultCallValue;
+              text.append(" // default value = ").append(defaultCallValue);
             }
-            if (!StringUtil.isEmpty(tail)) {
-              text += " //" + tail;
-            }
-            return text;
+            return text.toString();
           }
         };
       }
@@ -409,7 +402,7 @@ public class PyChangeSignatureDialog extends ChangeSignatureDialogBase<PyParamet
       }
     };
   }
-  
+
   @Override
   protected boolean isListTableViewSupported() {
     return true;
