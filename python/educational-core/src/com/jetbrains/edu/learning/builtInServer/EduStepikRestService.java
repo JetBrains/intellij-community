@@ -17,9 +17,13 @@ package com.jetbrains.edu.learning.builtInServer;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.AppIcon;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -32,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.RestService;
 import org.jetbrains.io.Responses;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -118,6 +123,8 @@ public class EduStepikRestService extends RestService {
           StudySettings.getInstance().setUser(stepicUser);
           sendHtmlResponse(request, context, "/oauthResponsePages/okPage.html");
           showStepicNotification(NotificationType.INFORMATION, "Authorized as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
+          JFrame frame = WindowManager.getInstance().findVisibleFrame();
+          ApplicationManager.getApplication().invokeLater(() -> AppIcon.getInstance().requestFocus((IdeFrame)frame));
           return null;
         }
       }

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -241,14 +242,11 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected String layout(AbstractButton b, String text, Icon icon, FontMetrics fm, int width, int height) {
-    Insets i = b.getInsets();
-    viewRect.x = i.left;
-    viewRect.y = i.top;
-    viewRect.width = width - (i.right + viewRect.x);
-    viewRect.height = height - (i.bottom + viewRect.y);
+    textRect.setBounds(0, 0, 0, 0);
+    iconRect.setBounds(0, 0, 0, 0);
 
-    textRect.x = textRect.y = textRect.width = textRect.height = 0;
-    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
+    viewRect.setBounds(0, 0, width, height);
+    JBInsets.removeFrom(viewRect, b.getInsets());
 
     if (isComboButton(b)) {
       viewRect.x += 6;

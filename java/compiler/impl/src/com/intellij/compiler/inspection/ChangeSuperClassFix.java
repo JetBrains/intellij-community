@@ -22,11 +22,10 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.ArrayUtil;
@@ -35,8 +34,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -115,15 +116,15 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   private static void changeSuperClass(@NotNull final PsiClass aClass,
                                        @NotNull final PsiClass oldSuperClass,
                                        @NotNull final PsiClass newSuperClass) {
-    List<PsiMethod> ownMethods = ((PsiExtensibleClass)aClass).getOwnMethods();
+    PsiMethod[] ownMethods = aClass.getMethods();
     // first is own method, second is parent
     List<Pair<PsiMethod, Set<PsiMethod>>> oldOverridenMethods =
-      ownMethods.stream().map(m -> {
+      Stream.of(ownMethods).map(m -> {
         if (m.isConstructor()) return null;
         PsiMethod[] supers = m.findSuperMethods(oldSuperClass);
         if (supers.length == 0) return null;
         return Pair.create(m, ContainerUtil.set(supers));
-      }).collect(Collectors.toList());
+      }).filter(Objects::nonNull).collect(Collectors.toList());
 
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
     PsiElementFactory factory = psiFacade.getElementFactory();
@@ -159,21 +160,28 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
       JavaCodeStyleManager.getInstance(aClass.getProject()).shortenClassReferences(ref);
     });
 
-    if (ownMethods.isEmpty()) {
-      // should not override methods from a new super class
-      return;
-    }
-    Stream<PsiMethod> memberInfos = oldOverridenMethods.stream().filter(m -> {
+    List<MemberInfo> memberInfos = oldOverridenMethods.stream().filter(m -> {
       Set<PsiMethod> newSupers = ContainerUtil.set(m.getFirst().findSuperMethods(newSuperClass));
       return !newSupers.equals(m.getSecond());
-    }).map(m -> m.getFirst());
+    }).map(m -> m.getFirst())
+      .map(m -> {
+      MemberInfo info = new MemberInfo(m);
+      info.setChecked(true);
+      return info;
+    }).collect(Collectors.toList());
 
-    List<PsiMethod> toDelete = getOverridenMethodsToDelete(memberInfos, newSuperClass.getName());
-    WriteAction.run(() -> {
-      for (PsiMethod method : toDelete) {
-        method.delete();
-      }
-    });
+    if (memberInfos.isEmpty()) {
+      return;
+    }
+
+    List<PsiMethod> toDelete = getOverridenMethodsToDelete(memberInfos, newSuperClass.getName(), aClass.getProject());
+    if (!toDelete.isEmpty()) {
+      WriteAction.run(() -> {
+        for (PsiMethod method : toDelete) {
+          method.delete();
+        }
+      });
+    }
   }
 
   @NotNull
@@ -182,16 +190,26 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
   }
 
   @NotNull
-  private static List<PsiMethod> getOverridenMethodsToDelete(Stream<PsiMethod> candidates, String newClassName) {
-    DialogBuilder dlg = new DialogBuilder();
-    MemberSelectionPanel panel = new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
-                                                          candidates.map(m -> {
-      MemberInfo info = new MemberInfo(m);
-      info.setChecked(true);
-      return info;
-    }).collect(Collectors.toList()), null);
-    dlg.setCenterPanel(panel);
-    dlg.setTitle("Choose Members");
+  private static List<PsiMethod> getOverridenMethodsToDelete(List<MemberInfo> candidates,
+                                                             String newClassName,
+                                                             Project project) {
+    MemberSelectionPanel panel =
+      new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
+                               candidates,
+                               null);
+    DialogWrapper dlg = new DialogWrapper(project, false) {
+
+      {
+        setOKButtonText("Remove");
+        setTitle("Choose Members");
+        init();
+      }
+      @NotNull
+      @Override
+      protected JComponent createCenterPanel() {
+        return panel;
+      }
+    };
     return dlg.showAndGet()
            ? panel.getTable().getSelectedMemberInfos().stream().map(info -> (PsiMethod)info.getMember()).collect(Collectors.toList())
            : Collections.emptyList();

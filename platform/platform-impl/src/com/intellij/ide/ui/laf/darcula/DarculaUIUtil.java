@@ -36,6 +36,8 @@ import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Arrays;
@@ -340,5 +342,29 @@ public class DarculaUIUtil {
     }
 
     return false;
+  }
+
+  public static class MouseHoverPropertyTrigger extends MouseAdapter {
+    private final JComponent repaintComponent;
+    private final String     hoverProperty;
+
+    public MouseHoverPropertyTrigger(@NotNull JComponent repaintComponent, @NotNull String hoverProperty) {
+      this.repaintComponent = repaintComponent;
+      this.hoverProperty = hoverProperty;
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+      JComponent c = (JComponent)e.getComponent();
+      c.putClientProperty(hoverProperty, Boolean.TRUE);
+      repaintComponent.repaint();
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+      JComponent c = (JComponent)e.getComponent();
+      c.putClientProperty(hoverProperty, Boolean.FALSE);
+      repaintComponent.repaint();
+    }
   }
 }

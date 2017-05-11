@@ -332,7 +332,6 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
-      hasFocus = false;
       checkFocus();
 
       final Rectangle arrowButtonBounds = arrowButton.getBounds();
@@ -395,6 +394,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   protected void checkFocus() {
+    hasFocus = false;
     if (!comboBox.isEnabled()) {
       hasFocus = false;
       return;
@@ -403,7 +403,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     hasFocus = hasFocus(comboBox);
     if (hasFocus) return;
 
-    final ComboBoxEditor ed = comboBox.getEditor();
+    ComboBoxEditor ed = comboBox.getEditor();
     editor = ed == null ? null : ed.getEditorComponent();
     if (editor != null) {
       hasFocus = hasFocus(editor);
@@ -411,7 +411,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   }
 
   protected static boolean hasFocus(Component c) {
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
 

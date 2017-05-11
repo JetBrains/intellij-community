@@ -399,7 +399,6 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
       Editor editor1 = mySide.select(getEditor(ThreeSide.LEFT), getEditor(ThreeSide.BASE));
       Editor editor2 = mySide.select(getEditor(ThreeSide.BASE), getEditor(ThreeSide.RIGHT));
 
-      //DividerPolygonUtil.paintSimplePolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
       DiffDividerDrawUtil.paintPolygons(gg, divider.getWidth(), editor1, editor2, myPaintable);
 
       myFoldingModel.paintOnDivider(gg, divider, mySide);

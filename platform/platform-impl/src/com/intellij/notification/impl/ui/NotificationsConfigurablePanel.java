@@ -272,7 +272,10 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
             int column = columnAtPoint(point);
             int row = rowAtPoint(point);
 
+            if (row < 0 || row >= getModel().getRowCount()) return;
+
             UIUtil.resetEnabledRollOver(NotificationsTreeTable.this, LOG_COLUMN);
+
             if (column == LOG_COLUMN) {
               JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
               rc.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, row);
