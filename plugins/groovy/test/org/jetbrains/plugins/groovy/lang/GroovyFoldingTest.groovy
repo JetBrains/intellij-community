@@ -107,6 +107,12 @@ line*/
 
 //one
 //two
+//region test
+//three
+//four
+//endregion
+//five
+//six
 
 delimiter()
 //single
@@ -122,6 +128,9 @@ def bar(){}
     assertNoFolding('/*single')
     assertFolding('/*multi')
     assertFolding('//one')
+    assertFolding('//region test')
+    assertFolding('//three')
+    assertFolding('//five')
     assertNoFolding('//single')
     assertNoFolding('/**single')
     assertFolding('/**multi')

@@ -454,6 +454,63 @@ class Foo {
     assertEquals "Some", foldingModel.allFoldRegions[0].placeholderText
   }
 
+  public void "test custom foldings intersecting with comment foldings"() {
+    @Language("JAVA")
+    def text = """class Foo {
+// 0
+// 1
+// region Some
+// 2
+// 3 next empty line is significant
+
+// non-dangling
+  int t = 1;
+// 4
+// 5
+// endregion
+// 6
+// 7
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assertFolding "// region"
+    assertFolding "// 0"
+    assertFolding "// 2" // Note: spans only two lines, see next test for details
+    assertFolding "// 4"
+    assertFolding "// 6"
+
+    assertEquals 5, foldRegionsCount
+  }
+
+  public void "test single line comments foldings"() {
+    @Language("JAVA")
+    def text = """class Foo {
+// 0
+// 1
+// 2 next empty line is significant
+
+// 3 non-folded
+// 4 non-folded
+  int t = 1;
+// 5
+// 6
+// 7
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assertFolding "// 0"
+    assertNoFoldingStartsAt "// 3"
+    assertNoFoldingCovers "// 3"
+    assertNoFoldingCovers "// 4"
+    assertFolding "// 5"
+
+    assertEquals 2, foldRegionsCount
+  }
+
   public void "test custom folding collapsed by default"() {
     @Language("JAVA")
     def text = """\
@@ -1019,5 +1076,33 @@ class Foo {
 
   private int getExpandedFoldRegionsCount() {
     return myFixture.editor.foldingModel.allFoldRegions.count { it.isExpanded() ? 1 : 0}
+  }
+
+  // Based on methods from GroovyFoldingTest
+  private boolean assertFolding(int offset) {
+    assert offset >= 0
+    myFixture.editor.foldingModel.allFoldRegions.any { it.startOffset == offset }
+  }
+
+  private void assertFolding(String marker) {
+    assert assertFolding(myFixture.file.text.indexOf(marker)), marker
+  }
+
+  private boolean assertNoFoldingCovers(int offset) {
+    assert offset >= 0
+    myFixture.editor.foldingModel.allFoldRegions.every { offset < it.startOffset || it.endOffset <= offset }
+  }
+
+  private void assertNoFoldingCovers(String marker) {
+    assert assertNoFoldingCovers(myFixture.file.text.indexOf(marker)), marker
+  }
+
+  private boolean assertNoFoldingStartsAt(int offset) {
+    assert offset >= 0
+    myFixture.editor.foldingModel.allFoldRegions.every { offset != it.startOffset }
+  }
+
+  private void assertNoFoldingStartsAt(String marker) {
+    assert assertNoFoldingStartsAt(myFixture.file.text.indexOf(marker)), marker
   }
 }

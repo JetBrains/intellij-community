@@ -275,25 +275,25 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   private static void addCommentFolds(@NotNull PsiComment comment,
                                       @NotNull Set<PsiElement> processedComments,
                                       @NotNull List<FoldingDescriptor> foldElements) {
-    if (processedComments.contains(comment) || comment.getTokenType() != JavaTokenType.END_OF_LINE_COMMENT) {
+    if (processedComments.contains(comment) || comment.getTokenType() != JavaTokenType.END_OF_LINE_COMMENT
+        || isCustomRegionElement(comment)) {
       return;
     }
+    processedComments.add(comment);
 
     PsiElement end = null;
-    boolean containsCustomRegionMarker = isCustomRegionElement(comment);
     for (PsiElement current = comment.getNextSibling(); current != null; current = current.getNextSibling()) {
       ASTNode node = current.getNode();
       if (node == null) {
         break;
       }
       IElementType elementType = node.getElementType();
-      if (elementType == JavaTokenType.END_OF_LINE_COMMENT) {
+      if (elementType == JavaTokenType.END_OF_LINE_COMMENT && !isCustomRegionElement(current) && !processedComments.contains(current)) {
         end = current;
         // We don't want to process, say, the second comment in case of three subsequent comments when it's being examined
         // during all elements traversal. I.e. we expect to start from the first comment and grab as many subsequent
         // comments as possible during the single iteration.
         processedComments.add(current);
-        containsCustomRegionMarker |= isCustomRegionElement(current);
         continue;
       }
       if (elementType == TokenType.WHITE_SPACE) {
@@ -302,7 +302,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       break;
     }
 
-    if (end != null && !containsCustomRegionMarker) {
+    if (end != null) {
       foldElements.add(
         new FoldingDescriptor(comment, new TextRange(comment.getTextRange().getStartOffset(), end.getTextRange().getEndOffset()))
       );
