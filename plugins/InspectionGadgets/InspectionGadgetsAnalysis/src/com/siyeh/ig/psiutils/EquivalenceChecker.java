@@ -902,11 +902,11 @@ public class EquivalenceChecker {
       DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(tokenType1);
       DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(tokenType2);
       if(rel1 != null && rel2 != null && rel1.getFlipped() == rel2) {
-        return expressionsMatch(left1, right2).combine(expressionsMatch(right1, left2));
+        return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {right2, left2});
       }
       return EXACT_MISMATCH;
     }
-    return expressionsMatch(left1, left2).combine(expressionsMatch(right1, right2));
+    return expressionsAreEquivalent(new PsiExpression[] {left1, right1}, new PsiExpression[] {left2, right2});
   }
 
   protected Match assignmentExpressionsMatch(@NotNull PsiAssignmentExpression assignmentExpression1, @NotNull PsiAssignmentExpression assignmentExpression2) {
