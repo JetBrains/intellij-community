@@ -2,6 +2,7 @@ package com.jetbrains.edu.learning.newproject.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -177,7 +178,7 @@ public class EduCoursesPanel extends JPanel {
     });
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myCoursesList).
-      disableAddAction().disableRemoveAction().disableUpDownActions().setActionGroup(group);
+      disableAddAction().disableRemoveAction().disableUpDownActions().setActionGroup(group).setToolbarPosition(ActionToolbarPosition.BOTTOM);
     JPanel toolbarDecoratorPanel = toolbarDecorator.createPanel();
     toolbarDecoratorPanel.setBorder(null);
     myCoursesList.setBorder(null);
