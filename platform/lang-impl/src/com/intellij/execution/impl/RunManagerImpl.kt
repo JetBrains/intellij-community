@@ -141,7 +141,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   private val eventPublisher: RunManagerListener
-    get() = createRunManagerEventPublisher(project)
+    get() = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
   init {
     initializeConfigurationTypes(ConfigurationType.CONFIGURATION_TYPE_EP.extensions)
@@ -666,8 +666,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     fireBeforeRunTasksUpdated()
 
-    // ProjectRunConfigurationStartupActivity will dispatch runConfigurationSelected on first load (when oldSelectedConfigurationId == null)
-    if (oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
+    if (!isFirstLoadState && oldSelectedConfigurationId != null && oldSelectedConfigurationId != selectedConfigurationId) {
       eventPublisher.runConfigurationSelected()
     }
   }
@@ -1156,7 +1155,5 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     changedSettings.forEach { eventPublisher.runConfigurationChanged(it, null) }
   }
 }
-
-internal fun createRunManagerEventPublisher(project: Project) = project.messageBus.syncPublisher(RunManagerListener.TOPIC)
 
 private fun isUseProjectSchemeManager() = Registry.`is`("runManager.use.schemeManager", false)
