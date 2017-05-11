@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -317,14 +318,14 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
                                            myCurrentTab.getComponent());
 
     myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
-    myToolBar.setBorder(IdeBorderFactory.createEmptyBorder());
+    myToolBar.setBorder(new CustomLineBorder(1, 1, 0, 1));
 
     SchemesPanel schemesPanel = new SchemesPanel();
     schemesPanel.setBorder(JBUI.Borders.empty(5, 10, 0, 10));
     schemesPanel.resetSchemes(Arrays.asList(FileTemplatesScheme.DEFAULT, myManager.getProjectScheme()));
 
     JPanel leftPanelWrapper = new JPanel(new BorderLayout());
-    leftPanelWrapper.setBorder(JBUI.Borders.empty(0, 10, 10, 0));
+    leftPanelWrapper.setBorder(JBUI.Borders.empty(10, 10, 10, 0));
     leftPanelWrapper.add(BorderLayout.NORTH, myToolBar);
     leftPanelWrapper.add(BorderLayout.CENTER, myLeftPanel);
 
