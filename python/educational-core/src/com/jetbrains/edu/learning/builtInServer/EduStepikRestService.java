@@ -123,8 +123,7 @@ public class EduStepikRestService extends RestService {
           StudySettings.getInstance().setUser(stepicUser);
           sendHtmlResponse(request, context, "/oauthResponsePages/okPage.html");
           showStepicNotification(NotificationType.INFORMATION, "Authorized as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
-          JFrame frame = WindowManager.getInstance().findVisibleFrame();
-          ApplicationManager.getApplication().invokeLater(() -> AppIcon.getInstance().requestFocus((IdeFrame)frame));
+          focusOnApplicationWindow();
           return null;
         }
       }
@@ -138,6 +137,14 @@ public class EduStepikRestService extends RestService {
     String message = "Unknown command: " + path;
     LOG.info(message);
     return message;
+  }
+
+  private static void focusOnApplicationWindow() {
+    JFrame frame = WindowManager.getInstance().findVisibleFrame();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      AppIcon.getInstance().requestFocus((IdeFrame)frame);
+      frame.toFront();
+    });
   }
 
   private void sendHtmlResponse(@NotNull HttpRequest request, @NotNull ChannelHandlerContext context, String pagePath) throws IOException {
