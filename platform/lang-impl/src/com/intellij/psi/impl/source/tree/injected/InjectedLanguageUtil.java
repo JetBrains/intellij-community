@@ -52,6 +52,7 @@ import java.util.List;
 public class InjectedLanguageUtil {
   static final Key<List<Trinity<IElementType, SmartPsiElementPointer<PsiLanguageInjectionHost>, TextRange>>> HIGHLIGHT_TOKENS =
     Key.create("HIGHLIGHT_TOKENS");
+  public static final Key<IElementType> INJECTED_FRAGMENT_TYPE = Key.create("INJECTED_FRAGMENT_TYPE");
   public static final Key<Boolean> FRANKENSTEIN_INJECTION = Key.create("FRANKENSTEIN_INJECTION");
   // meaning: injected file text is probably incorrect
 
