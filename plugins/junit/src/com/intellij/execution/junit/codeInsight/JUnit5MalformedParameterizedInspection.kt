@@ -20,6 +20,7 @@ import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateMethodQuickFix
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
+import com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
 import com.intellij.codeInsight.intention.QuickFixFactory
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
@@ -34,6 +35,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.util.TypeConversionUtil
@@ -85,7 +87,10 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                 checkEnumSource(method, it)
                 source = it
               }
-              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE,
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE -> {
+                checkFileSource(it)
+                noMultiArgsProvider = false
+              }
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_SOURCE,
               JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCE -> {
                 noMultiArgsProvider = false
@@ -136,6 +141,19 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
         else if (attributesNumber == 0) {
           holder.registerProblem(valuesSource, "No value source is defined")
         }
+      }
+
+      private fun checkFileSource(methodSource: PsiAnnotation) {
+        val annotationMemberValue = methodSource.findDeclaredAttributeValue("resources")
+        processArrayInAnnotationParameter(annotationMemberValue, { attributeValue ->
+          val refs = attributeValue.references.filter { it -> it is FileReference }
+          if (refs.find { reference -> reference.resolve() != null } == null) {
+            val reference = refs.first()
+            val fixes = if (reference != null) FileReferenceQuickFixProvider.registerQuickFix(reference as FileReference).toTypedArray()
+                        else emptyArray()
+            holder.registerProblem(attributeValue, "Cannot resolve file source: \'" + attributeValue.text + "\'", *fixes)
+          }
+        })
       }
 
       private fun checkMethodSource(method: PsiMethod, methodSource: PsiAnnotation) {
