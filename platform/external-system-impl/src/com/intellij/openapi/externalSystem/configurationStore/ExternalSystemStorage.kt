@@ -15,15 +15,16 @@
  */
 package com.intellij.openapi.externalSystem.configurationStore
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.StateMap
+import com.intellij.configurationStore.StateStorageManager
+import com.intellij.configurationStore.StreamProviderFactory
+import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.ByteSequence
 import org.jdom.Element
 
-internal class ExternalProjectStorage(private val module: Module, storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, null, storageManager.macroSubstitutor, RoamingType.DISABLED) {
+internal class ExternalProjectStorage(private val module: Module, storageManager: StateStorageManager) : XmlElementStorage(StoragePathMacros.MODULE_FILE, "module", storageManager.macroSubstitutor, RoamingType.DISABLED) {
   private val manager = StreamProviderFactory.EP_NAME.getExtensions(module.project).first { it is ExternalSystemStreamProviderFactory } as ExternalSystemStreamProviderFactory
 
   override fun loadLocalData() = manager.readModuleData(module.name)
@@ -35,9 +36,7 @@ internal class ExternalProjectStorage(private val module: Module, storageManager
         manager.moduleStorage.remove(module.name)
       }
       else {
-        val byteOut = BufferExposingByteArrayOutputStream()
-        serializeElementToBinary(element, byteOut)
-        manager.moduleStorage.put(module.name, ByteSequence(byteOut.internalBuffer, 0, byteOut.size()))
+        manager.moduleStorage.write(module.name, element)
       }
     }
   }
