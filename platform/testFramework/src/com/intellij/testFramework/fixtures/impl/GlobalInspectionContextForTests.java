@@ -34,7 +34,7 @@ public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl
   }
 
   @Override
-  protected void notifyInspectionsFinished(AnalysisScope scope) {
+  protected void notifyInspectionsFinished(@NotNull AnalysisScope scope) {
     super.notifyInspectionsFinished(scope);
     myFinished = true;
   }

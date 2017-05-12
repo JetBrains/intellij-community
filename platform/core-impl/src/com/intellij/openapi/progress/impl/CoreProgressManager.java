@@ -328,22 +328,20 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   private void runSynchronously(@NotNull final Task task) {
-    Runnable runnable = () -> runProcessWithProgressSynchronously(task, null);
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
+      runProcessWithProgressSynchronously(task, null);
     }
     else {
-      ApplicationManager.getApplication().invokeAndWait(runnable);
+      ApplicationManager.getApplication().invokeAndWait(() -> runProcessWithProgressSynchronously(task, null));
     }
   }
 
   private void runAsynchronously(@NotNull final Task.Backgroundable task) {
-    Runnable runnable = () -> runProcessWithProgressAsynchronously(task);
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      runnable.run();
+      runProcessWithProgressAsynchronously(task);
     }
     else {
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.defaultModalityState());
+      ApplicationManager.getApplication().invokeLater(() -> runProcessWithProgressAsynchronously(task), ModalityState.defaultModalityState());
     }
   }
 
@@ -734,6 +732,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
   }
 
+  @FunctionalInterface
   protected interface CheckCanceledHook {
     /**
      * @param indicator the indicator whose {@link ProgressIndicator#checkCanceled()} was called, or null if a non-progressive thread performed {@link ProgressManager#checkCanceled()}

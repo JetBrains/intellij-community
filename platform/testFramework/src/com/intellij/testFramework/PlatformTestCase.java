@@ -759,7 +759,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     return file;
   }
 
-  public static void setContentOnDisk(@NotNull File file, byte[] bom, @NotNull String content, @NotNull Charset charset) throws IOException {
+  public static void setContentOnDisk(@NotNull File file, @Nullable byte[] bom, @NotNull String content, @NotNull Charset charset) throws IOException {
     FileOutputStream stream = new FileOutputStream(file);
     if (bom != null) {
       stream.write(bom);

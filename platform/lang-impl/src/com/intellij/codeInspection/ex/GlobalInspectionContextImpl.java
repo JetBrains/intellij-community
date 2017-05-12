@@ -344,7 +344,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextBase imp
   }
 
   @Override
-  protected void notifyInspectionsFinished(final AnalysisScope scope) {
+  protected void notifyInspectionsFinished(@NotNull final AnalysisScope scope) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     UIUtil.invokeLaterIfNeeded(() -> {
       long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
