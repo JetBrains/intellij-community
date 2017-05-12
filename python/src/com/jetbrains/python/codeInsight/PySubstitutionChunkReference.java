@@ -198,8 +198,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyDictLiteralExpression valueExpr,
-                                                      @NotNull Integer index) {
+  private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyDictLiteralExpression valueExpr, @NotNull Integer index) {
     boolean allKeysForSure = true;
     final PyKeyValueExpression[] elements = valueExpr.getElements();
     for (PyKeyValueExpression element : elements) {
@@ -212,28 +211,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
 
-    PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(valueExpr, PyDoubleStarExpression.class);
-    if (starExpressions != null) {
-      for (PyDoubleStarExpression expression : starExpressions) {
-        PyExpression underStarExpr = PyPsiUtils.flattenParens(expression.getExpression());
-        if (underStarExpr != null) {
-          if (underStarExpr instanceof PyDictLiteralExpression) {
-            Ref<PyExpression> expr = getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, index);
-            allKeysForSure = expr != null;
-            if (expr != null && !expr.isNull()) return expr;
-          }
-          else if (underStarExpr instanceof PyCallExpression) {
-            Ref<PyExpression> expr = resolveDictCall((PyCallExpression)underStarExpr, index.toString(), true);
-            allKeysForSure = expr != null;
-            if (expr != null && !expr.isNull()) return expr;
-          }
-          else {
-            allKeysForSure = false;
-          }
-        }
-      }
-    }
-    return allKeysForSure ? Ref.create() : null;
+    return resolveDoubleStar(valueExpr, String.valueOf(index), true, allKeysForSure);
   }
 
   @Nullable
@@ -413,9 +391,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyDictLiteralExpression expression, @NotNull String mappingKey) {
-    final PyKeyValueExpression[] keyValueExpressions = expression.getElements();
-
     boolean allKeysForSure = true;
+    final PyKeyValueExpression[] keyValueExpressions = expression.getElements();
     for (PyKeyValueExpression keyValueExpression : keyValueExpressions) {
       PyExpression keyExpression = keyValueExpression.getKey();
       if (keyExpression instanceof PyStringLiteralExpression) {
@@ -429,6 +406,11 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
 
+    return resolveDoubleStar(expression, mappingKey, false, allKeysForSure);
+  }
+
+  @Nullable
+  private Ref<PyExpression> resolveDoubleStar(@NotNull PyDictLiteralExpression expression, @NotNull String mappingKey, boolean isNumeric, boolean allKeysForSure) {
     final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(expression, PyDoubleStarExpression.class);
     if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && starExpressions != null) {
@@ -436,7 +418,14 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         PyExpression underStarExpr = PyPsiUtils.flattenParens(expr.getExpression());
         if (underStarExpr != null) {
           if (underStarExpr instanceof PyDictLiteralExpression) {
-            Ref<PyExpression> element = getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, mappingKey);
+            Ref<PyExpression> element;
+            if (isNumeric) {
+              element = getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, Integer.valueOf(mappingKey));
+            }
+            else {
+              element = getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, mappingKey);
+            }
+
             allKeysForSure = element != null;
              if (element != null && !element.isNull()) return element;
           }
