@@ -261,6 +261,9 @@ class AndroidStudioProperties extends BaseIdeaProperties {
     buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
       fileset(file: "$root/out/studio/transform/libs/profilers-transform.jar")
     }
+    buildContext.ant.copy(todir: "$androidPluginLib/../resources") {
+      fileset(file: "$root/out/studio/perfa/libs/perfa.jar")
+    }
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/perfd") {
       fileset(dir: "$root/out/studio/native/out/release")
     }
