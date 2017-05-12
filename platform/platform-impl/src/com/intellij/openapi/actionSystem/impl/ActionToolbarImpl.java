@@ -794,7 +794,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       for (int i = getComponentCount() - 1, j = 1; i > 0; i--, j++) {
         final Component component = getComponent(i);
         if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
-          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * JBUI.scale(25), 0, JBUI.scale(25), maxHeight));
+          bounds.set(bounds.size() - j, new Rectangle(size2Fit.width - j * JBUI.scale(25), (getHeight() - maxHeight) / 2, JBUI.scale(25), maxHeight));
         }
       }
     }
