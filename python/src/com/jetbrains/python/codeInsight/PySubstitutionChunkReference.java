@@ -20,7 +20,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -28,7 +27,6 @@ import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +39,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   private final int myPosition;
   @NotNull private final PyStringFormatParser.SubstitutionChunk myChunk;
   private final boolean myIsPercent;
-  private final TypeEvalContext myTypeEvalContext;
 
   public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element,
                                       @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
@@ -49,9 +46,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
     myChunk = chunk;
     myPosition = position;
     myIsPercent = chunk instanceof PyStringFormatParser.PercentSubstitutionChunk;
-
-    final PsiFile file = element.getContainingFile();
-    myTypeEvalContext = TypeEvalContext.codeAnalysis(file.getProject(), file);
   }
 
   @Nullable
@@ -174,7 +168,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private Ref<PyExpression> resolveStringIndex(@NotNull PyExpression valueExpr, @NotNull String indexElement) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
     if (valueExpr instanceof PyCallExpression) {
       return resolveDictCall((PyCallExpression)valueExpr, indexElement, false);
     }
@@ -183,11 +176,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       if (resolvedRef != null) return resolvedRef;
     }
     else if (valueExpr instanceof PyReferenceExpression) {
-      PsiElement element = ((PyReferenceExpression)valueExpr).followAssignmentsChain(resolveContext).getElement();
-
-      if (element != valueExpr && element instanceof PyExpression) {
-        return resolveStringIndex((PyExpression)element, indexElement);
-      }
+      return Ref.create(valueExpr);
     }
 
     return null;
@@ -195,7 +184,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private Ref<PyExpression> resolveNumericIndex(@NotNull PyExpression valueExpr, @NotNull Integer index) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
     if (PyUtil.instanceOf(valueExpr, PyListLiteralExpression.class, PyTupleExpression.class, PyStringLiteralExpression.class)) {
       Ref<PyExpression> elementRef = getElementByIndex(valueExpr, index);
       if (elementRef != null) return elementRef;
@@ -204,12 +192,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       return getElementFromDictLiteral((PyDictLiteralExpression)valueExpr, index);
     }
     else if (valueExpr instanceof PyReferenceExpression) {
-      PsiElement element = ((PyReferenceExpression)valueExpr).followAssignmentsChain(resolveContext).getElement();
-
-      if (element != null && element != valueExpr && element instanceof PyExpression) {
-        //noinspection ConstantConditions
-        return resolveNumericIndex(PyPsiUtils.flattenParens((PyExpression)element), index);
-      }
+      return Ref.create(valueExpr);
     }
     return null;
   }
