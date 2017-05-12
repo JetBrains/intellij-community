@@ -18,19 +18,24 @@ package com.intellij.execution.impl
 import com.intellij.execution.application.ApplicationConfigurationType
 import com.intellij.execution.impl.RunConfigurable.NodeKind.*
 import com.intellij.execution.junit.JUnitConfigurationType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Trinity
-import com.intellij.testFramework.LightIdeaTestCase
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.ProjectRule
+import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.RowsDnDSupport
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.loadElement
 import org.jdom.Element
+import org.junit.After
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import java.util.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
-import kotlin.properties.Delegates
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
   FOLDER, //1
@@ -42,41 +47,56 @@ private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
   CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN//Defaults
 )
 
-private fun createRunManager(element: Element): RunManagerImpl {
-  val runManager = RunManagerImpl(LightPlatformTestCase.getProject())
-  runManager.initializeConfigurationTypes(arrayOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
-  runManager.loadState(element)
-  return runManager
-}
+@RunsInEdt
+class RunConfigurableTest {
+  companion object {
+    @JvmField
+    @ClassRule
+    val projectRule = ProjectRule()
 
-class RunConfigurableTest : LightIdeaTestCase() {
-  private var configurable: MockRunConfigurable? = null
-  private var tree: Tree by Delegates.notNull()
-  private var root: DefaultMutableTreeNode? = null
-  private var model: RunConfigurable.MyTreeModel by Delegates.notNull()
+    private fun createRunManager(element: Element): RunManagerImpl {
+      val runManager = RunManagerImpl(projectRule.project)
+      runManager.initializeConfigurationTypes(arrayOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
+      runManager.loadState(element)
+      return runManager
+    }
 
-  override fun setUp() {
-    super.setUp()
-
-    configurable = MockRunConfigurable(createRunManager(loadElement(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
-    tree = configurable!!.myTree
-    root = configurable!!.myRoot
-    model = configurable!!.myTreeModel
-  }
-
-  override fun tearDown() {
-    try {
-      if (configurable != null) {
-        configurable!!.disposeUIResources()
+    private class MockRunConfigurable(private val testManager: RunManagerImpl) : RunConfigurable(projectRule.project) {
+      init {
+        createComponent()
       }
-      configurable = null
-      root = null
-    }
-    finally {
-      super.tearDown()
+
+      internal override fun getRunManager() = testManager
     }
   }
 
+  @JvmField
+  @Rule
+  val edtRule = EdtRule()
+
+  private val disposable = Disposer.newDisposable()
+
+  private val configurable: RunConfigurable by lazy {
+    val result = MockRunConfigurable(createRunManager(loadElement(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
+    Disposer.register(disposable, result)
+    result
+  }
+
+  private val root: DefaultMutableTreeNode
+    get() = configurable.myRoot
+
+  private val tree: Tree
+    get() = configurable.myTree
+
+  private val model: RunConfigurable.MyTreeModel
+    get() = configurable.myTreeModel
+
+  @After
+  fun tearDown() {
+    Disposer.dispose(disposable)
+  }
+
+  @Test
   fun testDND() {
     doExpand()
     val never = intArrayOf(-1, 0, 14, 22, 23, 999)
@@ -130,7 +150,7 @@ class RunConfigurableTest : LightIdeaTestCase() {
       tree.expandPath(TreePath(node.path))
     }
 
-    assertThat(ORDER.mapIndexed { index, nodeKind ->  RunConfigurable.getKind(tree.getPathForRow(index).lastPathComponent as DefaultMutableTreeNode) }).containsExactly(*ORDER)
+    assertThat(ORDER.mapIndexed { index, nodeKind -> RunConfigurable.getKind(tree.getPathForRow(index).lastPathComponent as DefaultMutableTreeNode) }).containsExactly(*ORDER)
   }
 
   private fun assertCan(oldIndex: Int, newIndex: Int, position: RowsDnDSupport.RefinedDropSupport.Position) {
@@ -155,6 +175,7 @@ class RunConfigurableTest : LightIdeaTestCase() {
     }
   }
 
+  @Test
   fun testMoveUpDown() {
     doExpand()
     checkPositionToMove(0, 1, null)
@@ -181,14 +202,46 @@ class RunConfigurableTest : LightIdeaTestCase() {
 
   private fun checkPositionToMove(selectedRow: Int, direction: Int, expected: Trinity<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>?) {
     tree.setSelectionRow(selectedRow)
-    assertThat(configurable!!.getAvailableDropPosition(direction)).isEqualTo(expected)
-  }
-}
-
-private class MockRunConfigurable(private val testManager: RunManagerImpl) : RunConfigurable(LightPlatformTestCase.getProject()) {
-  init {
-    createComponent()
+    assertThat(configurable.getAvailableDropPosition(direction)).isEqualTo(expected)
   }
 
-  internal override fun getRunManager() = testManager
+  @Test
+  fun testSort() {
+    doExpand()
+    assertThat(configurable.isModified).isFalse()
+    model.drop(2, 0, ABOVE)
+    assertThat(configurable.isModified).isTrue()
+    configurable.apply()
+    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
+      "UI",
+      "AuTest",
+      "Simples",
+      "OutAndErr",
+      "C148C_TersePrincess",
+      "Periods",
+      "C148E_Porcelain",
+      "ErrAndOut",
+      "All in titled",
+      "All in titled2",
+      "All in titled3",
+      "All in titled4",
+      "All in titled5"))
+    assertThat(configurable.isModified).isFalse()
+    model.drop(4, 8, BELOW)
+    configurable.apply()
+    assertThat(configurable.runManager.allSettings.map { it.name }).isEqualTo(listOf("Renamer",
+      "AuTest",
+      "Simples",
+      "UI",
+      "OutAndErr",
+      "C148C_TersePrincess",
+      "Periods",
+      "C148E_Porcelain",
+      "ErrAndOut",
+      "All in titled",
+      "All in titled2",
+      "All in titled3",
+      "All in titled4",
+      "All in titled5"))
+  }
 }

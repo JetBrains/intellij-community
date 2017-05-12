@@ -262,24 +262,23 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     lock.write {
       immutableSortedSettingsList = null
 
-      existingId = findExistingConfigurationId(settings)
       // https://youtrack.jetbrains.com/issue/IDEA-112821
       // we should check by instance, not by id (todo is it still relevant?)
+      existingId = if (idToSettings.get(newId) === settings) newId else findExistingConfigurationId(settings)
       existingId?.let {
-        // idToSettings is a LinkedHashMap - we must remove even if existingId equals to newId and in any case we will replace it on put
-        idToSettings.remove(it)
+        if (newId != it) {
+          idToSettings.remove(it)
+        }
       }
+
+      idToSettings.put(newId, settings)
 
       if (selectedConfigurationId != null && selectedConfigurationId == existingId) {
         selectedConfigurationId = newId
       }
-      idToSettings.put(newId, settings)
 
       if (existingId == null) {
         refreshUsagesList(settings)
-      }
-
-      if (existingId == null) {
         settings.schemeManager?.addScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
       else {
@@ -287,9 +286,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       }
     }
 
-    checkRecentsLimit()
-
     if (existingId == null) {
+      if (settings.isTemporary) {
+        checkRecentsLimit()
+      }
       eventPublisher.runConfigurationAdded(settings)
     }
     else {

@@ -20,6 +20,7 @@ import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.configurations.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +45,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectIntHashMap;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +67,7 @@ import static com.intellij.openapi.ui.LabeledComponent.create;
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
-class RunConfigurable extends BaseConfigurable {
+class RunConfigurable extends BaseConfigurable implements Disposable {
   @NonNls private static final Object DEFAULTS = new Object() {
     @Override
     public String toString() {
@@ -642,13 +645,19 @@ class RunConfigurable extends BaseConfigurable {
     try {
       updateActiveConfigurationFromSelected();
 
+      TObjectIntHashMap<RunnerAndConfigurationSettings> settingsToOrder = new TObjectIntHashMap<>();
+      int order = 0;
       Set<RunnerAndConfigurationSettings> toDeleteSettings = new THashSet<>(manager.getAllSettings());
       RunnerAndConfigurationSettings selectedSettings = getSelectedSettings();
       for (int i = 0; i < myRoot.getChildCount(); i++) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myRoot.getChildAt(i);
         Object userObject = node.getUserObject();
         if (userObject instanceof ConfigurationType) {
-          applyByType(node, (ConfigurationType)userObject, selectedSettings, toDeleteSettings);
+          List<RunConfigurationBean> beans = applyByType(node, (ConfigurationType)userObject, selectedSettings);
+          for (RunConfigurationBean bean : beans) {
+            settingsToOrder.put(bean.getSettings(), order++);
+            toDeleteSettings.remove(bean.getSettings());
+          }
         }
       }
       manager.removeConfigurations(toDeleteSettings);
@@ -670,7 +679,7 @@ class RunConfigurable extends BaseConfigurable {
         each.first.apply();
       }
 
-      manager.setOrder(null);
+      manager.setOrder(Comparator.comparingInt(settingsToOrder::get));
     }
     finally {
       manager.fireEndUpdate();
@@ -686,7 +695,7 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private void applyByType(@NotNull DefaultMutableTreeNode typeNode, @NotNull ConfigurationType type, @Nullable RunnerAndConfigurationSettings selectedSettings, @NotNull Set<RunnerAndConfigurationSettings> toDeleteSettings) throws ConfigurationException {
+  private List<RunConfigurationBean> applyByType(@NotNull DefaultMutableTreeNode typeNode, @NotNull ConfigurationType type, @Nullable RunnerAndConfigurationSettings selectedSettings) throws ConfigurationException {
     int indexToMove = -1;
 
     final List<RunConfigurationBean> configurationBeans = new ArrayList<>();
@@ -739,7 +748,6 @@ class RunConfigurable extends BaseConfigurable {
     // try to apply all
     for (RunConfigurationBean bean : configurationBeans) {
       applyConfiguration(typeNode, bean.getConfigurable());
-      toDeleteSettings.remove(bean.getSettings());
     }
 
     //Just saved as 'stable' configuration shouldn't stay between temporary ones (here we order model to save)
@@ -750,6 +758,8 @@ class RunConfigurable extends BaseConfigurable {
     if (shift != 0 && indexToMove != -1) {
       configurationBeans.add(indexToMove-shift, configurationBeans.remove(indexToMove));
     }
+
+    return configurationBeans;
   }
 
   static void collectNodesRecursively(DefaultMutableTreeNode parentNode, List<DefaultMutableTreeNode> nodes, NodeKind... allowed) {
@@ -852,6 +862,11 @@ class RunConfigurable extends BaseConfigurable {
 
   @Override
   public void disposeUIResources() {
+    Disposer.dispose(this);
+  }
+
+  @Override
+  public void dispose() {
     isDisposed = true;
     for (Configurable configurable : myStoredComponents.values()) {
       configurable.disposeUIResources();
@@ -1638,6 +1653,7 @@ class RunConfigurable extends BaseConfigurable {
       myShared = configurable.isStoreProjectConfiguration();
     }
 
+    @NotNull
     public RunnerAndConfigurationSettings getSettings() {
       return mySettings;
     }
