@@ -292,9 +292,9 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
 
     final Set<String> levels = new HashSet<>();
     for (Element inspectElement : rootElement.getChildren("inspection_tool")) {
-      addLevelIfNotNull(levels, inspectElement);
+      ContainerUtil.addAllNotNull(levels, inspectElement.getAttributeValue("level"));
       for (Element s : inspectElement.getChildren("scope")) {
-        addLevelIfNotNull(levels, s);
+        ContainerUtil.addAllNotNull(levels, s.getAttributeValue("level"));
       }
     }
     for (Iterator<String> iterator = levels.iterator(); iterator.hasNext(); ) {
@@ -328,12 +328,5 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     profile.setProjectLevel(false);
     profile.initInspectionTools(project);
     return profile;
-  }
-
-  private static void addLevelIfNotNull(Set<String> levels, Element inspectElement) {
-    final String level = inspectElement.getAttributeValue("level");
-    if (level != null) {
-      levels.add(level);
-    }
   }
 }
