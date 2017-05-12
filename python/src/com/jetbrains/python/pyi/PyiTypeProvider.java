@@ -17,13 +17,17 @@ package com.jetbrains.python.pyi;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author vlan
@@ -161,7 +165,9 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   private static PyCallExpressionHelper.ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
                                                                             @NotNull PyFunction function,
                                                                             @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = Arrays.asList(function.getParameterList().getParameters());
+    final List<PyCallableParameter> parameters =
+      ContainerUtil.map(function.getParameterList().getParameters(), PyCallableParameterImpl::new);
+
     final PyCallExpressionHelper.ArgumentMappingResults mapping =
       PyCallExpressionHelper.mapArguments(callSite, function, parameters, context);
 

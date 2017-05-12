@@ -621,7 +621,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       final PyExpression assignedValue = ((PyTargetExpression)resolveResult).findAssignedValue();
       if (assignedValue instanceof PyCallExpression) {
         final PyCallExpression call = (PyCallExpression)assignedValue;
-        final Pair<String,PyFunction> functionPair = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myElement);
+        final Pair<String,PyFunction> functionPair = PyCallExpressionHelper.interpretAsModifierWrappingCall(call);
         if (functionPair != null && functionPair.second == element) {
           return true;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,15 @@
  */
 package com.jetbrains.python.psi.types;
 
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyParameter;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author vlan
@@ -34,7 +39,7 @@ public class PyCallableParameterImpl implements PyCallableParameter {
     myElement = null;
   }
 
-  public PyCallableParameterImpl(@Nullable PyParameter element) {
+  public PyCallableParameterImpl(@NotNull PyParameter element) {
     myName = null;
     myType = null;
     myElement = element;
@@ -68,5 +73,101 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Override
   public PyParameter getParameter() {
     return myElement;
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getDefaultValue() {
+    return myElement == null ? null : myElement.getDefaultValue();
+  }
+
+  @Override
+  public boolean hasDefaultValue() {
+    return myElement != null && myElement.hasDefaultValue();
+  }
+
+  @Override
+  public boolean isPositionalContainer() {
+    final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
+    return namedParameter != null && namedParameter.isPositionalContainer();
+  }
+
+  @Override
+  public boolean isKeywordContainer() {
+    final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
+    return namedParameter != null && namedParameter.isKeywordContainer();
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+    if (myElement instanceof PyNamedParameter || myElement == null) {
+      final StringBuilder sb = new StringBuilder();
+
+      if (isPositionalContainer()) sb.append("*");
+      else if (isKeywordContainer()) sb.append("**");
+
+      sb.append(getName());
+
+      final PyType argumentType = context == null ? null : getArgumentType(context);
+      if (argumentType != null) {
+        sb.append(": ");
+        sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+      }
+
+      final PyExpression defaultValue = getDefaultValue();
+      if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue, argumentType)) {
+        final Pair<String, String> quotes = defaultValue instanceof PyStringLiteralExpression
+                                            ? PyStringLiteralUtil.getQuotes(defaultValue.getText())
+                                            : null;
+
+        sb.append("=");
+        if (quotes != null) {
+          final String value = ((PyStringLiteralExpression)defaultValue).getStringValue();
+          sb.append(quotes.getFirst());
+          StringUtil.escapeStringCharacters(value.length(), value, sb);
+          sb.append(quotes.getSecond());
+        }
+        else {
+          sb.append(PyUtil.getReadableRepr(defaultValue, true));
+        }
+      }
+
+      return sb.toString();
+    }
+
+    return PyUtil.getReadableRepr(myElement, false);
+  }
+
+  @Nullable
+  @Override
+  public PyType getArgumentType(@NotNull TypeEvalContext context) {
+    final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
+    return namedParameter == null ? null : namedParameter.getArgumentType(context);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == this) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    final PyCallableParameterImpl parameter = (PyCallableParameterImpl)o;
+    return Objects.equals(myName, parameter.myName) &&
+           Objects.equals(myType, parameter.myType) &&
+           Objects.equals(myElement, parameter.myElement);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myName, myType, myElement);
+  }
+
+  private static boolean defaultValueShouldBeIncluded(boolean includeDefaultValue,
+                                                      @Nullable PyExpression defaultValue,
+                                                      @Nullable PyType type) {
+    if (!includeDefaultValue || defaultValue == null) return false;
+
+    // In case of `None` default value, it will be listed in the type as `Optional[...]` or `Union[..., None, ...]`
+    return type == null || !PyNames.NONE.equals(defaultValue.getText());
   }
 }

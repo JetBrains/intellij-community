@@ -24,7 +24,10 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyBinaryExpression;
+import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyElementVisitor;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
@@ -50,21 +53,26 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     pyVisitor.visitPyBinaryExpression(this);
   }
 
+  @Override
   @Nullable
   public PyExpression getLeftExpression() {
     return PsiTreeUtil.getChildOfType(this, PyExpression.class);
   }
 
+  @Override
+  @Nullable
   public PyExpression getRightExpression() {
     return PsiTreeUtil.getNextSiblingOfType(getLeftExpression(), PyExpression.class);
   }
 
+  @Override
   @Nullable
   public PyElementType getOperator() {
     final PsiElement psiOperator = getPsiOperator();
     return psiOperator != null ? (PyElementType)psiOperator.getNode().getElementType() : null;
   }
 
+  @Override
   @Nullable
   public PsiElement getPsiOperator() {
     ASTNode node = getNode();
@@ -73,6 +81,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return null;
   }
 
+  @Override
   public boolean isOperator(String chars) {
     ASTNode child = getNode().getFirstChildNode();
     StringBuilder buf = new StringBuilder();
@@ -86,6 +95,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return buf.toString().equals(chars);
   }
 
+  @Override
   @Nullable
   public PyExpression getOppositeExpression(PyExpression expression) throws IllegalArgumentException {
     PyExpression right = getRightExpression();
@@ -126,6 +136,8 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return new PyOperatorReference(this, context);
   }
 
+  @Override
+  @Nullable
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (isOperator("and") || isOperator("or")) {
       final PyExpression left = getLeftExpression();
@@ -143,14 +155,14 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       final List<PyType> matchedTypes = new ArrayList<>();
       for (PyTypeChecker.AnalyzeCallResults result : results) {
         boolean matched = true;
-        for (Map.Entry<PyExpression, PyNamedParameter> entry : result.getMapping().getMappedParameters().entrySet()) {
+        for (Map.Entry<PyExpression, PyCallableParameter> entry : result.getMapping().getMappedParameters().entrySet()) {
           final PyExpression argument = entry.getKey();
-          final PyNamedParameter parameter = entry.getValue();
+          final PyCallableParameter parameter = entry.getValue();
           if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
             continue;
           }
           final Map<PyGenericType, PyType> substitutions = new HashMap<>();
-          final PyType parameterType = context.getType(parameter);
+          final PyType parameterType = parameter.getType(context);
           final PyType argumentType = context.getType(argument);
           if (!PyTypeChecker.match(parameterType, argumentType, context, substitutions)) {
             matched = false;

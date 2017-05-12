@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
@@ -526,12 +525,12 @@ public class PyTypeChecker {
 
   @Nullable
   public static Map<PyGenericType, PyType> unifyGenericCall(@Nullable PyExpression receiver,
-                                                            @NotNull Map<PyExpression, PyNamedParameter> arguments,
+                                                            @NotNull Map<PyExpression, PyCallableParameter> arguments,
                                                             @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = unifyReceiver(receiver, context);
-    for (Map.Entry<PyExpression, PyNamedParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
+    for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(arguments).entrySet()) {
       final PyType argumentType = context.getType(entry.getKey());
-      final PyNamedParameter parameter = entry.getValue();
+      final PyCallableParameter parameter = entry.getValue();
       if (!match(parameter.getArgumentType(context), argumentType, context, substitutions)) {
         return null;
       }
@@ -546,12 +545,12 @@ public class PyTypeChecker {
     return substitutions;
   }
 
-  private static boolean matchContainer(@Nullable PyNamedParameter container, @NotNull List<PyExpression> arguments,
+  private static boolean matchContainer(@Nullable PyCallableParameter container, @NotNull List<PyExpression> arguments,
                                         @NotNull Map<PyGenericType, PyType> substitutions, @NotNull TypeEvalContext context) {
     if (container == null) {
       return true;
     }
-    final List<PyType> types = arguments.stream().map(e -> context.getType(e)).collect(Collectors.toList());
+    final List<PyType> types = ContainerUtil.map(arguments, context::getType);
     return match(container.getArgumentType(context), PyUnionType.union(types), context, substitutions);
   }
 
@@ -753,9 +752,10 @@ public class PyTypeChecker {
   }
 
   @NotNull
-  public static List<PyParameter> filterExplicitParameters(@NotNull List<PyParameter> parameters, @NotNull PyCallable callable,
-                                                           @NotNull PyCallSiteExpression callSite,
-                                                           @NotNull PyResolveContext resolveContext) {
+  public static List<PyCallableParameter> filterExplicitParameters(@NotNull List<PyCallableParameter> parameters,
+                                                                   @NotNull PyCallable callable,
+                                                                   @NotNull PyCallSiteExpression callSite,
+                                                                   @NotNull PyResolveContext resolveContext) {
     final int implicitOffset;
     if (callSite instanceof PyCallExpression) {
       final PyCallExpression callExpr = (PyCallExpression)callSite;

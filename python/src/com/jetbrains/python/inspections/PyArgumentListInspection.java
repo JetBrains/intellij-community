@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -34,10 +35,7 @@ import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyABCUtil;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureHandler;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -81,29 +79,28 @@ public class PyArgumentListInspection extends PyInspection {
 
     @Override
     public void visitPyDecoratorList(final PyDecoratorList node) {
-      PyDecorator[] decorators = node.getDecorators();
+      final PyDecorator[] decorators = node.getDecorators();
       for (PyDecorator deco : decorators) {
         if (deco.hasArgumentList()) continue;
         final PyCallExpression.PyMarkedCallee markedCallee = deco.resolveCallee(getResolveContext());
         if (markedCallee != null && !markedCallee.isImplicitlyResolved()) {
           final PyCallable callable = markedCallee.getCallable();
-          int firstParamOffset =  markedCallee.getImplicitOffset();
-          final List<PyParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
-          final PyNamedParameter allegedFirstParam = params.size() < firstParamOffset ?
-                                                       null : params.get(firstParamOffset-1).getAsNamed();
+          final int firstParamOffset = markedCallee.getImplicitOffset();
+          final List<PyCallableParameter> params = PyUtil.getParameters(callable, myTypeEvalContext);
+
+          final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
           if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
             // no parameters left to pass function implicitly, or wrong param type
             registerProblem(deco, PyBundle.message("INSP.func.$0.lacks.first.arg", callable.getName())); // TODO: better names for anon lambdas
           }
           else { // possible unfilled params
-            for (int i = firstParamOffset; i < params.size(); i += 1) {
-              final PyParameter parameter = params.get(i);
-              if (parameter instanceof PySingleStarParameter) continue;
-              final PyNamedParameter par = parameter.getAsNamed();
+            for (int i = firstParamOffset; i < params.size(); i++) {
+              final PyCallableParameter parameter = params.get(i);
+              if (parameter.getParameter() instanceof PySingleStarParameter) continue;
               // param tuples, non-starred or non-default won't do
-              if (par == null || (!par.isKeywordContainer() && !par.isPositionalContainer() &&!par.hasDefaultValue())) {
-                String parameterName = par != null ? par.getName() : "(...)";
-                registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", parameterName));
+              if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
+                final String parameterName = parameter.getName();
+                registerProblem(deco, PyBundle.message("INSP.parameter.$0.unfilled", parameterName == null ? "(...)" : parameterName));
               }
             }
           }
@@ -111,7 +108,6 @@ public class PyArgumentListInspection extends PyInspection {
         // else: this case is handled by arglist visitor
       }
     }
-
   }
 
   public static void inspectPyArgumentList(@NotNull PyArgumentList node,
@@ -241,7 +237,7 @@ public class PyArgumentListInspection extends PyInspection {
       holder.registerProblem(node, addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.unexpected.arg(s)"), mappings, context));
     }
   }
-  
+
   private static void highlightUnfilledParameters(@NotNull PyArgumentList node,
                                                   @NotNull ProblemsHolder holder,
                                                   @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
@@ -257,7 +253,7 @@ public class PyArgumentListInspection extends PyInspection {
           if (mappings.size() == 1) {
             StreamEx
               .of(mappings.get(0).getUnmappedParameters())
-              .map(PyParameter::getName)
+              .map(PyCallableParameter::getName)
               .filter(Objects::nonNull)
               .forEach(name -> holder.registerProblem(psi, PyBundle.message("INSP.parameter.$0.unfilled", name)));
           }
