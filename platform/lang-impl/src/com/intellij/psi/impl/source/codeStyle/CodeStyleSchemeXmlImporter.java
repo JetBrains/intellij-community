@@ -98,10 +98,4 @@ public class CodeStyleSchemeXmlImporter extends CodeStyleSettingsLoader implemen
     ((CodeStyleSchemeImpl)scheme).setCodeStyleSettings(newSettings);
     return scheme;
   }
-
-  @Nullable
-  @Override
-  public String getAdditionalImportInfo(@NotNull CodeStyleScheme scheme) {
-    return null;
-  }
 }

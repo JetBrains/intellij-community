@@ -40,10 +40,4 @@ public class InspectionProfileImporter implements SchemeImporter<NewInspectionPr
                                            @NotNull SchemeFactory<NewInspectionProfile> schemeFactory) throws SchemeImportException {
     throw new UnsupportedOperationException();
   }
-
-  @Nullable
-  @Override
-  public String getAdditionalImportInfo(@NotNull NewInspectionProfile scheme) {
-    return null;
-  }
 }

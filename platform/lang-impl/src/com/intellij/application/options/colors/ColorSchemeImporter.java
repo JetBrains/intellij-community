@@ -61,11 +61,4 @@ public class ColorSchemeImporter implements SchemeImporter<EditorColorsScheme> {
     if (name == null) throw new SchemeImportException("Scheme 'name' attribute is missing.");
     return name;
   }
-
-
-  @Nullable
-  @Override
-  public String getAdditionalImportInfo(@NotNull EditorColorsScheme scheme) {
-    return null;
-  }
 }
