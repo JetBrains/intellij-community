@@ -122,8 +122,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
   @Override
   public ProjectData createProject() {
     final String projectDirPath = resolverCtx.getProjectPath();
-    final IdeaProject ideaProject = resolverCtx.getModels().getIdeaProject();
-    return new ProjectData(GradleConstants.SYSTEM_ID, ideaProject.getName(), projectDirPath, projectDirPath);
+    final ExternalProject externalProject = resolverCtx.getExtraProject(ExternalProject.class);
+    String projectName = externalProject != null ? externalProject.getName() : resolverCtx.getModels().getIdeaProject().getName();
+    return new ProjectData(GradleConstants.SYSTEM_ID, projectName, projectDirPath, projectDirPath);
   }
 
   @NotNull
