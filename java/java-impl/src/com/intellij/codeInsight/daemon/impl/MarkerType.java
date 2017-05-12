@@ -224,6 +224,11 @@ public class MarkerType {
   });
 
   private static String getOverriddenMethodTooltip(@NotNull PsiMethod method) {
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+      return DaemonBundle.message("method.is.implemented.too.many");
+    }
+
     PsiElementProcessor.CollectElementsWithLimit<PsiMethod> processor = new PsiElementProcessor.CollectElementsWithLimit<>(5);
     GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(method));
     OverridingMethodsSearch.search(method, scope, true).forEach(new PsiElementProcessorAdapter<>(processor));
@@ -236,7 +241,6 @@ public class MarkerType {
 
     PsiMethod[] overridings = processor.toArray(PsiMethod.EMPTY_ARRAY);
     if (overridings.length == 0) {
-      final PsiClass aClass = method.getContainingClass();
       if (aClass != null && isAbstract && FunctionalExpressionSearch.search(aClass).findFirst() != null) {
         return "Has functional implementations";
       }
