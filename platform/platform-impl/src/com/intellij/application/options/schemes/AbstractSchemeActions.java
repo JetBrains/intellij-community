@@ -91,9 +91,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     }
     actions.add(new CopyAction());
     actions.add(new RenameAction());
+    addAdditionalActions(actions);
     actions.add(new ResetAction());
     actions.add(new DeleteAction());
-    addAdditionalActions(actions);
     if (!mySchemeExporterNames.isEmpty()) {
       actions.add(createImportExportAction(ApplicationBundle.message("settings.editor.scheme.export"),
                                            mySchemeExporterNames,
@@ -108,7 +108,6 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     return actions;
   }
   
-  @SuppressWarnings("unused")
   protected void addAdditionalActions(@NotNull List<AnAction> defaultActions) {}
 
   private class CopyToProjectAction extends DumbAwareAction {
