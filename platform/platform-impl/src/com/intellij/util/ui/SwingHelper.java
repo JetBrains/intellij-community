@@ -378,7 +378,7 @@ public class SwingHelper {
     }
   }
 
-  private static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
+  public static void setLongestAsPrototype(@NotNull JComboBox comboBox, @NotNull List<String> variants) {
     Object prototypeDisplayValue = comboBox.getPrototypeDisplayValue();
     String prototypeDisplayValueStr = null;
     if (prototypeDisplayValue instanceof String) {
