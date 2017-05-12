@@ -31,10 +31,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import org.jetbrains.annotations.NotNull;
@@ -115,15 +113,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
   }
 
   public static void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
-    Collections.sort(descriptions, (o1, o2) -> {
-      final ProblemDescriptorBase d1 = (ProblemDescriptorBase)o1;
-      final ProblemDescriptorBase d2 = (ProblemDescriptorBase)o2;
-      final int elementsDiff = PsiUtilCore.compareElementsByPosition(d1.getPsiElement(), d2.getPsiElement());
-      if (elementsDiff == 0) {
-        return Comparing.compare(d1.getDescriptionTemplate(), d2.getDescriptionTemplate());
-      }
-      return -elementsDiff;
-    });
+    Collections.sort(descriptions, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
   }
 
   @Override
