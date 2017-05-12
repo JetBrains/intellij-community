@@ -372,25 +372,15 @@ public class GitUtil {
   @Deprecated
   @Nullable
   public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
-    return getGitRootOrNull(filePath.getIOFile());
-  }
-
-  public static boolean isGitRoot(@NotNull File folder) {
-    return findGitDir(folder) != null;
-  }
-
-  /**
-   * @deprecated because uses the java.io.File.
-   * @use GitRepositoryManager#getRepositoryForFile().
-   */
-  @Deprecated
-  @Nullable
-  public static VirtualFile getGitRootOrNull(final File file) {
-    File root = file;
+    File root = filePath.getIOFile();
     while (root != null && (!root.exists() || !root.isDirectory() || !new File(root, DOT_GIT).exists())) {
       root = root.getParentFile();
     }
     return root == null ? null : LocalFileSystem.getInstance().findFileByIoFile(root);
+  }
+
+  public static boolean isGitRoot(@NotNull File folder) {
+    return findGitDir(folder) != null;
   }
 
   /**
