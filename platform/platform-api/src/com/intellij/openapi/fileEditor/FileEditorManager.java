@@ -144,11 +144,28 @@ public abstract class FileEditorManager {
    */
   public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
 
+  /**
+   * Adds the specified component above the editor and paints a separator line below it.
+   * If a separator line is not needed, set the client property to {@code true}:
+   * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
+   * Otherwise, a separator line will be painted by a
+   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR}.
+   * This method allows to add several components above the editor.
+   */
   public abstract void addTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
   public abstract void removeTopComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
+  /**
+   * Adds the specified component below the editor and paints a separator line above it.
+   * If a separator line is not needed, set the client property to {@code true}:
+   * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
+   * Otherwise, a separator line will be painted by a
+   * {@link com.intellij.openapi.editor.colors.EditorColors#TEARLINE_COLOR TEARLINE_COLOR}.
+   * This method allows to add several components below the editor.
+   */
   public abstract void addBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
   public abstract void removeBottomComponent(@NotNull final FileEditor editor, @NotNull final JComponent component);
 
+  public static final Key<Boolean> SEPARATOR_DISABLED = Key.create("FileEditorSeparatorDisabled");
 
   /**
    * Adds specified {@code listener}

@@ -319,7 +319,9 @@ public abstract class EditorComposite implements Disposable {
     }
     else {
       NonOpaquePanel wrapper = new NonOpaquePanel(component);
-      wrapper.setBorder(createTopBottomSideBorder(top));
+      if (!Boolean.TRUE.equals(component.getClientProperty(FileEditorManager.SEPARATOR_DISABLED))) {
+        wrapper.setBorder(createTopBottomSideBorder(top));
+      }
       container.add(wrapper, calcComponentInsertionIndex(component, container));
     }
     container.revalidate();
