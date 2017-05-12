@@ -1714,6 +1714,177 @@ public class PyTypeTest extends PyTestCase {
     getTypeEvalContexts(expression).forEach(context -> context.getType(expression));
   }
 
+  // PY-22971
+  public void testFirstOverloadAndImplementationInClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "from typing import overload\n" +
+                   "class A:\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: int) -> int:\n" +
+                   "        pass\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: str) -> str:\n" +
+                   "        pass\n" +
+                   "    def foo(self, value):\n" +
+                   "        return None\n" +
+                   "expr = A().foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testTopLevelFirstOverloadAndImplementation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("int",
+                   "from typing import overload\n" +
+                   "@overload\n" +
+                   "def foo(value: int) -> int:\n" +
+                   "    pass\n" +
+                   "@overload\n" +
+                   "def foo(value: str) -> str:\n" +
+                   "    pass\n" +
+                   "def foo(value):\n" +
+                   "    return None\n" +
+                   "expr = foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testFirstOverloadAndImplementationInImportedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("int",
+                            "from b import A\n" +
+                            "expr = A().foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testFirstOverloadAndImplementationInImportedModule() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("int",
+                            "from b import foo\n" +
+                            "expr = foo(5)")
+    );
+  }
+
+  // PY-22971
+  public void testSecondOverloadAndImplementationInClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("str",
+                   "from typing import overload\n" +
+                   "class A:\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: int) -> int:\n" +
+                   "        pass\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: str) -> str:\n" +
+                   "        pass\n" +
+                   "    def foo(self, value):\n" +
+                   "        return None\n" +
+                   "expr = A().foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testTopLevelSecondOverloadAndImplementation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("str",
+                   "from typing import overload\n" +
+                   "@overload\n" +
+                   "def foo(value: int) -> int:\n" +
+                   "    pass\n" +
+                   "@overload\n" +
+                   "def foo(value: str) -> str:\n" +
+                   "    pass\n" +
+                   "def foo(value):\n" +
+                   "    return None\n" +
+                   "expr = foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testSecondOverloadAndImplementationInImportedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("str",
+                            "from b import A\n" +
+                            "expr = A().foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testSecondOverloadAndImplementationInImportedModule() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("str",
+                            "from b import foo\n" +
+                            "expr = foo(\"5\")")
+    );
+  }
+
+  // PY-22971
+  public void testNotMatchedOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Union[int, str]",
+                   "from typing import overload\n" +
+                   "class A:\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: int) -> int:\n" +
+                   "        pass\n" +
+                   "    @overload\n" +
+                   "    def foo(self, value: str) -> str:\n" +
+                   "        pass\n" +
+                   "    def foo(self, value):\n" +
+                   "        return None\n" +
+                   "expr = A().foo(object())")
+    );
+  }
+
+  // PY-22971
+  public void testTopLevelNotMatchedOverloadsAndImplementation() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTest("Union[int, str]",
+                   "from typing import overload\n" +
+                   "@overload\n" +
+                   "def foo(value: int) -> int:\n" +
+                   "    pass\n" +
+                   "@overload\n" +
+                   "def foo(value: str) -> str:\n" +
+                   "    pass\n" +
+                   "def foo(value):\n" +
+                   "    return None\n" +
+                   "expr = foo(object())")
+    );
+  }
+
+  // PY-22971
+  public void testNotMatchedOverloadsAndImplementationInImportedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Union[int, str]",
+                            "from b import A\n" +
+                            "expr = A().foo(object())")
+    );
+  }
+
+  // PY-22971
+  public void testNotMatchedOverloadsAndImplementationInImportedModule() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doMultiFileTest("Union[int, str]",
+                            "from b import foo\n" +
+                            "expr = foo(object())")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

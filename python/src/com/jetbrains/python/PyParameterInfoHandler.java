@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -75,7 +76,8 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
           PyUtil.filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext));
 
-        final Object[] items = PyCallExpressionHelper.forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, typeEvalContext)
+        final Object[] items = PyCallExpressionHelper
+          .forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, ResolveResult::getElement, typeEvalContext)
           .map(ratedMarkedCallee -> Pair.createNonNull(call, ratedMarkedCallee.getMarkedCallee()))
           .toArray();
 

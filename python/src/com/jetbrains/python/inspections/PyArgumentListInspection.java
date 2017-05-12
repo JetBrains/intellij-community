@@ -155,7 +155,7 @@ public class PyArgumentListInspection extends PyInspection {
       PyUtil.filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext, implicitOffset));
 
     return PyCallExpressionHelper
-      .forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, context)
+      .forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, ResolveResult::getElement, context)
       .map(ratedMarkedCallee -> PyCallExpressionHelper.mapArguments(call, ratedMarkedCallee.getMarkedCallee(), context))
       .collect(Collectors.toList());
   }

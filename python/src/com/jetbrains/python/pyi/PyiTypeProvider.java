@@ -91,9 +91,8 @@ public class PyiTypeProvider extends PyTypeProviderBase {
       if (pythonStub instanceof PyFunction) {
         return getOverloadedCallType((PyFunction)pythonStub, callSite, context);
       }
-      else if (function.getContainingFile() instanceof PyiFile) {
-        return getOverloadedCallType(function, callSite, context);
-      }
+
+      return getOverloadedCallType(function, callSite, context);
     }
 
     return null;
