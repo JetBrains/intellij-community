@@ -128,14 +128,7 @@ public class JdkUtil {
   }
 
   public static boolean checkForJre(@NotNull File homePath) {
-    File binPath = new File(homePath, "bin");
-    if (!binPath.exists()) return false;
-
-    FileFilter fileFilter = f -> !f.isDirectory() && "java".equals(FileUtil.getNameWithoutExtension(f));
-    File[] children = binPath.listFiles(fileFilter);
-
-    return children != null && children.length >= 1 &&
-           checkForRuntime(homePath.getAbsolutePath());
+    return new File(homePath, "bin/java").isFile() || new File(homePath, "bin/java.exe").isFile();
   }
 
   public static boolean checkForRuntime(@NotNull String homePath) {
