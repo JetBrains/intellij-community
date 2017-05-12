@@ -1111,6 +1111,12 @@ myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
   }
 
   @Override
+  public void searchFinished() {
+    drainQueuedUsageNodes();
+    setSearchInProgress(false);
+  }
+
+  @Override
   public void includeUsages(@NotNull Usage[] usages) {
     List<TreeNode> nodes = new ArrayList<>(usages.length);
     for (Usage usage : usages) {

@@ -101,4 +101,6 @@ public interface UsageView extends Disposable {
    * Useful for processing huge number of usages faster, e.g. during "find in path/replace all".
    */
   void removeUsagesBulk(@NotNull Collection<Usage> usages);
+
+  void searchFinished();
 }

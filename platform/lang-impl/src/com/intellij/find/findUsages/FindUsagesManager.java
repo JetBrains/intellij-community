@@ -430,7 +430,7 @@ public class FindUsagesManager {
       throw new AssertionError(handler + " " + findUsagesOptions);
     }
     PsiElement2UsageTargetAdapter[] primaryTargets = convertToUsageTargets(Arrays.asList(primaryElements), findUsagesOptions);
-     PsiElement2UsageTargetAdapter[] secondaryTargets = convertToUsageTargets(Arrays.asList(secondaryElements), findUsagesOptions);
+    PsiElement2UsageTargetAdapter[] secondaryTargets = convertToUsageTargets(Arrays.asList(secondaryElements), findUsagesOptions);
     PsiElement2UsageTargetAdapter[]targets= ArrayUtil.mergeArrays(primaryTargets, secondaryTargets);
                                         Factory<UsageSearcher> factory = () -> createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
     UsageView usageView = myAnotherManager.searchAndShowUsages(targets,

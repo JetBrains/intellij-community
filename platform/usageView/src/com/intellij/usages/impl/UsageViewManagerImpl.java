@@ -60,15 +60,24 @@ public class UsageViewManagerImpl extends UsageViewManager {
     myProject = project;
   }
 
+
+  @NotNull
+  @Override
+  public UsageView createEmptyUsageView(@NotNull UsageTarget[] targets,
+                                        @NotNull UsageViewPresentation presentation,
+                                        Factory<UsageSearcher> usageSearcherFactory) {
+    return new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+  }
+
   @Override
   @NotNull
   public UsageView createUsageView(@NotNull UsageTarget[] targets,
                                    @NotNull Usage[] usages,
                                    @NotNull UsageViewPresentation presentation,
                                    Factory<UsageSearcher> usageSearcherFactory) {
-    UsageViewImpl usageView = new UsageViewImpl(myProject, presentation, targets, usageSearcherFactory);
+    UsageView usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
     appendUsages(usages, usageView);
-    usageView.setSearchInProgress(false);
+    usageView.searchFinished();
     return usageView;
   }
 
@@ -79,13 +88,15 @@ public class UsageViewManagerImpl extends UsageViewManager {
                               @NotNull UsageViewPresentation presentation,
                               Factory<UsageSearcher> factory) {
     UsageView usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
-    addContent((UsageViewImpl)usageView, presentation);
+    addContent(usageView, presentation);
     showToolWindow(true);
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (!((UsageViewImpl)usageView).isDisposed()) {
-        ((UsageViewImpl)usageView).expandRoot();
-      }
-    });
+    if (usageView instanceof UsageViewImpl) {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (!((UsageViewImpl)usageView).isDisposed()) {
+          ((UsageViewImpl)usageView).expandRoot();
+        }
+      });
+    }
     return usageView;
   }
 
@@ -202,7 +213,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  protected static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageViewImpl usageView) {
+  protected static void appendUsages(@NotNull final Usage[] foundUsages, @NotNull final UsageView usageView) {
     ApplicationManager.getApplication().runReadAction(() -> {
       for (Usage foundUsage : foundUsages) {
         usageView.appendUsage(foundUsage);

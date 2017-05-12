@@ -271,7 +271,7 @@ class SearchForUsagesRunnable implements Runnable {
     if (usageView != null) return usageView;
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-      usageView =  myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
+      usageView =  myUsageViewManager.createEmptyUsageView(mySearchFor, myPresentation, mySearcherFactory);
       usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
         openView(usageView);
@@ -343,7 +343,7 @@ class SearchForUsagesRunnable implements Runnable {
           myFirstUsage.compareAndSet(null, usage);
         }
 
-          final UsageView usageView = getUsageView(indicator1);
+        final UsageView usageView = getUsageView(indicator1);
 
         TooManyUsagesStatus tooManyUsagesStatus= TooManyUsagesStatus.getFrom(indicator1);
         if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsagesStatus.switchTooManyUsagesStatus()) {
@@ -447,12 +447,7 @@ class SearchForUsagesRunnable implements Runnable {
     }
     else {
       final UsageView usageView = myUsageViewRef.get();
-      if (usageView instanceof UsageViewImpl) {
-        UsageViewImpl impl = (UsageViewImpl)usageView;
-        impl.drainQueuedUsageNodes();
-        impl.setSearchInProgress(false);
-      }
-
+      usageView.searchFinished();
       final List<String> lines;
       final HyperlinkListener hyperlinkListener;
       if (myOutOfScopeUsages.get() == 0 || getPsiElement(mySearchFor)==null) {
