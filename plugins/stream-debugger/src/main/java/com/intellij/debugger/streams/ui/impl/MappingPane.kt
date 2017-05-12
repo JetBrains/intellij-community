@@ -19,6 +19,7 @@ import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.ValueWithPosition
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BasicStroke
 import java.awt.BorderLayout
@@ -26,6 +27,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import javax.swing.JPanel
 import javax.swing.SwingConstants
+
 
 /**
  * @author Vitaliy.Bibaev
@@ -57,6 +59,7 @@ class MappingPane(name: String,
 
       val x1 = x
       val x2 = x + width
+      val config = GraphicsUtil.setupAAPainting(g)
       for (value in beforeValues) {
         val position: Int = value.position
         val linkedValues = mapping.getLinkedValues(value) ?: continue
@@ -70,6 +73,7 @@ class MappingPane(name: String,
           }
         }
       }
+      config.restore()
     }
 
     private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isVisible || right.isVisible
