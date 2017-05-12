@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.configurations.SearchScopeProvider;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
@@ -40,6 +41,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -49,6 +52,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -347,6 +351,29 @@ public class GradleManager
   @Override
   public FileChooserDescriptor getExternalProjectDescriptor() {
     return GradleUtil.getGradleProjectFileChooserDescriptor();
+  }
+
+  @Nullable
+  @Override
+  public GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
+    String projectPath = taskExecutionSettings.getExternalProjectPath();
+    if (StringUtil.isEmpty(projectPath)) return null;
+
+    GradleProjectSettings projectSettings =
+
+      getSettingsProvider().fun(project).getLinkedProjectSettings(projectPath);
+    if (projectSettings == null) return null;
+
+    if (!projectSettings.isResolveModulePerSourceSet()) {
+      // use default implementation which will find target module using projectPathFile
+      return null;
+    }
+    else {
+      Module[] modules = Arrays.stream(ModuleManager.getInstance(project).getModules())
+        .filter(module -> StringUtil.equals(projectPath, ExternalSystemApiUtil.getExternalProjectPath(module)))
+        .toArray(Module[]::new);
+      return modules.length > 0 ? SearchScopeProvider.createSearchScope(modules) : null;
+    }
   }
 
   @Override
