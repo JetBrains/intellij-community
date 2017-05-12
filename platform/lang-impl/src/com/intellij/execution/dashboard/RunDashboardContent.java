@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,20 @@
 package com.intellij.execution.dashboard;
 
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.actions.StopAction;
 import com.intellij.execution.dashboard.tree.DashboardGrouper;
 import com.intellij.execution.dashboard.tree.RunDashboardTreeStructure;
+import com.intellij.execution.runners.FakeRerunAction;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.openapi.Disposable;
@@ -39,6 +47,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -46,9 +55,11 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
+import java.util.stream.Collectors;
+
+import static com.intellij.util.ui.UIUtil.CONTRAST_BORDER_COLOR;
 
 /**
  * @author konstantin.aleev
@@ -56,16 +67,19 @@ import java.util.Set;
 public class RunDashboardContent extends JPanel implements TreeContent, Disposable {
   public static final DataKey<RunDashboardContent> KEY = DataKey.create("runDashboardContent");
   @NonNls private static final String PLACE_TOOLBAR = "RunDashboardContent#Toolbar";
-  @NonNls private static final String RUN_DASHBOARD_TOOLBAR = "RunDashboardToolbar";
+  @NonNls private static final String RUN_DASHBOARD_CONTENT_TOOLBAR = "RunDashboardContentToolbar";
+  @NonNls private static final String RUN_DASHBOARD_TREE_TOOLBAR = "RunDashboardTreeToolbar";
   @NonNls private static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
 
   private static final String MESSAGE_CARD = "message";
   private static final String CONTENT_CARD = "content";
 
+  private final JPanel myTreePanel;
   private final Tree myTree;
   private final CardLayout myDetailsPanelLayout;
   private final JPanel myDetailsPanel;
   private final JBPanelWithEmptyText myMessagePanel;
+  private final JComponent myToolbar;
 
   private final DefaultTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
@@ -77,6 +91,10 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   @NotNull private final ContentManagerListener myContentManagerListener;
 
   @NotNull private final Project myProject;
+
+  private final DefaultActionGroup myContentActionGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myDashboardContentActions = new DefaultActionGroup();
+  private final Map<Content, List<AnAction>> myContentActions = new WeakHashMap<>();
 
   public RunDashboardContent(@NotNull Project project, @NotNull ContentManager contentManager, @NotNull List<DashboardGrouper> groupers) {
     super(new BorderLayout());
@@ -91,10 +109,13 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myTree.setCellRenderer(new NodeRenderer());
     myTree.setLineStyleAngled();
 
-    add(createToolbar(), BorderLayout.WEST);
+    myToolbar = createToolbar();
+    add(myToolbar, BorderLayout.WEST);
 
     Splitter splitter = new OnePixelSplitter(false, 0.3f);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
+    myTreePanel = new JPanel(new BorderLayout());
+    myTreePanel.add(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT), BorderLayout.CENTER);
+    splitter.setFirstComponent(myTreePanel);
     myDetailsPanelLayout = new CardLayout();
     myDetailsPanel = new JPanel(myDetailsPanelLayout);
     myMessagePanel = new JBPanelWithEmptyText().withEmptyText(ExecutionBundle.message("run.dashboard.empty.selection.message"));
@@ -105,10 +126,36 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myContentManager = contentManager;
     myContentManagerListener = new ContentManagerAdapter() {
       @Override
+      public void contentAdded(ContentManagerEvent event) {
+        Content content = event.getContent();
+        RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
+        if (descriptor == null) {
+          return;
+        }
+        RunnerLayoutUi layoutUi = descriptor.getRunnerLayoutUi();
+        if (!(layoutUi instanceof RunnerLayoutUiImpl)) {
+          return;
+        }
+        RunnerLayoutUiImpl layoutUiImpl = (RunnerLayoutUiImpl)layoutUi;
+        layoutUiImpl.setLeftToolbarVisible(false);
+        List<AnAction> leftToolbarActions = layoutUiImpl.getActions();
+        myContentActions.put(content, leftToolbarActions);
+        updateContentToolbar(content);
+      }
+
+      @Override
+      public void contentRemoved(ContentManagerEvent event) {
+        Content content = event.getContent();
+        myContentActions.remove(content);
+        updateContentToolbar(content);
+      }
+
+      @Override
       public void selectionChanged(final ContentManagerEvent event) {
         if (ContentManagerEvent.ContentOperation.add != event.getOperation()) {
           return;
         }
+        contentAdded(event);
         myBuilder.queueUpdate().doWhenDone(() -> myBuilder.accept(DashboardNode.class, new TreeVisitor<DashboardNode>() {
           @Override
           public boolean visit(@NotNull DashboardNode node) {
@@ -156,13 +203,57 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         return nodeDescriptor.getValue();
       }
     });
+    putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (KEY.getName().equals(dataId)) {
+          return RunDashboardContent.this;
+        }
+        Content content = myContentManager.getSelectedContent();
+        if (content != null && content.getComponent() != null) {
+          DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
+          if (dataProvider != null) {
+            return dataProvider.getData(dataId);
+          }
+        }
+        return null;
+      }
+    });
 
     DefaultActionGroup popupActionGroup = new DefaultActionGroup();
-    popupActionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_TOOLBAR));
+    popupActionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    popupActionGroup.addSeparator();
+    popupActionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_TREE_TOOLBAR));
     popupActionGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_POPUP));
     PopupHandler.installPopupHandler(myTree, popupActionGroup, ActionPlaces.RUN_DASHBOARD_POPUP, ActionManager.getInstance());
 
     new TreeSpeedSearch(myTree, TreeSpeedSearch.NODE_DESCRIPTOR_TOSTRING, true);
+
+    setTreeVisible(RunDashboardManager.getInstance(myProject).isShowConfigurations());
+  }
+
+  private void setTreeVisible(boolean visible) {
+    myTreePanel.setVisible(visible);
+    myToolbar.setBorder(visible ? null : BorderFactory.createMatteBorder(0, 0, 0, 1, CONTRAST_BORDER_COLOR));
+  }
+
+  private void updateContentToolbar(Content content) {
+    List<AnAction> actions = myContentActions.get(content);
+
+    myContentActionGroup.removeAll();
+    myContentActionGroup.addAll(myDashboardContentActions);
+    myContentActionGroup.addSeparator();
+
+    if (actions != null) {
+      myContentActionGroup.addAll(actions.stream()
+                                    .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
+                                    .collect(Collectors.toList()));
+    }
+
+    // TODO [konstantin.aleev] provide context help ID
+    //myContentActionGroup.addSeparator();
+    //myContentActionGroup.add(new ContextHelpAction(HELP_ID));
   }
 
   private void onSelectionChanged() {
@@ -170,6 +261,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     if (nodes.size() != 1) {
       showMessagePanel(ExecutionBundle.message("run.dashboard.empty.selection.message"));
       myLastSelection = null;
+      updateContentToolbar(null);
       return;
     }
 
@@ -181,6 +273,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     myLastSelection = node;
     if (node instanceof DashboardNode) {
       Content content = ((DashboardNode)node).getContent();
+      updateContentToolbar(content);
       if (content != null) {
         if (content != myContentManager.getSelectedContent()) {
           myContentManager.removeContentManagerListener(myContentManagerListener);
@@ -229,42 +322,66 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private JComponent createToolbar() {
-    JPanel toolBarPanel = new JPanel(new GridLayout());
-    DefaultActionGroup leftGroup = new DefaultActionGroup();
-    leftGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_TOOLBAR));
-    // TODO [konstantin.aleev] provide context help ID
-    //leftGroup.add(new Separator());
-    //leftGroup.add(new ContextHelpAction(HELP_ID));
+    JPanel toolBarPanel = new JPanel(new BorderLayout());
 
-    ActionToolbar leftActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, leftGroup, false);
-    toolBarPanel.add(leftActionToolBar.getComponent());
+    myDashboardContentActions.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR));
+    myContentActionGroup.add(myDashboardContentActions);
+    ActionToolbar contentActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, myContentActionGroup, false);
+    toolBarPanel.add(contentActionsToolBar.getComponent(), BorderLayout.CENTER);
+    contentActionsToolBar.setTargetComponent(this);
 
-    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
+    DefaultActionGroup treeGroup = new DefaultActionGroup();
+
+    treeGroup.addAction(new ToggleAction("Show Configurations", null, AllIcons.Actions.ShowAsTree) {
       @Override
-      public Object getData(@NonNls String dataId) {
-        if (KEY.getName().equals(dataId)) {
-          return RunDashboardContent.this;
-        }
-        return null;
+      public boolean isSelected(AnActionEvent e) {
+        return RunDashboardManager.getInstance(myProject).isShowConfigurations();
+      }
+
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        RunDashboardManager.getInstance(myProject).setShowConfigurations(state);
+        updateContent(false);
       }
     });
-    leftActionToolBar.setTargetComponent(myTree);
+    treeGroup.addAction(new AnAction("Previous Running Configuration", null, AllIcons.Actions.PreviousOccurence) {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(myContentManager.getContentCount() > 1);
+      }
 
-    DefaultActionGroup rightGroup = new DefaultActionGroup();
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myContentManager.selectPreviousContent();
+      }
+    });
+    treeGroup.addAction(new AnAction("Next Running Configuration", null, AllIcons.Actions.NextOccurence) {
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(myContentManager.getContentCount() > 1);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myContentManager.selectNextContent();
+      }
+    });
+    treeGroup.addSeparator();
 
     TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
-    rightGroup.add(expandAllAction);
+    treeGroup.add(expandAllAction);
 
     AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
-    rightGroup.add(collapseAllAction);
+    treeGroup.add(collapseAllAction);
 
-    rightGroup.add(new Separator());
-    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> rightGroup.add(new GroupAction(grouper)));
+    treeGroup.addSeparator();
+    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> treeGroup.add(new GroupAction(grouper)));
 
-    ActionToolbar rightActionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, rightGroup, false);
-    toolBarPanel.add(rightActionToolBar.getComponent());
-    rightActionToolBar.setTargetComponent(myTree);
+    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, false);
+    toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.EAST);
+    treeActionsToolBar.setTargetComponent(this);
+
     return toolBarPanel;
   }
 
@@ -273,22 +390,32 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   public void updateContent(boolean withStructure) {
-    ApplicationManager.getApplication().invokeLater(() -> myBuilder.queueUpdate(withStructure).doWhenDone(() -> {
-      if (!withStructure) {
-        return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      boolean showConfigurations = RunDashboardManager.getInstance(myProject).isShowConfigurations();
+      if (myTreePanel.isVisible() ^ showConfigurations) {
+        setTreeVisible(showConfigurations);
+
+        revalidate();
+        repaint();
       }
-      // Remove nodes not presented in the tree from collapsed node values set.
-      // Children retrieving is quick since grouping and run configuration nodes are already constructed.
-      Set<Object> nodes = new HashSet<>();
-      myBuilder.accept(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
-        @Override
-        public boolean visit(@NotNull AbstractTreeNode node) {
-          nodes.add(node.getValue());
-          return false;
+
+      myBuilder.queueUpdate(withStructure).doWhenDone(() -> {
+        if (!withStructure) {
+          return;
         }
+        // Remove nodes not presented in the tree from collapsed node values set.
+        // Children retrieving is quick since grouping and run configuration nodes are already constructed.
+        Set<Object> nodes = new HashSet<>();
+        myBuilder.accept(AbstractTreeNode.class, new TreeVisitor<AbstractTreeNode>() {
+          @Override
+          public boolean visit(@NotNull AbstractTreeNode node) {
+            nodes.add(node.getValue());
+            return false;
+          }
+        });
+        myCollapsedTreeNodeValues.retainAll(nodes);
       });
-      myCollapsedTreeNodeValues.retainAll(nodes);
-    }), myProject.getDisposed());
+    }, myProject.getDisposed());
   }
 
   @Override
@@ -309,10 +436,13 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       Presentation presentation = e.getPresentation();
+      presentation.setEnabled(myTreePanel.isVisible());
       ActionPresentation actionPresentation = myGrouper.getRule().getPresentation();
       presentation.setText(actionPresentation.getText());
       presentation.setDescription(actionPresentation.getDescription());
-      presentation.setIcon(actionPresentation.getIcon());
+      if (PLACE_TOOLBAR.equals(e.getPlace())) {
+        presentation.setIcon(actionPresentation.getIcon());
+      }
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
   private WeakReference<JBPopup> myActivePopupRef = null;
 
   private static boolean isPlaceGlobal(AnActionEvent e) {
@@ -309,7 +309,7 @@ class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
     private HandlerItem(String displayName, Icon icon, boolean hasSeparator) {
       this.displayName = displayName;
       this.icon = icon;
-      this.hasSeparator =  hasSeparator;
+      this.hasSeparator = hasSeparator;
     }
 
     public String toString() {

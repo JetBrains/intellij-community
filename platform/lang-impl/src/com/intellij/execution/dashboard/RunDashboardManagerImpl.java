@@ -63,6 +63,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
   @NotNull private final List<DashboardGrouper> myGroupers;
+  private boolean myShowConfigurations;
 
   private RunDashboardContent myDashboardContent;
 
@@ -180,10 +181,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
     configurations.forEach(configurationSettings -> {
       List<RunContentDescriptor> descriptors = executionManager.getDescriptors(
-          settings -> Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration()));
+        settings -> Comparing.equal(settings.getConfiguration(), configurationSettings.getConfiguration()));
       if (descriptors.isEmpty()) {
         result.add(Pair.create(configurationSettings, null));
-      } else {
+      }
+      else {
         descriptors.forEach(descriptor -> result.add(Pair.create(configurationSettings, descriptor)));
       }
     });
@@ -202,6 +204,16 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     });
 
     return result;
+  }
+
+  @Override
+  public boolean isShowConfigurations() {
+    return myShowConfigurations;
+  }
+
+  @Override
+  public void setShowConfigurations(boolean value) {
+    myShowConfigurations = value;
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
@@ -256,6 +268,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public State getState() {
     State state = new State();
+    state.showConfigurations = myShowConfigurations;
     state.ruleStates = myGroupers.stream()
       .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
       .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
@@ -265,6 +278,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public void loadState(State state) {
+    myShowConfigurations = state.showConfigurations;
     state.ruleStates.forEach(ruleState -> {
       for (DashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
@@ -276,6 +290,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   static class State {
+    boolean showConfigurations = true;
     public List<RuleState> ruleStates = new ArrayList<>();
   }
 

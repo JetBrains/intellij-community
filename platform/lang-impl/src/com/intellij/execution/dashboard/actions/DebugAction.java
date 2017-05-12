@@ -21,6 +21,8 @@ import com.intellij.execution.ExecutorRegistry;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.wm.ToolWindowId;
 
+import javax.swing.*;
+
 /**
  * @author konstantin.aleev
  */
@@ -34,5 +36,10 @@ public class DebugAction extends ExecutorAction {
   @Override
   protected Executor getExecutor() {
     return ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
+  }
+
+  @Override
+  protected Icon getIcon(boolean running) {
+    return AllIcons.Toolwindows.ToolWindowDebugger;
   }
 }

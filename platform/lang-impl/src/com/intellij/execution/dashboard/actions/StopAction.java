@@ -17,6 +17,7 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
@@ -38,11 +39,30 @@ public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigura
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
-    e.getPresentation().setEnabled(targetNodes.stream().anyMatch(node -> {
-      Content content = node.getContent();
-      return content != null && !RunContentManagerImpl.isTerminated(content);
-    }));
+    if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
+      List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
+      e.getPresentation().setEnabled(targetNodes.stream().anyMatch(node -> {
+        Content content = node.getContent();
+        return content != null && !RunContentManagerImpl.isTerminated(content);
+      }));
+    }
+    else {
+      Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
+      e.getPresentation().setEnabled(content != null && !RunContentManagerImpl.isTerminated(content));
+    }
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
+      super.actionPerformed(e);
+    }
+    else {
+      Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
+      if (content != null) {
+        ExecutionManagerImpl.stopProcess(RunContentManagerImpl.getRunContentDescriptorByContent(content));
+      }
+    }
   }
 
   @Override

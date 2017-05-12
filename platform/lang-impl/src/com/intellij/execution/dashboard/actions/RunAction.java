@@ -20,6 +20,8 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 
+import javax.swing.*;
+
 /**
  * @author konstantin.aleev
  */
@@ -33,5 +35,10 @@ public class RunAction extends ExecutorAction {
   @Override
   protected Executor getExecutor() {
     return DefaultRunExecutor.getRunExecutorInstance();
+  }
+
+  @Override
+  protected Icon getIcon(boolean running) {
+    return running ? AllIcons.Actions.Restart : AllIcons.Toolwindows.ToolWindowRun;
   }
 }
