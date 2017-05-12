@@ -63,6 +63,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.*;
 
+import static com.intellij.util.JdomKt.loadElement;
+
 /**
  * Configuration that holds configured xml tag, attribute and method parameter
  * injection settings as well as the annotations to use for injection, pattern
@@ -356,7 +358,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   @Nullable
   public static Configuration load(final InputStream is) throws IOException, JDOMException {
     final List<Element> elements = new ArrayList<>();
-    final Element rootElement = JDOMUtil.load(is);
+    final Element rootElement = loadElement(is);
     final Element state;
     if (rootElement.getName().equals(COMPONENT_NAME)) {
       state = rootElement;

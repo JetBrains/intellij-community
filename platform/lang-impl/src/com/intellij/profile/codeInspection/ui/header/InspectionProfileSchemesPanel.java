@@ -36,8 +36,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -54,6 +52,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.JdomKt.loadElement;
 
 public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchemesPanel<InspectionProfileModifiableModel> {
   private final static Logger LOG = Logger.getInstance(InspectionProfileSchemesPanel.class);
@@ -149,7 +149,7 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           if (file != null) {
             try {
-              InspectionProfileImpl profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
+              InspectionProfileImpl profile = importInspectionProfile(loadElement(file.getInputStream()), myAppProfileManager, myProject);
               if (profile == null) {
                 Messages.showErrorDialog(myProject, "File '" + file.getName() + "' has invalid format.", "Inspection Settings");
                 return;

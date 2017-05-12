@@ -310,6 +310,9 @@ public class JDOMUtil {
     return reader == null ? null : loadDocument(reader).detachRootElement();
   }
 
+  /**
+   * Consider to use `loadElement` (JdomKt.loadElement from java) due to more efficient whitespace handling (cannot be changed here due to backward compatibility).
+   */
   @Contract("null -> null; !null -> !null")
   public static Element load(InputStream stream) throws JDOMException, IOException {
     return stream == null ? null : loadDocument(stream).detachRootElement();
