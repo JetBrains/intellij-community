@@ -247,7 +247,7 @@ class JUnit5MalformedParameterizedInspection : BaseJavaBatchLocalInspectionTool(
                !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_INFO) &&
                !InheritanceUtil.isInheritor(it.type, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_TEST_REPORTER)
              }
-             .count() > 1 && !MetaAnnotationUtil.isMetaAnnotated(method, Collections.singleton(
+             .count() > 1 && !AnnotationUtil.isAnnotated(method, Collections.singleton(
       JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
   }
 }

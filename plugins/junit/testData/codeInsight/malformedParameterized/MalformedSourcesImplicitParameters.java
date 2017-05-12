@@ -7,4 +7,8 @@ class MyJunit5 {
   @ValueSource(strings = "foo")
   void testWithRegularParameterResolver(String argument, TestInfo testReporter) {
   }
+  @ParameterizedTest
+  <warning descr="Multiple parameters are not supported by this source">@ValueSource(strings = "foo")</warning>
+  void testWithMultipleParams(String argument, int i) {
+  }
 }
