@@ -55,17 +55,23 @@ class MappingPane(name: String,
 
       if (g is Graphics2D) {
         g.stroke = STROKE
-      }
 
+        val config = GraphicsUtil.setupAAPainting(g)
+        drawLines(g, REGULAR_LINK_COLOR)
+        drawLines(g, SELECTED_LINK_COLOR)
+        config.restore()
+      }
+    }
+
+    private fun drawLines(g: Graphics2D, color: JBColor) {
       val x1 = x
       val x2 = x + width
-      val config = GraphicsUtil.setupAAPainting(g)
+      g.color = color
       for (value in beforeValues) {
         val position: Int = value.position
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         for (nextValue in linkedValues) {
-          if (needToDraw(value, nextValue)) {
-            g.color = getLineColor(value, nextValue)
+          if (needToDraw(value, nextValue) && getLineColor(value, nextValue) == color) {
             val y1 = position
             val y2 = nextValue.position
 
@@ -73,7 +79,6 @@ class MappingPane(name: String,
           }
         }
       }
-      config.restore()
     }
 
     private fun needToDraw(left: ValueWithPosition, right: ValueWithPosition): Boolean = left.isVisible || right.isVisible
