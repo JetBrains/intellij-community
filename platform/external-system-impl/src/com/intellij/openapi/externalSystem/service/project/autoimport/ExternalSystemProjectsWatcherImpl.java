@@ -104,7 +104,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
                                                      DOCUMENT_SAVE_DELAY, false, ANY_COMPONENT, myProject);
 
     myRefreshRequestsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Refresh requests queue",
-                                                    0, false, ANY_COMPONENT, myProject);
+                                                    0, false, ANY_COMPONENT, myProject, null, false);
 
     myImportAwareManagers = ContainerUtil.newArrayList();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
@@ -282,7 +282,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   }
 
   private void addToRefreshQueue(String projectPath, ProjectSystemId systemId) {
-    myRefreshRequestsQueue.run(new Update(Pair.create(systemId, projectPath)) {
+    myRefreshRequestsQueue.queue(new Update(Pair.create(systemId, projectPath)) {
       @Override
       public void run() {
         scheduleRefresh(myProject, projectPath, systemId, false);
