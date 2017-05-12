@@ -233,7 +233,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MOUSE_SELECTION_STATE_WORD_SELECTED = 1;
   private static final int MOUSE_SELECTION_STATE_LINE_SELECTED = 2;
 
-  private EditorHighlighter myHighlighter;
+  private volatile EditorHighlighter myHighlighter; // updated in EDT, but can be accessed from other threads (under read action)
   private Disposable myHighlighterDisposable = Disposer.newDisposable();
   private final TextDrawingCallback myTextDrawingCallback = new MyTextDrawingCallback();
 
@@ -1159,7 +1159,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.dispose(myHighlighterDisposable);
 
     document.addDocumentListener(highlighter);
-    myHighlighter = highlighter;
     myHighlighterDisposable = () -> document.removeDocumentListener(highlighter);
     Disposer.register(myDisposable, myHighlighterDisposable);
     highlighter.setEditor(this);
@@ -1167,6 +1166,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!(highlighter instanceof EmptyEditorHighlighter)) {
       EditorHighlighterCache.rememberEditorHighlighterForCachesOptimization(document, highlighter);
     }
+    myHighlighter = highlighter;
 
     if (myPanel != null) {
       reinitSettings();
