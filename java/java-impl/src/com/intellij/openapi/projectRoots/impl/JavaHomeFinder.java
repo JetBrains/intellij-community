@@ -22,11 +22,11 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -67,9 +67,9 @@ public abstract class JavaHomeFinder {
   protected static void scanFolder(File folder, List<String> result) {
     if (JdkUtil.checkForJdk(folder))
       result.add(folder.getAbsolutePath());
-    @SuppressWarnings("RedundantCast") File[] candidates = folder.listFiles((FileFilter)JdkUtil::checkForJdk);
-    if (candidates != null) {
-      for (File file : candidates) {
+
+    for (File file : ObjectUtils.notNull(folder.listFiles(), ArrayUtil.EMPTY_FILE_ARRAY)) {
+      if (JdkUtil.checkForJdk(file)) {
         result.add(file.getAbsolutePath());
       }
     }
