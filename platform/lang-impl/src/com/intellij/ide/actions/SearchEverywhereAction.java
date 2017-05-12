@@ -115,6 +115,7 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -212,7 +213,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = JBUI.Panels.simplePanel();
+    JPanel panel = new BorderLayoutPanel() {
+      @Override
+      public Dimension getPreferredSize() {
+        return JBUI.size(25);
+      }
+    };
     panel.setOpaque(false);
 
     final JLabel label = new JBLabel(AllIcons.Actions.FindPlain) {
