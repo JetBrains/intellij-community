@@ -22,7 +22,6 @@ import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.ide.ui.search.SearchUtil;
-import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -66,11 +65,10 @@ public abstract class InspectionsConfigTreeRenderer extends DefaultTreeRenderer 
       style = SimpleTextAttributes.STYLE_BOLD;
     }
     else {
-      final ToolDescriptors descriptors = node.getDescriptors();
-      assert descriptors != null;
-      final Descriptor defaultDescriptor = descriptors.getDefaultDescriptor();
-      text = defaultDescriptor.getText();
-      hint = getHint(defaultDescriptor);
+      final Descriptor descriptor = node.getDefaultDescriptor();
+      assert descriptor != null;
+      text = descriptor.getText();
+      hint = getHint(descriptor);
     }
 
     if (text != null) {

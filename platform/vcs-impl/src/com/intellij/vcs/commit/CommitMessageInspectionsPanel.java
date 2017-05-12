@@ -131,7 +131,7 @@ public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements 
 
   @NotNull
   private CommitMessageInspectionDetails createDetails(@NotNull MyInspectionTreeNode node) {
-    CommitMessageInspectionDetails details = new CommitMessageInspectionDetails(myProject, myModifiableModel, node.getDescriptors());
+    CommitMessageInspectionDetails details = new CommitMessageInspectionDetails(myProject, myModifiableModel, node.getDefaultDescriptor());
     details.addListener(severity -> myInspectionsTable.updateUI());
     return details;
   }

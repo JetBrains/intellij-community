@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.IdeTooltip;
@@ -32,7 +33,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
-import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
@@ -407,13 +407,13 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       nodes.add(node);
 
-      final ToolDescriptors descriptors = node.getDescriptors();
-      if (descriptors == null) {
+      final Descriptor descriptor = node.getDefaultDescriptor();
+      if (descriptor == null) {
         for (int i = 0; i < node.getChildCount(); i++) {
           collectInspectionFromNodes((InspectionConfigTreeNode)node.getChildAt(i), tools, nodes);
         }
       } else {
-        final HighlightDisplayKey key = descriptors.getDefaultDescriptor().getKey();
+        final HighlightDisplayKey key = descriptor.getKey();
         tools.add(key);
       }
     }

@@ -16,6 +16,7 @@
 
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
+import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 
 import java.util.Comparator;
@@ -40,11 +41,11 @@ public class InspectionsConfigTreeComparator implements Comparator<InspectionCon
       return getDisplayTextToSort(s1).compareToIgnoreCase(getDisplayTextToSort(s2));
     }
 
-    final ToolDescriptors descriptors1 = o1.getDescriptors();
-    final ToolDescriptors descriptors2 = o2.getDescriptors();
-    if (descriptors1 != null && descriptors2 != null) {
-      s1 = descriptors1.getDefaultDescriptor().getText();
-      s2 = descriptors2.getDefaultDescriptor().getText();
+    final Descriptor descriptor1 = o1.getDefaultDescriptor();
+    final Descriptor descriptor2 = o2.getDefaultDescriptor();
+    if (descriptor1 != null && descriptor2 != null) {
+      s1 = descriptor1.getText();
+      s2 = descriptor2.getText();
     }
 
     if (s1 != null && s2 != null) {
