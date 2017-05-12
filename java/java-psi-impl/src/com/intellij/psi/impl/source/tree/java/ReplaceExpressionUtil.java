@@ -36,7 +36,7 @@ public class ReplaceExpressionUtil {
     int priority = getExpressionPriority(newExpr);
     int parentPriority = getExpressionPriority(oldParent);
     if (priority == -1 || parentPriority == -1) {
-      // Unknown element types: enclose with parentheses just for the case
+      // Unknown element types: enclose with parentheses just in case
       return true;
     }
     if (priority > parentPriority) return false;
