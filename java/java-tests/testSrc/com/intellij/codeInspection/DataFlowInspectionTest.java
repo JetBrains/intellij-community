@@ -434,6 +434,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     doTest();
     checkIntentionResult("Unwrap 'do-while' statement");
   }
+  public void testLiteralDoWhileConditionWithBreak() {
+    doTest();
+    assertFalse(myFixture.getAvailableIntentions().stream().anyMatch(i -> i.getText().contains("Unwrap 'do-while' statement")));
+  }
 
   public void testFalseForConditionNoInitialization() {
     doTest();

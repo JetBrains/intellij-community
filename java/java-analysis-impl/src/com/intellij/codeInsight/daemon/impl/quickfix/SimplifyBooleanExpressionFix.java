@@ -86,10 +86,28 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
   @Override
   public boolean isAvailable() {
     PsiExpression expression = getSubExpression();
-    return super.isAvailable()
-           && expression != null
-           && expression.getManager().isInProject(expression)
-           && !PsiUtil.isAccessedForWriting(expression);
+    if (!super.isAvailable() ||
+        expression == null ||
+        !expression.getManager().isInProject(expression) ||
+        PsiUtil.isAccessedForWriting(expression)) {
+      return false;
+    }
+    PsiElement element = PsiUtil.skipParenthesizedExprUp(expression);
+    PsiElement parent = element == null ? null : element.getParent();
+    if (parent instanceof PsiDoWhileStatement && containsBreakOrContinue((PsiDoWhileStatement)parent)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private static boolean containsBreakOrContinue(PsiDoWhileStatement doWhileLoop) {
+    return SyntaxTraverser.psiTraverser(doWhileLoop).filter(e -> isBreakOrContinue(e, doWhileLoop)).iterator().hasNext();
+  }
+
+  private static boolean isBreakOrContinue(PsiElement e, PsiDoWhileStatement doWhileLoop) {
+    return e instanceof PsiBreakStatement && doWhileLoop == ((PsiBreakStatement)e).findExitedStatement() || 
+           e instanceof PsiContinueStatement && doWhileLoop == ((PsiContinueStatement)e).findContinuedStatement();
   }
 
   @Override
