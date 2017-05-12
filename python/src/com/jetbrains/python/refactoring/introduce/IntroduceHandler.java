@@ -47,6 +47,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -154,10 +155,12 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     myDialogTitle = dialogTitle;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     performAction(new IntroduceOperation(project, editor, file, null));
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
   }
 
@@ -229,10 +232,10 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       .map(PyArgumentList::getCallExpression)
       .ifPresent(
         call -> StreamEx
-          .of(call.multiMapArguments(PyResolveContext.noImplicits()))
+          .of(call.multiMapArguments(PyResolveContext.noImplicits().withTypeEvalContext(context)))
           .map(mapping -> mapping.getMappedParameters().get(expression))
           .nonNull()
-          .map(PyNamedParameter::getName)
+          .map(PyCallableParameter::getName)
           .forEach(candidates::add)
       );
 
@@ -580,7 +583,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       }
     }
 
-    private boolean needToWrapTopLevelExpressionInParenthesis(@NotNull PyExpression node) {
+    private static boolean needToWrapTopLevelExpressionInParenthesis(@NotNull PyExpression node) {
       if (node instanceof PyGeneratorExpression) {
         final PsiElement firstChild = node.getFirstChild();
         if (firstChild != null && firstChild.getNode().getElementType() != PyTokenTypes.LPAR) {
@@ -615,6 +618,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     final PyExpression expression = operation.getInitializer();
     final Project project = operation.getProject();
     return new WriteCommandAction<PsiElement>(project, expression.getContainingFile()) {
+      @Override
       protected void run(@NotNull final Result<PsiElement> result) throws Throwable {
         try {
           final RefactoringEventData afterData = new RefactoringEventData();

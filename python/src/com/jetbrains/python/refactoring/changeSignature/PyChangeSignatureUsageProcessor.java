@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,7 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureUsageProcessor;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.rename.ResolveSnapshotProvider;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
@@ -41,9 +39,9 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.ArgumentMappingResults;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,13 +152,13 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(call.getProject(), null);
     final PyFunction function = changeInfo.getMethod();
 
-    final PyParameter[] allOrigParams = function.getParameterList().getParameters();
+    final List<PyCallableParameter> allOrigParams = PyUtil.getParameters(function, typeEvalContext);
     final ArgumentMappingResults mapping = PyCallExpressionHelper.mapArguments(call, function, typeEvalContext);
 
     MultiMap<Integer, PyExpression> oldParamIndexToArgs = MultiMap.create();
-    for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getMappedParameters().entrySet()) {
-      final PyNamedParameter param = entry.getValue();
-      oldParamIndexToArgs.putValue(ArrayUtil.find(allOrigParams, param), entry.getKey());
+    for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.getMappedParameters().entrySet()) {
+      final PyCallableParameter param = entry.getValue();
+      oldParamIndexToArgs.putValue(allOrigParams.indexOf(param), entry.getKey());
     }
     assert oldParamIndexToArgs.keySet().stream().allMatch(index -> index >= 0);
 

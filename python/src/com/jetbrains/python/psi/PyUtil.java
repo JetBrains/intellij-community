@@ -942,7 +942,7 @@ public class PyUtil {
   }
 
   public static class KnownDecoratorProviderHolder {
-    public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+    public static final PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
     private KnownDecoratorProviderHolder() {
     }
@@ -1561,19 +1561,10 @@ public class PyUtil {
     return element;
   }
 
-  @NotNull
-  public static List<PyParameter> getParameters(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    return Optional
-      .ofNullable(as(context.getType(callable), PyCallableType.class))
-      .map(callableType -> callableType.getParameters(context))
-      .map(callableParameters -> ContainerUtil.map(callableParameters, PyCallableParameter::getParameter))
-      .orElse(Arrays.asList(callable.getParameterList().getParameters()));
-  }
-
   public static boolean isSignatureCompatibleTo(@NotNull PyCallable callable, @NotNull PyCallable otherCallable,
                                                 @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = getParameters(callable, context);
-    final List<PyParameter> otherParameters = getParameters(otherCallable, context);
+    final List<PyCallableParameter> parameters = callable.getParameters(context);
+    final List<PyCallableParameter> otherParameters = otherCallable.getParameters(context);
     final int optionalCount = optionalParametersCount(parameters);
     final int otherOptionalCount = optionalParametersCount(otherParameters);
     final int requiredCount = requiredParametersCount(callable, parameters);
@@ -1589,9 +1580,9 @@ public class PyUtil {
     return requiredCount <= otherRequiredCount && parameters.size() >= otherParameters.size() && optionalCount >= otherOptionalCount;
   }
 
-  private static int optionalParametersCount(@NotNull List<PyParameter> parameters) {
+  private static int optionalParametersCount(@NotNull List<PyCallableParameter> parameters) {
     int n = 0;
-    for (PyParameter parameter : parameters) {
+    for (PyCallableParameter parameter : parameters) {
       if (parameter.hasDefaultValue()) {
         n++;
       }
@@ -1599,11 +1590,11 @@ public class PyUtil {
     return n;
   }
 
-  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
+  private static int requiredParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     return parameters.size() - optionalParametersCount(parameters) - specialParametersCount(callable, parameters);
   }
 
-  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyParameter> parameters) {
+  private static int specialParametersCount(@NotNull PyCallable callable, @NotNull List<PyCallableParameter> parameters) {
     int n = 0;
     if (hasPositionalContainer(parameters)) {
       n++;
@@ -1616,7 +1607,7 @@ public class PyUtil {
     }
     else {
       if (parameters.size() > 0) {
-        final PyParameter first = parameters.get(0);
+        final PyCallableParameter first = parameters.get(0);
         if (PyNames.CANONICAL_SELF.equals(first.getName())) {
           n++;
         }
@@ -1625,18 +1616,18 @@ public class PyUtil {
     return n;
   }
 
-  private static boolean hasPositionalContainer(@NotNull List<PyParameter> parameters) {
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isPositionalContainer()) {
+  private static boolean hasPositionalContainer(@NotNull List<PyCallableParameter> parameters) {
+    for (PyCallableParameter parameter : parameters) {
+      if (parameter.isPositionalContainer()) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean hasKeywordContainer(@NotNull List<PyParameter> parameters) {
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).isKeywordContainer()) {
+  private static boolean hasKeywordContainer(@NotNull List<PyCallableParameter> parameters) {
+    for (PyCallableParameter parameter : parameters) {
+      if (parameter.isKeywordContainer()) {
         return true;
       }
     }

@@ -56,11 +56,10 @@ public class PyCallExpressionHelper {
    * Tries to interpret a call as a call to built-in {@code classmethod} or {@code staticmethod}.
    *
    * @param redefiningCall the possible call, generally a result of chasing a chain of assignments
-   * @param us             any in-project PSI element, used to determine SDK and ultimately builtins module used to check the wrapping functions
    * @return a pair of wrapper name and wrapped function; for {@code staticmethod(foo)} it would be ("staticmethod", foo).
    */
   @Nullable
-  public static Pair<String, PyFunction> interpretAsModifierWrappingCall(PyCallExpression redefiningCall, PsiElement us) {
+  public static Pair<String, PyFunction> interpretAsModifierWrappingCall(PyCallExpression redefiningCall) {
     PyExpression redefining_callee = redefiningCall.getCallee();
     if (redefiningCall.isCalleeText(PyNames.CLASSMETHOD, PyNames.STATICMETHOD)) {
       final PyReferenceExpression referenceExpr = (PyReferenceExpression)redefining_callee;
@@ -123,7 +122,7 @@ public class PyCallExpressionHelper {
     final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
-      final ClarifiedResolveResult clarifiedResolveResult = clarifyResolveResult(resolveResult, resolveContext, call);
+      final ClarifiedResolveResult clarifiedResolveResult = clarifyResolveResult(resolveResult, resolveContext);
       if (clarifiedResolveResult == null) continue;
 
       final PyCallExpression.PyRatedMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
@@ -143,12 +142,15 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<QualifiedRatedResolveResult> multiResolveCallee(@Nullable PyExpression callee, @NotNull PyResolveContext resolveContext) {
+  private static List<QualifiedRatedResolveResult> multiResolveCallee(@Nullable PyExpression callee,
+                                                                      @NotNull PyResolveContext resolveContext) {
     if (callee instanceof PyReferenceExpression) {
       return ((PyReferenceExpression)callee).multiFollowAssignmentsChain(resolveContext);
     }
     else if (callee instanceof PyLambdaExpression) {
-      return Collections.singletonList(new QualifiedRatedResolveResult(callee, Collections.emptyList(), RatedResolveResult.RATE_NORMAL, false));
+      return Collections.singletonList(
+        new QualifiedRatedResolveResult(callee, Collections.emptyList(), RatedResolveResult.RATE_NORMAL, false)
+      );
     }
 
     return Collections.emptyList();
@@ -156,8 +158,7 @@ public class PyCallExpressionHelper {
 
   @Nullable
   private static ClarifiedResolveResult clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
-                                                             @NotNull PyResolveContext resolveContext,
-                                                             @NotNull PsiElement anchor) {
+                                                             @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
     if (resolved instanceof PyClass) {
@@ -165,7 +166,7 @@ public class PyCallExpressionHelper {
       return clarifiedResolved == null ? null : new ClarifiedResolveResult(resolveResult, clarifiedResolved, null, true);
     }
     else if (resolved instanceof PyCallExpression) { // foo = classmethod(foo)
-      final Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall((PyCallExpression)resolved, anchor);
+      final Pair<String, PyFunction> wrapperInfo = interpretAsModifierWrappingCall((PyCallExpression)resolved);
       if (wrapperInfo != null) {
         final String wrapperName = wrapperInfo.getFirst();
         final PyFunction.Modifier wrappedModifier = PyNames.CLASSMETHOD.equals(wrapperName)
@@ -583,7 +584,7 @@ public class PyCallExpressionHelper {
         // imitate isinstance(second_arg, possible_class)
         PyClass secondClass = ((PyClassType)second_type).getPyClass();
         if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
-          return getSuperClassUnionType(firstClass,context);
+          return getSuperClassUnionType(firstClass, context);
         }
         if (secondClass.isSubclass(firstClass, context)) {
           final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
@@ -646,8 +647,8 @@ public class PyCallExpressionHelper {
                                                                   @NotNull PyArgumentList argumentList,
                                                                   @NotNull PyCallExpression.PyMarkedCallee markedCallee,
                                                                   @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
-    final List<PyParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
+    final List<PyCallableParameter> parameters = PyUtil.getParameters(markedCallee.getCallable(), context);
+    final List<PyCallableParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
     final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
@@ -664,11 +665,13 @@ public class PyCallExpressionHelper {
   @NotNull
   public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
                                                     @NotNull PyCallable callable,
-                                                    @NotNull List<PyParameter> parameters,
+                                                    @NotNull List<PyCallableParameter> parameters,
                                                     @NotNull TypeEvalContext context) {
     final List<PyExpression> arguments = PyTypeChecker.getArguments(callSite, callable);
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    final List<PyParameter> explicitParameters = PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> explicitParameters =
+      PyTypeChecker.filterExplicitParameters(parameters, callable, callSite, resolveContext);
+
     return analyzeArguments(arguments, explicitParameters);
   }
 
@@ -676,30 +679,30 @@ public class PyCallExpressionHelper {
   public static ArgumentMappingResults mapArguments(@NotNull PyCallSiteExpression callSite,
                                                     @NotNull PyCallable callable,
                                                     @NotNull TypeEvalContext context) {
-    final List<PyParameter> parameters = PyUtil.getParameters(callable, context);
+    final List<PyCallableParameter> parameters = PyUtil.getParameters(callable, context);
     return mapArguments(callSite, callable, parameters, context);
   }
 
   @NotNull
-  public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+  public static List<PyExpression> getArgumentsMappedToPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
     return mapping.entrySet().stream()
       .filter(e -> e.getValue().isPositionalContainer())
       .map(e -> e.getKey()).collect(Collectors.toList());
   }
 
   @NotNull
-  public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+  public static List<PyExpression> getArgumentsMappedToKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
     return mapping.entrySet().stream()
       .filter(e -> e.getValue().isKeywordContainer())
       .map(e -> e.getKey()).collect(Collectors.toList());
   }
 
   @NotNull
-  public static Map<PyExpression, PyNamedParameter> getRegularMappedParameters(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
-    final Map<PyExpression, PyNamedParameter> result = new LinkedHashMap<>();
-    for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.entrySet()) {
+  public static Map<PyExpression, PyCallableParameter> getRegularMappedParameters(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
+    final Map<PyExpression, PyCallableParameter> result = new LinkedHashMap<>();
+    for (Map.Entry<PyExpression, PyCallableParameter> entry : mapping.entrySet()) {
       final PyExpression argument = entry.getKey();
-      final PyNamedParameter parameter = entry.getValue();
+      final PyCallableParameter parameter = entry.getValue();
       if (!parameter.isPositionalContainer() && !parameter.isKeywordContainer()) {
         result.put(argument, parameter);
       }
@@ -708,25 +711,26 @@ public class PyCallExpressionHelper {
   }
 
   @Nullable
-  public static PyNamedParameter getMappedPositionalContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+  public static PyCallableParameter getMappedPositionalContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
     return mapping.values().stream().filter(p -> p.isPositionalContainer()).findFirst().orElse(null);
   }
 
   @Nullable
-  public static PyNamedParameter getMappedKeywordContainer(@NotNull Map<PyExpression, PyNamedParameter> mapping) {
+  public static PyCallableParameter getMappedKeywordContainer(@NotNull Map<PyExpression, PyCallableParameter> mapping) {
     return mapping.values().stream().filter(p -> p.isKeywordContainer()).findFirst().orElse(null);
   }
 
   @NotNull
-  private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments, @NotNull List<PyParameter> parameters) {
+  private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments,
+                                                         @NotNull List<PyCallableParameter> parameters) {
     boolean seenSingleStar = false;
     boolean mappedVariadicArgumentsToParameters = false;
-    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<>();
-    final List<PyParameter> unmappedParameters = new ArrayList<>();
+    final Map<PyExpression, PyCallableParameter> mappedParameters = new LinkedHashMap<>();
+    final List<PyCallableParameter> unmappedParameters = new ArrayList<>();
     final List<PyExpression> unmappedArguments = new ArrayList<>();
-    final List<PyNamedParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<>();
-    final List<PyNamedParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<>();
-    final Map<PyExpression, PyTupleParameter> tupleMappedParameters = new LinkedHashMap<>();
+    final List<PyCallableParameter> parametersMappedToVariadicKeywordArguments = new ArrayList<>();
+    final List<PyCallableParameter> parametersMappedToVariadicPositionalArguments = new ArrayList<>();
+    final Map<PyExpression, PyCallableParameter> tupleMappedParameters = new LinkedHashMap<>();
 
     final PositionalArgumentsAnalysisResults positionalResults = filterPositionalAndVariadicArguments(arguments);
     final List<PyKeywordArgument> keywordArguments = filterKeywordArguments(arguments);
@@ -737,28 +741,29 @@ public class PyCallExpressionHelper {
 
     final List<PyExpression> allPositionalArguments = positionalResults.allPositionalArguments;
 
-    for (PyParameter parameter : parameters) {
-      if (parameter instanceof PyNamedParameter) {
-        final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
-        final String parameterName = namedParameter.getName();
-        if (namedParameter.isPositionalContainer()) {
+    for (PyCallableParameter parameter : parameters) {
+      final PyParameter psi = parameter.getParameter();
+
+      if (psi instanceof PyNamedParameter || psi == null) {
+        final String parameterName = parameter.getName();
+        if (parameter.isPositionalContainer()) {
           for (PyExpression argument : allPositionalArguments) {
             if (argument != null) {
-              mappedParameters.put(argument, namedParameter);
+              mappedParameters.put(argument, parameter);
             }
           }
           if (variadicPositionalArguments.size() == 1) {
-            mappedParameters.put(variadicPositionalArguments.get(0), namedParameter);
+            mappedParameters.put(variadicPositionalArguments.get(0), parameter);
           }
           allPositionalArguments.clear();
           variadicPositionalArguments.clear();
         }
-        else if (namedParameter.isKeywordContainer()) {
+        else if (parameter.isKeywordContainer()) {
           for (PyKeywordArgument argument : keywordArguments) {
-            mappedParameters.put(argument, namedParameter);
+            mappedParameters.put(argument, parameter);
           }
           if (variadicKeywordArguments.size() == 1) {
-            mappedParameters.put(variadicKeywordArguments.get(0), namedParameter);
+            mappedParameters.put(variadicKeywordArguments.get(0), parameter);
           }
           keywordArguments.clear();
           variadicKeywordArguments.clear();
@@ -766,32 +771,32 @@ public class PyCallExpressionHelper {
         else if (seenSingleStar) {
           final PyExpression keywordArgument = removeKeywordArgument(keywordArguments, parameterName);
           if (keywordArgument != null) {
-            mappedParameters.put(keywordArgument, namedParameter);
+            mappedParameters.put(keywordArgument, parameter);
           }
           else if (variadicKeywordArguments.isEmpty()) {
-            if (!namedParameter.hasDefaultValue()) {
-              unmappedParameters.add(namedParameter);
+            if (!parameter.hasDefaultValue()) {
+              unmappedParameters.add(parameter);
             }
           }
           else {
-            parametersMappedToVariadicKeywordArguments.add(namedParameter);
+            parametersMappedToVariadicKeywordArguments.add(parameter);
           }
         }
         else {
           if (allPositionalArguments.isEmpty()) {
             final PyKeywordArgument keywordArgument = removeKeywordArgument(keywordArguments, parameterName);
             if (keywordArgument != null) {
-              mappedParameters.put(keywordArgument, namedParameter);
+              mappedParameters.put(keywordArgument, parameter);
             }
-            else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !namedParameter.hasDefaultValue()) {
-              unmappedParameters.add(namedParameter);
+            else if (variadicPositionalArguments.isEmpty() && variadicKeywordArguments.isEmpty() && !parameter.hasDefaultValue()) {
+              unmappedParameters.add(parameter);
             }
             else {
               if (!variadicPositionalArguments.isEmpty()) {
-                parametersMappedToVariadicPositionalArguments.add(namedParameter);
+                parametersMappedToVariadicPositionalArguments.add(parameter);
               }
               if (!variadicKeywordArguments.isEmpty()) {
-                parametersMappedToVariadicKeywordArguments.add(namedParameter);
+                parametersMappedToVariadicKeywordArguments.add(parameter);
               }
               mappedVariadicArgumentsToParameters = true;
             }
@@ -799,23 +804,22 @@ public class PyCallExpressionHelper {
           else {
             final PyExpression positionalArgument = next(allPositionalArguments);
             if (positionalArgument != null) {
-              mappedParameters.put(positionalArgument, namedParameter);
+              mappedParameters.put(positionalArgument, parameter);
               if (positionalComponentsOfVariadicArguments.contains(positionalArgument)) {
-                parametersMappedToVariadicPositionalArguments.add(namedParameter);
+                parametersMappedToVariadicPositionalArguments.add(parameter);
               }
             }
-            else if (!namedParameter.hasDefaultValue()) {
-              unmappedParameters.add(namedParameter);
+            else if (!parameter.hasDefaultValue()) {
+              unmappedParameters.add(parameter);
             }
           }
         }
       }
-      else if (parameter instanceof PyTupleParameter) {
+      else if (psi instanceof PyTupleParameter) {
         final PyExpression positionalArgument = next(allPositionalArguments);
         if (positionalArgument != null) {
-          final PyTupleParameter tupleParameter = (PyTupleParameter)parameter;
-          tupleMappedParameters.put(positionalArgument, tupleParameter);
-          final TupleMappingResults tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, tupleParameter);
+          tupleMappedParameters.put(positionalArgument, parameter);
+          final TupleMappingResults tupleMappingResults = mapComponentsOfTupleParameter(positionalArgument, (PyTupleParameter)psi);
           mappedParameters.putAll(tupleMappingResults.getParameters());
           unmappedParameters.addAll(tupleMappingResults.getUnmappedParameters());
           unmappedArguments.addAll(tupleMappingResults.getUnmappedArguments());
@@ -829,7 +833,7 @@ public class PyCallExpressionHelper {
           mappedVariadicArgumentsToParameters = true;
         }
       }
-      else if (parameter instanceof PySingleStarParameter) {
+      else if (psi instanceof PySingleStarParameter) {
         seenSingleStar = true;
       }
       else if (!parameter.hasDefaultValue()) {
@@ -897,19 +901,19 @@ public class PyCallExpressionHelper {
   }
 
   public static class ArgumentMappingResults {
-    @NotNull private final Map<PyExpression, PyNamedParameter> myMappedParameters;
-    @NotNull private final List<PyParameter> myUnmappedParameters;
+    @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
+    @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
-    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicPositionalArguments;
-    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicKeywordArguments;
-    @NotNull private final Map<PyExpression, PyTupleParameter> myMappedTupleParameters;
+    @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicPositionalArguments;
+    @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
+    @NotNull private final Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
 
-    public ArgumentMappingResults(@NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
-                                  @NotNull List<PyParameter> unmappedParameters,
+    public ArgumentMappingResults(@NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
+                                  @NotNull List<PyCallableParameter> unmappedParameters,
                                   @NotNull List<PyExpression> unmappedArguments,
-                                  @NotNull List<PyNamedParameter> parametersMappedToVariadicPositionalArguments,
-                                  @NotNull List<PyNamedParameter> parametersMappedToVariadicKeywordArguments,
-                                  @NotNull Map<PyExpression, PyTupleParameter> mappedTupleParameters) {
+                                  @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
+                                  @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
+                                  @NotNull Map<PyExpression, PyCallableParameter> mappedTupleParameters) {
       myMappedParameters = mappedParameters;
       myUnmappedParameters = unmappedParameters;
       myUnmappedArguments = unmappedArguments;
@@ -919,12 +923,12 @@ public class PyCallExpressionHelper {
     }
 
     @NotNull
-    public Map<PyExpression, PyNamedParameter> getMappedParameters() {
+    public Map<PyExpression, PyCallableParameter> getMappedParameters() {
       return myMappedParameters;
     }
 
     @NotNull
-    public List<PyParameter> getUnmappedParameters() {
+    public List<PyCallableParameter> getUnmappedParameters() {
       return myUnmappedParameters;
     }
 
@@ -934,28 +938,28 @@ public class PyCallExpressionHelper {
     }
 
     @NotNull
-    public List<PyNamedParameter> getParametersMappedToVariadicPositionalArguments() {
+    public List<PyCallableParameter> getParametersMappedToVariadicPositionalArguments() {
       return myParametersMappedToVariadicPositionalArguments;
     }
 
     @NotNull
-    public List<PyNamedParameter> getParametersMappedToVariadicKeywordArguments() {
+    public List<PyCallableParameter> getParametersMappedToVariadicKeywordArguments() {
       return myParametersMappedToVariadicKeywordArguments;
     }
 
     @NotNull
-    public Map<PyExpression, PyTupleParameter> getMappedTupleParameters() {
+    public Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
       return myMappedTupleParameters;
     }
   }
 
   private static class TupleMappingResults {
-    @NotNull private final Map<PyExpression, PyNamedParameter> myParameters;
-    @NotNull private final List<PyParameter> myUnmappedParameters;
+    @NotNull private final Map<PyExpression, PyCallableParameter> myParameters;
+    @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
 
-    TupleMappingResults(@NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
-                        @NotNull List<PyParameter> unmappedParameters,
+    TupleMappingResults(@NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
+                        @NotNull List<PyCallableParameter> unmappedParameters,
                         @NotNull List<PyExpression> unmappedArguments) {
 
       myParameters = mappedParameters;
@@ -964,12 +968,12 @@ public class PyCallExpressionHelper {
     }
 
     @NotNull
-    public Map<PyExpression, PyNamedParameter> getParameters() {
+    public Map<PyExpression, PyCallableParameter> getParameters() {
       return myParameters;
     }
 
     @NotNull
-    public List<PyParameter> getUnmappedParameters() {
+    public List<PyCallableParameter> getUnmappedParameters() {
       return myUnmappedParameters;
     }
 
@@ -981,9 +985,9 @@ public class PyCallExpressionHelper {
 
   @NotNull
   private static TupleMappingResults mapComponentsOfTupleParameter(@Nullable PyExpression argument, @NotNull PyTupleParameter parameter) {
-    final List<PyParameter> unmappedParameters = new ArrayList<>();
+    final List<PyCallableParameter> unmappedParameters = new ArrayList<>();
     final List<PyExpression> unmappedArguments = new ArrayList<>();
-    final Map<PyExpression, PyNamedParameter> mappedParameters = new LinkedHashMap<>();
+    final Map<PyExpression, PyCallableParameter> mappedParameters = new LinkedHashMap<>();
     argument = PyPsiUtils.flattenParens(argument);
     if (argument instanceof PySequenceExpression) {
       final PySequenceExpression sequenceExpr = (PySequenceExpression)argument;
@@ -995,7 +999,7 @@ public class PyCallExpressionHelper {
           final PyExpression arg = argumentComponents[i];
           if (arg != null) {
             if (param instanceof PyNamedParameter) {
-              mappedParameters.put(arg, (PyNamedParameter)param);
+              mappedParameters.put(arg, new PyCallableParameterImpl(param));
             }
             else if (param instanceof PyTupleParameter) {
               final TupleMappingResults nestedResults = mapComponentsOfTupleParameter(arg, (PyTupleParameter)param);
@@ -1008,11 +1012,11 @@ public class PyCallExpressionHelper {
             }
           }
           else {
-            unmappedParameters.add(param);
+            unmappedParameters.add(new PyCallableParameterImpl(param));
           }
         }
         else {
-          unmappedParameters.add(param);
+          unmappedParameters.add(new PyCallableParameterImpl(param));
         }
       }
       if (argumentComponents.length > parameterComponents.length) {
@@ -1135,8 +1139,8 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<PyParameter> dropImplicitParameters(@NotNull List<PyParameter> parameters, int offset) {
-    final ArrayList<PyParameter> results = new ArrayList<>(parameters);
+  private static List<PyCallableParameter> dropImplicitParameters(@NotNull List<PyCallableParameter> parameters, int offset) {
+    final ArrayList<PyCallableParameter> results = new ArrayList<>(parameters);
     for (int i = 0; i < offset && !results.isEmpty(); i++) {
       results.remove(0);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveArgumentEqualDefaultQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -110,9 +111,9 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
 
     private void checkArguments(PyCallExpression callExpr, PyExpression[] arguments) {
       final PyCallExpression.PyArgumentsMapping mapping = callExpr.mapArguments(getResolveContext());
-      Set<PyExpression> problemElements = new HashSet<>();
-      for (Map.Entry<PyExpression, PyNamedParameter> e : mapping.getMappedParameters().entrySet()) {
-        PyExpression defaultValue = e.getValue().getDefaultValue();
+      final Set<PyExpression> problemElements = new HashSet<>();
+      for (Map.Entry<PyExpression, PyCallableParameter> e : mapping.getMappedParameters().entrySet()) {
+        final PyExpression defaultValue = e.getValue().getDefaultValue();
         if (defaultValue != null) {
           PyExpression key = e.getKey();
           if (key instanceof PyKeywordArgument && ((PyKeywordArgument)key).getValueExpression() != null) {

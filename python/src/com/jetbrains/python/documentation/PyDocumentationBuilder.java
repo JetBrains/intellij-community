@@ -332,7 +332,7 @@ public class PyDocumentationBuilder {
     // it may be a call to a standard wrapper
     if (myElement instanceof PyCallExpression) {
       final PyCallExpression call = (PyCallExpression)myElement;
-      final Pair<String, PyFunction> wrapInfo = PyCallExpressionHelper.interpretAsModifierWrappingCall(call, myOriginalElement);
+      final Pair<String, PyFunction> wrapInfo = PyCallExpressionHelper.interpretAsModifierWrappingCall(call);
       if (wrapInfo != null) {
         final String wrapperName = wrapInfo.getFirst();
         final PyFunction wrappedFunction = wrapInfo.getSecond();
@@ -604,7 +604,8 @@ public class PyDocumentationBuilder {
       myPath = path;
     }
 
-    public boolean visitRoot(@NotNull VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
+    @Override
+    public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
       final String vpath = VfsUtilCore.urlToPath(root.getUrl());
       if (myPath.startsWith(vpath)) {
         myResult = vpath;

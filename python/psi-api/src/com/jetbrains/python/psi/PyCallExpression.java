@@ -24,6 +24,7 @@ import com.jetbrains.python.nameResolver.FQNamesProvider;
 import com.jetbrains.python.nameResolver.NameResolverTools;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.types.PyCallableParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -348,21 +349,21 @@ public interface PyCallExpression extends PyCallSiteExpression {
   class PyArgumentsMapping {
     @NotNull private final PyCallExpression myCallExpression;
     @Nullable private final PyMarkedCallee myCallee;
-    @NotNull private final Map<PyExpression, PyNamedParameter> myMappedParameters;
-    @NotNull private final List<PyParameter> myUnmappedParameters;
+    @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
+    @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
-    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicPositionalArguments;
-    @NotNull private final List<PyNamedParameter> myParametersMappedToVariadicKeywordArguments;
-    @NotNull private final Map<PyExpression, PyTupleParameter> myMappedTupleParameters;
+    @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicPositionalArguments;
+    @NotNull private final List<PyCallableParameter> myParametersMappedToVariadicKeywordArguments;
+    @NotNull private final Map<PyExpression, PyCallableParameter> myMappedTupleParameters;
 
     public PyArgumentsMapping(@NotNull PyCallExpression expression,
                               @Nullable PyMarkedCallee markedCallee,
-                              @NotNull Map<PyExpression, PyNamedParameter> mappedParameters,
-                              @NotNull List<PyParameter> unmappedParameters,
+                              @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
+                              @NotNull List<PyCallableParameter> unmappedParameters,
                               @NotNull List<PyExpression> unmappedArguments,
-                              @NotNull List<PyNamedParameter> parametersMappedToVariadicPositionalArguments,
-                              @NotNull List<PyNamedParameter> parametersMappedToVariadicKeywordArguments,
-                              @NotNull Map<PyExpression, PyTupleParameter> tupleMappedParameters) {
+                              @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
+                              @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
+                              @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
       myCallExpression = expression;
       myCallee = markedCallee;
       myMappedParameters = mappedParameters;
@@ -396,12 +397,12 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     @NotNull
-    public Map<PyExpression, PyNamedParameter> getMappedParameters() {
+    public Map<PyExpression, PyCallableParameter> getMappedParameters() {
       return myMappedParameters;
     }
 
     @NotNull
-    public List<PyParameter> getUnmappedParameters() {
+    public List<PyCallableParameter> getUnmappedParameters() {
       return myUnmappedParameters;
     }
 
@@ -411,17 +412,17 @@ public interface PyCallExpression extends PyCallSiteExpression {
     }
 
     @NotNull
-    public List<PyNamedParameter> getParametersMappedToVariadicPositionalArguments() {
+    public List<PyCallableParameter> getParametersMappedToVariadicPositionalArguments() {
       return myParametersMappedToVariadicPositionalArguments;
     }
 
     @NotNull
-    public List<PyNamedParameter> getParametersMappedToVariadicKeywordArguments() {
+    public List<PyCallableParameter> getParametersMappedToVariadicKeywordArguments() {
       return myParametersMappedToVariadicKeywordArguments;
     }
 
     @NotNull
-    public Map<PyExpression, PyTupleParameter> getMappedTupleParameters() {
+    public Map<PyExpression, PyCallableParameter> getMappedTupleParameters() {
       return myMappedTupleParameters;
     }
   }

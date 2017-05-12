@@ -301,13 +301,12 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @NotNull
   private static Ref<PyType> getOpenFunctionType(@NotNull String callQName,
-                                                 @NotNull Map<PyExpression, PyNamedParameter> arguments,
+                                                 @NotNull Map<PyExpression, PyCallableParameter> arguments,
                                                  @NotNull PsiElement anchor,
                                                  @NotNull TypeEvalContext context) {
     String mode = "r";
-    for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
-      final PyNamedParameter parameter = entry.getValue();
-      if ("mode".equals(parameter.getName())) {
+    for (Map.Entry<PyExpression, PyCallableParameter> entry : arguments.entrySet()) {
+      if ("mode".equals(entry.getValue().getName())) {
         PyExpression argument = entry.getKey();
         if (argument instanceof PyKeywordArgument) {
           argument = ((PyKeywordArgument)argument).getValueExpression();
