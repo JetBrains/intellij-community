@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,11 +78,6 @@ final class GitRepositoryUpdater implements Disposable, BulkFileListener {
     if (myMessageBusConnection != null) {
       myMessageBusConnection.disconnect();
     }
-  }
-
-  @Override
-  public void before(@NotNull List<? extends VFileEvent> events) {
-    // everything is handled in #after()
   }
 
   @Override
