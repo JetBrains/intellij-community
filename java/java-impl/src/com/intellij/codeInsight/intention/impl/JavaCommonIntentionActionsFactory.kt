@@ -23,6 +23,7 @@ import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
 import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.UClass
@@ -35,7 +36,7 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     return ModifierFix(declaration.modifierList, modifier, shouldPresent, false)
   }
 
-  override fun createAddMethodAction(u: UClass,
+  override fun createAddMethodAction(uClass: UClass,
                                      methodName: String,
                                      @PsiModifier.ModifierConstant @NotNull visibilityModifier: String,
                                      returnType: PsiType,
@@ -43,19 +44,43 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     val paramsString = parameters.mapIndexed { i, t -> "${t.presentableText} arg$i" }.joinToString()
     val signatureString =
       "${VisibilityUtil.getVisibilityString(visibilityModifier)} ${returnType.presentableText} $methodName($paramsString){}"
-    val smartPsi = SmartPointerManager.getInstance(u.project).createSmartPsiElementPointer(u.psi)
+    val smartPsi = SmartPointerManager.getInstance(uClass.project).createSmartPsiElementPointer(uClass.psi)
     return object : AbstractIntentionAction() {
 
-      private val text = QuickFixBundle.message("add.method.text", methodName, u.name)
+      private val text = QuickFixBundle.message("add.method.text", methodName, uClass.name)
 
       override fun getText(): String = text
 
       override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
         val psi = smartPsi.element ?: return
-        val createMethodFromText = PsiElementFactory.SERVICE.getInstance(u.project)
+        val createMethodFromText = PsiElementFactory.SERVICE.getInstance(uClass.project)
           .createMethodFromText(signatureString, psi)
         psi.add(createMethodFromText)
       }
     }
+  }
+
+  override fun createAddBeanPropertyActions(uClass: UClass,
+                                            propertyName: String,
+                                            @PsiModifier.ModifierConstant visibilityModifier: String,
+                                            propertyType: PsiType,
+                                            setterRequired: Boolean,
+                                            getterRequired: Boolean): Array<IntentionAction> {
+    if (getterRequired && setterRequired)
+      return arrayOf<IntentionAction>(
+        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+                                  true),
+        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+                                  false))
+    if (getterRequired || setterRequired)
+      return arrayOf<IntentionAction>(
+        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+                                  true),
+        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
+                                  false),
+        CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, true, true, true))
+
+    return arrayOf<IntentionAction>(
+      CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired, true))
   }
 }
