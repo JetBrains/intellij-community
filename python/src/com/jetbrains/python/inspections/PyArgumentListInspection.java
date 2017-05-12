@@ -31,7 +31,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.PyRemoveArgumentQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameArgumentQuickFix;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyType;
@@ -120,7 +119,8 @@ public class PyArgumentListInspection extends PyInspection {
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
-    final List<PyCallExpression.PyArgumentsMapping> mappings = calculateMappings(call, context, implicitOffset);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+    final List<PyCallExpression.PyArgumentsMapping> mappings = call.multiMapArguments(resolveContext, implicitOffset);
 
     for (PyCallExpression.PyArgumentsMapping mapping : mappings) {
       final PyCallExpression.PyMarkedCallee callee = mapping.getMarkedCallee();
@@ -144,20 +144,6 @@ public class PyArgumentListInspection extends PyInspection {
 
   public static void inspectPyArgumentList(@NotNull PyArgumentList node, @NotNull ProblemsHolder holder, @NotNull TypeEvalContext context) {
     inspectPyArgumentList(node, holder, context, 0);
-  }
-
-  @NotNull
-  private static List<PyCallExpression.PyArgumentsMapping> calculateMappings(@NotNull PyCallExpression call,
-                                                                             @NotNull TypeEvalContext context,
-                                                                             int implicitOffset) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-    final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
-      PyUtil.filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext, implicitOffset));
-
-    return PyCallExpressionHelper
-      .forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, ResolveResult::getElement, context)
-      .map(ratedMarkedCallee -> PyCallExpressionHelper.mapArguments(call, ratedMarkedCallee.getMarkedCallee(), context))
-      .collect(Collectors.toList());
   }
 
   private static boolean decoratedClassInitCall(@Nullable PyExpression callee, @NotNull PyFunction function) {

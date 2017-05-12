@@ -18,7 +18,6 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.ResolveResult;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -628,9 +627,7 @@ public class PyTypeChecker {
       final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
         PyUtil.filterTopPriorityResults(((PyCallExpression)callSite).multiResolveRatedCallee(resolveContext));
 
-      return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, ResolveResult::getElement, context)
-        .map(PyCallExpression.PyRatedMarkedCallee::getElement)
-        .collect(Collectors.toList());
+      return ContainerUtil.map(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement);
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<PyCallable> results = new ArrayList<>();

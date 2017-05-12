@@ -119,19 +119,29 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyCallExpression call,
                                                                                    @NotNull PyResolveContext resolveContext,
                                                                                    int implicitOffset) {
-    return multiResolveCallee(call.getCallee(), resolveContext)
-      .stream()
-      .map(resolveResult -> clarifyResolveResult(resolveResult, resolveContext, call))
-      .filter(Objects::nonNull)
-      .map(resolveResult -> markResolveResult(resolveResult, resolveContext.getTypeEvalContext(), implicitOffset))
-      .filter(Objects::nonNull)
+    final LinkedHashMap<PsiElement, PyCallExpression.PyRatedMarkedCallee> result = new LinkedHashMap<>();
+
+    for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
+      final ClarifiedResolveResult clarifiedResolveResult = clarifyResolveResult(resolveResult, resolveContext, call);
+      if (clarifiedResolveResult == null) continue;
+
+      final PyCallExpression.PyRatedMarkedCallee markedCallee =
+        markResolveResult(clarifiedResolveResult, resolveContext.getTypeEvalContext(), implicitOffset);
+      if (markedCallee == null) continue;
+
       // while clarifying resolve results we could get duplicate callables so we have to group them and select result with highest rate
-      .collect(Collectors.groupingBy(markedCallee -> markedCallee.getElement(), LinkedHashMap::new, Collectors.toList()))
-      .entrySet()
-      .stream()
-      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate)).orElse(null))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      result.put(markedCallee.getElement(),
+                 StreamEx
+                   .of(markedCallee, result.get(markedCallee.getElement()))
+                   .nonNull()
+                   .max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate))
+                   .orElse(null));
+    }
+
+    return StreamEx
+      .of(forEveryScopeTakeOverloadsOtherwiseImplementations(result.entrySet(), Map.Entry::getKey, resolveContext.getTypeEvalContext()))
+      .map(Map.Entry::getValue)
+      .toList();
   }
 
   @NotNull
@@ -842,9 +852,9 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static <E> Stream<E> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull List<E> elements,
-                                                                                 @NotNull Function<? super E, PsiElement> mapper,
-                                                                                 @NotNull TypeEvalContext context) {
+  private static <E> Stream<E> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull Collection<E> elements,
+                                                                                  @NotNull Function<? super E, PsiElement> mapper,
+                                                                                  @NotNull TypeEvalContext context) {
     if (!containsOverloadsAndImplementations(elements, mapper, context)) {
       return elements.stream();
     }
@@ -857,7 +867,7 @@ public class PyCallExpressionHelper {
       .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
   }
 
-  private static <E> boolean containsOverloadsAndImplementations(@NotNull List<E> elements,
+  private static <E> boolean containsOverloadsAndImplementations(@NotNull Collection<E> elements,
                                                                  @NotNull Function<? super E, PsiElement> mapper,
                                                                  @NotNull TypeEvalContext context) {
     boolean containsOverloads = false;
