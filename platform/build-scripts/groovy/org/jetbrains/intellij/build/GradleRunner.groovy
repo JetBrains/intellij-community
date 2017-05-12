@@ -68,6 +68,7 @@ class GradleRunner {
     command.add("${projectDir.absolutePath}/$gradleScript".toString())
     command.addAll(tasks)
     command.add('--stacktrace')
+    command.add('--no-daemon')
     def process = new ProcessBuilder(command).directory(projectDir).start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
