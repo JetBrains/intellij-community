@@ -21,7 +21,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -58,72 +60,67 @@ public class SideEffectChecker {
   }
 
   public static boolean mayHaveSideEffects(@NotNull PsiExpression exp) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor();
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null);
     exp.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 
   public static boolean mayHaveSideEffects(@NotNull PsiStatement statement, Predicate<PsiMethodCallExpression> shouldIgnoreCall) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor(shouldIgnoreCall);
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(null, shouldIgnoreCall);
     statement.accept(visitor);
     return visitor.mayHaveSideEffects();
   }
 
   public static boolean checkSideEffects(@NotNull PsiExpression element, @NotNull List<PsiElement> sideEffects) {
-    final SideEffectsVisitor visitor = new SideEffectsVisitor();
+    final SideEffectsVisitor visitor = new SideEffectsVisitor(sideEffects);
     element.accept(visitor);
-    if (visitor.sideEffect != null) {
-      sideEffects.add(visitor.sideEffect);
-      return true;
-    }
-    return false;
+    return visitor.mayHaveSideEffects();
+  }
+
+  public static List<PsiExpression> extractSideEffectExpressions(@NotNull PsiExpression element) {
+    List<PsiElement> list = new ArrayList<>();
+    element.accept(new SideEffectsVisitor(list));
+    return StreamEx.of(list).select(PsiExpression.class).toList();
   }
 
   private static class SideEffectsVisitor extends JavaRecursiveElementWalkingVisitor {
-    PsiElement sideEffect;
+    private @Nullable final List<PsiElement> mySideEffects;
+    boolean found;
     final Predicate<PsiMethodCallExpression> myIgnoredCallPredicate;
 
-    SideEffectsVisitor() {
-      this(call -> false);
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects) {
+      this(sideEffects, call -> false);
     }
 
-    SideEffectsVisitor(Predicate<PsiMethodCallExpression> predicate) {
+    SideEffectsVisitor(@Nullable List<PsiElement> sideEffects, Predicate<PsiMethodCallExpression> predicate) {
       myIgnoredCallPredicate = predicate;
+      mySideEffects = sideEffects;
     }
 
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (sideEffect == null) {
-        super.visitElement(element);
+    private void addSideEffect(PsiElement element) {
+      found = true;
+      if(mySideEffects != null) {
+        mySideEffects.add(element);
+      } else {
+        stopWalking();
       }
     }
 
     @Override
-    public void visitAssignmentExpression(
-      @NotNull PsiAssignmentExpression expression) {
-      if (sideEffect != null) {
-        return;
-      }
-      super.visitAssignmentExpression(expression);
-      sideEffect = expression;
+    public void visitAssignmentExpression(@NotNull PsiAssignmentExpression expression) {
+      addSideEffect(expression);
     }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
-      if (sideEffect != null) {
-        return;
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
+      if (!myIgnoredCallPredicate.test(expression)) {
+        final PsiMethod method = expression.resolveMethod();
+        if (!isPure(method)) {
+          addSideEffect(expression);
+          return;
+        }
       }
       super.visitMethodCallExpression(expression);
-      if (myIgnoredCallPredicate.test(expression)) {
-        return;
-      }
-      final PsiMethod method = expression.resolveMethod();
-      if (isPure(method)) {
-        return;
-      }
-      
-      sideEffect = expression;
     }
 
     protected boolean isPure(PsiMethod method) {
@@ -138,51 +135,41 @@ public class SideEffectChecker {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if (sideEffect != null) {
+      if(!isSideEffectFreeConstructor(expression)) {
+        addSideEffect(expression);
         return;
       }
       super.visitNewExpression(expression);
-      sideEffect = isSideEffectFreeConstructor(expression) ? null : expression;
     }
 
     @Override
-    public void visitPostfixExpression(
-      @NotNull PsiPostfixExpression expression) {
-      if (sideEffect != null) {
+    public void visitPostfixExpression(@NotNull PsiPostfixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        addSideEffect(expression);
         return;
       }
       super.visitPostfixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
-          tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        sideEffect = expression;
-      }
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
-      if (sideEffect != null) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
+      final IElementType tokenType = expression.getOperationTokenType();
+      if (tokenType.equals(JavaTokenType.PLUSPLUS) || tokenType.equals(JavaTokenType.MINUSMINUS)) {
+        addSideEffect(expression);
         return;
       }
       super.visitPrefixExpression(expression);
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (tokenType.equals(JavaTokenType.PLUSPLUS) ||
-          tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        sideEffect = expression;
-      }
     }
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
-      sideEffect = statement;
-      super.visitDeclarationStatement(statement);
+      addSideEffect(statement);
     }
 
     @Override
     public void visitBreakStatement(PsiBreakStatement statement) {
-      sideEffect = statement;
-      super.visitBreakStatement(statement);
+      addSideEffect(statement);
     }
 
     @Override
@@ -192,20 +179,17 @@ public class SideEffectChecker {
 
     @Override
     public void visitContinueStatement(PsiContinueStatement statement) {
-      sideEffect = statement;
-      super.visitContinueStatement(statement);
+      addSideEffect(statement);
     }
 
     @Override
     public void visitReturnStatement(PsiReturnStatement statement) {
-      sideEffect = statement;
-      super.visitReturnStatement(statement);
+      addSideEffect(statement);
     }
 
     @Override
     public void visitThrowStatement(PsiThrowStatement statement) {
-      sideEffect = statement;
-      super.visitThrowStatement(statement);
+      addSideEffect(statement);
     }
 
     @Override
@@ -214,7 +198,7 @@ public class SideEffectChecker {
     }
 
     public boolean mayHaveSideEffects() {
-      return sideEffect != null;
+      return found;
     }
   }
 
