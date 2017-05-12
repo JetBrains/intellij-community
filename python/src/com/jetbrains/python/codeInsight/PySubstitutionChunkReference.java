@@ -179,7 +179,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       return resolveDictCall((PyCallExpression)valueExpr, indexElement, false);
     }
     else if (valueExpr instanceof PyDictLiteralExpression) {
-      Ref<PyExpression> resolvedRef = getElementFromDictLiteral(valueExpr, indexElement);
+      Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)valueExpr, indexElement);
       if (resolvedRef != null) return resolvedRef;
     }
     else if (valueExpr instanceof PyReferenceExpression) {
@@ -240,7 +240,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
             if (expr != null && !expr.isNull()) return expr;
           }
           else if (underStarExpr instanceof PyCallExpression) {
-            Ref<PyExpression> expr = getElementFromCallExpression((PyCallExpression)underStarExpr, index.toString());
+            Ref<PyExpression> expr = resolveDictCall((PyCallExpression)underStarExpr, index.toString(), true);
             allKeysForSure = expr != null;
             if (expr != null && !expr.isNull()) return expr;
           }
@@ -251,16 +251,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
     return allKeysForSure ? Ref.create() : null;
-  }
-
-  @Nullable
-  private  Ref<PyExpression> getElementFromCallExpression(@NotNull PyCallExpression valueExpr,
-                                                          @NotNull String key) {
-    final PyExpression callee = valueExpr.getCallee();
-    if (callee != null && "dict".equals(callee.getName())) {
-      return resolveDictCall(valueExpr, key, true);
-    }
-    return null;
   }
 
   @Nullable
@@ -345,8 +335,8 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   private PyExpression resolveKeywordPercent(@NotNull PyExpression expression, @NotNull String key) {
     final PyExpression containedExpr = PyPsiUtils.flattenParens(expression);
-    if (PyUtil.instanceOf(containedExpr, PyDictLiteralExpression.class, PyCallExpression.class)) {
-      final Ref<PyExpression> resolvedRef = getElementFromDictLiteral(containedExpr, key);
+    if (PyUtil.instanceOf(containedExpr, PyDictLiteralExpression.class)) {
+      final Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)containedExpr, key);
       return resolvedRef != null ? resolvedRef.get() : containedExpr;
     }
     else if (PyUtil.instanceOf(containedExpr, PyLiteralExpression.class, PySetLiteralExpression.class,
@@ -441,55 +431,47 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @Nullable
-  private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyExpression expression,
-                                                      @NotNull String mappingKey) {
-    if (expression instanceof PyDictLiteralExpression) {
-      final PyKeyValueExpression[] keyValueExpressions = ((PyDictLiteralExpression)expression).getElements();
+  private Ref<PyExpression> getElementFromDictLiteral(@NotNull PyDictLiteralExpression expression, @NotNull String mappingKey) {
+    final PyKeyValueExpression[] keyValueExpressions = expression.getElements();
 
-      boolean allKeysForSure = true;
-      for (PyKeyValueExpression keyValueExpression : keyValueExpressions) {
-        PyExpression keyExpression = keyValueExpression.getKey();
-        if (keyExpression instanceof PyStringLiteralExpression) {
-          final PyStringLiteralExpression key = (PyStringLiteralExpression)keyExpression;
-          if (key.getStringValue().equals(mappingKey)) {
-            return Ref.create(keyValueExpression.getValue());
-          }
-        }
-        else if (!(keyExpression instanceof PyLiteralExpression)) {
-          allKeysForSure = false;
+    boolean allKeysForSure = true;
+    for (PyKeyValueExpression keyValueExpression : keyValueExpressions) {
+      PyExpression keyExpression = keyValueExpression.getKey();
+      if (keyExpression instanceof PyStringLiteralExpression) {
+        final PyStringLiteralExpression key = (PyStringLiteralExpression)keyExpression;
+        if (key.getStringValue().equals(mappingKey)) {
+          return Ref.create(keyValueExpression.getValue());
         }
       }
+      else if (!(keyExpression instanceof PyLiteralExpression)) {
+        allKeysForSure = false;
+      }
+    }
 
-      final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
-      PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(expression, PyDoubleStarExpression.class);
-      if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && starExpressions != null) {
-        for (PyDoubleStarExpression expr : starExpressions) {
-          PyExpression underStarExpr = PyPsiUtils.flattenParens(expr.getExpression());
-          if (underStarExpr != null) {
-            if (underStarExpr instanceof PyDictLiteralExpression) {
-              Ref<PyExpression> element = getElementFromDictLiteral(underStarExpr, mappingKey);
-              allKeysForSure = element != null;
-               if (element != null && !element.isNull()) return element;
-            }
-            else if (underStarExpr instanceof PyCallExpression) {
-              Ref<PyExpression> element = getElementFromCallExpression((PyCallExpression)underStarExpr, mappingKey);
-              allKeysForSure = element != null;
-              if (element != null && !element.isNull()) return element;
-            }
-            else {
-              allKeysForSure = false;
-            }
+    final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
+    PyDoubleStarExpression[] starExpressions = PsiTreeUtil.getChildrenOfType(expression, PyDoubleStarExpression.class);
+    if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && starExpressions != null) {
+      for (PyDoubleStarExpression expr : starExpressions) {
+        PyExpression underStarExpr = PyPsiUtils.flattenParens(expr.getExpression());
+        if (underStarExpr != null) {
+          if (underStarExpr instanceof PyDictLiteralExpression) {
+            Ref<PyExpression> element = getElementFromDictLiteral((PyDictLiteralExpression)underStarExpr, mappingKey);
+            allKeysForSure = element != null;
+             if (element != null && !element.isNull()) return element;
+          }
+          else if (underStarExpr instanceof PyCallExpression) {
+            Ref<PyExpression> element = resolveDictCall((PyCallExpression)underStarExpr, mappingKey, true);
+            allKeysForSure = element != null;
+            if (element != null && !element.isNull()) return element;
+          }
+          else {
+            allKeysForSure = false;
           }
         }
       }
+    }
 
-      return allKeysForSure ? Ref.create() : null;
-    }
-    else if (expression instanceof PyCallExpression) {
-      return resolveDictCall((PyCallExpression)expression, mappingKey, false);
-    }
-    
-    return null;
+    return allKeysForSure ? Ref.create() : null;
   }
 
   @Nullable
@@ -505,7 +487,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
           if (languageLevel.isAtLeast(LanguageLevel.PYTHON35) && goDeep && arg instanceof PyStarExpression) {
             PyExpression expr = ((PyStarExpression)arg).getExpression();
             if (expr instanceof PyDictLiteralExpression) {
-              Ref<PyExpression> element = getElementFromDictLiteral(expr, key);
+              Ref<PyExpression> element = getElementFromDictLiteral((PyDictLiteralExpression)expr, key);
               if (element != null) return element;
             }
             else if (expr instanceof PyCallExpression) {
