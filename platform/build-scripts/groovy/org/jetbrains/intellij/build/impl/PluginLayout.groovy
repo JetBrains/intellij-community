@@ -16,7 +16,9 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.Pair
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.ResourcesGenerator
 
 import java.util.function.Function
 
@@ -124,6 +126,13 @@ class PluginLayout extends BaseLayout {
      */
     void withResourceArchive(String resourcePath, String relativeOutputFile) {
       layout.resourcePaths << new ModuleResourceData(layout.mainModule, resourcePath, relativeOutputFile, true)
+    }
+
+    /**
+     * Copy output produced by {@code generator} to the directory specified by {@code relativeOutputPath} under the plugin directory.
+     */
+    void withGeneratedResources(ResourcesGenerator generator, String relativeOutputPath) {
+      layout.resourceGenerators << Pair.create(generator, relativeOutputPath)
     }
 
     /**

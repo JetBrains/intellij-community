@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
@@ -225,7 +226,7 @@ class DistributionJARsBuilder {
       layoutBuilder.patchModuleOutput("platform-resources", FileUtil.toSystemIndependentName(patchedKeyMapDir.absolutePath))
     }
 
-    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars)
+    buildByLayout(layoutBuilder, platform, buildContext.paths.distAll, platform.moduleJars, [])
 
     if (buildContext.proprietaryBuildTools.scrambleTool != null) {
       def forbiddenJarNames = buildContext.proprietaryBuildTools.scrambleTool.namesOfJarsRequiredToBeScrambled
@@ -301,7 +302,11 @@ class DistributionJARsBuilder {
     pluginsToInclude.each { plugin ->
       def actualModuleJars = plugin.getActualModules(enabledModulesSet)
       checkOutputOfPluginModules(plugin.mainModule, actualModuleJars.values(), plugin.moduleExcludes)
-      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars)
+      List<Pair<File, String>> generatedResources = plugin.resourceGenerators.collectMany {
+        File resourceFile = it.first.generateResources(buildContext)
+        resourceFile != null ? [Pair.create(resourceFile, it.second)] : []
+      }
+      buildByLayout(layoutBuilder, plugin, "$targetDirectory/$plugin.directoryName", actualModuleJars, generatedResources)
     }
   }
 
@@ -327,7 +332,12 @@ class DistributionJARsBuilder {
     })
   }
 
-  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars) {
+  /**
+   * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
+   * @param additionalResources pairs of resources files and corresponding relative output paths
+   */
+  private void buildByLayout(LayoutBuilder layoutBuilder, BaseLayout layout, String targetDirectory, MultiValuesMap<String, String> moduleJars,
+                             List<Pair<File, String>> additionalResources) {
     def ant = buildContext.ant
     def resourceExcluded = RESOURCES_EXCLUDED
     def resourcesIncluded = RESOURCES_INCLUDED
@@ -420,6 +430,17 @@ class DistributionJARsBuilder {
             else {
               ant.fileset(dir: path)
             }
+          }
+        }
+      }
+      additionalResources.each {
+        File resource = it.first
+        dir(it.second) {
+          if (resource.isFile()) {
+            ant.fileset(file: resource.absolutePath)
+          }
+          else {
+            ant.fileset(dir: resource.absolutePath)
           }
         }
       }
