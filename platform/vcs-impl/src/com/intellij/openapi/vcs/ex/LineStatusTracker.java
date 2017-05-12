@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.ex;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -171,15 +172,17 @@ public class LineStatusTracker extends LineStatusTrackerBase {
   @Override
   @CalledInAwt
   protected void fireFileUnchanged() {
-    // later to avoid saving inside document change event processing.
-    TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
-      FileDocumentManager.getInstance().saveDocument(myDocument);
-      List<Range> ranges = getRanges();
-      if (ranges == null || ranges.isEmpty()) {
-        // file was modified, and now it's not -> dirty local change
-        myVcsDirtyScopeManager.fileDirty(myVirtualFile);
-      }
-    });
+    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+      // later to avoid saving inside document change event processing.
+      TransactionGuard.getInstance().submitTransactionLater(getProject(), () -> {
+        FileDocumentManager.getInstance().saveDocument(myDocument);
+        List<Range> ranges = getRanges();
+        if (ranges == null || ranges.isEmpty()) {
+          // file was modified, and now it's not -> dirty local change
+          myVcsDirtyScopeManager.fileDirty(myVirtualFile);
+        }
+      });
+    }
   }
 
   @Override
