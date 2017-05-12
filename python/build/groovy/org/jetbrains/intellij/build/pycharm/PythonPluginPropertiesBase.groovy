@@ -16,71 +16,15 @@
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.ApplicationInfoProperties
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 import org.jetbrains.intellij.build.MacDistributionCustomizer
 import org.jetbrains.intellij.build.WindowsDistributionCustomizer
-import org.jetbrains.intellij.build.impl.PluginLayout
-
 /**
  * @author vlan
  */
 abstract class PythonPluginPropertiesBase extends PyCharmPropertiesBase {
-  List<String> communityModules = [
-    "IntelliLang-python",
-    "ipnb",
-    "python-openapi",
-    "python-community-plugin-core",
-    "python-community-plugin-java",
-    "python-community-configure",
-    "python-community-plugin-minor",
-    "python-psi-api",
-    "python-pydev",
-    "python-community",
-  ]
-
-  String pythonCommunityPluginModule = "python-community-plugin-resources"
-
   PythonPluginPropertiesBase() {
     super()
-  }
-
-  PluginLayout pythonCommunityPluginLayout(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    def pluginXmlModules = [
-      "IntelliLang-python",
-      "ipnb",
-    ]
-    pythonPlugin(pythonCommunityPluginModule, "python-ce", "python-community-plugin-build-patches",
-                 communityModules) {
-      withProjectLibrary("markdown4j-2.2")  // Required for ipnb
-      pluginXmlModules.each { module ->
-        excludeFromModule(module, "META-INF/plugin.xml")
-      }
-      excludeFromModule(pythonCommunityPluginModule, "META-INF/python-plugin-dependencies.xml")
-      body.delegate = delegate
-      body()
-    }
-  }
-
-  static PluginLayout pythonPlugin(String mainModuleName, String name, String buildPatchesModule, List<String> modules,
-                                   @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure body = {}) {
-    return PluginLayout.plugin(mainModuleName) {
-      directoryName = name
-      mainJarName = "${name}.jar"
-      modules.each { module ->
-        withModule(module, mainJarName, false)
-      }
-      withModule(buildPatchesModule, mainJarName, false)
-      withResourceFromModule("python-helpers", "", "helpers")
-      withCustomVersion { BuildContext context ->
-        // TODO: Make the Python plugin follow the conventional scheme for plugin versioning, build the plugin together with the IDE
-        def pluginBuildNumber = System.getProperty("build.number", "SNAPSHOT")
-        "$context.applicationInfo.majorVersion.$context.applicationInfo.minorVersionMainPart.$pluginBuildNumber"
-      }
-      doNotCreateSeparateJarForLocalizableResources()
-      body.delegate = delegate
-      body()
-    }
   }
 
   @Override

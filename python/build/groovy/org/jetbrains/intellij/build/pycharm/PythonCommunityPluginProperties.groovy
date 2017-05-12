@@ -16,6 +16,7 @@
 package org.jetbrains.intellij.build.pycharm
 
 import org.jetbrains.intellij.build.CommunityRepositoryModules
+import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 
 /**
  * @author vlan
@@ -26,10 +27,10 @@ class PythonCommunityPluginProperties extends PythonPluginPropertiesBase {
     productCode = "PC"
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "python-community-ide-resources"
-    productLayout.pluginModulesToPublish = [pythonCommunityPluginModule]
+    productLayout.pluginModulesToPublish = [PythonCommunityPluginModules.PYTHON_COMMUNITY_PLUGIN_MODULE]
 
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [
-      pythonCommunityPluginLayout()
+      PythonCommunityPluginModules.pythonCommunityPluginLayout()
     ]
   }
 }
