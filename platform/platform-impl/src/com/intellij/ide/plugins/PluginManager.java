@@ -119,7 +119,11 @@ public class PluginManager extends PluginManagerCore {
           getLogger().error(t);
         }
         catch (Throwable ignore) { }
-        if (t instanceof StackOverflowError) return; // workaround for startup's SOE parsing PAC file (JRE-247)
+        if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
+          // workaround for startup's SOE parsing PAC file (JRE-247)
+          // jdk8u_nashorn/blob/master/src/jdk/nashorn/internal/runtime/RecompilableScriptFunctionData.java#createAstSerializerExecutorService
+          return;
+        }
       }
 
       final ImplementationConflictException conflictException = findCause(t, ImplementationConflictException.class);
