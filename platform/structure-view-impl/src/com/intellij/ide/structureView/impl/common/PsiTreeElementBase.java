@@ -19,6 +19,7 @@ import com.intellij.ide.structureView.StructureViewExtension;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.customRegions.CustomRegionStructureUtil;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Iconable;
@@ -99,6 +100,11 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
   @NotNull
   @Override
   public final StructureViewTreeElement[] getChildren() {
+    return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren);
+  }
+
+  @NotNull
+  private StructureViewTreeElement[] doGetChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
     List<StructureViewTreeElement> result = new ArrayList<>();

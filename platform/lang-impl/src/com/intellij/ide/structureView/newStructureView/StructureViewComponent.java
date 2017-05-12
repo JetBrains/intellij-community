@@ -38,6 +38,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -116,7 +117,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
       @Override
       public boolean isToBuildChildrenInBackground(final Object element) {
-        return getRootElement() == element;
+        return Registry.is("ide.structureView.StructureViewTreeStructure.BuildChildrenInBackground") ||
+               getRootElement() == element;
       }
 
       @Override
