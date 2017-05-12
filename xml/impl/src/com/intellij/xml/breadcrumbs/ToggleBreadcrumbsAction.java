@@ -16,42 +16,32 @@
 package com.intellij.xml.breadcrumbs;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.FileViewProvider;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
 final class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
+  private static final Key<Boolean> FORCED_BREADCRUMBS = new Key<>("FORCED_BREADCRUMBS");
+
   @Override
   public boolean isSelected(AnActionEvent event) {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    Editor editor = ToggleBreadcrumbsSettingsAction.findEditor(event);
+    if (editor == null) return false;
 
-    boolean selected = settings.isBreadcrumbsShown();
-    if (!selected) return false;
+    Boolean shown = getForcedShown(editor);
+    if (shown != null) return shown;
 
-    String languageID = findLanguageID(event);
-    return languageID == null || settings.isBreadcrumbsShownFor(languageID);
+    return ToggleBreadcrumbsSettingsAction.isSelected(editor);
   }
 
   @Override
   public void setSelected(AnActionEvent event, boolean selected) {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-
-    boolean modified;
-    String languageID = findLanguageID(event);
-    if (languageID == null) {
-      modified = settings.setBreadcrumbsShown(selected);
-    }
-    else {
-      modified = settings.setBreadcrumbsShownFor(languageID, selected);
-      if (selected && settings.setBreadcrumbsShown(true)) modified = true;
-    }
-    if (modified) {
+    Editor editor = ToggleBreadcrumbsSettingsAction.findEditor(event);
+    if (editor != null) {
+      editor.putUserData(FORCED_BREADCRUMBS, selected);
       UISettings.getInstance().fireUISettingsChanged();
     }
   }
@@ -60,17 +50,11 @@ final class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
 
-    Editor editor = findEditor(event);
+    Editor editor = ToggleBreadcrumbsSettingsAction.findEditor(event);
     event.getPresentation().setEnabled(editor != null);
   }
 
-  private static Editor findEditor(AnActionEvent event) {
-    return event == null ? null : event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
-  }
-
-  private static String findLanguageID(AnActionEvent event) {
-    if (!ActionPlaces.MAIN_MENU.equals(event.getPlace())) return null;
-    FileViewProvider provider = BreadcrumbsXmlWrapper.findViewProvider(findEditor(event));
-    return provider == null ? null : provider.getBaseLanguage().getID();
+  static Boolean getForcedShown(@NotNull Editor editor) {
+    return editor.getUserData(FORCED_BREADCRUMBS);
   }
 }

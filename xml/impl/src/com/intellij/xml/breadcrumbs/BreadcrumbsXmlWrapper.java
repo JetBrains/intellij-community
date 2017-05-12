@@ -112,7 +112,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
       }
     }, this);
 
-    myInfoProvider = findInfoProvider(myFile, myProject);
+    myInfoProvider = findInfoProvider(myEditor, myFile);
 
     final CaretListener caretListener = new CaretListener() {
       @Override
@@ -237,7 +237,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static BreadcrumbsProvider findProviderForElement(@NotNull PsiElement element, BreadcrumbsProvider defaultProvider) {
-    final BreadcrumbsProvider provider = getInfoProvider(element.getLanguage());
+    Language language = element.getLanguage();
+    if (!EditorSettingsExternalizable.getInstance().isBreadcrumbsShownFor(language.getID())) return defaultProvider;
+    BreadcrumbsProvider provider = getInfoProvider(language);
     return provider == null ? defaultProvider : provider;
   }
 
@@ -380,8 +382,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  static BreadcrumbsProvider findInfoProvider(VirtualFile file, Project project) {
-    return project == null ? null : findInfoProvider(findViewProvider(file, project));
+  static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, VirtualFile file) {
+    Project project = editor.getProject();
+    return project == null ? null : findInfoProvider(editor, findViewProvider(file, project));
   }
 
   private static VirtualFile getVirtualFile(@NotNull Editor editor) {
@@ -398,19 +401,22 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
   }
 
   @Nullable
-  public static BreadcrumbsProvider findInfoProvider(@Nullable FileViewProvider viewProvider) {
+  public static BreadcrumbsProvider findInfoProvider(@NotNull Editor editor, @Nullable FileViewProvider viewProvider) {
     if (viewProvider == null) return null;
 
+    Boolean shown = ToggleBreadcrumbsAction.getForcedShown(editor);
+    if (shown != null && !shown) return null;
+
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (!settings.isBreadcrumbsShown()) return null;
+    if (shown == null && !settings.isBreadcrumbsShown()) return null;
 
     Language baseLang = viewProvider.getBaseLanguage();
-    if (!settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
+    if (shown == null && !settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
 
     BreadcrumbsProvider provider = getInfoProvider(baseLang);
     if (provider == null) {
       for (Language language : viewProvider.getLanguages()) {
-        if (settings.isBreadcrumbsShownFor(language.getID())) {
+        if (shown != null || settings.isBreadcrumbsShownFor(language.getID())) {
           provider = getInfoProvider(language);
           if (provider != null) break;
         }
@@ -482,10 +488,9 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static BreadcrumbsProvider getInfoProvider(@NotNull Language language) {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
     for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
       for (Language supported : provider.getLanguages()) {
-        if (settings.isBreadcrumbsShownFor(language.getID()) && supported.isKindOf(language)) {
+        if (supported.isKindOf(language)) {
           return provider;
         }
       }

@@ -34,8 +34,6 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
-import com.intellij.psi.FileViewProvider;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,46 +92,32 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   }
 
   private static void reinitBreadcrumbsComponent(@NotNull final FileEditorManager fileEditorManager, @NotNull VirtualFile file) {
-    if (isSuitable(fileEditorManager.getProject(), file)) {
-      FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
-      for (final FileEditor fileEditor : fileEditors) {
-        if (fileEditor instanceof TextEditor && fileEditor.isValid()) {
-          Editor editor = ((TextEditor)fileEditor).getEditor();
-          final BreadcrumbsXmlWrapper existingWrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
-          if (existingWrapper != null) {
-            existingWrapper.queueUpdate();
-            continue;
-          }
-
-          final BreadcrumbsXmlWrapper wrapper = new BreadcrumbsXmlWrapper(editor);
-          registerWrapper(fileEditorManager, fileEditor, wrapper);
-        }
-      }
-    }
-    else {
-      removeBreadcrumbs(fileEditorManager, file);
-    }
-  }
-
-  private static void removeBreadcrumbs(@NotNull FileEditorManager fileEditorManager, @NotNull VirtualFile file) {
-    final FileEditor[] fileEditors = fileEditorManager.getAllEditors(file);
-    for (FileEditor fileEditor : fileEditors) {
+    for (FileEditor fileEditor : fileEditorManager.getAllEditors(file)) {
       if (fileEditor instanceof TextEditor) {
-        Editor editor = ((TextEditor)fileEditor).getEditor();
+        TextEditor textEditor = (TextEditor)fileEditor;
+        Editor editor = textEditor.getEditor();
         BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
-        if (wrapper != null) {
+        if (isSuitable(textEditor, file)) {
+          if (wrapper != null) {
+            wrapper.queueUpdate();
+          }
+          else {
+            registerWrapper(fileEditorManager, fileEditor, new BreadcrumbsXmlWrapper(editor));
+          }
+        }
+        else if (wrapper != null) {
           disposeWrapper(fileEditorManager, fileEditor, wrapper);
         }
       }
     }
   }
 
-  private static boolean isSuitable(@NotNull Project project, @NotNull VirtualFile file) {
+  private static boolean isSuitable(@NotNull TextEditor editor, @NotNull VirtualFile file) {
     if (file instanceof HttpVirtualFile) {
       return false;
     }
 
-    return BreadcrumbsXmlWrapper.findInfoProvider(file, project) != null;
+    return editor.isValid() && BreadcrumbsXmlWrapper.findInfoProvider(editor.getEditor(), file) != null;
   }
 
   private static void registerWrapper(@NotNull FileEditorManager fileEditorManager,
