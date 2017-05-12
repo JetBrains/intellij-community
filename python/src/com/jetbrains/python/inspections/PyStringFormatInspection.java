@@ -145,7 +145,7 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyCallExpression) {
           final PyExpression callee = ((PyCallExpression)rightExpression).getCallee();
           if (callee != null && "dict".equals(callee.getName())) return 1;
-          return inspectCallExpression((PyCallExpression)rightExpression, resolveContext, myTypeEvalContext, true);
+          return inspectCallExpression((PyCallExpression)rightExpression, resolveContext, myTypeEvalContext);
         }
         else if (rightExpression instanceof PyParenthesizedExpression) {
           final PyExpression rhs = ((PyParenthesizedExpression)rightExpression).getContainedExpression();
@@ -598,8 +598,7 @@ public class PyStringFormatInspection extends PyInspection {
 
     static int inspectCallExpression(@NotNull PyCallExpression callExpression,
                                      @NotNull PyResolveContext resolveContext,
-                                     @NotNull TypeEvalContext evalContext,
-                                     boolean isPercent) {
+                                     @NotNull TypeEvalContext evalContext) {
       final IntSummaryStatistics statistics = callExpression.multiResolveCalleeFunction(resolveContext)
         .stream()
         .map(callable -> callable.getCallType(evalContext, callExpression))
@@ -613,12 +612,7 @@ public class PyStringFormatInspection extends PyInspection {
                 return 1;
               }
               else if (callType instanceof PyClassType) {
-                final PyClassType setType = PyBuiltinCache.getInstance(callExpression).getSetType();
-                final PyClassType tupleType = PyBuiltinCache.getInstance(callExpression).getTupleType();
-
-                if (!callType.equals(tupleType) &&
-                    (callType.equals(setType) && isPercent
-                     || PyBuiltinCache.getInstance(callExpression).isBuiltin(((PyClassType)callType).getPyClass()))) {
+                if (PyBuiltinCache.getInstance(callExpression).isBuiltin(((PyClassType)callType).getPyClass())) {
                   return 1;
                 }
               }
