@@ -157,7 +157,7 @@ public class DocumentCommitThread implements Runnable, Disposable, DocumentCommi
 
     if (!project.isInitialized()) return;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(document);
-    if (psiFile == null) return;
+    if (psiFile == null || psiFile instanceof PsiCompiledElement) return;
     doQueue(project, document, getAllFileNodes(psiFile), reason, context,
             PsiDocumentManager.getInstance(project).getLastCommittedText(document));
   }
