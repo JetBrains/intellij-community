@@ -1108,7 +1108,7 @@ public class UsageViewImpl implements UsageView {
         DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
         for (UsageNode node : nodes) {
           MutableTreeNode parent = (MutableTreeNode)node.getParent();
-          int childIndex = parent.getIndex(node);
+          int childIndex = parent == null ? -1 : parent.getIndex(node);
           if (childIndex != -1) {
             parent.remove(childIndex);
           }
