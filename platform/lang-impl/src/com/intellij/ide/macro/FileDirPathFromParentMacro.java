@@ -78,7 +78,7 @@ public class FileDirPathFromParentMacro extends Macro {
       boolean found = true;
       for (int j = 0; j < patternLength; j++) {
         if (ignoreCase) {
-          if (!StringUtil.charsEqualIgnoreCase(pattern.charAt(j), buffer.charAt(i + j))) {
+          if (!StringUtil.charsMatch(pattern.charAt(j), buffer.charAt(i + j), true)) {
             found = false;
             break;
           }

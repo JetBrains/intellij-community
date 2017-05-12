@@ -33,7 +33,6 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.*;
@@ -135,7 +134,7 @@ public class AppUIUtil {
 
   public static String getFrameClass() {
     String name = ApplicationNamesInfo.getInstance().getProductName().toLowerCase(Locale.US);
-    String wmClass = VENDOR_PREFIX + StringUtil.replaceChar(name, ' ', '-');
+    String wmClass = VENDOR_PREFIX + name.replace(' ', '-');
     if ("true".equals(System.getProperty("idea.debug.mode"))) {
       wmClass += "-debug";
     }

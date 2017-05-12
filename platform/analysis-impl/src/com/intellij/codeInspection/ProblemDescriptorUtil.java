@@ -55,7 +55,7 @@ public class ProblemDescriptorUtil {
         }
       }
     }
-    ref = StringUtil.replaceChar(ref, '\n', ' ').trim();
+    ref = ref.replace('\n', ' ').trim();
     ref = StringUtil.first(ref, 100, true);
     return ref.trim().replaceAll("\\s+", " ");
   }

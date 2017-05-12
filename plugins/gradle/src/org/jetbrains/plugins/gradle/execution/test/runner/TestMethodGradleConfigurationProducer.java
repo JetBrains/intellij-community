@@ -190,6 +190,6 @@ public class TestMethodGradleConfigurationProducer extends GradleTestRunConfigur
   public static String createTestFilter(@Nullable String aClass, @Nullable String method) {
     if (aClass == null) return null;
     String testFilterPattern = aClass + (method == null ? "" : '.' + method);
-    return String.format("--tests \"%s\" ", StringUtil.replaceChar(testFilterPattern, '\"', '*'));
+    return String.format("--tests \"%s\" ", testFilterPattern.replace('\"', '*'));
   }
 }

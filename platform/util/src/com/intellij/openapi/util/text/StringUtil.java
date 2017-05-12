@@ -144,6 +144,7 @@ public class StringUtil extends StringUtilRt {
     }
   };
 
+  // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   @NotNull
   @Contract(pure = true)
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {
@@ -165,25 +166,14 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
+  /**
+   * @deprecated Use {@link String#replace(char,char)} instead
+   */
   @NotNull
   @Contract(pure = true)
+  @Deprecated
   public static String replaceChar(@NotNull String buffer, char oldChar, char newChar) {
-    StringBuilder newBuffer = null;
-    for (int i = 0; i < buffer.length(); i++) {
-      char c = buffer.charAt(i);
-      if (c == oldChar) {
-        if (newBuffer == null) {
-          newBuffer = new StringBuilder(buffer.length());
-          newBuffer.append(buffer, 0, i);
-        }
-
-        newBuffer.append(newChar);
-      }
-      else if (newBuffer != null) {
-        newBuffer.append(c);
-      }
-    }
-    return newBuffer == null ? buffer : newBuffer.toString();
+    return buffer.replace(oldChar, newChar);
   }
 
   @Contract(pure = true)
@@ -244,15 +234,15 @@ public class StringUtil extends StringUtilRt {
 
     for (int i = fromIndex; i <= max; i++) {
       /* Look for first character. */
-      if (!charsEqualIgnoreCase(where.charAt(i), first)) {
-        while (++i <= max && !charsEqualIgnoreCase(where.charAt(i), first)) ;
+      if (!charsMatch(where.charAt(i), first, true)) {
+        while (++i <= max && !charsMatch(where.charAt(i), first, true)) ;
       }
 
       /* Found first character, now look at the rest of v2 */
       if (i <= max) {
         int j = i + 1;
         int end = j + targetCount - 1;
-        for (int k = 1; j < end && charsEqualIgnoreCase(where.charAt(j), what.charAt(k)); j++, k++) ;
+        for (int k = 1; j < end && charsMatch(where.charAt(j), what.charAt(k), true); j++, k++) ;
 
         if (j == end) {
           /* Found whole string. */
@@ -268,7 +258,7 @@ public class StringUtil extends StringUtilRt {
   public static int indexOfIgnoreCase(@NotNull String where, char what, int fromIndex) {
     int sourceCount = where.length();
     for (int i = Math.max(fromIndex, 0); i < sourceCount; i++) {
-      if (charsEqualIgnoreCase(where.charAt(i), what)) {
+      if (charsMatch(where.charAt(i), what, true)) {
         return i;
       }
     }
@@ -1148,10 +1138,10 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(value = "null -> false", pure = true)
   public static boolean isNotEmpty(@Nullable String s) {
-    return s != null && !s.isEmpty();
+    return !isEmpty(s);
   }
 
-  @Contract(value = "null -> true", pure=true)
+  @Contract(value = "null -> true", pure = true)
   public static boolean isEmpty(@Nullable String s) {
     return s == null || s.isEmpty();
   }
@@ -2980,12 +2970,20 @@ public class StringUtil extends StringUtilRt {
     return shortenPathWithEllipsis(path, maxLength, false);
   }
 
+  /**
+   * @deprecated Use {@link #charsMatch(char, char, boolean)}
+   */
   @Contract(pure = true)
+  @Deprecated
   public static boolean charsEqual(char a, char b, boolean ignoreCase) {
-    return ignoreCase ? charsEqualIgnoreCase(a, b) : a == b;
+    return charsMatch(a, b, ignoreCase);
   }
 
+  /**
+   * @deprecated Use {@link #charsMatch(char, char, boolean)} which works more correctly
+   */
   @Contract(pure = true)
+  @Deprecated
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return StringUtilRt.charsEqualIgnoreCase(a, b);
   }
