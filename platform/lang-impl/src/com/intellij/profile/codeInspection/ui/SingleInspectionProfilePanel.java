@@ -84,8 +84,6 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 
-import com.intellij.util.containers.Queue;
-
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionToolsPanel");
   @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
@@ -853,14 +851,12 @@ public class SingleInspectionProfilePanel extends JPanel {
         final ScopesChooser scopesChooser = new ScopesChooser(ContainerUtil.map(nodes, node -> node.getDefaultDescriptor()), myProfile, project, null) {
           @Override
           protected void onScopesOrderChanged() {
-            myTreeTable.updateUI();
-            updateOptionsAndDescriptionPanel();
+            updateRecursively(nodes, true);
           }
 
           @Override
           protected void onScopeAdded() {
-            myTreeTable.updateUI();
-            updateOptionsAndDescriptionPanel();
+            updateRecursively(nodes, true);
           }
         };
 
@@ -904,43 +900,25 @@ public class SingleInspectionProfilePanel extends JPanel {
 
             @Override
             protected void onSettingsChanged() {
-              update(false);
+              updateRecursively(nodes, false);
             }
 
             @Override
             protected void onScopeAdded() {
-              update(true);
+              updateRecursively(nodes, true);
             }
 
             @Override
             protected void onScopesOrderChanged() {
-              update(true);
+              updateRecursively(nodes, true);
             }
 
             @Override
             protected void onScopeRemoved(final int scopesCount) {
-              update(scopesCount == 1);
+              updateRecursively(nodes, scopesCount == 1);
             }
 
-            private void update(final boolean updateOptionsAndDescriptionPanel) {
-              Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
-              for (InspectionConfigTreeNode node : nodes) {
-                q.addLast(node);
-              }
-              while (!q.isEmpty()) {
-                final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
-                inspectionConfigTreeNode.dropCache();
-                final TreeNode parent = inspectionConfigTreeNode.getParent();
-                if (parent != null && parent.getParent() != null) {
-                  q.addLast((InspectionConfigTreeNode)parent);
-                }
-              }
 
-              myTreeTable.updateUI();
-              if (updateOptionsAndDescriptionPanel) {
-                updateOptionsAndDescriptionPanel();
-              }
-            }
           });
 
         final ToolbarDecorator wrappedTable = ToolbarDecorator.createDecorator(scopesAndScopesAndSeveritiesTable).disableUpDownActions().setRemoveActionUpdater(
@@ -977,6 +955,28 @@ public class SingleInspectionProfilePanel extends JPanel {
       initOptionsAndDescriptionPanel();
     }
     myOptionsPanel.repaint();
+  }
+
+  private void updateRecursively(List<InspectionConfigTreeNode> nodes, boolean updateOptionsAndDescriptionPanel) {
+    Queue<InspectionConfigTreeNode> q = new Queue<>(nodes.size());
+    Set<InspectionConfigTreeNode> alreadyUpdated = new THashSet<>();
+    for (InspectionConfigTreeNode node : nodes) {
+      q.addLast(node);
+    }
+    while (!q.isEmpty()) {
+      final InspectionConfigTreeNode inspectionConfigTreeNode = q.pullFirst();
+      if (!alreadyUpdated.add(inspectionConfigTreeNode)) continue;
+      inspectionConfigTreeNode.dropCache();
+      final TreeNode parent = inspectionConfigTreeNode.getParent();
+      if (parent != null && parent.getParent() != null) {
+        q.addLast((InspectionConfigTreeNode)parent);
+      }
+    }
+
+    myTreeTable.repaint();
+    if (updateOptionsAndDescriptionPanel) {
+      updateOptionsAndDescriptionPanel();
+    }
   }
 
   private boolean isThoughOneNodeEnabled(final List<InspectionConfigTreeNode> nodes) {
