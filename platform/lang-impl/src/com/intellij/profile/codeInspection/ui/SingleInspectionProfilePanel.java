@@ -140,6 +140,15 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   public void performProfileReset() {
+    //forcibly initialize configs to be able compare xmls after reset
+    TreeUtil.traverse(myRoot, n -> {
+      InspectionConfigTreeNode node = (InspectionConfigTreeNode)n;
+      Descriptor defaultDescriptor = node.getDefaultDescriptor();
+      if (defaultDescriptor != null && node.isProperSetting()) {
+        defaultDescriptor.loadConfig();
+      }
+      return true;
+    });
     getProfile().resetToBase(myProjectProfileManager.getProject());
     loadDescriptorsConfigs(true);
     postProcessModification();
@@ -370,9 +379,6 @@ public class SingleInspectionProfilePanel extends JPanel {
   }
 
   private boolean wereToolSettingsModified(Descriptor descriptor, boolean isDefault) {
-    if (!myProfile.isToolEnabled(descriptor.getKey(), descriptor.getScope(), myProjectProfileManager.getProject())) {
-      return false;
-    }
     Element oldConfig = descriptor.getConfig();
     if (oldConfig == null) return false;
 
