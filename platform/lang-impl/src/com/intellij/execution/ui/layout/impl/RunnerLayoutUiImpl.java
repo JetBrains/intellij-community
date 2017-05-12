@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, LayoutStateDefaults, LayoutViewOptions, DataProvider {
   private final RunnerLayout myLayout;
@@ -381,5 +382,13 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
       return myContentUI;
     }
     return null;
+  }
+
+  public void setLeftToolbarVisible(boolean value) {
+    myContentUI.setLeftToolbarVisible(value);
+  }
+
+  public List<AnAction> getActions() {
+    return myContentUI.getActions(true);
   }
 }

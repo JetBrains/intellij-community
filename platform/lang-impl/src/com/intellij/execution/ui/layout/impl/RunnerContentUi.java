@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -196,6 +196,14 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myComponent.repaint();
   }
 
+  public void setLeftToolbarVisible(boolean value) {
+    myToolbar.setVisible(value);
+    myTabs.getComponent().setBorder(new EmptyBorder(0, value ? 1 : 0, 0, 0));
+
+    myComponent.revalidate();
+    myComponent.repaint();
+  }
+
   public void initUi() {
     if (myTabs != null) return;
 
@@ -222,12 +230,12 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myTabs.getComponent().setBackground(myToolbar.getBackground());
     myTabs.getComponent().setBorder(new EmptyBorder(0, 1, 0, 0));
 
-    final NonOpaquePanel wrappper = new MyComponent(new BorderLayout(0, 0));
-    wrappper.add(myToolbar, BorderLayout.WEST);
-    wrappper.add(myTabs.getComponent(), BorderLayout.CENTER);
-    wrappper.setBorder(new EmptyBorder(-1, 0, 0, 0));
+    final NonOpaquePanel wrapper = new MyComponent(new BorderLayout(0, 0));
+    wrapper.add(myToolbar, BorderLayout.WEST);
+    wrapper.add(myTabs.getComponent(), BorderLayout.CENTER);
+    wrapper.setBorder(new EmptyBorder(-1, 0, 0, 0));
 
-    myComponent = wrappper;
+    myComponent = wrapper;
 
     myTabs.addListener(new TabsListener.Adapter() {
 
