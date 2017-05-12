@@ -54,14 +54,12 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
-import java.util.function.Function;
 
 public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   protected PyType myType;
@@ -183,10 +181,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
           }
         }
 
-        final Function<RatedResolveResult, PsiElement> mapper = RatedResolveResult::getElement;
-        return PyiUtil.containsOverloads(resultList, mapper, typeEvalContext)
-               ? PyiUtil.moveOverloadsBack(resultList, mapper, typeEvalContext)
-               : resultList;
+        return resultList;
       }
 
       synchronized (myNameDefinerNegativeCache) {

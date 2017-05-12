@@ -119,29 +119,27 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyCallExpression call,
                                                                                    @NotNull PyResolveContext resolveContext,
                                                                                    int implicitOffset) {
-    final LinkedHashMap<PsiElement, PyCallExpression.PyRatedMarkedCallee> result = new LinkedHashMap<>();
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
       final ClarifiedResolveResult clarifiedResolveResult = clarifyResolveResult(resolveResult, resolveContext, call);
       if (clarifiedResolveResult == null) continue;
 
-      final PyCallExpression.PyRatedMarkedCallee markedCallee =
-        markResolveResult(clarifiedResolveResult, resolveContext.getTypeEvalContext(), implicitOffset);
+      final PyCallExpression.PyRatedMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
       if (markedCallee == null) continue;
 
-      // while clarifying resolve results we could get duplicate callables so we have to group them and select result with highest rate
-      result.put(markedCallee.getElement(),
-                 StreamEx
-                   .of(markedCallee, result.get(markedCallee.getElement()))
-                   .nonNull()
-                   .max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate))
-                   .orElse(null));
+      ratedMarkedCallees.add(markedCallee);
     }
 
-    return StreamEx
-      .of(forEveryScopeTakeOverloadsOtherwiseImplementations(result.entrySet(), Map.Entry::getKey, resolveContext.getTypeEvalContext()))
-      .map(Map.Entry::getValue)
-      .toList();
+    return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement, context)
+      // while clarifying resolve results we could get duplicate callables so we have to group them and select result with highest rate
+      .collect(Collectors.groupingBy(markedCallee -> markedCallee.getElement(), LinkedHashMap::new, Collectors.toList()))
+      .entrySet()
+      .stream()
+      .map(entry -> entry.getValue().stream().max(Comparator.comparingInt(PyCallExpression.PyRatedMarkedCallee::getRate)).orElse(null))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 
   @NotNull
@@ -405,11 +403,13 @@ public class PyCallExpressionHelper {
         }
         // normal cases
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final List<QualifiedRatedResolveResult> resolveResults =
-          PyUtil.filterTopPriorityResults(multiResolveCallee(callee, resolveContext));
+
+        final List<QualifiedRatedResolveResult> resolveResults = multiResolveCallee(callee, resolveContext);
+        final Stream<QualifiedRatedResolveResult> overloadsOtherwiseImplementations =
+          forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, RatedResolveResult::getElement, context);
 
         final List<PyType> members = StreamEx
-          .of(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, ResolveResult::getElement, context))
+          .of(PyUtil.filterTopPriorityResults(overloadsOtherwiseImplementations.collect(Collectors.toList())))
           .map(ResolveResult::getElement)
           .nonNull()
           .peek(element -> PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(element)))

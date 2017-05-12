@@ -44,13 +44,11 @@ import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveProcessor;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -561,13 +559,10 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     else {
       cls.processClassLevelDeclarations(processor);
-      final Collection<PsiElement> elements = processor.getElements();
-      result = PyiUtil.containsOverloads(elements, Function.identity(), context)
-               ? PyiUtil.moveOverloadsBack(elements, Function.identity(), context)
-               : elements;
+      result = processor.getElements();
     }
 
-    return ContainerUtil.map(result, element -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, element));
+    return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
