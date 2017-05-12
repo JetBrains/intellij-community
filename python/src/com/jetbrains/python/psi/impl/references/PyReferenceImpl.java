@@ -440,6 +440,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     else if (elt instanceof PyFile) {
       rate = RatedResolveResult.RATE_HIGH;
     }
+    else if (!PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+      rate = RatedResolveResult.RATE_LOW;
+    }
     else {
       rate = RatedResolveResult.RATE_NORMAL;
     }

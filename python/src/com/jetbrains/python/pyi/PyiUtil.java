@@ -28,14 +28,13 @@ import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * @author vlan
@@ -126,22 +125,6 @@ public class PyiUtil {
            PyKnownDecoratorUtil.getKnownDecorators((PyFunction)element, context).contains(overload);
   }
 
-  public static <T> boolean containsOverloads(@NotNull Collection<T> elements,
-                                              @NotNull Function<? super T, PsiElement> mapper,
-                                              @NotNull TypeEvalContext context) {
-    return ContainerUtil.exists(elements, element -> isOverload(mapper.apply(element), context));
-  }
-
-  @NotNull
-  public static <T> List<T> moveOverloadsBack(@NotNull Collection<T> elements,
-                                              @NotNull Function<? super T, PsiElement> mapper,
-                                              @NotNull TypeEvalContext context) {
-    return StreamEx
-      .of(elements)
-      .sorted((e1, e2) -> Boolean.compare(isOverload(mapper.apply(e1), context), isOverload(mapper.apply(e2), context)))
-      .toList();
-  }
-
   private static boolean pyButNotPyiFile(@Nullable PsiFile file) {
     return file instanceof PyFile && !(file instanceof PyiFile);
   }
@@ -190,20 +173,20 @@ public class PyiUtil {
           final PyClassLikeType instanceType = classType.toInstance();
           final List<? extends RatedResolveResult> resolveResults = instanceType.resolveMember(name, null, AccessDirection.READ,
                                                                                                PyResolveContext.noImplicits(), false);
-          return takeFirstElement(resolveResults);
+          return takeTopPriorityElement(resolveResults);
         }
       }
       else if (originalOwner instanceof PyFile) {
-        return takeFirstElement(((PyFile)originalOwner).multiResolveName(name));
+        return takeTopPriorityElement(((PyFile)originalOwner).multiResolveName(name));
       }
     }
     return null;
   }
 
   @Nullable
-  private static PsiElement takeFirstElement(@Nullable List<? extends RatedResolveResult> resolveResults) {
+  private static PsiElement takeTopPriorityElement(@Nullable List<? extends RatedResolveResult> resolveResults) {
     if (!ContainerUtil.isEmpty(resolveResults)) {
-      return resolveResults.get(0).getElement();
+      return Collections.max(resolveResults, Comparator.comparingInt(RatedResolveResult::getRate)).getElement();
     }
     return null;
   }
