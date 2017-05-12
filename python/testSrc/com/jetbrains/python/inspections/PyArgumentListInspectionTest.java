@@ -273,6 +273,26 @@ public class PyArgumentListInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInImportedModule() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
   private void doMultiFileTest() {
     final String folderPath = "inspections/PyArgumentListInspection/" + getTestName(false) + "/";
 
