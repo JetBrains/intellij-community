@@ -148,9 +148,12 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
         descriptor.setDescription("Choose profile file");
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           if (file != null) {
-            final InspectionProfileImpl profile;
             try {
-              profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
+              InspectionProfileImpl profile = importInspectionProfile(JDOMUtil.load(file.getInputStream()), myAppProfileManager, myProject);
+              if (profile == null) {
+                Messages.showErrorDialog(myProject, "File '" + file.getName() + "' has invalid format.", "Inspection Settings");
+                return;
+              }
               final SingleInspectionProfilePanel existed = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(profile);
               if (existed != null) {
                 if (Messages.showOkCancelDialog(myProject, "Profile with name \'" +
@@ -280,16 +283,19 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     return myConfigurable.getPreferredFocusedComponent();
   }
 
+  @Nullable("returns null if xml has invalid format")
   public static InspectionProfileImpl importInspectionProfile(@NotNull Element rootElement,
                                                               @NotNull BaseInspectionProfileManager profileManager,
                                                               @NotNull Project project) {
-    InspectionProfileImpl profile =
-      new InspectionProfileImpl("TempProfile", InspectionToolRegistrar.getInstance(), profileManager);
     if (Comparing.strEqual(rootElement.getName(), "component")) {
       //import right from .idea/inspectProfiles/xxx.xml
       rootElement = rootElement.getChildren().get(0);
     }
 
+    String profileName = getProfileName(rootElement);
+    if (profileName == null) return null;
+
+    InspectionProfileImpl profile = new InspectionProfileImpl(profileName, InspectionToolRegistrar.getInstance(), profileManager);
     final Set<String> levels = new HashSet<>();
     for (Element inspectElement : rootElement.getChildren("inspection_tool")) {
       ContainerUtil.addAllNotNull(levels, inspectElement.getAttributeValue("level"));
@@ -328,5 +334,15 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
     profile.setProjectLevel(false);
     profile.initInspectionTools(project);
     return profile;
+  }
+
+  private static String getProfileName(Element rootElement) {
+    for (Element option : rootElement.getChildren("option")) {
+      String optionName = option.getAttributeValue("name");
+      if (optionName.equals("myName")) {
+        return option.getAttributeValue("value");
+      }
+    }
+    return null;
   }
 }
