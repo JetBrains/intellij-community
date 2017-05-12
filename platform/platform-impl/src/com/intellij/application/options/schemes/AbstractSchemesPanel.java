@@ -221,6 +221,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   protected abstract boolean highlightNonDefaultSchemes();
 
+  protected boolean hideDeleteActionIfUnavailable() {
+    return true;
+  }
+
   public abstract boolean useBoldForNonRemovableSchemes();
 
   public void showStatus(final String message, MessageType messageType) {

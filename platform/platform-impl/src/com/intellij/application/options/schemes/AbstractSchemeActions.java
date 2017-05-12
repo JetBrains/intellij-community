@@ -246,8 +246,13 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
     @Override
     public void update(AnActionEvent e) {
       Presentation p = e.getPresentation();
-      T scheme = getCurrentScheme(); 
-      p.setEnabledAndVisible(scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme));
+      T scheme = getCurrentScheme();
+      boolean isEnabled = scheme != null && mySchemesPanel.getModel().canDeleteScheme(scheme);
+      if (mySchemesPanel.hideDeleteActionIfUnavailable()) {
+        p.setEnabledAndVisible(isEnabled);
+      }  else {
+        p.setEnabled(isEnabled);
+      }
     }
   }
 

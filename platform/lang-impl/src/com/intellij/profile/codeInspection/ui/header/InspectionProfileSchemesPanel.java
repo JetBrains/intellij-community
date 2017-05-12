@@ -102,6 +102,11 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
   }
 
   @Override
+  protected boolean hideDeleteActionIfUnavailable() {
+    return false;
+  }
+
+  @Override
   protected AbstractSchemeActions<InspectionProfileModifiableModel> createSchemeActions() {
     return new DescriptionAwareSchemeActions<InspectionProfileModifiableModel>(this) {
       @Nullable
