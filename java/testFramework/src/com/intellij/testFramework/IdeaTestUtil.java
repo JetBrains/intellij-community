@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public class IdeaTestUtil extends PlatformTestUtil {
     List<String> paths =
       ContainerUtil.packNullables(javaHome, new File(javaHome).getParent(), System.getenv("JDK_16_x64"), System.getenv("JDK_16"));
     for (String path : paths) {
-      if (JdkUtil.checkForJdk(new File(path))) {
+      if (JdkUtil.checkForJdk(path)) {
         return path;
       }
     }

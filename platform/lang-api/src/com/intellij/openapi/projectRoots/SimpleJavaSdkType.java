@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,7 +93,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return JdkUtil.checkForJdk(new File(path));
+    return JdkUtil.checkForJdk(path);
   }
 
   @Override
@@ -101,10 +101,8 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return currentSdkName;
   }
 
-
   @Override
   public final String getVersionString(final String sdkHome) {
     return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
-
 }

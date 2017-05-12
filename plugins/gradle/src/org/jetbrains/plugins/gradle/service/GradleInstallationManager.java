@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,13 +162,14 @@ public class GradleInstallationManager {
         linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
     }
 
-    final File sdkHomePath = sdk != null && sdk.getHomePath() != null ? new File(sdk.getHomePath()) : null;
-    if (sdkHomePath != null && JdkUtil.checkForJre(sdkHomePath.getPath()) && !JdkUtil.checkForJdk(sdkHomePath)) {
+    String sdkHomePath = sdk != null ? sdk.getHomePath() : null;
+    if (sdkHomePath != null && JdkUtil.checkForJre(sdkHomePath) && !JdkUtil.checkForJdk(sdkHomePath)) {
       throw new ExternalSystemJdkException(
         String.format("Please, use JDK instead of JRE for Gradle importer. <a href='%s'>Open Gradle Settings</a> \n",
                       OpenExternalSystemSettingsCallback.ID),
         linkedProjectPath, null, OpenExternalSystemSettingsCallback.ID);
     }
+
     return sdk;
   }
 

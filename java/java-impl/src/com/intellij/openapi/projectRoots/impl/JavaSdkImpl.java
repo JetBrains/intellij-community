@@ -212,7 +212,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public boolean isValidSdkHome(String path) {
-    return checkForJdk(new File(path));
+    return JdkUtil.checkForJdk(path);
   }
 
   @Override

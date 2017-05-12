@@ -55,10 +55,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
@@ -335,18 +332,16 @@ public class BuildManager implements Disposable {
 
   @Nullable
   private static String getFallbackSdkHome() {
-    final String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
-    if (home == null) {
-      return null;
-    }
-    File javaHome = new File(home);
-    if (!JavaSdk.checkForJdk(javaHome)) {
-      final File parent = javaHome.getParentFile();
-      if (parent != null && JavaSdk.checkForJdk(parent)) {
-        javaHome = parent;
+    String home = SystemProperties.getJavaHome(); // should point either to jre or jdk
+    if (home == null) return null;
+
+    if (!JdkUtil.checkForJdk(home)) {
+      String parent = new File(home).getParent();
+      if (parent != null && JdkUtil.checkForJdk(parent)) {
+        home = parent;
       }
     }
-    return FileUtil.toSystemIndependentName(javaHome.getAbsolutePath());
+    return FileUtil.toSystemIndependentName(home);
   }
 
   private List<Project> getOpenProjects() {
@@ -502,7 +497,7 @@ public class BuildManager implements Disposable {
       myAutoMakeTask.schedule();
     }
   }
-   
+
   @NotNull
   private static String getThreadTrace(Thread thread, final int depth) { // debugging
     final StringBuilder buf = new StringBuilder();
