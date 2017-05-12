@@ -19,8 +19,8 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -394,17 +395,19 @@ public class PyCallExpressionHelper {
         }
         // normal cases
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
-        final List<PyType> members = new ArrayList<>();
-        for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
-          PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(target));
-          if (target != null) {
-            final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
-            if (typeRef != null) {
-              members.add(typeRef.get());
-            }
-          }
-        }
+        final List<QualifiedRatedResolveResult> resolveResults =
+          PyUtil.filterTopPriorityResults(multiResolveCallee(callee, resolveContext));
+
+        final List<PyType> members = StreamEx
+          .of(forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, ResolveResult::getElement, context))
+          .map(ResolveResult::getElement)
+          .nonNull()
+          .peek(element -> PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(element)))
+          .map(element -> getCallTargetReturnType(call, element, context))
+          .nonNull()
+          .<PyType>map(Ref::get)
+          .toList();
+
         if (!members.isEmpty()) {
           return PyUnionType.union(members);
         }
@@ -839,27 +842,29 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  public static Stream<PyCallExpression.PyRatedMarkedCallee> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull List<PyCallExpression.PyRatedMarkedCallee> callees,
-                                                                                                                @NotNull TypeEvalContext context) {
-    if (!containsOverloadsAndImplementations(callees, context)) {
-      return callees.stream();
+  public static <E> Stream<E> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull List<E> elements,
+                                                                                 @NotNull Function<? super E, PsiElement> mapper,
+                                                                                 @NotNull TypeEvalContext context) {
+    if (!containsOverloadsAndImplementations(elements, mapper, context)) {
+      return elements.stream();
     }
 
     return StreamEx
-      .of(callees)
-      .groupingBy(callee -> ScopeUtil.getScopeOwner(callee.getElement()))
+      .of(elements)
+      .groupingBy(element -> ScopeUtil.getScopeOwner(mapper.apply(element)))
       .values()
       .stream()
-      .flatMap(oneScopeCallees -> takeOverloadsOtherwiseImplementations(oneScopeCallees, context));
+      .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
   }
 
-  private static boolean containsOverloadsAndImplementations(@NotNull List<PyCallExpression.PyRatedMarkedCallee> callees,
-                                                             @NotNull TypeEvalContext context) {
+  private static <E> boolean containsOverloadsAndImplementations(@NotNull List<E> elements,
+                                                                 @NotNull Function<? super E, PsiElement> mapper,
+                                                                 @NotNull TypeEvalContext context) {
     boolean containsOverloads = false;
     boolean containsImplementations = false;
 
-    for (PyCallExpression.PyRatedMarkedCallee callee : callees) {
-      final boolean overload = PyiUtil.isOverload(callee.getElement(), context);
+    for (E element : elements) {
+      final boolean overload = PyiUtil.isOverload(mapper.apply(element), context);
       containsOverloads |= overload;
       containsImplementations |= !overload;
 
@@ -870,13 +875,14 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static Stream<PyCallExpression.PyRatedMarkedCallee> takeOverloadsOtherwiseImplementations(@NotNull List<PyCallExpression.PyRatedMarkedCallee> callees,
-                                                                                                    @NotNull TypeEvalContext context) {
-    if (!containsOverloadsAndImplementations(callees, context)) {
-      return callees.stream();
+  private static <E> Stream<E> takeOverloadsOtherwiseImplementations(@NotNull List<E> elements,
+                                                                     @NotNull Function<? super E, PsiElement> mapper,
+                                                                     @NotNull TypeEvalContext context) {
+    if (!containsOverloadsAndImplementations(elements, mapper, context)) {
+      return elements.stream();
     }
 
-    return callees.stream().filter(callee -> PyiUtil.isOverload(callee.getElement(), context));
+    return elements.stream().filter(element -> PyiUtil.isOverload(mapper.apply(element), context));
   }
 
   public static class ArgumentMappingResults {
