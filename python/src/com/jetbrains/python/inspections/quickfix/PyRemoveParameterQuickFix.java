@@ -24,11 +24,10 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyParameter;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
@@ -52,11 +51,11 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement parameter = descriptor.getPsiElement();
-    assert parameter instanceof PyParameter;
+    final PyParameter psi = PyUtil.as(descriptor.getPsiElement(), PyParameter.class);
+    assert psi != null;
+    final PyCallableParameter parameter = new PyCallableParameterImpl(psi);
 
-    final PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
-
+    final PyFunction function = PsiTreeUtil.getParentOfType(psi, PyFunction.class);
     if (function != null) {
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myContext);
 
@@ -66,13 +65,13 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
         .nonNull()
         .map(PsiElement::getParent)
         .select(PyCallExpression.class)
-        .flatMap(callExpression -> callExpression.multiMapArguments(resolveContext).stream())
-        .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())
-        .filter(entry -> entry.getValue() == parameter)
+        .flatCollection(callExpression -> callExpression.multiMapArguments(resolveContext))
+        .flatCollection(mapping -> mapping.getMappedParameters().entrySet())
+        .filter(entry -> parameter.equals(entry.getValue()))
         .forEach(entry -> entry.getKey().delete());
 
       final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
-      final String parameterName = ((PyParameter)parameter).getName();
+      final String parameterName = parameter.getName();
       if (docStringExpression != null && parameterName != null) {
         PyDocstringGenerator.forDocStringOwner(function).withoutParam(parameterName).buildAndInsert();
       }
@@ -87,6 +86,6 @@ public class PyRemoveParameterQuickFix implements LocalQuickFix {
       }
     }
 
-    parameter.delete();
+    psi.delete();
   }
 }

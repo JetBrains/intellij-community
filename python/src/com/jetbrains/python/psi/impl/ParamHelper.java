@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,11 @@
  */
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyCallableParameter;
+import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,27 +39,32 @@ public class ParamHelper {
    * @param walker the walker with callbacks.
    */
   public static void walkDownParamArray(PyParameter[] params, ParamWalker walker) {
-    int last = params.length-1;
+    walkDownParameters(ContainerUtil.map(params, PyCallableParameterImpl::new), walker);
+  }
+
+  public static void walkDownParameters(@NotNull List<PyCallableParameter> parameters, @NotNull ParamWalker walker) {
     int i = 0;
-    for (PyParameter param : params) {
-      PyTupleParameter t_param = param.getAsTuple();
-      if (t_param != null) {
-        PyParameter[] nested_params = t_param.getContents();
-        PyTupleParameter tpar = (PyTupleParameter)param;
-        walker.enterTupleParameter(tpar, (i==0), (i == last));
-        walkDownParamArray(nested_params, walker);
-        walker.leaveTupleParameter(tpar, (i==0), (i == last));
+    for (PyCallableParameter parameter : parameters) {
+      final PyParameter psi = parameter.getParameter();
+      final boolean first = i == 0;
+      final boolean last = i == parameters.size() - 1;
+
+      if (psi instanceof PyTupleParameter) {
+        final PyTupleParameter tupleParameter = (PyTupleParameter)psi;
+        walker.enterTupleParameter(tupleParameter, first, last);
+        walkDownParamArray(tupleParameter.getContents(), walker);
+        walker.leaveTupleParameter(tupleParameter, first, last);
+      }
+      else if (psi instanceof PyNamedParameter) {
+        walker.visitNamedParameter((PyNamedParameter)psi, first, last);
+      }
+      else if (psi instanceof PySingleStarParameter) {
+        walker.visitSingleStarParameter((PySingleStarParameter)psi, first, last);
       }
       else {
-        final PyNamedParameter namedParameter = param.getAsNamed();
-        if (namedParameter != null) {
-          walker.visitNamedParameter(namedParameter, (i==0), (i == last));
-        }
-        else {
-          walker.visitSingleStarParameter((PySingleStarParameter) param, (i == 0), (i == last));
-        }
+        walker.visitNonPsiParameter(parameter, first, last);
       }
-      i += 1;
+      i++;
     }
   }
 
@@ -85,16 +94,26 @@ public class ParamHelper {
     void visitNamedParameter(PyNamedParameter param, boolean first, boolean last);
 
     void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last);
+
+    void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last);
   }
 
   public static abstract class ParamVisitor implements ParamWalker {
+
+    @Override
     public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) { }
 
+    @Override
     public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) { }
 
+    @Override
     public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) { }
 
+    @Override
     public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) { }
+
+    @Override
+    public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) { }
   }
 
   public static List<PyNamedParameter> collectNamedParameters(PyParameterList plist) {
@@ -102,6 +121,7 @@ public class ParamHelper {
     walkDownParamArray(
       plist.getParameters(),
       new ParamVisitor() {
+        @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           result.add(param);
         }

@@ -214,20 +214,20 @@ public class PyTypeCheckerInspection extends PyInspection {
     private AnalyzeCalleeResults analyzeCallee(@NotNull PyTypeChecker.AnalyzeCallResults results) {
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
       final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(results.getReceiver(), myTypeEvalContext);
-      final Map<PyExpression, PyNamedParameter> mapping = results.getMapping().getMappedParameters();
-      for (Map.Entry<PyExpression, PyNamedParameter> entry : getRegularMappedParameters(mapping).entrySet()) {
+      final Map<PyExpression, PyCallableParameter> mapping = results.getMapping().getMappedParameters();
+      for (Map.Entry<PyExpression, PyCallableParameter> entry : getRegularMappedParameters(mapping).entrySet()) {
         final PyExpression argument = entry.getKey();
-        final PyNamedParameter parameter = entry.getValue();
+        final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
         final PyType actual = myTypeEvalContext.getType(argument);
         final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
-      final PyNamedParameter positionalContainer = getMappedPositionalContainer(mapping);
+      final PyCallableParameter positionalContainer = getMappedPositionalContainer(mapping);
       if (positionalContainer != null) {
         result.addAll(analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mapping), substitutions));
       }
-      final PyNamedParameter keywordContainer = getMappedKeywordContainer(mapping);
+      final PyCallableParameter keywordContainer = getMappedKeywordContainer(mapping);
       if (keywordContainer != null) {
         result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mapping), substitutions));
       }
@@ -235,7 +235,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @NotNull
-    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyNamedParameter container, @NotNull List<PyExpression> arguments,
+    private List<AnalyzeArgumentResult> analyzeContainerMapping(@NotNull PyCallableParameter container, @NotNull List<PyExpression> arguments,
                                                                 @NotNull Map<PyGenericType, PyType> substitutions) {
       final PyType expected = container.getArgumentType(myTypeEvalContext);
       final PyType expectedWithSubstitutions = substituteGenerics(expected, substitutions);
@@ -296,6 +296,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {

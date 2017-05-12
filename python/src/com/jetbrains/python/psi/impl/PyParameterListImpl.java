@@ -50,10 +50,12 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     pyVisitor.visitPyParameterList(this);
   }
 
+  @Override
   public PyParameter[] getParameters() {
     return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
 
+  @Override
   public void addParameter(final PyNamedParameter param) {
     PsiElement paren = getLastChild();
     if (paren != null && ")".equals(paren.getText())) {
@@ -83,6 +85,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     }
   }
 
+  @Override
   public boolean hasPositionalContainer() {
     for (PyParameter parameter: getParameters()) {
       if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isPositionalContainer()) {
@@ -92,6 +95,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     return false;
   }
 
+  @Override
   public boolean hasKeywordContainer() {
     for (PyParameter parameter: getParameters()) {
       if (parameter instanceof PyNamedParameter && ((PyNamedParameter) parameter).isKeywordContainer()) {
@@ -116,6 +120,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     return result.get();
   }
 
+  @Override
   @NotNull
   public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
     final StringBuilder target = new StringBuilder();
@@ -123,21 +128,25 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     target.append("(");
     ParamHelper.walkDownParamArray(
       getParameters(),
-      new ParamHelper.ParamWalker() {
+      new ParamHelper.ParamVisitor() {
+        @Override
         public void enterTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           target.append("(");
         }
 
+        @Override
         public void leaveTupleParameter(PyTupleParameter param, boolean first, boolean last) {
           target.append(")");
           if (!last) target.append(COMMA);
         }
 
+        @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
           target.append(param.getRepr(includeDefaultValue, context));
           if (!last) target.append(COMMA);
         }
 
+        @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
           target.append('*');
           if (!last) target.append(COMMA);
