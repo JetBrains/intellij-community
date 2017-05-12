@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -250,11 +250,6 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * @throws IllegalArgumentException if {@code component} is {@code null}.
    */
   public static boolean isModalContext(@NotNull Component component) {
-    JBPopup popup = component instanceof JComponent ? (JBPopup)((JComponent)component).getRootPane().getClientProperty(JBPopup.KEY) : null;
-    if (popup != null) {
-      return popup.isModalContext();
-    }
-
     Window window = UIUtil.getWindow(component);
 
     if (window instanceof IdeFrameImpl) {
@@ -276,7 +271,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
-    return !(window instanceof FloatingDecorator);
+    boolean isFloatingDecorator = window instanceof FloatingDecorator;
+
+    boolean isPopup = !(component instanceof JFrame) && !(component instanceof JDialog);
+    if (isPopup) {
+      if (component instanceof JWindow) {
+        JBPopup popup = (JBPopup)((JWindow)component).getRootPane().getClientProperty(JBPopup.KEY);
+        if (popup != null) {
+          return popup.isModalContext();
+        }
+      }
+    }
+
+    return !isFloatingDecorator;
   }
 
   private boolean inWaitForSecondStrokeState() {

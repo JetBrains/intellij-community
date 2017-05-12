@@ -174,6 +174,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         .setResizable(true)
         .setMayBeParent(true)
         .setCancelOnClickOutside(true)
+        .setModalContext(false)
         .setRequestFocus(true)
         .setCancelCallback(() -> {
           if (!myCanClose.get()) return false;
