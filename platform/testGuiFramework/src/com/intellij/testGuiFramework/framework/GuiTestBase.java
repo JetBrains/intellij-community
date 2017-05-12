@@ -71,7 +71,7 @@ import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
 
 
-@RunWith(GuiTestRunner.class)
+@RunWith(GuiTestLocalRunner.class)
 public abstract class GuiTestBase {
   protected Robot myRobot;
 
@@ -128,6 +128,7 @@ public abstract class GuiTestBase {
 
   @Before
   public void setUp() throws Exception {
+    //if test is local -> create control test and run it inside
     Application application = ApplicationManager.getApplication();
     assertNotNull(application); // verify that we are using the IDE's ClassLoader.
   }

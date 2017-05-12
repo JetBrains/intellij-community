@@ -17,16 +17,15 @@ package com.intellij.testGuiFramework.remote
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import org.junit.AssumptionViolatedException
-import org.junit.runner.Description
-import org.junit.runner.JUnitCore
-import org.junit.runner.notification.Failure
-import org.junit.runner.notification.RunListener
-import java.io.DataInputStream
+import java.io.EOFException
+import java.io.InputStream
+import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ConnectException
 import java.net.Socket
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 
 /**
  * @author Sergey Karashevich
@@ -35,20 +34,59 @@ import java.util.concurrent.CountDownLatch
 
 class JUnitClient(val host: String = "localhost", val port: Int) {
 
-  val LOG: Logger = Logger.getInstance(this.javaClass)
+  val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClient")
 
   var objectOutputStream: ObjectOutputStream? = null
   val clientInit = CountDownLatch(1)
   var myClient: Socket? = null
 
   var isAlive: Boolean = false
-  var core: JUnitCore? = null
+  val testQueue: BlockingQueue<JUnitTestContainer> = LinkedBlockingQueue<JUnitTestContainer>()
 
-  private fun runClient(serverName: String, port: Int) {
+//  private fun runClient(serverName: String, port: Int) {
+//    LOG.info("Connecting to $serverName on port $port")
+//    try {
+//      myClient = Socket(serverName, port)
+//    }
+//    catch (e: ConnectException) {
+//      LOG.error("Connection to JUnit Server is refused", e)
+//      ApplicationManager.getApplication().invokeAndWait(Runnable {
+//        ApplicationManager.getApplication().exit()
+//      })
+//      return
+//    }
+//
+//    LOG.info("Just connected to " + myClient!!.remoteSocketAddress)
+//    val outToServer = myClient!!.getOutputStream()
+//    val inFromServer = myClient!!.getInputStream()
+//
+//    try {
+//      objectOutputStream = ObjectOutputStream(outToServer)
+//      clientInit.countDown()
+//
+//      val inputStream = DataInputStream(inFromServer)
+//      try {
+//        while (myClient != null && myClient!!.isConnected)
+//          LOG.info("Server response: ${inputStream.readUTF()}")
+//      } catch (eof: EOFException) {
+//        LOG.warn("Client message transport exception: ${eof.message}")
+//      } finally {
+//        inputStream.close()
+//      }
+//
+//    } finally {
+//      stopClient()
+//      outToServer.close()
+//      inFromServer.close()
+//    }
+//  }
+
+  private fun runClientInWaitMode(serverName: String, port: Int) {
     LOG.info("Connecting to $serverName on port $port")
     try {
       myClient = Socket(serverName, port)
-    } catch (e: ConnectException) {
+    }
+    catch (e: ConnectException) {
       LOG.error("Connection to JUnit Server is refused", e)
       ApplicationManager.getApplication().invokeAndWait(Runnable {
         ApplicationManager.getApplication().exit()
@@ -60,22 +98,48 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
     val outToServer = myClient!!.getOutputStream()
     val inFromServer = myClient!!.getInputStream()
 
-    objectOutputStream = ObjectOutputStream(outToServer)
-    clientInit.countDown()
+    try {
+      objectOutputStream = ObjectOutputStream(outToServer)
+      clientInit.countDown()
+      processIncomingObjects(inFromServer) { handleObject(it) }
 
-    while (myClient != null && myClient!!.isConnected) {
-      val inputStream = DataInputStream(inFromServer)
-      LOG.info("Server response: ${inputStream.readUTF()}")
+    } finally {
+      stopClient()
+      outToServer.close()
+      inFromServer.close()
     }
-    stopClient()
   }
 
-  private fun startClientIfNecessary() {
+  private fun processIncomingObjects(inFromServer: InputStream?, objectHandler: (Any) -> Unit) {
+    val inputStream = ObjectInputStream(inFromServer)
+    try {
+      while (myClient != null && myClient!!.isConnected)
+        objectHandler(inputStream.readObject())
+    }
+    catch (eof: EOFException) {
+      LOG.warn("Client message transport exception: ${eof.message}")
+    }
+    finally {
+      inputStream.close()
+    }
+  }
+
+  private fun handleObject(obj: Any) {
+    when(obj) {
+      is JUnitTestContainer -> {
+        //todo: check that class is derived from GuiTestCase
+        testQueue.put(obj)
+      }
+      else -> LOG.error("Unsupported type to handle it: ${obj.toString()}")
+    }
+  }
+
+  fun startClientIfNecessary() {
     if (!isAlive) {
       LOG.info("Client hasn't been started yet or is not alive => starting...")
       object : Thread("IDE JUnit client thread") {
         override fun run() {
-          runClient(host, port)
+          runClientInWaitMode(host, port)
         }
       }.start()
       clientInit.await()
@@ -88,59 +152,6 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
     myClient = null
     isAlive = false
     LOG.info("Client disconnected")
-  }
-
-  fun runTests(vararg testClasses: Class<*>) {
-    startClientIfNecessary()
-    if (core == null) {
-      core = JUnitCore()
-      assert(objectOutputStream != null)
-      val objectSender = ObjectSender(objectOutputStream!!)
-      val myListener = JUnitClientListener(objectSender)
-      core!!.addListener(myListener)
-    }
-    core!!.run(*testClasses)
-  }
-
-  class ObjectSender(val objectStream: ObjectOutputStream) {
-
-    val LOG: Logger = Logger.getInstance(this.javaClass)
-
-    fun send(obj: Any) {
-      LOG.info("Sending to sever: $obj")
-      objectStream.writeObject(obj)
-    }
-  }
-
-
-  class JUnitClientListener(val objectSender: ObjectSender) : RunListener() {
-
-    override fun testStarted(description: Description?) {
-      objectSender.send(JUnitInfo(Type.STARTED, description))
-    }
-
-    override fun testAssumptionFailure(failure: Failure?) {
-      objectSender.send(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable()))
-    }
-
-    override fun testFailure(failure: Failure?) {
-      objectSender.send(JUnitInfo(Type.FAILURE, failure))
-    }
-
-    override fun testFinished(description: Description?) {
-      objectSender.send(JUnitInfo(Type.FINISHED, description))
-    }
-
-    override fun testIgnored(description: Description?) {
-      objectSender.send(JUnitInfo(Type.IGNORED, description))
-    }
-
-    private fun Failure?.friendlySerializable(): Failure? {
-      if (this == null) return null
-      val e = this.exception as AssumptionViolatedException
-      val newException = AssumptionViolatedException(e.toString(), e.cause)
-      return Failure(this.description, newException)
-    }
   }
 
 }

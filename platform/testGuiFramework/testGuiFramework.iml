@@ -20,8 +20,8 @@
     <orderEntry type="module" module-name="xdebugger-impl" />
     <orderEntry type="module" module-name="external-system-rt" />
     <orderEntry type="module" module-name="external-system-impl" />
-    <orderEntry type="module" module-name="platform-main" />
     <orderEntry type="library" name="jsr305" level="project" />
     <orderEntry type="module" module-name="testFramework" />
+    <orderEntry type="module" module-name="jps-builders" />
   </component>
 </module>
