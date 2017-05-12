@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
@@ -67,6 +68,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private IpnbEditablePanel myBufferPanel;
   private int myInitialSelection = 0;
   private boolean mySynchronize;
+  private static final String ourHelpID = "IPython_Notebook_Support";
 
   public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
@@ -759,6 +761,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
     if (IpnbFileEditor.DATA_KEY.is(dataId)) {
       return myParent;
+    }
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return ourHelpID;
     }
     return null;
   }
