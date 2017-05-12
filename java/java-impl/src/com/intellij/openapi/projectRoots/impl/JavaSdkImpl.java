@@ -330,7 +330,7 @@ public class JavaSdkImpl extends JavaSdk {
   public final String getVersionString(String sdkHome) {
     String versionString = myCachedVersionStrings.get(sdkHome);
     if (versionString == null) {
-      versionString = getJdkVersion(sdkHome);
+      versionString = SdkVersionUtil.detectJdkVersion(sdkHome);
       if (!StringUtil.isEmpty(versionString)) {
         myCachedVersionStrings.put(sdkHome, versionString);
       }

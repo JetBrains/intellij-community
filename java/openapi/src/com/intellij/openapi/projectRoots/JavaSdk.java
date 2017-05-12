@@ -57,7 +57,7 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
     return JdkUtil.checkForJre(file);
   }
 
-  @Nullable
+  /** @deprecated use {@link SdkVersionUtil#detectJdkVersion} (to be removed in IDEA 2019) */
   public static String getJdkVersion(@NotNull String sdkHome) {
     return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
