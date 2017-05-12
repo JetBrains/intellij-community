@@ -27,7 +27,10 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
+import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
@@ -443,23 +446,13 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     return result;
   }
 
-  @Nullable
+  @NotNull
   private static PyNamedTupleType.FieldTypeAndDefaultValue parseNamedTupleField(@NotNull PsiElement anchor,
                                                                                 @Nullable String type,
                                                                                 @NotNull TypeEvalContext context) {
     if (type == null) return new PyNamedTupleType.FieldTypeAndDefaultValue(null, null);
 
-    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(anchor.getProject(), "dummy.py", type, false);
-    codeFragment.setContext(anchor.getContainingFile());
-
-    final PsiElement element = codeFragment.getFirstChild();
-    if (element instanceof PyExpressionStatement) {
-      final PyExpression expression = ((PyExpressionStatement)element).getExpression();
-      final PyType pyType = Ref.deref(PyTypingTypeProvider.getType(expression, context));
-
-      return new PyNamedTupleType.FieldTypeAndDefaultValue(pyType, null);
-    }
-
-    return null;
+    final PyType pyType = Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context));
+    return new PyNamedTupleType.FieldTypeAndDefaultValue(pyType, null);
   }
 }
