@@ -40,13 +40,18 @@ fun UFile.analyzeAll(context: UastContext = getUastContext(), extensions: List<U
 @JvmOverloads
 fun UExpression?.uValueOf(extensions: List<UEvaluatorExtension> = emptyList()): UValue? {
     if (this == null) return null
-    val declaration = getContainingDeclaration() ?: return null
+    val declaration = getContainingAnalyzableDeclaration() ?: return null
     val context = declaration.getEvaluationContextWithCaching(extensions)
     context.analyze(declaration)
     return context.valueOf(this)
 }
 
 fun UExpression?.uValueOf(vararg extensions: UEvaluatorExtension): UValue? = uValueOf(extensions.asList())
+
+private fun UElement.getContainingAnalyzableDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull {
+    it is UMethod ||
+    it is UField // TODO: think about field analysis (should we use class as analyzable declaration)
+}
 
 fun UDeclaration.getEvaluationContextWithCaching(extensions: List<UEvaluatorExtension> = emptyList()): UEvaluationContext {
     return containingFile?.let { file ->
