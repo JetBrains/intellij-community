@@ -16,13 +16,21 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AutoBoxingInspectionTest extends LightInspectionTestCase {
+public class AutoBoxingInspectionJava7Test extends LightInspectionTestCase {
 
-  public void testAutoBoxing() {
+  public void testAutoBoxingJava7() {
     doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7;
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -621,10 +620,9 @@ public class ExpectedTypeUtils {
       if (parameters.length == 0) {
         return null;
       }
-
-      PsiSubstitutor substitutor = result.getSubstitutor();
-      boolean isVarargs = result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).isVarargs();
-      PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
+      final boolean isVarargs = method.isVarArgs();
+      final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
+      final PsiSubstitutor substitutor = result.getSubstitutor();
       final PsiType type = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(parameterType));
       if (type == null) {
         return null;
