@@ -33,14 +33,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import com.intellij.ui.content.ContentManager;
-import com.intellij.ui.content.ContentUI;
+import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.ui.content.*;
+import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +63,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   private boolean myShowConfigurations;
 
   private RunDashboardContent myDashboardContent;
+  private Content myToolWindowContent;
 
   public RunDashboardManagerImpl(@NotNull final Project project) {
     myProject = project;
@@ -137,6 +135,12 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         updateDashboard(false);
       }
     });
+    myContentManager.addContentManagerListener(new ContentManagerAdapter() {
+      @Override
+      public void selectionChanged(ContentManagerEvent event) {
+        updateToolWindowContent();
+      }
+    });
   }
 
   @Override
@@ -162,11 +166,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public void createToolWindowContent(@NotNull ToolWindow toolWindow) {
     myDashboardContent = new RunDashboardContent(myProject, myContentManager, myGroupers);
-    ContentManager contentManager = toolWindow.getContentManager();
-    Content content = contentManager.getFactory().createContent(myDashboardContent, null, false);
-    Disposer.register(content, myDashboardContent);
-    Disposer.register(content, () -> myDashboardContent = null);
-    toolWindow.getContentManager().addContent(content);
+    myToolWindowContent = new RunDashboardTabbedContent(myContentManager, myDashboardContent, null, false);
+    myToolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    Disposer.register(myToolWindowContent, myDashboardContent);
+    Disposer.register(myToolWindowContent, () -> myDashboardContent = null);
+    toolWindow.getContentManager().addContent(myToolWindowContent);
+    toolWindow.setDefaultContentUiType(ToolWindowContentUiType.COMBO);
+    toolWindow.setContentUiType(ToolWindowContentUiType.COMBO, null);
   }
 
   @Override
@@ -214,6 +220,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   public void setShowConfigurations(boolean value) {
     myShowConfigurations = value;
+    updateToolWindowContent();
   }
 
   private void updateDashboardIfNeeded(@Nullable RunnerAndConfigurationSettings settings) {
@@ -264,6 +271,27 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     return !getRunConfigurations().isEmpty();
   }
 
+  private void updateToolWindowContent() {
+    String tabName = null;
+    Icon tabIcon = null;
+    if (!myShowConfigurations) {
+      Content content = myContentManager.getSelectedContent();
+      if (content != null) {
+        tabName = content.getTabName();
+        tabIcon = content.getIcon();
+      }
+    }
+    myToolWindowContent.setDisplayName(tabName);
+    myToolWindowContent.setIcon(tabIcon);
+
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId());
+    if (toolWindow instanceof ToolWindowImpl) {
+      ToolWindowContentUi contentUi = ((ToolWindowImpl)toolWindow).getContentUI();
+      contentUi.revalidate();
+      contentUi.repaint();
+    }
+  }
+
   @Nullable
   @Override
   public State getState() {
@@ -305,6 +333,57 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     public RuleState(String name, boolean enabled) {
       this.name = name;
       this.enabled = enabled;
+    }
+  }
+
+  private static class RunDashboardTabbedContent extends ContentImpl implements TabbedContent {
+    private ContentManager myDashboardContentManager;
+    private String myTitlePrefix = "Running Configurations:";
+
+    RunDashboardTabbedContent(ContentManager dashboardContentManager, JComponent component, String displayName, boolean isPinnable) {
+      super(component, displayName, isPinnable);
+      myDashboardContentManager = dashboardContentManager;
+    }
+
+    @Override
+    public void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab) {
+    }
+
+    @Override
+    public void removeContent(@NotNull JComponent content) {
+    }
+
+    @Override
+    public void selectContent(int index) {
+      Content content = myDashboardContentManager.getContent(index);
+      if (content != null) {
+        myDashboardContentManager.setSelectedContent(content);
+      }
+    }
+
+    @Override
+    public List<Pair<String, JComponent>> getTabs() {
+      return Arrays.stream(myDashboardContentManager.getContents()).map(content -> Pair.create(content.getDisplayName(), content.getComponent())).collect(Collectors.toList());
+    }
+
+    @Override
+    public String getTitlePrefix() {
+      return myTitlePrefix;
+    }
+
+    @Override
+    public void setTitlePrefix(String titlePrefix) {
+      myTitlePrefix = titlePrefix;
+    }
+
+    @Override
+    public void split() {
+    }
+
+    @Override
+    public void dispose() {
+      myDashboardContentManager = null;
+      super.dispose();
     }
   }
 }
