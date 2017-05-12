@@ -20,15 +20,19 @@ task setupAndroidSdk {
 
   def zipFile = org.gradle.internal.os.OperatingSystem.current().familyName + ".zip"
   def gradleFile = "gradle-3.3-bin.zip"
+  def repoFile = "offline_repo_repo.zip"
   def archivePath = "$project.buildDir/android-sdk/" + zipFile
   def gradlePath = "$project.buildDir/android-sdk/" + gradleFile
+  def repoPath = "$project.buildDir/android-sdk/" + repoFile
   def outputDir ="$project.buildDir/android-sdk/prebuilts/studio/sdk"
   def outputGradle ="$project.buildDir/android-sdk/tools/external/gradle"
+  def outputRepo ="$project.buildDir/android-sdk/prebuilts/tools/common/m2/repository"
   outputs.dir(outputDir)
   outputs.dir(outputGradle)
   outputs.dir("$project.buildDir/android-sdk/prebuilts/tools/common");
   outputs.file(archivePath)
   outputs.file(gradlePath)
+  outputs.file(repoPath)
 
   doFirst {
     download {
@@ -39,6 +43,11 @@ task setupAndroidSdk {
     download {
       src "http://repo.labs.intellij.net/thirdparty/gradle/" + gradleFile
       dest gradlePath
+      onlyIfNewer true
+    }
+    download {
+      src "http://repo.labs.intellij.net/thirdparty/android-sdk/" + repoFile
+      dest repoPath
       onlyIfNewer true
     }
   }
@@ -52,7 +61,10 @@ task setupAndroidSdk {
       from file(gradlePath)
       into outputGradle
     }
-    file("$project.buildDir/android-sdk/prebuilts/tools/common/m2/repository").mkdirs()
+    copy {
+      from zipTree(file(repoPath))
+      into outputRepo
+    }
     file("$project.buildDir/android-sdk/prebuilts/tools/common/offline-m2").mkdirs()
   }
 }
