@@ -27,9 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-/**
- * @author Irina.Chernushina on 5/30/2016.
- */
 public class JsonSchemaFileTypeManager implements ProjectManagerListener {
   private final Collection<VirtualFile> myFileSets = ContainerUtil.newConcurrentSet();
   private volatile boolean mySetsInitialized;

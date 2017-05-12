@@ -133,7 +133,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     return myCachedFiles.notNullValues();
   }
 
-  public void onProjectClosed(@NotNull Project project) {
+  public void onProjectClosed() {
     clearCache();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       cleanup();
@@ -144,7 +144,6 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     clearCache();
   }
 
-
   private static final Key<Boolean> DISPOSE_CALLBACK = Key.create("DISPOSE_CALLBACK");
 
   private void registerDisposeCallback(Project project) {
@@ -154,7 +153,7 @@ public abstract class DummyCachingFileSystem<T extends VirtualFile> extends Dumm
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {
-        onProjectClosed(project);
+        onProjectClosed();
       }
     });
   }
