@@ -19,25 +19,29 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
@@ -115,12 +119,20 @@ public class PyCallExpressionHelper {
   public static List<PyCallExpression.PyRatedMarkedCallee> multiResolveRatedCallee(@NotNull PyCallExpression call,
                                                                                    @NotNull PyResolveContext resolveContext,
                                                                                    int implicitOffset) {
-    return multiResolveCallee(call.getCallee(), resolveContext)
-      .stream()
-      .map(resolveResult -> clarifyResolveResult(resolveResult, resolveContext, call))
-      .filter(Objects::nonNull)
-      .map(resolveResult -> markResolveResult(resolveResult, resolveContext.getTypeEvalContext(), implicitOffset))
-      .filter(Objects::nonNull)
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees = new ArrayList<>();
+
+    for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
+      final ClarifiedResolveResult clarifiedResolveResult = clarifyResolveResult(resolveResult, resolveContext, call);
+      if (clarifiedResolveResult == null) continue;
+
+      final PyCallExpression.PyRatedMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
+      if (markedCallee == null) continue;
+
+      ratedMarkedCallees.add(markedCallee);
+    }
+
+    return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, PyCallExpression.PyRatedMarkedCallee::getElement, context)
       // while clarifying resolve results we could get duplicate callables so we have to group them and select result with highest rate
       .collect(Collectors.groupingBy(markedCallee -> markedCallee.getElement(), LinkedHashMap::new, Collectors.toList()))
       .entrySet()
@@ -391,17 +403,21 @@ public class PyCallExpressionHelper {
         }
         // normal cases
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-        final PsiPolyVariantReference reference = ((PyReferenceExpression)callee).getReference(resolveContext);
-        final List<PyType> members = new ArrayList<>();
-        for (PsiElement target : PyUtil.multiResolveTopPriority(reference)) {
-          PyUtil.verboseOnly(() ->PyPsiUtils.assertValid(target));
-          if (target != null) {
-            final Ref<? extends PyType> typeRef = getCallTargetReturnType(call, target, context);
-            if (typeRef != null) {
-              members.add(typeRef.get());
-            }
-          }
-        }
+
+        final List<QualifiedRatedResolveResult> resolveResults = multiResolveCallee(callee, resolveContext);
+        final Stream<QualifiedRatedResolveResult> overloadsOtherwiseImplementations =
+          forEveryScopeTakeOverloadsOtherwiseImplementations(resolveResults, RatedResolveResult::getElement, context);
+
+        final List<PyType> members = StreamEx
+          .of(PyUtil.filterTopPriorityResults(overloadsOtherwiseImplementations.collect(Collectors.toList())))
+          .map(ResolveResult::getElement)
+          .nonNull()
+          .peek(element -> PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(element)))
+          .map(element -> getCallTargetReturnType(call, element, context))
+          .nonNull()
+          .<PyType>map(Ref::get)
+          .toList();
+
         if (!members.isEmpty()) {
           return PyUnionType.union(members);
         }
@@ -833,6 +849,50 @@ public class PyCallExpressionHelper {
     return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedArguments,
                                       parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
                                       tupleMappedParameters);
+  }
+
+  @NotNull
+  private static <E> Stream<E> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull Collection<E> elements,
+                                                                                  @NotNull Function<? super E, PsiElement> mapper,
+                                                                                  @NotNull TypeEvalContext context) {
+    if (!containsOverloadsAndImplementations(elements, mapper, context)) {
+      return elements.stream();
+    }
+
+    return StreamEx
+      .of(elements)
+      .groupingBy(element -> ScopeUtil.getScopeOwner(mapper.apply(element)))
+      .values()
+      .stream()
+      .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
+  }
+
+  private static <E> boolean containsOverloadsAndImplementations(@NotNull Collection<E> elements,
+                                                                 @NotNull Function<? super E, PsiElement> mapper,
+                                                                 @NotNull TypeEvalContext context) {
+    boolean containsOverloads = false;
+    boolean containsImplementations = false;
+
+    for (E element : elements) {
+      final boolean overload = PyiUtil.isOverload(mapper.apply(element), context);
+      containsOverloads |= overload;
+      containsImplementations |= !overload;
+
+      if (containsOverloads && containsImplementations) return true;
+    }
+
+    return false;
+  }
+
+  @NotNull
+  private static <E> Stream<E> takeOverloadsOtherwiseImplementations(@NotNull List<E> elements,
+                                                                     @NotNull Function<? super E, PsiElement> mapper,
+                                                                     @NotNull TypeEvalContext context) {
+    if (!containsOverloadsAndImplementations(elements, mapper, context)) {
+      return elements.stream();
+    }
+
+    return elements.stream().filter(element -> PyiUtil.isOverload(mapper.apply(element), context));
   }
 
   public static class ArgumentMappingResults {

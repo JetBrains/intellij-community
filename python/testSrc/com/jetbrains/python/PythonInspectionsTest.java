@@ -79,58 +79,9 @@ public class PythonInspectionsTest extends PyTestCase {
     doTest(getTestName(false), inspection);
   }
 
-  public void testPyRedeclarationInspection() {
-    doHighlightingTest(PyRedeclarationInspection.class);
-  }
-
   public void testPyTrailingSemicolonInspection() {
     LocalInspectionTool inspection = new PyTrailingSemicolonInspection();
     doTest(getTestName(false), inspection);
-  }
-
-  public void testPyUnusedLocalVariableInspection() {
-    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    inspection.ignoreTupleUnpacking = false;
-    inspection.ignoreLambdaParameters = false;
-    doHighlightingTest(inspection, LanguageLevel.PYTHON27);
-  }
-
-  public void testPyUnusedLocalVariableInspection3K() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON30);
-  }
-
-  public void testPyUnusedVariableTupleUnpacking() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON26);
-  }
-
-  public void testPyUnusedLocalFunctionInspection() {
-    PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  // PY-9778
-  public void testPyUnusedLocalCoroutine() {
-    myFixture.copyDirectoryToProject("inspections/" + getTestName(false), "");
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON34);
-  }
-
-  public void testPyUnusedParameterInspection() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
-  }
-
-  // PY-20805
-  public void testUnusedLocalFStringReferences() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
-  }
-
-  // PY-22087
-  public void testUnusedLocalFStringReferencesInComprehensions() {
-    doHighlightingTest(PyUnusedLocalInspection.class, LanguageLevel.PYTHON36);
-  }
-
-  // PY-8219
-  public void testUnusedLocalDoctestReference() {
-    doHighlightingTest(PyUnusedLocalInspection.class);
   }
 
   public void testPyDictCreationInspection() {
@@ -331,10 +282,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyShadowingNamesInspection() {
     doHighlightingTest(PyShadowingNamesInspection.class);
-  }
-
-  public void testPyDunderSlotsInspection() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doHighlightingTest(PyDunderSlotsInspection.class));
   }
 
   // PY-21645

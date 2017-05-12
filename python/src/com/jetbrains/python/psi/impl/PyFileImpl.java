@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,6 +180,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
             }
           }
         }
+
         return resultList;
       }
 
@@ -210,6 +211,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return PythonFileType.INSTANCE;
   }
 
+  @Override
   public String toString() {
     return "PyFile:" + getName();
   }
@@ -444,6 +446,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return cache;
   }
 
+  @Override
   @Nullable
   public PsiElement getElementNamed(final String name) {
     final List<RatedResolveResult> results = multiResolveName(name);
@@ -458,6 +461,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return null;
   }
 
+  @Override
   @NotNull
   public Iterable<PyElement> iterateNames() {
     final List<PyElement> result = new ArrayList<>();

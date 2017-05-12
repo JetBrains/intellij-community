@@ -376,6 +376,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
+  void moveToCaretPosition() {
+    myOffsets.destabilizeLookupStart();
+    refreshUi(false, true);
+  }
+
   private boolean updateList(boolean onExplicitAction, boolean reused) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();

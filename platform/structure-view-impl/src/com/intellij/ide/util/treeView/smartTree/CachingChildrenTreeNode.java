@@ -19,6 +19,7 @@ package com.intellij.ide.util.treeView.smartTree;
 import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import gnu.trove.THashMap;
@@ -47,8 +48,13 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   private void ensureChildrenAreInitialized() {
     if (myChildren == null) {
-      myChildren = new ArrayList<>();
-      rebuildSubtree();
+      try {
+        myChildren = new ArrayList<>();
+        rebuildSubtree();
+      } catch (ProcessCanceledException pce) {
+        myChildren = null;
+        throw pce;
+      }
     }
   }
 

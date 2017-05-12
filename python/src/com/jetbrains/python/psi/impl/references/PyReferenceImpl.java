@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -46,6 +47,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -269,6 +271,16 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
           // TODO: Use the results from the processor as a cache for resolving to latest defs
           final ResolveResultList latestDefs = resolveToLatestDefs(instructions, realContext, referencedName, typeEvalContext);
           if (!latestDefs.isEmpty()) {
+            if (ContainerUtil.exists(latestDefs, result -> result.getElement() instanceof PyCallable)) {
+              return StreamEx
+                .of(processor.getResults().keySet())
+                .nonNull()
+                .filter(element -> PyiUtil.isOverload(element, typeEvalContext))
+                .map(element -> new RatedResolveResult(getRate(element, typeEvalContext), element))
+                .prepend(latestDefs)
+                .toList();
+            }
+
             return latestDefs;
           }
           else if (resolvedOwner instanceof PyClass || instructions.isEmpty() && allInOwnScopeComprehensions(resolvedElements)) {
@@ -427,6 +439,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     else if (elt instanceof PyFile) {
       rate = RatedResolveResult.RATE_HIGH;
+    }
+    else if (!PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+      rate = RatedResolveResult.RATE_LOW;
     }
     else {
       rate = RatedResolveResult.RATE_NORMAL;

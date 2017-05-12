@@ -22,10 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
@@ -151,15 +149,28 @@ public abstract class FileBasedIndex {
     VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
-        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
-          return false; // avoid visiting files more than once, e.g. additional indexed roots intersect sometimes
-        }
-        if (projectFileIndex != null && projectFileIndex.isExcluded(file)) {
-          return false;
+        if (!acceptsFile(file)) return false;
+        if (file.is(VFileProperty.SYMLINK)) {
+          if(!Registry.is("indexer.follows.symlinks")) return false;
+          VirtualFile canonicalFile = file.getCanonicalFile();
+
+          if (canonicalFile != null) {
+            if(!acceptsFile(canonicalFile)) return false;
+          }
         }
         if (indicator != null) indicator.checkCanceled();
 
         processor.processFile(file);
+        return true;
+      }
+
+      private boolean acceptsFile(@NotNull VirtualFile file) {
+        if (visitedRoots != null && !root.equals(file) && file.isDirectory() && !visitedRoots.add(file)) {
+          return false;
+        }
+        if (projectFileIndex != null && projectFileIndex.isExcluded(file)) {
+          return false;
+        }
         return true;
       }
     });

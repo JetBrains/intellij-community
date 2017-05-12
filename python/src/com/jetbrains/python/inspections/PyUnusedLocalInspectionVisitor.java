@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +79,9 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
 
   @Override
   public void visitPyFunction(final PyFunction node) {
-    processScope(node);
+    if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
+      processScope(node);
+    }
   }
 
   @Override
@@ -367,7 +370,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             fixes.add(new AddFieldQuickFix(name, name, containingClass.getName(), false));
           }
           if (canRemove) {
-            fixes.add(new PyRemoveParameterQuickFix());
+            fixes.add(new PyRemoveParameterQuickFix(myTypeEvalContext));
           }
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes.toArray(new LocalQuickFix[fixes.size()]));
         }
@@ -448,12 +451,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   private static class ReplaceWithWildCard implements LocalQuickFix {
+    @Override
     @NotNull
     public String getFamilyName() {
       return PyBundle.message("INSP.unused.locals.replace.with.wildcard");
     }
 
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement psiElement = descriptor.getPsiElement();
       final PyFile pyFile = (PyFile) PyElementGenerator.getInstance(psiElement.getProject()).createDummyFile(LanguageLevel.getDefault(),
                                                                                                              "for _ in tuples:\n  pass"

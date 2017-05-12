@@ -1840,4 +1840,16 @@ ita<caret>
     assert lookup
   }
 
+  void "test don't close lookup when starting a new line"() {
+    myFixture.configureByText 'a.java', 'class Foo {{ "abc"<caret> }}'
+    type '.'
+    assert lookup
+    edt {
+      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_START_NEW_LINE)
+      assert lookup
+      assert lookup.lookupStart == myFixture.editor.caretModel.offset
+      assert myFixture.editor.document.text.contains('\n')
+    }
+  }
+
 }

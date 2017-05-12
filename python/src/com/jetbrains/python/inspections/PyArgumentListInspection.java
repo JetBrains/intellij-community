@@ -45,6 +45,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class PyArgumentListInspection extends PyInspection {
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
@@ -268,11 +269,10 @@ public class PyArgumentListInspection extends PyInspection {
       .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
       .nonNull()
       .map(markedCallee -> calculatePossibleCalleeRepresentation(markedCallee.getCallable(), context))
-      .nonNull()
       .collect(Collectors.joining("<br>"));
   }
 
-  @Nullable
+  @NotNull
   private static String calculatePossibleCalleeRepresentation(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
     final String name = callable.getName();
     final String parameters = callable.getParameterList().getPresentableText(true, context);

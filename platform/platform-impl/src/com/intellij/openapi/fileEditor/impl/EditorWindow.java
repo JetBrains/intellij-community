@@ -1088,20 +1088,16 @@ public class EditorWindow {
   private void doTrimSize(int limit, @Nullable VirtualFile fileToIgnore, boolean closeNonModifiedFilesFirst, boolean transferFocus) {
     LinkedHashSet<VirtualFile> closingOrder = getTabClosingOrder(closeNonModifiedFilesFirst);
     VirtualFile selectedFile = getSelectedFile();
-    if (shouldCloseSelected()) {
-      defaultCloseFile(selectedFile, transferFocus);
-      closingOrder.remove(selectedFile);
-    }
 
     for (VirtualFile file : closingOrder) {
       if (myTabbedPane.getTabCount() <= limit || myTabbedPane.getTabCount() == 0 || areAllTabsPinned(fileToIgnore)) {
         return;
       }
-      if (fileCanBeClosed(file, fileToIgnore)) {
-        defaultCloseFile(file, transferFocus);
-      }
-    }
+      if (file.equals(selectedFile) && !shouldCloseSelected()) continue;
+      if (!fileCanBeClosed(file, fileToIgnore)) continue;
 
+      defaultCloseFile(file, transferFocus);
+    }
   }
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
