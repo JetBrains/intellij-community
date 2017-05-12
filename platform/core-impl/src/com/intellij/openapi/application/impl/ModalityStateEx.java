@@ -37,12 +37,7 @@ public class ModalityStateEx extends ModalityState {
   }
 
   private List<Object> getModalEntities() {
-    ArrayList<Object> result = new ArrayList<>();
-    for (Object entity : myModalEntities) {
-      //noinspection UseBulkOperation
-      result.add(entity);
-    }
-    return result;
+    return myModalEntities.toStrongList();
   }
 
   @NotNull
