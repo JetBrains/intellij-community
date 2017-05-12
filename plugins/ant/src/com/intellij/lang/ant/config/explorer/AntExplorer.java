@@ -92,19 +92,23 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   private AntConfiguration myConfig;
 
   private final TreeExpander myTreeExpander = new TreeExpander() {
+    @Override
     public void expandAll() {
       myBuilder.expandAll();
     }
 
+    @Override
     public boolean canExpand() {
       final AntConfiguration config = myConfig;
       return config != null && !config.getBuildFileList().isEmpty();
     }
 
+    @Override
     public void collapseAll() {
       myBuilder.collapseAll();
     }
 
+    @Override
     public boolean canCollapse() {
       return canExpand();
     }
@@ -126,6 +130,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(final Component comp, final int x, final int y) {
         popupInvoked(comp, x, y);
       }
@@ -148,6 +153,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     }.installOn(myTree);
 
     myTree.registerKeyboardAction(new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         runSelection(DataManager.getInstance().getDataContext(myTree));
       }
@@ -160,18 +166,21 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     myKeymapListener = new KeymapListener();
 
     DomManager.getDomManager(project).addDomEventListener(new DomEventListener() {
+      @Override
       public void eventOccured(DomEvent event) {
         myBuilder.queueUpdate();
       }
     }, this);
 
     project.getMessageBus().connect(this).subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
+      @Override
       public void beforeRunTasksChanged () {
         myBuilder.queueUpdate();
       }
     });
   }
 
+  @Override
   public void dispose() {
     final KeymapListener listener = myKeymapListener;
     if (listener != null) {
@@ -422,6 +431,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     popupMenu.getComponent().show(comp, x, y);
   }
 
+  @Override
   @Nullable
   public Object getData(@NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
@@ -507,6 +517,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   public static FileChooserDescriptor createXmlDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, true){
+      @Override
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         boolean b = super.isFileVisible(file, showHiddenFiles);
         if (!file.isDirectory()) {
@@ -518,6 +529,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
   }
 
   private static final class NodeRenderer extends ColoredTreeCellRenderer {
+    @Override
     public void customizeCellRenderer(@NotNull JTree tree,
                                       Object value,
                                       boolean selected,
@@ -541,6 +553,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), IconUtil.getAddIcon());
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       addBuildFile();
     }
@@ -552,10 +565,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
             IconUtil.getRemoveIcon());
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       removeBuildFile();
     }
 
+    @Override
     public void update(AnActionEvent event) {
       event.getPresentation().setEnabled(getCurrentBuildFile() != null);
     }
@@ -567,10 +582,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
             AllIcons.Actions.Execute);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       runSelection(e.getDataContext());
     }
 
+    @Override
     public void update(AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       final String place = event.getPlace();
@@ -654,11 +671,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
             AllIcons.General.Filter);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent event) {
       final Project project = myProject;
       return project != null && AntConfigurationBase.getInstance(project).isFilterTargets();
     }
 
+    @Override
     public void setSelected(AnActionEvent event, boolean flag) {
       setTargetsFiltered(flag);
     }
@@ -679,10 +698,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myExecutionEvent = executionEvent;
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return myTarget.equals(AntConfigurationBase.getInstance(myProject).getTargetForEvent(myExecutionEvent));
     }
 
+    @Override
     public void setSelected(AnActionEvent event, boolean state) {
       final AntConfigurationBase antConfiguration = AntConfigurationBase.getInstance(myProject);
       if (state) {
@@ -696,6 +717,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myBuilder.queueUpdate();
     }
 
+    @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final AntBuildFile buildFile = myTarget.getModel().getBuildFile();
@@ -711,11 +733,13 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myTarget = target;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final AntExecuteBeforeRunDialog dialog = new AntExecuteBeforeRunDialog(myProject, myTarget);
       dialog.show();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myTarget.getModel().getBuildFile().exists());
     }
@@ -728,6 +752,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 /*IconLoader.getIcon("/actions/execute.png")*/);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       final String[] targets = getTargetNamesFromPaths(myTree.getSelectionPaths());
@@ -740,6 +765,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       e.getPresentation().setEnabled(paths != null && paths.length > 1 && canRunSelection());
@@ -752,17 +778,20 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       super(AntBundle.message("remove.meta.targets.action.name"), AntBundle.message("remove.meta.targets.action.description"), null);
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree);
       Disposer.register(AntExplorer.this, new Disposable() {
+        @Override
         public void dispose() {
           RemoveMetaTargetsOrBuildFileAction.this.unregisterCustomShortcutSet(myTree);
         }
       });
       myTree.registerKeyboardAction(new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           doAction();
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       doAction();
     }
@@ -803,6 +832,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final TreePath[] paths = myTree.getSelectionPaths();
@@ -857,10 +887,12 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myActionId = actionId;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       new EditKeymapsDialog(myProject, myActionId).show();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myActionId != null && ActionManager.getInstance().getAction(myActionId) != null);
     }
@@ -876,6 +908,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       keymapManager.addKeymapManagerListener(this, AntExplorer.this);
     }
 
+    @Override
     public void activeKeymapChanged(Keymap keymap) {
       listenTo(keymap);
       updateTree();
@@ -896,6 +929,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       myBuilder.updateFromRoot();
     }
 
+    @Override
     public void onShortcutChanged(String actionId) {
       updateTree();
     }
