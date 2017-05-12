@@ -345,7 +345,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   private PyExpression resolveKeywordPercent(@NotNull PyExpression expression, @NotNull String key) {
     final PyExpression containedExpr = PyPsiUtils.flattenParens(expression);
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
     if (PyUtil.instanceOf(containedExpr, PyDictLiteralExpression.class, PyCallExpression.class)) {
       final Ref<PyExpression> resolvedRef = getElementFromDictLiteral(containedExpr, key);
       return resolvedRef != null ? resolvedRef.get() : containedExpr;
@@ -416,7 +415,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private Ref<PyExpression> resolveKeywordStarExpression(@NotNull PyStarArgument starArgument) {
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
     // TODO: support call, reference expressions here
     final PyDictLiteralExpression dictExpr = PsiTreeUtil.getChildOfType(starArgument, PyDictLiteralExpression.class);
     final PyCallExpression callExpression = PsiTreeUtil.getChildOfType(starArgument, PyCallExpression.class);
@@ -497,7 +495,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   private Ref<PyExpression> resolveDictCall(@NotNull PyCallExpression expression, @NotNull String key, boolean goDeep) {
     final PyExpression callee = expression.getCallee();
-    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
     boolean allKeysForSure = true;
     final LanguageLevel languageLevel = LanguageLevel.forElement(expression);
     if (callee != null) {
