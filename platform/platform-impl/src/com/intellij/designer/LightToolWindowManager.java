@@ -66,12 +66,12 @@ public abstract class LightToolWindowManager implements Disposable {
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
-    myConnection = myProject.getMessageBus().connect();
-
-    myConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
         if (myProject == project) {
+          connection.disconnect();
           LightToolWindowManager.this.projectOpened();
         }
       }
@@ -90,6 +90,7 @@ public abstract class LightToolWindowManager implements Disposable {
   }
 
   private void initListeners() {
+    myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
