@@ -26,7 +26,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
-import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
+import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesPanel;
 import com.intellij.psi.PsiModifier;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
@@ -294,7 +294,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
     Element toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile =
-      InspectionToolsConfigurable.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
+      InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
 
     //check merged
     Element mergedElement = JdomKt.loadElement(mergedText);
