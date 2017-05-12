@@ -40,6 +40,7 @@ import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBList;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
+import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
@@ -177,9 +178,12 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
 
                 model.ensureCapacity(model.size() + virtualFiles.length + 1);
                 ThemeFilter filter = thumbnailView.getFilter();
+                TagFilter tagFilter = thumbnailView.getTagFilter();
                 for (VirtualFile virtualFile : virtualFiles) {
                     if (filter == null || filter.accepts(virtualFile)) {
-                        model.addElement(virtualFile);
+                        if (tagFilter == null || tagFilter.accepts(virtualFile)) {
+                            model.addElement(virtualFile);
+                        }
                     }
                 }
                 if (model.size() > 0) {

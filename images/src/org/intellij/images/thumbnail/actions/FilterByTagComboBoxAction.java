@@ -16,28 +16,29 @@
 
 package org.intellij.images.thumbnail.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.search.ImageTagManager;
+import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Arrays;
 
-public final class FilterByThemeComboBoxAction extends ComboBoxAction {
+public final class FilterByTagComboBoxAction extends ComboBoxAction {
     
     public void update(final AnActionEvent e) {
         Project project = e.getProject();
         ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-        boolean hasApplicableExtension = 
-          Arrays.stream(ThemeFilter.EP_NAME.getExtensions())
-            .allMatch(filter -> project != null && filter.isApplicableToProject(project));
-        e.getPresentation().setVisible(view != null && hasApplicableExtension);
-        ThemeFilter filter = view != null ? view.getFilter() : null;
+        ImageTagManager tagManager = ImageTagManager.getInstance(project);
+        e.getPresentation().setVisible(view != null && !tagManager.getAllTags().isEmpty());
+        TagFilter filter = view != null ? view.getTagFilter() : null;
         e.getPresentation().setText(filter == null ? "All" : filter.getDisplayName());
     }
 
@@ -45,7 +46,9 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
     @Override
     protected DefaultActionGroup createPopupActionGroup(JComponent button) {
         DefaultActionGroup group = new DefaultActionGroup();
-        group.add(new FilterImagesAction(new ThemeFilter() {
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
+        ImageTagManager tagManager = ImageTagManager.getInstance(project);
+        group.add(new FilterImagesAction(new TagFilter("All", tagManager) {
             @Override
             public String getDisplayName() {
                 return "All";
@@ -60,14 +63,10 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
             public boolean isApplicableToProject(Project project) {
                 return true;
             }
-
-            @Override
-            public void setFilter(ThumbnailView view) {
-                view.setFilter(this);
-            }
         }));
-        for (ThemeFilter filter : ThemeFilter.EP_NAME.getExtensions()) {
-            group.add(new FilterImagesAction(filter));
+
+        for (String tag : tagManager.getAllTags()) {
+            group.add(new FilterImagesAction(new TagFilter(tag, tagManager)));
         }
 
         return group;

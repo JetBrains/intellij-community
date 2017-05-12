@@ -13,38 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.devkit.icons;
+package org.intellij.images.search;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
-import org.intellij.images.thumbnail.actions.ThemeFilter;
-import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.intellij.images.thumbnail.actions.Filter;
 
-public abstract class AbstractThemeFilter implements ThemeFilter {
-  private final Theme myTheme;
+public class TagFilter implements Filter {
+  private String myTag;
+  private ImageTagManager myManager;
 
-  protected AbstractThemeFilter(Theme theme) {
-    myTheme = theme;
+  public TagFilter(String tag, ImageTagManager manager) {
+    myTag = tag;
+    myManager = manager;
   }
 
   @Override
   public String getDisplayName() {
-    return myTheme.getDisplayName();
+    return myTag;
   }
 
   @Override
   public boolean accepts(VirtualFile file) {
-    return myTheme.accepts(file);
+    return myManager.hasTag(myTag, file);
   }
 
   @Override
   public boolean isApplicableToProject(Project project) {
-    return PsiUtil.isIdeaProject(project) || PsiUtil.isPluginProject(project);
+    return true;
   }
 
   @Override
   public void setFilter(ThumbnailView view) {
-    view.setFilter(this);
+    view.setTagFilter(this);
   }
 }

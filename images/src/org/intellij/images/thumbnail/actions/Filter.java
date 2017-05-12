@@ -15,29 +15,16 @@
  */
 package org.intellij.images.thumbnail.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
-import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 
-public class FilterByThemeAction extends AnAction {
-  private final ThemeFilter myFilter;
+public interface Filter {
+  String getDisplayName();
 
-  public FilterByThemeAction(ThemeFilter filter) {
-    myFilter = filter;
-  }
+  boolean accepts(VirtualFile file);
 
-  @Override
-  public void update(AnActionEvent e) {
-    e.getPresentation().setText(myFilter.getDisplayName());
-  }
+  boolean isApplicableToProject(Project project);
 
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    ThumbnailView view = ThumbnailViewActionUtil.getVisibleThumbnailView(e);
-
-    if (view != null) {
-      view.setFilter(myFilter);
-    } 
-  }
+  void setFilter(ThumbnailView view);
 }
