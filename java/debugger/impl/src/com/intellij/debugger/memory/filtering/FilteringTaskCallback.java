@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.memory.filtering;
 
-import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,13 +25,13 @@ public interface FilteringTaskCallback {
   void started(int totalCount);
 
   @NotNull
-  Action matched(@NotNull ObjectReference ref);
+  Action matched(@NotNull Value ref);
 
   @NotNull
-  Action notMatched(@NotNull ObjectReference ref);
+  Action notMatched(@NotNull Value ref);
 
   @NotNull
-  Action error(@NotNull ObjectReference ref, @NotNull String description);
+  Action error(@NotNull Value ref, @NotNull String description);
 
   void completed(@NotNull FilteringResult reason);
 

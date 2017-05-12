@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.memory.filtering;
 
-import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @FunctionalInterface
 public interface ConditionChecker {
-  CheckingResult check(@NotNull ObjectReference ref);
+  CheckingResult check(@NotNull Value ref);
 
   ConditionChecker ALL_MATCHED_CHECKER = ref -> CheckingResultImpl.SUCCESS;
 }

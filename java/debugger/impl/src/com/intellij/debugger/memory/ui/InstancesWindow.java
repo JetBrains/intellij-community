@@ -61,6 +61,7 @@ import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
@@ -396,7 +397,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @NotNull
       @Override
-      public Action matched(@NotNull ObjectReference ref) {
+      public Action matched(@NotNull Value ref) {
         final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
                                                     myEvaluationContext, myNodeManager);
         myMatchedCount++;
@@ -410,7 +411,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @NotNull
       @Override
-      public Action notMatched(@NotNull ObjectReference ref) {
+      public Action notMatched(@NotNull Value ref) {
         myProceedCount++;
         updateProgress();
 
@@ -419,7 +420,7 @@ public class InstancesWindow extends DialogWrapper {
 
       @NotNull
       @Override
-      public Action error(@NotNull ObjectReference ref, @NotNull String description) {
+      public Action error(@NotNull Value ref, @NotNull String description) {
         final JavaValue val = new InstanceJavaValue(new InstanceValueDescriptor(myProject, ref),
                                                     myEvaluationContext, myNodeManager);
         myErrorsGroup.addErrorValue(description, val);
@@ -482,7 +483,7 @@ public class InstancesWindow extends DialogWrapper {
       MyFilteringWorker(@NotNull List<ObjectReference> refs,
                         @NotNull XExpression expression,
                         @NotNull EvaluationContextImpl evaluationContext) {
-        myTask = new FilteringTask(myClassName, myDebugProcess, expression, refs,
+        myTask = new FilteringTask(myClassName, myDebugProcess, expression, new MyValuesList(refs),
                                    new MyFilteringCallback(evaluationContext));
       }
 
@@ -496,6 +497,24 @@ public class InstancesWindow extends DialogWrapper {
         myTask.cancel();
         super.cancel(false);
       }
+    }
+  }
+
+  private static class MyValuesList implements FilteringTask.ValuesList {
+    private final List<ObjectReference> myRefs;
+
+    public MyValuesList(List<ObjectReference> refs) {
+      myRefs = refs;
+    }
+
+    @Override
+    public int size() {
+      return myRefs.size();
+    }
+
+    @Override
+    public ObjectReference get(int index) {
+      return myRefs.get(index);
     }
   }
 
