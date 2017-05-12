@@ -92,14 +92,21 @@ public class CommandLineProcessor {
 
   @NotNull
   private static Project findBestProject(VirtualFile file, Project[] projects) {
-    for (Project aProject : projects) {
-      if (ProjectRootManager.getInstance(aProject).getFileIndex().isInContent(file)) {
-        return aProject;
+    for (Project project : projects) {
+      if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
+        return project;
       }
     }
+
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
-    Project project = frame == null ? null : frame.getProject();
-    return project != null ? project : projects[0];
+    if (frame != null) {
+      Project project = frame.getProject();
+      if (project != null) {
+        return project;
+      }
+    }
+
+    return projects[0];
   }
 
   @Nullable
