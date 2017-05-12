@@ -35,7 +35,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -328,15 +327,10 @@ public class GitUtil {
   public static Set<VirtualFile> gitRootsForPaths(final Collection<VirtualFile> roots) {
     HashSet<VirtualFile> rc = new HashSet<>();
     for (VirtualFile root : roots) {
-      VirtualFile f = root;
-      do {
-        if (f.findFileByRelativePath(DOT_GIT) != null) {
-          rc.add(f);
-          break;
-        }
-        f = f.getParent();
+      VirtualFile gitRoot = getGitRootOrNull(VcsUtil.getFilePath(root));
+      if (gitRoot != null) {
+        rc.add(gitRoot);
       }
-      while (f != null);
     }
     return rc;
   }
@@ -373,10 +367,12 @@ public class GitUtil {
   @Nullable
   public static VirtualFile getGitRootOrNull(@NotNull final FilePath filePath) {
     File root = filePath.getIOFile();
-    while (root != null && (!root.exists() || !root.isDirectory() || !new File(root, DOT_GIT).exists())) {
+    while (root != null) {
+      File gitDir = findGitDir(root);
+      if (gitDir != null) return LocalFileSystem.getInstance().findFileByIoFile(root);
       root = root.getParentFile();
     }
-    return root == null ? null : LocalFileSystem.getInstance().findFileByIoFile(root);
+    return null;
   }
 
   public static boolean isGitRoot(@NotNull File folder) {
@@ -414,17 +410,7 @@ public class GitUtil {
    */
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
-    if (file instanceof AbstractVcsVirtualFile) {
-      return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
-    }
-    VirtualFile root = file;
-    while (root != null) {
-      if (root.findFileByRelativePath(DOT_GIT) != null) {
-        return root;
-      }
-      root = root.getParent();
-    }
-    return root;
+    return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
   }
 
   /**
