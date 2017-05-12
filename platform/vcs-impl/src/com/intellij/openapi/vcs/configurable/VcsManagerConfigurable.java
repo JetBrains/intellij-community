@@ -32,8 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
+import static com.intellij.util.containers.ContainerUtil.map2Set;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
   private final Project myProject;
@@ -140,9 +142,11 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       }
     }
 
-    VcsDescriptor[] vcses = ProjectLevelVcsManager.getInstance(myProject).getAllVcss();
-    for (VcsDescriptor vcs : vcses) {
-      result.add(createVcsConfigurableWrapper(vcs));
+    Set<String> projectConfigurableIds = map2Set(myProject.getExtensions(Configurable.PROJECT_CONFIGURABLE), ep -> ep.id);
+    for (VcsDescriptor descriptor : ProjectLevelVcsManager.getInstance(myProject).getAllVcss()) {
+      if (!projectConfigurableIds.contains(getVcsConfigurableId(descriptor.getDisplayName()))) {
+        result.add(wrapConfigurable(new VcsConfigurableEP(myProject, descriptor)));
+      }
     }
 
     return result.toArray(new Configurable[result.size()]);
@@ -152,18 +156,23 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
     return myMappings;
   }
 
-  private Configurable createVcsConfigurableWrapper(@NotNull VcsDescriptor descriptor) {
-    return wrapConfigurable(new VcsConfigurableEP(myProject, descriptor));
+  @NotNull
+  public static String getVcsConfigurableId(@NotNull String displayName) {
+    return "vcs." + displayName;
   }
 
   private static class VcsConfigurableEP extends ConfigurableEP<Configurable> {
+
+    private static final int WEIGHT = -500;
+
     @NotNull private final VcsDescriptor myDescriptor;
 
     public VcsConfigurableEP(@NotNull Project project, @NotNull VcsDescriptor descriptor) {
       super(project);
       myDescriptor = descriptor;
       displayName = descriptor.getDisplayName();
-      id = "vcs." + displayName;
+      id = getVcsConfigurableId(descriptor.getDisplayName());
+      groupWeight = WEIGHT;
     }
 
     @NotNull
