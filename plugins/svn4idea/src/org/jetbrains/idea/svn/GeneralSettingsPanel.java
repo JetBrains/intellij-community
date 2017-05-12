@@ -38,10 +38,9 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   private JPanel myMainPanel;
 
-  private JCheckBox myUseDefaultCheckBox;
+  private JCheckBox myUseCustomConfigurationDirectory;
   private TextFieldWithBrowseButton myConfigurationDirectoryText;
   private JButton myClearAuthButton;
-  private JLabel myConfigurationDirectoryLabel;
   private JCheckBox myLockOnDemand;
   private JBCheckBox myWithCommandLineClient;
   private JBCheckBox myRunUnderTerminal;
@@ -53,11 +52,10 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
     myWithCommandLineClient.addItemListener(e -> enableCommandLineClientOptions());
     enableCommandLineClientOptions();
-    myUseDefaultCheckBox.addActionListener(e -> {
-      boolean enabled = !myUseDefaultCheckBox.isSelected();
+    myUseCustomConfigurationDirectory.addActionListener(e -> {
+      boolean enabled = myUseCustomConfigurationDirectory.isSelected();
       myConfigurationDirectoryText.setEnabled(enabled);
       myConfigurationDirectoryText.setEditable(enabled);
-      myConfigurationDirectoryLabel.setEnabled(enabled);
       SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
       String path = configuration.getConfigurationDirectory();
       if (!enabled || path == null) {
@@ -75,7 +73,6 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       @NonNls String path = myConfigurationDirectoryText.getText().trim();
       SvnConfigurable.selectConfigurationDirectory(path, s -> myConfigurationDirectoryText.setText(s), myProject, myMainPanel);
     });
-    myConfigurationDirectoryLabel.setLabelFor(myConfigurationDirectoryText);
   }
 
   @NotNull
@@ -91,12 +88,11 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
       path = IdeaSubversionConfigurationDirectory.getPath();
     }
     myConfigurationDirectoryText.setText(path);
-    myUseDefaultCheckBox.setSelected(configuration.isUseDefaultConfiguation());
+    myUseCustomConfigurationDirectory.setSelected(!configuration.isUseDefaultConfiguation());
 
-    boolean enabled = !myUseDefaultCheckBox.isSelected();
+    boolean enabled = myUseCustomConfigurationDirectory.isSelected();
     myConfigurationDirectoryText.setEnabled(enabled);
     myConfigurationDirectoryText.setEditable(enabled);
-    myConfigurationDirectoryLabel.setEnabled(enabled);
     myLockOnDemand.setSelected(configuration.isUpdateLockOnDemand());
 
     myWithCommandLineClient.setSelected(configuration.isCommandLine());
@@ -107,7 +103,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public boolean isModified(@NotNull SvnConfiguration configuration) {
-    if (configuration.isUseDefaultConfiguation() != myUseDefaultCheckBox.isSelected()) {
+    if (configuration.isUseDefaultConfiguation() == myUseCustomConfigurationDirectory.isSelected()) {
       return true;
     }
     if (configuration.isUpdateLockOnDemand() != myLockOnDemand.isSelected()) {
@@ -124,7 +120,7 @@ public class GeneralSettingsPanel implements ConfigurableUi<SvnConfiguration> {
 
   @Override
   public void apply(@NotNull SvnConfiguration configuration) throws ConfigurationException {
-    configuration.setConfigurationDirParameters(myUseDefaultCheckBox.isSelected(), myConfigurationDirectoryText.getText());
+    configuration.setConfigurationDirParameters(!myUseCustomConfigurationDirectory.isSelected(), myConfigurationDirectoryText.getText());
 
     final SvnVcs vcs17 = SvnVcs.getInstance(myProject);
     configuration.setUpdateLockOnDemand(myLockOnDemand.isSelected());
