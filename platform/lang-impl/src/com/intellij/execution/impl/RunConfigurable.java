@@ -689,7 +689,7 @@ class RunConfigurable extends BaseConfigurable {
   private void applyByType(@NotNull DefaultMutableTreeNode typeNode, @NotNull ConfigurationType type, @Nullable RunnerAndConfigurationSettings selectedSettings, @NotNull Set<RunnerAndConfigurationSettings> toDeleteSettings) throws ConfigurationException {
     int indexToMove = -1;
 
-    final List<RunConfigurationBean> stableConfigurations = new ArrayList<>();
+    final List<RunConfigurationBean> configurationBeans = new ArrayList<>();
     final Set<String> names = new THashSet<>();
     List<DefaultMutableTreeNode> configurationNodes = new ArrayList<>();
     collectNodesRecursively(typeNode, configurationNodes, CONFIGURATION, TEMPORARY_CONFIGURATION);
@@ -706,8 +706,8 @@ class RunConfigurable extends BaseConfigurable {
       else if (userObject instanceof RunnerAndConfigurationSettingsImpl) {
         settings = (RunnerAndConfigurationSettings)userObject;
         configurationBean = new RunConfigurationBean(settings, settings.isShared());
-
       }
+
       if (configurationBean != null) {
         final SingleConfigurationConfigurable configurable = configurationBean.getConfigurable();
         final String nameText = configurable != null ? configurable.getNameText() : configurationBean.getSettings().getName();
@@ -715,9 +715,9 @@ class RunConfigurable extends BaseConfigurable {
           TreeUtil.selectNode(myTree, node);
           throw new ConfigurationException(type.getDisplayName() + " with name \'" + nameText + "\' already exists");
         }
-        stableConfigurations.add(configurationBean);
+        configurationBeans.add(configurationBean);
         if (settings == selectedSettings) {
-          indexToMove = stableConfigurations.size()-1;
+          indexToMove = configurationBeans.size()-1;
         }
       }
     }
@@ -735,8 +735,9 @@ class RunConfigurable extends BaseConfigurable {
         throw new ConfigurationException("Folders name \'" + folderName + "\' is duplicated");
       }
     }
+
     // try to apply all
-    for (RunConfigurationBean bean : stableConfigurations) {
+    for (RunConfigurationBean bean : configurationBeans) {
       applyConfiguration(typeNode, bean.getConfigurable());
       toDeleteSettings.remove(bean.getSettings());
     }
@@ -747,7 +748,7 @@ class RunConfigurable extends BaseConfigurable {
       shift = adjustOrder();
     }
     if (shift != 0 && indexToMove != -1) {
-      stableConfigurations.add(indexToMove-shift, stableConfigurations.remove(indexToMove));
+      configurationBeans.add(indexToMove-shift, configurationBeans.remove(indexToMove));
     }
   }
 
