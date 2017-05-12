@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * To solve "caret after last symbol" problem consider using {@link com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction}
+ * To solve "caret after last symbol" problem consider using {@link BaseElementAtCaretIntentionAction}
  *
  * @author Anna Kozlova
  * @author Konstantin Bulenkov
@@ -49,7 +49,6 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
    * @param project the project in which the file is opened.
    * @param editor  the editor for the file.
    * @param element the element under cursor.
-   * @throws com.intellij.util.IncorrectOperationException
    *
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
@@ -60,7 +59,7 @@ public abstract class PsiElementBaseIntentionAction extends BaseIntentionAction 
     final PsiManager manager = file.getManager();
     if (manager == null) return false;
     if (!manager.isInProject(file)) return false;
-    final PsiElement element = getElement(editor, file);
+    final PsiElement element = editor == null ? null : getElement(editor, file);
     return element != null && isAvailable(project, editor, element);
   }
 
