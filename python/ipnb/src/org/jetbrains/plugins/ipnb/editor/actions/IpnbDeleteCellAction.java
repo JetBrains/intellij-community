@@ -3,11 +3,14 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
+
+import javax.swing.*;
 
 public class IpnbDeleteCellAction extends AnAction {
 
@@ -16,6 +19,7 @@ public class IpnbDeleteCellAction extends AnAction {
   public IpnbDeleteCellAction(IpnbFileEditor fileEditor) {
     super(AllIcons.Actions.Delete);
     myFileEditor = fileEditor;
+    registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("DELETE")), myFileEditor.getIpnbFilePanel());
   }
 
   @Override
