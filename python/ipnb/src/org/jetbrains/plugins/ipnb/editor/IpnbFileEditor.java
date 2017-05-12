@@ -90,6 +90,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
     registerHeadingActions();
+
+    new IpnbDeleteCellAction(this);
   }
 
   public void loaded() {
