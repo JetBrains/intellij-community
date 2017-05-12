@@ -68,11 +68,10 @@ class MappingPane(name: String,
       val x2 = x + width
       g.color = color
       for (value in beforeValues) {
-        val position: Int = value.position
         val linkedValues = mapping.getLinkedValues(value) ?: continue
         for (nextValue in linkedValues) {
           if (needToDraw(value, nextValue) && getLineColor(value, nextValue) == color) {
-            val y1 = position
+            val y1 = value.position
             val y2 = nextValue.position
 
             g.drawLine(x1, y1, x2, y2)
