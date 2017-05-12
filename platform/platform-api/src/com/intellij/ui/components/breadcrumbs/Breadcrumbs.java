@@ -442,8 +442,9 @@ public class Breadcrumbs extends JComponent {
         if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
           Graphics2D g2 = (Graphics2D)g.create();
           float stroke = getFontSize(getFont()) / DEF_SYSTEM_FONT_SIZE;
-          int delta = bounds.height / 4;
-          g2.clipRect(0, bounds.y + delta, Short.MAX_VALUE, bounds.height - delta - delta);
+          // calculate a visible width of separator (30% of a whole path)
+          int delta = (int)(scale * (.3 * getRightGap() + getLeftGap()));
+          g2.clipRect(bounds.x - delta, bounds.y, Short.MAX_VALUE, bounds.height);
           g2.setPaint(getForeground());
           if (stroke > 1) g2.setStroke(new BasicStroke(stroke));
           g2.draw(createPath(scale, false));
