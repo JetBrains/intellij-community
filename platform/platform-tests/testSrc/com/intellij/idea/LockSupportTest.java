@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,13 +83,13 @@ public class LockSupportTest {
   public void testTwoLocks() throws Exception {
     List<SocketLock> toClose = new ArrayList<>();
     try {
-      assertThat(createLock(toClose, myTempDir, "1", "1-").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
-      assertThat(createLock(toClose, myTempDir, "1.1", "1-1").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
-      assertThat(createLock(toClose, myTempDir, "2", "2-").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
+      assertThat(createLock(toClose, myTempDir, "cfg1", "sys1").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
+      assertThat(createLock(toClose, myTempDir, "cfg2", "sys2").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
+      assertThat(createLock(toClose, myTempDir, "cfg3", "sys3").lock(), equalTo(SocketLock.ActivateStatus.NO_INSTANCE));
 
-      assertThat(createLock(toClose, myTempDir, "2", "2-").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
-      assertThat(createLock(toClose, myTempDir, "1", "1-").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
-      assertThat(createLock(toClose, myTempDir, "1.1", "1-1").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
+      assertThat(createLock(toClose, myTempDir, "cfg1", "sys1").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
+      assertThat(createLock(toClose, myTempDir, "cfg2", "sys2").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
+      assertThat(createLock(toClose, myTempDir, "cfg3", "sys3").lock(), equalTo(SocketLock.ActivateStatus.ACTIVATED));
     }
     finally {
       toClose.forEach(SocketLock::dispose);
@@ -97,8 +97,8 @@ public class LockSupportTest {
   }
 
   @NotNull
-  private static SocketLock createLock(@NotNull List<SocketLock> toClose, @NotNull File dir, @NotNull String c, @NotNull String s) {
-    SocketLock lock = new SocketLock(dir.getPath() + "/" + c, dir.getPath() + "/" + s);
+  private static SocketLock createLock(@NotNull List<SocketLock> toClose, @NotNull File dir, @NotNull String cfg, @NotNull String sys) {
+    SocketLock lock = new SocketLock(dir.getPath() + "/" + cfg, dir.getPath() + "/" + sys);
     toClose.add(lock);
     return lock;
   }
