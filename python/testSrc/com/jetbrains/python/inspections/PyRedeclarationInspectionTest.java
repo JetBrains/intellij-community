@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyRedeclarationInspectionTest extends PyTestCase {
 
@@ -61,6 +62,36 @@ public class PyRedeclarationInspectionTest extends PyTestCase {
 
   public void testNestedComprehension() {
     doTest();
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationsInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadImplementationOverloadImplementation() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22971
+  public void testOverloadImplementationOverloadImplementationInClass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
   private void doTest() {
