@@ -14,6 +14,10 @@ object IdeaPersistence : Persistence {
         return PasswordSafe.getInstance().getPassword(ProjectManager.getInstance().defaultProject, this.javaClass, key).orEmpty()
     }
 
+    suspend override fun delete(key: String) {
+        PasswordSafe.getInstance().removePassword(ProjectManager.getInstance().defaultProject, this.javaClass, key)
+    }
+
     suspend override fun clear() {
     }
 
