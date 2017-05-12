@@ -276,7 +276,7 @@ public class UIUtil {
   private static final Color BORDER_COLOR = Color.LIGHT_GRAY;
 
   public static final Color CONTRAST_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
-    final Color color = new JBColor(0x9b9b9b, 0x282828);
+    final Color color = new JBColor(0x9b9b9b, 0x4b4b4b);
     @NotNull
     @Override
     public Color produce() {
