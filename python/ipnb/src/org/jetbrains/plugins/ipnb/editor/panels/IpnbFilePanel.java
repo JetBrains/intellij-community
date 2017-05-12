@@ -167,6 +167,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         myParent.updateScrollPosition(mySelectedCellPanel);
       }
     });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
+    });
   }
 
   private void addWarningIfNeeded() {
@@ -668,7 +671,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       if (ipnbPanel != null) {
         ipnbPanel.setEditing(false);
         IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance().requestFocus(ipnbPanel, true);
+          IdeFocusManager.getGlobalInstance().requestFocus(this, true);
         });
         repaint();
         setSelectedCell(ipnbPanel, true);
