@@ -61,7 +61,12 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
       }
 
       List<Runnable> tasks = new ArrayList<>();
-      tasks.add(() -> myProjectFileIndex.iterateContent(processor));
+      final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
+
+      tasks.add(() -> myProjectFileIndex.iterateContent(
+        (file) ->
+          (file.isDirectory() && !visitedRoots.add(file)) || processor.processFile(file))
+      );
 
       /*
       Module[] modules = ModuleManager.getInstance(project).getModules();
@@ -75,7 +80,6 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         });
       }*/
 
-      final Set<VirtualFile> visitedRoots = ContainerUtil.newConcurrentSet();
       JBIterable<VirtualFile> contributedRoots = JBIterable.empty();
       for (IndexableSetContributor contributor : Extensions.getExtensions(IndexableSetContributor.EP_NAME)) {
         //important not to depend on project here, to support per-project background reindex
