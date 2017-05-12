@@ -91,7 +91,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   private IdeRootPane myRootPane;
   private BalloonLayout myBalloonLayout;
   private IdeFrameDecorator myFrameDecorator;
-  private PropertyChangeListener myWindowsBorderUpdater;
   private boolean myRestoreFullScreen;
 
   public IdeFrameImpl(ApplicationInfoEx applicationInfoEx,
@@ -127,36 +126,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
 
-    addWindowStateListener(new WindowAdapter() {
-      @Override
-      public void windowStateChanged(WindowEvent e) {
-        updateBorder();
-      }
-    });
-    if (SystemInfo.isWindows) {
-      myWindowsBorderUpdater = __ -> updateBorder();
-      Toolkit.getDefaultToolkit().addPropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
-      if (!SystemInfo.isJavaVersionAtLeast("1.8")) {
-        final Ref<Dimension> myDimensionRef = new Ref<>(new Dimension());
-        final Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-        final Runnable runnable = new Runnable() {
-          @Override
-          public void run() {
-            if (isDisplayable() && !getSize().equals(myDimensionRef.get())) {
-              Rectangle bounds = getBounds();
-              bounds.width--;
-              setBounds(bounds);
-              bounds.width++;
-              setBounds(bounds);
-              myDimensionRef.set(getSize());
-            }
-            alarm.addRequest(this, 50);
-          }
-        };
-        alarm.addRequest(runnable, 50);
-      }
-    }
-
     IdeMenuBar.installAppMenuIfNeeded(this);
 
     // UIUtil.suppressFocusStealing();
@@ -167,36 +136,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public void addNotify() {
     super.addNotify();
     PowerSupplyKit.checkPowerSupply();
-  }
-
-
-
-  private void updateBorder() {
-    int state = getExtendedState();
-    if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS() || !SystemInfo.isWindows || myRootPane == null) {
-      return;
-    }
-
-    myRootPane.setBorder(null);
-    boolean isNotClassic = Boolean.parseBoolean(String.valueOf(Toolkit.getDefaultToolkit().getDesktopProperty("win.xpstyle.themeActive")));
-    if (isNotClassic && (state & MAXIMIZED_BOTH) != 0) {
-      IdeFrame[] projectFrames = WindowManager.getInstance().getAllProjectFrames();
-      GraphicsDevice device = ScreenUtil.getScreenDevice(getBounds());
-
-      for (IdeFrame frame : projectFrames) {
-        if (frame == this) continue;
-        if (((IdeFrameImpl)frame).isInFullScreen() && ScreenUtil.getScreenDevice(((IdeFrameImpl)frame).getBounds()) == device) {
-          Insets insets = ScreenUtil.getScreenInsets(device.getDefaultConfiguration());
-          int mask = SideBorder.NONE;
-          if (insets.top != 0) mask |= SideBorder.TOP;
-          if (insets.left != 0) mask |= SideBorder.LEFT;
-          if (insets.bottom != 0) mask |= SideBorder.BOTTOM;
-          if (insets.right != 0) mask |= SideBorder.RIGHT;
-          myRootPane.setBorder(new SideBorder(JBColor.BLACK, mask, 3));
-          break;
-        }
-      }
-    }
   }
 
   protected IdeRootPane createRootPane(ActionManagerEx actionManager,
@@ -488,10 +427,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       Disposer.dispose(myFrameDecorator);
       myFrameDecorator = null;
     }
-    if (myWindowsBorderUpdater != null) {
-      Toolkit.getDefaultToolkit().removePropertyChangeListener("win.xpstyle.themeActive", myWindowsBorderUpdater);
-      myWindowsBorderUpdater = null;
-    }
 
     FocusTrackback.release(this);
 
@@ -589,10 +524,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
     if (myFrameDecorator != null) {
       return myFrameDecorator.toggleFullScreen(state);
-    }
-    IdeFrame[] frames = WindowManager.getInstance().getAllProjectFrames();
-    for (IdeFrame frame : frames) {
-      ((IdeFrameImpl)frame).updateBorder();
     }
 
     return ActionCallback.DONE;
