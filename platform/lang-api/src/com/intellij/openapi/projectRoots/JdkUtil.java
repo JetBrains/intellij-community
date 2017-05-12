@@ -93,10 +93,9 @@ public class JdkUtil {
       File signatureJar = FileUtil.findFirstThatExist(
         homePath + "/jre/lib/rt.jar",
         homePath + "/lib/rt.jar",
-        homePath + "/jre/lib/vm.jar",
-        homePath + "/../Classes/classes.jar",
         homePath + "/lib/jrt-fs.jar",
-        homePath + "/jrt-fs.jar");
+        homePath + "/jre/lib/vm.jar",
+        homePath + "/../Classes/classes.jar");
       if (signatureJar != null) {
         return JarUtil.getJarAttribute(signatureJar, attribute);
       }
