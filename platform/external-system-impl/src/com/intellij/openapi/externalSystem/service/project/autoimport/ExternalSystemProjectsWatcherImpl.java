@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ServiceManager;
@@ -95,11 +96,15 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   private final MultiMap<String/* project path */, String /* files paths */> myKnownAffectedFiles = MultiMap.createConcurrentSet();
   private final MultiMap<VirtualFilePointer, String /* project path */> myFilesPointers = MultiMap.createConcurrentSet();
   private final List<LocalFileSystem.WatchRequest> myWatchedRoots = new ArrayList<>();
+  private final MergingUpdateQueue myRefreshRequestsQueue;
 
   public ExternalSystemProjectsWatcherImpl(Project project) {
     myProject = project;
     myChangedDocumentsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Document changes queue",
                                                      DOCUMENT_SAVE_DELAY, false, ANY_COMPONENT, myProject);
+
+    myRefreshRequestsQueue = new MergingUpdateQueue("ExternalSystemProjectsWatcher: Refresh requests queue",
+                                                    0, false, ANY_COMPONENT, myProject);
 
     myImportAwareManagers = ContainerUtil.newArrayList();
     for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
@@ -115,6 +120,18 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
       new MergingUpdateQueue("ExternalSystemProjectsWatcher: Notifier queue", 500, false, ANY_COMPONENT, myProject);
 
     myNotificationMap = ContainerUtil.newConcurrentMap();
+
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+      @Override
+      public void batchChangeStarted(Project project) {
+        myRefreshRequestsQueue.suspend();
+      }
+
+      @Override
+      public void batchChangeCompleted(Project project) {
+        myRefreshRequestsQueue.resume();
+      }
+    });
   }
 
   @Override
@@ -142,6 +159,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
     makeUserAware(myChangedDocumentsQueue, myProject);
     myChangedDocumentsQueue.activate();
+    myRefreshRequestsQueue.activate();
 
     DocumentListener myDocumentListener = new DocumentListener() {
       @Override
@@ -188,6 +206,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
   public synchronized void stop() {
     Disposer.dispose(myChangedDocumentsQueue);
     Disposer.dispose(myUpdatesQueue);
+    Disposer.dispose(myRefreshRequestsQueue);
     myNotificationMap.clear();
     ServiceManager.getService(ExternalSystemProgressNotificationManager.class).removeNotificationListener(this);
   }
@@ -236,10 +255,20 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         .findTask(ExternalSystemTaskType.RESOLVE_PROJECT, systemId, projectPath);
       final ExternalSystemTaskState taskState = resolveTask == null ? null : resolveTask.getState();
       if (taskState == null || taskState.isStopped()) {
-        scheduleRefresh(myProject, projectPath, systemId, false);
+        addToRefreshQueue(projectPath, systemId);
       }
       else if (taskState != ExternalSystemTaskState.NOT_STARTED) {
-        // TODO re-schedule to wait for the project import task end
+        // re-schedule to wait for the active project import task end
+        final ExternalSystemProgressNotificationManager progressManager =
+          ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+        final ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
+          @Override
+          public void onEnd(@NotNull ExternalSystemTaskId id) {
+            progressManager.removeNotificationListener(this);
+            addToRefreshQueue(projectPath, systemId);
+          }
+        };
+        progressManager.addNotificationListener(resolveTask.getId(), taskListener);
       }
     }
     else {
@@ -250,6 +279,15 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
         }
       });
     }
+  }
+
+  private void addToRefreshQueue(String projectPath, ProjectSystemId systemId) {
+    myRefreshRequestsQueue.run(new Update(Pair.create(systemId, projectPath)) {
+      @Override
+      public void run() {
+        scheduleRefresh(myProject, projectPath, systemId, false);
+      }
+    });
   }
 
   private void updateWatchedRoots(boolean isProjectOpen) {
