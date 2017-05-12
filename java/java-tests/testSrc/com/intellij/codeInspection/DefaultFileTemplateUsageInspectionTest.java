@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defaultFileTemplateUsage.DefaultFileTemplateUsageInspection;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 public class DefaultFileTemplateUsageInspectionTest extends LightCodeInsightFixtureTestCase {
@@ -33,5 +34,11 @@ public class DefaultFileTemplateUsageInspectionTest extends LightCodeInsightFixt
   private void doTest() {
     myFixture.enableInspections(new DefaultFileTemplateUsageInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    PlatformTestUtil.setLongMeaninglessFileIncludeTemplateTemporarilyFor(getProject(), getTestRootDisposable());
   }
 }
