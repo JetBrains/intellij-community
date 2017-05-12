@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.ConfigurableBase;
+import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -31,75 +31,69 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.SshSettingsPanel;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.function.Supplier;
 
-public class SvnConfigurable implements Configurable {
+import static com.intellij.openapi.vcs.configurable.VcsManagerConfigurable.getVcsConfigurableId;
+
+public abstract class SvnConfigurable extends ConfigurableBase<ConfigurableUi<SvnConfiguration>, SvnConfiguration> {
 
   public static final String DISPLAY_NAME = SvnVcs.VCS_DISPLAY_NAME;
-
-  private final Project myProject;
-
-  private JPanel myMainPanel;
-  private GeneralSettingsPanel myGeneralSettingsPanel;
-  private PresentationSettingsPanel myPresentationSettingsPanel;
-  private NetworkSettingsPanel myNetworkSettingsPanel;
-  private SshSettingsPanel mySshSettingsPanel;
-
+  public static final String ID = getVcsConfigurableId(DISPLAY_NAME);
   @NonNls private static final String HELP_ID = "project.propSubversion";
 
-  public SvnConfigurable(Project project) {
+  @NotNull private final Project myProject;
+  @NotNull private final Supplier<? extends ConfigurableUi<SvnConfiguration>> myUiSupplier;
+
+  protected SvnConfigurable(@NotNull Project project,
+                            @NotNull String displayName,
+                            @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> uiSupplier) {
+    this(project, ID + "." + displayName, displayName, uiSupplier);
+  }
+
+  protected SvnConfigurable(@NotNull Project project,
+                            @NotNull String id,
+                            @NotNull String displayName,
+                            @NotNull Supplier<? extends ConfigurableUi<SvnConfiguration>> uiSupplier) {
+    super(id, displayName, HELP_ID);
     myProject = project;
+    myUiSupplier = uiSupplier;
   }
 
-  public JComponent createComponent() {
-    return myMainPanel;
+  @Override
+  protected ConfigurableUi<SvnConfiguration> createUi() {
+    return myUiSupplier.get();
   }
 
-  public String getDisplayName() {
-    return DISPLAY_NAME;
+  @NotNull
+  @Override
+  protected SvnConfiguration getSettings() {
+    return SvnConfiguration.getInstance(myProject);
   }
 
-  public String getHelpTopic() {
-    return HELP_ID;
+  public static class General extends SvnConfigurable {
+    public General(@NotNull Project project) {
+      super(project, ID, DISPLAY_NAME, () -> new GeneralSettingsPanel(project));
+    }
   }
 
-  public boolean isModified() {
-    SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-
-    return myGeneralSettingsPanel.isModified(configuration) ||
-           myPresentationSettingsPanel.isModified(configuration) ||
-           myNetworkSettingsPanel.isModified(configuration) ||
-           mySshSettingsPanel.isModified(configuration);
+  public static class Presentation extends SvnConfigurable {
+    public Presentation(@NotNull Project project) {
+      super(project, "Presentation", () -> new PresentationSettingsPanel(project));
+    }
   }
 
-  public void apply() throws ConfigurationException {
-    SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-
-    myGeneralSettingsPanel.apply(configuration);
-    myPresentationSettingsPanel.apply(configuration);
-    myNetworkSettingsPanel.apply(configuration);
-    mySshSettingsPanel.apply(configuration);
+  public static class Network extends SvnConfigurable {
+    public Network(@NotNull Project project) {
+      super(project, "Network", () -> new NetworkSettingsPanel(project));
+    }
   }
 
-  public void reset() {
-    SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-
-    myGeneralSettingsPanel.reset(configuration);
-    myPresentationSettingsPanel.reset(configuration);
-    myNetworkSettingsPanel.reset(configuration);
-    mySshSettingsPanel.reset(configuration);
-  }
-
-  public void disposeUIResources() {
-  }
-
-  private void createUIComponents() {
-    myGeneralSettingsPanel = new GeneralSettingsPanel(myProject);
-    myPresentationSettingsPanel = new PresentationSettingsPanel(myProject);
-    myNetworkSettingsPanel = new NetworkSettingsPanel(myProject);
-    mySshSettingsPanel = new SshSettingsPanel(myProject);
+  public static class Ssh extends SvnConfigurable {
+    public Ssh(@NotNull Project project) {
+      super(project, "SSH", () -> new SshSettingsPanel(project));
+    }
   }
 
   public static void selectConfigurationDirectory(@NotNull String path,
