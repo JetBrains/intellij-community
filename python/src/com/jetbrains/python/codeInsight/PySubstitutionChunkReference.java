@@ -300,9 +300,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         // But string element isn't PyExpression so I decided to resolve to PyStringLiteralExpression for
         // every string element
         PyExpression[] result = new PyExpression[value.length()];
-        for (int i = 0; i < value.length(); i++) {
-          result[i] = expression;
-        }
+        Arrays.fill(result, expression);
         return result;
       }
     }
