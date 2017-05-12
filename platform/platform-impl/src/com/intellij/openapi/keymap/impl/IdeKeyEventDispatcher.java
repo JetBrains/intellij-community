@@ -651,10 +651,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     myContext.getActions().clear();
 
     if (isControlEnterOnDialog(component, sc)) return myContext;
-    if ((component instanceof JTextArea || component instanceof JTextField) && sc instanceof KeyboardShortcut) {
-      if (((JComponent)component).getActionForKeyStroke(((KeyboardShortcut)sc).getFirstKeyStroke()) != null) return myContext;
-    }
-    
+
     boolean hasSecondStroke = false;
 
     // here we try to find "local" shortcuts
