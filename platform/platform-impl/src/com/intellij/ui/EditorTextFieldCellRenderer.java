@@ -454,6 +454,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       return false;
     }
 
+    @Override
+    public long getModificationStamp() {
+      return 0;
+    }
+
     @NotNull
     @Override
     public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {

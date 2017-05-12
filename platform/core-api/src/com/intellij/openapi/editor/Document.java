@@ -192,9 +192,7 @@ public interface Document extends UserDataHolder {
    * @see com.intellij.openapi.vfs.VirtualFile#getModificationStamp()
    */
   @Contract(pure=true)
-  default long getModificationStamp() {
-    return 0;
-  }
+  long getModificationStamp();
 
   /**
    * Fires a notification that the user would like to remove the read-only state
