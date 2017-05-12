@@ -25,12 +25,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiTypeProvider;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
@@ -833,6 +836,47 @@ public class PyCallExpressionHelper {
     return new ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedArguments,
                                       parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
                                       tupleMappedParameters);
+  }
+
+  @NotNull
+  public static Stream<PyCallExpression.PyRatedMarkedCallee> forEveryScopeTakeOverloadsOtherwiseImplementations(@NotNull List<PyCallExpression.PyRatedMarkedCallee> callees,
+                                                                                                                @NotNull TypeEvalContext context) {
+    if (!containsOverloadsAndImplementations(callees, context)) {
+      return callees.stream();
+    }
+
+    return StreamEx
+      .of(callees)
+      .groupingBy(callee -> ScopeUtil.getScopeOwner(callee.getElement()))
+      .values()
+      .stream()
+      .flatMap(oneScopeCallees -> takeOverloadsOtherwiseImplementations(oneScopeCallees, context));
+  }
+
+  private static boolean containsOverloadsAndImplementations(@NotNull List<PyCallExpression.PyRatedMarkedCallee> callees,
+                                                             @NotNull TypeEvalContext context) {
+    boolean containsOverloads = false;
+    boolean containsImplementations = false;
+
+    for (PyCallExpression.PyRatedMarkedCallee callee : callees) {
+      final boolean overload = PyiTypeProvider.isOverload(callee.getElement(), context);
+      containsOverloads |= overload;
+      containsImplementations |= !overload;
+
+      if (containsOverloads && containsImplementations) return true;
+    }
+
+    return false;
+  }
+
+  @NotNull
+  private static Stream<PyCallExpression.PyRatedMarkedCallee> takeOverloadsOtherwiseImplementations(@NotNull List<PyCallExpression.PyRatedMarkedCallee> callees,
+                                                                                                    @NotNull TypeEvalContext context) {
+    if (!containsOverloadsAndImplementations(callees, context)) {
+      return callees.stream();
+    }
+
+    return callees.stream().filter(callee -> PyiTypeProvider.isOverload(callee.getElement(), context));
   }
 
   public static class ArgumentMappingResults {

@@ -72,8 +72,10 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(argumentList.getProject(), argumentList.getContainingFile());
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withRemote().withTypeEvalContext(typeEvalContext);
 
-        final Object[] items = PyUtil.filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext))
-          .stream()
+        final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
+          PyUtil.filterTopPriorityResults(call.multiResolveRatedCallee(resolveContext));
+
+        final Object[] items = PyCallExpressionHelper.forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, typeEvalContext)
           .map(ratedMarkedCallee -> Pair.createNonNull(call, ratedMarkedCallee.getMarkedCallee()))
           .toArray();
 

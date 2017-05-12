@@ -624,8 +624,12 @@ public class PyTypeChecker {
   private static List<PyCallable> multiResolveCallee(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
     if (callSite instanceof PyCallExpression) {
-      final List<PyCallExpression.PyRatedCallee> ratedCallees = ((PyCallExpression)callSite).multiResolveRatedCalleeFunction(resolveContext);
-      return ContainerUtil.map(PyUtil.filterTopPriorityResults(ratedCallees), PyCallExpression.PyRatedCallee::getElement);
+      final List<PyCallExpression.PyRatedMarkedCallee> ratedMarkedCallees =
+        PyUtil.filterTopPriorityResults(((PyCallExpression)callSite).multiResolveRatedCallee(resolveContext));
+
+      return forEveryScopeTakeOverloadsOtherwiseImplementations(ratedMarkedCallees, context)
+        .map(PyCallExpression.PyRatedMarkedCallee::getElement)
+        .collect(Collectors.toList());
     }
     else if (callSite instanceof PySubscriptionExpression || callSite instanceof PyBinaryExpression) {
       final List<PyCallable> results = new ArrayList<>();
