@@ -16,17 +16,13 @@
 package com.intellij.openapi.ui.playback.util;
 
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.AsyncResult;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.MessageBusUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.io.File;
@@ -54,12 +50,12 @@ public class ProjectPlaybackCall {
 
   public static AsyncResult<String> openProject(final PlaybackContext context, final String path) {
     final AsyncResult<String> result = new AsyncResult<>();
-    final ProjectManager projectManager = ProjectManager.getInstance();
-    MessageBusUtil.subscribe(ProjectManager.TOPIC, new MyProjectManagerListener(result));
-
+    ProjectUtil.runWhenProjectOpened(project -> StartupManager.getInstance(project).registerPostStartupActivity(() -> {
+      DumbService.getInstance(project).runWhenSmart(() -> result.setDone("Opened successfully: " + project.getPresentableUrl()));
+    }));
     UIUtil.invokeLaterIfNeeded(() -> {
       try {
-        projectManager.loadAndOpenProject(path);
+        ProjectManager.getInstance().loadAndOpenProject(path);
       }
       catch (Exception e) {
         context.error(e.getMessage(), context.getCurrentLine());
@@ -68,25 +64,5 @@ public class ProjectPlaybackCall {
     });
 
     return result;
-  }
-
-  private static class MyProjectManagerListener implements ProjectManagerListener, Disposable {
-    private final AsyncResult<String> myResult;
-
-    public MyProjectManagerListener(AsyncResult<String> result) {
-      myResult = result;
-    }
-
-    @Override
-    public void projectOpened(final Project project) {
-      StartupManager.getInstance(project).registerPostStartupActivity(() -> {
-        Disposer.dispose(this);
-        DumbService.getInstance(project).runWhenSmart(() -> myResult.setDone("Opened successfully: " + project.getPresentableUrl()));
-      });
-    }
-
-    @Override
-    public void dispose() {
-    }
   }
 }

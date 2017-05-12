@@ -19,6 +19,7 @@ package com.intellij.openapi.project
 import com.intellij.ide.DataManager
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
@@ -39,6 +40,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import java.util.function.Consumer
 import javax.swing.JComponent
 
 val Module.rootManager: ModuleRootManager
@@ -164,4 +166,30 @@ fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false
 @JvmOverloads
 fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, hashSeparator: String = "."): Path {
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
+}
+
+/**
+ * Add one-time projectOpened listener.
+ */
+fun Project.runWhenProjectOpened(handler: Runnable) = runWhenProjectOpened(this) { handler.run() }
+
+/**
+ * Add one-time first projectOpened listener.
+ */
+@JvmOverloads
+fun runWhenProjectOpened(project: Project? = null, handler: Consumer<Project>) = runWhenProjectOpened(project) { handler.accept(it) }
+
+/**
+ * Add one-time projectOpened listener.
+ */
+inline fun runWhenProjectOpened(project: Project? = null, crossinline handler: (project: Project) -> Unit) {
+  val connection = (project ?: ApplicationManager.getApplication()).messageBus.connect()
+  connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+    override fun projectOpened(eventProject: Project) {
+      if (project == null || project === eventProject) {
+        connection.disconnect()
+        handler(eventProject)
+      }
+    }
+  })
 }

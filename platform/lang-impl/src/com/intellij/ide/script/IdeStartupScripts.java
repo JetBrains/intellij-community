@@ -17,23 +17,19 @@ package com.intellij.ide.script;
 
 import com.intellij.ide.extensionResources.ExtensionsRootType;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.MessageBusUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 class IdeStartupScripts implements ApplicationComponent {
@@ -69,7 +66,7 @@ class IdeStartupScripts implements ApplicationComponent {
     LOG.info(scripts.size() + " startup script(s) found");
     if (scripts.isEmpty()) return;
 
-    MessageBusUtil.subscribe(ProjectManager.TOPIC, new MyProjectManagerListener(prepareScriptEnginesAsync(scripts)));
+    ProjectUtil.runWhenProjectOpened(project -> new MyProjectOpenedHandler(prepareScriptEnginesAsync(scripts)));
   }
 
   @NotNull
@@ -132,21 +129,20 @@ class IdeStartupScripts implements ApplicationComponent {
     return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
   }
 
-  private static class MyProjectManagerListener implements ProjectManagerListener, Disposable {
+  private static class MyProjectOpenedHandler implements Consumer<Project> {
     final AtomicBoolean myScriptsExecutionStarted;
     private final Future<List<Pair<VirtualFile, IdeScriptEngine>>> myScriptsAndEnginesFuture;
 
-    public MyProjectManagerListener(@NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture) {
+    public MyProjectOpenedHandler(@NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> scriptsAndEnginesFuture) {
       myScriptsAndEnginesFuture = scriptsAndEnginesFuture;
       myScriptsExecutionStarted = new AtomicBoolean();
     }
 
     @Override
-    public void projectOpened(final Project project) {
+    public void accept(@NotNull Project project) {
       StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
         if (project.isDisposed()) return;
         if (!myScriptsExecutionStarted.compareAndSet(false, true)) return;
-        Disposer.dispose(this);
         runAllScriptsImpl(project);
       });
     }
@@ -176,10 +172,6 @@ class IdeStartupScripts implements ApplicationComponent {
       catch (Exception e) {
         LOG.error(e);
       }
-    }
-
-    @Override
-    public void dispose() {
     }
   }
 }

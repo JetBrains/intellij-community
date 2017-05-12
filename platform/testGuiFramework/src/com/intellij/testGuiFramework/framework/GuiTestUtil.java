@@ -19,7 +19,6 @@ import com.intellij.diagnostic.AbstractMessage;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.ide.PrivacyPolicy;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -33,8 +32,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SwitchBootJdkAction;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -50,8 +49,8 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
-import com.intellij.util.MessageBusUtil;
 import com.intellij.util.Producer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
 import org.fest.swing.core.*;
 import org.fest.swing.core.Robot;
@@ -207,12 +206,14 @@ GuiTestUtil {
     Robot robot = null;
     try {
       robot = BasicRobot.robotWithCurrentAwtHierarchy();
-      final MyProjectManagerListener listener = new MyProjectManagerListener();
 
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
 
       if(isFirstStart) (new FirstStart(robot)).completeBefore();
+
+      final MyProjectManagerListener listener = new MyProjectManagerListener();
+      final Ref<MessageBusConnection> connection = new Ref<>();
 
       findFrame(new GenericTypeMatcher<Frame>(Frame.class) {
         @Override
@@ -220,7 +221,8 @@ GuiTestUtil {
           if (frame instanceof IdeFrame) {
             if (frame instanceof IdeFrameImpl) {
               listener.myActive = true;
-              MessageBusUtil.subscribe(ProjectManager.TOPIC, listener);
+              connection.set(ApplicationManager.getApplication().getMessageBus().connect());
+              connection.get().subscribe(ProjectManager.TOPIC, listener);
             }
             return true;
           }
@@ -253,7 +255,11 @@ GuiTestUtil {
                                !progressManager.hasProgressIndicator() &&
                                !progressManager.hasUnsafeProgressIndicator();
               if (isIdle) {
-                Disposer.dispose(listener);
+                MessageBusConnection busConnection = connection.get();
+                if (busConnection != null) {
+                  connection.set(null);
+                  busConnection.disconnect();
+                }
               }
               return isIdle;
             }
@@ -728,17 +734,13 @@ GuiTestUtil {
     return s == null ? System.getenv(name) : s;
   }
 
-  private static class MyProjectManagerListener implements ProjectManagerListener, Disposable {
+  private static class MyProjectManagerListener implements ProjectManagerListener {
     boolean myActive;
     boolean myNotified;
 
     @Override
     public void projectOpened(Project project) {
       myNotified = true;
-    }
-
-    @Override
-    public void dispose() {
     }
   }
 

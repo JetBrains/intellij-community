@@ -51,12 +51,4 @@ public class MessageBusUtil {
       }
     };
   }
-
-  public static <L> void subscribe(@NotNull Topic<L> topic, @NotNull L handler) {
-    subscribe(ApplicationManager.getApplication().getMessageBus(), topic, handler);
-  }
-
-  public static <L> void subscribe(@NotNull MessageBus messageBus, @NotNull Topic<L> topic, @NotNull L handler) {
-    (handler instanceof Disposable ? messageBus.connect((Disposable)handler) : messageBus.connect()).subscribe(topic, handler);
-  }
 }

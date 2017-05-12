@@ -26,8 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -66,16 +65,7 @@ public abstract class LightToolWindowManager implements Disposable {
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
     myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
 
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(Project project) {
-        if (myProject == project) {
-          connection.disconnect();
-          LightToolWindowManager.this.projectOpened();
-        }
-      }
-    });
+    ProjectUtil.runWhenProjectOpened(project, () -> projectOpened());
   }
 
   protected void projectOpened() {
