@@ -114,7 +114,7 @@ public class PyStringFormatInspection extends PyInspection {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
             if (rightType instanceof PyTupleType) {
               final PyTupleType tupleType = (PyTupleType)rightType;
-              for (int i = 0; i <= tupleType.getElementCount(); i += 1) {
+              for (int i = 0; i < tupleType.getElementCount(); i++) {
                 final PyType elementType = tupleType.getElementType(i);
                 if (elementType != null) {
                   final String typeName = myFormatSpec.get(String.valueOf(i + 1));
