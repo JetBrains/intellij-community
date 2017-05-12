@@ -116,7 +116,7 @@ public class TerminalSettingsPanel {
 
   public boolean isModified() {
     return !Comparing.equal(myShellPathField.getText(), myOptionsProvider.getShellPath())
-           || !Comparing.equal(myStartDirectoryField.getText(), myProjectOptionsProvider.getStartingDirectory())
+           || !Comparing.equal(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Comparing.equal(myTabNameTextField.getText(), myOptionsProvider.getTabName())
            || (myCloseSessionCheckBox.isSelected() != myOptionsProvider.closeSessionOnLogout())
            || (myMouseReportCheckBox.isSelected() != myOptionsProvider.enableMouseReporting())
