@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
@@ -30,6 +29,7 @@ import com.jetbrains.python.psi.PyFunction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -269,6 +269,40 @@ public class PyChangeSignatureTest extends PyTestCase {
     doValidationTest(null, Arrays.asList(firstParam), PyBundle.message("refactoring.change.signature.dialog.validation.parameter.name"));
   }
 
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationChangeOverload() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doUnchangedSignatureTest);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationChangeImplementation() {
+    doChangeSignatureTest(null, Collections.emptyList(), LanguageLevel.PYTHON35);
+  }
+
+  // PY-22971
+  public void testTopLevelOverloadsAndImplementationChangeCall() {
+    doChangeSignatureTest(null, Collections.emptyList(), LanguageLevel.PYTHON35);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassChangeOverload() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doUnchangedSignatureTest);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassChangeImplementation() {
+    doChangeSignatureTest(null,
+                          Collections.singletonList(new PyParameterInfo(0, "self", null, false)),
+                          LanguageLevel.PYTHON35);
+  }
+
+  // PY-22971
+  public void testOverloadsAndImplementationInClassChangeCall() {
+    doChangeSignatureTest(null,
+                          Collections.singletonList(new PyParameterInfo(0, "self", null, false)),
+                          LanguageLevel.PYTHON35);
+  }
+
   public void doChangeSignatureTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters) {
     myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
     changeSignature(newName, parameters);
@@ -283,6 +317,11 @@ public class PyChangeSignatureTest extends PyTestCase {
     finally {
       setLanguageLevel(null);
     }
+  }
+
+  private void doUnchangedSignatureTest() {
+    myFixture.configureByFile("refactoring/changeSignature/" + getTestName(true) + ".before.py");
+    assertNull(new PyChangeSignatureHandler().findTargetMember(myFixture.getFile(), myFixture.getEditor()));
   }
 
   public void doValidationTest(@Nullable String newName, @Nullable List<PyParameterInfo> parameters, @Nullable String expected) {
