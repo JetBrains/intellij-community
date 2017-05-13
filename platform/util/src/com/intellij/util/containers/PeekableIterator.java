@@ -20,9 +20,13 @@ import java.util.NoSuchElementException;
 
 /**
  * An iterator with additional ability to {@link #peek()} the current element without moving the cursor.
- * Upon creation, {@link #peek()} returns the first element, after {@link #hasNext()} returns false might throw {@link NoSuchElementException}.
  */
 public interface PeekableIterator<T> extends Iterator<T> {
+  /**
+   * @return the current element.
+   * Upon iterator creation should return the first element.
+   * After {@link #hasNext()} returned false might throw {@link NoSuchElementException}.
+   */
   T peek() throws NoSuchElementException;
 
   PeekableIterator EMPTY = new PeekableIterator() {
