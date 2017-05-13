@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
+import com.intellij.util.text.trimMiddle
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -152,7 +153,11 @@ private fun Project.getPresentableFileName(): String {
 }
 
 private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
-  return "${if (forceNameUse) name else getPresentableFileName()}$hashSeparator$locationHash"
+  var name = if (forceNameUse) name else getPresentableFileName()
+  // run testRangeMarkersDoNotGetAddedOrRemovedWhenUserIsJustTypingInsideHighlightedRegionAndEspeciallyInsideInjectedFragmentsWhichAreColoredGreenAndUsersComplainEndlesslyThatEditorFlickersThere
+  // to reproduce "File name too long"
+  name = name.trimMiddle(Math.min(name.length, 255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
+  return "$name$hashSeparator$locationHash"
 }
 
 @JvmOverloads
