@@ -57,7 +57,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<Collection<Key>>();
+  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<>();
   private final SnapshotInputMappings<Key, Value, Input> mySnapshotInputMappings;
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -179,30 +179,35 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   @Override
-  public void clear() throws StorageException {
-    super.clear();
-    if (mySnapshotInputMappings != null) try {
-      mySnapshotInputMappings.clear();
-    }
-    catch (IOException e) {
-      LOG.error(e);
+  protected void doClear() throws StorageException, IOException {
+    super.doClear();
+    if (mySnapshotInputMappings != null) {
+      try {
+        mySnapshotInputMappings.clear();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 
   @Override
-  public void flush() throws StorageException {
-    super.flush();
+  protected void doFlush() throws IOException, StorageException {
+    super.doFlush();
     if (mySnapshotInputMappings != null) mySnapshotInputMappings.flush();
   }
 
   @Override
-  public void dispose() {
-    super.dispose();
-    if (mySnapshotInputMappings != null) try {
-      mySnapshotInputMappings.close();
-    }
-    catch (IOException e) {
-      LOG.error(e);
+  protected void doDispose() throws StorageException {
+    super.doDispose();
+
+    if (mySnapshotInputMappings != null) {
+      try {
+        mySnapshotInputMappings.close();
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
     }
   }
 
