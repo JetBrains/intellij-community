@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -411,9 +412,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
       final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
       List<PsiElement> navigatableResults = new ArrayList<>(results.length);
 
-      for(ResolveResult r:results) {
+      for (ResolveResult r : results) {
         PsiElement element = r.getElement();
-        if (EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource()) {
+        if (isNavigatableSource(element)) {
           navigatableResults.add(element);
         }
       }
@@ -425,6 +426,12 @@ public class TargetElementUtil extends TargetElementUtilBase {
       return Collections.singleton(resolved);
     }
     return Collections.emptyList();
+  }
+
+
+  @Contract("null -> false")
+  public boolean isNavigatableSource(@Nullable PsiElement element) {
+    return EditSourceUtil.canNavigate(element) || element instanceof Navigatable && ((Navigatable)element).canNavigateToSource();
   }
 
   @Override
