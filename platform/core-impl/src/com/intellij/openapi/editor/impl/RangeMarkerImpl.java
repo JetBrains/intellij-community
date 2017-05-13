@@ -22,12 +22,11 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.*;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx, MutableInterval {
+public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerImpl");
 
   private final DocumentEx myDocument;
@@ -36,7 +35,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private final long myId;
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
-  protected RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
+  RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
     this(document, start, end, register, false, false);
   }
   private RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean greedyToLeft, boolean greedyToRight) {

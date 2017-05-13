@@ -23,7 +23,7 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 /**
- * An iterator you must to {@link #dispose()} after use
+ * An iterator you must {@link #dispose()} after use
  */
 public interface MarkupIterator<T> extends PeekableIterator<T> {
   void dispose();
@@ -35,7 +35,7 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
 
     @Override
     public Object peek() {
-      return null;
+      throw new NoSuchElementException();
     }
 
     @Override

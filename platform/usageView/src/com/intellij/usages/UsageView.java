@@ -32,13 +32,13 @@ import java.util.Set;
  */
 public interface UsageView extends Disposable {
   /**
-   * Returns {@link com.intellij.usages.UsageTarget} to look usages for
+   * Returns {@link UsageTarget} to look usages for
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
   @Deprecated String USAGE_TARGETS = USAGE_TARGETS_KEY.getName();
 
   /**
-   * Returns {@link com.intellij.usages.Usage} which are selected in usage view
+   * Returns {@link Usage} which are selected in usage view
    */
   DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
   @Deprecated String USAGES = USAGES_KEY.getName();
