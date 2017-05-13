@@ -209,7 +209,7 @@ public class StringSearcher {
   private boolean isSameChar(char charInPattern, char charInText) {
     boolean sameChar = charInPattern == charInText;
     if (!sameChar && !myCaseSensitive) {
-      return StringUtil.charsEqualIgnoreCase(charInPattern, charInText);
+      return StringUtil.charsMatch(charInPattern, charInText, true);
     }
     return sameChar;
   }

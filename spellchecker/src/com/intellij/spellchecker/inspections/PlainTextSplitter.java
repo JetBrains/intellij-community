@@ -50,11 +50,11 @@ public class PlainTextSplitter extends BaseSplitter {
 
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
-    if (text == null || StringUtil.isEmpty(text)) {
+    if (StringUtil.isEmpty(text)) {
       return;
     }
 
-    final String substring = StringUtil.replaceChar(StringUtil.replaceChar(range.substring(text), '\b', '\n'), '\f', '\n');
+    final String substring = range.substring(text).replace('\b', '\n').replace('\f', '\n');
     if (Verifier.checkCharacterData(SPLIT_PATTERN.matcher(substring).replaceAll("")) != null) {
       return;
     }
