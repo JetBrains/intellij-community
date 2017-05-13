@@ -72,7 +72,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
       false,
       newName -> {
         CodeStyleScheme newScheme = getModel().exportProjectScheme(newName);
-        getModel().setUsePerProjectSettings(false);
         getModel().selectScheme(newScheme, null);
       }
     );
@@ -172,7 +171,6 @@ abstract class CodeStyleSchemesActions extends AbstractSchemeActions<CodeStyleSc
                        Messages.getQuestionIcon());
     if (copyToProjectConfirmation == Messages.YES) {
       getModel().copyToProject(scheme);
-      getModel().setUsePerProjectSettings(true, true);
     }
   }
 

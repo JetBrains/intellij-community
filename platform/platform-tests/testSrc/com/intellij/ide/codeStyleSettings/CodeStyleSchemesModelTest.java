@@ -18,8 +18,11 @@ package com.intellij.ide.codeStyleSettings;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.testFramework.LightPlatformTestCase;
+
+import java.util.List;
 
 public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
   private CodeStyleSchemesModel myModel;
@@ -28,6 +31,7 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
     myModel = new CodeStyleSchemesModel(getProject());
     myDefaultScheme = myModel.getSelectedScheme();
   }
@@ -45,7 +49,6 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
       }
       CodeStyleScheme projectScheme = myModel.getProjectScheme();
       ((CodeStyleSchemeImpl)projectScheme).setCodeStyleSettings(new CodeStyleSettings());
-      myModel.setUsePerProjectSettings(false);
       myModel.selectScheme(myDefaultScheme, null);
       myModel.apply();
     }
@@ -56,23 +59,28 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
 
   public void testDefaults() throws Exception {
     CodeStyleScheme defaultScheme = myModel.getSelectedScheme();
-    assertEquals("Default", defaultScheme.getName());
+    assertEquals(CodeStyleScheme.DEFAULT_SCHEME_NAME, defaultScheme.getName());
     assertEquals(new CodeStyleSettings(), defaultScheme.getCodeStyleSettings());
+    assertFalse(myModel.isSchemeListModified());
+    assertFalse(myModel.isUsePerProjectSettings());
   }
 
   public void testCopyToIde() throws Exception {
     CodeStyleScheme projectScheme = myModel.getProjectScheme();
-    myModel.setUsePerProjectSettings(true);
-    assertEquals(CodeStyleSchemesModel.PROJECT_SCHEME_NAME, myModel.getSelectedScheme().getName());
+    myModel.selectScheme(projectScheme, null);
+    assertEquals(CodeStyleScheme.PROJECT_SCHEME_NAME, myModel.getSelectedScheme().getName());
     CodeStyleSettings settings = projectScheme.getCodeStyleSettings();
     settings.setRightMargin(null, 66);
     CodeStyleScheme newScheme = myModel.exportProjectScheme("New Scheme");
     assertEquals(66, newScheme.getCodeStyleSettings().getRightMargin(null));
-    // Check that code style settings instance is not the same as in the original
-    assertFalse(projectScheme.getCodeStyleSettings() == newScheme.getCodeStyleSettings());
+    assertNotSame(projectScheme.getCodeStyleSettings(), newScheme.getCodeStyleSettings());
   }
 
   public void testCopyToProject() {
+    myModel.selectScheme(myModel.getProjectScheme(), null);
+    assertTrue(myModel.isUsePerProjectSettings());
+    myModel.apply();
+
     CodeStyleSettings defaultSettings = new CodeStyleSettings();
     CodeStyleScheme projectScheme = myModel.getProjectScheme();
     assertEquals(defaultSettings.getDefaultRightMargin(), projectScheme.getCodeStyleSettings().getDefaultRightMargin());
@@ -80,6 +88,38 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
     CodeStyleSettings settings = scheme.getCodeStyleSettings();
     settings.setDefaultRightMargin(66);
     myModel.copyToProject(scheme);
-    assertEquals(66, projectScheme.getCodeStyleSettings().getDefaultRightMargin());
+    CodeStyleSettings currentSettings = CodeStyleSettingsManager.getSettings(getProject());
+    assertEquals(66, currentSettings.getDefaultRightMargin());
+  }
+
+  public void testDiffersFromDefault() {
+    CodeStyleScheme scheme = myModel.getSelectedScheme();
+    CodeStyleSettings settings = myModel.getCloneSettings(scheme);
+    assertFalse(myModel.differsFromDefault(scheme));
+    settings.setDefaultRightMargin(66);
+    assertTrue(myModel.differsFromDefault(scheme));
+    myModel.reset();
+    assertFalse(myModel.differsFromDefault(scheme));
+  }
+
+  public void testListOrder() {
+    CodeStyleScheme scheme1 = myModel.createNewScheme("New Scheme", myModel.getSelectedScheme());
+    CodeStyleScheme scheme2 = myModel.createNewScheme("Another Scheme", myModel.getSelectedScheme());
+    myModel.addScheme(scheme1, false);
+    myModel.addScheme(scheme2, false);
+    List<CodeStyleScheme> schemes = myModel.getAllSortedSchemes();
+    StringBuilder sb = new StringBuilder();
+    for (CodeStyleScheme scheme : schemes) {
+      if (sb.length() > 0) sb.append('\n');
+      sb.append(scheme.getName());
+    }
+    assertEquals(
+      "Project\n" +
+      "Default\n" +
+      "Another Scheme\n" +
+      "New Scheme",
+
+      sb.toString()
+    );
   }
 }

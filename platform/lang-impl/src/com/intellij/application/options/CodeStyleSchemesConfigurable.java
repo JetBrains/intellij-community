@@ -239,11 +239,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
         }
 
         @Override
-        public void usePerProjectSettingsOptionChanged() {
-          myRootSchemesPanel.usePerProjectSettingsOptionChanged();
-        }
-
-        @Override
         public void schemeChanged(final CodeStyleScheme scheme) {
           if (scheme == myModel.getSelectedScheme()) myRootSchemesPanel.onSelectedSchemeChanged();
         }

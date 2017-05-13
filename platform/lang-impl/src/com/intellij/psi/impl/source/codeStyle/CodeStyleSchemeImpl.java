@@ -29,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements CodeStyleScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(CodeStyleSchemeImpl.class);
-  
-  static final String DEFAULT_SCHEME_NAME = "Default";
 
   private SchemeDataHolder<? super CodeStyleSchemeImpl> myDataHolder;
   private String myParentSchemeName;

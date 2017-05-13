@@ -19,6 +19,9 @@ import com.intellij.openapi.options.Scheme;
 import org.jetbrains.annotations.NotNull;
 
 public interface CodeStyleScheme extends Scheme {
+  String DEFAULT_SCHEME_NAME = "Default";
+  String PROJECT_SCHEME_NAME = "Project";
+
   @Override
   @NotNull
   String getName();
