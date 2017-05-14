@@ -40,7 +40,7 @@ class GroovyConsoleEditorDecorator(private val project: Project) : Provider<JCom
     val consoleService = GroovyConsoleStateService.getInstance(project)
     if (!consoleService.isProjectConsole(file)) return null
     val actionGroup = DefaultActionGroup(EXECUTE_ACTION, GrSelectModuleAction(project, file))
-    val menu = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true)
+    val menu = ActionManager.getInstance().createActionToolbar("GroovyConsole", actionGroup, true)
     return EditorHeaderComponent().apply {
       add(menu.component)
     }
