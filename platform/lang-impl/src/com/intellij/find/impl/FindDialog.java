@@ -1128,7 +1128,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
 
     Arrays.sort(names,String.CASE_INSENSITIVE_ORDER);
-    myModuleComboBox = new ComboBox(names);
+    int preferredWidth = Collections.max(Arrays.asList(names), Comparator.comparing(String::length)).length();
+    myModuleComboBox = new ComboBox(names, preferredWidth);
     myModuleComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
