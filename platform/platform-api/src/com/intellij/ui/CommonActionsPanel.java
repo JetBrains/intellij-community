@@ -145,7 +145,7 @@ public class CommonActionsPanel extends JPanel {
     myDecorateButtons = UIUtil.isUnderAquaLookAndFeel() && position == ActionToolbarPosition.BOTTOM;
 
     final ActionManagerEx mgr = (ActionManagerEx)ActionManager.getInstance();
-    myToolbar = mgr.createActionToolbar(ActionPlaces.UNKNOWN,
+    myToolbar = mgr.createActionToolbar("ToolbarDecorator",
                                         new DefaultActionGroup(toolbarActions.toArray(new AnAction[toolbarActions.size()])),
                                         position == ActionToolbarPosition.BOTTOM || position == ActionToolbarPosition.TOP,
                                         myDecorateButtons);
