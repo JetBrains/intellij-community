@@ -419,7 +419,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   @Override
-  public boolean process(@NotNull Processor<? super T> processor) {
+  public boolean processAll(@NotNull Processor<? super T> processor) {
     try {
       l.readLock().lock();
       checkMax(true);
@@ -1269,7 +1269,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   @Override
   public void clear() {
     l.writeLock().lock();
-    process(t -> {
+    processAll(t -> {
       beforeRemove(t, "Clear all");
       return true;
     });

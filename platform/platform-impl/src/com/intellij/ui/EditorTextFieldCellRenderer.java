@@ -403,7 +403,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
 
     @Override
-    public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.process(processor); }
+    public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.processAll(processor); }
 
     @Override
     public boolean processRangeMarkersOverlappingWith(int start,
