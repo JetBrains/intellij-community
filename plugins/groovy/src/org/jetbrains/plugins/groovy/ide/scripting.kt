@@ -76,7 +76,7 @@ private fun initConsole(project: Project) {
   val consoleComponent = console.component
 
   val toolbarActions = DefaultActionGroup()
-  val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false)
+  val toolbar = ActionManager.getInstance().createActionToolbar("GroovyScriptingConsole", toolbarActions, false)
   toolbar.setTargetComponent(consoleComponent)
 
   val panel = JPanel(BorderLayout())
