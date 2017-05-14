@@ -157,7 +157,9 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
           () -> result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
                                                                 " already exists.\nDo you want to overwrite it?",
-                                                     CommonBundle.getWarningTitle(), Messages.getWarningIcon()));
+                                                     CommonBundle.getWarningTitle(),
+                                                     "Overwrite", "Cancel",
+                                                     Messages.getWarningIcon()));
         if (Messages.NO == result[0]) return;
       }
       if (file.getParentFile() == null) {

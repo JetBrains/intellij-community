@@ -116,11 +116,11 @@ public class ExportTestResultsAction extends DumbAwareAction {
       }
       filename = d.getFileName();
       showDialog = getOutputFile(config, project, filename).exists()
-                   && Messages.showOkCancelDialog(
-        project,
-        ExecutionBundle.message("export.test.results.file.exists.message", filename),
-        ExecutionBundle.message("export.test.results.file.exists.title"),
-        Messages.getQuestionIcon()
+                   && Messages.showOkCancelDialog(project,
+                                                  ExecutionBundle.message("export.test.results.file.exists.message", filename),
+                                                  ExecutionBundle.message("export.test.results.file.exists.title"),
+                                                  "Overwrite", "Cancel",
+                                                  Messages.getQuestionIcon()
       ) != Messages.OK;
     }
 

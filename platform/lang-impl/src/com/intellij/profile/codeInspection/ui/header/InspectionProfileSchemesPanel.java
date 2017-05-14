@@ -157,9 +157,10 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
               }
               final SingleInspectionProfilePanel existed = InspectionProfileSchemesPanel.this.getModel().getProfilePanel(profile);
               if (existed != null) {
-                if (Messages.showOkCancelDialog(myProject, "Profile with name \'" +
-                                                           profile.getName() +
-                                                           "\' already exists. Do you want to overwrite it?", "Warning",
+                if (Messages.showOkCancelDialog(myProject, "Profile with name \'" + profile.getName() +
+                                                           "\' already exists. Do you want to overwrite it?",
+                                                "Overwrite Warning",
+                                                "Overwrite", "Cancel",
                                                 Messages.getInformationIcon()) != Messages.OK) {
                   return;
                 }
