@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.MarkupIterator;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
@@ -41,7 +42,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<T> implements IntervalTree<T> {
+abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTree<T> {
   static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.RangeMarkerTree");
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal());
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
@@ -51,7 +52,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
   private final ReferenceQueue<T> myReferenceQueue = new ReferenceQueue<>();
   private int deadReferenceCount;
 
-  static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
+  static class IntervalNode<E> extends RedBlackTree.Node<E> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
     private static final byte ATTACHED_TO_TREE_FLAG = COLOR_MASK <<1; // true if the node is inserted to the tree
@@ -142,7 +143,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
           return false;
         }
       }
-      assert false: "interval not found: "+key +"; "+ intervals+"; isValid="+key.isValid();
+      assert false: "interval not found: "+key +"; "+ intervals;
       return false;
     }
     private boolean isAttachedToTree() {
@@ -936,11 +937,11 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   @Override
   public boolean removeInterval(@NotNull T interval) {
-    if (!interval.isValid()) return false;
+    if (!((RangeMarkerEx)interval).isValid()) return false;
     try {
       l.writeLock().lock();
       modCount++;
-      if (!interval.isValid()) return false;
+      if (!((RangeMarkerEx)interval).isValid()) return false;
       checkBelongsToTheTree(interval, true);
       checkMax(true);
       processReferenceQueue();
@@ -1347,7 +1348,7 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   private static final IntervalTreeGuide INTERVAL_TREE_GUIDE_INSTANCE = new IntervalTreeGuide();
   @NotNull
-  private static <T extends MutableInterval> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
+  private static <T> WalkingState.TreeGuide<IntervalNode<T>> getGuide() {
     //noinspection unchecked
     return (WalkingState.TreeGuide)INTERVAL_TREE_GUIDE_INSTANCE;
   }
@@ -1363,11 +1364,11 @@ abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBlackTree<
 
   // combines iterators for two trees in one using specified comparator
   @NotNull
-  static <T extends MutableInterval> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
-                                                                                  @NotNull TextRangeInterval tree1Range,
-                                                                                  @NotNull IntervalTreeImpl<T> tree2,
-                                                                                  @NotNull TextRangeInterval tree2Range,
-                                                                                  @NotNull Comparator<? super T> comparator) {
+  static <T> MarkupIterator<T> mergingOverlappingIterator(@NotNull IntervalTreeImpl<T> tree1,
+                                                          @NotNull TextRangeInterval tree1Range,
+                                                          @NotNull IntervalTreeImpl<T> tree2,
+                                                          @NotNull TextRangeInterval tree2Range,
+                                                          @NotNull Comparator<? super T> comparator) {
     MarkupIterator<T> exact = tree1.overlappingIterator(tree1Range);
     MarkupIterator<T> lines = tree2.overlappingIterator(tree2Range);
     return MarkupIterator.mergeIterators(exact, lines, comparator);

@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
-interface IntervalTree<T extends Interval> {
+interface IntervalTree<T> {
   boolean process(@NotNull Processor<? super T> processor);
   boolean processOverlappingWith(int start, int end, @NotNull Processor<? super T> processor);
   boolean processContaining(int offset, @NotNull Processor<? super T> processor);

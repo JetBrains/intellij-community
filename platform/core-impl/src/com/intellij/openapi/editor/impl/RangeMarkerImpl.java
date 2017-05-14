@@ -260,7 +260,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
            + (isGreedyToRight() ? "]" : ")") + " " + getId();
   }
 
-  @Override
   public int setIntervalStart(int start) {
     if (start < 0) {
       LOG.error("Negative start: " + start);
@@ -268,7 +267,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return myNode.setIntervalStart(start);
   }
 
-  @Override
   public int setIntervalEnd(int end) {
     if (end < 0) {
       LOG.error("Negative end: "+end);
@@ -282,13 +280,11 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isValid();
   }
 
-  @Override
   public boolean setValid(boolean value) {
     RangeMarkerTree.RMNode node = myNode;
     return node == null || node.setValid(value);
   }
 
-  @Override
   public int intervalStart() {
     RangeMarkerTree.RMNode node = myNode;
     if (node == null) {
@@ -297,7 +293,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node.intervalStart();
   }
 
-  @Override
   public int intervalEnd() {
     RangeMarkerTree.RMNode node = myNode;
     if (node == null) {
