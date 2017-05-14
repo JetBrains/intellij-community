@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
-import git4idea.commands.GitHandler;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -53,10 +52,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   private final VirtualFile myRoot;
   /**
-   * The handler that specified this editor
-   */
-  private final GitHandler myHandler;
-  /**
    * The handler number
    */
   @NotNull private final UUID myHandlerNo;
@@ -80,24 +75,14 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    * @param service the service object that has created this handler
    * @param project the context project
    * @param root    the git repository root
-   * @param handler the handler for process that needs this editor
    */
   public GitInteractiveRebaseEditorHandler(@NotNull final GitRebaseEditorService service,
                                            @NotNull final Project project,
-                                           @NotNull final VirtualFile root,
-                                           @NotNull GitHandler handler) {
+                                           @NotNull final VirtualFile root) {
     myService = service;
     myProject = project;
     myRoot = root;
-    myHandler = handler;
     myHandlerNo = service.registerHandler(this, project);
-  }
-
-  /**
-   * @return the handler for the process that started this editor
-   */
-  public GitHandler getHandler() {
-    return myHandler;
   }
 
   /**

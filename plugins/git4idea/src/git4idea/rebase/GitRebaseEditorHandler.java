@@ -15,11 +15,6 @@
  */
 package git4idea.rebase;
 
-import git4idea.commands.GitHandler;
-
-/**
- * The interface
- */
 public interface GitRebaseEditorHandler {
   /**
    * Edit commits request
@@ -29,8 +24,4 @@ public interface GitRebaseEditorHandler {
    */
   int editCommits(String path);
 
-  /**
-   * @return the handler for the git process
-   */
-  GitHandler getHandler();
 }

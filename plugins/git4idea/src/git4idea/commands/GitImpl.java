@@ -644,7 +644,7 @@ public class GitImpl implements Git {
                                                               @NotNull GitLineHandler handler,
                                                               boolean commitListAware) {
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
-    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root, handler);
+    GitInteractiveRebaseEditorHandler editor = new GitInteractiveRebaseEditorHandler(service, project, root);
     if (!commitListAware) {
       editor.setRebaseEditorShown();
     }
