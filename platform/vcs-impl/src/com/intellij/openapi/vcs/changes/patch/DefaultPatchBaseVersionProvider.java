@@ -29,20 +29,28 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.vcs.VcsBundle.message;
 
 public class DefaultPatchBaseVersionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.DefaultPatchBaseVersionProvider");
@@ -87,27 +95,25 @@ public class DefaultPatchBaseVersionProvider {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
         final VcsRevisionNumber finalRevision = revision;
         try {
-          final boolean loadedExactRevision = finalRevision != null && ProgressManager.getInstance()
-            .run(new Task.WithResult<Boolean, VcsException>(myProject,
-                                                            VcsBundle.message("progress.text2.loading.revision", finalRevision.asString()),
-                                                            true) {
-              @Override
-              protected Boolean compute(@NotNull ProgressIndicator indicator) throws VcsException {
-                if (historyProvider instanceof VcsBaseRevisionAdviser) {
-                  return ((VcsBaseRevisionAdviser)historyProvider)
-                    .getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
-                }
-                else {
-                  // use diff provider
-                  final DiffProvider diffProvider = myVcs.getDiffProvider();
-                  if (diffProvider != null && filePath.getVirtualFile() != null) {
-                    final ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
-                    return fileContent != null && !processor.process(fileContent.getContent());
-                  }
-                  return false;
-                }
-              }
-            });
+          final boolean loadedExactRevision = finalRevision != null &&
+                                              computeInBackgroundTask(myProject,
+                                                                      message("progress.text2.loading.revision", finalRevision.asString()),
+                                                                      true, () -> {
+                                                  if (historyProvider instanceof VcsBaseRevisionAdviser) {
+                                                    return ((VcsBaseRevisionAdviser)historyProvider)
+                                                      .getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
+                                                  }
+                                                  else {
+                                                    // use diff provider
+                                                    final DiffProvider diffProvider = myVcs.getDiffProvider();
+                                                    if (diffProvider != null && filePath.getVirtualFile() != null) {
+                                                      final ContentRevision fileContent =
+                                                        diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
+                                                      return fileContent != null && !processor.process(fileContent.getContent());
+                                                    }
+                                                    return false;
+                                                  }
+                                                });
           if (loadedExactRevision) return;
         }
         catch (ProcessCanceledException pce) {
@@ -135,13 +141,8 @@ public class DefaultPatchBaseVersionProvider {
 
     final VcsHistorySession historySession;
     try {
-      historySession = ProgressManager.getInstance()
-        .run(new Task.WithResult<VcsHistorySession, VcsException>(myProject, VcsBundle.message("loading.file.history.progress"), true) {
-          @Override
-          protected VcsHistorySession compute(@NotNull ProgressIndicator indicator) throws VcsException {
-            return historyProvider.createSessionFor(filePath);
-          }
-        });
+      historySession = computeInBackgroundTask(myProject, message("loading.file.history.progress"), true,
+                                               () -> historyProvider.createSessionFor(filePath));
     }
     catch (ProcessCanceledException e) {
       return;
@@ -211,5 +212,17 @@ public class DefaultPatchBaseVersionProvider {
       }
     }
     return null;
+  }
+
+  public static <T, E extends Exception> T computeInBackgroundTask(@Nullable Project project,
+                                                                   @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
+                                                                   boolean canBeCancelled,
+                                                                   @NotNull ThrowableComputable<T, E> computable) throws E {
+    return ProgressManager.getInstance().run(new Task.WithResult<T, E>(project, title, canBeCancelled) {
+      @Override
+      protected T compute(@NotNull ProgressIndicator indicator) throws E {
+        return computable.compute();
+      }
+    });
   }
 }
