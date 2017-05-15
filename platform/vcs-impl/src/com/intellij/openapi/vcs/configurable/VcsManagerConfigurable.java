@@ -28,21 +28,23 @@ import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsDescriptor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
-import static com.intellij.util.containers.ContainerUtil.map2Set;
+import static com.intellij.util.ArrayUtil.toObjectArray;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
 
 public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract implements Configurable.NoScroll {
-  private final Project myProject;
+  @NotNull private final Project myProject;
   private VcsDirectoryConfigurationPanel myMappings;
   private VcsGeneralConfigurationConfigurable myGeneralPanel;
 
-  public VcsManagerConfigurable(Project project) {
+  public VcsManagerConfigurable(@NotNull Project project) {
     myProject = project;
   }
 
@@ -92,6 +94,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   }
 
   @Override
+  @NotNull
   public String getHelpTopic() {
     return "project.propVCSSupport.Mappings";
   }
@@ -99,42 +102,28 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
   @Override
   @NotNull
   public String getId() {
-    return getDefaultConfigurableIdValue(this);
-  }
-
-  @NotNull
-  private static String getDefaultConfigurableIdValue(final Configurable configurable) {
-    final String helpTopic = configurable.getHelpTopic();
-    return helpTopic == null ? configurable.getClass().getName() : helpTopic;
+    return getHelpTopic();
   }
 
   @Override
   protected Configurable[] buildConfigurables() {
     myGeneralPanel = new VcsGeneralConfigurationConfigurable(myProject, this);
 
-    List<Configurable> result = new ArrayList<>();
+    List<Configurable> result = newArrayList();
 
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurable(myProject));
-
     if (!myProject.isDefault()) {
       result.add(new IgnoredSettingsPanel(myProject));
     }
-    /*if (!myProject.isDefault()) {
-      result.add(new CacheSettingsPanel(myProject));
-    }*/
     result.add(new IssueNavigationConfigurationPanel(myProject));
     if (!myProject.isDefault()) {
       result.add(new ChangelistConflictConfigurable(ChangeListManagerImpl.getInstanceImpl(myProject)));
     }
-
     result.add(new CommitDialogConfigurable(myProject));
     result.add(new ShelfProjectConfigurable(myProject));  
     for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
-      final Configurable configurable = provider.getConfigurable(myProject);
-      if (configurable != null) {
-        result.add(configurable);
-      }
+      addIfNotNull(result, provider.getConfigurable(myProject));
     }
 
     Set<String> projectConfigurableIds = map2Set(myProject.getExtensions(Configurable.PROJECT_CONFIGURABLE), ep -> ep.id);
@@ -144,9 +133,10 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       }
     }
 
-    return result.toArray(new Configurable[result.size()]);
+    return toObjectArray(result, Configurable.class);
   }
 
+  @Nullable
   public VcsDirectoryConfigurationPanel getMappings() {
     return myMappings;
   }
@@ -176,7 +166,7 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
       return new ObjectProducer() {
         @Override
         protected Object createElement() {
-          return ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName()).getConfigurable();
+          return notNull(ProjectLevelVcsManager.getInstance(getProject()).findVcsByName(myDescriptor.getName())).getConfigurable();
         }
 
         @Override
