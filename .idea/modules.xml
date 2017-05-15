@@ -280,6 +280,7 @@
       <module fileurl="file://$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" filepath="$PROJECT_DIR$/java/structuralsearch-java/structuralsearch-java.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" filepath="$PROJECT_DIR$/platform/structuralsearch/structuralsearch-tests.iml" group="plugins/structuralsearch" />
       <module fileurl="file://$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" filepath="$PROJECT_DIR$/platform/structure-view-impl/structure-view-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/../adt/idea/studioflags/studioflags.iml" filepath="$PROJECT_DIR$/../adt/idea/studioflags/studioflags.iml" group="android" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" filepath="$PROJECT_DIR$/plugins/svn4idea/svn4idea-tests.iml" group="plugins/VCS" />
       <module fileurl="file://$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" filepath="$PROJECT_DIR$/plugins/tasks/tasks-api/tasks-api.iml" group="plugins/tasks" />
