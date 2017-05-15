@@ -1116,7 +1116,9 @@ public abstract class ChooseByNameBase {
   private void applySelection(SelectionPolicy selection) {
     List<Integer> indices = selection.performSelection(this, myListModel);
     myList.setSelectedIndices(Ints.toArray(indices));
-    ScrollingUtil.ensureIndexIsVisible(myList, indices.get(0).intValue(), 0);
+    if (!indices.isEmpty()) {
+      ScrollingUtil.ensureIndexIsVisible(myList, indices.get(0).intValue(), 0);
+    }
   }
 
   @Deprecated
