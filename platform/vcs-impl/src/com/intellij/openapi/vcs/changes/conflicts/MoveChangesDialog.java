@@ -114,7 +114,7 @@ public class MoveChangesDialog extends DialogWrapper {
     panel.add(ScrollPaneFactory.createScrollPane(myTreeList), BorderLayout.CENTER);
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(myTreeList.getTreeActions());
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.NORTH);
+    panel.add(ActionManager.getInstance().createActionToolbar("MoveChangesDialog", actionGroup, true).getComponent(), BorderLayout.NORTH);
     myTreeList.expandAll();
     myTreeList.repaint();
     return panel;
