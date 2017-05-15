@@ -566,7 +566,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @TestOnly
   public Collection<Project> closeTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    closeProject(project, false, false, false);
+    forceCloseProject(project, false);
     Project[] projects = getOpenProjects();
     return projects.length == 0 ? Collections.emptyList() : Arrays.asList(projects);
   }
@@ -604,8 +604,13 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return closeProject(project, true, false, true);
   }
 
+  @TestOnly
+  public boolean forceCloseProject(@NotNull Project project, boolean dispose) {
+    return closeProject(project, false, dispose, false);
+  }
+
   @SuppressWarnings("TestOnlyProblems")
-  public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
+  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean dispose, boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
@@ -634,7 +639,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     try {
       myBusPublisher.projectClosingBeforeSave(project);
 
-      if (save) {
+      if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
         app.saveSettings();
