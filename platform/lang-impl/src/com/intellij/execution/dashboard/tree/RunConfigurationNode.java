@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -41,24 +41,27 @@ import java.util.Collections;
 /**
  * @author konstantin.aleev
  */
-class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>>
+class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
   implements DashboardRunConfigurationNode {
+
+  private final RunContentDescriptor myDescriptor;
+
   public RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
-    super(project, value);
+    super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
+    myDescriptor = value.second;
   }
 
   @Override
   @NotNull
   public RunnerAndConfigurationSettings getConfigurationSettings() {
     //noinspection ConstantConditions ???
-    return getValue().getFirst();
+    return getValue().first;
   }
 
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
-    //noinspection ConstantConditions ???
-    return getValue().getSecond();
+    return myDescriptor;
   }
 
   @Override
