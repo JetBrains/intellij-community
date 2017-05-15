@@ -889,6 +889,11 @@
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantStreamOptionalCallInspection"
                      displayName="Redundant step in Stream or Optional call chain"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObviousNullCheck"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.ObviousNullCheckInspection"
+                     displayName="Null-check method is called with obviously non-null argument"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifyStreamApiCallChains"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
