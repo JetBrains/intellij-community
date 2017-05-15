@@ -17,6 +17,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.primitives.Ints;
 import com.intellij.Patches;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -126,7 +127,7 @@ public abstract class ChooseByNameBase {
 
   protected JScrollPane myListScrollPane; // Located in the layered pane
   private final MyListModel<Object> myListModel = new MyListModel<>();
-  protected final JList myList = new JBList(myListModel);
+  protected final JList<Object> myList = new JBList<>(myListModel);
   private final List<Pair<String, Integer>> myHistory = ContainerUtil.newArrayList();
   private final List<Pair<String, Integer>> myFuture = ContainerUtil.newArrayList();
 
@@ -162,6 +163,7 @@ public abstract class ChooseByNameBase {
   static final boolean ourLoadNamesEachTime = FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping;
   private boolean myAlwaysHasMore = false;
   private Point myFocusPoint;
+  private SelectionSnapshot myCurrentChosenInfo;
 
   public boolean checkDisposed() {
     return myDisposedFlag;
@@ -538,7 +540,9 @@ public abstract class ChooseByNameBase {
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        rebuildList(false);
+        SelectionPolicy toSelect = myCurrentChosenInfo != null && myCurrentChosenInfo.hasSamePattern(ChooseByNameBase.this)
+                                   ? myCurrentChosenInfo : SelectMostRelevant.INSTANCE;
+        rebuildList(toSelect, myRebuildDelay, ModalityState.current(), null);
       }
     });
 
@@ -586,7 +590,7 @@ public abstract class ChooseByNameBase {
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
-              rebuildList(myList.getSelectedIndex(), myRebuildDelay, ModalityState.current(), null);
+              rebuildList(new SelectIndex(myList.getSelectedIndex()), myRebuildDelay, ModalityState.current(), null);
               e.consume();
             }
             break;
@@ -618,7 +622,7 @@ public abstract class ChooseByNameBase {
           if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
-              rebuildList(selectedIndex, myRebuildDelay, ModalityState.current(), null);
+              rebuildList(new SelectIndex(selectedIndex), myRebuildDelay, ModalityState.current(), null);
             }
             else {
               doClose(true);
@@ -631,6 +635,7 @@ public abstract class ChooseByNameBase {
       }
     }.installOn(myList);
 
+    //noinspection unchecked
     myList.setCellRenderer(myModel.getListCellRenderer());
     myList.setFont(editorFont);
 
@@ -639,6 +644,11 @@ public abstract class ChooseByNameBase {
       public void valueChanged(@NotNull ListSelectionEvent e) {
         chosenElementMightChange();
         updateDocumentation();
+
+        List<Object> chosenElements = getChosenElements();
+        if (!chosenElements.isEmpty()) {
+          myCurrentChosenInfo = new SelectionSnapshot(getTrimmedText(), new HashSet<>(chosenElements));
+        }
       }
     });
 
@@ -652,7 +662,7 @@ public abstract class ChooseByNameBase {
     myInitialized = true;
 
     if (modalityState != null) {
-      rebuildList(myInitialIndex, 0, modalityState, null);
+      rebuildList(SelectionPolicyKt.fromIndex(myInitialIndex), 0, modalityState, null);
     }
   }
 
@@ -701,7 +711,7 @@ public abstract class ChooseByNameBase {
    */
   public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, ModalityState.current(), null);
+    rebuildList(initial ? SelectionPolicyKt.fromIndex(myInitialIndex) : SelectMostRelevant.INSTANCE, myRebuildDelay, ModalityState.current(), null);
   }
 
   private void updateDocumentation() {
@@ -877,7 +887,7 @@ public abstract class ChooseByNameBase {
     return layeredPane;
   }
 
-  protected void rebuildList(final int pos,
+  protected void rebuildList(SelectionPolicy pos,
                              final int delay,
                              @NotNull final ModalityState modalityState,
                              @Nullable final Runnable postRunnable) {
@@ -930,7 +940,7 @@ public abstract class ChooseByNameBase {
     });
   }
 
-  private void backgroundCalculationFinished(Collection<?> result, int toSelect) {
+  private void backgroundCalculationFinished(Collection<?> result, SelectionPolicy toSelect) {
     myCalcElementsThread = null;
     setElementsToList(toSelect, result);
     myList.repaint();
@@ -952,7 +962,7 @@ public abstract class ChooseByNameBase {
     return myShowListAfterCompletionKeyStroke;
   }
 
-  private void setElementsToList(int pos, @NotNull Collection<?> elements) {
+  private void setElementsToList(SelectionPolicy pos, @NotNull Collection<?> elements) {
     myListUpdater.cancelAll();
     if (checkDisposed()) return;
     if (isCloseByFocusLost() && Registry.is("focus.follows.mouse.workarounds")) {
@@ -975,9 +985,7 @@ public abstract class ChooseByNameBase {
 
     myTextField.setForeground(UIUtil.getTextFieldForeground());
     if (commands == null || commands.isEmpty()) {
-      pos = calcSelectedIndex(newElements, getTrimmedText());
-
-      ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.getSize() - 1));
+      applySelection(pos);
       myList.setVisibleRowCount(Math.min(VISIBLE_LIST_SIZE_LIMIT, myList.getModel().getSize()));
       showList();
       myTextFieldPanel.repositionHint();
@@ -1067,7 +1075,7 @@ public abstract class ChooseByNameBase {
       myAlarm.cancelAllRequests();
     }
 
-    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, final int selectionPos) {
+    public void appendToModel(@NotNull List<ModelDiff.Cmd> commands, SelectionPolicy selection) {
       myAlarm.cancelAllRequests();
       myCommands.addAll(commands);
 
@@ -1096,14 +1104,19 @@ public abstract class ChooseByNameBase {
             myTextFieldPanel.repositionHint();
 
             if (!myListModel.isEmpty()) {
-              int pos = selectionPos <= 0 ? calcSelectedIndex(myListModel.getItems().toArray(), ChooseByNameBase.this.getTrimmedText()) : selectionPos;
-              ScrollingUtil.selectItem(myList, Math.min(pos, myListModel.getSize() - 1));
+              applySelection(selection);
             }
           }
         }
       }, DELAY);
     }
 
+  }
+
+  private void applySelection(SelectionPolicy selection) {
+    List<Integer> indices = selection.performSelection(this, myListModel);
+    myList.setSelectedIndices(Ints.toArray(indices));
+    ScrollingUtil.ensureIndexIsVisible(myList, indices.get(0).intValue(), 0);
   }
 
   @Deprecated
@@ -1124,7 +1137,7 @@ public abstract class ChooseByNameBase {
   }
 
   protected List<Object> getChosenElements() {
-    return ContainerUtil.filter(myList.getSelectedValues(), o -> !isSpecialElement(o));
+    return ContainerUtil.filter(myList.getSelectedValuesList(), o -> !isSpecialElement(o));
   }
 
   protected void chosenElementMightChange() {
@@ -1205,7 +1218,7 @@ public abstract class ChooseByNameBase {
         final int oldPos = myList.getSelectedIndex();
         myHistory.add(Pair.create(pattern, oldPos));
         final Runnable postRunnable = () -> fillInCommonPrefix(pattern);
-        rebuildList(0, 0, ModalityState.current(), postRunnable);
+        rebuildList(SelectMostRelevant.INSTANCE, 0, ModalityState.current(), postRunnable);
         return;
       }
       if (backStroke != null && keyStroke.equals(backStroke)) {
@@ -1216,7 +1229,7 @@ public abstract class ChooseByNameBase {
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
           myFuture.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, ModalityState.current(), null);
+          rebuildList(SelectMostRelevant.INSTANCE, 0, ModalityState.current(), null);
         }
         return;
       }
@@ -1228,7 +1241,7 @@ public abstract class ChooseByNameBase {
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
           myHistory.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, ModalityState.current(), null);
+          rebuildList(SelectMostRelevant.INSTANCE, 0, ModalityState.current(), null);
         }
         return;
       }
