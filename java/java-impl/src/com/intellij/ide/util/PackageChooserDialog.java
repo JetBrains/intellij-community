@@ -164,7 +164,7 @@ public class PackageChooserDialog extends PackageChooser {
 
     final JPanel northPanel = new JPanel(new BorderLayout());
     panel.add(northPanel, BorderLayout.NORTH);
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(PackageChooserDialog.class.getSimpleName(), group, true);
     northPanel.add(toolBar.getComponent(), BorderLayout.WEST);
     setupPathComponent(northPanel);
     return panel;
