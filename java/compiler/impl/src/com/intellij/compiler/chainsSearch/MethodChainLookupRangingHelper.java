@@ -222,7 +222,7 @@ public class MethodChainLookupRangingHelper {
     LookupElement result;
     if (method.isConstructor()) {
       //noinspection ConstantConditions
-      result = LookupElementBuilder.create(String.format("%s %s", PsiKeyword.NEW, method.getContainingClass().getName()));
+      result = LookupElementBuilder.create(String.format("new %s", method.getContainingClass().getName()));
     } else if (method.hasModifierProperty(PsiModifier.STATIC)) {
       result = new JavaMethodCallElement(method, false, true);
     } else {
