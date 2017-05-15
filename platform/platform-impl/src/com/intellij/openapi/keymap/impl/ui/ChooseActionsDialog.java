@@ -154,7 +154,7 @@ public class ChooseActionsDialog extends DialogWrapper {
 
     panel.add(toolbar, BorderLayout.WEST);
     group = new DefaultActionGroup();
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseActionsDialog", group, true);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
