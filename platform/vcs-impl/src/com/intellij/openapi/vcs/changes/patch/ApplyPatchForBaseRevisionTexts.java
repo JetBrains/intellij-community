@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -34,7 +35,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+
 public class ApplyPatchForBaseRevisionTexts {
+
+  private static final Logger LOG = Logger.getInstance(ApplyPatchForBaseRevisionTexts.class);
+
   private final CharSequence myLocal;
   private CharSequence myBase;
   private String myPatched;
@@ -76,6 +82,9 @@ public class ApplyPatchForBaseRevisionTexts {
       final GenericPatchApplier applier = new GenericPatchApplier(myBase, hunks);
       if (!applier.execute()) {
         myIsAppliedSomehow = true;
+        LOG.warn(
+          String.format("Patch for %s has wrong base and can't be applied properly",
+                        chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
         applier.trySolveSomehow();
       }
       setPatched(applier.getAfter());
