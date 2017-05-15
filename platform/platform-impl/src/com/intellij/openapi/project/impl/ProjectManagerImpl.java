@@ -604,12 +604,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return closeProject(project, true, false, true);
   }
 
+  @SuppressWarnings("TestOnlyProblems")
   public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
     }
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ApplicationManager.getApplication().saveSettings();
+    app.assertIsDispatchThread();
+    app.saveSettings();
 
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
@@ -620,10 +622,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
       ((ProjectImpl)project).setTemporarilyDisposed(false);
     }
-    else {
-      if (!isProjectOpened(project)) return true;
+    else if (!isProjectOpened(project)) {
+      return true;
     }
-    if (checkCanClose && !canClose(project)) return false;
+
+    if (checkCanClose && !canClose(project)) {
+      return false;
+    }
+
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -640,7 +646,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      app.runWriteAction(() -> {
         removeFromOpened(project);
 
         fireProjectClosed(project);
