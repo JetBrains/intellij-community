@@ -123,10 +123,11 @@ public class AppUIUtil {
 
   public static void updateFrameClass() {
     try {
+      String wmClass = getFrameClass() + "\0"; //needs to be null-terminated as defined in the icccm spec 4.1.2.5
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
       final Class<? extends Toolkit> aClass = toolkit.getClass();
       if ("sun.awt.X11.XToolkit".equals(aClass.getName())) {
-        ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", getFrameClass());
+        ReflectionUtil.setField(aClass, toolkit, null, "awtAppClassName", wmClass);
       }
     }
     catch (Exception ignore) { }
