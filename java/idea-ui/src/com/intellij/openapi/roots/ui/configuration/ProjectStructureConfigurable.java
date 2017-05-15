@@ -190,7 +190,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new BackAction(myComponent));
     toolbarGroup.add(new ForwardAction(myComponent));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructure", toolbarGroup, true);
     toolbar.setTargetComponent(myComponent);
     myToolbarComponent = toolbar.getComponent();
     left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
