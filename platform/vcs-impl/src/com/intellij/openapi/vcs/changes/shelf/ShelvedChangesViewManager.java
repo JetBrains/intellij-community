@@ -763,6 +763,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       return myCurrentShelvedElement;
     }
 
+    @CalledInAwt
     @Override
     public void clear() {
       myCurrentShelvedElement = null;

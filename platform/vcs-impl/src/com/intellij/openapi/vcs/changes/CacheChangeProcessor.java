@@ -114,6 +114,7 @@ public abstract class CacheChangeProcessor extends CacheDiffRefreshableRequestPr
    * current element should always be among allChanges and selection (if they are not empty)
    */
 
+  @CalledInAwt
   @Override
   public void clear() {
     myCurrentChange = null;

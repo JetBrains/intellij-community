@@ -33,6 +33,7 @@ public abstract class CacheDiffRefreshableRequestProcessor<T> extends CacheDiffR
   /**
    * Notify currently shown diff that it's not needed now and cached values can be reset, a.e. before hiding preview panel
    */
+  @CalledInAwt
   public abstract void clear();
 
   /**
