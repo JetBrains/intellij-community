@@ -258,10 +258,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           ApplyPatchForBaseRevisionTexts texts =
             ApplyPatchForBaseRevisionTexts.create(project, file, patchContext.getPathBeforeRename(file), patch, baseContents);
           //found base
-          if (texts.isBaseRevisionLoaded()) {
-
-            if (texts.isAppliedSomehow()) throw new DiffRequestProducerException(DIFF_WITH_BASE_ERROR);
-
+          if (texts.isBaseRevisionLoaded() && !texts.isAppliedSomehow()) {
             //normal diff
             DiffContentFactory contentFactory = DiffContentFactory.getInstance();
             DiffContent leftContent = withLocal
@@ -272,6 +269,9 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
           }
           else {
             //try applying on local
+            if (texts.isAppliedSomehow()) {
+              texts.clearBase();  // wrong base should not be used even it exists
+            }
             DiffRequest diffRequest = shelvedChange.isConflictingChange(project)
                                       ? createConflictDiffRequest(project, file, patch, SHELVED_VERSION, texts, getName())
                                       : createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);

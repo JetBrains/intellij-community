@@ -127,6 +127,10 @@ public class ApplyPatchForBaseRevisionTexts {
   public CharSequence getBase() {
     return myBase;
   }
+
+  public void clearBase() {
+    myBase = null;
+  }
   
   private void setPatched(final String text) {
     myPatched = StringUtil.convertLineSeparators(text);
