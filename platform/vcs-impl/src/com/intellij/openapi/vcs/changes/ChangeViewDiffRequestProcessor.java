@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<CacheChangeProcessor.ChangeWrapper>
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor<ChangeViewDiffRequestProcessor.ChangeWrapper>
   implements DiffPreviewUpdateProcessor {
 
   @Nullable private Change myCurrentChange;
 
-  public CacheChangeProcessor(@NotNull Project project, @NotNull String place) {
+  public ChangeViewDiffRequestProcessor(@NotNull Project project, @NotNull String place) {
     super(project, place);
   }
 
@@ -244,7 +244,7 @@ public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<Cac
 
     @Override
     public String toString() {
-      return String.format("CacheChangeProcessor.ChangeWrapper: %s (%s - %s)",
+      return String.format("ChangeViewDiffRequestProcessor.ChangeWrapper: %s (%s - %s)",
                            change.getClass(), toString(change.getBeforeRevision()), toString(change.getAfterRevision()));
     }
 
