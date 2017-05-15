@@ -797,11 +797,11 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
     private void dropCachesIfNeededAndUpdate(@NotNull ShelvedWrapper currentShelvedElement) {
       ShelvedChange shelvedChange = currentShelvedElement.getShelvedChange();
-      boolean needDropCaches = shelvedChange != null && myPreloader.isPatchFileChanged(shelvedChange.getPatchPath());
-      if (needDropCaches) {
+      boolean dropCaches = shelvedChange != null && myPreloader.isPatchFileChanged(shelvedChange.getPatchPath());
+      if (dropCaches) {
         dropCaches();
       }
-      updateRequest(needDropCaches);
+      updateRequest(dropCaches);
     }
 
     boolean keepShelvedSelection(@NotNull List<ShelvedChange> selectedChanges, @Nullable ShelvedChange currentShelvedChange) {
