@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.plugins.groovy.transformations.isUnderTransformation
 
 class GroovyLightInnerClassFinder(project: Project) : GroovyClassFinder(project) {
 
@@ -37,6 +38,6 @@ class GroovyLightInnerClassFinder(project: Project) : GroovyClassFinder(project)
   }
 
   fun findInnerLightClass(clazz: PsiClass, name: String): PsiClass? {
-    return clazz.findInnerClassByName(name, false) as? LightElement as?PsiClass
+    return if (isUnderTransformation(clazz)) null else clazz.findInnerClassByName(name, false) as? LightElement as? PsiClass
   }
 }
