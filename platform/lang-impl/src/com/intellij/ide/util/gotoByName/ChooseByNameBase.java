@@ -440,7 +440,7 @@ public abstract class ChooseByNameBase {
         return PsiUtilCore.toPsiElementArray(elements);
       }
     });
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseByNameBase", group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     actionToolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     final JComponent toolbarComponent = actionToolbar.getComponent();
