@@ -102,7 +102,7 @@ public class StepicStudyOptions implements StudyOptionsProvider {
 
     if (stepicUser == null) {
       myUsernameLabel.setText("You're not logged in");
-      myHoverHyperlinkLabel.setText("Authorize on Stepik");
+      myHoverHyperlinkLabel.setText("Log in to Stepik");
 
       myListener = createAuthorizeListener();
       myHoverHyperlinkLabel.addHyperlinkListener(myListener);

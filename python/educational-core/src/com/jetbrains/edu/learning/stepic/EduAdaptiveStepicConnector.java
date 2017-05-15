@@ -300,7 +300,7 @@ public class EduAdaptiveStepicConnector {
     if (user == null) {
       LOG.warn("Can't get next recommendation: user is null");
       ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
-                                                                                               "Can't get next recommendation: you're not authorized"));
+                                                                                               "Can't get next recommendation: you're not logged in"));
       return;
     }
 
