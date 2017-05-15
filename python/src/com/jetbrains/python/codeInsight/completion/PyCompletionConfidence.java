@@ -16,11 +16,11 @@
 package com.jetbrains.python.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
-import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -38,10 +38,11 @@ public class PyCompletionConfidence extends CompletionConfidence {
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     ASTNode node = contextElement.getNode();
     if (node != null) {
-      if (node.getElementType() == PyTokenTypes.FLOAT_LITERAL) {
+      final IElementType elementType = node.getElementType();
+      if (elementType == PyTokenTypes.FLOAT_LITERAL || elementType == PyTokenTypes.INTEGER_LITERAL) {
         return ThreeState.YES;
       }
-      if (PyTokenTypes.STRING_NODES.contains(node.getElementType())) {
+      if (PyTokenTypes.STRING_NODES.contains(elementType)) {
         final PsiElement parent = contextElement.getParent();
         if (parent instanceof PyStringLiteralExpression) {
           final List<TextRange> ranges = ((PyStringLiteralExpression)parent).getStringValueTextRanges();
