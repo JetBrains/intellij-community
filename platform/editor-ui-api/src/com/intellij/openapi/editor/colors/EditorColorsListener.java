@@ -22,15 +22,13 @@ import java.util.EventListener;
 /**
  * A listener for global color scheme change event.
  * <p/>
- * <em>NOTE: </em>The <code>EditorColorsManager</code> pushes the events down
- * the UI components hierarchy so there's no need to add a <code>JComponent</code> as a listener.
+ * <em>NOTE: </em>The {@code EditorColorsManager} pushes the events down
+ * the UI components hierarchy so there's no need to add a {@code JComponent} as a listener.
  * UI components also get this event triggered when global scheme itself is modified
  * so they can adjust their appearance accordingly.
  *
  * @see com.intellij.util.ComponentTreeEventDispatcher
  */
 public interface EditorColorsListener extends EventListener {
-
   void globalSchemeChange(@Nullable EditorColorsScheme scheme);
-
 }

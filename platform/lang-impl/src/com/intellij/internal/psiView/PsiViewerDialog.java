@@ -1268,10 +1268,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
 
     @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-
-    }
-    @Override
     public void documentChanged(DocumentEvent event) {
       myNewDocumentHashCode = event.getDocument().getText().hashCode();
     }

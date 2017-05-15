@@ -17,7 +17,6 @@ package com.intellij.openapi.editor;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
@@ -366,15 +365,9 @@ public class EditorPaintingTest extends AbstractEditorTest {
     }
 
     @Override
-    public void setText(@NotNull CharSequence text) {}
-
-    @Override
     public void setEditor(@NotNull HighlighterClient editor) {
       myDocument = editor.getDocument();
     }
-
-    @Override
-    public void documentChanged(DocumentEvent event) {}
 
     private class Iterator implements HighlighterIterator {
       private int myOffset;

@@ -19,23 +19,4 @@ package com.intellij.openapi.command;
  * @deprecated Use CommandListener directly
  */
 public abstract class CommandAdapter implements CommandListener {
-  @Override
-  public void commandStarted(CommandEvent event) {
-  }
-
-  @Override
-  public void beforeCommandFinished(CommandEvent event) {
-  }
-
-  @Override
-  public void commandFinished(CommandEvent event) {
-  }
-
-  @Override
-  public void undoTransparentActionStarted() {
-  }
-
-  @Override
-  public void undoTransparentActionFinished() {
-  }
 }

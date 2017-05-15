@@ -155,10 +155,6 @@ public class GroovyMapParameterDialog extends DialogWrapper {
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
-      @Override
       public void documentChanged(DocumentEvent event) {
         fireNameDataChanged();
       }
