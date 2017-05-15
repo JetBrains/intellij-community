@@ -414,7 +414,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
     for (AnAction anAction : extra) {
       toolbarGroup.add(anAction);
     }
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true);
+    return ActionManager.getInstance().createActionToolbar("CommittedChangesTree", toolbarGroup, true);
   }
 
   public void calcData(DataKey key, DataSink sink) {
