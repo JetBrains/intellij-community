@@ -46,14 +46,17 @@ public abstract class OutputLineSplitter {
     int from = 0;
     // new line char and teamcity message start are two reasons to flush previous line
     int inMessageBlockPosition = 0;
-    boolean justFlushed = true;
+    boolean justProcessed = true;
     for (int to = 0; to < text.length(); to++) {
       final char currentChar = text.charAt(to);
       if (currentChar == '\n') {
         processLine(text.substring(from, to + 1), outputType);
         from = to + 1;
-        justFlushed = true;
-      } else if ( (!justFlushed) && currentChar == TEAMCITY_SERVICE_MESSAGE_PREFIX.charAt(inMessageBlockPosition)) {
+        // processLine either calls processStdOutConsistently which flushes line because it ends with \n or
+        // calls onLineAvailable which has same effect as flush.
+        // this variable means data just flushed so no need to look for teamcity in this line
+        justProcessed = true;
+      } else if ( (!justProcessed) && currentChar == TEAMCITY_SERVICE_MESSAGE_PREFIX.charAt(inMessageBlockPosition)) {
         inMessageBlockPosition++;
         if (inMessageBlockPosition == TC_MESSAGE_LENGTH) {
           final int tcMessageStart = to + 1 - TC_MESSAGE_LENGTH;
@@ -64,7 +67,7 @@ public abstract class OutputLineSplitter {
         }
       } else {
         inMessageBlockPosition = (currentChar == TEAMCITY_SERVICE_MESSAGE_PREFIX.charAt(0) ? 1 : 0);
-        justFlushed = false;
+        justProcessed = false;
       }
     }
     if (from < text.length()) {
