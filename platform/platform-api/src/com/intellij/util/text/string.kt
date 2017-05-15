@@ -19,6 +19,8 @@ import com.intellij.openapi.util.text.StringUtil
 
 fun String?.nullize(nullizeSpaces: Boolean = false): String? = StringUtil.nullize(this, nullizeSpaces)
 
-fun String.trimMiddle(maxLength: Int, useEllipsisSymbol: Boolean = true): String = StringUtil.shortenTextWithEllipsis(this, maxLength, maxLength shr 1, useEllipsisSymbol)
+fun String.trimMiddle(maxLength: Int, useEllipsisSymbol: Boolean = true): String {
+  return StringUtil.shortenTextWithEllipsis(this, maxLength, maxLength shr 1, useEllipsisSymbol)
+}
 
 fun CharArray.nullize() = if (isEmpty()) null else this
