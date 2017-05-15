@@ -1,6 +1,7 @@
 package com.intellij.stats.events.completion
 
 import junit.framework.Assert.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.*
 
@@ -23,8 +24,8 @@ class EventSerializeDeserializeTest {
 
     private fun serializeDeserializeAndCheck(event: LogEvent) {
         val logLine = LogEventSerializer.toString(event)
-        val eventFromString = LogEventSerializer.fromString(logLine)
-        assertEquals(logLine, LogEventSerializer.toString(eventFromString!!))
+        val eventFromString = LogEventSerializer.fromString(logLine)!!.event
+        assertEquals(logLine, LogEventSerializer.toString(eventFromString))
     }
 
     @Test
@@ -84,5 +85,31 @@ class EventSerializeDeserializeTest {
         val event = TypeEvent(Fixtures.userId, "xx", listOf(1,2,3), Fixtures.lookupList, 1)
         serializeDeserializeAndCheck(event)
     }
+
+    @Test
+    fun `deserialization with info`() {
+        val json = JsonSerializer.toJson(First())
+        val obj: DeserializationResult<Second> = JsonSerializer.fromJson(json, Second::class.java)
+
+        assertThat(obj.absentFields).hasSize(2)
+        assertThat(obj.absentFields).contains("absent_field0").contains("absent_field1")
+
+        assertThat(obj.unknownFields).hasSize(1)
+        assertThat(obj.unknownFields).contains("unknown_field")
+    }
     
 }
+
+
+private class First {
+    val just_field: String = ""
+    val unknown_field: Int = 0
+}
+
+
+class Second {
+    val just_field: String = ""
+    val absent_field0: Double = 1.0
+    val absent_field1: Double = 1.0
+}
+

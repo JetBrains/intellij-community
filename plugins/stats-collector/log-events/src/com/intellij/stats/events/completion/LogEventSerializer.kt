@@ -16,15 +16,31 @@
 package com.intellij.stats.events.completion
 
 import com.google.gson.Gson
+import com.google.gson.internal.LinkedTreeMap
 
 object JsonSerializer {
     private val gson = Gson()
-    fun toJson(obj: Any) = gson.toJson(obj)
-    fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
+
+    fun toJson(obj: Any): String = gson.toJson(obj)
+
+    fun <T> fromJson(json: String, clazz: Class<T>): DeserializationResult<T> {
+        val declaredFields = clazz.declaredFields.map { it.name }.toSet()
+        val jsonFields = gson.fromJson(json, LinkedTreeMap::class.java).keys.map { it.toString() }.toSet()
+        val value = gson.fromJson(json, clazz)
+
+        val unknownFields = jsonFields.subtract(declaredFields)
+        val absentFields = declaredFields.subtract(jsonFields)
+
+        return DeserializationResult(value, unknownFields, absentFields)
+    }
 }
 
 
+class DeserializationResult<out T>(val value: T, val unknownFields: Set<String>, val absentFields: Set<String>)
+
+
 object LogEventSerializer {
+
 
     private val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
         Action.COMPLETION_STARTED to CompletionStartedEvent::class.java,
@@ -38,11 +54,13 @@ object LogEventSerializer {
         Action.CUSTOM to CustomMessageEvent::class.java
     )
 
+
     fun toString(event: LogEvent): String {
         return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
     }
 
-    fun fromString(line: String): LogEvent? {
+
+    fun fromString(line: String): DeserializedLogEvent? {
         val items = mutableListOf<String>()
 
         var start = -1
@@ -62,15 +80,29 @@ object LogEventSerializer {
         val clazz = actionClassMap[actionType] ?: return null
 
         val json = line.substring(start + 1)
-        val obj = JsonSerializer.fromJson(json, clazz)
+        val result = JsonSerializer.fromJson(json, clazz)
 
-        obj.userUid = userUid
-        obj.timestamp = timestamp
-        obj.recorderId = recorderId
-        obj.sessionUid = sessionUid
-        obj.actionType = actionType
+        val event = result.value
 
-        return obj
+        event.userUid = userUid
+        event.timestamp = timestamp
+        event.recorderId = recorderId
+        event.sessionUid = sessionUid
+        event.actionType = actionType
+
+        return DeserializedLogEvent(event, result.unknownFields, result.absentFields)
     }
+
+}
+
+
+class DeserializedLogEvent(
+  val event: LogEvent,
+  val unknownEventFields: Set<String>,
+  val absentEventFields: Set<String>
+) {
+
+    val isOk: Boolean
+      get() = unknownEventFields.isEmpty() || absentEventFields.isEmpty()
 
 }

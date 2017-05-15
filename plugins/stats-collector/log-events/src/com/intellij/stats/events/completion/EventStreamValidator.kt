@@ -34,7 +34,9 @@ open class SessionsInputSeparator(input: InputStream,
         var line: String? = inputReader.readLine()
         
         while (line != null) {
-            val event: LogEvent? = LogEventSerializer.fromString(line)
+            val event: LogEvent? = LogEventSerializer.fromString(line)?.event
+            //if there is any unknown or absent fields we should fail here
+
             if (event == null) {
                 handleNullEvent(line)
                 continue
@@ -46,7 +48,7 @@ open class SessionsInputSeparator(input: InputStream,
                 currentSessionUid = event.sessionUid
             }
             
-            session.add(com.intellij.stats.events.completion.EventLine(event, line))
+            session.add(EventLine(event, line))
             line = inputReader.readLine()
         }
         
@@ -63,7 +65,7 @@ open class SessionsInputSeparator(input: InputStream,
         
         val initial = session.first()
         if (initial.event is CompletionStartedEvent) {
-            val state = com.intellij.stats.events.completion.CompletionValidationState(initial.event)
+            val state = CompletionValidationState(initial.event)
             session.drop(1).forEach { state.accept(it.event) }
             isValidSession = state.isFinished && state.isValid
         }
