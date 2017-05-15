@@ -258,7 +258,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       for (final Project project : manager.getOpenProjects()) {
         try {
           CommandProcessor.getInstance().executeCommand(project, () -> {
-            if (!manager.closeProject(project, true, true, checkCanCloseProject)) {
+            if (!manager.closeProject(project, true, false, true, checkCanCloseProject)) {
               canClose[0] = false;
             }
           }, ApplicationBundle.message("command.exit"), null);

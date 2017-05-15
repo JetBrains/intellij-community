@@ -424,7 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     if (!ok) {
-      closeProject(project, false, false, true);
+      closeProject(project, false, false);
       notifyProjectOpenFailed();
       return false;
     }
@@ -601,16 +601,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeProject(@NotNull final Project project) {
-    return closeProject(project, true, false, true);
+    return closeProject(project, true, false);
   }
 
   @TestOnly
   public boolean forceCloseProject(@NotNull Project project, boolean dispose) {
-    return closeProject(project, false, dispose, false);
+    return closeProject(project, false, false, dispose, false);
   }
 
+  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean dispose) {
+    return closeProject(project, saveProject, saveProject, dispose, true);
+  }
+
+  // saveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
-  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean dispose, boolean checkCanClose) {
+  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean saveApp, final boolean dispose, boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
@@ -642,7 +647,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
-        app.saveSettings();
+        if (saveApp) {
+          app.saveSettings();
+        }
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -675,7 +682,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true, true);
+    return closeProject(project, true, true);
   }
 
   private void fireProjectClosing(@NotNull Project project) {
