@@ -16,7 +16,9 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.wrapper.*;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
+import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
+import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
 
 /**

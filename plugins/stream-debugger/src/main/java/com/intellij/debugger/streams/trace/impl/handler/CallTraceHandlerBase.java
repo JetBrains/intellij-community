@@ -16,7 +16,6 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
-import com.intellij.debugger.streams.trace.impl.handler.HandlerBase;
 
 /**
  * @author Vitaliy.Bibaev
