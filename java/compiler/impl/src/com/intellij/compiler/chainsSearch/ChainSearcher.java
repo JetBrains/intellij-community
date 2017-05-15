@@ -80,8 +80,8 @@ public class ChainSearcher {
       .getVertices()
       .stream()
       .map(
-        signAndWeight -> new OccurrencesAware<>(MethodChain.create(signAndWeight.getUnderlying(), signAndWeight.getOccurrences(), context),
-                                                signAndWeight.getOccurrences()))
+        signAndWeight -> new OccurrencesAware<>(MethodChain.create(signAndWeight.getUnderlying(), signAndWeight.getOccurrenceCount(), context),
+                                                signAndWeight.getOccurrenceCount()))
       .filter(Objects::nonNull)
       .collect(Collectors.toCollection(LinkedList::new));
 
@@ -89,7 +89,7 @@ public class ChainSearcher {
     while (!q.isEmpty()) {
       ProgressManager.checkCanceled();
       OccurrencesAware<MethodChain> currentVertex = q.poll();
-      int currentVertexDistance = currentVertex.getOccurrences();
+      int currentVertexDistance = currentVertex.getOccurrenceCount();
       MethodChain currentChain = currentVertex.getUnderlying();
       MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
       MethodChain currentVertexMethodChain = knownDistance.get(headSignature);
@@ -107,12 +107,12 @@ public class ChainSearcher {
       String targetQName = context.getTarget().getClassQName();
       for (OccurrencesAware<MethodIncompleteSignature> indexValue : nextMethods) {
         MethodIncompleteSignature vertex = indexValue.getUnderlying();
-        int occurrences = indexValue.getOccurrences();
+        int occurrences = indexValue.getOccurrenceCount();
         if (vertex.isStatic() || !vertex.getOwner().equals(targetQName)) {
           int vertexDistance = Math.min(currentVertexDistance, occurrences);
           MethodChain knownVertexMethodChain = knownDistance.get(vertex);
           if ((knownVertexMethodChain == null || knownVertexMethodChain.getChainWeight() < vertexDistance)) {
-            if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrences() < vertexDistance) {
+            if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrenceCount() < vertexDistance) {
               if (currentVertexMethodChain.size() < pathMaximalLength - 1) {
                 MethodChain newBestMethodChain =
                   currentVertexMethodChain.continuation(indexValue.getUnderlying(), vertexDistance, context);
@@ -138,7 +138,7 @@ public class ChainSearcher {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;
-                MethodChain continuation = currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
+                MethodChain continuation = currentChain.continuation(sign.getUnderlying(), sign.getOccurrenceCount(), context);
                 if (continuation != null) {
                   result.add(continuation);
                 }
@@ -147,9 +147,9 @@ public class ChainSearcher {
               else {
                 updated = true;
                 MethodChain methodChain =
-                  currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
+                  currentChain.continuation(sign.getUnderlying(), sign.getOccurrenceCount(), context);
                 if (methodChain != null) {
-                  q.addFirst(new OccurrencesAware<>(methodChain, sign.getOccurrences()));
+                  q.addFirst(new OccurrencesAware<>(methodChain, sign.getOccurrenceCount()));
                   continue;
                 }
               }

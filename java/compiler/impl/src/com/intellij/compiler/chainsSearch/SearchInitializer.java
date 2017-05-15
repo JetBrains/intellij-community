@@ -37,7 +37,7 @@ public class SearchInitializer {
     int bestOccurrences = -1;
     for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
       if (add(indexValue)) {
-        int occurrences = indexValue.getOccurrences();
+        int occurrences = indexValue.getOccurrenceCount();
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;
         }
@@ -50,7 +50,7 @@ public class SearchInitializer {
 
   private boolean add(OccurrencesAware<MethodIncompleteSignature> indexValue) {
     MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
-    int occurrences = indexValue.getOccurrences();
+    int occurrences = indexValue.getOccurrenceCount();
     MethodChain methodChain = MethodChain.create(indexValue.getUnderlying(), occurrences, myContext);
     if (methodChain != null) {
       myChains.put(methodInvocation, Pair.create(methodChain, occurrences));

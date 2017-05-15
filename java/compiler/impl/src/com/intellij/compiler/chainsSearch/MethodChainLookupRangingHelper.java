@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
-public class MethodsChainLookupRangingHelper {
+public class MethodChainLookupRangingHelper {
   @Nullable
   public static LookupElement chainToWeightableLookupElement(MethodChain chain,
                                                              ChainCompletionContext context) {

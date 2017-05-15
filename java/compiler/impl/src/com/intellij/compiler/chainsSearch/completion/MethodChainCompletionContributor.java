@@ -23,7 +23,7 @@ import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.ChainSearcher;
 import com.intellij.compiler.chainsSearch.MethodChain;
-import com.intellij.compiler.chainsSearch.MethodsChainLookupRangingHelper;
+import com.intellij.compiler.chainsSearch.MethodChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
@@ -111,7 +111,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
     return searchResult
       .stream()
       .filter(ch -> ch.getChainWeight() * ChainSearchMagicConstants.FILTER_RATIO >= maxWeight)
-      .map(ch -> MethodsChainLookupRangingHelper.chainToWeightableLookupElement(ch, context))
+      .map(ch -> MethodChainLookupRangingHelper.chainToWeightableLookupElement(ch, context))
       .collect(Collectors.toList());
   }
 

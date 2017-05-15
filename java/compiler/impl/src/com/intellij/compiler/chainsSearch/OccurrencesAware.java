@@ -30,13 +30,13 @@ public class OccurrencesAware<V> implements Comparable<OccurrencesAware<V>> {
     return myUnderlying;
   }
 
-  public int getOccurrences() {
+  public int getOccurrenceCount() {
     return myOccurrences;
   }
 
   @Override
   public int compareTo(@NotNull final OccurrencesAware<V> that) {
-    final int sub = -getOccurrences() + that.getOccurrences();
+    final int sub = -getOccurrenceCount() + that.getOccurrenceCount();
     if (sub != 0) {
       return sub;
     }
@@ -45,6 +45,6 @@ public class OccurrencesAware<V> implements Comparable<OccurrencesAware<V>> {
 
   @Override
   public String toString() {
-    return getOccurrences() + " for " + myUnderlying;
+    return getOccurrenceCount() + " for " + myUnderlying;
   }
 }
