@@ -184,7 +184,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     splitter.setFirstComponent(component);
     splitter.setSecondComponent(toolbarPanel);
     JPanel contentPanel = new JPanel(new GridBagLayout());
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myRootTreeEditor.getEditingActionsGroup(), true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureContentEntries", myRootTreeEditor.getEditingActionsGroup(), true);
     contentPanel.add(new JLabel("Mark as:"),
                      new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, 0, JBUI.insets(0, 10), 0, 0));
     contentPanel.add(actionToolbar.getComponent(),
