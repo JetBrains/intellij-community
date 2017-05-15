@@ -95,7 +95,7 @@ public class ControlFlowFactory {
       if (enableShortCircuit != this.enableShortCircuit) return false;
 
       // optimization: when no constant condition were computed, both control flows are the same
-      if (!controlFlow.isConstantConditionOccurred()) return true;
+      if (this.evaluateConstantIfCondition && !controlFlow.isConstantConditionOccurred()) return true;
 
       return evaluateConstantIfCondition == this.evaluateConstantIfCondition;
     }
