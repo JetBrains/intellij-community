@@ -378,6 +378,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     treeGroup.addSeparator();
     myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> treeGroup.add(new GroupAction(grouper)));
 
+    treeGroup.addSeparator();
+    treeGroup.add(ActionManager.getInstance().getAction(RUN_DASHBOARD_TREE_TOOLBAR));
+
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, false);
     toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.EAST);
     treeActionsToolBar.setTargetComponent(this);
