@@ -15,8 +15,7 @@
  */
 package com.intellij.stats.events.completion
 
-import java.io.InputStream
-import java.io.OutputStream
+import java.io.*
 
 data class EventLine(val event: LogEvent, val line: String)
 
@@ -24,11 +23,11 @@ open class SessionsInputSeparator(input: InputStream,
                                   output: OutputStream,
                                   error: OutputStream) {
     
-    private val inputReader = java.io.BufferedReader(java.io.InputStreamReader(input))
-    private val outputWriter = java.io.BufferedWriter(java.io.OutputStreamWriter(output))
-    private val errorWriter = java.io.BufferedWriter(java.io.OutputStreamWriter(error))
+    private val inputReader = BufferedReader(InputStreamReader(input))
+    private val outputWriter = BufferedWriter(OutputStreamWriter(output))
+    private val errorWriter = BufferedWriter(OutputStreamWriter(error))
 
-    var session = mutableListOf<com.intellij.stats.events.completion.EventLine>()
+    var session = mutableListOf<EventLine>()
     var currentSessionUid = ""
 
     fun processInput() {
@@ -57,7 +56,7 @@ open class SessionsInputSeparator(input: InputStream,
         errorWriter.flush()
     }
 
-    private fun processCompletionSession(session: List<com.intellij.stats.events.completion.EventLine>) {
+    private fun processCompletionSession(session: List<EventLine>) {
         if (session.isEmpty()) return
 
         var isValidSession = false
@@ -72,7 +71,7 @@ open class SessionsInputSeparator(input: InputStream,
         onSessionProcessingFinished(session, isValidSession)
     }
 
-    open protected fun onSessionProcessingFinished(session: List<com.intellij.stats.events.completion.EventLine>, isValidSession: Boolean) {
+    open protected fun onSessionProcessingFinished(session: List<EventLine>, isValidSession: Boolean) {
         val writer = if (isValidSession) outputWriter else errorWriter
         session.forEach {
             writer.write(it.line)

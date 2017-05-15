@@ -19,14 +19,14 @@ import com.google.gson.Gson
 
 object JsonSerializer {
     private val gson = Gson()
-    fun toJson(obj: Any) = com.intellij.stats.events.completion.JsonSerializer.gson.toJson(obj)
-    fun <T> fromJson(json: String, clazz: Class<T>) = com.intellij.stats.events.completion.JsonSerializer.gson.fromJson(json, clazz)
+    fun toJson(obj: Any) = gson.toJson(obj)
+    fun <T> fromJson(json: String, clazz: Class<T>) = gson.fromJson(json, clazz)
 }
 
 
 object LogEventSerializer {
 
-    val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
+    private val actionClassMap: Map<Action, Class<out LogEvent>> = mapOf(
         Action.COMPLETION_STARTED to CompletionStartedEvent::class.java,
         Action.TYPE to TypeEvent::class.java,
         Action.DOWN to DownPressedEvent::class.java,
@@ -39,8 +39,7 @@ object LogEventSerializer {
     )
 
     fun toString(event: LogEvent): String {
-        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${com.intellij.stats.events.completion.JsonSerializer.toJson(
-          event)}"
+        return "${event.timestamp}\t${event.recorderId}\t${event.userUid}\t${event.sessionUid}\t${event.actionType}\t${JsonSerializer.toJson(event)}"
     }
 
     fun fromString(line: String): LogEvent? {
@@ -60,10 +59,10 @@ object LogEventSerializer {
         val sessionUid = items[3]
         val actionType = Action.valueOf(items[4])
 
-        val clazz = com.intellij.stats.events.completion.LogEventSerializer.actionClassMap[actionType] ?: return null
+        val clazz = actionClassMap[actionType] ?: return null
 
         val json = line.substring(start + 1)
-        val obj = com.intellij.stats.events.completion.JsonSerializer.fromJson(json, clazz)
+        val obj = JsonSerializer.fromJson(json, clazz)
 
         obj.userUid = userUid
         obj.timestamp = timestamp
