@@ -233,10 +233,10 @@ class StateMerger {
       for (DfaMemoryStateImpl state : states) {
         for (Map.Entry<DfaVariableValue, Map<LongRangeSet, LongRangeSet>> entry : ranges.entrySet()) {
           DfaVariableState variableState = state.getVariableState(entry.getKey());
-          LongRangeSet range = variableState.getRange();
+          LongRangeSet range = variableState.getFact(DfaFactType.RANGE);
           LongRangeSet boundingRange = entry.getValue().get(range);
           if (boundingRange != null && !boundingRange.equals(range)) {
-            state.setRange(entry.getKey(), boundingRange);
+            state.setFact(entry.getKey(), DfaFactType.RANGE, boundingRange);
             changed = true;
           }
         }
@@ -256,12 +256,12 @@ class StateMerger {
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       Map<DfaVariableValue, DfaVariableState> variableStates = state.getVariableStates();
-      for (Map.Entry<DfaVariableValue, DfaVariableState> entry : variableStates.entrySet()) {
-        LongRangeSet range = entry.getValue().getRange();
+      variableStates.forEach((varValue, varState) -> {
+        LongRangeSet range = varState.getFact(DfaFactType.RANGE);
         if (range != null) {
-          ranges.computeIfAbsent(entry.getKey(), k -> new HashMap<>()).put(range, range);
+          ranges.computeIfAbsent(varValue, k -> new HashMap<>()).put(range, range);
         }
-      }
+      });
     }
     return ranges;
   }
@@ -302,7 +302,7 @@ class StateMerger {
       DfaMemoryStateImpl getState() {
         if(myMerged) {
           myState.flushVariable(var);
-          myState.setRange(var, myRange);
+          myState.setFact(var, DfaFactType.RANGE, myRange);
         }
         return myState;
       }
@@ -312,7 +312,7 @@ class StateMerger {
     Map<DfaMemoryStateImpl, Record> merged = new LinkedHashMap<>();
     for (DfaMemoryStateImpl state : states) {
       DfaVariableState variableState = state.getVariableState(var);
-      LongRangeSet range = variableState.getRange();
+      LongRangeSet range = variableState.getFact(DfaFactType.RANGE);
       if (range == null) {
         range = LongRangeSet.fromType(var.getVariableType());
         if (range == null) return null;
@@ -328,7 +328,7 @@ class StateMerger {
     // If there are too many states, try to drop range information from some variable
     DfaVariableValue lastVar = Collections.max(rangeVariables, Comparator.comparingInt(DfaVariableValue::getID));
     for (DfaMemoryStateImpl state : states) {
-      state.setRange(lastVar, null);
+      state.setFact(lastVar, DfaFactType.RANGE, null);
     }
     return new ArrayList<>(new HashSet<>(states));
   }

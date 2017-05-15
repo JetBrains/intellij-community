@@ -1013,7 +1013,8 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
             myOptionalQualifiers.add(qualifier);
           }
           else if (DfaOptionalSupport.isOptionalGetMethodName(methodName)) {
-            ThreeState state = memState.checkOptional(memState.peek());
+            Boolean fact = memState.getValueFact(DfaFactType.OPTIONAL_PRESENCE, memState.peek());
+            ThreeState state = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
             myOptionalCalls.merge(call, state, ThreeState::merge);
           }
         }

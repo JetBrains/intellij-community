@@ -30,7 +30,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -211,9 +210,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     if (!myVariableStates.isEmpty()) {
       result.append("\n  vars: ");
-      for (Map.Entry<DfaVariableValue, DfaVariableState> entry : myVariableStates.entrySet()) {
-        result.append("[").append(entry.getKey()).append("->").append(entry.getValue()).append("] ");
-      }
+      myVariableStates.forEach((key, value) -> result.append("[").append(key).append("->").append(value).append("] "));
     }
     if (!myUnknownVariables.isEmpty()) {
       result.append("\n  unknowns: ").append(new HashSet<>(myUnknownVariables));
@@ -647,29 +644,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
-  private void applyIsPresentCheck(boolean present, DfaValue qualifier) {
-    if (qualifier instanceof DfaVariableValue && !isUnknownState(qualifier)) {
-      setVariableState((DfaVariableValue)qualifier, getVariableState((DfaVariableValue)qualifier).withOptionalPresense(present));
+  <T> void setFact(DfaValue target, DfaFactType<T> factType, T fact) {
+    if (target instanceof DfaVariableValue && !isUnknownState(target)) {
+      setVariableState((DfaVariableValue)target, getVariableState((DfaVariableValue)target).withFact(factType, fact));
     }
   }
 
-  void setRange(DfaVariableValue target, LongRangeSet range) {
-    if (!isUnknownState(target)) {
-      setVariableState(target, getVariableState(target).withRange(range));
-    }
-  }
-
-  boolean applyRange(LongRangeSet range, DfaVariableValue target) {
+  <T> boolean applyFact(DfaVariableValue target, DfaFactType<T> factType, T range) {
     if (!isUnknownState(target) && range != null) {
       DfaVariableState state = getVariableState(target);
-      LongRangeSet oldRange = state.getRange();
-      if (oldRange == null) {
-        oldRange = LongRangeSet.fromType(target.getVariableType());
-        if (oldRange == null) return true;
-      }
-      LongRangeSet newRange = oldRange.intersect(range);
-      if (newRange.isEmpty()) return false;
-      setVariableState(target, state.withRange(newRange));
+      DfaVariableState newState = state.intersectFact(factType, range);
+      if (newState == null) return false;
+      setVariableState(target, newState);
     }
     return true;
   }
@@ -735,33 +721,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     RelationType relationType = dfaRelation.getRelation();
 
     if (dfaLeft instanceof DfaVariableValue) {
-      LongRangeSet right = getRange(dfaRight);
+      LongRangeSet right = getValueFact(DfaFactType.RANGE, dfaRight);
       if (right != null) {
-        if (!applyRange(right.fromRelation(relationType), (DfaVariableValue)dfaLeft)) {
+        if (!applyFact((DfaVariableValue)dfaLeft, DfaFactType.RANGE, right.fromRelation(relationType))) {
           return false;
         }
       }
     }
     if (dfaRight instanceof DfaVariableValue) {
-      LongRangeSet left = getRange(dfaLeft);
+      LongRangeSet left = getValueFact(DfaFactType.RANGE, dfaLeft);
       if (left != null) {
-        if (!applyRange(left.fromRelation(relationType.getFlipped()), (DfaVariableValue)dfaRight)) {
+        if (!applyFact((DfaVariableValue)dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
           return false;
         }
       }
     }
 
-    if (dfaRight instanceof DfaOptionalValue && (relationType == RelationType.IS || relationType == RelationType.IS_NOT)) {
-      ThreeState state = checkOptional(dfaLeft);
-      boolean present = ((DfaOptionalValue)dfaRight).isPresent();
-      if (relationType == RelationType.IS_NOT) {
-        present = !present;
-      }
-      if (state == ThreeState.UNSURE) {
-        applyIsPresentCheck(present, dfaLeft);
-        return true;
-      }
-      return state == ThreeState.fromBoolean(present);
+    if (dfaLeft instanceof DfaVariableValue &&
+        dfaRight instanceof DfaOptionalValue &&
+        (relationType == RelationType.IS || relationType == RelationType.IS_NOT)) {
+      boolean present = ((DfaOptionalValue)dfaRight).isPresent() == (relationType == RelationType.IS);
+      return applyFact((DfaVariableValue)dfaLeft, DfaFactType.OPTIONAL_PRESENCE, present);
     }
 
     if (dfaRight instanceof DfaTypeValue) {
@@ -871,7 +851,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     if (!isNegated && dfaRight instanceof DfaOptionalValue) {
-      applyIsPresentCheck(((DfaOptionalValue)dfaRight).isPresent(), dfaLeft);
+      setFact(dfaLeft, DfaFactType.OPTIONAL_PRESENCE, ((DfaOptionalValue)dfaRight).isPresent());
     }
 
     return true;
@@ -1009,40 +989,35 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  @Override
-  public ThreeState checkOptional(DfaValue value) {
-    if (value instanceof DfaVariableValue) {
-      DfaVariableValue var = (DfaVariableValue)value;
-      DfaVariableState state = getVariableState(var);
-      return state.getOptionalPresense();
+  @Nullable
+  @SuppressWarnings("unchecked")
+  public <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value) {
+    if (factType == DfaFactType.RANGE) {
+      LongRangeSet range = getRange(value);
+      if (range != null) {
+        return (T)range;
+      }
     }
-    return value instanceof DfaOptionalValue ? ThreeState.fromBoolean(((DfaOptionalValue)value).isPresent()) : ThreeState.UNSURE;
+    if (value instanceof DfaVariableValue) {
+      DfaVariableState state = myVariableStates.get((DfaVariableValue)value);
+      if (state != null) {
+        T fact = state.getFact(factType);
+        if (fact != null) {
+          return fact;
+        }
+      }
+      DfaConstValue constValue = getConstantValue((DfaVariableValue)value);
+      if (constValue != null) {
+        value = constValue;
+      }
+    }
+    return factType.fromDfaValue(value);
   }
 
-  /**
-   * Returns range of possible values for given DfaValue if possible
-   *
-   * @param value value to get the range from
-   * @return possible range or null if range is not known/non-applicable. Empty range indicates that no exact value is possible
-   * for given DfaValue (likely impossible code path).
-   */
   @Nullable
-  @Override
-  public LongRangeSet getRange(DfaValue value) {
+  private LongRangeSet getRange(DfaValue value) {
     if (value instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue)value;
-      if (!TypeConversionUtil.isPrimitiveAndNotNull(var.getVariableType())) {
-        return null;
-      }
-      DfaVariableState state = getVariableState(var);
-      LongRangeSet range = state.getRange();
-      if (range == null) {
-        DfaConstValue constValue = getConstantValue(var);
-        if (constValue != null) {
-          return LongRangeSet.fromConstant(constValue.getValue());
-        }
-        return LongRangeSet.fromType(var.getVariableType());
-      }
       if (var.getPsiVariable() instanceof PsiMethod && MethodUtils.isStringLength((PsiMethod)var.getPsiVariable())) {
         DfaVariableValue qualifier = var.getQualifier();
         if(qualifier != null) {
@@ -1052,9 +1027,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
         }
       }
-      return range;
     }
-    return LongRangeSet.fromDfaValue(value);
+    return null;
   }
 
   void setVariableState(DfaVariableValue dfaVar, DfaVariableState state) {

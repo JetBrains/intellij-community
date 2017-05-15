@@ -636,8 +636,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
     DfaValue result = null;
     if (JavaTokenType.AND == opSign) {
-      LongRangeSet left = memState.getRange(dfaLeft);
-      LongRangeSet right = memState.getRange(dfaRight);
+      LongRangeSet left = memState.getValueFact(DfaFactType.RANGE, dfaLeft);
+      LongRangeSet right = memState.getValueFact(DfaFactType.RANGE, dfaRight);
       if(left != null && right != null) {
         result = runner.getFactory().getRangeFactory().create(left.bitwiseAnd(right));
       }

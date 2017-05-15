@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.rangeSet;
 
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRangeValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.util.ThreeState;
@@ -335,6 +332,9 @@ public abstract class LongRangeSet {
     }
     if (value instanceof DfaConstValue) {
       return fromConstant(((DfaConstValue)value).getValue());
+    }
+    if (value instanceof DfaVariableValue) {
+      return fromType(((DfaVariableValue)value).getVariableType());
     }
     return null;
   }

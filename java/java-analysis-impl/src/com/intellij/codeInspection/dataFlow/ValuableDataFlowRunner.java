@@ -16,13 +16,11 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,9 +78,8 @@ class ValuableDataFlowRunner extends DataFlowRunner {
                                      Set<DfaPsiType> notInstanceofValues,
                                      Nullness nullability, DfaValue value,
                                      @NotNull FList<PsiExpression> concatenation,
-                                     ThreeState optionalPresence,
-                                     LongRangeSet range) {
-      super(instanceofValues, notInstanceofValues, nullability, optionalPresence, range);
+                                     @NotNull DfaFactMap factMap) {
+      super(instanceofValues, notInstanceofValues, nullability, factMap);
       myValue = value;
       myConcatenation = concatenation;
     }
@@ -92,24 +89,20 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues,
                                           @NotNull Set<DfaPsiType> notInstanceofValues,
                                           @NotNull Nullness nullability,
-                                          ThreeState optionalPresence,
-                                          LongRangeSet range) {
-      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation, optionalPresence,
-                                          range);
+                                          @NotNull DfaFactMap factMap) {
+      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation, factMap);
     }
 
     @NotNull
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation,
-                                          myOptionalPresence, myRange);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation, myFactMap);
     }
 
     ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation,
-                                          myOptionalPresence, myRange);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation, myFactMap);
     }
 
     @Override

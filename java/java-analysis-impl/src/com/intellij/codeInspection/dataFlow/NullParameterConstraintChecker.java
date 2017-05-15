@@ -29,7 +29,6 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.impl.search.JavaNullMethodArgumentUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.ThreeState;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -130,7 +129,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
         setVariableState(getFactory().getVarFactory().createVariableValue(parameter, false),
-                         new DfaVariableState(Collections.emptySet(), Collections.emptySet(), Nullness.NULLABLE, ThreeState.UNSURE, null));
+                         new DfaVariableState(Collections.emptySet(), Collections.emptySet(), Nullness.NULLABLE, DfaFactMap.EMPTY));
       }
     }
 
