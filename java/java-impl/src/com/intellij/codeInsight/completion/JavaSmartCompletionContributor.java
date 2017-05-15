@@ -211,7 +211,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     extend(CompletionType.SMART, LabelReferenceCompletion.LABEL_REFERENCE, new LabelReferenceCompletion());
 
     extend(CompletionType.SMART, psiElement(), new FunctionalExpressionCompletionProvider());
-    extend(CompletionType.SMART, psiElement(), new MethodReferenceCompletionProvider());
+    extend(CompletionType.SMART, psiElement().afterLeaf("::"), new MethodReferenceCompletionProvider());
   }
 
   @NotNull
