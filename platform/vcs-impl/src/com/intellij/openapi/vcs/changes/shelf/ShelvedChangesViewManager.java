@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 import com.intellij.CommonBundle;
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.icons.AllIcons;
@@ -741,7 +742,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
   }
 
-  private class MyShelvedPreviewProcessor extends CacheDiffRefreshableRequestProcessor<ShelvedWrapper> {
+  private class MyShelvedPreviewProcessor extends CacheDiffRequestProcessor<ShelvedWrapper> implements DiffPreviewUpdateProcessor {
 
     @NotNull private final DiffShelvedChangesAction.PatchesPreloader myPreloader;
     @Nullable private ShelvedWrapper myCurrentShelvedElement;

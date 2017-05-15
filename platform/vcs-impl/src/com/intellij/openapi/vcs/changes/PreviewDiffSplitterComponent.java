@@ -24,11 +24,11 @@ import javax.swing.*;
 
 public class PreviewDiffSplitterComponent extends JBSplitter {
   @NotNull private final JComponent myFirstComponent;
-  @NotNull private final CacheDiffRefreshableRequestProcessor myProcessor;
+  @NotNull private final DiffPreviewUpdateProcessor myProcessor;
   private boolean myDetailsOn;
 
   public PreviewDiffSplitterComponent(@NotNull JComponent firstComponent,
-                                      @NotNull CacheDiffRefreshableRequestProcessor processor,
+                                      @NotNull DiffPreviewUpdateProcessor processor,
                                       @NotNull String splitterDimensionKey, boolean detailsOn) {
     super(splitterDimensionKey, 0.5f);
     myFirstComponent = firstComponent;

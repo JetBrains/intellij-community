@@ -15,31 +15,25 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.impl.CacheDiffRequestProcessor;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public abstract class CacheDiffRefreshableRequestProcessor<T> extends CacheDiffRequestProcessor<T> {
-  public CacheDiffRefreshableRequestProcessor(@Nullable Project project) {
-    super(project);
-  }
+import javax.swing.*;
 
-  public CacheDiffRefreshableRequestProcessor(@Nullable Project project, @NotNull String place) {
-    super(project, place);
-  }
-
+public interface DiffPreviewUpdateProcessor {
   /**
    * Notify currently shown diff that it's not needed now and cached values can be reset, a.e. before hiding preview panel
    */
   @CalledInAwt
-  public abstract void clear();
+  void clear();
 
   /**
    * Get newly requested element for diff and update/create new diff request for it
    * a.e. get selection from some model and check if previously shown diff request need to be replaced or still valid for such selection
    */
   @CalledInAwt
-  public abstract void refresh();
+  void refresh();
+
+  @NotNull
+  JComponent getComponent();
 }
