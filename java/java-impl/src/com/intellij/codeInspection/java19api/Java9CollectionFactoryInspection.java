@@ -23,6 +23,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -312,8 +313,11 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         .prepend((PsiExpression)null)
         .pairMap((prev, next) -> (prev == null ? "" : CommentTracker.commentsBetween(prev, next)) + ct.text(next))
         .joining(",", "java.util." + model.myType + "." + typeArgument + "of(", ")");
+      List<PsiLocalVariable> vars =
+        StreamEx.of(model.myElementsToDelete).map(PsiElement::getParent).select(PsiLocalVariable.class).toList();
       model.myElementsToDelete.forEach(ct::delete);
       PsiElement replacement = ct.replaceAndRestoreComments(call, replacementText);
+      vars.stream().filter(var -> ReferencesSearch.search(var).findFirst() == null).forEach(PsiElement::delete);
       PsiDiamondTypeUtil.removeRedundantTypeArguments(replacement);
     }
 
