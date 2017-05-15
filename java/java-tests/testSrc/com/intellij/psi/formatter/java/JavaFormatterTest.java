@@ -3377,5 +3377,16 @@ public void testSCR260() throws Exception {
       "}"
     );
   }
+
+  public void testPreserveRbraceOnItsLine() {
+    doClassTest(
+      "class SomeTest {\n" +
+      "  @Test\n" +
+      "}",
+      "class SomeTest {\n" +
+      "    @Test\n" +
+      "}"
+    );
+  }
   
 }
