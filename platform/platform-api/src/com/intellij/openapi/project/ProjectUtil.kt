@@ -31,7 +31,6 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.util.PathUtilRt
@@ -141,23 +140,22 @@ fun Project.guessProjectDir() : VirtualFile {
   return this.baseDir!!
 }
 
-private fun Project.getPresentableFileName(): String {
-  if (isDefault) {
-    return name
+private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
+  val presentableUrl = presentableUrl
+  var name = if (forceNameUse || presentableUrl == null) {
+    name
+  }
+  else {
+    // lower case here is used for cosmetic reasons (develar - discussed with jeka - leave it as it was, user projects will not have long names as in our tests)
+    FileUtil.sanitizeFileName(PathUtilRt.getFileName(presentableUrl).toLowerCase(Locale.US).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION), false)
   }
 
-  val projectName = FileUtilRt.toSystemIndependentName(PathUtilRt.getFileName(presentableUrl!!))
-    .toLowerCase(Locale.US)
-    .removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
-  return FileUtil.sanitizeFileName(projectName, false)
-}
+  // do not use project.locationHash to avoid prefix for IPR projects (not required in our case because name in any case is prepended).
+  val locationHash = Integer.toHexString((presentableUrl ?: name).hashCode())
 
-private fun Project.getProjectCacheFileName(forceNameUse: Boolean, hashSeparator: String): String {
-  var name = if (forceNameUse) name else getPresentableFileName()
-  // run testRangeMarkersDoNotGetAddedOrRemovedWhenUserIsJustTypingInsideHighlightedRegionAndEspeciallyInsideInjectedFragmentsWhichAreColoredGreenAndUsersComplainEndlesslyThatEditorFlickersThere
-  // to reproduce "File name too long"
+  // trim to avoid "File name too long"
   name = name.trimMiddle(Math.min(name.length, 255 - hashSeparator.length - locationHash.length), useEllipsisSymbol = false)
-  return "$name$hashSeparator$locationHash"
+  return "$name$hashSeparator${locationHash}"
 }
 
 @JvmOverloads
