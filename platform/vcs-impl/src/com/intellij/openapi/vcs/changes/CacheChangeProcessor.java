@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.impl.CacheDiffRequestProcessor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
@@ -31,7 +32,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class CacheChangeProcessor extends CacheDiffRefreshableRequestProcessor<CacheChangeProcessor.ChangeWrapper> {
+public abstract class CacheChangeProcessor extends CacheDiffRequestProcessor<CacheChangeProcessor.ChangeWrapper>
+  implements DiffPreviewUpdateProcessor {
 
   @Nullable private Change myCurrentChange;
 
