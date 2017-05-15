@@ -28,6 +28,7 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.internal.ReviseWhenPortedToJDK;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -121,7 +122,8 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     try {
       Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
+      //TODO revise when jdk9 arrives. Until then this redundant cast is a workaround to compile under jdk9 b169
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously((@ReviseWhenPortedToJDK("9") Runnable)() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
         descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
