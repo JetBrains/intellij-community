@@ -60,6 +60,8 @@ public abstract class ProjectManager {
   @Deprecated
   public abstract void removeProjectManagerListener(@NotNull ProjectManagerListener listener);
 
+  public abstract void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener);
+
   /**
    * Adds listener to the specified project.
    *

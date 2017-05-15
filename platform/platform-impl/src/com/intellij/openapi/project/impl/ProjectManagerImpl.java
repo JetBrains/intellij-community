@@ -99,7 +99,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectOpened(project);
           }
@@ -111,7 +111,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosed(Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosed(project);
           }
@@ -125,7 +125,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosing(Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosing(project);
           }
@@ -137,7 +137,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosingBeforeSave(@NotNull Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosingBeforeSave(project);
           }
@@ -698,6 +698,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @Override
+  public void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener) {
+    boolean removed = myListeners.remove(listener);
+    LOG.assertTrue(removed);
+  }
+
+  @Override
   public void addProjectManagerListener(@NotNull Project project, @NotNull ProjectManagerListener listener) {
     List<ProjectManagerListener> listeners = project.getUserData(LISTENERS_IN_PROJECT_KEY);
     if (listeners == null) {
@@ -737,7 +743,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("enter: canClose()");
     }
 
-    for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+    for (ProjectManagerListener listener : getAllListeners(project)) {
       try {
         //noinspection deprecation
         boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
@@ -752,6 +758,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     return true;
+  }
+
+  // both lists are thread-safe (LockFreeCopyOnWriteArrayList), but ContainerUtil.concat cannot handle situation when list size is changed during iteration
+  // so, we have to create list.
+  @NotNull
+  private List<ProjectManagerListener> getAllListeners(@NotNull Project project) {
+    List<ProjectManagerListener> projectLevelListeners = getListeners(project);
+    if (projectLevelListeners.isEmpty()) {
+      return myListeners;
+    }
+    else if (myListeners.isEmpty()) {
+      return projectLevelListeners;
+    }
+
+    List<ProjectManagerListener> result = new ArrayList<>(projectLevelListeners.size() + myListeners.size());
+    // order is critically important due to backward compatibility - project level listeners must be first
+    result.addAll(projectLevelListeners);
+    result.addAll(myListeners);
+    return result;
   }
 
   private static boolean ensureCouldCloseIfUnableToSave(@NotNull Project project) {
