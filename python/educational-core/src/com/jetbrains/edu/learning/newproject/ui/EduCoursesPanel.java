@@ -188,7 +188,7 @@ public class EduCoursesPanel extends JPanel {
       @Override
       public void mouseClicked(MouseEvent e) {
         if (!isLoggedIn() && myErrorLabel.isVisible()) {
-          ApplicationManager.getApplication().getMessageBus().connect().subscribe(StudySettings.USER_SET, u -> {
+          ApplicationManager.getApplication().getMessageBus().connect().subscribe(StudySettings.SETTINGS_CHANGED, () -> {
             StepicUser user = StudySettings.getInstance().getUser();
             if (user != null) {
               ApplicationManager.getApplication().invokeLater(() -> {

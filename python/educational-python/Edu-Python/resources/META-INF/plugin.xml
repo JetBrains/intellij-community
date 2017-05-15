@@ -25,7 +25,6 @@
                      level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyLanguageLevelInspection"
                      displayName="Unsupported language level for a course" groupName="Inspection.Study.Python"/>
     <!--course creator-->
-    <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
     <configurationType implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationType"/>
     <runConfigurationProducer implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationProducer"/>
   </extensions>

@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 @State(name = "StepicUpdateSettings", storages = @Storage("other.xml"))
 public class StudySettings implements PersistentStateComponent<StudySettings> {
-  public static final Topic<UserSetListener> USER_SET = Topic.create("Edu.UserSet", UserSetListener.class);
+  public static final Topic<StudySettingsListener> SETTINGS_CHANGED = Topic.create("Edu.UserSet", StudySettingsListener.class);
   private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
   private boolean myEnableTestingFromSamples = false;
@@ -52,7 +52,7 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setUser(@Nullable final StepicUser user) {
     myUser = user;
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(USER_SET).userSet(user);
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(SETTINGS_CHANGED).settingsChanged();
     updateStepicUserWidget();
   }
 
@@ -69,6 +69,7 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setEnableTestingFromSamples(boolean enableTestingFromSamples) {
     myEnableTestingFromSamples = enableTestingFromSamples;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(SETTINGS_CHANGED).settingsChanged();
   }
 
   public boolean isCourseCreatorEnabled() {
@@ -77,10 +78,11 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setCourseCreatorEnabled(boolean courseCreatorEnabled) {
     isCourseCreatorEnabled = courseCreatorEnabled;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(SETTINGS_CHANGED).settingsChanged();
   }
 
   @FunctionalInterface
-  public interface UserSetListener {
-    void userSet(StepicUser user);
+  public interface StudySettingsListener {
+    void settingsChanged();
   }
 }
