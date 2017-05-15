@@ -21,8 +21,8 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
-import com.intellij.compiler.chainsSearch.ChainsSearcher;
-import com.intellij.compiler.chainsSearch.MethodsChain;
+import com.intellij.compiler.chainsSearch.ChainSearcher;
+import com.intellij.compiler.chainsSearch.MethodChain;
 import com.intellij.compiler.chainsSearch.MethodsChainLookupRangingHelper;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
@@ -50,14 +50,14 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 /**
  * @author Dmitry Batkovich
  */
-public class MethodsChainsCompletionContributor extends CompletionContributor {
+public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
-  private static final Logger LOG = Logger.getInstance(MethodsChainsCompletionContributor.class);
+  private static final Logger LOG = Logger.getInstance(MethodChainCompletionContributor.class);
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
   public static final CompletionType COMPLETION_TYPE = UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
 
   @SuppressWarnings("unchecked")
-  public MethodsChainsCompletionContributor() {
+  public MethodChainCompletionContributor() {
     ElementPattern<PsiElement> pattern = or(patternForMethodCallParameter(), patternForVariableAssignment());
     extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
@@ -100,13 +100,13 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
     CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
     ChainSearchTarget target = context.getTarget();
-    List<MethodsChain> searchResult =
-      ChainsSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
-                            target,
-                            ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
-                            context,
-                            methodsUsageIndexReader);
-    int maxWeight = searchResult.stream().mapToInt(MethodsChain::getChainWeight).max().orElse(0);
+    List<MethodChain> searchResult =
+      ChainSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
+                           target,
+                           ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
+                           context,
+                           methodsUsageIndexReader);
+    int maxWeight = searchResult.stream().mapToInt(MethodChain::getChainWeight).max().orElse(0);
 
     return searchResult
       .stream()

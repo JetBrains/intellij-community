@@ -29,21 +29,18 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * @author Dmitry Batkovich
- */
-public class ChainsSearcher {
-  private static final Logger LOG = Logger.getInstance(ChainsSearcher.class);
+public class ChainSearcher {
+  private static final Logger LOG = Logger.getInstance(ChainSearcher.class);
 
-  private ChainsSearcher() {
+  private ChainSearcher() {
   }
 
   @NotNull
-  public static List<MethodsChain> search(int pathMaximalLength,
-                                          ChainSearchTarget searchTarget,
-                                          int maxResultSize,
-                                          ChainCompletionContext context,
-                                          CompilerReferenceServiceEx compilerReferenceServiceEx) {
+  public static List<MethodChain> search(int pathMaximalLength,
+                                         ChainSearchTarget searchTarget,
+                                         int maxResultSize,
+                                         ChainCompletionContext context,
+                                         CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
     return search(compilerReferenceServiceEx,
                   initializer,
@@ -70,20 +67,20 @@ public class ChainsSearcher {
   }
 
   @NotNull
-  private static List<MethodsChain> search(CompilerReferenceServiceEx indexReader,
-                                           SearchInitializer initializer,
-                                           int pathMaximalLength,
-                                           int maxResultSize,
-                                           ChainCompletionContext context) {
+  private static List<MethodChain> search(CompilerReferenceServiceEx indexReader,
+                                          SearchInitializer initializer,
+                                          int pathMaximalLength,
+                                          int maxResultSize,
+                                          ChainCompletionContext context) {
     SearchInitializer.InitResult initResult = initializer.init(Collections.emptySet());
 
-    Map<MethodIncompleteSignature, MethodsChain> knownDistance = initResult.getChains();
+    Map<MethodIncompleteSignature, MethodChain> knownDistance = initResult.getChains();
 
-    LinkedList<OccurrencesAware<MethodsChain>> q = initResult
+    LinkedList<OccurrencesAware<MethodChain>> q = initResult
       .getVertices()
       .stream()
       .map(
-        signAndWeight -> new OccurrencesAware<>(MethodsChain.create(signAndWeight.getUnderlying(), signAndWeight.getOccurrences(), context),
+        signAndWeight -> new OccurrencesAware<>(MethodChain.create(signAndWeight.getUnderlying(), signAndWeight.getOccurrences(), context),
                                                 signAndWeight.getOccurrences()))
       .filter(Objects::nonNull)
       .collect(Collectors.toCollection(LinkedList::new));
@@ -91,12 +88,12 @@ public class ChainsSearcher {
     ResultHolder result = new ResultHolder();
     while (!q.isEmpty()) {
       ProgressManager.checkCanceled();
-      OccurrencesAware<MethodsChain> currentVertex = q.poll();
+      OccurrencesAware<MethodChain> currentVertex = q.poll();
       int currentVertexDistance = currentVertex.getOccurrences();
-      MethodsChain currentChain = currentVertex.getUnderlying();
+      MethodChain currentChain = currentVertex.getUnderlying();
       MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
-      MethodsChain currentVertexMethodsChain = knownDistance.get(headSignature);
-      if (currentVertexDistance != currentVertexMethodsChain.getChainWeight()) {
+      MethodChain currentVertexMethodChain = knownDistance.get(headSignature);
+      if (currentVertexDistance != currentVertexMethodChain.getChainWeight()) {
         continue;
       }
       if (headSignature.isStatic() || context.hasQualifier(context.resolveQualifierClass(headSignature))) {
@@ -113,16 +110,16 @@ public class ChainsSearcher {
         int occurrences = indexValue.getOccurrences();
         if (vertex.isStatic() || !vertex.getOwner().equals(targetQName)) {
           int vertexDistance = Math.min(currentVertexDistance, occurrences);
-          MethodsChain knownVertexMethodsChain = knownDistance.get(vertex);
-          if ((knownVertexMethodsChain == null || knownVertexMethodsChain.getChainWeight() < vertexDistance)) {
+          MethodChain knownVertexMethodChain = knownDistance.get(vertex);
+          if ((knownVertexMethodChain == null || knownVertexMethodChain.getChainWeight() < vertexDistance)) {
             if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrences() < vertexDistance) {
-              if (currentVertexMethodsChain.size() < pathMaximalLength - 1) {
-                MethodsChain newBestMethodsChain =
-                  currentVertexMethodsChain.continuation(indexValue.getUnderlying(), vertexDistance, context);
-                if (newBestMethodsChain != null) {
+              if (currentVertexMethodChain.size() < pathMaximalLength - 1) {
+                MethodChain newBestMethodChain =
+                  currentVertexMethodChain.continuation(indexValue.getUnderlying(), vertexDistance, context);
+                if (newBestMethodChain != null) {
                   currentSignatures
                     .add(new OccurrencesAware<>(indexValue.getUnderlying(), vertexDistance));
-                  knownDistance.put(vertex, newBestMethodsChain);
+                  knownDistance.put(vertex, newBestMethodChain);
                 }
               }
             }
@@ -141,7 +138,7 @@ public class ChainsSearcher {
               boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
               if (stopChain) {
                 updated = true;
-                MethodsChain continuation = currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
+                MethodChain continuation = currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
                 if (continuation != null) {
                   result.add(continuation);
                 }
@@ -149,10 +146,10 @@ public class ChainsSearcher {
               }
               else {
                 updated = true;
-                MethodsChain methodsChain =
+                MethodChain methodChain =
                   currentChain.continuation(sign.getUnderlying(), sign.getOccurrences(), context);
-                if (methodsChain != null) {
-                  q.addFirst(new OccurrencesAware<>(methodsChain, sign.getOccurrences()));
+                if (methodChain != null) {
+                  q.addFirst(new OccurrencesAware<>(methodChain, sign.getOccurrences()));
                   continue;
                 }
               }
@@ -173,19 +170,19 @@ public class ChainsSearcher {
     return result.getResult();
   }
 
-  private static MethodsChain createChainFromFirstElement(MethodsChain chain, PsiClass newQualifierClass) {
+  private static MethodChain createChainFromFirstElement(MethodChain chain, PsiClass newQualifierClass) {
     //TODO
-    return new MethodsChain(newQualifierClass, Collections.singletonList(chain.getFirst()), null, chain.getChainWeight());
+    return new MethodChain(newQualifierClass, Collections.singletonList(chain.getFirst()), null, chain.getChainWeight());
   }
 
   private static class ResultHolder {
-    private final List<MethodsChain> myResult;
+    private final List<MethodChain> myResult;
 
     private ResultHolder() {
       myResult = new ArrayList<>();
     }
 
-    public void add(MethodsChain newChain) {
+    public void add(MethodChain newChain) {
       if (myResult.isEmpty()) {
         myResult.add(newChain);
         return;
@@ -193,9 +190,9 @@ public class ChainsSearcher {
       boolean doAdd = true;
       Stack<Integer> indexesToRemove = new Stack<>();
       for (int i = 0; i < myResult.size(); i++) {
-        MethodsChain chain = myResult.get(i);
+        MethodChain chain = myResult.get(i);
         //
-        MethodsChain.CompareResult r = MethodsChain.compare(chain, newChain);
+        MethodChain.CompareResult r = MethodChain.compare(chain, newChain);
         switch (r) {
           case LEFT_CONTAINS_RIGHT:
             indexesToRemove.add(i);
@@ -216,11 +213,11 @@ public class ChainsSearcher {
       }
     }
 
-    public List<MethodsChain> getRawResult() {
+    public List<MethodChain> getRawResult() {
       return myResult;
     }
 
-    public List<MethodsChain> getResult() {
+    public List<MethodChain> getResult() {
       return findSimilar(reduceChainsSize(myResult));
     }
 
@@ -228,7 +225,7 @@ public class ChainsSearcher {
       return myResult.size();
     }
 
-    private static List<MethodsChain> reduceChainsSize(List<MethodsChain> chains) {
+    private static List<MethodChain> reduceChainsSize(List<MethodChain> chains) {
       return ContainerUtil.map(chains, chain -> {
         Iterator<PsiMethod[]> chainIterator = chain.iterator();
         if (!chainIterator.hasNext()) {
@@ -268,9 +265,9 @@ public class ChainsSearcher {
       });
     }
 
-    private static List<MethodsChain> findSimilar(List<MethodsChain> chains) {
+    private static List<MethodChain> findSimilar(List<MethodChain> chains) {
       ResultHolder resultHolder = new ResultHolder();
-      for (MethodsChain chain : chains) {
+      for (MethodChain chain : chains) {
         resultHolder.add(chain);
       }
       return resultHolder.getRawResult();

@@ -22,7 +22,7 @@ import com.intellij.openapi.util.Pair;
 import java.util.*;
 
 public class SearchInitializer {
-  private final LinkedHashMap<MethodIncompleteSignature, Pair<MethodsChain, Integer>> myChains;
+  private final LinkedHashMap<MethodIncompleteSignature, Pair<MethodChain, Integer>> myChains;
   private final ChainCompletionContext myContext;
 
   public SearchInitializer(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
@@ -51,9 +51,9 @@ public class SearchInitializer {
   private boolean add(OccurrencesAware<MethodIncompleteSignature> indexValue) {
     MethodIncompleteSignature methodInvocation = indexValue.getUnderlying();
     int occurrences = indexValue.getOccurrences();
-    MethodsChain methodsChain = MethodsChain.create(indexValue.getUnderlying(), occurrences, myContext);
-    if (methodsChain != null) {
-      myChains.put(methodInvocation, Pair.create(methodsChain, occurrences));
+    MethodChain methodChain = MethodChain.create(indexValue.getUnderlying(), occurrences, myContext);
+    if (methodChain != null) {
+      myChains.put(methodInvocation, Pair.create(methodChain, occurrences));
       return true;
     }
     return false;
@@ -62,14 +62,14 @@ public class SearchInitializer {
   public InitResult init(Set<String> excludedEdgeNames) {
     int size = myChains.size();
     List<OccurrencesAware<MethodIncompleteSignature>> initedVertexes = new ArrayList<>(size);
-    LinkedHashMap<MethodIncompleteSignature, MethodsChain> initedChains =
+    LinkedHashMap<MethodIncompleteSignature, MethodChain> initedChains =
       new LinkedHashMap<>(size);
-    for (Map.Entry<MethodIncompleteSignature, Pair<MethodsChain, Integer>> entry : myChains.entrySet()) {
+    for (Map.Entry<MethodIncompleteSignature, Pair<MethodChain, Integer>> entry : myChains.entrySet()) {
       MethodIncompleteSignature signature = entry.getKey();
       if (!excludedEdgeNames.contains(signature.getName())) {
         initedVertexes.add(new OccurrencesAware<>(entry.getKey(), entry.getValue().getSecond()));
-        MethodsChain methodsChain = entry.getValue().getFirst();
-        initedChains.put(signature, methodsChain);
+        MethodChain methodChain = entry.getValue().getFirst();
+        initedChains.put(signature, methodChain);
       }
     }
     return new InitResult(initedVertexes, initedChains);
@@ -77,10 +77,10 @@ public class SearchInitializer {
 
   public static class InitResult {
     private final List<OccurrencesAware<MethodIncompleteSignature>> myVertexes;
-    private final LinkedHashMap<MethodIncompleteSignature, MethodsChain> myChains;
+    private final LinkedHashMap<MethodIncompleteSignature, MethodChain> myChains;
 
     private InitResult(List<OccurrencesAware<MethodIncompleteSignature>> vertexes,
-                       LinkedHashMap<MethodIncompleteSignature, MethodsChain> chains) {
+                       LinkedHashMap<MethodIncompleteSignature, MethodChain> chains) {
       myVertexes = vertexes;
       myChains = chains;
     }
@@ -89,7 +89,7 @@ public class SearchInitializer {
       return myVertexes;
     }
 
-    public LinkedHashMap<MethodIncompleteSignature, MethodsChain> getChains() {
+    public LinkedHashMap<MethodIncompleteSignature, MethodChain> getChains() {
       return myChains;
     }
   }

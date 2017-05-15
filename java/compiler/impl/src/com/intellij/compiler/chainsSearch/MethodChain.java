@@ -30,16 +30,16 @@ import java.util.stream.Collectors;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.reverse;
 
-public class MethodsChain {
+public class MethodChain {
   private final List<PsiMethod[]> myRevertedPath;
   private final MethodIncompleteSignature mySignature;
   private final int myWeight;
   private final PsiClass myQualifierClass;
 
   @Nullable
-  public static MethodsChain create(@NotNull MethodIncompleteSignature signature,
-                             int weight,
-                             @NotNull ChainCompletionContext context) {
+  public static MethodChain create(@NotNull MethodIncompleteSignature signature,
+                                   int weight,
+                                   @NotNull ChainCompletionContext context) {
     PsiClass qualifier = context.resolveQualifierClass(signature);
     if (qualifier == null || (!signature.isStatic() && InheritanceUtil.isInheritorOrSelf(context.getTarget().getTargetClass(), qualifier, true))) {
       return null;
@@ -55,13 +55,13 @@ public class MethodsChain {
       return null;
     }
     classes.add(contextClass);
-    return new MethodsChain(qualifier, Collections.singletonList(methods), signature, weight);
+    return new MethodChain(qualifier, Collections.singletonList(methods), signature, weight);
   }
 
-  public MethodsChain(@NotNull PsiClass qualifierClass,
-                      @NotNull List<PsiMethod[]> revertedPath,
-                      MethodIncompleteSignature signature,
-                      int weight) {
+  public MethodChain(@NotNull PsiClass qualifierClass,
+                     @NotNull List<PsiMethod[]> revertedPath,
+                     MethodIncompleteSignature signature,
+                     int weight) {
     myQualifierClass = qualifierClass;
     myRevertedPath = revertedPath;
     mySignature = signature;
@@ -99,16 +99,16 @@ public class MethodsChain {
   }
 
 
-  public MethodsChain continuation(@NotNull MethodIncompleteSignature signature,
-                                   int weight,
-                                   @NotNull ChainCompletionContext context) {
-    MethodsChain head = create(signature, weight, context);
+  public MethodChain continuation(@NotNull MethodIncompleteSignature signature,
+                                  int weight,
+                                  @NotNull ChainCompletionContext context) {
+    MethodChain head = create(signature, weight, context);
     if (head == null) return null;
 
     ArrayList<PsiMethod[]> newRevertedPath = newArrayList();
     newRevertedPath.addAll(myRevertedPath);
     newRevertedPath.add(head.getPath().get(0));
-    return new MethodsChain(head.getQualifierClass(), newRevertedPath, head.getHeadSignature(), weight);
+    return new MethodChain(head.getQualifierClass(), newRevertedPath, head.getHeadSignature(), weight);
   }
 
   @Override
@@ -117,7 +117,7 @@ public class MethodsChain {
   }
 
   @SuppressWarnings("ConstantConditions")
-  public static CompareResult compare(@NotNull MethodsChain left, @NotNull MethodsChain right) {
+  public static CompareResult compare(@NotNull MethodChain left, @NotNull MethodChain right) {
     if (left.size() == 0) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }

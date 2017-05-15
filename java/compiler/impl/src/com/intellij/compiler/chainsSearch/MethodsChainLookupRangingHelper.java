@@ -45,7 +45,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 public class MethodsChainLookupRangingHelper {
   @Nullable
-  public static LookupElement chainToWeightableLookupElement(MethodsChain chain,
+  public static LookupElement chainToWeightableLookupElement(MethodChain chain,
                                                              ChainCompletionContext context) {
     int chainSize = chain.size();
     assert chainSize != 0;

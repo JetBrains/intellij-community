@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Dmitry Batkovich
  */
-public class MethodsChainsWeigher extends CompletionWeigher {
+public class MethodChainWeigher extends CompletionWeigher {
   @Override
   public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
     if (element instanceof WeightableChainLookupElement) {
