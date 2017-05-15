@@ -55,7 +55,7 @@ public class GitSimplePathsBrowser extends JPanel {
   @NotNull
   private static ActionToolbar createToolbar(@NotNull FilePathChangesTreeList browser) {
     DefaultActionGroup actionGroup = new DefaultActionGroup(browser.getTreeActions());
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true);
+    return ActionManager.getInstance().createActionToolbar("GitPathBrowser", actionGroup, true);
   }
 
   @NotNull
