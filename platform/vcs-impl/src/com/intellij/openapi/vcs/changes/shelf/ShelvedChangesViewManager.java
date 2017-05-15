@@ -37,6 +37,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -822,9 +823,10 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
         DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
         ShelvedBinaryFile binaryFile = assertNotNull(provider.getBinaryFile());
-        return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(), factory
-          .createBinary(myProject, binaryFile.createBinaryContentRevision(myProject).getBinaryContent(),
-                        VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType(), getRequestName(provider)), null, null);
+        byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
+        FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
+        return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),
+                                     factory.createBinary(myProject, binaryContent, fileType, getRequestName(provider)), null, null);
       }
       catch (VcsException | IOException e) {
         throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
