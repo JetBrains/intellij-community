@@ -86,9 +86,8 @@ public class DefaultPatchBaseVersionProvider {
       if (matcher.find()) {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
         final VcsRevisionNumber finalRevision = revision;
-        final boolean loadedExactRevision;
         try {
-          loadedExactRevision = finalRevision != null && ProgressManager.getInstance()
+          final boolean loadedExactRevision = finalRevision != null && ProgressManager.getInstance()
             .run(new Task.WithResult<Boolean, VcsException>(myProject,
                                                             VcsBundle.message("progress.text2.loading.revision", finalRevision.asString()),
                                                             true) {
@@ -109,11 +108,11 @@ public class DefaultPatchBaseVersionProvider {
                 }
               }
             });
+          if (loadedExactRevision) return;
         }
         catch (ProcessCanceledException pce) {
           return;
         }
-        if (loadedExactRevision) return;
       }
     }
 
