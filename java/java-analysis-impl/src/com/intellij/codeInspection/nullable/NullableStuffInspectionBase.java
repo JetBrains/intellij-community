@@ -100,6 +100,14 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       @Override
       public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
         checkMethodReference(expression, holder);
+
+        JavaResolveResult result = expression.advancedResolve(false);
+        PsiElement target = result.getElement();
+        if (target instanceof PsiMethod) {
+          checkCollectionNullityOnAssignment(expression, 
+                                             LambdaUtil.getFunctionalInterfaceReturnType(expression),
+                                             result.getSubstitutor().substitute(((PsiMethod)target).getReturnType()));
+        }
       }
 
       @Override
@@ -161,6 +169,28 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
       }
 
       @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        super.visitReferenceElement(reference);
+
+        checkNullableNotNullInstantiationConflict(reference);
+      }
+
+      private void checkNullableNotNullInstantiationConflict(PsiJavaCodeReferenceElement reference) {
+        PsiElement element = reference.resolve();
+        if (element instanceof PsiClass && ((PsiClass)element).getTypeParameters().length > 0) {
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+          if (isNullableNotNullCollectionConflict(reference, 
+                                                  factory.createType((PsiClass)element, PsiSubstitutor.EMPTY),
+                                                  factory.createType(reference))) {
+            holder.registerProblem(reference,
+                                   "Nullable type arguments where non-null ones are expected",
+                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+
+          }
+        }
+      }
+
+      @Override
       public void visitAssignmentExpression(PsiAssignmentExpression expression) {
         checkCollectionNullityOnAssignment(expression.getOperationSign(), expression.getLExpression().getType(), expression.getRExpression());
       }
@@ -170,6 +200,28 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         PsiIdentifier identifier = variable.getNameIdentifier();
         if (identifier != null) {
           checkCollectionNullityOnAssignment(identifier, variable.getType(), variable.getInitializer());
+        }
+      }
+
+      @Override
+      public void visitReturnStatement(PsiReturnStatement statement) {
+        PsiExpression returnValue = statement.getReturnValue();
+        if (returnValue == null) return;
+
+        PsiElement element = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
+        if (element == null) return;
+        
+        PsiType returnType = element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element);
+        
+        checkCollectionNullityOnAssignment(statement.getReturnValue(), returnType, returnValue);
+      }
+
+      @Override
+      public void visitLambdaExpression(PsiLambdaExpression lambda) {
+        super.visitLambdaExpression(lambda);
+        PsiElement body = lambda.getBody();
+        if (body instanceof PsiExpression) {
+          checkCollectionNullityOnAssignment(body, LambdaUtil.getFunctionalInterfaceReturnType(lambda), (PsiExpression)body);
         }
       }
 
@@ -192,17 +244,47 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         }
       }
 
-      private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement, PsiType expectedType, PsiExpression assignedExpression) {
-        PsiType lItemType = JavaGenericsUtil.getCollectionItemType(expectedType, errorElement.getResolveScope());
-        PsiType rItemType = assignedExpression == null ? null : JavaGenericsUtil.getCollectionItemType(assignedExpression);
+      private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
+                                                      @Nullable PsiType expectedType, 
+                                                      @Nullable PsiExpression assignedExpression) {
+        if (assignedExpression == null) return;
 
-        if (DfaPsiUtil.getTypeNullability(lItemType) == Nullness.NOT_NULL &&
-            DfaPsiUtil.getTypeNullability(rItemType) == Nullness.NULLABLE) {
+        checkCollectionNullityOnAssignment(errorElement, expectedType, assignedExpression.getType());
+      }
+
+      private void checkCollectionNullityOnAssignment(@NotNull PsiElement errorElement,
+                                                      @Nullable PsiType expectedType,
+                                                      @Nullable PsiType assignedType) {
+        if (isNullableNotNullCollectionConflict(errorElement, expectedType, assignedType)) {
           holder.registerProblem(errorElement,
                                  "Assigning a collection of nullable elements into a collection of non-null elements",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
 
         }
+      }
+
+      private boolean isNullableNotNullCollectionConflict(PsiElement place,
+                                                          @Nullable PsiType expectedType,
+                                                          @Nullable PsiType assignedType) {
+
+        if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, place.getResolveScope()),
+                              JavaGenericsUtil.getCollectionItemType(assignedType, place.getResolveScope()))) {
+          return true;
+        }
+
+        for (int i = 0; i <= 1; i++) {
+          PsiType expectedArg = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
+          PsiType assignedArg = PsiUtil.substituteTypeParameter(assignedType, CommonClassNames.JAVA_UTIL_MAP, i, false);
+          if (isNullityConflict(expectedArg, assignedArg)) {
+            return true;
+          }
+        }
+        
+        return false;
+      }
+
+      private boolean isNullityConflict(PsiType expected, PsiType assigned) {
+        return DfaPsiUtil.getTypeNullability(expected) == Nullness.NOT_NULL && DfaPsiUtil.getTypeNullability(assigned) == Nullness.NULLABLE;
       }
     };
   }

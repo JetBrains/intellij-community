@@ -18,6 +18,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -165,4 +166,19 @@ public class InheritanceUtil {
     }
     return place == aClass;
   }
+
+  public static boolean processSuperTypes(@NotNull PsiType type, boolean includeSelf, @NotNull Processor<PsiType> processor) {
+    if (includeSelf && !processor.process(type)) return false;
+    return processSuperTypes(type, processor, new HashSet<>());
+  }
+
+  private static boolean processSuperTypes(PsiType type, Processor<PsiType> processor, Set<PsiType> visited) {
+    if (!visited.add(type)) return true;
+    for (PsiType superType : type.getSuperTypes()) {
+      if (!processor.process(superType)) return false;
+      processSuperTypes(superType, processor, visited);
+    }
+    return true;
+  }
+
 }
