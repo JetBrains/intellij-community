@@ -134,10 +134,18 @@ public class JdkUtil {
   public static boolean checkForRuntime(@NotNull String homePath) {
     return new File(homePath, "jre/lib/rt.jar").exists() ||          // JDK
            new File(homePath, "lib/rt.jar").exists() ||              // JRE
-           new File(homePath, "lib/jrt-fs.jar").exists() ||          // Jigsaw JDK/JRE
+           isModularRuntime(homePath) ||                             // Jigsaw JDK/JRE
            new File(homePath, "../Classes/classes.jar").exists() ||  // Apple JDK
            new File(homePath, "jre/lib/vm.jar").exists() ||          // IBM JDK
            new File(homePath, "classes").isDirectory();              // custom build
+  }
+
+  public static boolean isModularRuntime(@NotNull String homePath) {
+    return isModularRuntime(new File(FileUtil.toSystemDependentName(homePath)));
+  }
+
+  public static boolean isModularRuntime(@NotNull File homePath) {
+    return new File(homePath, "lib/jrt-fs.jar").isFile();
   }
 
   public static GeneralCommandLine setupJVMCommandLine(@NotNull SimpleJavaParameters javaParameters) throws CantRunException {
