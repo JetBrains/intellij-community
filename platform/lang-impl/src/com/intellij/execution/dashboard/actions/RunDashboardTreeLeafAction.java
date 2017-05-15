@@ -60,7 +60,8 @@ public abstract class RunDashboardTreeLeafAction<T extends DashboardNode> extend
           // Do not add grouping nodes to the target set
           result.add(node);
         }
-      } else {
+      }
+      else {
         result.addAll(getLeaves(children));
       }
     }

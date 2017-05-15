@@ -84,8 +84,8 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private final DefaultTreeModel myTreeModel;
   private AbstractTreeBuilder myBuilder;
   private AbstractTreeNode<?> myLastSelection;
-  private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
-  private List<DashboardGrouper> myGroupers;
+  private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
+  private final List<DashboardGrouper> myGroupers;
 
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
@@ -428,9 +428,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   }
 
   private class GroupAction extends ToggleAction implements DumbAware {
-    private DashboardGrouper myGrouper;
+    private final DashboardGrouper myGrouper;
 
-    public GroupAction(DashboardGrouper grouper) {
+    GroupAction(DashboardGrouper grouper) {
       super();
       myGrouper = grouper;
     }

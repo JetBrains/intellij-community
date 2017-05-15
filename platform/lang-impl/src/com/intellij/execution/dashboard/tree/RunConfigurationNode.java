@@ -1,4 +1,4 @@
-  /*
+/*
  * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -46,7 +46,7 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
 
   private final RunContentDescriptor myDescriptor;
 
-  public RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
+  RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
     super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
     myDescriptor = value.second;
   }
@@ -67,6 +67,7 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   @Override
   protected void update(PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
+    //noinspection ConstantConditions
     boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
