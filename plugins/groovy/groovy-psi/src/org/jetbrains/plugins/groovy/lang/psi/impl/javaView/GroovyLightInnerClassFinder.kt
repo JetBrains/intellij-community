@@ -16,24 +16,22 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.javaView
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.plugins.groovy.transformations.isUnderTransformation
+import org.jetbrains.plugins.groovy.util.getPackageAndShortName
 
 class GroovyLightInnerClassFinder(project: Project) : GroovyClassFinder(project) {
 
   override fun findClasses(qualifiedName: String, scope: GlobalSearchScope): Array<out PsiClass> {
-    val containingClassFqn = StringUtil.getPackageName(qualifiedName)
-    val innerClassName = StringUtil.getShortName(qualifiedName)
+    val (containingClassFqn, innerClassName) = getPackageAndShortName(qualifiedName)
     return super.findClasses(containingClassFqn, scope).mapNotNull { findInnerLightClass(it, innerClassName) }.toTypedArray()
   }
 
   override fun findClass(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
-    val containingClassFqn = StringUtil.getPackageName(qualifiedName)
+    val (containingClassFqn, innerClassName) = getPackageAndShortName(qualifiedName)
     val containingClass = super.findClass(containingClassFqn, scope) ?: return null
-    val innerClassName = StringUtil.getShortName(qualifiedName)
     return findInnerLightClass(containingClass, innerClassName)
   }
 
