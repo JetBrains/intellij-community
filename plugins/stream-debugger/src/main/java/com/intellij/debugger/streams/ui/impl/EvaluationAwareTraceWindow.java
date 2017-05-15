@@ -100,7 +100,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
   public void setTrace(@NotNull ResolvedTracingResult resolvedTrace, @NotNull EvaluationContextImpl context) {
     final List<ResolvedTrace> traces = resolvedTrace.getResolvedTraces();
-    assert myTabContents.size() == traces.size() + 1;
+    assert myTabContents.size() == traces.size();
 
     final List<TraceControllerImpl> controllers = createControllers(resolvedTrace);
 

@@ -24,6 +24,7 @@ import com.intellij.debugger.streams.trace.TracingResult;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +77,13 @@ public class TracingResultImpl implements TracingResult {
     ValuesOrderResolver.Result prevResolved =
       ResolverFactoryImpl.getInstance().getResolver(producerTrace.getCall().getName()).resolve(producerTrace);
 
+    final ResolvedTraceImpl resolvedProducerTrace = new ResolvedTraceImpl(
+      producerTrace.getCall(),
+      TraceUtil.sortedByTime(producerTrace.getValuesOrderAfter().values()),
+      Collections.emptyMap(), prevResolved.getDirectOrder()
+    );
+
+    result.add(resolvedProducerTrace);
     for (int i = 1; i < myTrace.size(); i++) {
       final TraceInfo traceInfo = myTrace.get(i);
       final StreamCall currentCall = traceInfo.getCall();
