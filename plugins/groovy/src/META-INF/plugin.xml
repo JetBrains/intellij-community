@@ -122,6 +122,7 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.InitializerBuilderStrategySupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.BindableTransformationSupport"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.VetoableTransformationSupport"/>
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.autoimplement.AutoImplementTransformation"/>
 
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.LoggingContributor"/>
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.CategoryTransformationSupport"/>

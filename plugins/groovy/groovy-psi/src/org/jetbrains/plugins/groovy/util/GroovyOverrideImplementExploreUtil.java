@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.overrideImplement;
+package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.psi.*;
@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
 
@@ -54,12 +55,17 @@ public class GroovyOverrideImplementExploreUtil {
 
   @NotNull
   public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, boolean toImplement, boolean skipImplemented) {
+    Collection<HierarchicalMethodSignature> allMethodSignatures = aClass.getVisibleSignatures();
+    return getMapToOverrideImplement(aClass, allMethodSignatures, toImplement, skipImplemented);
+  }
+
+  @NotNull
+  public static Map<MethodSignature, CandidateInfo> getMapToOverrideImplement(GrTypeDefinition aClass, Collection<HierarchicalMethodSignature> allMethodSignatures, boolean toImplement, boolean skipImplemented) {
     Map<MethodSignature, PsiMethod> abstracts = ContainerUtil.newLinkedHashMap();
     Map<MethodSignature, PsiMethod> finals = ContainerUtil.newLinkedHashMap();
     Map<MethodSignature, PsiMethod> concretes = ContainerUtil.newLinkedHashMap();
 
     PsiUtilCore.ensureValid(aClass);
-    Collection<HierarchicalMethodSignature> allMethodSignatures = aClass.getVisibleSignatures();
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(aClass.getProject()).getResolveHelper();
     for (HierarchicalMethodSignature signature : allMethodSignatures) {
       PsiMethod method = signature.getMethod();
@@ -96,7 +102,7 @@ public class GroovyOverrideImplementExploreUtil {
     return result;
   }
 
-  private static void processMethod(GrTypeDefinition aClass,
+  public static void processMethod(GrTypeDefinition aClass,
                                     boolean skipImplemented,
                                     Map<MethodSignature, PsiMethod> abstracts,
                                     Map<MethodSignature, PsiMethod> finals,
@@ -114,7 +120,7 @@ public class GroovyOverrideImplementExploreUtil {
     // filter already implemented
     if (skipImplemented) {
       PsiMethod implemented = MethodSignatureUtil.findMethodBySignature(aClass, signature, false);
-      if (implemented != null && !(implemented instanceof GrTraitMethod)) {
+      if (implemented != null && !(implemented instanceof GrTraitMethod) && !(implemented instanceof GrLightMethodBuilder)) {
         return;
       }
     }
@@ -176,13 +182,13 @@ public class GroovyOverrideImplementExploreUtil {
       }
     }
 
-    for (final PsiMethod method : new GroovyMethodImplementor().getMethodsToImplement(aClass)) {
+    /*for (final PsiMethod method : new GroovyMethodImplementor().getMethodsToImplement(aClass)) {
       MethodSignature signature = MethodSignatureUtil.createMethodSignature(method.getName(), method.getParameterList(),
                                                                             method.getTypeParameterList(), PsiSubstitutor.EMPTY,
                                                                             method.isConstructor());
       CandidateInfo info = new CandidateInfo(method, PsiSubstitutor.EMPTY);
       result.put(signature, info);
-    }
+    }*/
   }
 
 }
