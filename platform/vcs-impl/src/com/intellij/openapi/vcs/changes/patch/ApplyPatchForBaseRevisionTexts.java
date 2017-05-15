@@ -38,7 +38,7 @@ public class ApplyPatchForBaseRevisionTexts {
   private final CharSequence myLocal;
   private CharSequence myBase;
   private String myPatched;
-  private boolean isAppliedSomehow;
+  private boolean myIsAppliedSomehow;
   private final List<String> myWarnings;
   private boolean myBaseRevisionLoaded;
 
@@ -75,7 +75,7 @@ public class ApplyPatchForBaseRevisionTexts {
       myBaseRevisionLoaded = true;
       final GenericPatchApplier applier = new GenericPatchApplier(myBase, hunks);
       if (!applier.execute()) {
-        isAppliedSomehow = true;
+        myIsAppliedSomehow = true;
         applier.trySolveSomehow();
       }
       setPatched(applier.getAfter());
@@ -103,7 +103,7 @@ public class ApplyPatchForBaseRevisionTexts {
 
     final GenericPatchApplier applier = new GenericPatchApplier(myLocal, hunks);
     if (!applier.execute()) {
-      isAppliedSomehow = true;
+      myIsAppliedSomehow = true;
       applier.trySolveSomehow();
     }
     setPatched(applier.getAfter());
@@ -141,7 +141,7 @@ public class ApplyPatchForBaseRevisionTexts {
   }
 
   public boolean isAppliedSomehow() {
-    return isAppliedSomehow;
+    return myIsAppliedSomehow;
   }
 
   public boolean isBaseRevisionLoaded() {
