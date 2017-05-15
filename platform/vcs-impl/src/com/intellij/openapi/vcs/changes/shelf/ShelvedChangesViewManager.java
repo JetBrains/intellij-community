@@ -782,26 +782,24 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       if (myCurrentShelvedElement != null) {
         if (keepBinarySelection(selectedBinaryChanges, myCurrentShelvedElement.getBinaryFile()) ||
             keepShelvedSelection(selectedChanges, myCurrentShelvedElement.getShelvedChange())) {
-          dropCachesIfTimeStampChanged(myCurrentShelvedElement);  
+          dropCachesIfNeededAndUpdate(myCurrentShelvedElement);  
           return;
         }
       }
       //getFirstSelected
-      ShelvedChange selectedText = selectedChanges.isEmpty() ? null : selectedChanges.get(0);
-      myCurrentShelvedElement = selectedText != null
-                                ? new ShelvedWrapper(selectedText)
+      myCurrentShelvedElement = !selectedChanges.isEmpty()
+                                ? new ShelvedWrapper(selectedChanges.get(0))
                                 : new ShelvedWrapper(selectedBinaryChanges.get(0));
-      dropCachesIfTimeStampChanged(myCurrentShelvedElement);
+      dropCachesIfNeededAndUpdate(myCurrentShelvedElement);
     }
 
-    private void dropCachesIfTimeStampChanged(@NotNull ShelvedWrapper currentShelvedElement) {
+    private void dropCachesIfNeededAndUpdate(@NotNull ShelvedWrapper currentShelvedElement) {
       ShelvedChange shelvedChange = currentShelvedElement.getShelvedChange();
-      if (shelvedChange != null && myPreloader.isPatchFileChangedOrNotLoaded(shelvedChange.getPatchPath())) {
+      boolean needDropCaches = shelvedChange != null && myPreloader.isPatchFileChangedOrNotLoaded(shelvedChange.getPatchPath());
+      if (needDropCaches) {
         dropCaches();
-        updateRequest(true);
-        return;
       }
-      updateRequest();
+      updateRequest(needDropCaches);
     }
 
     boolean keepShelvedSelection(@NotNull List<ShelvedChange> selectedChanges, @Nullable ShelvedChange currentShelvedChange) {
