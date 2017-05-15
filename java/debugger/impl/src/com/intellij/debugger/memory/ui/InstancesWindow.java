@@ -489,7 +489,11 @@ public class InstancesWindow extends DialogWrapper {
 
       @Override
       protected Void doInBackground() throws Exception {
-        myTask.run();
+        try {
+          myTask.run();
+        } catch (Throwable e) {
+          LOG.error(e);
+        }
         return null;
       }
 
