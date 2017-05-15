@@ -79,7 +79,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
     add(myEditorField, BorderLayout.CENTER);
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, getToolbarActions(), withSeparator);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), withSeparator);
     toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
