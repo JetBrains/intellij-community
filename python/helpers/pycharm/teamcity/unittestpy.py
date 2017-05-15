@@ -5,9 +5,11 @@ import datetime
 import re
 
 from teamcity.messages import TeamcityServiceMessages
-from teamcity.common import is_string, get_class_fullname, convert_error_to_string, limit_output, split_output
+from teamcity.common import is_string, get_class_fullname, convert_error_to_string, \
+    dump_test_stdout, dump_test_stderr, get_exception_message, to_unicode, FlushingStringIO
 
 _real_stdout = sys.stdout
+_real_stderr = sys.stderr
 
 
 class TeamcityTestResult(TestResult):
@@ -24,6 +26,7 @@ class TeamcityTestResult(TestResult):
         self.failed_tests = set()
         self.subtest_failures = {}
         self.messages = TeamcityServiceMessages(_real_stdout)
+        self.current_test_id = None
 
     @staticmethod
     def get_test_id(test):
@@ -69,7 +72,10 @@ class TeamcityTestResult(TestResult):
             super(TeamcityTestResult, self).addSkip(test, reason)
 
         if reason:
-            reason_str = ": " + str(reason)
+            if isinstance(reason, Exception):
+                reason_str = ": " + get_exception_message(reason)
+            else:
+                reason_str = ": " + to_unicode(reason)
         else:
             reason_str = ""
 
@@ -188,12 +194,32 @@ class TeamcityTestResult(TestResult):
         self.failed_tests.add(test_id)
 
     def startTest(self, test):
-        super(TeamcityTestResult, self).startTest(test)
-
         test_id = self.get_test_id(test)
+        self.current_test_id = test_id
+
+        super(TeamcityTestResult, self).startTest(test)
 
         self.test_started_datetime_map[test_id] = datetime.datetime.now()
         self.messages.testStarted(test_id, captureStandardOutput='true', flowId=test_id)
+
+    def _dump_test_stderr(self, data):
+        if self.current_test_id is not None:
+            dump_test_stderr(self.messages, self.current_test_id, self.current_test_id, data)
+        else:
+            _real_stderr.write(data)
+
+    def _dump_test_stdout(self, data):
+        if self.current_test_id is not None:
+            dump_test_stdout(self.messages, self.current_test_id, self.current_test_id, data)
+        else:
+            _real_stdout.write(data)
+
+    def _setupStdout(self):
+        if getattr(self, 'buffer', None):
+            self._stderr_buffer = FlushingStringIO(self._dump_test_stderr)
+            self._stdout_buffer = FlushingStringIO(self._dump_test_stdout)
+            sys.stdout = self._stdout_buffer
+            sys.stderr = self._stderr_buffer
 
     def stopTest(self, test):
         test_id = self.get_test_id(test)
@@ -204,15 +230,15 @@ class TeamcityTestResult(TestResult):
 
             output = sys.stdout.getvalue()
             if output:
-                for chunk in split_output(limit_output(output)):
-                    self.messages.testStdOut(test_id, chunk, flowId=test_id)
+                dump_test_stdout(self.messages, test_id, test_id, output)
 
             error = sys.stderr.getvalue()
             if error:
-                for chunk in split_output(limit_output(error)):
-                    self.messages.testStdErr(test_id, chunk, flowId=test_id)
+                dump_test_stderr(self.messages, test_id, test_id, error)
 
         super(TeamcityTestResult, self).stopTest(test)
+
+        self.current_test_id = None
 
         if test_id not in self.failed_tests:
             subtest_failures = self.get_subtest_failure(test_id)

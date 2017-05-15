@@ -5,7 +5,7 @@ import datetime
 import inspect
 
 from teamcity import is_running_under_teamcity
-from teamcity.common import is_string, split_output, limit_output, get_class_fullname, convert_error_to_string
+from teamcity.common import is_string, get_class_fullname, convert_error_to_string, dump_test_stdout
 from teamcity.messages import TeamcityServiceMessages
 
 import nose
@@ -142,8 +142,7 @@ class TeamcityReport(Plugin):
             # nose capture does not fill 'capturedOutput' property on successful tests
             captured_output = self._capture_plugin_buffer()
         if captured_output:
-            for chunk in split_output(limit_output(captured_output)):
-                self.messages.testStdOut(test_id, chunk, flowId=test_id)
+            dump_test_stdout(self.messages, test_id, test_id, captured_output)
 
         if test_id in self.test_started_datetime_map:
             time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
