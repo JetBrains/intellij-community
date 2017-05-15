@@ -29,9 +29,9 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
+import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestTargetType;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,6 @@ import static org.junit.Assert.assertEquals;
 public final class PythonUnitTestingTest extends PyEnvTestCase {
 
 
-
   /**
    * tests failfast as example of argument
    */
@@ -64,7 +63,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
       @NotNull
       @Override
       protected PyUnitTestProcessRunner createProcessRunner() throws Exception {
-        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1){
+        return new PyUnitTestProcessRunner(toFullPath(myScriptName), 1) {
           @Override
           protected void configurationCreatedAndWillLaunch(@NotNull final PyUnitTestConfiguration configuration) throws IOException {
             super.configurationCreatedAndWillLaunch(configuration);
@@ -79,17 +78,42 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         Assert.assertEquals("Runner did not stop after first fail", 1, runner.getAllTestsCount());
-        runner.getFormattedTestTree();
         Assert.assertEquals("Bad tree produced for failfast", "Test tree:\n" +
-                                "[root]\n" +
-                                ".test_test\n" +
-                                "..SomeTestCase\n" +
-                                "...test_1_test(-)\n", runner.getFormattedTestTree());
+                                                              "[root]\n" +
+                                                              ".test_test\n" +
+                                                              "..SomeTestCase\n" +
+                                                              "...test_1_test(-)\n", runner.getFormattedTestTree());
       }
     });
   }
 
 
+  /**
+   *  check non-ascii (127+) chars are supported in skip messaged
+   */
+  @Test
+  public void testNonAsciiMessage() throws Exception {
+
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/nonAscii", "test_test.py") {
+
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+
+        runner.getFormattedTestTree();
+        assertEquals("Skipped test with non-ascii message broke tree",
+                     "Test tree:\n" +
+                                                    "[root]\n" +
+                                                    ".test_test\n" +
+                                                    "..TestCase\n" +
+                                                    "...test(~)\n", runner.getFormattedTestTree());
+        Assert.assertThat("non-ascii char broken in output", stdout, containsString("ошибка"));
+      }
+    });
+  }
 
 
   /**
@@ -472,7 +496,7 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
   public void testConfigurationProducerObeysDefaultDir() throws Exception {
     runPythonTest(
       new CreateConfigurationByFileTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
-                                                                          PyUnitTestConfiguration.class) {
+                                                                 PyUnitTestConfiguration.class) {
         private static final String SOME_RANDOM_DIR = "//some/random/ddir";
 
         @Override

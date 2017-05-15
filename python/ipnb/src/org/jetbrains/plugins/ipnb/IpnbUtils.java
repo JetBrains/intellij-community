@@ -10,6 +10,7 @@ import javafx.application.Platform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,8 +24,8 @@ public class IpnbUtils {
   private static final Logger LOG  = Logger.getInstance(IpnbUtils.class);
   private static int hasFx = 0;
 
-  public static JComponent createLatexPane(@NotNull final String source, int width) {
-    final JComponent panel = createHtmlPanel(source, width);
+  public static JComponent createLatexPane(@NotNull final String source, int width, IpnbFilePanel parent) {
+    final JComponent panel = createHtmlPanel(source, width, parent);
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -52,9 +53,9 @@ public class IpnbUtils {
     return hasFx == 1;
   }
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
+  public static JComponent createHtmlPanel(@NotNull final String source, int width, IpnbFilePanel parent) {
     if (hasFx()) {
-      return IpnbJfxUtils.createHtmlPanel(source, width);
+      return IpnbJfxUtils.createHtmlPanel(source, width, parent);
     }
     return createNonJfxPanel(source);
   }

@@ -16,24 +16,15 @@
 package com.jetbrains.edu.learning.newproject.ui;
 
 import com.intellij.facet.ui.ValidationResult;
-import com.intellij.ide.RecentProjectsManager;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.ide.util.projectWizard.AbstractNewProjectStep;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
-import com.intellij.platform.PlatformProjectOpenProcessor;
-import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
-import com.intellij.projectImport.ProjectOpenedCallback;
+import com.intellij.util.Function;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
@@ -41,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.util.EnumSet;
 
 public class EduCreateNewProjectDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(EduCreateNewProjectDialog.class);
@@ -92,83 +81,25 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
       return;
     }
     EduCourseProjectGenerator projectGenerator = configurator.getEduCourseProjectGenerator();
-    String errorMessage = createProject(projectGenerator);
-    if (errorMessage != null) {
-      myPanel.setError(errorMessage);
-      return;
-    }
-    if (myProject == null) {
-      myPanel.setError("Project did't created");
-      return;
-    }
-    super.doOKAction();
-  }
-
-  /**
-   * @param projectGenerator
-   * @return error message if didn't create project else return null
-   */
-  @Nullable
-  private String createProject(@NotNull final EduCourseProjectGenerator projectGenerator) {
-    String location = FileUtil.toSystemDependentName(myPanel.getLocationPath());
-
     ValidationResult result = projectGenerator.validate();
     if (!result.isOk()) {
-      return result.getErrorMessage();
+      myPanel.setError(result.getErrorMessage());
+      return;
     }
+    createProject(projectGenerator, myCourse, myPanel.getLocationPath());
+  }
 
-    final File directory = new File(location);
-    if (!FileUtil.createDirectory(directory)) {
-      String message = "Can't create a project directory";
-      LOG.error(message + ": " + location);
-      return message;
+  public static void createProject(@NotNull EduCourseProjectGenerator projectGenerator, @NotNull Course course, @NotNull String location) {
+    projectGenerator.setCourse(course);
+    if (!projectGenerator.beforeProjectGenerated()) {
+      return;
     }
-
-    projectGenerator.setCourse(myCourse);
-
-    final VirtualFile baseDir = WriteAction.compute(() ->
-                                                      LocalFileSystem.getInstance()
-                                                        .refreshAndFindFileByIoFile(directory));
-
-    if (baseDir == null) {
-      LOG.error("Couldn't find '" + directory + "' in VFS");
-      return "Couldn't find in VFS";
+    Function<VirtualFile, Object> settings = file -> projectGenerator.getProjectSettings();
+    DirectoryProjectGenerator directoryProjectGenerator = projectGenerator.getDirectoryProjectGenerator();
+    Project createdProject = AbstractNewProjectStep.doGenerateProject(null, location, directoryProjectGenerator, settings);
+    if (createdProject == null) {
+      return;
     }
-    VfsUtil.markDirtyAndRefresh(false, true, true, baseDir);
-
-    if (baseDir.getChildren().length > 0) {
-      String message =
-        String.format("Directory '%s' is not empty.\nFiles and directories will remove.\nDo you want continue?",
-                      directory.getAbsolutePath());
-      int rc = Messages.showYesNoDialog((Project)null, message, "New Project", Messages.getQuestionIcon());
-      if (rc != Messages.YES) {
-        myPanel.resetError();
-        return "Canceled by user";
-      }
-    }
-
-    DirectoryProjectGenerator generator = projectGenerator.getDirectoryProjectGenerator();
-
-    String generatorName = ConvertUsagesUtil.ensureProperKey(generator.getName());
-    UsageTrigger.trigger("AbstractNewProjectStep." + generatorName);
-
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(directory.getParent());
-
-    ProjectOpenedCallback callback = null;
-    if(generator instanceof TemplateProjectDirectoryGenerator){
-      ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), location);
-    } else {
-      callback = (project, module) -> {
-        if (projectGenerator.beforeProjectGenerated()) {
-          Object settings = projectGenerator.getProjectSettings();
-          //noinspection unchecked
-          generator.generateProject(project, baseDir, settings, module);
-          projectGenerator.afterProjectGenerated(project);
-        }
-      };
-    }
-    EnumSet<PlatformProjectOpenProcessor.Option> options = EnumSet.noneOf(PlatformProjectOpenProcessor.Option.class);
-    myProject = PlatformProjectOpenProcessor.doOpenProject(baseDir, null, -1, callback, options);
-    return null;
+    projectGenerator.afterProjectGenerated(createdProject);
   }
 }

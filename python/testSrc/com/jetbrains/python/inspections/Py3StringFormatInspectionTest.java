@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,47 @@ public class Py3StringFormatInspectionTest extends PyTestCase {
   // PY-16938
   public void testByteString() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testIndexElementWithPackedReferenceExpr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedDictLiteralInsideDictLiteral() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedDictCallInsideDictLiteral() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedListInsideList() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedTupleInsideList() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedTupleInsideTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedListInsideTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedRefInsideList()  {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  public void testPackedRefInsideTuple()  {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-20599
+  public void testPy3kAsciiFormatSpecifier() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, () -> doTest());
   }
 
   private void doTest() {

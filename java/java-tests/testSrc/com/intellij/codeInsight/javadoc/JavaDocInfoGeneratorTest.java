@@ -401,6 +401,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestAtCaret();
   }
 
+  public void testDocumentationForUncheckedExceptionsInSupers() throws Exception {
+    doTestAtCaret();
+  }
+
   public void testDumbMode() throws Exception {
     DumbServiceImpl.getInstance(myProject).setDumb(true);
     try {

@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.ex;
 
-import com.intellij.openapi.editor.impl.MutableInterval;
 import com.intellij.util.containers.PeekableIterator;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +22,7 @@ import java.util.Comparator;
 import java.util.NoSuchElementException;
 
 /**
- * An iterator you must to {@link #dispose()} after use
+ * An iterator you must {@link #dispose()} after use
  */
 public interface MarkupIterator<T> extends PeekableIterator<T> {
   void dispose();
@@ -35,7 +34,7 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
 
     @Override
     public Object peek() {
-      return null;
+      throw new NoSuchElementException();
     }
 
     @Override
@@ -55,9 +54,9 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
   };
 
   @NotNull
-  static <T extends MutableInterval> MarkupIterator<T> mergeIterators(@NotNull final MarkupIterator<T> iterator1,
-                                                                      @NotNull final MarkupIterator<T> iterator2,
-                                                                      @NotNull final Comparator<? super T> comparator) {
+  static <T> MarkupIterator<T> mergeIterators(@NotNull final MarkupIterator<T> iterator1,
+                                              @NotNull final MarkupIterator<T> iterator2,
+                                              @NotNull final Comparator<? super T> comparator) {
     return new MarkupIterator<T>() {
       @Override
       public void dispose() {

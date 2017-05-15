@@ -147,6 +147,8 @@ public class RefManagerImpl extends RefManager {
     for (RefManagerExtension extension : myExtensions.values()) {
       extension.cleanup();
     }
+    myExtensions.clear();
+    myLanguageExtensions.clear();
   }
 
   @Nullable

@@ -29,7 +29,6 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
 import com.jetbrains.edu.learning.statistics.EduUsagesCollector;
-import com.jetbrains.edu.learning.stepic.StepicUser;
 import icons.EducationalCoreIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -175,11 +174,7 @@ public class StudyCheckAction extends StudyActionWithShortcut {
     }
 
     private StudyCheckResult checkOnRemote() {
-      final StepicUser user = StudySettings.getInstance().getUser();
-      if (user == null) {
-        return new StudyCheckResult(StudyStatus.Unchecked, "Failed to launch checking: you're not authorized");
-      }
-      return myChecker.checkOnRemote(user);
+      return myChecker.checkOnRemote(StudySettings.getInstance().getUser());
     }
   }
 }

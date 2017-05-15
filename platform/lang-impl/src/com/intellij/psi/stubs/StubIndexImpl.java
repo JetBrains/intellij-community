@@ -39,10 +39,7 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
-import com.intellij.util.indexing.impl.UpdateData;
+import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -59,7 +56,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(name = "FileBasedIndex", storages = @Storage(value = "stubIndex.xml", roamingType = RoamingType.DISABLED))
 public class StubIndexImpl extends StubIndex implements PersistentStateComponent<StubIndexState>, ApplicationComponent {
@@ -214,9 +211,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     if (!myInitialized) {
       return;
     }
-    AsyncState state = getAsyncState();
-    for (StubIndexKey key : getAllStubIndexKeys()) {
-      final MyIndex<?> index = state.myIndices.get(key);
+    for (MyIndex<?> index : getAsyncState().myIndices.values()) {
       index.flush();
     }
   }
@@ -344,27 +339,29 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
                                        @Nullable final GlobalSearchScope scope,
                                        @NotNull StubIdListContainerAction action) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(StubUpdatingIndex.INDEX_ID);
-    fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+    ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
+    myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(stubUpdatingIndexId);
+    fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope);
 
     final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);
 
+    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
     try {
-      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(indexKey);
+      myAccessValidator.checkAccessingIndexDuringOtherIndexProcessing(stubUpdatingIndexId);
 
       try {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
 
-        index.getReadLock().lock();
+        stubUpdatingIndex.getReadLock().lock();
 
-        myAccessValidator.startedProcessingActivityForIndex(indexKey);
+        myAccessValidator.startedProcessingActivityForIndex(stubUpdatingIndexId);
 
         return index.getData(key).forEach(action);
       }
       finally {
-        myAccessValidator.stoppedProcessingActivityForIndex(indexKey);
-        index.getReadLock().unlock();
+        myAccessValidator.stoppedProcessingActivityForIndex(stubUpdatingIndexId);
+        stubUpdatingIndex.getReadLock().unlock();
         FileBasedIndexImpl.enableUpToDateCheckForCurrentThread();
       }
     }
@@ -505,18 +502,20 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   public void cleanupMemoryStorage() {
-    for (UpdatableIndex index : getAsyncState().myIndices.values()) {
-      final IndexStorage indexStorage = ((VfsAwareMapReduceIndex)index).getStorage();
-      index.getWriteLock().lock();
-      try {
+    UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex =
+      ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+    stubUpdatingIndex.getWriteLock().lock();
+
+    try {
+      for (UpdatableIndex index : getAsyncState().myIndices.values()) {
+        final IndexStorage indexStorage = ((VfsAwareMapReduceIndex)index).getStorage();
         ((MemoryIndexStorage)indexStorage).clearMemoryMap();
       }
-      finally {
-        index.getWriteLock().unlock();
-      }
+    }
+    finally {
+      stubUpdatingIndex.getWriteLock().unlock();
     }
   }
-
 
   public void clearAllIndices() {
     for (UpdatableIndex index : getAsyncState().myIndices.values()) {
@@ -561,14 +560,6 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     myPreviouslyRegistered = state;
   }
 
-  public final Lock getWriteLock(StubIndexKey indexKey) {
-    return getAsyncState().myIndices.get(indexKey).getWriteLock();
-  }
-
-  Collection<StubIndexKey> getAllStubIndexKeys() {
-    return Collections.unmodifiableCollection(getAsyncState().myIndices.keySet());
-  }
-
   public <K> void updateIndex(@NotNull StubIndexKey key,
                               int fileId,
                               @NotNull final Map<K, StubIdList> oldValues,
@@ -586,6 +577,12 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
   }
 
   private static class MyIndex<K> extends VfsAwareMapReduceIndex<K, StubIdList, Void> {
+    @NotNull
+    @Override
+    protected ReentrantReadWriteLock createLock() {
+      UpdatableIndex<?, ?, FileContent> index = ((FileBasedIndexImpl)FileBasedIndex.getInstance()).getIndex(StubUpdatingIndex.INDEX_ID);
+      return ((MapReduceIndex)index).getLock();
+    }
 
     public MyIndex(IndexExtension<K, StubIdList, Void> extension, IndexStorage<K, StubIdList> storage) throws IOException {
       super(extension, storage);

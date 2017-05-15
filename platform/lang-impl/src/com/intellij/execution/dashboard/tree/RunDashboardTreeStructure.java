@@ -103,7 +103,8 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
     groups.forEach((group, groupedNodes) -> {
       if (group == null || (!rule.shouldGroupSingleNodes() && groupedNodes.size() == 1)) {
         ungroupedNodes.addAll(group(project, parent, remaining, groupedNodes));
-      } else {
+      }
+      else {
         GroupingNode node = new GroupingNode(project, parent.getValue(), group);
         node.addChildren(group(project, node, remaining, groupedNodes));
         result.add(node);
@@ -128,14 +129,16 @@ public class RunDashboardTreeStructure extends AbstractTreeStructureBase {
             Optional child = node.getChildren().stream().findFirst();
             assert child.isPresent();
             runConfigurationNode = child.get();
-          } else {
+          }
+          else {
             runConfigurationNode = node;
           }
           assert runConfigurationNode instanceof RunConfigurationNode;
           return (RunConfigurationNode)runConfigurationNode;
         }
       });
-    } else {
+    }
+    else {
       Collections.sort(result, Comparator.comparing(node -> ((GroupingNode)node).getGroup().getName()));
       result.addAll(ungroupedNodes);
     }

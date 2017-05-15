@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.configurationStore.ESCAPED_MODULE_DIR
+import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.configurationStore.createModule
 import com.intellij.configurationStore.useAndDispose
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
@@ -24,7 +26,6 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.io.delete
 import com.intellij.util.io.parentSystemIndependentPath
-import com.intellij.util.io.readText
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -50,7 +51,7 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `must be empty if external system storage`() {
-    val cacheDir = ExternalProjectsDataStorage.getProjectConfigurationDir(projectRule.project)
+    val cacheDir = ExternalProjectsDataStorage.getProjectConfigurationDir(projectRule.project).resolve("modules")
     cacheDir.delete()
 
     // we must not use VFS here, file must not be created
@@ -58,16 +59,37 @@ class ExternalSystemStorageTest {
     projectRule.createModule(moduleFile).useAndDispose {
       assertThat(cacheDir).doesNotExist()
 
+      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
+
+      saveStore()
+      assertThat(cacheDir).doesNotExist()
+      assertThat(moduleFile).isEqualTo("""
+      <?xml version="1.0" encoding="UTF-8"?>
+      <module type="JAVA_MODULE" version="4">
+        <component name="NewModuleRootManager" inherit-compiler-output="true">
+          <exclude-output />
+          <content url="file://$ESCAPED_MODULE_DIR" />
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>
+      </module>""")
+
       setOption(ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY, "true")
 
-      ModuleRootModificationUtil.addContentRoot(this, moduleFile.parentSystemIndependentPath)
       assertThat(cacheDir).doesNotExist()
       saveStore()
       assertThat(cacheDir).isDirectory
-      assertThat(moduleFile).isRegularFile
-      assertThat(moduleFile.readText()).startsWith("""
+      assertThat(moduleFile).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
-      <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4" />""".trimIndent())
+      <module org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule="true" type="JAVA_MODULE" version="4" />""")
+
+      assertThat(cacheDir.resolve("test.xml")).isEqualTo("""
+      <module>
+        <component name="NewModuleRootManager" inherit-compiler-output="true">
+          <exclude-output />
+          <content url="file://$ESCAPED_MODULE_DIR" />
+          <orderEntry type="sourceFolder" forTests="false" />
+        </component>
+      </module>""")
     }
   }
 }
@@ -76,11 +98,11 @@ private class ExternalStorageRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
     return statement {
       try {
-        IS_ENABLED = true
+        IS_EXTERNAL_STORAGE_ENABLED = true
         base.evaluate()
       }
       finally {
-        IS_ENABLED = false
+        IS_EXTERNAL_STORAGE_ENABLED = false
       }
     }
   }

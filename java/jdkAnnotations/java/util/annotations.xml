@@ -1099,12 +1099,14 @@
   </item>
   <item name='java.util.Objects T requireNonNull(T)'>
     <annotation name='org.jetbrains.annotations.Contract'>
-      <val val="&quot;null-&gt;fail&quot;"/>
+      <val name="value" val="&quot;null-&gt;fail&quot;"/>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Objects T requireNonNull(T, java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
-      <val val="&quot;null,_-&gt;fail&quot;"/>
+      <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
+      <val name="pure" val="true"/>
     </annotation>
   </item>
   <item name='java.util.Optional T get()'>

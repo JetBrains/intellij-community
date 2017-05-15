@@ -21,7 +21,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.uiDesigner.LoaderFactory;
 import org.jdom.Element;
@@ -30,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.JdomKt.loadElement;
 
 @State(name = "ClientPropertiesManager", defaultStateAsResource = true)
 public class ClientPropertiesManager implements PersistentStateComponent<Element> {
@@ -51,7 +52,7 @@ public class ClientPropertiesManager implements PersistentStateComponent<Element
     protected ClientPropertiesManager compute() {
       ClientPropertiesManager result = new ClientPropertiesManager();
       try {
-        result.loadState(JDOMUtil.load(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
+        result.loadState(loadElement(ClientPropertiesManager.class.getResourceAsStream("/" + COMPONENT_NAME + ".xml")));
       }
       catch (Exception e) {
         LOG.error(e);

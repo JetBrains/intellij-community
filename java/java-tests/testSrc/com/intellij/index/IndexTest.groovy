@@ -536,7 +536,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     }
 
     assertTrue(foundClass[0])
-    assertTrue(!foundMethod[0])
+    assertTrue(foundMethod[0]) // allow access stub index processing other index
 
     def foundClassProcessAll = [false]
     def foundClassStub = [false]

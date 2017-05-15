@@ -91,9 +91,6 @@ public class PyIntroduceDialog extends DialogWrapper {
     });
 
     ((EditorTextField)myNameComboBox.getEditor().getEditorComponent()).addDocumentListener(new DocumentListener() {
-      public void beforeDocumentChange(DocumentEvent event) {
-      }
-
       public void documentChanged(DocumentEvent event) {
         updateControls();
       }

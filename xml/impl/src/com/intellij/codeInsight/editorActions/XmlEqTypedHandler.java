@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
-import com.intellij.codeInsight.completion.XmlAttributeInsertHandler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -60,7 +59,7 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
         if (fileContext.getText().startsWith("\'")) toInsert = "\"\"";
       }
       if (toInsert == null) {
-        final String quote = XmlAttributeInsertHandler.getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
+        final String quote = XmlEditUtil.getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
         toInsert = quote + quote;
       }
       editor.getDocument().insertString(offset, toInsert);

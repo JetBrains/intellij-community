@@ -149,10 +149,6 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
   }
 
   @Override
-  public void applicationActivated(IdeFrame ideFrame) {
-  }
-
-  @Override
   public void applicationDeactivated(IdeFrame ideFrame) {
     if (myFrame == ideFrame) {
       myMenu.setVisible(false);

@@ -11,6 +11,6 @@ public class TestCompletion {
   void m() {
     String asd = "123";
       PsiManager psiManager = null;
-      Project p = psiManager.getProject(asd, zxc)
+      Project p = psiManager.getProject()
   }
 }

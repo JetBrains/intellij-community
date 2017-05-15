@@ -247,7 +247,7 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
               count);
           }))
           .filter(Objects::nonNull)
-          .collect(Collectors.groupingBy(x -> x.getUnderlying(), Collectors.summarizingInt(x -> x.getOccurrences())))
+          .collect(Collectors.groupingBy(x -> x.getUnderlying(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
           .stream()
           .map(e -> new OccurrencesAware<>(e.getKey(), (int)e.getValue().getSum()))

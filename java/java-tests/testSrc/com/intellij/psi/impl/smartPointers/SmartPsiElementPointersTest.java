@@ -293,10 +293,6 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       public void beforeDocumentChange(DocumentEvent event) {
         pointer[0] = createPointer(aClass);
       }
-
-      @Override
-      public void documentChanged(DocumentEvent event) {
-      }
     };
     EditorEventMulticaster multicaster = EditorFactory.getInstance().getEventMulticaster();
     multicaster.addDocumentListener(listener);

@@ -309,7 +309,7 @@ class FilePointerPartNode {
     while (start1 < len1 && start2 < len2) {
       char c1 = s1.charAt(start1);
       char c2 = s2.charAt(start2);
-      if (!StringUtil.charsEqual(c1, c2, ignoreCase)) {
+      if (!StringUtil.charsMatch(c1, c2, ignoreCase)) {
         return start1;
       }
       start1++;

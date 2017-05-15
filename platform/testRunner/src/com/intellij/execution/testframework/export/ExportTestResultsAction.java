@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,11 +116,11 @@ public class ExportTestResultsAction extends DumbAwareAction {
       }
       filename = d.getFileName();
       showDialog = getOutputFile(config, project, filename).exists()
-                   && Messages.showOkCancelDialog(
-        project,
-        ExecutionBundle.message("export.test.results.file.exists.message", filename),
-        ExecutionBundle.message("export.test.results.file.exists.title"),
-        Messages.getQuestionIcon()
+                   && Messages.showOkCancelDialog(project,
+                                                  ExecutionBundle.message("export.test.results.file.exists.message", filename),
+                                                  ExecutionBundle.message("export.test.results.file.exists.title"),
+                                                  "Overwrite", "Cancel",
+                                                  Messages.getQuestionIcon()
       ) != Messages.OK;
     }
 
@@ -130,10 +130,6 @@ public class ExportTestResultsAction extends DumbAwareAction {
         @Override
         public boolean shouldStartInBackground() {
           return true;
-        }
-
-        @Override
-        public void processSentToBackground() {
         }
       }) {
         @Override

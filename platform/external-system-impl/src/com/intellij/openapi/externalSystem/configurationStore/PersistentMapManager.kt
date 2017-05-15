@@ -15,10 +15,23 @@
  */
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.configurationStore.deserializeElementFromBinary
+import com.intellij.configurationStore.serializeElementToBinary
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.ByteSequence
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.*
+import com.intellij.util.loadElement
+import com.intellij.util.write
+import org.jdom.Element
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.nio.file.Path
 
@@ -84,6 +97,129 @@ class PersistentMapManager<VALUE>(name: String, dir: Path, valueExternalizer: Da
   fun forceSave() {
     if (storageCreated) {
       storage.force()
+    }
+  }
+}
+
+internal interface ExternalSystemStorage {
+  val isDirty: Boolean
+
+  fun remove(name: String)
+
+  fun read(name: String): Element?
+
+  fun write(name: String, element: Element)
+
+  fun forceSave()
+
+  fun rename(oldName: String, newName: String)
+}
+
+private fun nameToFilename(name: String) = "${FileUtil.sanitizeFileName(name, false)}.xml"
+
+internal class FileSystemExternalSystemStorage(project: Project) : ExternalSystemStorage {
+  override val isDirty = false
+
+  private val dir = ExternalProjectsDataStorage.getProjectConfigurationDir(project).resolve("modules")
+
+  private var hasSomeData: Boolean
+
+  init {
+    val fileAttributes = dir.basicAttributesIfExists()
+    if (fileAttributes == null) {
+      hasSomeData = false
+    }
+    else if (fileAttributes.isRegularFile) {
+      // old binary format
+      dir.parent.deleteChildrenStartingWith(dir.fileName.toString())
+      hasSomeData = false
+    }
+    else {
+      LOG.assertTrue(fileAttributes.isDirectory)
+      hasSomeData = true
+    }
+  }
+
+  private fun nameToPath(name: String) = dir.resolve(nameToFilename(name))
+
+  override fun forceSave() {
+  }
+
+  override fun remove(name: String) {
+    if (!hasSomeData) {
+      return
+    }
+
+    nameToPath(name).delete()
+  }
+
+  override fun read(name: String): Element? {
+    if (!hasSomeData) {
+      return null
+    }
+
+    return nameToPath(name).inputStreamIfExists()?.use {
+      loadElement(it)
+    }
+  }
+
+  override fun write(name: String, element: Element) {
+    hasSomeData = true
+    element.write(nameToPath(name))
+  }
+
+  override fun rename(oldName: String, newName: String) {
+    if (!hasSomeData) {
+      return
+    }
+
+    val oldFile = nameToPath(oldName)
+    if (oldFile.exists()) {
+      oldFile.move(nameToPath(newName))
+    }
+  }
+}
+
+// not used for now, https://upsource.jetbrains.com/IDEA/review/IDEA-CR-20673, later PersistentHashMap will be not used.
+@Suppress("unused")
+internal class BinaryExternalSystemStorage(project: Project) : ExternalSystemStorage {
+  override fun forceSave() {
+    moduleStorage.forceSave()
+  }
+
+  override val isDirty: Boolean
+    get() = moduleStorage.isDirty
+
+  @Suppress("INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET")
+  val moduleStorage = PersistentMapManager("modules", ExternalProjectsDataStorage.getProjectConfigurationDir(project), ByteSequenceDataExternalizer.INSTANCE, project, 0) {
+    StartupManager.getInstance(project).runWhenProjectIsInitialized {
+      val externalProjectManager = ExternalProjectsManager.getInstance(project)
+      externalProjectManager.runWhenInitialized {
+        externalProjectManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+      }
+    }
+  }
+
+  override fun remove(name: String) {
+    moduleStorage.remove(name)
+  }
+
+  override fun read(name: String): Element? {
+    val data = moduleStorage.get(name) ?: return null
+    return ByteArrayInputStream(data.bytes, data.offset, data.length).use { deserializeElementFromBinary(it) }
+
+  }
+
+  override fun write(name: String, element: Element) {
+    val byteOut = BufferExposingByteArrayOutputStream()
+    serializeElementToBinary(element, byteOut)
+    moduleStorage.put(name, ByteSequence(byteOut.internalBuffer, 0, byteOut.size()))
+  }
+
+  override fun rename(oldName: String, newName: String) {
+    moduleStorage.get(oldName)?.let {
+      moduleStorage.remove(oldName)
+      moduleStorage.put(newName, it)
     }
   }
 }

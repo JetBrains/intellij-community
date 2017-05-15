@@ -705,6 +705,11 @@ public class ExceptionUtil {
     return InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) || InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ERROR);
   }
 
+  public static boolean isUncheckedException(@NotNull PsiClass psiClass) {
+    return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION) ||
+           InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_ERROR);
+  }
+
   public static boolean isUncheckedExceptionOrSuperclass(@NotNull final PsiClassType type) {
     return isGeneralExceptionType(type) || isUncheckedException(type);
   }

@@ -38,10 +38,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ChainCompletionContext {
-  private static final String[] WIDE_USED_CLASS_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,
+  private static final String[] WIDELY_USED_CLASS_NAMES = new String [] {CommonClassNames.JAVA_LANG_STRING,
                                                                   CommonClassNames.JAVA_LANG_OBJECT,
                                                                   CommonClassNames.JAVA_LANG_CLASS};
-  private static final Set<String> WIDE_USED_SHORT_NAMES = ContainerUtil.set("String", "Object", "Class");
+  private static final Set<String> WIDELY_USED_SHORT_NAMES = ContainerUtil.set("String", "Object", "Class");
 
   @NotNull
   private final ChainSearchTarget myTarget;
@@ -260,12 +260,12 @@ public class ChainCompletionContext {
     type = type.getDeepComponentType();
     if (type instanceof PsiPrimitiveType) return true;
     if (!(type instanceof PsiClassType)) return false;
-    if (WIDE_USED_SHORT_NAMES.contains(((PsiClassType)type).getClassName())) return false;
+    if (WIDELY_USED_SHORT_NAMES.contains(((PsiClassType)type).getClassName())) return false;
     final PsiClass resolvedClass = ((PsiClassType)type).resolve();
     if (resolvedClass == null) return false;
     final String qName = resolvedClass.getQualifiedName();
     if (qName == null) return false;
-    for (String name : WIDE_USED_CLASS_NAMES) {
+    for (String name : WIDELY_USED_CLASS_NAMES) {
       if (name.equals(qName)) {
         return true;
       }

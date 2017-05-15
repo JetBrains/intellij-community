@@ -122,7 +122,7 @@ public abstract class DashboardTreeAction<T, C extends TreeContent> extends AnAc
   }
 
   protected void doActionPerformed(@NotNull C content, AnActionEvent e, List<T> nodes) {
-    nodes.forEach(node -> doActionPerformed(content, e , node));
+    nodes.forEach(node -> doActionPerformed(content, e, node));
   }
 
   protected void doActionPerformed(@NotNull C content, AnActionEvent e, T node) {

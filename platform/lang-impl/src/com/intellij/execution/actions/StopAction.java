@@ -32,10 +32,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,24 +69,22 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     if (isPlaceGlobal(e)) {
       List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(e.getDataContext());
       List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(e.getProject());
-      int todoSize = stoppableDescriptors.size() + cancellableProcesses.size();
-      if (todoSize > 1) {
+      int stopCount = stoppableDescriptors.size();
+      int cancelCount = cancellableProcesses.size();
+      if (stopCount > 1 || cancelCount > 0) {
+        enable = true;
         presentation.setText(getTemplatePresentation().getText()+"...");
       }
-      else if (todoSize == 1) {
-        if (stoppableDescriptors.size() == 1) {
+      else if (stopCount == 1) {
+        enable = true;
           presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
                                                        StringUtil.escapeMnemonics(stoppableDescriptors.get(0).getDisplayName())));
-        } else {
-          TaskInfo taskInfo = cancellableProcesses.get(0).first;
-          presentation.setText(taskInfo.getCancelText() + " " + taskInfo.getTitle());
-        }
       } else {
-        presentation.setText(getTemplatePresentation().getText());
+        enable = false;
       }
-      enable = todoSize > 0;
-      if (todoSize > 1) {
-        icon = IconUtil.addText(icon, String.valueOf(todoSize));
+      int count = stopCount + cancelCount;
+      if (count > 1) {
+        icon = IconUtil.addText(icon, String.valueOf(count));
       }
     }
     else {
@@ -119,14 +122,11 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     Project project = e.getProject();
     List<Pair<TaskInfo, ProgressIndicator>> cancellableProcesses = getCancellableProcesses(project);
     List<RunContentDescriptor> stoppableDescriptors = getActiveStoppableDescriptors(dataContext);
+    int stopCount = stoppableDescriptors.size();
+    int cancelCount = cancellableProcesses.size();
     if (isPlaceGlobal(e)) {
-      int todoSize = cancellableProcesses.size() + stoppableDescriptors.size();
-      if (todoSize == 1) {
-        if (!stoppableDescriptors.isEmpty()) {
-          ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
-        } else {
-          cancellableProcesses.get(0).second.cancel();
-        }
+      if (stopCount == 1 && cancelCount == 0) {
+        ExecutionManagerImpl.stopProcess(stoppableDescriptors.get(0));
         return;
       }
 
@@ -148,7 +148,9 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
             }
           }
         };
-      ((DefaultListModel<HandlerItem>)list.getModel()).addElement(stopAllItem);
+      if (stopCount + cancelCount > 1) {
+        ((DefaultListModel<HandlerItem>)list.getModel()).addElement(stopAllItem);
+      }
       JBPopup activePopup = SoftReference.dereference(myActivePopupRef);
       if (activePopup != null) {
           stopAllItem.stop();
@@ -196,7 +198,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       myActivePopupRef = new WeakReference<>(popup);
       InputEvent inputEvent = e.getInputEvent();
       Component component = inputEvent != null ? inputEvent.getComponent() : null;
-      if (component != null && ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())) {
+      if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())
+                                || ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(e.getPlace()))) {
         popup.showUnderneathOf(component);
       }
       else if (project == null) {
@@ -213,13 +216,12 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
   @NotNull
   private static List<Pair<TaskInfo, ProgressIndicator>>  getCancellableProcesses(@Nullable Project project) {
-    return Collections.emptyList();//Don't confuse users with 'Stop Everything' toolbar button
-    //IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
-    //StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
-    //if (statusBar == null) return Collections.emptyList();
-    //
-    //return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
-    //                             pair -> pair.first.isCancellable() && !pair.second.isCanceled());
+    IdeFrame frame = ((WindowManagerEx)WindowManager.getInstance()).findFrameFor(project);
+    StatusBarEx statusBar = frame == null ? null : (StatusBarEx)frame.getStatusBar();
+    if (statusBar == null) return Collections.emptyList();
+
+    return ContainerUtil.findAll(statusBar.getBackgroundProcesses(),
+                                 pair -> pair.first.isCancellable() && !pair.second.isCanceled());
   }
 
   @Nullable

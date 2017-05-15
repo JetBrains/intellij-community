@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 
@@ -47,5 +48,10 @@ class CreateModuleInfoActionTest : LightJava9ModulesCodeInsightFixtureTestCase()
   private class TestIdeView(private val dir: PsiDirectory) : IdeView {
     override fun getDirectories() = arrayOf(dir)
     override fun getOrChooseDirectory() = throw UnsupportedOperationException()
+  }
+
+  override fun setUp() {
+    super.setUp()
+    PlatformTestUtil.setLongMeaninglessFileIncludeTemplateTemporarilyFor(project, testRootDisposable)
   }
 }

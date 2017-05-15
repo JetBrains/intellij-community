@@ -31,7 +31,8 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public abstract class RunDashboardContributor {
-  public static final ExtensionPointName<RunDashboardContributor> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardContributor");
+  public static final ExtensionPointName<RunDashboardContributor> EP_NAME =
+    ExtensionPointName.create("com.intellij.runDashboardContributor");
 
   private final ConfigurationType myType;
 
@@ -51,6 +52,7 @@ public abstract class RunDashboardContributor {
 
   /**
    * Returns node's status. Subclasses may override this method to provide custom statuses.
+   *
    * @param node dashboard node
    * @return node's status. Returned status is used for grouping nodes by status.
    */

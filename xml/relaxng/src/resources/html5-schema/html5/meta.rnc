@@ -162,6 +162,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-hyperlink.attrs.type?
 		&	referrerpolicy?
 		&	link.attrs.sizes?
+		&	link.attrs.color?
 		#	link.attrs.title included in common.attrs
 		&	embedded.content.attrs.crossorigin?
 		&	(	common.attrs.aria.role.link
@@ -206,6 +207,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		link.attrs.sizes =
 			attribute sizes {
 				w:string "any" | common.data.sizes
+			}
+		link.attrs.color =
+			attribute color {
+				common.data.color
 			}
 	link.inner =
 		( empty )

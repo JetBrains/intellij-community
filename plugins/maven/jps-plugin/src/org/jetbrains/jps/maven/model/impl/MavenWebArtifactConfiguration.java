@@ -46,7 +46,7 @@ public class MavenWebArtifactConfiguration {
   public List<String> packagingExcludes = new ArrayList<>();
 
   @Tag("war-root")
-  public String warSourceDirectory;
+  public String warSourceDirectory = "src/main/webapp";
 
   @Transient
   private volatile Map<File, ResourceRootConfiguration> myResourceRootsMap;

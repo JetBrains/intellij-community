@@ -32,6 +32,7 @@ import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ModuleComponentSelector
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentSelector
+import org.gradle.api.artifacts.dsl.DependencyHandler
 import org.gradle.api.artifacts.result.*
 import org.gradle.api.plugins.WarPlugin
 import org.gradle.api.specs.Specs
@@ -136,8 +137,11 @@ class DependencyResolverImpl implements DependencyResolver {
 
         Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap = ArrayListMultimap.create()
         resolvedArtifacts.each { artifactMap.put(it.moduleVersion.id, it) }
+
+        def isBuildScriptConfiguration = myProject.buildscript.configurations.find { it == configuration } != null
         //noinspection GroovyAssignabilityCheck
-        Set<ComponentArtifactsResult> componentResults = myProject.dependencies.createArtifactResolutionQuery()
+        def dependencyHandler = isBuildScriptConfiguration ? myProject.buildscript.dependencies : myProject.dependencies
+        Set<ComponentArtifactsResult> componentResults = dependencyHandler.createArtifactResolutionQuery()
           .forComponents(resolvedArtifacts
                            .findAll { !isProjectDependencyArtifact(it) }
                            .collect { toComponentIdentifier(it.moduleVersion.id) })

@@ -99,7 +99,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     messageBus.connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectOpened(project);
           }
@@ -111,7 +111,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosed(Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosed(project);
           }
@@ -125,7 +125,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosing(Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosing(project);
           }
@@ -137,7 +137,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       @Override
       public void projectClosingBeforeSave(@NotNull Project project) {
-        for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+        for (ProjectManagerListener listener : getAllListeners(project)) {
           try {
             listener.projectClosingBeforeSave(project);
           }
@@ -424,7 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     if (!ok) {
-      closeProject(project, false, false, true);
+      closeProject(project, false, false);
       notifyProjectOpenFailed();
       return false;
     }
@@ -566,7 +566,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   @TestOnly
   public Collection<Project> closeTestProject(@NotNull final Project project) {
     assert ApplicationManager.getApplication().isUnitTestMode();
-    closeProject(project, false, false, false);
+    forceCloseProject(project, false);
     Project[] projects = getOpenProjects();
     return projects.length == 0 ? Collections.emptyList() : Arrays.asList(projects);
   }
@@ -601,14 +601,26 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeProject(@NotNull final Project project) {
-    return closeProject(project, true, false, true);
+    return closeProject(project, true, false);
   }
 
-  public boolean closeProject(@NotNull final Project project, final boolean save, final boolean dispose, boolean checkCanClose) {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+  @TestOnly
+  public boolean forceCloseProject(@NotNull Project project, boolean dispose) {
+    return closeProject(project, false, false, dispose, false);
+  }
+
+  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean dispose) {
+    return closeProject(project, saveProject, saveProject, dispose, true);
+  }
+
+  // saveApp is ignored if saveProject is false
+  @SuppressWarnings("TestOnlyProblems")
+  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean saveApp, final boolean dispose, boolean checkCanClose) {
+    Application app = ApplicationManager.getApplication();
+    if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
     }
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    app.assertIsDispatchThread();
 
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
@@ -619,18 +631,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       }
       ((ProjectImpl)project).setTemporarilyDisposed(false);
     }
-    else {
-      if (!isProjectOpened(project)) return true;
+    else if (!isProjectOpened(project)) {
+      return true;
     }
-    if (checkCanClose && !canClose(project)) return false;
+
+    if (checkCanClose && !canClose(project)) {
+      return false;
+    }
+
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
       myBusPublisher.projectClosingBeforeSave(project);
 
-      if (save) {
+      if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
+        if (saveApp) {
+          app.saveSettings();
+        }
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
@@ -639,7 +658,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       fireProjectClosing(project); // somebody can start progress here, do not wrap in write action
 
-      ApplicationManager.getApplication().runWriteAction(() -> {
+      app.runWriteAction(() -> {
         removeFromOpened(project);
 
         fireProjectClosed(project);
@@ -663,7 +682,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true, true);
+    return closeProject(project, true, true);
   }
 
   private void fireProjectClosing(@NotNull Project project) {
@@ -692,6 +711,12 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public void removeProjectManagerListener(@NotNull ProjectManagerListener listener) {
+    boolean removed = myListeners.remove(listener);
+    LOG.assertTrue(removed);
+  }
+
+  @Override
+  public void removeProjectManagerListener(@NotNull VetoableProjectManagerListener listener) {
     boolean removed = myListeners.remove(listener);
     LOG.assertTrue(removed);
   }
@@ -736,7 +761,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("enter: canClose()");
     }
 
-    for (ProjectManagerListener listener : ContainerUtil.concat(getListeners(project), myListeners)) {
+    for (ProjectManagerListener listener : getAllListeners(project)) {
       try {
         //noinspection deprecation
         boolean canClose = listener instanceof VetoableProjectManagerListener ? ((VetoableProjectManagerListener)listener).canClose(project) : listener.canCloseProject(project);
@@ -751,6 +776,25 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     return true;
+  }
+
+  // both lists are thread-safe (LockFreeCopyOnWriteArrayList), but ContainerUtil.concat cannot handle situation when list size is changed during iteration
+  // so, we have to create list.
+  @NotNull
+  private List<ProjectManagerListener> getAllListeners(@NotNull Project project) {
+    List<ProjectManagerListener> projectLevelListeners = getListeners(project);
+    if (projectLevelListeners.isEmpty()) {
+      return myListeners;
+    }
+    else if (myListeners.isEmpty()) {
+      return projectLevelListeners;
+    }
+
+    List<ProjectManagerListener> result = new ArrayList<>(projectLevelListeners.size() + myListeners.size());
+    // order is critically important due to backward compatibility - project level listeners must be first
+    result.addAll(projectLevelListeners);
+    result.addAll(myListeners);
+    return result;
   }
 
   private static boolean ensureCouldCloseIfUnableToSave(@NotNull Project project) {

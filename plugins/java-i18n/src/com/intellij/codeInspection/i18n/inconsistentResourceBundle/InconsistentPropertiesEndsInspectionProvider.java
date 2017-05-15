@@ -36,6 +36,7 @@ import java.util.Set;
  */
 public class InconsistentPropertiesEndsInspectionProvider implements InconsistentResourceBundleInspectionProvider {
   private static final Set<Character> PROPERTY_VALUE_END_CHECK_SYMBOLS = ContainerUtil.newTroveSet('!', '?', '.', ':', ';');
+  private static final char NULL = '\0';
 
   @NotNull
   @Override
@@ -77,7 +78,7 @@ public class InconsistentPropertiesEndsInspectionProvider implements Inconsisten
           if (parentPropertyValue == null) {
             continue;
           }
-          final char parentLastChar = parentPropertyValue.charAt(parentPropertyValue.length() - 1);
+          final char parentLastChar = parentPropertyValue.isEmpty() ? NULL : parentPropertyValue.charAt(parentPropertyValue.length() - 1);
           if (lastChar != parentLastChar) {
             final String message;
             if (PROPERTY_VALUE_END_CHECK_SYMBOLS.contains(parentLastChar)) {

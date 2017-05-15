@@ -115,11 +115,6 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       }
 
       @Override
-      public void usePerProjectSettingsOptionChanged() {
-        mySchemesPanel.usePerProjectSettingsOptionChanged();
-      }
-
-      @Override
       public void schemeChanged(final CodeStyleScheme scheme) {
         ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
       }

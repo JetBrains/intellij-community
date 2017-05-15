@@ -144,6 +144,8 @@ public class StringUtil extends StringUtilRt {
     }
   };
 
+  // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
+  // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
   @NotNull
   @Contract(pure = true)
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {
@@ -156,34 +158,14 @@ public class StringUtil extends StringUtilRt {
     return replace(text, oldS, newS, true);
   }
 
-  public static void replaceChar(@NotNull char[] buffer, char oldChar, char newChar, int start, int end) {
-    for (int i = start; i < end; i++) {
-      char c = buffer[i];
-      if (c == oldChar) {
-        buffer[i] = newChar;
-      }
-    }
-  }
-
+  /**
+   * @deprecated Use {@link String#replace(char,char)} instead
+   */
   @NotNull
   @Contract(pure = true)
+  @Deprecated
   public static String replaceChar(@NotNull String buffer, char oldChar, char newChar) {
-    StringBuilder newBuffer = null;
-    for (int i = 0; i < buffer.length(); i++) {
-      char c = buffer.charAt(i);
-      if (c == oldChar) {
-        if (newBuffer == null) {
-          newBuffer = new StringBuilder(buffer.length());
-          newBuffer.append(buffer, 0, i);
-        }
-
-        newBuffer.append(newChar);
-      }
-      else if (newBuffer != null) {
-        newBuffer.append(c);
-      }
-    }
-    return newBuffer == null ? buffer : newBuffer.toString();
+    return buffer.replace(oldChar, newChar);
   }
 
   @Contract(pure = true)
@@ -694,42 +676,6 @@ public class StringUtil extends StringUtilRt {
     return s;
   }
 
-  /**
-   * This is just an optimized version of Matcher.quoteReplacement
-   */
-  @NotNull
-  @Contract(pure = true)
-  public static String quoteReplacement(@NotNull String s) {
-    boolean needReplacements = false;
-
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c == '\\' || c == '$') {
-        needReplacements = true;
-        break;
-      }
-    }
-
-    if (!needReplacements) return s;
-
-    StringBuilder sb = new StringBuilder(s.length() * 6 / 5);
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if (c == '\\') {
-        sb.append('\\');
-        sb.append('\\');
-      }
-      else if (c == '$') {
-        sb.append('\\');
-        sb.append('$');
-      }
-      else {
-        sb.append(c);
-      }
-    }
-    return sb.toString();
-  }
-
   private static void unescapeStringCharacters(int length, @NotNull String s, @NotNull StringBuilder buffer) {
     boolean escaped = false;
     for (int idx = 0; idx < length; idx++) {
@@ -954,7 +900,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static int stringHashCodeIgnoreWhitespaces(char[] chars, int from, int to) {
+  public static int stringHashCodeIgnoreWhitespaces(@NotNull char[] chars, int from, int to) {
     int h = 0;
     for (int off = from; off < to; off++) {
       char c = chars[off];
@@ -1148,10 +1094,10 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(value = "null -> false", pure = true)
   public static boolean isNotEmpty(@Nullable String s) {
-    return s != null && !s.isEmpty();
+    return !isEmpty(s);
   }
 
-  @Contract(value = "null -> true", pure=true)
+  @Contract(value = "null -> true", pure = true)
   public static boolean isEmpty(@Nullable String s) {
     return s == null || s.isEmpty();
   }
@@ -1688,12 +1634,9 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean containsAnyChar(@NotNull final String value, @NotNull final String chars) {
-    if (chars.length() > value.length()) {
-      return containsAnyChar(value, chars, 0, value.length());
-    }
-    else {
-      return containsAnyChar(chars, value, 0, chars.length());
-    }
+    return chars.length() > value.length()
+           ? containsAnyChar(value, chars, 0, value.length())
+           : containsAnyChar(chars, value, 0, chars.length());
   }
 
   @Contract(pure = true)
@@ -2780,7 +2723,7 @@ public class StringUtil extends StringUtilRt {
       return false;
     }
     for (int i = 0; i < s1.length(); i++) {
-      if (!charsMatch(s1.charAt(i), s2.charAt(i), true)) {
+      if (!charsEqualIgnoreCase(s1.charAt(i), s2.charAt(i))) {
         return false;
       }
     }
@@ -2981,13 +2924,8 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean charsEqual(char a, char b, boolean ignoreCase) {
-    return ignoreCase ? charsEqualIgnoreCase(a, b) : a == b;
-  }
-
-  @Contract(pure = true)
   public static boolean charsEqualIgnoreCase(char a, char b) {
-    return StringUtilRt.charsEqualIgnoreCase(a, b);
+    return charsMatch(a, b, true);
   }
 
   @Contract(pure = true)
@@ -3049,14 +2987,6 @@ public class StringUtil extends StringUtilRt {
   @NotNull
   public static String convertLineSeparators(@NotNull String text, @NotNull String newSeparator, @Nullable int[] offsetsToKeep) {
     return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep);
-  }
-
-  @NotNull
-  public static String convertLineSeparators(@NotNull String text,
-                                             @NotNull String newSeparator,
-                                             @Nullable int[] offsetsToKeep,
-                                             boolean keepCarriageReturn) {
-    return StringUtilRt.convertLineSeparators(text, newSeparator, offsetsToKeep, keepCarriageReturn);
   }
 
   @Contract(pure = true)

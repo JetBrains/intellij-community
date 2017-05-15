@@ -26,6 +26,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
@@ -51,6 +53,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.util.ui.update.Update.HIGH_PRIORITY;
+
 public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(IpnbFilePanel.class);
   private final DocumentListener myDocumentListener;
@@ -69,10 +73,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private int myInitialSelection = 0;
   private boolean mySynchronize;
   private static final String ourHelpID = "IPython_Notebook_Support";
+  private MergingUpdateQueue myQueue;
 
   public IpnbFilePanel(@NotNull final Project project, @NotNull final IpnbFileEditor parent, @NotNull final VirtualFile vFile,
                        @NotNull final IpnbFileEditor.CellSelectionListener listener) {
     super(new VerticalFlowLayout(VerticalFlowLayout.TOP, 100, 5, true, false));
+    myQueue = new MergingUpdateQueue("Jupyter", 100, true, this, this,
+                                     null, true);
     myProject = project;
     myParent = parent;
     myVirtualFile = vFile;
@@ -102,7 +109,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       });
       setFocusable(true);
     }, 10, ModalityState.stateForComponent(this));
-
+    alarm.addRequest(() -> {
+      revalidate();
+      repaint();
+      myParent.loaded();
+    }, 100);
     UIUtil.requestFocus(this);
     myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myBusConnection.subscribe(ProjectEx.ProjectSaved.TOPIC,
@@ -700,8 +711,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   public void revalidateAndRepaint() {
-    revalidate();
-    repaint();
+    myQueue.queue(new Update("Jupyter.Repaint", HIGH_PRIORITY) {
+      @Override
+      public void run() {
+        revalidate();
+        repaint();
+      }
+    });
   }
 
   @Nullable

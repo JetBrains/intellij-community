@@ -456,7 +456,6 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     Document document = getDocument(psiFile);
 
     assertNotNull(document);
-    assertFalse(psiFile.isWritable());
     assertInstanceOf(psiFile, PsiLargeTextFile.class);
 
     assertLargeFileContentLimited(content, vFile, document);

@@ -59,15 +59,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
   }
 
   @Override
-  public void beforeCommandFinished(CommandEvent event) {}
-
-  @Override
-  public void undoTransparentActionStarted() {}
-
-  @Override
-  public void undoTransparentActionFinished() {}
-
-  @Override
   public void commandFinished(CommandEvent event) {
     myCommandLevel--;
     if (LOG.isDebugEnabled()) {
@@ -105,9 +96,6 @@ public class CvsStorageSupportingDeletionComponent extends CvsStorageComponent i
     }
     return myDeleteHandler;
   }
-
-  @Override
-  public void fileDeleted(@NotNull VirtualFileEvent event) {}
 
   private boolean shouldProcessEvent(VirtualFileEvent event, boolean parentShouldBeUnderCvs) {
     if (myAnotherProjectCommand) {

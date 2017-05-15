@@ -62,10 +62,6 @@ public class SearchResults implements DocumentListener {
     myCursorPositions.clear();
   }
 
-  @Override
-  public void documentChanged(DocumentEvent event) {
-  }
-
   public enum Direction {UP, DOWN}
 
 

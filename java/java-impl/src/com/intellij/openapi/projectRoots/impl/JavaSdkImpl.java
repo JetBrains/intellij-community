@@ -520,7 +520,7 @@ public class JavaSdkImpl extends JavaSdk {
     List<VirtualFile> result = ContainerUtil.newArrayList();
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
-    if (JrtFileSystem.isModularJdk(file.getPath())) {
+    if (JdkUtil.isModularRuntime(file)) {
       VirtualFile jrt = fileManager.findFileByUrl(JrtFileSystem.PROTOCOL_PREFIX + getPath(file) + JrtFileSystem.SEPARATOR);
       if (jrt != null) {
         ContainerUtil.addAll(result, jrt.getChildren());

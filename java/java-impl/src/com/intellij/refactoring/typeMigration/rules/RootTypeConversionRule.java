@@ -166,6 +166,7 @@ public class RootTypeConversionRule extends TypeConversionRule {
       }
       throw new AssertionError(" migrationType: " + migrationType + ", paramId: " + paramId + ", actualParameters: " + Arrays.toString(actualParams));
     } else {
+      if (paramId >= actualParams.length) return true;
       return TypeConversionUtil.areTypesAssignmentCompatible(migrationType, actualParams[paramId]);
     }
   }

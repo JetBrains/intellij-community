@@ -270,13 +270,11 @@ public class JavaGenericsUtil {
 
   @Nullable
   public static PsiType getCollectionItemType(@NotNull PsiExpression expression) {
-    final PsiType type = expression.getType();
-    if (type == null) return null;
-    return getCollectionItemType(type, expression.getResolveScope());
+    return getCollectionItemType(expression.getType(), expression.getResolveScope());
   }
 
   @Nullable
-  public static PsiType getCollectionItemType(final PsiType type, final GlobalSearchScope scope) {
+  public static PsiType getCollectionItemType(@Nullable PsiType type, @NotNull GlobalSearchScope scope) {
     if (type instanceof PsiArrayType) {
       return ((PsiArrayType)type).getComponentType();
     }

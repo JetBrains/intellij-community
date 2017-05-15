@@ -97,10 +97,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   private volatile MemoryDiskConflictResolver myConflictResolver = new MemoryDiskConflictResolver();
   private final PrioritizedDocumentListener myPhysicalDocumentChangeTracker = new PrioritizedDocumentListener() {
     @Override
-    public void beforeDocumentChange(DocumentEvent event) {
-    }
-
-    @Override
     public int getPriority() {
       return Integer.MIN_VALUE;
     }
@@ -656,28 +652,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   }
 
   @Override
-  public void fileCreated(@NotNull VirtualFileEvent event) {
-  }
-
-  @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
     Document doc = getCachedDocument(event.getFile());
     if (doc != null) {
       myTrailingSpacesStripper.documentDeleted(doc);
     }
-  }
-
-  @Override
-  public void fileMoved(@NotNull VirtualFileMoveEvent event) {
-  }
-
-  @Override
-  public void fileCopied(@NotNull VirtualFileCopyEvent event) {
-    fileCreated(event);
-  }
-
-  @Override
-  public void beforePropertyChange(@NotNull VirtualFilePropertyEvent event) {
   }
 
   @Override
@@ -698,14 +677,6 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       return true;
     }
     return false;
-  }
-
-  @Override
-  public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-  }
-
-  @Override
-  public void beforeFileMovement(@NotNull VirtualFileMoveEvent event) {
   }
 
   @Override

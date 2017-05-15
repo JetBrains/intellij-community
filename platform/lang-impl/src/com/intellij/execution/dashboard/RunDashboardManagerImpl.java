@@ -327,10 +327,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     public boolean enabled = true;
 
     @SuppressWarnings("UnusedDeclaration")
-    public RuleState() {
+    RuleState() {
     }
 
-    public RuleState(String name, boolean enabled) {
+    RuleState(String name, boolean enabled) {
       this.name = name;
       this.enabled = enabled;
     }
@@ -363,7 +363,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
     @Override
     public List<Pair<String, JComponent>> getTabs() {
-      return Arrays.stream(myDashboardContentManager.getContents()).map(content -> Pair.create(content.getDisplayName(), content.getComponent())).collect(Collectors.toList());
+      return Arrays.stream(myDashboardContentManager.getContents())
+        .map(content -> Pair.create(content.getDisplayName(), content.getComponent())).collect(Collectors.toList());
     }
 
     @Override

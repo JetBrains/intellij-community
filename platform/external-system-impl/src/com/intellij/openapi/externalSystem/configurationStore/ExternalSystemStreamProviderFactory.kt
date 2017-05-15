@@ -18,45 +18,26 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.configurationStore.deserializeElementFromBinary
+import com.intellij.configurationStore.isExternalStorageEnabled
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
-import com.intellij.openapi.startup.StartupManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Function
-import com.intellij.util.io.ByteSequenceDataExternalizer
 import org.jdom.Element
-import java.io.ByteArrayInputStream
 import java.util.*
 
 private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
 private val LOG = logger<ExternalSystemStreamProviderFactory>()
 
-private fun isEnabled() = Registry.`is`("store.imported.project.elements.separately", false) || IS_ENABLED
-
-// test only
-internal var IS_ENABLED = false
-
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val moduleStorage = PersistentMapManager("modules", ExternalProjectsDataStorage.getProjectConfigurationDir(project), ByteSequenceDataExternalizer.INSTANCE, project, 0) {
-    StartupManager.getInstance(project).runWhenProjectIsInitialized {
-      val externalProjectsManager = ServiceManager.getService(project, ExternalProjectsManager::class.java)
-      externalProjectsManager.runWhenInitialized {
-        externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
-      }
-    }
-  }
+  val moduleStorage = FileSystemExternalSystemStorage(project)
 
   private var isStorageFlushInProgress = false
 
@@ -84,44 +65,40 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
 
       override fun modulesRenamed(project: Project, modules: MutableList<Module>, oldNameProvider: Function<Module, String>) {
         for (module in modules) {
-          val oldName = oldNameProvider.`fun`(module)
-          moduleStorage.get(oldName)?.let {
-            moduleStorage.remove(oldName)
-            moduleStorage.put(module.name, it)
-          }
+          moduleStorage.rename(oldNameProvider.`fun`(module), module.name)
         }
       }
     })
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    if (componentManager !is Module || component !is ProjectModelElement || !isEnabled()) {
+    if (componentManager !is Module || component !is ProjectModelElement || !isExternalStorageEnabled()) {
       return null
     }
 
-    if (operation == StateStorageOperation.WRITE) {
-      // Keep in mind - this call will require storage for module because module option values are used.
-      // We cannot just check that module name exists in the nameToData - new external system module will be not in the nameToData because not yet saved.
-      @Suppress("INTERFACE_STATIC_METHOD_CALL_FROM_JAVA6_TARGET")
-      if (ExternalProjectSystemRegistry.getInstance().getExternalSource(componentManager) == null) {
-        return null
-      }
-    }
-    else {
-      // on read we cannot check because on import module is just created and not yet marked as external system module,
-      // so, we just add our storage as first and default storages in the end as fallback
-      val result = ArrayList<Storage>(storages.size + 1)
-      result.add(EXTERNAL_STORAGE_ANNOTATION)
-      result.addAll(storages)
-      return result
+    // Keep in mind - this call will require storage for module because module option values are used.
+    // We cannot just check that module name exists in the nameToData - new external system module will be not in the nameToData because not yet saved.
+    if (operation == StateStorageOperation.WRITE && component.externalSource == null) {
+      return null
     }
 
-    // todo we can return on StateStorageOperation.WRITE default iml storage and then somehow using StateStorageChooserEx return Resolution.CLEAR to remove data from iml
-    return listOf(EXTERNAL_STORAGE_ANNOTATION)
+    // on read we cannot check because on import module is just created and not yet marked as external system module,
+    // so, we just add our storage as first and default storages in the end as fallback
+
+    // on write default storages also returned, because default FileBasedStorage will remove data if component has external source
+
+    val result = ArrayList<Storage>(storages.size + 1)
+    result.add(EXTERNAL_STORAGE_ANNOTATION)
+    result.addAll(storages)
+    return result
   }
 
   fun readModuleData(name: String): Element? {
-    val data = moduleStorage.get(name) ?: return null
-    return ByteArrayInputStream(data.bytes, data.offset, data.length).use { deserializeElementFromBinary(it) }
+    val result = moduleStorage.read(name)
+    if (result == null) {
+      // todo we must detect situation when module was really stored but file was somehow deleted by user / corrupted
+      // now we use file-based storage, and, so, not easy to detect this situation on start (because all modules data stored not in the one file, but per file)
+    }
+    return result
   }
 }

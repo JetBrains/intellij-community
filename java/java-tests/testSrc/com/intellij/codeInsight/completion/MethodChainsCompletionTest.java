@@ -19,10 +19,8 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
-import com.intellij.compiler.chainsSearch.completion.MethodsChainsCompletionContributor;
-import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionMethodCallLookupElement;
+import com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor;
 import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.SmartList;
@@ -43,13 +41,13 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   protected void setUp() throws Exception {
     super.setUp();
     installCompiler();
-    Registry.get(MethodsChainsCompletionContributor.REGISTRY_KEY).setValue(true);
+    Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      Registry.get(MethodsChainsCompletionContributor.REGISTRY_KEY).setValue(false);
+      Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(false);
     } finally {
       super.tearDown();
     }
@@ -248,8 +246,6 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   private void doTestRendering() {
-    PropertiesComponent.getInstance(getProject())
-      .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(true));
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
     for (LookupElement element : myFixture.complete(CompletionType.BASIC)) {
@@ -259,9 +255,6 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
         break;
       }
     }
-
-    PropertiesComponent.getInstance(getProject())
-      .setValue(ChainCompletionMethodCallLookupElement.PROP_METHODS_CHAIN_COMPLETION_AUTO_COMPLETION, String.valueOf(false));
     myFixture.checkResultByFile(getAfterCompletionFilePath());
   }
 

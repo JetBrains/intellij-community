@@ -194,7 +194,7 @@ public class ColorAndFontDescriptionPanel extends JPanel implements OptionsPanel
                        description.isEffectsColorChecked(), description.getEffectColor());
 
     String name = ContainerUtil.reverseMap(myEffectsMap).get(effectType);
-    myEffectsCombo.setSelectedItem(name);
+    myEffectsCombo.getModel().setSelectedItem(name);
     myEffectsCombo
       .setEnabled((description.isEffectsColorEnabled() && description.isEffectsColorChecked()) && description.isEditable());
     setInheritanceInfo(description);

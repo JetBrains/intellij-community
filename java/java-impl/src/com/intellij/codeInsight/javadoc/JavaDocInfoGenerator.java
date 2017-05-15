@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.javadoc;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.InferredAnnotationsManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
@@ -1723,11 +1720,36 @@ public class JavaDocInfoGenerator {
 
   private void generateThrowsSection(StringBuilder buffer, PsiMethod method, PsiDocComment comment) {
     PsiDocTag[] localTags = getThrowsTags(comment);
+    PsiDocTag[] thrownTags = localTags;
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(method.getProject());
+
+    Set<PsiClass> reported = new HashSet<>();
+    for (HierarchicalMethodSignature signature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
+      PsiMethod superMethod = ObjectUtils.tryCast(signature.getMethod().getNavigationElement(), PsiMethod.class);
+      PsiDocComment docComment = superMethod != null ? superMethod.getDocComment() : null;
+      if (docComment != null) {
+        PsiDocTag[] uncheckedExceptions = Arrays.stream(getThrowsTags(docComment)).filter(tag -> {
+          PsiDocTagValue valueElement = tag.getValueElement();
+          if (valueElement == null) return false;
+          if (Arrays.stream(localTags)
+            .map(PsiDocTag::getValueElement)
+            .map(ObjectUtils::notNull)
+            .anyMatch(docTagValue -> areWeakEqual(docTagValue.getText(), valueElement.getText()))) {
+            return false;
+          }
+          PsiClass exClass = psiFacade.getResolveHelper().resolveReferencedClass(valueElement.getText(), docComment);
+          if (exClass == null) return false;
+          return ExceptionUtil.isUncheckedException(exClass) && reported.add(exClass);
+        }).toArray(PsiDocTag[]::new);
+        thrownTags = ArrayUtil.mergeArrays(thrownTags, uncheckedExceptions);
+      }
+    }
+
     LinkedList<Pair<PsiDocTag, InheritDocProvider<PsiDocTag>>> collectedTags = new LinkedList<>();
     List<PsiClassType> declaredThrows = new ArrayList<>(Arrays.asList(method.getThrowsList().getReferencedTypes()));
 
-    for (int i = localTags.length - 1; i > -1; i--) {
-      PsiDocTagValue valueElement = localTags[i].getValueElement();
+    for (int i = thrownTags.length - 1; i > -1; i--) {
+      PsiDocTagValue valueElement = thrownTags[i].getValueElement();
 
       if (valueElement != null) {
         for (Iterator<PsiClassType> iterator = declaredThrows.iterator(); iterator.hasNext();) {
@@ -1740,7 +1762,7 @@ public class JavaDocInfoGenerator {
         }
 
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = findInheritDocTag(method, exceptionLocator(valueElement.getText()));
-        collectedTags.addFirst(new Pair<>(localTags[i], new InheritDocProvider<PsiDocTag>() {
+        collectedTags.addFirst(new Pair<>(thrownTags[i], new InheritDocProvider<PsiDocTag>() {
           @Override
           public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
             return tag;
@@ -1759,7 +1781,7 @@ public class JavaDocInfoGenerator {
         String paramName = trouser.getCanonicalText();
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> parmTag = null;
 
-        for (PsiDocTag localTag : localTags) {
+        for (PsiDocTag localTag : thrownTags) {
           PsiDocTagValue value = localTag.getValueElement();
           if (value != null) {
             String tagName = value.getText();
@@ -1779,7 +1801,7 @@ public class JavaDocInfoGenerator {
         }
         else {
           try {
-            PsiDocTag tag = JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createDocTagFromText("@exception " + paramName);
+            PsiDocTag tag = psiFacade.getElementFactory().createDocTagFromText("@exception " + paramName);
             collectedTags.addLast(Pair.create(tag, ourEmptyProvider));
           }
           catch (IncorrectOperationException e) {

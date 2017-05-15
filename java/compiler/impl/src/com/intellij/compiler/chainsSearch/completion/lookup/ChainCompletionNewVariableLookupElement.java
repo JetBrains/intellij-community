@@ -61,13 +61,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
     ((PsiJavaFile)file).importClass(myQualifierClass);
     final PsiElement caretElement = ObjectUtils.notNull(file.findElementAt(context.getEditor().getCaretModel().getOffset()));
 
-    PsiElement prevSibling = caretElement.getPrevSibling();
-    final PsiStatement statement;
-    if (prevSibling instanceof PsiStatement) {
-      statement = (PsiStatement)prevSibling;
-    } else {
-      statement = PsiTreeUtil.getParentOfType(prevSibling, PsiStatement.class);
-    }
+    final PsiStatement statement = PsiTreeUtil.getParentOfType(caretElement.getPrevSibling(), PsiStatement.class, false);
     final Project project = context.getProject();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     context.commitDocument();

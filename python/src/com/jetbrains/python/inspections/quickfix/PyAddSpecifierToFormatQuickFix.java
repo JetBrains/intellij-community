@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -68,7 +67,7 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
     final PyExpression leftExpression = expression.getLeftExpression();
     if (leftExpression instanceof PyStringLiteralExpression) {
       final List<PyStringFormatParser.SubstitutionChunk> chunks =
-        filterSubstitutions(parsePercentFormat(((PyStringLiteralExpression)leftExpression).getStringValue()));
+        filterSubstitutions(parsePercentFormat(leftExpression.getText()));
       PyExpression[] elements;
       if (rightExpression instanceof PyTupleExpression) {
         elements = ((PyTupleExpression)rightExpression).getElements();
@@ -77,22 +76,24 @@ public class PyAddSpecifierToFormatQuickFix implements LocalQuickFix {
         elements = new PyExpression[]{rightExpression};
       }
 
-      int shift = 2;
+      int shift = 1;
       for (int i = 0; i < chunks.size(); i++) {
-        final PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
-        if (elements.length <= i) return;
-        final PyType type = context.getType(elements[i]);
-        final char conversionType = chunk.getConversionType();
-        if (conversionType == '\u0000') {
-          final int insertOffset = offset + chunk.getStartIndex() + shift;
-          if (insertOffset > leftExpression.getTextRange().getEndOffset()) return;
-          if (PyTypeChecker.match(strType, type, context)) {
-            document.insertString(insertOffset, "s");
-            shift += 1;
-          }
-          if (PyTypeChecker.match(intType, type, context) || PyTypeChecker.match(floatType, type, context)) {
-            document.insertString(insertOffset, "d");
-            shift += 1;
+        final PyStringFormatParser.PercentSubstitutionChunk chunk = PyUtil.as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
+        if (chunk != null) {
+          if (elements.length <= i) return;
+          final PyType type = context.getType(elements[i]);
+          final char conversionType = chunk.getConversionType();
+          if (conversionType == '\u0000') {
+            final int insertOffset = offset + chunk.getStartIndex() + shift;
+            if (insertOffset > leftExpression.getTextRange().getEndOffset()) return;
+            if (PyTypeChecker.match(strType, type, context)) {
+              document.insertString(insertOffset, "s");
+              shift += 1;
+            }
+            if (PyTypeChecker.match(intType, type, context) || PyTypeChecker.match(floatType, type, context)) {
+              document.insertString(insertOffset, "d");
+              shift += 1;
+            }
           }
         }
       }

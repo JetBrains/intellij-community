@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,26 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.javaView
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.plugins.groovy.transformations.isUnderTransformation
+import org.jetbrains.plugins.groovy.util.getPackageAndShortName
 
 class GroovyLightInnerClassFinder(project: Project) : GroovyClassFinder(project) {
 
   override fun findClasses(qualifiedName: String, scope: GlobalSearchScope): Array<out PsiClass> {
-    val containingClassFqn = StringUtil.getPackageName(qualifiedName)
-    val innerClassName = StringUtil.getShortName(qualifiedName)
+    val (containingClassFqn, innerClassName) = getPackageAndShortName(qualifiedName)
     return super.findClasses(containingClassFqn, scope).mapNotNull { findInnerLightClass(it, innerClassName) }.toTypedArray()
   }
 
   override fun findClass(qualifiedName: String, scope: GlobalSearchScope): PsiClass? {
-    val containingClassFqn = StringUtil.getPackageName(qualifiedName)
+    val (containingClassFqn, innerClassName) = getPackageAndShortName(qualifiedName)
     val containingClass = super.findClass(containingClassFqn, scope) ?: return null
-    val innerClassName = StringUtil.getShortName(qualifiedName)
     return findInnerLightClass(containingClass, innerClassName)
   }
 
   fun findInnerLightClass(clazz: PsiClass, name: String): PsiClass? {
-    return clazz.findInnerClassByName(name, false) as? LightElement as?PsiClass
+    return if (isUnderTransformation(clazz)) null else clazz.findInnerClassByName(name, false) as? LightElement as? PsiClass
   }
 }

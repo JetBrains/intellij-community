@@ -270,7 +270,7 @@ public final class LoadTextUtil {
     charset = fromBOM == null || charset != null && charset.name().startsWith("NATIVE_TO_ASCII_") && charset.name().endsWith(fromBOM.name())
               ? charset : fromBOM;
     
-    byte[] bom = charset == null ? ArrayUtil.EMPTY_BYTE_ARRAY : getBOM(content, charset);
+    byte[] bom = charset == null || fromBOM == null ? ArrayUtil.EMPTY_BYTE_ARRAY : getBOM(content, charset);
     if (saveBOM && bom.length != 0) {
       virtualFile.setBOM(bom);
       setCharsetWasDetectedFromBytes(virtualFile, AUTO_DETECTED_FROM_BOM);

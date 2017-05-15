@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.testFramework.assertions
 
+import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.readText
 import com.intellij.util.io.size
+import junit.framework.ComparisonFailure
 import org.assertj.core.api.AbstractCharSequenceAssert
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
@@ -39,6 +41,17 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
     }
 
     return this
+  }
+
+  fun isEqualTo(expected: String) {
+    isNotNull
+    isRegularFile
+
+    val expectedContent = expected.trimIndent()
+    val actualContent = StringUtilRt.convertLineSeparators(actual.readText())
+    if (actualContent != expectedContent) {
+      throw ComparisonFailure(null, expectedContent, actualContent)
+    }
   }
 
   fun hasChildren(vararg names: String) {

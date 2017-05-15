@@ -121,7 +121,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getUniqueID(): String {
     var result = uniqueId
-    if (result == null) {
+    // check name if configuration name was changed not using our setName
+    if (result == null || !result.contains(configuration.name)) {
       val configuration = configuration
       @Suppress("DEPRECATION")
       result = "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"

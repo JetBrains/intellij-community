@@ -1,1 +1,0 @@
-v = '<warning descr="Unresolved reference '{}'">{}</warning>'.format()

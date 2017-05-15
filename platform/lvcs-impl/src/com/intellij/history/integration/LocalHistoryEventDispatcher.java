@@ -64,18 +64,9 @@ public class LocalHistoryEventDispatcher implements VirtualFileManagerListener, 
   }
 
   @Override
-  public void beforeCommandFinished(CommandEvent e) { }
-
-  @Override
   public void commandFinished(CommandEvent e) {
     endChangeSet(e.getCommandName());
   }
-
-  @Override
-  public void undoTransparentActionStarted() { }
-
-  @Override
-  public void undoTransparentActionFinished() { }
 
   public void startAction() {
     myGateway.registerUnsavedDocuments(myVcs);

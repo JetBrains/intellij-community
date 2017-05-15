@@ -20,7 +20,10 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.SuppressiveDiffTool;
-import com.intellij.diff.comparison.*;
+import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.ComparisonMergeUtil;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DiffPsiFileSupport;
 import com.intellij.diff.contents.DocumentContent;
@@ -50,7 +53,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
-import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -710,7 +712,7 @@ public class DiffUtil {
                                         @NotNull ComparisonPolicy comparisonPolicy) {
     if (chunk1 == null) chunk1 = "";
     if (chunk2 == null) chunk2 = "";
-    return ComparisonManager.getInstance().isEquals(chunk1, chunk2, comparisonPolicy);
+    return ComparisonUtil.isEquals(chunk1, chunk2, comparisonPolicy);
   }
 
   @NotNull
@@ -1120,7 +1122,7 @@ public class DiffUtil {
 
       CharSequence content1 = getLinesContent(sequence1, offsets1, line1, line1 + 1);
       CharSequence content2 = getLinesContent(sequence2, offsets2, line2, line2 + 1);
-      if (!ComparisonManager.getInstance().isEquals(content1, content2, policy)) return false;
+      if (!ComparisonUtil.isEquals(content1, content2, policy)) return false;
     }
 
     return true;

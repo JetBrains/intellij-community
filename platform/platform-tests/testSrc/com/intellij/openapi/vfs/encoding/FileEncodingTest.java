@@ -900,4 +900,16 @@ public class FileEncodingTest extends PlatformTestCase implements TestDialog {
     CharSequence loaded = LoadTextUtil.loadText(virtualFile);
     assertInstanceOf(loaded, ByteArrayCharSequence.class);
   }
+
+  public void testUTF16LEWithNoBOMIsAThing() throws IOException {
+    String text = "text";
+    File file = createTempFile("a.txt", text);
+    setContentOnDisk(file, null, text, CharsetToolkit.UTF_16LE_CHARSET);
+
+    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    vFile.setCharset(CharsetToolkit.UTF_16LE_CHARSET);
+    vFile.setBOM(null);
+    CharSequence loaded = LoadTextUtil.loadText(vFile);
+    assertEquals(text, loaded.toString());
+  }
 }

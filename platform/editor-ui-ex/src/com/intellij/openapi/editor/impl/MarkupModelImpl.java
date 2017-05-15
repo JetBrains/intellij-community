@@ -95,8 +95,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       if (size == 0) return RangeHighlighter.EMPTY_ARRAY;
       List<RangeHighlighterEx> list = new ArrayList<>(size);
       CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
-      myHighlighterTree.process(collectProcessor);
-      myHighlighterTreeForLines.process(collectProcessor);
+      myHighlighterTree.processAll(collectProcessor);
+      myHighlighterTreeForLines.processAll(collectProcessor);
       myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
     }
     return myCachedHighlighters;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 Bas Leijdekkers
+ * Copyright 2006-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,7 @@ public class DoubleNegationInspection extends BaseInspection {
     @Override
     public void visitPrefixExpression(PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
-      if (!isNegation(expression)) {
+      if (!isUnaryNegation(expression)) {
         return;
       }
       final PsiExpression operand = expression.getOperand();
@@ -127,7 +127,7 @@ public class DoubleNegationInspection extends BaseInspection {
     @Override
     public void visitPolyadicExpression(PsiPolyadicExpression expression) {
       super.visitPolyadicExpression(expression);
-      if (!isNegation(expression)) {
+      if (!isBinaryNegation(expression)) {
         return;
       }
       final PsiExpression[] operands = expression.getOperands();
@@ -148,16 +148,16 @@ public class DoubleNegationInspection extends BaseInspection {
 
   public static boolean isNegation(@Nullable PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
-    if (expression instanceof PsiPrefixExpression) return isNegation((PsiPrefixExpression)expression);
-    if (expression instanceof PsiPolyadicExpression) return isNegation((PsiPolyadicExpression)expression);
+    if (expression instanceof PsiPrefixExpression) return isUnaryNegation((PsiPrefixExpression)expression);
+    if (expression instanceof PsiPolyadicExpression) return isBinaryNegation((PsiPolyadicExpression)expression);
     return false;
   }
 
-  static boolean isNegation(PsiPrefixExpression expression) {
+  static boolean isUnaryNegation(PsiPrefixExpression expression) {
     return JavaTokenType.EXCL.equals(expression.getOperationTokenType());
   }
 
-  static boolean isNegation(PsiPolyadicExpression expression) {
+  static boolean isBinaryNegation(PsiPolyadicExpression expression) {
     for (PsiExpression operand : expression.getOperands()) {
       if (TypeUtils.hasFloatingPointType(operand)) return false; // don't change semantics for NaNs
     }

@@ -637,11 +637,13 @@ public class PathsVerifier<BinaryType extends FilePatch> {
       final List<FilePatch> result = new LinkedList<>();
       if (! myOverrideExisting.isEmpty()) {
         final String title = "Overwrite Existing Files";
-        final Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
-          new ArrayList<>(myOverrideExisting.keySet()), title,
+        List<FilePath> files = new ArrayList<>(myOverrideExisting.keySet());
+        Collection<FilePath> selected = AbstractVcsHelper.getInstance(myProject).selectFilePathsToProcess(
+          files, title,
           "\nThe following files should be created by patch, but they already exist.\nDo you want to overwrite them?\n", title,
           "The following file should be created by patch, but it already exists.\nDo you want to overwrite it?\n{0}",
-          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION);
+          VcsShowConfirmationOption.STATIC_SHOW_CONFIRMATION,
+          "Overwrite", "Cancel");
         if (selected != null) {
           for (FilePath path : selected) {
             myOverrideExisting.remove(path);

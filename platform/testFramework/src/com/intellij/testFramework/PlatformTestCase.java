@@ -531,7 +531,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       for (Project project : projectManager.closeTestProject(projectToClose)) {
         runAll = runAll
           .append(() -> { throw new IllegalStateException("Test project is not disposed: " + project + ";\n created in: " + getCreationPlace(project)); })
-          .append(() -> ((ProjectManagerImpl)projectManager).closeProject(project, false, true, false));
+          .append(() -> ((ProjectManagerImpl)projectManager).forceCloseProject(project, true));
       }
     }
     runAll.append(() -> WriteAction.run(() -> Disposer.dispose(projectToClose))).run();

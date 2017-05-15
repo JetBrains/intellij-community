@@ -19,14 +19,12 @@
   <depends>com.jetbrains.edu.interactivelearning</depends>
   
   <extensions defaultExtensionNs="com.intellij">
-    <directoryProjectGenerator implementation="com.jetbrains.edu.learning.PyStudyDirectoryProjectGenerator"/>
     <localInspection shortName="PyStudyInterpreterInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyInterpreterInspection"/>
 
     <localInspection shortName="PyStudyLanguageLevelInspection" suppressId="PyStudyLanguageLevelInspection" enabledByDefault="true"
                      level="WARNING" implementationClass="com.jetbrains.edu.learning.PyStudyLanguageLevelInspection"
                      displayName="Unsupported language level for a course" groupName="Inspection.Study.Python"/>
     <!--course creator-->
-    <directoryProjectGenerator implementation="com.jetbrains.edu.coursecreator.PyCCProjectGenerator"/>
     <configurationType implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationType"/>
     <runConfigurationProducer implementation="com.jetbrains.edu.coursecreator.run.PyCCRunTestsConfigurationProducer"/>
   </extensions>
@@ -38,10 +36,6 @@
     <pluginConfigurator implementationClass="com.jetbrains.edu.learning.PyEduPluginConfigurator" language="Python"/>
   </extensions>
   <actions>
-    <action id="WelcomeScreen.PythonIntro" class="com.jetbrains.edu.learning.actions.PyStudyIntroductionCourseAction"
-            icon="InteractiveLearningPythonIcons.EducationalProjectType">
-      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
-    </action>
     <action id="StudyWatchTutorial" class="com.jetbrains.edu.learning.actions.PyStudyWatchTutorialAction">
       <add-to-group group-id="HelpMenu" anchor="before" relative-to-action="HelpTopics"/>
     </action>

@@ -41,29 +41,33 @@ import java.util.Collections;
 /**
  * @author konstantin.aleev
  */
-class RunConfigurationNode  extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>>
+class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationSettings, Content>>
   implements DashboardRunConfigurationNode {
-  public RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
-    super(project, value);
+
+  private final RunContentDescriptor myDescriptor;
+
+  RunConfigurationNode(Project project, @NotNull Pair<RunnerAndConfigurationSettings, RunContentDescriptor> value) {
+    super(project, Pair.create(value.first, value.second == null ? null : value.second.getAttachedContent()));
+    myDescriptor = value.second;
   }
 
   @Override
   @NotNull
   public RunnerAndConfigurationSettings getConfigurationSettings() {
     //noinspection ConstantConditions ???
-    return getValue().getFirst();
+    return getValue().first;
   }
 
   @Nullable
   @Override
   public RunContentDescriptor getDescriptor() {
-    //noinspection ConstantConditions ???
-    return getValue().getSecond();
+    return myDescriptor;
   }
 
   @Override
   protected void update(PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
+    //noinspection ConstantConditions
     boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);
     presentation.addText(configurationSettings.getName(),
                          isStored ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);

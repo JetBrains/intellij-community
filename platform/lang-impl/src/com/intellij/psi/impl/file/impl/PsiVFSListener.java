@@ -60,7 +60,6 @@ public class PsiVFSListener implements VirtualFileListener {
   private final ProjectRootManager myProjectRootManager;
   private final PsiManagerImpl myManager;
   private final FileManagerImpl myFileManager;
-  private final MessageBusConnection myConnection;
   private final Project myProject;
   private boolean myReportedUnloadedPsiChange;
 
@@ -113,17 +112,16 @@ public class PsiVFSListener implements VirtualFileListener {
     myManager = (PsiManagerImpl) PsiManager.getInstance(project);
     myFileManager = (FileManagerImpl) myManager.getFileManager();
 
-    myConnection = project.getMessageBus().connect(project);
-
     StartupManager.getInstance(project).registerPreStartupActivity(() -> {
-      myConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
-      myConnection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
+      MessageBusConnection connection = project.getMessageBus().connect(project);
+      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
+      connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
         @Override
         public void fileTypesChanged(@NotNull FileTypeEvent e) {
           myFileManager.processFileTypesChanged();
         }
       });
-      myConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
+      connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerAdapter());
       myFileManager.markInitialized();
     });
   }

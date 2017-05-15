@@ -121,7 +121,9 @@ public class PsiDocumentManagerImpl extends PsiDocumentManagerBase implements Se
         }
       }
       // must not commit during document save
-      if (PomModelImpl.isAllowPsiModification()) {
+      if (PomModelImpl.isAllowPsiModification()
+          // it can happen that document(forUseInNonAWTThread=true) outside write action caused this
+          && ApplicationManager.getApplication().isWriteAccessAllowed()) {
         commitAllDocuments();
       }
     }
