@@ -611,7 +611,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
     }
     app.assertIsDispatchThread();
-    app.saveSettings();
 
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed; if we are shutting down the entire test framework, proceed to full dispose
@@ -638,6 +637,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       if (save) {
         FileDocumentManager.getInstance().saveAllDocuments();
         project.save();
+        app.saveSettings();
       }
 
       if (checkCanClose && !ensureCouldCloseIfUnableToSave(project)) {
