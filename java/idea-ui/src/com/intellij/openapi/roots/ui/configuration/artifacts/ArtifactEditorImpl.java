@@ -289,7 +289,7 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       }
     });
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActionGroup(), true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructureArtifactEditor", createToolbarActionGroup(), true);
     JComponent toolbarComponent = toolbar.getComponent();
     if (UIUtil.isUnderDarcula()) {
       toolbarComponent.setBorder(new CustomLineBorder(0,0,1,0));
