@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,9 +218,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public boolean shouldStartInBackground() {
       return PERFORM_UPDATE_IN_BACKGROUND;
     }
-
-    @Override
-    public void processSentToBackground() {}
   }
 
   private class CommitInBackgroundOption implements PerformInBackgroundOption {
@@ -228,9 +225,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public boolean shouldStartInBackground() {
       return PERFORM_COMMIT_IN_BACKGROUND;
     }
-
-    @Override
-    public void processSentToBackground() {}
   }
 
   private class EditInBackgroundOption implements PerformInBackgroundOption {
