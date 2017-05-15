@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,31 +16,47 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Version;
-import junit.framework.TestCase;
+import org.junit.Test;
 
-public class VersionTest extends TestCase {
-  public void testParseVersion() throws Exception {
-    assertEquals(new Version(1, 0, 0), Version.parseVersion("1"));
-    assertEquals(new Version(1, 2, 0), Version.parseVersion("1.2"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3.4"));
+import static org.assertj.core.api.Assertions.assertThat;
 
-    assertEquals(new Version(1, 0, 0), Version.parseVersion("1beta"));
-    assertEquals(new Version(1, 2, 0), Version.parseVersion("1.2beta"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3beta"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3.4beta"));
-    
-    assertEquals(new Version(1, 0, 0), Version.parseVersion("1-beta"));
-    assertEquals(new Version(1, 2, 0), Version.parseVersion("1.2-beta"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3-beta"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3.4-beta"));
+public class VersionTest {
+  @Test
+  public void testParseVersion() {
+    assertParsed("0", 0, 0, 0);
+    assertParsed("0.0", 0, 0, 0);
+    assertParsed("0.0.0", 0, 0, 0);
+    assertParsed("0.0.0-ALPHA", 0, 0, 0);
 
-    assertEquals(new Version(1, 0, 0), Version.parseVersion("1.beta"));
-    assertEquals(new Version(1, 2, 0), Version.parseVersion("1.2.beta"));
-    assertEquals(new Version(1, 2, 3), Version.parseVersion("1.2.3.beta"));
+    assertParsed("1", 1, 0, 0);
+    assertParsed("1.2", 1, 2, 0);
+    assertParsed("1.2.3", 1, 2, 3);
+    assertParsed("1.2.3.4", 1, 2, 3);
 
-    assertEquals(null, Version.parseVersion(""));
-    assertEquals(null, Version.parseVersion("beta1"));
-    assertEquals(null, Version.parseVersion("beta.beta.beta"));
+    assertParsed("1beta", 1, 0, 0);
+    assertParsed("1.2beta", 1, 2, 0);
+    assertParsed("1.2.3beta", 1, 2, 3);
+    assertParsed("1.2.3.4beta", 1, 2, 3);
+
+    assertParsed("1-beta", 1, 0, 0);
+    assertParsed("1.2-beta", 1, 2, 0);
+    assertParsed("1.2.3-beta", 1, 2, 3);
+    assertParsed("1.2.3.4-beta", 1, 2, 3);
+
+    assertParsed("1.beta", 1, 0, 0);
+    assertParsed("1.2.beta", 1, 2, 0);
+    assertParsed("1.2.3.beta", 1, 2, 3);
+
+    assertNotParsed("");
+    assertNotParsed("beta1");
+    assertNotParsed("beta.beta.beta");
+  }
+
+  private static void assertParsed(String text, int major, int minor, int patch) {
+    assertThat(Version.parseVersion(text)).describedAs(text).isEqualTo(new Version(major, minor, patch));
+  }
+
+  private static void assertNotParsed(String text) {
+    assertThat(Version.parseVersion(text)).describedAs(text).isNull();
   }
 }
