@@ -128,7 +128,6 @@ public class ShelvedChange {
 
       File file = getAbsolutePath(baseDir, myBeforePath);
       FilePath beforePath = VcsUtil.getFilePath(file, false);
-      beforePath.refresh();
       ContentRevision beforeRevision = null;
       if (myFileStatus != FileStatus.ADDED) {
         beforeRevision = new CurrentContentRevision(beforePath) {
@@ -239,7 +238,6 @@ public class ShelvedChange {
     }
 
     private String getBaseContent() {
-      myBeforeFilePath.refresh();
       return ReadAction.compute(() -> {
         final Document doc = FileDocumentManager.getInstance().getDocument(myBeforeFilePath.getVirtualFile());
         return doc.getText();
