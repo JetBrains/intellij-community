@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.generators;
 
 import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.emmet.ZenCodingTemplate;
 import com.intellij.codeInsight.template.emmet.ZenCodingUtil;
@@ -30,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
@@ -64,7 +64,7 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
 
   @NotNull
   private String toString(@NotNull TemplateToken token, boolean hasChildren, @NotNull PsiElement context) {
-    CodeStyleSettings.QuoteStyle quoteStyle = quoteStyle(context.getContainingFile());
+    CodeStyleSettings.QuoteStyle quoteStyle = XmlEditUtil.quoteStyle(context.getContainingFile());
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
@@ -92,15 +92,6 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
       }
     }
     return text;
-  }
-  
-  private static CodeStyleSettings.QuoteStyle quoteStyle(@NotNull PsiFile file) {
-    PsiElement context = file.getContext();
-    CodeStyleSettings.QuoteStyle style = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().HTML_QUOTE_STYLE;
-    if (context != null && !style.quote.isEmpty() && context.getText().startsWith(style.quote)) {
-      return style == CodeStyleSettings.QuoteStyle.Double ? CodeStyleSettings.QuoteStyle.Single : CodeStyleSettings.QuoteStyle.Double;   
-    }
-    return style;
   }
 
   public abstract String toString(@NotNull XmlTag tag,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
+import com.intellij.codeInsight.editorActions.XmlEditUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,7 +28,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
@@ -68,7 +68,7 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
     final PsiFile file = context.getFile();
 
     final CharSequence chars = document.getCharsSequence();
-    final String quote = getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
+    final String quote = XmlEditUtil.getAttributeQuote(HtmlUtil.hasHtml(file) || HtmlUtil.supportsXmlTypedHandlers(file));
     final boolean insertQuotes = WebEditorOptions.getInstance().isInsertQuotesForAttributeValue() && StringUtil.isNotEmpty(quote);
     final boolean hasQuotes = CharArrayUtil.regionMatches(chars, caretOffset, "=\"") ||
                               CharArrayUtil.regionMatches(chars, caretOffset, "='");
@@ -124,10 +124,6 @@ public class XmlAttributeInsertHandler implements InsertHandler<LookupElement> {
         }
       }
     }
-  }
-
-  public static String getAttributeQuote(boolean html) {
-    return html ? CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE.quote : "\"";
   }
 
   private static void qualifyWithPrefix(@NotNull String namespacePrefix, @NotNull PsiElement context) {
