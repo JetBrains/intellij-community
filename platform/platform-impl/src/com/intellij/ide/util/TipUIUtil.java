@@ -140,11 +140,8 @@ public class TipUIUtil {
 //      return;
 //    }
 
-    String suffix = "";
     Component af = IdeFrameImpl.getActiveFrame();
     Component comp = af != null ? af: browser;
-    if (JBUI.isPixHiDPI(comp)) suffix += "@2x";
-    if (dark) suffix += "_dark";
     int index = text.indexOf("<img", 0);
     while (index != -1) {
       final int end = text.indexOf(">", index + 1);
@@ -155,19 +152,34 @@ public class TipUIUtil {
       if (endIndex != -1) {
         String path = img.substring(srcIndex + 5, endIndex);
         if (!path.endsWith("_dark") && !path.endsWith("@2x")) {
-          path += suffix + ".png";
+          boolean hidpi =  JBUI.isPixHiDPI(comp);
+          path += (hidpi ? "@2x" : "") + (dark ? "_dark" : "") + ".png";
           URL url = ResourceUtil.getResource(tipLoader, "/tips/", path);
           if (url != null) {
             String newImgTag = "<img src=\"" + path + "\" ";
-            if (UIUtil.isJreHiDPI(comp)) {
-              try {
-                final BufferedImage image = ImageIO.read(url.openStream());
-                final int w = (int)(image.getWidth() / JBUI.sysScale());
-                final int h = (int)(image.getHeight() / JBUI.sysScale());
-                newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
-              } catch (Exception ignore) {
-                newImgTag += "width=\"400\" height=\"200\"";
+            try {
+              BufferedImage image = ImageIO.read(url.openStream());
+              int w = image.getWidth();
+              int h = image.getHeight();
+              if (UIUtil.isJreHiDPI(comp)) {
+                // compensate JRE scale
+                float sysScale = JBUI.sysScale(comp);
+                w = (int)(w / sysScale);
+                h = (int)(h / sysScale);
               }
+              else {
+                // compensate image scale
+                float imgScale = hidpi ? 2f : 1f;
+                w = (int)(w / imgScale);
+                h = (int)(h / imgScale);
+              }
+              // fit the user scale
+              w = (int)(JBUI.scale((float)w));
+              h = (int)(JBUI.scale((float)h));
+
+              newImgTag += "width=\"" + w + "\" height=\"" + h + "\"";
+            } catch (Exception ignore) {
+              newImgTag += "width=\"400\" height=\"200\"";
             }
             newImgTag += "/>";
             text.replace(index, end + 1, newImgTag);
