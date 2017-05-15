@@ -96,6 +96,8 @@ class AndroidStudioLibraryLicenses {
                        license: "Eclipse Public License 1.0", licenseUrl: "http://www.eclipse.org/legal/epl-v10.html"),
     new LibraryLicense(name: "uiautomatorviewer.jar", libraryName: "uiautomatorviewer.jar", license: "Apache 2.0"),
     new LibraryLicense(name: "TightVNC", libraryName: "tightvnc", license: "Commercial License"),
+    new LibraryLicense(name: "Instant App Proto Manifest", libraryName: "aia-manifest-proto-1.0-jarjar.jar",
+                       license: "Apache 2.0", url: "http://source.android.com/"),
 
     jetbrainsLibrary("uast")
   ] as List<LibraryLicense>
