@@ -16,8 +16,8 @@
 package com.intellij.formatting.commandLine;
 
 import com.intellij.formatting.FormatTextRanges;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.lang.LanguageFormatting;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -90,8 +89,7 @@ class FileSetFormatter extends FileSetProcessor {
 
   private void closeProject() {
     if (myProject != null) {
-      ProjectManager.getInstance().closeProject(myProject);
-      WriteAction.run(() -> Disposer.dispose(myProject));
+      ProjectUtil.closeAndDispose(myProject);
     }
   }
 
