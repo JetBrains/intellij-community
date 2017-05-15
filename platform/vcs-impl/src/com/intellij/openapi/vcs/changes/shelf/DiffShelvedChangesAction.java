@@ -60,6 +60,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.diff.tools.util.DiffNotifications.createNotification;
 import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.createConflictDiffRequest;
@@ -296,20 +299,22 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
   }
 
   static class PatchesPreloader {
-    private final SoftHardCacheMap<String, PatchInfo> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
     private final Project myProject;
+    private final SoftHardCacheMap<String, PatchInfo> myFilePatchesMap = new SoftHardCacheMap<>(5, 5);
+    private final ReadWriteLock myLock = new ReentrantReadWriteLock(true);
 
     PatchesPreloader(final Project project) {
       myProject = project;
     }
 
     @NotNull
+    @CalledInBackground
     public TextFilePatch getPatch(final ShelvedChange shelvedChange, @NotNull CommitContext commitContext) throws VcsException {
       String patchPath = shelvedChange.getPatchPath();
-      if (myFilePatchesMap.get(patchPath) == null || isPatchFileChanged(patchPath)) {
+      if (getInfoFromCache(patchPath) == null || isPatchFileChanged(patchPath)) {
         readFilePatchAndUpdateCaches(patchPath, commitContext);
       }
-      PatchInfo patchInfo = myFilePatchesMap.get(patchPath);
+      PatchInfo patchInfo = getInfoFromCache(patchPath);
       if (patchInfo != null) {
         for (TextFilePatch textFilePatch : patchInfo.myTextFilePatches) {
           if (shelvedChange.getBeforePath().equals(textFilePatch.getBeforeName())) {
@@ -320,18 +325,32 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       throw new VcsException("Can not find patch for " + shelvedChange.getBeforePath() + " in patch file.");
     }
 
+    private PatchInfo getInfoFromCache(@NotNull String patchPath) {
+      try {
+        myLock.readLock().lock();
+        return myFilePatchesMap.get(patchPath);
+      }
+      finally {
+        myLock.readLock().unlock();
+      }
+    }
+
     private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @NotNull CommitContext commitContext) throws VcsException {
       try {
+        myLock.writeLock().lock();
         myFilePatchesMap.put(patchPath, new PatchInfo(ShelveChangesManager.loadPatches(myProject, patchPath, commitContext),
                                                       new File(patchPath).lastModified()));
       }
       catch (IOException | PatchSyntaxException e) {
         throw new VcsException(e);
       }
+      finally {
+        myLock.writeLock().unlock();
+      }
     }
 
-    public boolean isPatchFileChanged(String patchPath) {
-      PatchInfo patchInfo = myFilePatchesMap.get(patchPath);
+    public boolean isPatchFileChanged(@NotNull String patchPath) {
+      PatchInfo patchInfo = getInfoFromCache(patchPath);
       long lastModified = new File(patchPath).lastModified();
       return patchInfo != null && lastModified != patchInfo.myLoadedTimeStamp;
     }
