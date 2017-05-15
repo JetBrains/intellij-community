@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -213,7 +213,7 @@ public class CreateParameterForFieldIntention extends Intention {
 
   static class MyPredicate implements PsiElementPredicate {
     @Override
-    public boolean satisfiedBy(PsiElement element) {
+    public boolean satisfiedBy(@NotNull PsiElement element) {
       final List<GrField> candidates = findFieldCandidates(element);
       if (candidates != null && !candidates.isEmpty()) return true;
       final List<GrMethod> constructors = findConstructorCandidates(element);

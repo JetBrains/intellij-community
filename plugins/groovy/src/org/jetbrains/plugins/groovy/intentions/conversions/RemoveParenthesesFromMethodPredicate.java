@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.intentions.conversions;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -31,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 class RemoveParenthesesFromMethodPredicate implements PsiElementPredicate {
 
   @Override
-  public boolean satisfiedBy(PsiElement element) {
+  public boolean satisfiedBy(@NotNull PsiElement element) {
     if (!(element instanceof GrMethodCallExpression)) return false;
     if (!PsiUtil.isExpressionStatement(element)) return false;
 
