@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PatchDiffRequest extends DiffRequest {
-  @NotNull protected final AppliedTextPatch myAppliedPatch;
+  @NotNull private final AppliedTextPatch myAppliedPatch;
 
   @Nullable private final String myWindowTitle;
   @Nullable private final String myPanelTitle;
