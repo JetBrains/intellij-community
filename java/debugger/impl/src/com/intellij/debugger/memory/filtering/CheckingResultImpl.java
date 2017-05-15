@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.memory.filtering;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -46,5 +47,13 @@ public class CheckingResultImpl implements CheckingResult {
   @NotNull
   public String getFailureDescription() {
     return myDescription;
+  }
+
+  @Override
+  public String toString() {
+    if (StringUtil.isEmpty(myDescription)) {
+      return myResult.toString();
+    }
+    return  myResult + ": " + myDescription;
   }
 }
