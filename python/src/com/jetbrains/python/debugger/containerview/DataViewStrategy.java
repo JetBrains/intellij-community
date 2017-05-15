@@ -29,7 +29,7 @@ import java.util.Set;
 
 public abstract class DataViewStrategy {
   private static class StrategyHolder {
-    private static final Set<DataViewStrategy> STRATEGIES = ContainerUtil.newHashSet(new ArrayViewStrategy(), new DataFrameViewStrategy());
+    private static final Set<DataViewStrategy> STRATEGIES = ContainerUtil.newHashSet(new ArrayViewStrategy(), new DataFrameViewStrategy(), new DataFrameViewStrategy(), new SeriesViewStrategy());
   }
 
   public abstract AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel panel, @NotNull PyDebugValue debugValue);
@@ -52,5 +52,13 @@ public abstract class DataViewStrategy {
       }
     }
     return null;
+  }
+
+  private static class SeriesViewStrategy extends DataFrameViewStrategy {
+    @NotNull
+    @Override
+    public String getTypeName() {
+      return "Series";
+    }
   }
 }

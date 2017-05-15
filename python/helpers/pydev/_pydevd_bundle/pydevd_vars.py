@@ -425,6 +425,9 @@ def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
         xml += array_to_xml(array, roffset, coffset, rows, cols, format)
     elif type_name == 'DataFrame':
         xml = dataframe_to_xml(array, name, roffset, coffset, rows, cols, format)
+    elif type_name == 'Series':
+        xml = series_to_xml(array, name, roffset, 0, rows, 1, format)
+
     else:
         raise VariableError("Do not know how to convert type %s to table" % (type_name))
 
@@ -613,6 +616,59 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
         xml += "<row index=\"%s\"/>\n" % str(row)
         for col in range(cols):
             value = df.iat[row, col]
+            value = col_formats[col] % value
+            xml += var_to_xml(value, '')
+    return xml
+
+
+def series_to_xml(df, name, roffset, coffset, rows, cols, format):
+    """
+    :type df: pandas.core.frame.DataFrame
+    :type name: str
+    :type coffset: int
+    :type roffset: int
+    :type rows: int
+    :type cols: int
+    :type format: str
+
+
+    """
+    num_rows = df.shape[0]
+    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"\" type=\"\" max=\"0\" min=\"0\"/>\n' % \
+          (name, num_rows, 1)
+
+    if (rows, cols) == (-1, -1):
+        rows, cols = num_rows, 1
+
+    rows = min(rows, 100)
+    dtype = df.dtype.kind
+    col_bounds = [(df.min(), df.max()) if dtype in "biufc" else (0, 0)]
+
+    df = df.iloc[roffset: roffset + rows]
+    rows, cols = df.shape[0], 1
+
+
+    xml += "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
+    format = format.replace('%', '')
+    col_formats = []
+
+
+    for col in range(cols):
+        fmt = format if (dtype == 'f' and format) else array_default_format(dtype)
+        col_formats.append('%' + fmt)
+        bounds = col_bounds[col]
+
+        xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
+               (str(col), 1, dtype, fmt, bounds[1], bounds[0])
+    for row, label in enumerate(iter(df.axes[0])):
+        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
+               (str(row), 1)
+    xml += "</headerdata>\n"
+    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
+    for row in range(rows):
+        xml += "<row index=\"%s\"/>\n" % str(row)
+        for col in range(cols):
+            value = df.iat[row]
             value = col_formats[col] % value
             xml += var_to_xml(value, '')
     return xml
