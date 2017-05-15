@@ -87,7 +87,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
     group.add(new AddExternalSuiteAction());
     group.add(new DeleteSuiteAction());
     group.add(new SwitchEngineAction());
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    return ActionManager.getInstance().createActionToolbar("CoverageSuiteChooser", group, true).getComponent();
   }
 
   @Override
