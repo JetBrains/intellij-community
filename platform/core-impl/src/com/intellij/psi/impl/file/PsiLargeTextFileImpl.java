@@ -23,9 +23,4 @@ public class PsiLargeTextFileImpl extends PsiPlainTextFileImpl implements PsiLar
   public PsiLargeTextFileImpl(FileViewProvider viewProvider) {
     super(viewProvider);
   }
-
-  @Override
-  public boolean isWritable() {
-    return false;
-  }
 }
