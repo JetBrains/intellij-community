@@ -22,6 +22,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
@@ -32,7 +33,7 @@ public class NullableStuffInspectionTest extends LightCodeInsightFixtureTestCase
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(super.getSdk());
+      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
     }
   };
   private NullableStuffInspection myInspection = new NullableStuffInspection();
