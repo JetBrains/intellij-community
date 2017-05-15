@@ -484,7 +484,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class MyChangeProcessor extends CacheChangeProcessor {
+  private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);

@@ -1021,7 +1021,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
   }
 
-  private class MyChangeProcessor extends CacheChangeProcessor {
+  private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
     public MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.COMMIT_DIALOG);
 
