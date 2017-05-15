@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PatchDiffTool implements FrameDiffTool {
@@ -68,7 +69,7 @@ public class PatchDiffTool implements FrameDiffTool {
     private final DiffContext myContext;
     private final PatchDiffRequest myRequest;
     private final MyPrevNextDifferenceIterable myPrevNextDifferenceIterable;
-    private final PatchChangeBuilder myBuilder;
+    private List<PatchChangeBuilder.Hunk> myHunks = new ArrayList<>();
 
     public MyPatchViewer(DiffContext context, PatchDiffRequest request) {
       myProject = context.getProject();
@@ -76,7 +77,6 @@ public class PatchDiffTool implements FrameDiffTool {
       myRequest = request;
       Document document = EditorFactory.getInstance().createDocument("");
       myEditor = DiffUtil.createEditor(document, myProject, true, true);
-      myBuilder = new PatchChangeBuilder();
       myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
 
       Wrapper editorPanel = new Wrapper(new BorderLayout(0, DiffUtil.TITLE_GAP), myEditor.getComponent());
@@ -113,20 +113,22 @@ public class PatchDiffTool implements FrameDiffTool {
     }
 
     private void onInit() {
-      myBuilder.exec(myRequest.getPatch().getHunks());
+      PatchChangeBuilder builder = new PatchChangeBuilder();
+      builder.exec(myRequest.getPatch().getHunks());
+      myHunks.addAll(builder.getHunks());
 
       Document patchDocument = myEditor.getDocument();
-      WriteAction.run(() -> patchDocument.setText(myBuilder.getPatchContent().toString()));
+      WriteAction.run(() -> patchDocument.setText(builder.getPatchContent().toString()));
 
       myEditor.getGutterComponentEx()
-        .setLineNumberConvertor(myBuilder.getLineConvertor1().createConvertor(), myBuilder.getLineConvertor2().createConvertor());
+        .setLineNumberConvertor(builder.getLineConvertor1().createConvertor(), builder.getLineConvertor2().createConvertor());
 
-      for (int line : myBuilder.getSeparatorLines().toNativeArray()) {
+      for (int line : builder.getSeparatorLines().toNativeArray()) {
         int offset = patchDocument.getLineStartOffset(line);
         DiffDrawUtil.createLineSeparatorHighlighter(myEditor, offset, offset, BooleanGetter.TRUE);
       }
       // highlighting
-      for (PatchChangeBuilder.Hunk hunk : myBuilder.getHunks()) {
+      for (PatchChangeBuilder.Hunk hunk : myHunks) {
         DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, hunk.getPatchDeletionRange(), hunk.getPatchInsertionRange(), null);
       }
     }
@@ -147,7 +149,7 @@ public class PatchDiffTool implements FrameDiffTool {
       @NotNull
       @Override
       protected List<PatchChangeBuilder.Hunk> getChanges() {
-        return myBuilder.getHunks();
+        return myHunks;
       }
 
       @NotNull
