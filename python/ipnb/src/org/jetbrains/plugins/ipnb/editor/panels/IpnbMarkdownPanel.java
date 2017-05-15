@@ -24,7 +24,7 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JComponent, IpnbMarkdow
   @Override
   protected JComponent createViewPanel() {
     int width = myParent.getWidth();
-    return IpnbUtils.createLatexPane(myCell.getSourceAsString(), width);
+    return IpnbUtils.createLatexPane(myCell.getSourceAsString(), width, myParent);
   }
 
   @Override

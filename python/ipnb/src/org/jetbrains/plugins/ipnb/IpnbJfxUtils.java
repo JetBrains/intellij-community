@@ -17,11 +17,10 @@ import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
+import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 import org.markdown4j.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -68,7 +67,7 @@ public class IpnbJfxUtils {
   private static final String ourPostfix = "</div></body></html>";
   private static URL ourStyleUrl;
 
-  public static JComponent createHtmlPanel(@NotNull final String source, int width) {
+  public static JComponent createHtmlPanel(@NotNull final String source, int width, IpnbFilePanel parent) {
 
     final JFXPanel javafxPanel = new JFXPanel() {
       @Override
@@ -78,8 +77,6 @@ public class IpnbJfxUtils {
         parent.dispatchEvent(parentEvent);
       }
     };
-    javafxPanel.setBackground(IpnbEditorUtil.getBackground());
-
     Platform.runLater(() -> {
       final WebView webView = new WebView();
       webView.setContextMenuEnabled(false);
@@ -90,16 +87,20 @@ public class IpnbJfxUtils {
 
       final boolean hasMath = source.contains("$");
       if (hasMath) {
-        engine.setOnStatusChanged(event -> adjustHeight(webView, javafxPanel, source));
+        engine.setOnStatusChanged(event -> {
+          final String data = event.getData();
+          if (data != null && data.isEmpty()) {
+            adjustHeight(webView, javafxPanel, source, parent);
+          }
+        });
       }
       else {
         engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
           if (newValue == Worker.State.SUCCEEDED) {
-            adjustHeight(webView, javafxPanel, source);
+            adjustHeight(webView, javafxPanel, source, parent);
           }
         });
       }
-      final BorderPane pane = new BorderPane(webView);
       final String prefix;
       if (hasMath) {
         prefix = String.format(ourMathJaxPrefix, width - 500, EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize(),
@@ -111,7 +112,7 @@ public class IpnbJfxUtils {
       final String content = prefix + convertToHtml(source) + ourPostfix;
       engine.loadContent(content);
 
-      final Scene scene = new Scene(pane, 0, 0);
+      final Scene scene = new Scene(webView, 0, 0);
 
       javafxPanel.setScene(scene);
       updateLaf(LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo,
@@ -231,7 +232,7 @@ public class IpnbJfxUtils {
     }
   }
 
-  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source) {
+  private static void adjustHeight(final WebView webView, final JFXPanel javafxPanel, String source, IpnbFilePanel parent) {
     final WebEngine engine = webView.getEngine();
     final Document document = engine.getDocument();
     if (document != null) {
@@ -272,13 +273,13 @@ public class IpnbJfxUtils {
           source = source.substring(source.indexOf("$$") + 2);
         }
 
-        int finalHeight = height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize();
-        int finalWidth = width;
+        final Dimension size = new Dimension(
+          width, height + count * EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize());
         UIUtil.invokeLaterIfNeeded(() -> {
-          final Dimension size = new Dimension(finalWidth, finalHeight);
           javafxPanel.setPreferredSize(size);
           javafxPanel.setMinimumSize(size);
-          javafxPanel.revalidate();
+          javafxPanel.invalidate();
+          parent.revalidateAndRepaint();
         });
       }
     }

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBLoadingPanel;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
@@ -43,7 +44,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   private final String myName;
 
-  private final JComponent myEditorPanel;
+  private final JBLoadingPanel myEditorPanel;
 
   private final IpnbFilePanel myIpnbFilePanel;
   private final Document myDocument;
@@ -78,7 +79,8 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     myName = vFile.getName();
 
-    myEditorPanel = new JPanel(new BorderLayout());
+    myEditorPanel = new JBLoadingPanel(new BorderLayout(), this);
+    myEditorPanel.startLoading();
     myEditorPanel.setBackground(IpnbEditorUtil.getBackground());
 
     myIpnbFilePanel = createIpnbEditorPanel(project, vFile);
@@ -90,6 +92,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
     registerHeadingActions();
+  }
+
+  public void loaded() {
+    myEditorPanel.stopLoading();
   }
 
   public Document getDocument() {
