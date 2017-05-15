@@ -306,7 +306,7 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
     @NotNull
     public TextFilePatch getPatch(final ShelvedChange shelvedChange, @NotNull CommitContext commitContext) throws VcsException {
       String patchPath = shelvedChange.getPatchPath();
-      if (isPatchFileChangedOrNotLoaded(patchPath)) {
+      if (myFilePatchesMap.get(patchPath) == null || isPatchFileChanged(patchPath)) {
         readFilePatchAndUpdateCaches(patchPath, commitContext);
       }
       PatchInfo patchInfo = myFilePatchesMap.get(patchPath);
@@ -330,10 +330,10 @@ public class DiffShelvedChangesAction extends AnAction implements DumbAware {
       }
     }
 
-    public boolean isPatchFileChangedOrNotLoaded(String patchPath) {
+    public boolean isPatchFileChanged(String patchPath) {
       PatchInfo patchInfo = myFilePatchesMap.get(patchPath);
       long lastModified = new File(patchPath).lastModified();
-      return patchInfo == null || lastModified != patchInfo.myLoadedTimeStamp;
+      return patchInfo != null && lastModified != patchInfo.myLoadedTimeStamp;
     }
 
     private static class PatchInfo {
