@@ -140,7 +140,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     });
 
     final JComponent component =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActions(structure), false).getComponent();
+      ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(structure), false).getComponent();
     addToLeft(component);
   }
 
