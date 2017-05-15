@@ -71,6 +71,9 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
+import static com.intellij.lang.ant.config.AntBuildListener.STATE.ABORTED;
+import static com.intellij.lang.ant.config.AntBuildListener.STATE.FINISHED_SUCCESSFULLY;
+
 public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.AntBuildMessageView");
 
@@ -833,7 +836,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
               }
               finally {
                 VirtualFileManager.getInstance().asyncRefresh(
-                  () -> antBuildListener.buildFinished(aborted ? AntBuildListener.ABORTED : AntBuildListener.FINISHED_SUCCESSFULLY, errorCount));
+                  () -> antBuildListener.buildFinished(myProject, aborted ? ABORTED : FINISHED_SUCCESSFULLY, errorCount));
               }
             };
             if (shouldActivate) {

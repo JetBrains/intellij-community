@@ -16,15 +16,33 @@
 
 package com.intellij.lang.ant.config;
 
-public interface AntBuildListener {
+import com.intellij.lang.ant.config.execution.AntBuildMessageView;
+import com.intellij.lang.ant.config.execution.AntExecutionListener;
+import com.intellij.openapi.project.Project;
 
-  int FINISHED_SUCCESSFULLY = 0;
-  int ABORTED = 1;
-  int FAILED_TO_RUN = 2;
+public abstract class AntBuildListener {
 
-  AntBuildListener NULL = new AntBuildListener() {
-    public void buildFinished(int state, int errorCount) { }
+  public enum STATE {FINISHED_SUCCESSFULLY, ABORTED, FAILED_TO_RUN}
+
+  public static final AntBuildListener NULL = new AntBuildListener() {
+    @Override
+    public void onBuildFinished(STATE state, int errorCount) { }
   };
 
-  void buildFinished(int state, int errorCount);
+  public final void buildFinished(Project project, STATE state, int errorCount) {
+    final AntExecutionListener[] antExecutionListeners = AntExecutionListener.EP_NAME.getExtensions();
+    for (AntExecutionListener listener: antExecutionListeners) {
+      listener.buildFinished(project, state, errorCount);
+    }
+    onBuildFinished(state, errorCount);
+  }
+
+  public final void beforeBuildStart(AntBuildMessageView view) {
+    final AntExecutionListener[] antExecutionListeners = AntExecutionListener.EP_NAME.getExtensions();
+    for (AntExecutionListener listener: antExecutionListeners) {
+      listener.buildStarted(view);
+    }
+  }
+
+  public abstract void onBuildFinished(STATE state, int errorCount);
 }
