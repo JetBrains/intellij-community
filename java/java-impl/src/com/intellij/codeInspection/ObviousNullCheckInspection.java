@@ -67,9 +67,9 @@ public class ObviousNullCheckInspection extends BaseJavaBatchLocalInspectionTool
 
   @Nullable
   private static String getObviouslyNonNullExplanation(PsiExpression arg) {
-    if (arg == null) return null;
+    if (arg == null || ExpressionUtils.isNullLiteral(arg)) return null;
     if (arg instanceof PsiNewExpression) return "newly created object";
-    if (arg instanceof PsiLiteralExpression && !ExpressionUtils.isNullLiteral(arg)) return "literal";
+    if (arg instanceof PsiLiteralExpression) return "literal";
     if (arg.getType() instanceof PsiPrimitiveType) return "a value of primitive type";
     if (arg instanceof PsiPolyadicExpression && ((PsiPolyadicExpression)arg).getOperationTokenType() == JavaTokenType.PLUS) {
       return "concatenation";

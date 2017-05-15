@@ -9,6 +9,7 @@ abstract class ObviousNullCheck {
   void test() {
     assertNotNull(<warning descr="Useless null-check: a value of primitive type is never null">5 + 6</warning>);
 
+    Objects.requireNonNull(null);
     Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">"xyz"</warning>, "xyz");
     Objects.requireNonNull((<warning descr="Useless null-check: concatenation is never null">getFoo() + getBar()</warning>));
     Objects.requireNonNull(<warning descr="Useless null-check: newly created object is never null">new ArrayList()</warning>, () -> "new returned null");
