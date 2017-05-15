@@ -187,11 +187,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
             classPath.add(file.getAbsolutePath());
           }
           else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
-            try {
-              JUnitUtil.getTestCaseClass(sourceScope);
+            if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
               classPath.add(file.getAbsolutePath());
-            }
-            catch (JUnitUtil.NoJUnitException ignore) {
             }
           }
         }
