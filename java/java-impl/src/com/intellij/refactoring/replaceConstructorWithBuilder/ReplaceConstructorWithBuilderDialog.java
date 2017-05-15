@@ -133,7 +133,7 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
       }
     }).setAsSecondary(true);
 
-    panel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, true).getComponent(), BorderLayout.EAST);
+    panel.add(ActionManager.getInstance().createActionToolbar("ReplaceConstructorWithBuilder", actionGroup, true).getComponent(), BorderLayout.EAST);
     final Box box = Box.createHorizontalBox();
     box.add(panel);
     box.add(Box.createHorizontalGlue());
