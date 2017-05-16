@@ -20,10 +20,8 @@ import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
-import com.intellij.lang.ant.config.AntBuildModelBase;
-import com.intellij.lang.ant.config.AntBuildTargetBase;
-import com.intellij.lang.ant.config.AntConfigurationBase;
+import com.intellij.lang.ant.config.*;
+import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -150,7 +148,14 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       }
     };
 
-    return JBUI.Panels.simplePanel(MessageTreeRenderer.install(myTree));
+    final JScrollPane treePane = MessageTreeRenderer.install(myTree);
+    if (myBuildFile instanceof AntBuildFileBase) {
+      ((MessageTreeRenderer)myTree.getCellRenderer()).setUseAnsiColor(
+        AntBuildFileImpl.TREE_VIEW_ANSI_COLOR.value(((AntBuildFileBase)myBuildFile).getAllOptions())
+      );
+    }
+
+    return JBUI.Panels.simplePanel(treePane);
   }
 
   private void createModel() {
