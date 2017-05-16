@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,9 @@ import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.UrlOpener
 import com.intellij.ide.browsers.WebBrowser
 import com.intellij.openapi.project.Project
-import com.intellij.util.ArrayUtil
 
 internal class DefaultUrlOpener : UrlOpener() {
   override fun openUrl(browser: WebBrowser, url: String, project: Project?): Boolean {
-    return BrowserLauncher.instance.browseUsingPath(url, null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY)
+    return BrowserLauncher.instance.browseUsingPath(url, browser = browser, project = project)
   }
 }
