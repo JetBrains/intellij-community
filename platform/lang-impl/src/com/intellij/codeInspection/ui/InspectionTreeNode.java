@@ -20,8 +20,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -44,7 +44,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return null;
   }
 
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
     Enumeration enumeration = children();
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();

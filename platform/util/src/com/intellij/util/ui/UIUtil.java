@@ -2574,9 +2574,10 @@ public class UIUtil {
     }
   }
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
-  public static Object htmlInjectionGuard(Object toRender) {
+  public static <T> T htmlInjectionGuard(T toRender) {
     if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
-      toRender = "<html>" + StringUtil.escapeXml((String)toRender);
+      //noinspection unchecked
+      return (T) ("<html>" + StringUtil.escapeXml((String)toRender));
     }
     return toRender;
   }

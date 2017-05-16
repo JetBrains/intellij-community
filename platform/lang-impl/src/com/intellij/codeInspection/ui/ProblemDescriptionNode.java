@@ -28,8 +28,8 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.xml.util.XmlStringUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +105,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  public void visitProblemSeverities(FactoryMap<HighlightDisplayLevel, Integer> counter) {
+  public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
     if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }

@@ -20,6 +20,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
+import com.intellij.util.Function;
 import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
@@ -57,12 +58,12 @@ public class TreeUIHelperImpl extends TreeUIHelper {
     new TreeSpeedSearch(tree, convertor, canExpand);
   }
 
-  public void installListSpeedSearch(JList list) {
-    new ListSpeedSearch(list);
+  public void installListSpeedSearch(JList<?> list) {
+    new ListSpeedSearch<>(list);
   }
 
-  public void installListSpeedSearch(JList list, Convertor<Object, String> convertor) {
-    new ListSpeedSearch(list, convertor);
+  public <T> void installListSpeedSearch(JList<T> list, Convertor<T, String> convertor) {
+    new ListSpeedSearch<>(list, (Function<T, String>)convertor::convert);
   }
 
   public void installEditSourceOnEnterKeyHandler(final JTree tree) {

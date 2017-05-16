@@ -129,6 +129,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private EditorEx myPreviewEditor;
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<String, Set<Object>> mySuppressedNodes = new FactoryMap<String, Set<Object>>() {
     @Override
     protected Set<Object> create(String key) {
@@ -390,27 +391,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RerunAction(this));
     group.add(new CloseAction());
-    final TreeExpander treeExpander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-        TreeUtil.expandAll(myTree);
-      }
-
-      @Override
-      public boolean canExpand() {
-        return true;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
     group.add(actionsManager.createPrevOccurenceAction(getOccurenceNavigator()));
@@ -712,7 +693,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    myTreeUpdater.submit((Runnable)() -> ReadAction.run(() -> {
+    myTreeUpdater.submit(() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (myTreeStructureUpdateLock) {

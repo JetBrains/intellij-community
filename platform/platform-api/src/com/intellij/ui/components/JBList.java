@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
@@ -40,6 +39,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 
 /**
@@ -47,38 +47,42 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JBList<E> extends JList<E> implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
-  @NotNull private StatusText myEmptyText;
-  @NotNull private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
+  private StatusText myEmptyText;
+  private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   @Nullable private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
-
 
   public JBList() {
     init();
   }
 
-  public JBList(@NotNull ListModel dataModel) {
+  public JBList(@NotNull ListModel<E> dataModel) {
     super(dataModel);
     init();
   }
 
-  public JBList(@NotNull Object... listData) {
+  public JBList(@NotNull E... listData) {
     super(createDefaultListModel(listData));
     init();
   }
 
   @NotNull
-  public static DefaultListModel createDefaultListModel(@NotNull Object... items) {
-    final DefaultListModel model = new DefaultListModel();
-    for (Object item : items) {
+  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull T... items) {
+    return createDefaultListModel(Arrays.asList(items));
+  }
+
+  @NotNull
+  public static <T> DefaultListModel<T> createDefaultListModel(@NotNull Iterable<T> items) {
+    DefaultListModel<T> model = new DefaultListModel<>();
+    for (T item : items) {
       model.add(model.getSize(), item);
     }
     return model;
   }
 
   public JBList(@NotNull Collection<E> items) {
-    this(ArrayUtil.toObjectArray(items));
+    this(createDefaultListModel(items));
   }
 
   @Override
@@ -297,7 +301,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
       super.setCellRenderer(cellRenderer);
       return;
     }
-    super.setCellRenderer(new ExpandedItemListCellRendererWrapper(cellRenderer, myExpandableItemsHandler));
+    super.setCellRenderer(new ExpandedItemListCellRendererWrapper<>(cellRenderer, myExpandableItemsHandler));
   }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
@@ -378,7 +382,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     }
 
     protected class AccessibleJBListChild extends AccessibleJListChild {
-      public AccessibleJBListChild(JBList parent, int indexInParent) {
+      public AccessibleJBListChild(JBList<E> parent, int indexInParent) {
         super(parent, indexInParent);
       }
 

@@ -188,17 +188,8 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
   @NotNull
   @Override
   public HighlighterIterator createIterator(int startOffset) {
-    // do NOT synchronize before updateLayers due to deadlock with PsiLock
-    final boolean changed = updateLayers();
-
     //noinspection SynchronizeOnThis
     synchronized (this) {
-      if (changed) {
-        Document document = getDocument();
-        if (document != null) {
-          resetText(document.getImmutableCharSequence());
-        }
-      }
       return new LayeredHighlighterIteratorImpl(startOffset);
     }
   }

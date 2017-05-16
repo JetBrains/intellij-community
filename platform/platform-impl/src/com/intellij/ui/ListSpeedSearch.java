@@ -31,21 +31,33 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class ListSpeedSearch extends SpeedSearchBase<JList> {
-  private final Convertor<Object, String> myToStringConvertor;
+public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
+  @Nullable private final Function<T, String> myToStringConvertor;
 
-  public ListSpeedSearch(JList list) {
-    this(list, (Convertor<Object, String>)null);
+  public ListSpeedSearch(JList<T> list) {
+    super(list);
+    myToStringConvertor = null;
+    registerSelectAll(list);
   }
 
-  public ListSpeedSearch(final JList list, @NotNull Function<Object, String> convertor) {
-    this(list, (Convertor<Object, String>)convertor::fun);
-  }
-
-  public ListSpeedSearch(final JList list, @Nullable Convertor<Object, String> convertor) {
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public ListSpeedSearch(final JList<T> list, @NotNull Function<T, String> convertor) {
     super(list);
     myToStringConvertor = convertor;
+    registerSelectAll(list);
+  }
 
+  /**
+   * @deprecated use {@link #ListSpeedSearch(JList, Function)}
+   */
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public ListSpeedSearch(final JList<T> list, @Nullable Convertor<T, String> convertor) {
+    super(list);
+    myToStringConvertor = convertor == null ? null : convertor::convert;
+    registerSelectAll(list);
+  }
+
+  private void registerSelectAll(JList<T> list) {
     new MySelectAllAction(list, this).registerCustomShortcutSet(list, null);
   }
 
@@ -86,7 +98,8 @@ public class ListSpeedSearch extends SpeedSearchBase<JList> {
   @Override
   protected String getElementText(Object element) {
     if (myToStringConvertor != null) {
-      return myToStringConvertor.convert(element);
+      //noinspection unchecked
+      return myToStringConvertor.fun((T)element);
     }
     return element == null ? null : element.toString();
   }
