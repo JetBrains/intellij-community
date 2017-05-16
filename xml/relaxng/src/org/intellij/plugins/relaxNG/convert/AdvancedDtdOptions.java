@@ -100,7 +100,7 @@ public class AdvancedDtdOptions implements AdvancedOptions {
       }
     });
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("RelaxNgDtdOptions", group, false);
     myToolbar.add(toolbar.getComponent());
   }
 
