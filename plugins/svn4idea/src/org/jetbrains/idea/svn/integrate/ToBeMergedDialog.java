@@ -306,7 +306,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private ActionToolbar createToolbar() {
     DefaultActionGroup actions = new DefaultActionGroup(new MySelectAll(), new MyUnselectAll(), myMore100Action, myMore500Action);
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    return ActionManager.getInstance().createActionToolbar("SvnToBeMerged", actions, true);
   }
 
   @NotNull

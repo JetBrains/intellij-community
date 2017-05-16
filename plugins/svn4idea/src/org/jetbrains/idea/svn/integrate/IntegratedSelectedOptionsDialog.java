@@ -183,7 +183,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   private void createUIComponents() {
     myGroup = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myGroup, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SvnIntegratedSelectedOptionsDialog", myGroup, false);
     myToolbar = actionToolbar.getComponent();
   }
 

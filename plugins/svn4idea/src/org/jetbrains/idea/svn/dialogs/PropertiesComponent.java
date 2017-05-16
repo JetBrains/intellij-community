@@ -193,7 +193,7 @@ public class PropertiesComponent extends JPanel {
     group.add(new FollowSelectionAction());
     group.add(myRefreshAction);
     group.add(myCloseAction);
-    return ActionManager.getInstance().createActionToolbar("", group, false).getComponent();
+    return ActionManager.getInstance().createActionToolbar("SvnProperties", group, false).getComponent();
   }
 
   private DefaultActionGroup createPopup() {
