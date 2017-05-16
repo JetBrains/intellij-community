@@ -17,6 +17,7 @@ package com.intellij.ide.browsers
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
+import com.intellij.util.ArrayUtil
 
 import java.io.File
 import java.net.URI
@@ -41,8 +42,8 @@ abstract class BrowserLauncher {
   abstract fun browse(url: String, browser: WebBrowser?, project: Project?)
 
   abstract fun browseUsingPath(url: String?,
-                               browserPath: String?,
-                               browser: WebBrowser?,
-                               project: Project?,
-                               additionalParameters: Array<String>): Boolean
+                               browserPath: String? = null,
+                               browser: WebBrowser? = null,
+                               project: Project? = null,
+                               additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY): Boolean
 }

@@ -24,10 +24,9 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Urls
@@ -64,17 +63,15 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
 
   override fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {
     val browserManager = WebBrowserManager.getInstance()
-    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
-      val browser = browserManager.firstActiveBrowser
-      if (browser != null) {
-        browse(uri.toString(), browser, project)
+    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST || "open" == settings.browserPath) {
+      browserManager.firstActiveBrowser?.let {
+        browse(uri.toString(), it, project)
         return
       }
     }
     else if (SystemInfo.isMac && "open" == settings.browserPath) {
-      val browser = browserManager.firstActiveBrowser
-      if (browser != null) {
-        browseUsingPath(uri.toString(), null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY)
+      browserManager.firstActiveBrowser?.let {
+        browseUsingPath(uri.toString(), null, it, project, ArrayUtil.EMPTY_STRING_ARRAY)
         return
       }
     }
@@ -82,31 +79,18 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     super.browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project)
   }
 
-  override fun showError(error: String?,
-                          browser: WebBrowser?,
-                          project: Project?,
-                          title: String?,
-                          launchTask: (() -> Unit)?) {
+  override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
     AppUIUtil.invokeOnEdt(Runnable {
-      if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"),
-        title ?: IdeBundle.message("browser.error"), Messages.OK_BUTTON,
-        IdeBundle.message("button.fix"), null) == Messages.NO) {
+      if (!showOkNoDialog(title ?: IdeBundle.message("browser.error"), error ?: "Unknown error", project, noText = IdeBundle.message("button.fix"))) {
         val browserSettings = BrowserSettings()
-        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, if (browser == null) null
-        else {
-          browserSettings.selectBrowser(browser)
-        } as Runnable)) {
+        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser?.let { Runnable { browserSettings.selectBrowser(it) } })) {
           launchTask?.invoke()
         }
       }
     }, project?.disposed)
   }
 
-  override fun checkCreatedProcess(browser: WebBrowser?,
-                                             project: Project?,
-                                             commandLine: GeneralCommandLine,
-                                             process: Process,
-                                             launchTask: (() -> Unit)?) {
+  override fun checkCreatedProcess(browser: WebBrowser?, project: Project?, commandLine: GeneralCommandLine, process: Process, launchTask: (() -> Unit)?) {
     if (isOpenCommandUsed(commandLine)) {
       val future = ApplicationManager.getApplication().executeOnPooledThread {
         try {

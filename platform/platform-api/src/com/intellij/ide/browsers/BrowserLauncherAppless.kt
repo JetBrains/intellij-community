@@ -56,9 +56,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     private val generalSettings: GeneralSettings
       get() {
         if (ApplicationManager.getApplication() != null) {
-          val settings = GeneralSettings.getInstance()
-          if (settings != null) {
-            return settings
+          GeneralSettings.getInstance()?.let {
+            return it
           }
         }
 
@@ -68,7 +67,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     private val defaultBrowserCommand: List<String>?
       get() {
         if (SystemInfo.isWindows) {
-          return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
+          return listOf(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
         }
         else if (SystemInfo.isMac) {
           return listOf(ExecUtil.getOpenCommandPath())
@@ -100,9 +99,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
     }
 
-    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean {
-      return SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
-    }
+    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
   }
 
   override fun open(url: String) = openOrBrowse(url, false, null)
@@ -128,13 +125,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
           // if "No application knows how to open", then we must not try to use OS open
           tryToUseCli = !e.message!!.contains("Error code: -10814")
         }
-
       }
 
       if (tryToUseCli) {
-        val command = defaultBrowserCommand
-        if (command != null) {
-          doLaunch(uri.toString(), command, null, project, ArrayUtil.EMPTY_STRING_ARRAY, null)
+        defaultBrowserCommand?.let {
+          doLaunch(uri.toString(), it, null, project)
           return
         }
       }
@@ -144,11 +139,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   protected open fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {
-    browseUsingPath(uri.toString(), settings.browserPath, null, project, ArrayUtil.EMPTY_STRING_ARRAY)
+    browseUsingPath(uri.toString(), settings.browserPath, project = project)
   }
 
   private fun openOrBrowse(_url: String, browse: Boolean, project: Project?) {
-    var url = _url.trim { it <= ' ' }
+    val url = _url.trim { it <= ' ' }
 
     val uri: URI?
     if (BrowserUtil.isAbsoluteURL(url)) {
@@ -169,7 +164,6 @@ open class BrowserLauncherAppless : BrowserLauncher() {
         catch (e: IOException) {
           LOG.debug(e)
         }
-
       }
 
       browse(file)
@@ -177,7 +171,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     }
 
     if (uri == null) {
-      showError(IdeBundle.message("error.malformed.url", url), null, project, null, null)
+      showError(IdeBundle.message("error.malformed.url", url), project = project)
     }
     else {
       browse(uri, project)
@@ -189,19 +183,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       openOrBrowse(url, true, project)
     }
     else {
-      for (urlOpener in UrlOpener.EP_NAME.extensions) {
-        if (urlOpener.openUrl(browser, url, project)) {
-          return
-        }
-      }
+      UrlOpener.EP_NAME.extensions.any { it.openUrl(browser, url, project) }
     }
   }
 
-  override fun browseUsingPath(url: String?,
-                               browserPath: String?,
-                               browser: WebBrowser?,
-                               project: Project?,
-                               additionalParameters: Array<String>): Boolean {
+  override fun browseUsingPath(url: String?, browserPath: String?, browser: WebBrowser?, project: Project?, additionalParameters: Array<String>): Boolean {
     var browserPathEffective = browserPath
     var launchTask: (() -> Unit)? = null
     if (browserPath == null && browser != null) {
@@ -211,12 +197,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     return doLaunch(url, browserPathEffective, browser, project, additionalParameters, launchTask)
   }
 
-  private fun doLaunch(url: String?,
-                       browserPath: String?,
-                       browser: WebBrowser?,
-                       project: Project?,
-                       additionalParameters: Array<String>,
-                       launchTask: (() -> Unit)?): Boolean {
+  private fun doLaunch(url: String?, browserPath: String?, browser: WebBrowser?, project: Project?, additionalParameters: Array<String>, launchTask: (() -> Unit)?): Boolean {
     if (!checkPath(browserPath, browser, project, launchTask)) {
       return false
     }
@@ -225,7 +206,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   @Contract("null, _, _, _ -> false")
   fun checkPath(browserPath: String?, browser: WebBrowser?, project: Project?, launchTask: (() -> Unit)?): Boolean {
-    if (!StringUtil.isEmptyOrSpaces(browserPath)) {
+    if (!browserPath.isNullOrBlank()) {
       return true
     }
 
@@ -234,19 +215,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     return false
   }
 
-  private fun doLaunch(url: String?,
-                       command: List<String>,
-                       browser: WebBrowser?,
-                       project: Project?,
-                       additionalParameters: Array<String>,
-                       launchTask: (() -> Unit)?): Boolean {
+  private fun doLaunch(url: String?, command: List<String>, browser: WebBrowser?, project: Project?, additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY, launchTask: (() -> Unit)? = null): Boolean {
     val commandLine = GeneralCommandLine(command)
 
-    if (url != null && url.startsWith("jar:")) {
-      return false
-    }
-
     if (url != null) {
+      if (url.startsWith("jar:")) {
+        return false
+      }
       commandLine.addParameter(url)
     }
 
@@ -258,8 +233,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     addArgs(commandLine, browserSpecificSettings, additionalParameters)
 
     try {
-      val process = commandLine.createProcess()
-      checkCreatedProcess(browser, project, commandLine, process, launchTask)
+      checkCreatedProcess(browser, project, commandLine, commandLine.createProcess(), launchTask)
       return true
     }
     catch (e: ExecutionException) {
@@ -269,14 +243,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   }
 
-  protected open fun checkCreatedProcess(browser: WebBrowser?,
-                                         project: Project?,
-                                         commandLine: GeneralCommandLine,
-                                         process: Process,
-                                         launchTask: (() -> Unit)?) {
+  protected open fun checkCreatedProcess(browser: WebBrowser?, project: Project?, commandLine: GeneralCommandLine, process: Process, launchTask: (() -> Unit)?) {
   }
 
-  protected open fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
+  protected open fun showError(error: String?, browser: WebBrowser? = null, project: Project? = null, title: String? = null, launchTask: (() -> Unit)? = null) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }
