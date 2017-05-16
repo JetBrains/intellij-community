@@ -279,9 +279,9 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyType getNamedTupleType(@NotNull PsiElement referenceTarget,
-                                          @NotNull TypeEvalContext context,
-                                          @Nullable PsiElement anchor) {
+  static PyType getNamedTupleType(@NotNull PsiElement referenceTarget,
+                                  @NotNull TypeEvalContext context,
+                                  @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
       final PyTargetExpressionStub stub = target.getStub();
