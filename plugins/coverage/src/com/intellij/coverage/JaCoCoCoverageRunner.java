@@ -107,18 +107,17 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
               @Override
               public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                 File file = path.toFile();
-                if (file.isFile()) {
-                  try {
-                    analyzer.analyzeAll(file);
-                  }
-                  catch (Exception e) {
-                    LOG.error(e);
-                  }
+                try {
+                  analyzer.analyzeAll(file);
+                }
+                catch (Exception e) {
+                  LOG.error(e);
                 }
                 return FileVisitResult.CONTINUE;
               }
             });
           }
+          catch (NoSuchFileException ignore) {}
           catch (URISyntaxException e) { 
             LOG.info(e);
           }
