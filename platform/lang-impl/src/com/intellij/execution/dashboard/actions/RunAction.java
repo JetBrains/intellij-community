@@ -19,26 +19,31 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
-
-import javax.swing.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author konstantin.aleev
  */
 public class RunAction extends ExecutorAction {
-  public RunAction() {
-    super(ExecutionBundle.message("run.dashboard.run.action.name"),
-          ExecutionBundle.message("run.dashboard.run.action.description"),
-          AllIcons.Toolwindows.ToolWindowRun);
-  }
-
   @Override
   protected Executor getExecutor() {
     return DefaultRunExecutor.getRunExecutorInstance();
   }
 
   @Override
-  protected Icon getIcon(boolean running) {
-    return running ? AllIcons.Actions.Restart : AllIcons.Toolwindows.ToolWindowRun;
+  protected void update(@NotNull AnActionEvent e, boolean running) {
+    Presentation presentation = e.getPresentation();
+    if (running) {
+      presentation.setText(ExecutionBundle.message("run.dashboard.rerun.action.name"));
+      presentation.setDescription(ExecutionBundle.message("run.dashboard.rerun.action.description"));
+      presentation.setIcon(AllIcons.Actions.Restart);
+    }
+    else {
+      presentation.setText(ExecutionBundle.message("run.dashboard.run.action.name"));
+      presentation.setDescription(ExecutionBundle.message("run.dashboard.run.action.description"));
+      presentation.setIcon(AllIcons.Actions.Execute);
+    }
   }
 }

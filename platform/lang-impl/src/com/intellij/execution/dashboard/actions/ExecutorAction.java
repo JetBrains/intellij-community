@@ -39,8 +39,8 @@ import java.util.List;
  * @author konstantin.aleev
  */
 public abstract class ExecutorAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
-  protected ExecutorAction(String text, String description, Icon icon) {
-    super(text, description, icon);
+  protected ExecutorAction() {
+    super(null, null, null);
   }
 
   @Override
@@ -59,11 +59,11 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
         Content content = node.getContent();
         return content != null && !RunContentManagerImpl.isTerminated(content);
       });
-      e.getPresentation().setIcon(getIcon(running));
+      update(e, running);
     }
     else {
       Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
-      e.getPresentation().setIcon(getIcon(content != null && !RunContentManagerImpl.isTerminated(content)));
+      update(e, content != null && !RunContentManagerImpl.isTerminated(content));
     }
   }
 
@@ -114,5 +114,5 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
 
   protected abstract Executor getExecutor();
 
-  protected abstract Icon getIcon(boolean running);
+  protected abstract void update(@NotNull AnActionEvent e, boolean running);
 }
