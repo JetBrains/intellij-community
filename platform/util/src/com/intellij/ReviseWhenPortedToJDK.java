@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.internal;
+package com.intellij;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,5 +26,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD,ElementType.TYPE,ElementType.TYPE_USE,ElementType.ANNOTATION_TYPE,ElementType.CONSTRUCTOR,ElementType.FIELD,ElementType.PARAMETER,ElementType.LOCAL_VARIABLE,ElementType.PACKAGE,ElementType.TYPE_PARAMETER})
 @Retention(RetentionPolicy.SOURCE)
 public @interface ReviseWhenPortedToJDK {
-  String value();
+  String value(); // JDK major version
 }

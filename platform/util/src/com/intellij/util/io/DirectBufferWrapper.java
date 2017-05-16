@@ -15,13 +15,16 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Cleaner;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -58,15 +61,37 @@ public abstract class DirectBufferWrapper extends ByteBufferWrapper {
     myBuffer = null;
   }
 
- static boolean disposeDirectBuffer(final ByteBuffer buffer) {
+  @ReviseWhenPortedToJDK("9")
+  static boolean disposeDirectBuffer(final ByteBuffer buffer) {
     return AccessController.doPrivileged(new PrivilegedAction<Object>() {
       @Override
       @Nullable
       public Object run() {
         try {
           if (buffer instanceof DirectBuffer) {
-            Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-            if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+            if (SystemInfo.IS_AT_LEAST_JAVA9) {
+              // in JDK9 DirectBuffer.cleaner() returns jdk.internal.ref.Cleaner instead of sun.misc.Cleaner
+              // since we have to target both jdk 8 and 9 we have to use reflection
+              try {
+                Method cleanerMethod = buffer.getClass().getMethod("cleaner");
+                cleanerMethod.setAccessible(true);
+                Object cleaner = cleanerMethod.invoke(buffer);
+                if (cleaner != null) {
+                  Method cleanMethod = cleaner.getClass().getMethod("clean");
+                  cleanMethod.setAccessible(true);
+                  cleanMethod.invoke(cleaner);
+                }
+              }
+              catch (Exception e) {
+                // something serious, needs to be logged
+                LOG.error(e);
+                throw e;
+              }
+            }
+            else {
+              Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
+              if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+            }
           }
           return null;
         }
@@ -76,5 +101,4 @@ public abstract class DirectBufferWrapper extends ByteBufferWrapper {
       }
     }) == null;
   }
-
 }
