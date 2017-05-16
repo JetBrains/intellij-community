@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.messages.MessageBusConnection;
@@ -108,6 +109,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
       @Override
       public void processStarted(@NotNull String executorId, @NotNull ExecutionEnvironment env, final @NotNull ProcessHandler handler) {
+        updateToolWindowContent();
         updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
       }
 
@@ -116,6 +118,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
                                     @NotNull ExecutionEnvironment env,
                                     @NotNull ProcessHandler handler,
                                     int exitCode) {
+        updateToolWindowContent();
         updateDashboardIfNeeded(env.getRunnerAndConfigurationSettings());
       }
     });
@@ -272,24 +275,26 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   private void updateToolWindowContent() {
-    String tabName = null;
-    Icon tabIcon = null;
-    if (!myShowConfigurations) {
-      Content content = myContentManager.getSelectedContent();
-      if (content != null) {
-        tabName = content.getTabName();
-        tabIcon = content.getIcon();
+    AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+      String tabName = null;
+      Icon tabIcon = null;
+      if (!myShowConfigurations) {
+        Content content = myContentManager.getSelectedContent();
+        if (content != null) {
+          tabName = content.getTabName();
+          tabIcon = content.getIcon();
+        }
       }
-    }
-    myToolWindowContent.setDisplayName(tabName);
-    myToolWindowContent.setIcon(tabIcon);
+      myToolWindowContent.setDisplayName(tabName);
+      myToolWindowContent.setIcon(tabIcon);
 
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId());
-    if (toolWindow instanceof ToolWindowImpl) {
-      ToolWindowContentUi contentUi = ((ToolWindowImpl)toolWindow).getContentUI();
-      contentUi.revalidate();
-      contentUi.repaint();
-    }
+      ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(getToolWindowId());
+      if (toolWindow instanceof ToolWindowImpl) {
+        ToolWindowContentUi contentUi = ((ToolWindowImpl)toolWindow).getContentUI();
+        contentUi.revalidate();
+        contentUi.repaint();
+      }
+    });
   }
 
   @Nullable
