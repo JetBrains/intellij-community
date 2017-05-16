@@ -60,6 +60,7 @@ class CompletionFileLogger(private val installationUID: String,
         return elementToId[itemString]
     }
 
+    //sout here to debug
     private fun logEvent(event: LogEvent) {
         val line = LogEventSerializer.toString(event)
         logFileManager.println(line)

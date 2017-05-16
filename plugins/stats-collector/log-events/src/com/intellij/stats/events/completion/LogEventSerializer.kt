@@ -61,15 +61,9 @@ object LogEventSerializer {
 
 
     fun fromString(line: String): DeserializedLogEvent? {
-        val items = mutableListOf<String>()
-
-        var start = -1
-        for (i in 0..4) {
-            val nextSpace = line.indexOf('\t', start + 1)
-            val newItem = line.substring(start + 1, nextSpace)
-            items.add(newItem)
-            start = nextSpace
-        }
+        val pair = tabSeparatedValues(line) ?: return null
+        val items = pair.first
+        val start = pair.second
 
         val timestamp = items[0].toLong()
         val recorderId = items[1]
@@ -93,6 +87,23 @@ object LogEventSerializer {
         return DeserializedLogEvent(event, result.unknownFields, result.absentFields)
     }
 
+    private fun tabSeparatedValues(line: String): Pair<List<String>, Int>? {
+        val items = mutableListOf<String>()
+        var start = -1
+        try {
+            for (i in 0..4) {
+                val nextSpace = line.indexOf('\t', start + 1)
+                val newItem = line.substring(start + 1, nextSpace)
+                items.add(newItem)
+                start = nextSpace
+            }
+            return Pair(items, start)
+        }
+        catch (e: Exception) {
+            return null
+        }
+    }
+
 }
 
 
@@ -102,7 +113,7 @@ class DeserializedLogEvent(
   val absentEventFields: Set<String>
 ) {
 
-    val isOk: Boolean
-      get() = unknownEventFields.isEmpty() || absentEventFields.isEmpty()
+    val isFailed: Boolean
+      get() = unknownEventFields.isNotEmpty() || absentEventFields.isNotEmpty()
 
 }

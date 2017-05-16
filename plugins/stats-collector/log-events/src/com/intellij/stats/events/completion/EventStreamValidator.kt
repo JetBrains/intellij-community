@@ -29,16 +29,25 @@ open class SessionsInputSeparator(input: InputStream,
 
     var session = mutableListOf<EventLine>()
     var currentSessionUid = ""
+    var hasDeserializationErrors = false
 
     fun processInput() {
         var line: String? = inputReader.readLine()
-        
+
         while (line != null) {
-            val event: LogEvent? = LogEventSerializer.fromString(line)?.event
-            //if there is any unknown or absent fields we should fail here
+            if (line.isEmpty()) {
+                line = inputReader.readLine()
+                continue
+            }
+
+            val event = LogEventSerializer.fromString(line)?.let {
+                hasDeserializationErrors = hasDeserializationErrors || it.isFailed
+                it.event
+            }
 
             if (event == null) {
                 handleNullEvent(line)
+                line = inputReader.readLine()
                 continue
             }
 
@@ -60,9 +69,12 @@ open class SessionsInputSeparator(input: InputStream,
 
     private fun processCompletionSession(session: List<EventLine>) {
         if (session.isEmpty()) return
+        if (hasDeserializationErrors) {
+            dumpSession(session, false)
+            return
+        }
 
         var isValidSession = false
-        
         val initial = session.first()
         if (initial.event is CompletionStartedEvent) {
             val state = CompletionValidationState(initial.event)
@@ -70,10 +82,10 @@ open class SessionsInputSeparator(input: InputStream,
             isValidSession = state.isFinished && state.isValid
         }
 
-        onSessionProcessingFinished(session, isValidSession)
+        dumpSession(session, isValidSession)
     }
 
-    open protected fun onSessionProcessingFinished(session: List<EventLine>, isValidSession: Boolean) {
+    open protected fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
         val writer = if (isValidSession) outputWriter else errorWriter
         session.forEach {
             writer.write(it.line)
@@ -92,6 +104,7 @@ open class SessionsInputSeparator(input: InputStream,
     private fun reset() {
         session.clear()
         currentSessionUid = ""
+        hasDeserializationErrors = false
     }
     
 }
