@@ -175,7 +175,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     doCreate(targetClass, method, shouldBeAbstract,
              ContainerUtil.map2List(arguments, Pair.createFunction(null)),
              getTargetSubstitutor(expression),
-             CreateFromUsageUtils.guessExpectedTypes(expression, true),
+             CreateFromUsageUtils.guessExpectedTypes(expression, expression.getParent() instanceof PsiStatement),
              context);
   }
 
