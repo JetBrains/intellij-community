@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaValue;
+import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
@@ -24,16 +25,26 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.*;
+import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
+import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-public class AdjustArrayRangeAction extends DebuggerAction {
+import javax.swing.*;
+import java.util.List;
+
+public abstract class ArrayAction extends DebuggerAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
@@ -42,8 +53,6 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     if(debugProcess == null) {
       return;
     }
-
-    final Project project = debuggerContext.getProject();
 
     final XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(e.getDataContext());
     if (node == null) {
@@ -67,22 +76,20 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     //if (index > 0) {
     //  title = title + " " + label.substring(index);
     //}
-    String title = node.getName();
-    final ArrayRenderer clonedRenderer = renderer.clone();
-    clonedRenderer.setForced(true);
-    if (ShowSettingsUtil.getInstance().editConfigurable(project, new NamedArrayConfigurable(title, clonedRenderer))) {
+    ArrayRenderer newRenderer = createNewRenderer(renderer, debuggerContext.getProject(), node.getName());
+    if (newRenderer != null) {
       debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
         @Override
-        public void contextAction() throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
           final Renderer lastRenderer = descriptor.getLastRenderer();
           if (lastRenderer instanceof ArrayRenderer) {
-            ((JavaValue)container).setRenderer(clonedRenderer, node);
+            ((JavaValue)container).setRenderer(newRenderer, node);
           }
           else if (lastRenderer instanceof CompoundNodeRenderer) {
             final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
             final ChildrenRenderer childrenRenderer = compoundRenderer.getChildrenRenderer();
             if (childrenRenderer instanceof ExpressionChildrenRenderer) {
-              ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, clonedRenderer);
+              ExpressionChildrenRenderer.setPreferableChildrenRenderer(descriptor, newRenderer);
               ((JavaValue)container).reBuild(node);
             }
           }
@@ -91,18 +98,17 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     }
   }
 
+  @Nullable
+  protected abstract ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title);
+
   @Override
   public void update(AnActionEvent e) {
     boolean enable = false;
-    XValueNodeImpl node = XDebuggerTreeActionBase.getSelectedNode(e.getDataContext());
-    if (node != null) {
-      XValue container = node.getValueContainer();
-      if (container instanceof JavaValue) {
-        ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
-        enable = getArrayRenderer(descriptor) != null;
-      }
+    List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
+    if (values.size() == 1) {
+      enable = getArrayRenderer(values.get(0).getDescriptor()) != null;
     }
-    e.getPresentation().setVisible(enable);
+    e.getPresentation().setEnabledAndVisible(enable);
   }
 
   @Nullable
@@ -150,6 +156,61 @@ public class AdjustArrayRangeAction extends DebuggerAction {
     @Override
     public String getHelpTopic() {
       return null;
+    }
+  }
+
+  private static class AdjustArrayRangeAction extends ArrayAction {
+    @Override
+    protected ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title) {
+      ArrayRenderer clonedRenderer = original.clone();
+      clonedRenderer.setForced(true);
+      if (ShowSettingsUtil.getInstance().editConfigurable(project, new NamedArrayConfigurable(title, clonedRenderer))) {
+        return clonedRenderer;
+      }
+      return null;
+    }
+  }
+
+  private static class FilterArrayAction extends ArrayAction {
+    @Nullable
+    @Override
+    protected ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title) {
+      ExpressionDialog dialog =
+        new ExpressionDialog(project, original instanceof ArrayRenderer.Filtered ? ((ArrayRenderer.Filtered)original).getExpression()
+                                                                                 : XExpressionImpl.EMPTY_EXPRESSION);
+      if (dialog.showAndGet()) {
+        return new ArrayRenderer.Filtered(dialog.getExpression());
+      }
+      return null;
+    }
+
+    private static class ExpressionDialog extends DialogWrapper {
+      private final XDebuggerExpressionEditor myEditor;
+
+      public ExpressionDialog(@NotNull Project project, XExpression expression) {
+        super(project);
+        myEditor = new XDebuggerExpressionEditor(project, new JavaDebuggerEditorsProvider(), "filter", null,
+                                                 expression, false, true, false);
+
+        setTitle("Filter");
+        init();
+      }
+
+      @Nullable
+      @Override
+      protected JComponent createCenterPanel() {
+        return myEditor.getComponent();
+      }
+
+      @Nullable
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        return myEditor.getPreferredFocusedComponent();
+      }
+
+      XExpression getExpression() {
+        return myEditor.getExpression();
+      }
     }
   }
 }

@@ -20,6 +20,9 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -33,11 +36,13 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xdebugger.XExpression;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Type;
@@ -188,5 +193,76 @@ public class ArrayRenderer extends NodeRendererImpl{
 
   public boolean isApplicable(Type type) {
     return type instanceof ArrayType;
+  }
+
+  public static class Filtered extends ArrayRenderer {
+    private final XExpression myExpression;
+
+    public Filtered(XExpression expression) {
+      myExpression = expression;
+    }
+
+    public XExpression getExpression() {
+      return myExpression;
+    }
+
+    @Override
+    public void buildChildren(Value value, ChildrenBuilder builder, EvaluationContext evaluationContext) {
+      DebuggerManagerThreadImpl.assertIsManagerThread();
+      NodeManagerImpl nodeManager = (NodeManagerImpl)builder.getNodeManager();
+      NodeDescriptorFactory descriptorFactory = builder.getDescriptorManager();
+
+      builder.initChildrenArrayRenderer(this);
+
+      if (ENTRIES_LIMIT > END_INDEX - START_INDEX + 1) {
+        ENTRIES_LIMIT = END_INDEX - START_INDEX;
+      }
+
+      if (ENTRIES_LIMIT <= 0) {
+        ENTRIES_LIMIT = 1;
+      }
+
+      ArrayReference array = (ArrayReference)value;
+      int arrayLength = array.length();
+      if (arrayLength > 0) {
+        CachedEvaluator cachedEvaluator = new CachedEvaluator() {
+          @Override
+          protected String getClassName() {
+            return CommonClassNames.JAVA_LANG_OBJECT;
+          }
+        };
+        cachedEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(myExpression));
+
+        int added = 0;
+        if (arrayLength - 1 >= START_INDEX) {
+          for (int idx = START_INDEX; idx < arrayLength; idx++) {
+            try {
+              if (DebuggerUtilsEx.evaluateBoolean(cachedEvaluator.getEvaluator(evaluationContext.getProject()),
+                                                  (EvaluationContextImpl)evaluationContext.createEvaluationContext(array.getValue(idx)))) {
+
+                DebuggerTreeNode arrayItemNode =
+                  nodeManager
+                    .createNode(descriptorFactory.getArrayItemDescriptor(builder.getParentDescriptor(), array, idx), evaluationContext);
+
+                builder.addChildren(Collections.singletonList(arrayItemNode), false);
+                added++;
+                //if (added > ENTRIES_LIMIT) {
+                //  break;
+                //}
+              }
+            }
+            catch (EvaluateException e) {
+              builder.addChildren(Collections.singletonList(nodeManager.createMessageNode(e.getMessage())), false);
+            }
+          }
+        }
+
+        builder.addChildren(Collections.emptyList(), true);
+
+        //if (added != 0 && END_INDEX < arrayLength - 1) {
+        //  builder.setRemaining(arrayLength - 1 - END_INDEX);
+        //}
+      }
+    }
   }
 }
