@@ -64,7 +64,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
   @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-    invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null);
+    invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null, null);
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates) {
@@ -72,10 +72,16 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
   }
 
   public static void invoke(final Project project, PsiElement[] elements, boolean checkDelegates, @Nullable final Runnable successRunnable) {
-    invoke(project, elements, null, checkDelegates, successRunnable);
+    invoke(project, elements, null, checkDelegates, successRunnable, null);
   }
 
-  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates, @Nullable final Runnable successRunnable) {
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable final Runnable successRunnable) {
+    invoke(project, elements, module, checkDelegates, successRunnable, null);
+  }
+
+  public static void invoke(final Project project, PsiElement[] elements, @Nullable Module module, boolean checkDelegates,
+                            @Nullable final Runnable successRunnable, @Nullable final  Runnable afterRefactoring) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) {
         return;
@@ -113,22 +119,26 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       RefactoringSettings settings = RefactoringSettings.getInstance();
-      SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
-                                         settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true).run();
+      final SafeDeleteProcessor processor =
+        SafeDeleteProcessor.createInstance(project, null, elementsToDelete, settings.SAFE_DELETE_SEARCH_IN_COMMENTS,
+                                           settings.SAFE_DELETE_SEARCH_IN_NON_JAVA, true);
+      if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
+      processor.run();
       if (successRunnable != null) successRunnable.run();
     }
     else {
       final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
         @Override
         public void run(final SafeDeleteDialog dialog) {
-          SafeDeleteProcessor.createInstance(project, () -> {
+          final SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
             if (successRunnable != null) {
               successRunnable.run();
             }
             dialog.close(DialogWrapper.CANCEL_EXIT_CODE);
-          }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true).run();
+          }, elementsToDelete, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+          if (afterRefactoring != null) processor.setAfterRefactoringCallback(afterRefactoring);
+          processor.run();
         }
-
       };
 
       SafeDeleteDialog dialog = new SafeDeleteDialog(project, elementsToDelete, callback);
