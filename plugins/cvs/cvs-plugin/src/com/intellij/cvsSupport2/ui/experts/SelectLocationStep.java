@@ -100,7 +100,7 @@ public abstract class SelectLocationStep extends WizardStep {
 
   protected void init() {
     final DefaultActionGroup fileSystemActionGroup = createFileSystemActionGroup();
-    myFileSystemToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, fileSystemActionGroup, true);
+    myFileSystemToolBar = ActionManager.getInstance().createActionToolbar("CvsSelectLocation", fileSystemActionGroup, true);
 
     final JTree tree = myFileSystemTree.getTree();
     tree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
