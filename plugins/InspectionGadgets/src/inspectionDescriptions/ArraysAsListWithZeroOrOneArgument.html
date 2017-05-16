@@ -2,6 +2,8 @@
 <body>
 Reports any calls to <b>Arrays.asList()</b> with zero arguments or only one argument. Such calls could be replaced
 with either a call to <b>Collections.singletonList()</b> or <b>Collections.emptyList()</b> which will save some memory.
+<p>Note: the list returned by <b>Collections.singletonList()</b> is immutable, while the list returned <b>Arrays.asList()</b> allows
+calling the <b>set()</b> method. This may break the code in rare cases.
 <!-- tooltip end -->
 <p>
 </body>
