@@ -200,6 +200,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     });
 
     getTableHeader().setReorderingAllowed(false);
+    getTableHeader().setResizingAllowed(false);
     registerKeyboardAction(new ActionListener() {
                              public void actionPerformed(ActionEvent e) {
                                model.swapInspectionEnableState();
