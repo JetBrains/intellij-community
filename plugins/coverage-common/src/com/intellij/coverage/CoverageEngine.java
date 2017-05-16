@@ -296,6 +296,9 @@ public abstract class CoverageEngine {
 
   public abstract List<PsiElement> findTestsByNames(@NotNull final String[] testNames, @NotNull final Project project);
 
+  /**
+   * To support per test coverage. Return file name which contain traces for given test 
+   */
   @Nullable
   public abstract String getTestMethodName(@NotNull final PsiElement element, @NotNull final AbstractTestProxy testProxy);
 
