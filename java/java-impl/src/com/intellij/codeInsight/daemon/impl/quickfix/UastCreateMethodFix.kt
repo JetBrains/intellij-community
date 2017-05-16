@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
+import com.intellij.codeInsight.intention.NewCallableMemberInfo
 import com.intellij.codeInspection.LocalQuickFixBase
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
@@ -55,7 +56,9 @@ class UastCreateMethodFix(containingClass: UClass, private val createMethodActio
                                       @PsiModifier.ModifierConstant modifier: String): UastCreateMethodFix? {
       if (!ModuleUtilCore.projectContainsFile(uClass.project, uClass.containingFile.virtualFile, false)) return null
       val actionsFactory = JvmCommonIntentionActionsFactory.forLanguage(uClass.language) ?: return null
-      val action = actionsFactory.createAddMethodAction(uClass, methodName, modifier, PsiType.VOID) ?: return null
+      val action = actionsFactory.createAddCallableMemberActions(
+        NewCallableMemberInfo.simpleMethodInfo(uClass, methodName, modifier, PsiType.VOID, emptyList())
+      ).firstOrNull() ?: return null
       return UastCreateMethodFix(uClass, action)
     }
   }

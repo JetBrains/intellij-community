@@ -16,10 +16,12 @@
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.daemon.impl.quickfix.AddConstructorFix
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
+import com.intellij.codeInsight.intention.NewCallableMemberInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -28,6 +30,7 @@ import com.intellij.util.VisibilityUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
+import org.jetbrains.uast.UParameter
 
 
 class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
@@ -36,12 +39,25 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     return ModifierFix(declaration.modifierList, modifier, shouldPresent, false)
   }
 
-  override fun createAddMethodAction(uClass: UClass,
-                                     methodName: String,
-                                     @PsiModifier.ModifierConstant @NotNull visibilityModifier: String,
-                                     returnType: PsiType,
-                                     vararg parameters: PsiType): IntentionAction? {
-    val paramsString = parameters.mapIndexed { i, t -> "${t.presentableText} arg$i" }.joinToString()
+  override fun createAddCallableMemberActions(info: NewCallableMemberInfo): List<IntentionAction> {
+    return when (info.kind) {
+      NewCallableMemberInfo.CallableKind.FUNCTION ->
+        with(info) {
+          createAddMethodAction(containingClass, name!!, modifiers.joinToString(" "), returnType!!, parameters)
+            ?.let { listOf(it) } ?: emptyList()
+        }
+
+      NewCallableMemberInfo.CallableKind.CONSTRUCTOR ->
+        listOf(AddConstructorFix(info.containingClass.psi, info.parameters.map { it.psi }))
+    }
+  }
+
+  private fun createAddMethodAction(uClass: UClass,
+                                    methodName: String,
+                                    @PsiModifier.ModifierConstant @NotNull visibilityModifier: String,
+                                    returnType: PsiType,
+                                    parameters: List<UParameter>): IntentionAction? {
+    val paramsString = parameters.mapIndexed { i, t -> "${t.type.presentableText} ${t.name ?: "arg$i"}" }.joinToString()
     val signatureString =
       "${VisibilityUtil.getVisibilityString(visibilityModifier)} ${returnType.presentableText} $methodName($paramsString){}"
     val smartPsi = SmartPointerManager.getInstance(uClass.project).createSmartPsiElementPointer(uClass.psi)
@@ -83,4 +99,5 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     return arrayOf<IntentionAction>(
       CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired, true))
   }
+
 }

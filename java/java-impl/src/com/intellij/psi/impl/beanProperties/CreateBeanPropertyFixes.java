@@ -17,6 +17,7 @@ package com.intellij.psi.impl.beanProperties;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory;
+import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -27,9 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
 
-import java.util.Arrays;
-
-import static com.intellij.codeInspection.IntentionWrapper.wrapToQuickFix;
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
 @ApiStatus.Experimental
@@ -39,9 +37,7 @@ public class CreateBeanPropertyFixes {
                                             @NotNull PsiClass psiClass,
                                             @Nullable PsiType type,
                                             final boolean createSetter) {
-    return Arrays.stream(createActions(propertyName, psiClass, type, createSetter))
-      .map(ia -> wrapToQuickFix(ia, psiClass.getContainingFile()))
-      .toArray(LocalQuickFix[]::new);
+    return IntentionWrapper.wrapToQuickFixes(createActions(propertyName, psiClass, type, createSetter), psiClass.getContainingFile());
   }
 
   public static IntentionAction[] createActions(String propertyName,
