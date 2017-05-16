@@ -101,7 +101,8 @@ public class ArrayRenderer extends NodeRendererImpl{
     }
 
     ArrayReference array = (ArrayReference)value;
-    if (array.length() > 0) {
+    int arrayLength = array.length();
+    if (arrayLength > 0) {
       if (ENTRIES_LIMIT > END_INDEX - START_INDEX + 1) {
         ENTRIES_LIMIT = END_INDEX - START_INDEX;
       }
@@ -112,8 +113,8 @@ public class ArrayRenderer extends NodeRendererImpl{
 
       int added = 0;
       boolean hiddenNulls = false;
-      if (array.length() - 1 >= START_INDEX) {
-        int end = array.length() - 1 < END_INDEX ? array.length() - 1 : END_INDEX;
+      if (arrayLength - 1 >= START_INDEX) {
+        int end = arrayLength - 1 < END_INDEX ? arrayLength - 1 : END_INDEX;
         for (int idx = START_INDEX; idx <= end; idx++) {
           if (ViewsGeneralSettings.getInstance().HIDE_NULL_ARRAY_ELEMENTS && elementIsNull(array, idx)) {
             hiddenNulls = true;
@@ -134,7 +135,7 @@ public class ArrayRenderer extends NodeRendererImpl{
       builder.addChildren(Collections.emptyList(), true);
 
       if (added == 0) {
-        if (START_INDEX == 0 && array.length() - 1 <= END_INDEX) {
+        if (START_INDEX == 0 && arrayLength - 1 <= END_INDEX) {
           builder.setMessage(DebuggerBundle.message("message.node.all.elements.null"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
         else {
@@ -146,8 +147,8 @@ public class ArrayRenderer extends NodeRendererImpl{
         if (hiddenNulls) {
           builder.setMessage(DebuggerBundle.message("message.node.elements.null.hidden"), null, SimpleTextAttributes.REGULAR_ATTRIBUTES, null);
         }
-        if (!myForced && END_INDEX < array.length() - 1) {
-          builder.setRemaining(array.length() - 1 - END_INDEX);
+        if (!myForced && END_INDEX < arrayLength - 1) {
+          builder.setRemaining(arrayLength - 1 - END_INDEX);
         }
       }
     }
