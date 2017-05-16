@@ -91,23 +91,6 @@ public class FileManagerImpl implements FileManager {
     return myVFileToViewProviderMap;
   }
 
-  private void updateAllViewProviders() {
-    handleFileTypesChange(new FileTypesChanged() {
-      @Override
-      protected void updateMaps() {
-        for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
-          if (!provider.getVirtualFile().isValid()) {
-            continue;
-          }
-
-          clearPsiCaches(provider);
-        }
-        removeInvalidFilesAndDirs(false);
-        checkLanguageChange();
-      }
-    });
-  }
-
   public static void clearPsiCaches(@NotNull FileViewProvider provider) {
     if (provider instanceof SingleRootFileViewProvider) {
       for (PsiFile root : ((SingleRootFileViewProvider)provider).getCachedPsiFiles()) {
@@ -123,21 +106,6 @@ public class FileManagerImpl implements FileManager {
         }
       }
     }
-  }
-
-  private void checkLanguageChange() {
-    Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
-    Map<VirtualFile, FileViewProvider> originalFileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
-    myVFileToViewProviderMap.clear();
-    for (Iterator<VirtualFile> iterator = fileToPsiFileMap.keySet().iterator(); iterator.hasNext();) {
-      VirtualFile vFile = iterator.next();
-      Language language = LanguageUtil.getLanguageForPsi(myManager.getProject(), vFile);
-      if (language != null && language != fileToPsiFileMap.get(vFile).getBaseLanguage()) {
-        iterator.remove();
-      }
-    }
-    myVFileToViewProviderMap.putAll(fileToPsiFileMap);
-    markInvalidations(originalFileToPsiFileMap);
   }
 
   public void forceReload(@NotNull VirtualFile vFile) {
@@ -287,12 +255,12 @@ public class FileManagerImpl implements FileManager {
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
-        updateAllViewProviders();
+        processFileTypesChanged();
       }
 
       @Override
       public void exitDumbMode() {
-        updateAllViewProviders();
+        processFileTypesChanged();
       }
     });
   }
@@ -301,36 +269,25 @@ public class FileManagerImpl implements FileManager {
     return myInitialized;
   }
 
-  void processFileTypesChanged() {
-    handleFileTypesChange(new FileTypesChanged() {
-      @Override
-      protected void updateMaps() {
-        removeInvalidFilesAndDirs(true);
-      }
-    });
-  }
-
-  private abstract class FileTypesChanged implements Runnable {
-    protected abstract void updateMaps();
-
-    @Override
-    public void run() {
-      PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
-      event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
-      myManager.beforePropertyChange(event);
-
-      updateMaps();
-
-      myManager.propertyChanged(event);
-    }
-  }
-
   private boolean myProcessingFileTypesChange;
-  private void handleFileTypesChange(@NotNull FileTypesChanged runnable) {
+
+  void processFileTypesChanged() {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     try {
-      ApplicationManager.getApplication().runWriteAction(runnable);
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
+        event.setPropertyName(PsiTreeChangeEvent.PROP_FILE_TYPES);
+        myManager.beforePropertyChange(event);
+
+        removeInvalidDirs(false);
+        for (final FileViewProvider provider : myVFileToViewProviderMap.values()) {
+          markInvalidated(provider);
+        }
+        myVFileToViewProviderMap.clear();
+
+        myManager.propertyChanged(event);
+      });
     }
     finally {
       myProcessingFileTypesChange = false;
@@ -514,7 +471,7 @@ public class FileManagerImpl implements FileManager {
     return files;
   }
 
-  void removeInvalidFilesAndDirs(boolean useFind) {
+  private void removeInvalidDirs(boolean useFind) {
     Map<VirtualFile, PsiDirectory> fileToPsiDirMap = new THashMap<>(myVFileToPsiDirMap);
     if (useFind) {
       myVFileToPsiDirMap.clear();
@@ -533,6 +490,10 @@ public class FileManagerImpl implements FileManager {
     }
     myVFileToPsiDirMap.clear();
     myVFileToPsiDirMap.putAll(fileToPsiDirMap);
+  }
+
+  void removeInvalidFilesAndDirs(boolean useFind) {
+    removeInvalidDirs(useFind);
 
     // note: important to update directories map first - findFile uses findDirectory!
     Map<VirtualFile, FileViewProvider> fileToPsiFileMap = new THashMap<>(myVFileToViewProviderMap);
