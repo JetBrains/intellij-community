@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,12 +244,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
                                     @NotNull InspectionProfileImpl profile,
                                     @NotNull String toolId,
                                     @NotNull Project project) {
-    if (newState) {
-      profile.enableTool(toolId, project);
-    }
-    else {
-      profile.disableTool(toolId, project);
-    }
+    profile.setToolEnabled(toolId, newState);
     for (ScopeToolState scopeToolState : profile.getTools(toolId, project).getTools()) {
       scopeToolState.setEnabled(newState);
     }

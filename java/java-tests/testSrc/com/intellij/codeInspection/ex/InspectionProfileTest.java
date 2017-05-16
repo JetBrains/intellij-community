@@ -28,6 +28,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesPanel;
 import com.intellij.psi.PsiModifier;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
@@ -43,10 +44,6 @@ import java.util.function.Supplier;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
-/**
- * @author Anna.Kozlova
- * Date: 18-Aug-2006
- */
 public class InspectionProfileTest extends LightIdeaTestCase {
   private static final String PROFILE = "ToConvert";
 
@@ -549,7 +546,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   public void testGlobalInspectionContext() throws Exception {
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
-    ProjectInspectionManagerTestKt.disableAllTools(profile, getProject());
+    InspectionsKt.disableAllTools(profile);
     profile.enableTool(new UnusedDeclarationInspectionBase(true).getShortName(), getProject());
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);
@@ -590,13 +587,8 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertNotNull(toolWrapper);
     String id = toolWrapper.getShortName();
     System.out.println(id);
-    if (profile.isToolEnabled(HighlightDisplayKey.findById(id))) {
-      profile.disableTool(id, getProject());
-    }
-    else {
-      profile.enableTool(id, getProject());
-    }
-    assertEquals(0, countInitializedTools(profile));
+    profile.setToolEnabled(id, !profile.isToolEnabled(HighlightDisplayKey.findById(id)));
+    assertThat(countInitializedTools(profile)).isEqualTo(0);
     profile.writeScheme();
     List<InspectionToolWrapper> initializedTools = getInitializedTools(profile);
     if (initializedTools.size() > 0) {
@@ -653,6 +645,5 @@ public class InspectionProfileTest extends LightIdeaTestCase {
 
   @SuppressWarnings("InspectionDescriptionNotFoundInspection")
   public static class TestTool extends LocalInspectionTool {
-
   }
 }

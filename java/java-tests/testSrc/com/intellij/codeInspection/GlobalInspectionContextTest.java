@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,17 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.InspectionsKt;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 5/24/12
- */
 public class GlobalInspectionContextTest extends CodeInsightTestCase {
   public void testProblemDuplication() throws Exception {
     String shortName = new VisibilityInspection().getShortName();
     InspectionProfileImpl profile = new InspectionProfileImpl("Foo");
-    ProjectInspectionManagerTestKt.disableAllTools(profile, getProject());
+    InspectionsKt.disableAllTools(profile);
     profile.enableTool(shortName, getProject());
 
     GlobalInspectionContextImpl context = ((InspectionManagerEx)InspectionManager.getInstance(getProject())).createNewGlobalContext(false);

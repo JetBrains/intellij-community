@@ -15,14 +15,14 @@
  */
 package com.intellij.codeInspection.ex
 
-import com.intellij.codeInspection.ModifiableModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.psi.PsiElement
 import com.intellij.util.Consumer
 
-open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null), ModifiableModel {
+open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
   private var modified = false
 
   init {
@@ -114,10 +114,14 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     profileManager = model.profileManager
   }
 
+  fun disableTool(toolShortName: String, element: PsiElement) {
+    getTools(toolShortName, element.project).disableTool(element)
+  }
+
   override fun toString() = "$name (copy)"
 }
 
-fun modifyAndCommitProjectProfile(project: Project, action: Consumer<ModifiableModel>) {
+fun modifyAndCommitProjectProfile(project: Project, action: Consumer<InspectionProfileModifiableModel>) {
   ProjectInspectionProfileManager.getInstance(project).currentProfile.edit { action.consume(this) }
 }
 

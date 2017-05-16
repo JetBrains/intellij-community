@@ -52,13 +52,10 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.function.Supplier;
 
-/**
- * @author max
- */
 public class InspectionProfileImpl extends NewInspectionProfile {
   @NonNls static final String INSPECTION_TOOL_TAG = "inspection_tool";
   @NonNls static final String CLASS_TAG = "class";
-  protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
+  protected static final Logger LOG = Logger.getInstance(InspectionProfileImpl.class);
   @NonNls private static final String VALID_VERSION = "1.0";
   @NonNls private static final String VERSION_TAG = "version";
   @NonNls private static final String USED_LEVELS = "used_levels";
@@ -144,6 +141,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return level;
   }
 
+  @Override
   public void readExternal(@NotNull Element element) {
     mySerializer.readExternal(this, element);
 
@@ -447,10 +445,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  public void disableTool(@NotNull String toolShortName, @NotNull PsiElement element) {
-    getTools(toolShortName, element.getProject()).disableTool(element);
-  }
-
   public void disableToolByDefault(@NotNull Collection<String> toolShortNames, @Nullable Project project) {
     for (String toolId : toolShortNames) {
       getTools(toolId, project).setDefaultEnabled(false);
@@ -660,11 +654,6 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       getTools(inspectionTool, project).disableTool(namedScope, project);
     }
     schemeState = SchemeState.POSSIBLY_CHANGED;
-  }
-
-  @Deprecated
-  public void disableTool(@NotNull String inspectionTool, @Nullable Project project) {
-    setToolEnabled(inspectionTool, false, project);
   }
 
   public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, Project project) {

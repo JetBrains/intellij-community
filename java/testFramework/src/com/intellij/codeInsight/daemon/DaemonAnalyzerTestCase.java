@@ -152,7 +152,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
   protected void disableInspectionTool(@NotNull String shortName){
     InspectionProfileImpl profile = InspectionProjectProfileManager.getInstance(getProject()).getCurrentProfile();
     if (profile.getInspectionTool(shortName, getProject()) != null) {
-      profile.disableTool(shortName, getProject());
+      profile.setToolEnabled(shortName, false);
     }
   }
 
