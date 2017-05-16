@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.errorTreeView;
 
+import com.intellij.execution.process.ConsoleHighlighter;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.ClickableTreeCellRenderer;
@@ -178,7 +179,7 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     }
 
     Icon icon = null;
-
+    Color foreground = getForeground();
     if (element instanceof GroupingElement) {
       final GroupingElement groupingElement = (GroupingElement)element;
 
@@ -188,15 +189,20 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
       ErrorTreeElementKind kind = element.getKind();
       if (ErrorTreeElementKind.ERROR.equals(kind)) {
         icon = AllIcons.General.Error;
+        foreground = ConsoleHighlighter.RED.getDefaultAttributes().getForegroundColor();
       }
       else if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
         icon = AllIcons.General.Warning;
+        foreground = ConsoleHighlighter.DARKGRAY.getDefaultAttributes().getForegroundColor();
       }
       else if (ErrorTreeElementKind.INFO.equals(kind)) {
         icon = AllIcons.General.Information;
+        foreground = ConsoleHighlighter.BLUE.getDefaultAttributes().getForegroundColor();
       }
     }
-
+    if (isUseAnsiColor()) {
+      setForeground(foreground);
+    }
     setIcon(icon);
   }
 

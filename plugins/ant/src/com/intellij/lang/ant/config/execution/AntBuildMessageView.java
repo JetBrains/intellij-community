@@ -157,7 +157,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
     myPlainTextView = new PlainTextView(project);
     myTreeView = new TreeView(project, buildFile);
-
+    myTreeView.setUseAnsiColor(AntBuildFileImpl.TREE_VIEW_ANSI_COLOR.value(buildFile.getAllOptions()));
     myCardLayout = new CardLayout();
     myContentPanel = new JPanel(myCardLayout);
     myContentPanel.add(myTreeView.getComponent(), myTreeView.getId());
