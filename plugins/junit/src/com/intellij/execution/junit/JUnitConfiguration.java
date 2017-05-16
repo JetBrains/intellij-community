@@ -42,8 +42,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jdom.Element;
@@ -625,11 +624,37 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public static String getMethodPresentation(PsiMethod method) {
-      return method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)
-             ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY,
-                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                          PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_FQ_CLASS_NAMES)
-             : method.getName();
+      if (method.getParameterList().getParametersCount() > 0 && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+        return method.getName() + "(" + StringUtil.join(method.getParameterList().getParameters(), 
+                                                        param -> param.getType().accept(createSignatureVisitor()),
+                                                        ",") + ")";
+      }
+      else {
+        return method.getName();
+      }
+    }
+
+    private static PsiTypeVisitor<String> createSignatureVisitor() {
+      return new PsiTypeVisitor<String>() {
+        @Override
+        public String visitPrimitiveType(PsiPrimitiveType primitiveType) {
+          return primitiveType.getCanonicalText();
+        }
+
+        @Override
+        public String visitClassType(PsiClassType classType) {
+          PsiClass aClass = classType.resolve();
+          if (aClass == null) {
+            return "";
+          }
+          return "L" + ClassUtil.getJVMClassName(aClass) + ";";
+        }
+
+        @Override
+        public String visitArrayType(PsiArrayType arrayType) {
+          return "[" + arrayType.getComponentType().accept(this);
+        }
+      };
     }
 
     public String getGeneratedName(final JavaRunConfigurationModule configurationModule) {
