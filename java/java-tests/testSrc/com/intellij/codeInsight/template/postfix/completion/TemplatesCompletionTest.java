@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,11 +150,9 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   }
 
   public void testQuickTypingWithTab() {
-    doQuickTypingTest("par", '\t');
-  }
-
-  public void testQuickTypingWithEnter() {
-    doQuickTypingTest("par", '\n');
+    configureByFile();
+    myFixture.type("par\t");
+    checkResultByFile();
   }
 
   public void testDoNotShowDisabledTemplate() {
@@ -207,12 +205,6 @@ public class TemplatesCompletionTest extends CompletionAutoPopupTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/postfix/completion";
-  }
-
-  private void doQuickTypingTest(String textToType, char c) {
-    configureByFile();
-    myFixture.type(textToType + c);
-    checkResultByFile();
   }
 
   private void doCompleteTest(String textToType, char c) {
