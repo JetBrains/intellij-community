@@ -200,7 +200,7 @@ public class ThreadDumpParser {
 
     String noDaemon = StringUtil.trimEnd(line, " [DAEMON]");
     m = ourYourkitThreadStartPattern.matcher(noDaemon);
-    if (m.find()) {
+    if (m.matches()) {
       ThreadState state = new ThreadState(m.group(1), m.group(2));
       if (noDaemon.length() < line.length()) {
         state.setDaemon(true);
