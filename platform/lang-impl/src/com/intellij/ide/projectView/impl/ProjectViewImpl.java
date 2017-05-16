@@ -25,6 +25,7 @@ import com.intellij.ide.impl.ProjectViewSelectInTarget;
 import com.intellij.ide.projectView.HelpID;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.actions.ChangeProjectViewPaneAction;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
@@ -62,7 +63,6 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,7 +110,6 @@ import java.util.List;
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, Disposable, QuickActionProvider, BusyObject  {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.impl.ProjectViewImpl");
   private static final Key<String> ID_KEY = Key.create("pane-id");
-  private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
   private final CopyPasteDelegator myCopyPasteDelegator;
   private boolean isInitialized;
   private boolean myExtensionsLoaded = false;
@@ -267,30 +266,24 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public List<AnAction> getActions(boolean originalProvider) {
     List<AnAction> result = new ArrayList<>();
 
-    DefaultActionGroup views = new DefaultActionGroup("Change View", true);
-
-    ChangeViewAction lastHeader = null;
-    for (int i = 0; i < myContentManager.getContentCount(); i++) {
-      Content each = myContentManager.getContent(i);
-      if (each == null) continue;
-
-      String id = each.getUserData(ID_KEY);
-      String subId = each.getUserData(SUB_ID_KEY);
-      ChangeViewAction newHeader = new ChangeViewAction(id, subId);
-
-      if (lastHeader != null) {
-        boolean lastHasKids = lastHeader.mySubId != null;
-        boolean newHasKids = newHeader.mySubId != null;
-        if (lastHasKids != newHasKids ||
-            lastHasKids && lastHeader.myId != newHeader.myId) {
-          views.add(Separator.getInstance());
-        }
+    DefaultActionGroup rootGroup = new DefaultActionGroup("Change View", true);
+    for (AbstractProjectViewPane pane : myId2Pane.values()) {
+      final String title = pane.getTitle();
+      final String id = pane.getId();
+      final String[] subIds = pane.getSubIds();
+      if (subIds.length == 0) {
+        rootGroup.add(new ChangeProjectViewPaneAction(this, id, null, title));
       }
-
-      views.add(newHeader);
-      lastHeader = newHeader;
+      else {
+        DefaultActionGroup subGroup = new DefaultActionGroup(title, true);
+        for (String subId : subIds) {
+          subGroup.add(new ChangeProjectViewPaneAction(this, id, subId, pane.getPresentableSubIdName(subId)));
+        }
+        rootGroup.add(subGroup);
+      }
     }
-    result.add(views);
+
+    result.add(rootGroup);
     result.add(Separator.getInstance());
 
     if (myActionGroup != null) {
@@ -309,27 +302,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
 
     return result;
-  }
-
-  private class ChangeViewAction extends AnAction {
-    @NotNull private final String myId;
-    @Nullable private final String mySubId;
-
-    private ChangeViewAction(@NotNull String id, @Nullable String subId) {
-      myId = id;
-      mySubId = subId;
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      AbstractProjectViewPane pane = getProjectViewPaneById(myId);
-      e.getPresentation().setText(pane.getTitle() + (mySubId != null ? (" - " + pane.getPresentableSubIdName(mySubId)) : ""));
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      changeView(myId, mySubId);
-    }
   }
 
   @Override
@@ -369,54 +341,35 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     for (AbstractProjectViewPane pane : myUninitializedPanes) {
       doAddPane(pane);
     }
-    final Content[] contents = getContentManager().getContents();
-    for (int i = 1; i < contents.length; i++) {
-      Content content = contents[i];
-      Content prev = contents[i - 1];
-      if (!StringUtil.equals(content.getUserData(ID_KEY), prev.getUserData(ID_KEY)) &&
-          prev.getUserData(SUB_ID_KEY) != null && content.getSeparator() == null) {
-        content.setSeparator("");
-      }
-    }
 
-    String selectID = null;
-    String selectSubID = null;
-
-    // try to find saved selected view...
-    for (Content content : contents) {
-      final String id = content.getUserData(ID_KEY);
-      final String subId = content.getUserData(SUB_ID_KEY);
-      if (id != null &&
-          id.equals(mySavedPaneId) &&
-          StringUtil.equals(subId, mySavedPaneSubId)) {
-        selectID = id;
-        selectSubID = subId;
-        mySavedPaneId = null;
-        mySavedPaneSubId = null;
-        break;
-      }
-    }
-
-    // saved view not found (plugin disabled, ID changed etc.) - select first available view...
-    if (selectID == null && contents.length > 0 && myCurrentViewId == null) {
-      Content content = contents[0];
-      selectID = content.getUserData(ID_KEY);
-      selectSubID = content.getUserData(SUB_ID_KEY);
-    }
-
-    if (selectID != null) {
+    if (canSelect(mySavedPaneId, mySavedPaneSubId)) {
+      String selectID = mySavedPaneId;
+      String selectSubID = mySavedPaneSubId;
+      mySavedPaneId = null;
+      mySavedPaneSubId = null;
       changeView(selectID, selectSubID);
+    }
+    else {
+      // saved view not found (plugin disabled, ID changed etc.) - select first available view...
+      Content content = getContentManager().getContent(0);
+      if (content != null) {
+        getContentManager().setSelectedContentCB(content);
+      }
     }
 
     myUninitializedPanes.clear();
   }
 
-  private void doAddPane(@NotNull final AbstractProjectViewPane newPane) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    int index;
-    final ContentManager manager = getContentManager();
-    for (index = 0; index < manager.getContentCount(); index++) {
-      Content content = manager.getContent(index);
+  private boolean canSelect(@NotNull String id, @Nullable String subId) {
+    AbstractProjectViewPane pane = getProjectViewPaneById(id);
+    if (pane == null) return false;
+    String[] subIds = pane.getSubIds();
+    return subId == null ? subIds.length == 0 : ArrayUtil.contains(subId, subIds);
+  }
+
+  private int getAnchorIndex(@NotNull final AbstractProjectViewPane newPane) {
+    int index = 0;
+    for (Content content : getContentManager().getContents()) {
       String id = content.getUserData(ID_KEY);
       AbstractProjectViewPane pane = myId2Pane.get(id);
 
@@ -426,32 +379,36 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (comp > 0) {
         break;
       }
+      index++;
     }
+    return index;
+  }
+
+  private void doAddPane(@NotNull final AbstractProjectViewPane newPane) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    final int index = getAnchorIndex(newPane);
     final String id = newPane.getId();
-    myId2Pane.put(id, newPane);
-    String[] subIds = newPane.getSubIds();
-    subIds = subIds.length == 0 ? new String[]{null} : subIds;
-    boolean first = true;
-    for (String subId : subIds) {
-      final String title = subId != null ?  newPane.getPresentableSubIdName(subId) : newPane.getTitle();
-      final Content content = getContentManager().getFactory().createContent(getComponent(), title, false);
-      content.setTabName(title);
-      content.putUserData(ID_KEY, id);
-      content.putUserData(SUB_ID_KEY, subId);
-      content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      content.setIcon(newPane.getIcon());
-      content.setPopupIcon(subId != null ? AllIcons.General.Bullet : newPane.getIcon());
-      content.setPreferredFocusedComponent(() -> {
-        final AbstractProjectViewPane current = getCurrentProjectViewPane();
-        return current != null ? current.getComponentToFocus() : null;
-      });
-      content.setBusyObject(this);
-      if (first && subId != null) {
-        content.setSeparator(newPane.getTitle());
-      }
-      manager.addContent(content, index++);
-      first = false;
+    final ContentManager manager = getContentManager();
+    final Content content;
+    final String[] subIds = newPane.getSubIds();
+    final String title = newPane.getTitle();
+    if (subIds.length == 0) {
+      content = manager.getFactory().createContent(getComponent(), title, false);
     }
+    else {
+      content = new ProjectViewTabbedContent(this, title, subIds, newPane::getPresentableSubIdName);
+    }
+    content.putUserData(ID_KEY, newPane.getId());
+    content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    content.setIcon(newPane.getIcon());
+    content.setPopupIcon(newPane.getIcon());
+    content.setPreferredFocusedComponent(() -> {
+      final AbstractProjectViewPane current = getCurrentProjectViewPane();
+      return current != null ? current.getComponentToFocus() : null;
+    });
+    content.setBusyObject(this);
+    manager.addContent(content, index);
+    myId2Pane.put(id, newPane);
   }
 
   private void showPane(@NotNull AbstractProjectViewPane newPane) {
@@ -574,22 +531,27 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     }
   }
 
-  private boolean viewSelectionChanged() {
+  void viewSelectionChanged() {
     Content content = getContentManager().getSelectedContent();
-    if (content == null) return false;
+    if (content == null) return;
+
     final String id = content.getUserData(ID_KEY);
-    String subId = content.getUserData(SUB_ID_KEY);
-    if (content.equals(Pair.create(myCurrentViewId, myCurrentViewSubId))) return false;
+    final String subId = content instanceof ProjectViewTabbedContent ? ((ProjectViewTabbedContent)content).getSelectedSubId() : null;
+
+    if (Comparing.equal(id, myCurrentViewId) && Comparing.equal(subId, myCurrentViewSubId)) return;
+
     final AbstractProjectViewPane newPane = getProjectViewPaneById(id);
-    if (newPane == null) return false;
+    if (newPane == null) return;
+
     newPane.setSubId(subId);
     showPane(newPane);
+
     ProjectViewSelectInTarget target = getProjectViewSelectInTarget(newPane);
     if (target != null) target.setSubId(subId);
+
     if (isAutoscrollFromSource(id)) {
       myAutoScrollFromSourceHandler.scrollFromSource();
     }
-    return true;
   }
 
   private void createToolbarActions() {
@@ -801,6 +763,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     myConnection.disconnect();
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     return myDataProvider;
@@ -934,18 +897,22 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @NotNull
   @Override
-  public ActionCallback changeViewCB(@NotNull String viewId, String subId) {
+  public ActionCallback changeViewCB(@NotNull String viewId, @Nullable String subId) {
+    if (viewId.equals(myCurrentViewId) && (subId == null || subId.equals(myCurrentViewSubId))) return ActionCallback.REJECTED;
+
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
     LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId + "; project: " + myProject);
-    if (!viewId.equals(getCurrentViewId())
-        || subId != null && !subId.equals(pane.getSubId())) {
-      for (Content content : getContentManager().getContents()) {
-        if (viewId.equals(content.getUserData(ID_KEY)) && StringUtil.equals(subId, content.getUserData(SUB_ID_KEY))) {
-          return getContentManager().setSelectedContentCB(content);
-        }
-      }
+
+    Content content = ContainerUtil.find(getContentManager().getContents(), it -> viewId.equals(it.getUserData(ID_KEY)));
+    if (content == null) return ActionCallback.REJECTED;
+
+    if (content instanceof ProjectViewTabbedContent == (subId == null)) return ActionCallback.REJECTED;
+
+    ActionCallback result = getContentManager().setSelectedContentCB(content);
+    if (content instanceof ProjectViewTabbedContent && !subId.equals(myCurrentViewSubId)) {
+      result.doWhenProcessed(() -> ((ProjectViewTabbedContent)content).selectContent(subId));
     }
-    return ActionCallback.REJECTED;
+    return result;
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
