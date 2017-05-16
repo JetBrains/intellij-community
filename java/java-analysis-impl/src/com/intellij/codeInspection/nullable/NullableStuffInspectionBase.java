@@ -208,12 +208,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         PsiExpression returnValue = statement.getReturnValue();
         if (returnValue == null) return;
 
-        PsiElement element = PsiTreeUtil.getParentOfType(statement, PsiMethod.class, PsiLambdaExpression.class);
-        if (element == null) return;
-        
-        PsiType returnType = element instanceof PsiMethod ? ((PsiMethod)element).getReturnType() : LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element);
-        
-        checkCollectionNullityOnAssignment(statement.getReturnValue(), returnType, returnValue);
+        checkCollectionNullityOnAssignment(statement.getReturnValue(), PsiTypesUtil.getMethodReturnType(statement), returnValue);
       }
 
       @Override
