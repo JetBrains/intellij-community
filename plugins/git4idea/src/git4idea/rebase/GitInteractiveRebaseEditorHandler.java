@@ -30,37 +30,21 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * The handler for rebase editor request. The handler shows {@link git4idea.rebase.GitRebaseEditor}
+ * The handler for rebase editor request. The handler shows the {@link GitRebaseEditor}
  * dialog with the specified file. If user accepts the changes, it saves file and returns 0,
  * otherwise it just returns error code.
  */
 public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEditorHandler {
-  /**
-   * The logger
-   */
-  private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class.getName());
-  /**
-   * The service object that has created this handler
-   */
+  private final static Logger LOG = Logger.getInstance(GitInteractiveRebaseEditorHandler.class);
   private final GitRebaseEditorService myService;
-  /**
-   * The context project
-   */
   private final Project myProject;
-  /**
-   * The git repository root
-   */
   private final VirtualFile myRoot;
-  /**
-   * The handler number
-   */
   @NotNull private final UUID myHandlerNo;
-  /**
-   * If true, the handler has been closed
-   */
   private boolean myIsClosed;
+
   /**
-   * Set to true after rebase editor was shown
+   * If interactive rebase editor (with the list of commits) was shown, this is true.
+   * In that case, the class expects only unstructured editor to edit the commit message.
    */
   protected boolean myRebaseEditorShown = false;
 
@@ -68,32 +52,16 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
 
   private boolean myEditorCancelled;
 
-  /**
-   * The constructor from fields that is expected to be
-   * accessed only from {@link git4idea.rebase.GitRebaseEditorService}.
-   *
-   * @param service the service object that has created this handler
-   * @param project the context project
-   * @param root    the git repository root
-   */
-  public GitInteractiveRebaseEditorHandler(@NotNull final GitRebaseEditorService service,
-                                           @NotNull final Project project,
-                                           @NotNull final VirtualFile root) {
+  public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
     myService = service;
     myProject = project;
     myRoot = root;
     myHandlerNo = service.registerHandler(this, project);
   }
 
-  /**
-   * Edit commits request
-   *
-   * @param path the path to editing
-   * @return the exit code to be returned from editor
-   */
-  public int editCommits(@NotNull final String path) {
+  public int editCommits(@NotNull String path) {
     ensureOpen();
-    final Ref<Boolean> isSuccess = new Ref<>();
+    Ref<Boolean> isSuccess = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         myEditorCancelled = false;
@@ -169,9 +137,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     }
   }
 
-  /**
-   * Stop using the handler
-   */
   public void close() {
     ensureOpen();
     myIsClosed = true;
