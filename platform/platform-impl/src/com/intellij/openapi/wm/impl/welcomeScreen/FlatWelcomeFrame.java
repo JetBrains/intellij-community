@@ -50,9 +50,8 @@ import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -204,8 +203,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return "Welcome to " + ApplicationNamesInfo.getInstance().getFullProductName();
   }
 
-  @Nullable
-  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList> pair) {
+  @NotNull
+  public static JComponent getPreferredFocusedComponent(@NotNull Pair<JPanel, JBList<AnAction>> pair) {
     if (pair.second.getModel().getSize() == 1) {
       JBTextField textField = UIUtil.uiTraverser(pair.first).filter(JBTextField.class).first();
       if (textField != null) {
@@ -476,10 +475,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
 
     private AnAction wrapGroups(AnAction action) {
       if (action instanceof ActionGroup && ((ActionGroup)action).isPopup()) {
-        final Pair<JPanel, JBList> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
+        final Pair<JPanel, JBList<AnAction>> panel = createActionGroupPanel((ActionGroup)action, mySlidingPanel, () -> goBack(), this);
         final Runnable onDone = () -> {
           setTitle("New Project");
-          final JBList list = panel.second;
+          final JBList<AnAction> list = panel.second;
           ScrollingUtil.ensureSelectionExists(list);
           final ListSelectionListener[] listeners =
             ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
@@ -489,9 +488,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), true));
           }
           JComponent toFocus = getPreferredFocusedComponent(panel);
-          if (toFocus != null) {
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
-          }
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
         };
         final String name = action.getClass().getName();
         mySlidingPanel.add(name, panel.first);
@@ -783,23 +780,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return getRootPane();
   }
 
-  public static void notifyFrameClosed(JFrame frame) {
-    saveLocation(frame.getBounds());
-  }
-
   public static class WelcomeScreenActionsPanel {
     private JPanel root;
     private JPanel actions;
   }
-  
-  public static Pair<JPanel, JBList> createActionGroupPanel(final ActionGroup action,
-                                                            final JComponent parent,
-                                                            final Runnable backAction,
-                                                            @NotNull Disposable parentDisposable) {
+
+  public static Pair<JPanel, JBList<AnAction>> createActionGroupPanel(final ActionGroup action,
+                                                                      final JComponent parent,
+                                                                      final Runnable backAction,
+                                                                      @NotNull Disposable parentDisposable) {
     JPanel actionsListPanel = new JPanel(new BorderLayout());
     actionsListPanel.setBackground(getProjectsBackground());
     final List<AnAction> groups = flattenActionGroups(action);
-    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(ArrayUtil.toObjectArray(groups));
+    final DefaultListModel<AnAction> model = JBList.createDefaultListModel(groups);
     final JBList<AnAction> list = new JBList<>(model);
     for (AnAction group : groups) {
       if (group instanceof Disposable) {
@@ -957,10 +950,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return back;
   }
 
-  public static void installQuickSearch(JBList list) {
-    new ListSpeedSearch(list, (Convertor<Object, String>)o -> {
+  public static void installQuickSearch(JBList<AnAction> list) {
+    new ListSpeedSearch<>(list, (Function<AnAction, String>)o -> {
       if (o instanceof AbstractActionWithPanel) { //to avoid dependency mess with ProjectSettingsStepBase
-        return ((AbstractActionWithPanel)o).getTemplatePresentation().getText();
+        return o.getTemplatePresentation().getText();
       }
       return null;
     });

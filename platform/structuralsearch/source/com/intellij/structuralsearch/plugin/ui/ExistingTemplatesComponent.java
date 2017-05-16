@@ -28,7 +28,7 @@ import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -149,7 +149,7 @@ public class ExistingTemplatesComponent {
     historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     historyList.setSelectedIndex(0);
 
-    final ListSpeedSearch speedSearch = new ListSpeedSearch(historyList, (Convertor<Object, String>)o -> o instanceof Configuration ? ((Configuration)o).getName() : o.toString());
+    ListSpeedSearch<Configuration> speedSearch = new ListSpeedSearch<>(historyList, (Function<Configuration, String>)Configuration::getName);
     historyList.setCellRenderer(new ExistingTemplatesListCellRenderer(speedSearch));
     configureSelectTemplateAction(historyList);
   }

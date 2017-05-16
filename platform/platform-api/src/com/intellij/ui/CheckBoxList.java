@@ -40,16 +40,16 @@ import java.util.Map;
 /**
  * @author oleg
  */
-public class CheckBoxList<T> extends JBList {
+public class CheckBoxList<T> extends JBList<JCheckBox> {
   private final CellRenderer myCellRenderer;
   private CheckBoxListListener checkBoxListListener;
   private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<>();
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
-    this(new DefaultListModel(), checkBoxListListener);
+    this(new DefaultListModel<>(), checkBoxListListener);
   }
 
-  public CheckBoxList(final DefaultListModel dataModel, final CheckBoxListListener checkBoxListListener) {
+  public CheckBoxList(DefaultListModel<JCheckBox> dataModel, CheckBoxListListener checkBoxListListener) {
     this(dataModel);
     setCheckBoxListListener(checkBoxListListener);
   }
@@ -189,7 +189,7 @@ public class CheckBoxList<T> extends JBList {
 
   @NotNull
   private JCheckBox getCheckBoxAt(int index) {
-    return (JCheckBox)getModel().getElementAt(index);
+    return getModel().getElementAt(index);
   }
 
   public void setStringItems(final Map<String, Boolean> items) {
@@ -220,7 +220,7 @@ public class CheckBoxList<T> extends JBList {
     JCheckBox checkBox = myItemMap.remove(oldItem);
     myItemMap.put(newItem, checkBox);
     checkBox.setText(newText);
-    DefaultListModel model = (DefaultListModel)getModel();
+    DefaultListModel<JCheckBox> model = (DefaultListModel<JCheckBox>)getModel();
     int ind = model.indexOf(checkBox);
     if (ind >= 0) {
       model.set(ind, checkBox); // to fire contentsChanged event
@@ -229,7 +229,7 @@ public class CheckBoxList<T> extends JBList {
 
   @Nullable
   public T getItemAt(int index) {
-    JCheckBox checkBox = (JCheckBox)getModel().getElementAt(index);
+    JCheckBox checkBox = getModel().getElementAt(index);
     List<T> value = myItemMap.getKeysByValue(checkBox);
     return value == null || value.isEmpty() ? null : value.get(0);
   }
@@ -240,7 +240,7 @@ public class CheckBoxList<T> extends JBList {
   }
 
   public boolean isItemSelected(int index) {
-    return ((JCheckBox)getModel().getElementAt(index)).isSelected();
+    return getModel().getElementAt(index).isSelected();
   }
 
   public boolean isItemSelected(T item) {
@@ -283,7 +283,7 @@ public class CheckBoxList<T> extends JBList {
     return rootComponent;
   }
 
-  private class CellRenderer implements ListCellRenderer {
+  private class CellRenderer implements ListCellRenderer<JCheckBox> {
     private final Border mySelectedBorder;
     private final Border myBorder;
     private final Insets myBorderInsets;
@@ -295,9 +295,7 @@ public class CheckBoxList<T> extends JBList {
     }
 
     @Override
-    public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-      JCheckBox checkbox = (JCheckBox)value;
-
+    public Component getListCellRendererComponent(JList list, JCheckBox checkbox, int index, boolean isSelected, boolean cellHasFocus) {
       Color textColor = getForeground(isSelected);
       Color backgroundColor = getBackground(isSelected);
       Font font = getFont();

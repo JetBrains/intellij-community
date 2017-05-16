@@ -80,7 +80,7 @@ public class TurnRefsToSuperDialog extends RefactoringDialog {
     final JLabel classListLabel = new JLabel();
     panel.add(classListLabel, BorderLayout.NORTH);
 
-    mySuperClassesList = new JBList<>(mySuperClasses.toArray());
+    mySuperClassesList = new JBList<>(mySuperClasses);
     mySuperClassesList.setCellRenderer(new ClassCellRenderer(mySuperClassesList.getCellRenderer()));
     mySuperClassesList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     classListLabel.setText(RefactoringBundle.message("turnRefsToSuper.change.usages.to", mySubClass.getQualifiedName()));
