@@ -72,17 +72,12 @@ public class MethodChain {
     return mySignature;
   }
 
-  public int size() {
+  public int length() {
     return myRevertedPath.size();
   }
 
   public PsiClass getQualifierClass() {
     return myQualifierClass;
-  }
-
-  @NotNull
-  public List<PsiMethod[]> getRevertedPath() {
-    return myRevertedPath;
   }
 
   @NotNull
@@ -118,10 +113,10 @@ public class MethodChain {
 
   @SuppressWarnings("ConstantConditions")
   public static CompareResult compare(@NotNull MethodChain left, @NotNull MethodChain right) {
-    if (left.size() == 0) {
+    if (left.length() == 0) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
-    if (right.size() == 0) {
+    if (right.length() == 0) {
       return CompareResult.LEFT_CONTAINS_RIGHT;
     }
     Iterator<PsiMethod[]> leftIterator = left.myRevertedPath.iterator();

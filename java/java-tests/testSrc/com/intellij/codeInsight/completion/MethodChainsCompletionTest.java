@@ -95,7 +95,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   }
 
   public void testMethodsWithParametersInContext() {
-    assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 0, 5, 3, 0, assertOneElement(doCompletion()));
+    assertAdvisorLookupElementEquals("getInstance().findFile().findElementAt", 0, 5, 3, 0, doCompletion().get(0));
   }
 
   public void testChainsWithIndependentCallings() {

@@ -59,65 +59,41 @@ public class ChainSearcher {
                                           int pathMaximalLength,
                                           int maxResultSize,
                                           ChainCompletionContext context) {
-    Map<MethodIncompleteSignature, MethodChain> knownDistance = initializer.getChains();
     LinkedList<MethodChain> q = initializer.getChainQueue();
 
     List<MethodChain> result = new ArrayList<>();
     while (!q.isEmpty()) {
 
       ProgressManager.checkCanceled();
-      MethodChain currentVertex = q.poll();
-      MethodIncompleteSignature headSignature = currentVertex.getHeadSignature();
-      MethodChain currentVertexMethodChain = knownDistance.get(headSignature);
-      if (currentVertex.getChainWeight() != currentVertexMethodChain.getChainWeight()) {
-        continue;
-      }
+      MethodChain currentChain = q.poll();
+      MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
 
-      // interrupt a chain if a head method is static or has suitable qualifier
-      if (headSignature.isStatic() || context.hasQualifier(context.resolveQualifierClass(headSignature))) {
-        addChainIfNotPresent(currentVertex, result);
+      // interrupt a chain if it can be terminal
+      if (headSignature.isStatic() ||
+          context.hasQualifier(context.resolveQualifierClass(headSignature)) ||
+          currentChain.length() >= pathMaximalLength) {
+        addChainIfNotPresent(currentChain, result);
         continue;
       }
 
       // otherwise try to find chain continuation
+      boolean updated = false;
       SortedSet<SignatureAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(headSignature.getOwner(), SignatureData.ZERO_DIM);
-      MaxSizeTreeSet<SignatureAndOccurrences> chosenCandidates = new MaxSizeTreeSet<>(maxResultSize);
       for (SignatureAndOccurrences candidate : candidates) {
-        if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentVertex.getChainWeight()) {
+        if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentChain.getChainWeight()) {
           break;
         }
         MethodIncompleteSignature sign = candidate.getSignature();
-        if (sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) {
-          int vertexDistance = Math.min(currentVertex.getChainWeight(), candidate.getOccurrenceCount());
-          MethodChain knownVertexMethodChain = knownDistance.get(sign);
-          if ((knownVertexMethodChain == null || knownVertexMethodChain.getChainWeight() < vertexDistance)) {
-            if ((chosenCandidates.isEmpty() || chosenCandidates.last().getOccurrenceCount() < vertexDistance) && currentVertexMethodChain.size() < pathMaximalLength - 1) {
-              MethodChain newBestMethodChain = currentVertexMethodChain.continuation(candidate.getSignature(), vertexDistance, context);
-              if (newBestMethodChain != null) {
-                chosenCandidates.add(new SignatureAndOccurrences(candidate.getSignature(), vertexDistance));
-                knownDistance.put(sign, newBestMethodChain);
-              }
+        if ((sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) &&
+            referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
+          MethodChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
+          if (continuation != null) {
+            boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
+            if (stopChain) {
+              addChainIfNotPresent(continuation, result);
             }
-          }
-          else {
-            break;
-          }
-        }
-      }
-
-      boolean updated = false;
-      if (!chosenCandidates.isEmpty()) {
-        for (SignatureAndOccurrences candidate : chosenCandidates) {
-          if (referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
-            MethodChain continuation = currentVertex.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
-            if (continuation != null) {
-              boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
-              if (stopChain) {
-                addChainIfNotPresent(continuation, result);
-              }
-              else {
-                q.addFirst(continuation);
-              }
+            else {
+              q.addFirst(continuation);
             }
             updated = true;
           }
@@ -126,7 +102,7 @@ public class ChainSearcher {
 
       // continuation is not found -> add this chain as result
       if (!updated && !context.getTarget().getClassQName().equals(headSignature.getOwner())) {
-        addChainIfNotPresent(currentVertex, result);
+        addChainIfNotPresent(currentChain, result);
       }
 
       if (result.size() > maxResultSize) {

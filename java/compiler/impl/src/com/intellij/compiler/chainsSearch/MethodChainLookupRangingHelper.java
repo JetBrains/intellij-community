@@ -41,8 +41,8 @@ public class MethodChainLookupRangingHelper {
   @Nullable
   public static LookupElement chainToWeightableLookupElement(MethodChain chain,
                                                              ChainCompletionContext context) {
-    int chainSize = chain.size();
-    assert chainSize != 0;
+    int chainLength = chain.length();
+    assert chainLength != 0;
     int lastMethodWeight = chain.getChainWeight();
     int unreachableParametersCount = 0;
     int notMatchedStringVars = 0;
@@ -93,7 +93,7 @@ public class MethodChainLookupRangingHelper {
     }
 
     ChainRelevance relevance =
-      new ChainRelevance(chainSize,
+      new ChainRelevance(chainLength,
                          lastMethodWeight,
                          unreachableParametersCount,
                          notMatchedStringVars,
