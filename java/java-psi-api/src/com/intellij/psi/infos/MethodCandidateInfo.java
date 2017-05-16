@@ -80,6 +80,11 @@ public class MethodCandidateInfo extends CandidateInfo{
     myLanguageLevel = languageLevel;
   }
 
+  /**
+   * To use during overload resolution to choose if method can be applicable by strong/loose invocation.
+   * 
+   * @return true only for java 8+ varargs methods.
+   */
   public boolean isVarargs() {
     return false;
   }

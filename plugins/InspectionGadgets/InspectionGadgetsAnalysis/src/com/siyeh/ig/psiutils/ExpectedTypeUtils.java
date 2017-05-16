@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -620,7 +621,8 @@ public class ExpectedTypeUtils {
       if (parameters.length == 0) {
         return null;
       }
-      final boolean isVarargs = method.isVarArgs();
+      final boolean isVarargs = result instanceof MethodCandidateInfo && 
+                                ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
       final PsiType parameterType = PsiTypesUtil.getParameterType(parameters, parameterPosition, isVarargs);
       final PsiSubstitutor substitutor = result.getSubstitutor();
       final PsiType type = GenericsUtil.getVariableTypeByExpressionType(substitutor.substitute(parameterType));
