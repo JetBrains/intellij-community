@@ -19,11 +19,9 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -40,8 +38,6 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
@@ -61,8 +57,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
@@ -133,61 +127,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
-    return Optional
-      .<PyType>ofNullable(getTypeForTypingNTInheritor(context))
-      .orElseGet(() -> new PyClassTypeImpl(this, true));
-  }
-
-  @Nullable
-  private PyNamedTupleType getTypeForTypingNTInheritor(@NotNull TypeEvalContext context) {
-    final Condition<PyClassLikeType> isTypingNT =
-      type ->
-        type != null &&
-        !(type instanceof PyNamedTupleType) &&
-        PyTypingTypeProvider.NAMEDTUPLE.equals(type.getClassQName());
-
-    if (ContainerUtil.exists(getSuperClassTypes(context), isTypingNT)) {
-      final String name = getName();
-      if (name != null) {
-        final PsiElement typingNT = resolveTopLevelMember(QualifiedName.fromDottedString(PyTypingTypeProvider.NAMEDTUPLE),
-                                                          fromFoothold(this));
-
-        final PyClass tupleClass = as(typingNT, PyClass.class);
-        if (tupleClass != null) {
-          final Set<PyTargetExpression> fields = new TreeSet<>(Comparator.comparingInt(PyTargetExpression::getTextOffset));
-
-          processClassLevelDeclarations(
-            new BaseScopeProcessor() {
-              @Override
-              public boolean execute(@NotNull PsiElement element, @NotNull ResolveState substitutor) {
-                if (element instanceof PyTargetExpression) {
-                  final PyTargetExpression target = (PyTargetExpression)element;
-                  if (target.getAnnotation() != null) {
-                    fields.add(target);
-                  }
-                }
-
-                return true;
-              }
-            }
-          );
-
-          final Collector<PyTargetExpression, ?, LinkedHashMap<String, PyNamedTupleType.FieldTypeAndDefaultValue>> toNTFields =
-            Collectors.toMap(PyTargetExpression::getName,
-                             field -> new PyNamedTupleType.FieldTypeAndDefaultValue(context.getType(field), field.findAssignedValue()),
-                             (v1, v2) -> v2,
-                             LinkedHashMap::new);
-
-          return new PyNamedTupleType(tupleClass,
-                                      this,
-                                      name,
-                                      fields.stream().collect(toNTFields),
-                                      PyNamedTupleType.DefinitionLevel.NEW_TYPE);
-        }
-      }
-    }
-
-    return null;
+    return new PyClassTypeImpl(this, true);
   }
 
   private class NewStyleCachedValueProvider implements ParameterizedCachedValueProvider<Boolean, TypeEvalContext> {
