@@ -55,6 +55,17 @@ public class RefJavaUtilImpl extends RefJavaUtil{
           }
         }
 
+        @Override
+        public void visitLiteralExpression(PsiLiteralExpression expression) {
+          for (PsiReference reference : expression.getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof PsiMember) {
+              final RefElement refClass = refFrom.getRefManager().getReference(resolve);
+              refFrom.addReference(refClass, resolve, psiFrom, false, true, null);
+            }
+          }
+        }
+
         @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
           visitElement(expression);
 

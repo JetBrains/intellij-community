@@ -194,4 +194,8 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testDeprecatedAsEntryPoint() {
     doTest();
   }
+
+  public void testReferenceFromReflection() {
+    doTest();
+  }
 }
