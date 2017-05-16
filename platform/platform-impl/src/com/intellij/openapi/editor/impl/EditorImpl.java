@@ -1250,11 +1250,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myView.xyToVisualPosition(p);
   }
 
+  @Override
   @NotNull
-  Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets) {
-    return myView.offsetToXY(offset, leanTowardsLargerOffsets, false);
+  public Point2D offsetToPoint2D(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
+    return myView.offsetToXY(offset, leanTowardsLargerOffsets, beforeSoftWrap);
   }
-  
+
+  @Override
+  @NotNull
+  public Point offsetToXY(int offset, boolean leanForward, boolean beforeSoftWrap) {
+    Point2D point2D = offsetToPoint2D(offset, leanForward, beforeSoftWrap);
+    return new Point((int)point2D.getX(), (int)point2D.getY());
+  }
+
   @Override
   @NotNull
   public VisualPosition offsetToVisualPosition(int offset) {
