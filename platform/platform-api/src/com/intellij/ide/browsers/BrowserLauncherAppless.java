@@ -13,280 +13,271 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.browsers
 
-import com.intellij.CommonBundle;
-import com.intellij.Patches;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.PathUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.CommonBundle
+import com.intellij.Patches
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.util.ExecUtil
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.util.ArrayUtil
+import com.intellij.util.PathUtil
+import org.jetbrains.annotations.Contract
+import java.awt.Desktop
+import java.io.File
+import java.io.IOException
+import java.net.URI
+import java.util.*
 
-import java.awt.*;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+open class BrowserLauncherAppless : BrowserLauncher() {
+  companion object {
+    internal val LOG = Logger.getInstance(BrowserLauncherAppless::class.java)
 
-public class BrowserLauncherAppless extends BrowserLauncher {
-  static final Logger LOG = Logger.getInstance(BrowserLauncherAppless.class);
+    private fun isDesktopActionSupported(action: Desktop.Action): Boolean {
+      return !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+    }
 
-  private static boolean isDesktopActionSupported(Desktop.Action action) {
-    return !Patches.SUN_BUG_ID_6486393 && Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action);
-  }
+    @JvmStatic
+    fun canUseSystemDefaultBrowserPolicy(): Boolean {
+      return isDesktopActionSupported(Desktop.Action.BROWSE) ||
+             SystemInfo.isMac || SystemInfo.isWindows ||
+             SystemInfo.isUnix && SystemInfo.hasXdgOpen()
+    }
 
-  public static boolean canUseSystemDefaultBrowserPolicy() {
-    return isDesktopActionSupported(Desktop.Action.BROWSE) ||
-           SystemInfo.isMac || SystemInfo.isWindows ||
-           (SystemInfo.isUnix && SystemInfo.hasXdgOpen());
-  }
+    private val generalSettings: GeneralSettings
+      get() {
+        if (ApplicationManager.getApplication() != null) {
+          val settings = GeneralSettings.getInstance()
+          if (settings != null) {
+            return settings
+          }
+        }
 
-  private static GeneralSettings getGeneralSettings() {
-    if (ApplicationManager.getApplication() != null) {
-      GeneralSettings settings = GeneralSettings.getInstance();
-      if (settings != null) {
-        return settings;
+        return GeneralSettings()
+      }
+
+    private val defaultBrowserCommand: List<String>?
+      get() {
+        if (SystemInfo.isWindows) {
+          return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
+        }
+        else if (SystemInfo.isMac) {
+          return listOf(ExecUtil.getOpenCommandPath())
+        }
+        else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
+          return listOf("xdg-open")
+        }
+        else {
+          return null
+        }
+      }
+
+    private fun addArgs(command: GeneralCommandLine, settings: BrowserSpecificSettings?, additional: Array<String>) {
+      val specific = settings?.additionalParameters ?: emptyList<String>()
+      if (specific.size + additional.size > 0) {
+        if (isOpenCommandUsed(command)) {
+          if (BrowserUtil.isOpenCommandSupportArgs()) {
+            command.addParameter("--args")
+          }
+          else {
+            LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " +
+                     StringUtil.join(specific, ", ") + " " + Arrays.toString(additional))
+            return
+          }
+        }
+
+        command.addParameters(specific)
+        command.addParameters(*additional)
       }
     }
 
-    return new GeneralSettings();
-  }
-
-  @Nullable
-  private static List<String> getDefaultBrowserCommand() {
-    if (SystemInfo.isWindows) {
-      return Arrays.asList(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""));
-    }
-    else if (SystemInfo.isMac) {
-      return Collections.singletonList(ExecUtil.getOpenCommandPath());
-    }
-    else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
-      return Collections.singletonList("xdg-open");
-    }
-    else {
-      return null;
+    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean {
+      return SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
     }
   }
 
-  @Override
-  public void open(@NotNull String url) {
-    openOrBrowse(url, false, null);
-  }
+  override fun open(url: String) = openOrBrowse(url, false, null)
 
-  @Override
-  public void browse(@NotNull File file) {
-    browse(VfsUtil.toUri(file));
-  }
+  override fun browse(file: File) = browse(VfsUtil.toUri(file))
 
-  @Override
-  public void browse(@NotNull URI uri) {
-    browse(uri, null);
-  }
+  override fun browse(uri: URI) = browse(uri, null)
 
-  public void browse(@NotNull URI uri, @Nullable Project project) {
-    LOG.debug("Launch browser: [" + uri + "]");
+  fun browse(uri: URI, project: Project?) {
+    LOG.debug("Launch browser: [$uri]")
 
-    GeneralSettings settings = getGeneralSettings();
-    if (settings.isUseDefaultBrowser()) {
-      boolean tryToUseCli = true;
+    val settings = generalSettings
+    if (settings.isUseDefaultBrowser) {
+      var tryToUseCli = true
       if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
         try {
-          Desktop.getDesktop().browse(uri);
-          LOG.debug("Browser launched using JDK 1.6 API");
-          return;
+          Desktop.getDesktop().browse(uri)
+          LOG.debug("Browser launched using JDK 1.6 API")
+          return
         }
-        catch (Exception e) {
-          LOG.warn("Error while using Desktop API, fallback to CLI", e);
+        catch (e: Exception) {
+          LOG.warn("Error while using Desktop API, fallback to CLI", e)
           // if "No application knows how to open", then we must not try to use OS open
-          tryToUseCli = !e.getMessage().contains("Error code: -10814");
+          tryToUseCli = !e.message!!.contains("Error code: -10814")
         }
+
       }
 
       if (tryToUseCli) {
-        List<String> command = getDefaultBrowserCommand();
+        val command = defaultBrowserCommand
         if (command != null) {
-          doLaunch(uri.toString(), command, null, project, ArrayUtil.EMPTY_STRING_ARRAY, null);
-          return;
+          doLaunch(uri.toString(), command, null, project, ArrayUtil.EMPTY_STRING_ARRAY, null)
+          return
         }
       }
     }
 
-    browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project);
+    browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project)
   }
 
-  protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
-    browseUsingPath(uri.toString(), settings.getBrowserPath(), null, project, ArrayUtil.EMPTY_STRING_ARRAY);
+  protected open fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {
+    browseUsingPath(uri.toString(), settings.browserPath, null, project, ArrayUtil.EMPTY_STRING_ARRAY)
   }
 
-  private void openOrBrowse(@NotNull String url, boolean browse, @Nullable Project project) {
-    url = url.trim();
+  private fun openOrBrowse(_url: String, browse: Boolean, project: Project?) {
+    var url = _url.trim { it <= ' ' }
 
-    URI uri;
+    val uri: URI?
     if (BrowserUtil.isAbsoluteURL(url)) {
-      uri = VfsUtil.toUri(url);
+      uri = VfsUtil.toUri(url)
     }
     else {
-      File file = new File(url);
+      val file = File(url)
       if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
-          showError(IdeBundle.message("error.file.does.not.exist", file.getPath()), null, null, null, null);
-          return;
+          showError(IdeBundle.message("error.file.does.not.exist", file.path), null, null, null, null)
+          return
         }
 
         try {
-          Desktop.getDesktop().open(file);
-          return;
+          Desktop.getDesktop().open(file)
+          return
         }
-        catch (IOException e) {
-          LOG.debug(e);
+        catch (e: IOException) {
+          LOG.debug(e)
         }
+
       }
 
-      browse(file);
-      return;
+      browse(file)
+      return
     }
 
     if (uri == null) {
-      showError(IdeBundle.message("error.malformed.url", url), null, project, null, null);
+      showError(IdeBundle.message("error.malformed.url", url), null, project, null, null)
     }
     else {
-      browse(uri, project);
+      browse(uri, project)
     }
   }
 
-  @Override
-  public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
+  override fun browse(url: String, browser: WebBrowser?, project: Project?) {
     if (browser == null) {
-      openOrBrowse(url, true, project);
+      openOrBrowse(url, true, project)
     }
     else {
-      for (UrlOpener urlOpener : UrlOpener.EP_NAME.getExtensions()) {
+      for (urlOpener in UrlOpener.EP_NAME.extensions) {
         if (urlOpener.openUrl(browser, url, project)) {
-          return;
+          return
         }
       }
     }
   }
 
-  @Override
-  public boolean browseUsingPath(@Nullable final String url,
-                                 @Nullable String browserPath,
-                                 @Nullable final WebBrowser browser,
-                                 @Nullable final Project project,
-                                 @NotNull final String[] additionalParameters) {
-    Runnable launchTask = null;
+  override fun browseUsingPath(url: String?,
+                               browserPath: String?,
+                               browser: WebBrowser?,
+                               project: Project?,
+                               additionalParameters: Array<String>): Boolean {
+    var browserPathEffective = browserPath
+    var launchTask: (() -> Unit)? = null
     if (browserPath == null && browser != null) {
-      browserPath = PathUtil.toSystemDependentName(browser.getPath());
-      launchTask = () -> browseUsingPath(url, null, browser, project, additionalParameters);
+      browserPathEffective = PathUtil.toSystemDependentName(browser.path)
+      launchTask = { browseUsingPath(url, null, browser, project, additionalParameters) }
     }
-    return doLaunch(url, browserPath, browser, project, additionalParameters, launchTask);
+    return doLaunch(url, browserPathEffective, browser, project, additionalParameters, launchTask)
   }
 
-  private boolean doLaunch(@Nullable String url,
-                           @Nullable String browserPath,
-                           @Nullable WebBrowser browser,
-                           @Nullable Project project,
-                           @NotNull String[] additionalParameters,
-                           @Nullable Runnable launchTask) {
+  private fun doLaunch(url: String?,
+                       browserPath: String?,
+                       browser: WebBrowser?,
+                       project: Project?,
+                       additionalParameters: Array<String>,
+                       launchTask: (() -> Unit)?): Boolean {
     if (!checkPath(browserPath, browser, project, launchTask)) {
-      return false;
+      return false
     }
-    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath, false), browser, project, additionalParameters, launchTask);
+    return doLaunch(url, BrowserUtil.getOpenBrowserCommand(browserPath!!, false), browser, project, additionalParameters, launchTask)
   }
 
   @Contract("null, _, _, _ -> false")
-  public boolean checkPath(@Nullable String browserPath, @Nullable WebBrowser browser, @Nullable Project project, @Nullable Runnable launchTask) {
+  fun checkPath(browserPath: String?, browser: WebBrowser?, project: Project?, launchTask: (() -> Unit)?): Boolean {
     if (!StringUtil.isEmptyOrSpaces(browserPath)) {
-      return true;
+      return true
     }
 
-    String message = browser != null ? browser.getBrowserNotFoundMessage() :
-                     IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath());
-    showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask);
-    return false;
+    val message = browser?.browserNotFoundMessage ?: IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath())
+    showError(message, browser, project, IdeBundle.message("title.browser.not.found"), launchTask)
+    return false
   }
 
-  private boolean doLaunch(@Nullable String url,
-                           @NotNull List<String> command,
-                           @Nullable WebBrowser browser,
-                           @Nullable Project project,
-                           @NotNull String[] additionalParameters,
-                           @Nullable Runnable launchTask) {
-    GeneralCommandLine commandLine = new GeneralCommandLine(command);
+  private fun doLaunch(url: String?,
+                       command: List<String>,
+                       browser: WebBrowser?,
+                       project: Project?,
+                       additionalParameters: Array<String>,
+                       launchTask: (() -> Unit)?): Boolean {
+    val commandLine = GeneralCommandLine(command)
 
     if (url != null && url.startsWith("jar:")) {
-      return false;
+      return false
     }
 
     if (url != null) {
-      commandLine.addParameter(url);
+      commandLine.addParameter(url)
     }
 
-    final BrowserSpecificSettings browserSpecificSettings = browser == null ? null : browser.getSpecificSettings();
+    val browserSpecificSettings = browser?.specificSettings
     if (browserSpecificSettings != null) {
-      commandLine.getEnvironment().putAll(browserSpecificSettings.getEnvironmentVariables());
+      commandLine.environment.putAll(browserSpecificSettings.environmentVariables)
     }
 
-    addArgs(commandLine, browserSpecificSettings, additionalParameters);
+    addArgs(commandLine, browserSpecificSettings, additionalParameters)
 
     try {
-      Process process = commandLine.createProcess();
-      checkCreatedProcess(browser, project, commandLine, process, launchTask);
-      return true;
+      val process = commandLine.createProcess()
+      checkCreatedProcess(browser, project, commandLine, process, launchTask)
+      return true
     }
-    catch (ExecutionException e) {
-      showError(e.getMessage(), browser, project, null, null);
-      return false;
+    catch (e: ExecutionException) {
+      showError(e.message, browser, project, null, null)
+      return false
     }
+
   }
 
-  protected void checkCreatedProcess(@Nullable WebBrowser browser,
-                                     @Nullable Project project,
-                                     @NotNull GeneralCommandLine commandLine,
-                                     @NotNull Process process,
-                                     @Nullable Runnable launchTask) {
+  protected open fun checkCreatedProcess(browser: WebBrowser?,
+                                         project: Project?,
+                                         commandLine: GeneralCommandLine,
+                                         process: Process,
+                                         launchTask: (() -> Unit)?) {
   }
 
-  protected void showError(@Nullable String error, @Nullable WebBrowser browser, @Nullable Project project, String title, @Nullable Runnable launchTask) {
+  protected open fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
-    LOG.warn(error);
-  }
-
-  private static void addArgs(@NotNull GeneralCommandLine command, @Nullable BrowserSpecificSettings settings, @NotNull String[] additional) {
-    List<String> specific = settings == null ? Collections.emptyList() : settings.getAdditionalParameters();
-    if (specific.size() + additional.length > 0) {
-      if (isOpenCommandUsed(command)) {
-        if (BrowserUtil.isOpenCommandSupportArgs()) {
-          command.addParameter("--args");
-        }
-        else {
-          LOG.warn("'open' command doesn't allow to pass command line arguments so they will be ignored: " +
-                   StringUtil.join(specific, ", ") + " " + Arrays.toString(additional));
-          return;
-        }
-      }
-
-      command.addParameters(specific);
-      command.addParameters(additional);
-    }
-  }
-
-  public static boolean isOpenCommandUsed(@NotNull GeneralCommandLine command) {
-    return SystemInfo.isMac && ExecUtil.getOpenCommandPath().equals(command.getExePath());
+    LOG.warn(error)
   }
 }

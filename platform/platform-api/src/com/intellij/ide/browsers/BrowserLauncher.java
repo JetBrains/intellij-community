@@ -13,36 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.browsers
 
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.project.Project
 
-import java.io.File;
-import java.net.URI;
+import java.io.File
+import java.net.URI
 
-public abstract class BrowserLauncher {
-  public static BrowserLauncher getInstance() {
-    return ServiceManager.getService(BrowserLauncher.class);
+abstract class BrowserLauncher {
+  companion object {
+    @JvmStatic
+    val instance: BrowserLauncher
+      get() = ServiceManager.getService(BrowserLauncher::class.java)
   }
 
-  public abstract void open(@NotNull String url);
+  abstract fun open(url: String)
 
-  public abstract void browse(@NotNull URI uri);
+  abstract fun browse(uri: URI)
 
-  public abstract void browse(@NotNull File file);
+  abstract fun browse(file: File)
 
-  public void browse(@NotNull String url, @Nullable WebBrowser browser) {
-    browse(url, browser, null);
+  fun browse(url: String, browser: WebBrowser?) {
+    browse(url, browser, null)
   }
 
-  public abstract void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project);
+  abstract fun browse(url: String, browser: WebBrowser?, project: Project?)
 
-  public abstract boolean browseUsingPath(@Nullable String url,
-                                          @Nullable String browserPath,
-                                          @Nullable WebBrowser browser,
-                                          @Nullable Project project,
-                                          @NotNull String[] additionalParameters);
+  abstract fun browseUsingPath(url: String?,
+                               browserPath: String?,
+                               browser: WebBrowser?,
+                               project: Project?,
+                               additionalParameters: Array<String>): Boolean
 }

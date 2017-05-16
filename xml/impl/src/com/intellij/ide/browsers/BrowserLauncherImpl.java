@@ -13,116 +13,112 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ide.browsers;
+package com.intellij.ide.browsers
 
-import com.intellij.concurrency.JobScheduler;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.util.ExecUtil;
-import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AppUIUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Url;
-import com.intellij.util.Urls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.ide.BuiltInServerManager;
+import com.intellij.concurrency.JobScheduler
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.util.ExecUtil
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.AppUIUtil
+import com.intellij.util.ArrayUtil
+import com.intellij.util.Urls
+import org.jetbrains.ide.BuiltInServerManager
+import java.net.URI
+import java.util.concurrent.TimeUnit
 
-import java.net.URI;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-public final class BrowserLauncherImpl extends BrowserLauncherAppless {
-  @Override
-  public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
-    BuiltInServerManager serverManager = BuiltInServerManager.getInstance();
-    Url parsedUrl = Urls.parse(url, false);
+class BrowserLauncherImpl : BrowserLauncherAppless() {
+  override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+    @Suppress("NAME_SHADOWING")
+    var url = url
+    @Suppress("NAME_SHADOWING")
+    var browser = browser
+    val serverManager = BuiltInServerManager.getInstance()
+    val parsedUrl = Urls.parse(url, false)
     if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
-      if (Registry.is("ide.built.in.web.server.activatable", false)) {
-        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true);
+      if (Registry.`is`("ide.built.in.web.server.activatable", false)) {
+        PropertiesComponent.getInstance().setValue("ide.built.in.web.server.active", true)
       }
 
-      url = serverManager.addAuthToken(parsedUrl).toExternalForm();
+      url = serverManager.addAuthToken(parsedUrl).toExternalForm()
     }
 
     if (browser == null) {
       // https://youtrack.jetbrains.com/issue/WEB-26547
-      WebBrowserManager browserManager = WebBrowserManager.getInstance();
+      val browserManager = WebBrowserManager.getInstance()
       if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
-        browser = browserManager.getFirstActiveBrowser();
+        browser = browserManager.firstActiveBrowser
       }
     }
 
-    super.browse(url, browser, project);
+    super.browse(url, browser, project)
   }
 
-  @Override
-  protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
-    WebBrowserManager browserManager = WebBrowserManager.getInstance();
+  override fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {
+    val browserManager = WebBrowserManager.getInstance()
     if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
-      WebBrowser browser = browserManager.getFirstActiveBrowser();
+      val browser = browserManager.firstActiveBrowser
       if (browser != null) {
-        browse(uri.toString(), browser, project);
-        return;
+        browse(uri.toString(), browser, project)
+        return
       }
     }
-    else if (SystemInfo.isMac && "open".equals(settings.getBrowserPath())) {
-      WebBrowser browser = browserManager.getFirstActiveBrowser();
+    else if (SystemInfo.isMac && "open" == settings.browserPath) {
+      val browser = browserManager.firstActiveBrowser
       if (browser != null) {
-        browseUsingPath(uri.toString(), null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY);
-        return;
+        browseUsingPath(uri.toString(), null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY)
+        return
       }
     }
 
-    super.browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project);
+    super.browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project)
   }
 
-  @Override
-  protected void showError(@Nullable final String error,
-                           @Nullable final WebBrowser browser,
-                           @Nullable final Project project,
-                           final String title,
-                           @Nullable final Runnable launchTask) {
-    AppUIUtil.invokeOnEdt(() -> {
+  override fun showError(error: String?,
+                          browser: WebBrowser?,
+                          project: Project?,
+                          title: String?,
+                          launchTask: (() -> Unit)?) {
+    AppUIUtil.invokeOnEdt(Runnable {
       if (Messages.showYesNoDialog(project, StringUtil.notNullize(error, "Unknown error"),
-                                   title == null ? IdeBundle.message("browser.error") : title, Messages.OK_BUTTON,
-                                   IdeBundle.message("button.fix"), null) == Messages.NO) {
-        final BrowserSettings browserSettings = new BrowserSettings();
-        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, browser == null ? null : (Runnable)() -> browserSettings.selectBrowser(browser))) {
-          if (launchTask != null) {
-            launchTask.run();
-          }
+        title ?: IdeBundle.message("browser.error"), Messages.OK_BUTTON,
+        IdeBundle.message("button.fix"), null) == Messages.NO) {
+        val browserSettings = BrowserSettings()
+        if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, if (browser == null) null
+        else {
+          browserSettings.selectBrowser(browser)
+        } as Runnable)) {
+          launchTask?.invoke()
         }
       }
-    }, project == null ? null : project.getDisposed());
+    }, project?.disposed)
   }
 
-  @Override
-  protected void checkCreatedProcess(@Nullable final WebBrowser browser,
-                                     @Nullable final Project project,
-                                     @NotNull final GeneralCommandLine commandLine,
-                                     @NotNull final Process process,
-                                     @Nullable final Runnable launchTask) {
+  override fun checkCreatedProcess(browser: WebBrowser?,
+                                             project: Project?,
+                                             commandLine: GeneralCommandLine,
+                                             process: Process,
+                                             launchTask: (() -> Unit)?) {
     if (isOpenCommandUsed(commandLine)) {
-      final Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      val future = ApplicationManager.getApplication().executeOnPooledThread {
         try {
           if (process.waitFor() == 1) {
-            showError(ExecUtil.readFirstLine(process.getErrorStream(), null), browser, project, null, launchTask);
+            showError(ExecUtil.readFirstLine(process.errorStream, null), browser, project, null, launchTask)
           }
         }
-        catch (InterruptedException ignored) {
+        catch (ignored: InterruptedException) {
         }
-      });
+      }
       // 10 seconds is enough to start
-      JobScheduler.getScheduler().schedule((Runnable)() -> future.cancel(true), 10, TimeUnit.SECONDS);
+      JobScheduler.getScheduler().schedule({ future.cancel(true) } as Runnable, 10, TimeUnit.SECONDS)
     }
   }
 }
