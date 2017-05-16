@@ -424,7 +424,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     boolean ok = myProgressManager.runProcessWithProgressSynchronously(process, ProjectBundle.message("project.load.progress"), canCancelProjectLoading(), project);
     if (!ok) {
-      closeProject(project, false, false);
+      closeProject(project, false, false, false, true);
       notifyProjectOpenFailed();
       return false;
     }
@@ -601,7 +601,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeProject(@NotNull final Project project) {
-    return closeProject(project, true, false);
+    return closeProject(project, true, true, false, true);
   }
 
   @TestOnly
@@ -609,13 +609,24 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     return closeProject(project, false, false, dispose, false);
   }
 
-  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean dispose) {
-    return closeProject(project, saveProject, saveProject, dispose, true);
+  // return true if successful
+  public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
+    ApplicationManager.getApplication().saveSettings();
+    for (Project project : getOpenProjects()) {
+      if (!closeProject(project, true, false, true, checkCanClose)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // saveApp is ignored if saveProject is false
   @SuppressWarnings("TestOnlyProblems")
-  public boolean closeProject(@NotNull final Project project, final boolean saveProject, final boolean saveApp, final boolean dispose, boolean checkCanClose) {
+  private boolean closeProject(@NotNull final Project project,
+                               final boolean saveProject,
+                               final boolean saveApp,
+                               final boolean dispose,
+                               boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call closeProject() from under write action because fireProjectClosing() listeners must have a chance to do something useful");
@@ -682,7 +693,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   @Override
   public boolean closeAndDispose(@NotNull final Project project) {
-    return closeProject(project, true, true);
+    return closeProject(project, true, true, true, true);
   }
 
   private void fireProjectClosing(@NotNull Project project) {
@@ -786,7 +797,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (projectLevelListeners.isEmpty()) {
       return myListeners;
     }
-    else if (myListeners.isEmpty()) {
+    if (myListeners.isEmpty()) {
       return projectLevelListeners;
     }
 
