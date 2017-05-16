@@ -21,7 +21,6 @@ import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
-import com.intellij.lang.ant.config.impl.AntBuildFileImpl;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,6 +63,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   private DefaultMutableTreeNode myStatusNode;
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private OccurenceNavigatorSupport myOccurenceNavigatorSupport;
+  private final boolean myAutoCollapseTargets;
   @NonNls public static final String ROOT_TREE_USER_OBJECT = "root";
   @NonNls public static final String JUNIT_TASK_NAME = "junit";
 
@@ -80,6 +80,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       }
     };
     myPanel = createPanel();
+    myAutoCollapseTargets = buildFile instanceof AntBuildFileBase && ((AntBuildFileBase)myBuildFile).isCollapseFinishedTargets();
   }
 
   @Override
@@ -151,7 +152,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     final JScrollPane treePane = MessageTreeRenderer.install(myTree);
     if (myBuildFile instanceof AntBuildFileBase) {
       ((MessageTreeRenderer)myTree.getCellRenderer()).setUseAnsiColor(
-        AntBuildFileImpl.TREE_VIEW_ANSI_COLOR.value(((AntBuildFileBase)myBuildFile).getAllOptions())
+        ((AntBuildFileBase)myBuildFile).isColoredOutputMessages()
       );
     }
 
@@ -348,10 +349,12 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   private void collapseTargets() {
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
-    for (int i = 0; i < root.getChildCount(); i++) {
-      DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
-      myTree.collapsePath(new TreePath(node.getPath()));
+    if (myAutoCollapseTargets) {
+      final DefaultMutableTreeNode root = (DefaultMutableTreeNode)myTreeModel.getRoot();
+      for (int i = 0; i < root.getChildCount(); i++) {
+        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)root.getChildAt(i);
+        myTree.collapsePath(new TreePath(node.getPath()));
+      }
     }
   }
 

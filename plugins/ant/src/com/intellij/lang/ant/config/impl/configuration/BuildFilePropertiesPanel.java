@@ -132,6 +132,7 @@ public class BuildFilePropertiesPanel {
     private JPanel myWholePanel;
     private JLabel myHeapSizeLabel;
     private JCheckBox myColoredOutputMessages;
+    private JCheckBox myCollapseFinishedTargets;
     private final Tab[] myTabs;
     private final UIPropertyBinding.Composite myBinding = new UIPropertyBinding.Composite();
     private final TabbedPaneWrapper myWrapper;
@@ -152,6 +153,7 @@ public class BuildFilePropertiesPanel {
       myBinding.bindBoolean(myRunInBackground, AntBuildFileImpl.RUN_IN_BACKGROUND);
       myBinding.bindBoolean(myCloseOnNoError, AntBuildFileImpl.CLOSE_ON_NO_ERRORS);
       myBinding.bindBoolean(myColoredOutputMessages, AntBuildFileImpl.TREE_VIEW_ANSI_COLOR);
+      myBinding.bindBoolean(myCollapseFinishedTargets, AntBuildFileImpl.TREE_VIEW_COLLAPSE_TARGETS);
       myBinding.bindInt(myXmx, AntBuildFileImpl.MAX_HEAP_SIZE);
       myBinding.bindInt(myXss, AntBuildFileImpl.MAX_STACK_SIZE);
 
