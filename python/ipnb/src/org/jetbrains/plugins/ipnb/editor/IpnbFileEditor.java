@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
-import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.*;
@@ -115,26 +114,22 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     final JPanel controlPanel = new JPanel();
     controlPanel.setBackground(IpnbEditorUtil.getBackground());
 
-    final DefaultActionGroup saveGroup = new DefaultActionGroup();
-    saveGroup.add(new IpnbSaveAction(this), new IpnbConvertToPythonAction());
-    controlPanel.add(createToolbar(saveGroup));
+    final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(new IpnbSaveAction(this));
+    toolbarGroup.add(new IpnbConvertToPythonAction());
+    toolbarGroup.add( new Separator());
+    toolbarGroup.add(new IpnbAddCellBelowAction(this));
+    toolbarGroup.add(new Separator());
+    toolbarGroup.addAll(new IpnbCutCellAction(this), new IpnbCopyCellAction(this), new IpnbPasteCellAction(this));
+    JComponent toolbar = createToolbar(toolbarGroup);
+    controlPanel.add(toolbar);
 
-    final DefaultActionGroup addGroup = new DefaultActionGroup();
-    addGroup.add(new IpnbAddCellBelowAction(this));
-    controlPanel.add(createToolbar(addGroup));
-
-
-    final DefaultActionGroup editorGroup = new DefaultActionGroup();
-    editorGroup.addAll(new IpnbCutCellAction(this), new IpnbCopyCellAction(this), new IpnbPasteCellAction(this));
-    controlPanel.add(createToolbar(editorGroup));
-
-    final DefaultActionGroup runGroup = new DefaultActionGroup();
+    DefaultActionGroup runGroup = new DefaultActionGroup();
     runGroup.addAll(new IpnbRunCellAction(this), new IpnbInterruptKernelAction(this), new IpnbReloadKernelAction(this));
     myRunPanel = createToolbar(runGroup);
     controlPanel.add(myRunPanel);
 
     myCellTypeCombo = new ComboBox(ourCellTypes);
-    myCellTypeCombo.setBorder(null);
 
     myCellTypeCombo.addActionListener(new ActionListener() {
       @Override
@@ -158,9 +153,10 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   @NotNull
   private static JComponent createToolbar(@NotNull DefaultActionGroup group) {
-    final JComponent savePanel = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
-    savePanel.setBackground(IpnbEditorUtil.getBackground());
-    return savePanel;
+    JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    component.setBackground(IpnbEditorUtil.getBackground());
+
+    return component;
   }
 
   public JComponent getRunPanel() {
