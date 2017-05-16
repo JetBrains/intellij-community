@@ -295,7 +295,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     DefaultActionGroup actionGroup = new DefaultActionGroup(createRerunAction());
 
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN,
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunnerErrors",
                                                                                         actionGroup, false);
 
     // Runner creating
@@ -608,7 +608,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   protected void createContentDescriptorAndActions() {
     // Runner creating
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("PydevConsoleRunner", toolbarActions, false);
 
     // Runner creating
     final JPanel panel = new JPanel(new BorderLayout());
