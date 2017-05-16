@@ -36,6 +36,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.profile.codeInspection.ui.table.ThreeStateCheckBoxRenderer;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.ui.treeStructure.treetable.TreeTableTree;
@@ -70,9 +71,9 @@ import java.util.stream.Stream;
 public class InspectionsConfigTreeTable extends TreeTable {
   private final static Logger LOG = Logger.getInstance(InspectionsConfigTreeTable.class);
 
-  private final static int TREE_COLUMN = 0;
-  private final static int SEVERITIES_COLUMN = 1;
-  private final static int IS_ENABLED_COLUMN = 2;
+  private final static int IS_ENABLED_COLUMN = 0;
+  private final static int TREE_COLUMN = 1;
+  private final static int SEVERITIES_COLUMN = 2;
 
   public static int getAdditionalPadding() {
     return SystemInfo.isMac ? 10 : 0;
@@ -92,6 +93,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
       public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean focus, int row, int column) {
         Component component = super.getTableCellRendererComponent(table, value, false, focus, row, column);
         Color bg = selected ? table.getSelectionBackground() : table.getBackground();
+        ((JLabel) component).setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 0, getAdditionalPadding()));
         component.setBackground(bg);
         ((JLabel) component).setText("");
         return component;
@@ -102,10 +104,10 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return value;
       }
     });
-    severitiesColumn.setMaxWidth(JBUI.scale(20));
+    severitiesColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
 
     TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
+    isEnabledColumn.setMaxWidth(JBUI.scale(20));
     ThreeStateCheckBoxRenderer boxRenderer = new ThreeStateCheckBoxRenderer();
     boxRenderer.setOpaque(true);
     isEnabledColumn.setCellRenderer(boxRenderer);
