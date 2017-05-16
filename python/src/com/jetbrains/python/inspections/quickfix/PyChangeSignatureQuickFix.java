@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections.quickfix;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.PeekingIterator;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,7 +69,16 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     final List<Pair<Integer, PyParameterInfo>> newParameters = new ArrayList<>();
     for (PyExpression arg : mapping.getUnmappedArguments()) {
       if (arg instanceof PyKeywordArgument) {
-        newParameters.add(Pair.create(parameters.length - 1, new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), "", false)));
+        final String defaultValueText;
+        final PyExpression value = ((PyKeywordArgument)arg).getValueExpression();
+        if (value != null && PyRefactoringUtil.isSimpleExpression(value) && !value.textContains('\n')) {
+          defaultValueText = value.getText();
+        }
+        else {
+          defaultValueText = ApplicationManager.getApplication().isUnitTestMode() ? "None" : "";
+        }
+        newParameters.add(Pair.create(parameters.length - 1,
+                                      new PyParameterInfo(-1, ((PyKeywordArgument)arg).getKeyword(), defaultValueText, true)));
       }
       else {
         final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callExpression.getContainingFile());
@@ -77,10 +87,10 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
         final String paramName = PyRefactoringUtil.selectUniqueNameFromType(typeName, function.getStatementList());
         newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(-1, paramName, "", false)));
       }
-    }    
+    }
     return new PyChangeSignatureQuickFix(function, newParameters);
   }
-  
+
 
   @NotNull
   public static PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
@@ -117,7 +127,7 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     }, ", ");
     return "<html>" +
            PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")") +
-           "</html>"; 
+           "</html>";
   }
 
   @Nullable
@@ -127,36 +137,45 @@ public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, createMethodDescriptor(getFunction())) {
+    final PyFunction function = getFunction();
+    final PyMethodDescriptor descriptor = createMethodDescriptor(function);
+
+    final PyChangeSignatureDialog dialog = new PyChangeSignatureDialog(project, descriptor) {
       // Similar to JavaChangeSignatureDialog.createAndPreselectNew()
       @Override
       protected int getSelectedIdx() {
         return (int)StreamEx.of(getParameters()).indexOf(info -> info.getOldIndex() < 0).orElse(super.getSelectedIdx());
       }
     };
-    dialog.show();
+
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.createRefactoringProcessor().run();
+    }
+    else {
+      dialog.show();
+    }
   }
 
   @NotNull
   private PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
     return new PyMethodDescriptor(function) {
-        @Override
-        public List<PyParameterInfo> getParameters() {
-          final List<PyParameterInfo> result = new ArrayList<>();
-          final List<PyParameterInfo> originalParams = super.getParameters();
-          final PeekingIterator<Pair<Integer, PyParameterInfo>> extra = Iterators.peekingIterator(myExtraParameters.iterator());
-          while (extra.hasNext() && extra.peek().getFirst() < 0) {
+      @Override
+      public List<PyParameterInfo> getParameters() {
+        final List<PyParameterInfo> result = new ArrayList<>();
+        final List<PyParameterInfo> originalParams = super.getParameters();
+        final PeekingIterator<Pair<Integer, PyParameterInfo>> extra = Iterators.peekingIterator(myExtraParameters.iterator());
+        while (extra.hasNext() && extra.peek().getFirst() < 0) {
+          result.add(extra.next().getSecond());
+        }
+        for (int i = 0; i < originalParams.size(); i++) {
+          result.add(originalParams.get(i));
+          while (extra.hasNext() && extra.peek().getFirst() == i) {
             result.add(extra.next().getSecond());
           }
-          for (int i = 0; i < originalParams.size(); i++) {
-            result.add(originalParams.get(i));
-            while (extra.hasNext() && extra.peek().getFirst() == i) {
-              result.add(extra.next().getSecond());
-            }
-          }
-          return result;
         }
-      };
+        return result;
+      }
+    };
   }
 
   @Nullable

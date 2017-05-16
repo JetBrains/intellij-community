@@ -89,7 +89,7 @@ public class PyChangeSignatureDialog extends
   }
 
   @Override
-  protected BaseRefactoringProcessor createRefactoringProcessor() {
+  public BaseRefactoringProcessor createRefactoringProcessor() {
     final List<PyParameterInfo> parameters = getParameters();
     return new PyChangeSignatureProcessor(myProject, myMethod.getMethod(), getMethodName(),
                                           parameters.toArray(new PyParameterInfo[parameters.size()]));

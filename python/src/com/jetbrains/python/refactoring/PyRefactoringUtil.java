@@ -17,6 +17,7 @@ package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.find.findUsages.FindUsagesHandler;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +29,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.introduce.IntroduceValidator;
@@ -396,5 +398,17 @@ public class PyRefactoringUtil {
 
   public static boolean isValidNewName(@NotNull String name, @NotNull PsiElement scopeAnchor) {
     return !(IntroduceValidator.isDefinedInScope(name, scopeAnchor) || PyNames.isReserved(name));
+  }
+
+  public static boolean isSimpleExpression(@NotNull PyExpression value) {
+    if (value instanceof PyLiteralExpression) {
+      final ASTNode node = value.getNode();
+      // Check that string literal doesn't contain multiple glued nodes
+      return node.getChildren(null).length == 1 && PyTokenTypes.SCALAR_LITERALS.contains(node.getFirstChildNode().getElementType());  
+    }
+    else if (value instanceof PyReferenceExpression) {
+      return PyUtil.isPy2ReservedWord((PyReferenceExpression)value);
+    }
+    return false;
   }
 }
