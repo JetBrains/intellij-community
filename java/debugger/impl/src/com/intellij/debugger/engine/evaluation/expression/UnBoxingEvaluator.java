@@ -93,14 +93,16 @@ public class UnBoxingEvaluator implements Evaluator {
   }
 
   @Nullable
-  public static PrimitiveValue getInnerPrimitiveValue(ObjectReference value) {
-    ReferenceType type = value.referenceType();
-    Field valueField = type.fieldByName("value");
-    if (valueField != null) {
-      Value primitiveValue = value.getValue(valueField);
-      if (primitiveValue instanceof PrimitiveValue) {
-        LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
-        return (PrimitiveValue)primitiveValue;
+  public static PrimitiveValue getInnerPrimitiveValue(@Nullable ObjectReference value) {
+    if (value != null) {
+      ReferenceType type = value.referenceType();
+      Field valueField = type.fieldByName("value");
+      if (valueField != null) {
+        Value primitiveValue = value.getValue(valueField);
+        if (primitiveValue instanceof PrimitiveValue) {
+          LOG.assertTrue(type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
+          return (PrimitiveValue)primitiveValue;
+        }
       }
     }
     return null;
