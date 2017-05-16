@@ -17,14 +17,18 @@ package com.intellij.stats.events.completion
 
 import com.google.gson.Gson
 import com.google.gson.internal.LinkedTreeMap
+import java.lang.reflect.Field
 
 object JsonSerializer {
     private val gson = Gson()
+    private val ignoredFields = setOf(
+      "recorderId", "timestamp", "sessionUid", "actionType", "userUid"
+    )
 
     fun toJson(obj: Any): String = gson.toJson(obj)
 
     fun <T> fromJson(json: String, clazz: Class<T>): DeserializationResult<T> {
-        val declaredFields = clazz.declaredFields.map { it.name }.toSet()
+        val declaredFields = allFields(clazz).map { it.name }.filter { it !in ignoredFields }
         val jsonFields = gson.fromJson(json, LinkedTreeMap::class.java).keys.map { it.toString() }.toSet()
         val value = gson.fromJson(json, clazz)
 
@@ -32,6 +36,14 @@ object JsonSerializer {
         val absentFields = declaredFields.subtract(jsonFields)
 
         return DeserializationResult(value, unknownFields, absentFields)
+    }
+
+    private fun <T> allFields(clazz: Class<T>): List<Field> {
+        val fields: List<Field> = clazz.declaredFields.toList()
+        if (clazz.superclass != null) {
+            return fields + allFields(clazz.superclass)
+        }
+        return fields
     }
 }
 
@@ -60,8 +72,8 @@ object LogEventSerializer {
     }
 
 
-    fun fromString(line: String): DeserializedLogEvent? {
-        val pair = tabSeparatedValues(line) ?: return null
+    fun fromString(line: String): DeserializedLogEvent {
+        val pair = tabSeparatedValues(line) ?: return DeserializedLogEvent(null, emptySet(), emptySet())
         val items = pair.first
         val start = pair.second
 
@@ -71,7 +83,7 @@ object LogEventSerializer {
         val sessionUid = items[3]
         val actionType = Action.valueOf(items[4])
 
-        val clazz = actionClassMap[actionType] ?: return null
+        val clazz = actionClassMap[actionType] ?: return DeserializedLogEvent(null, emptySet(), emptySet())
 
         val json = line.substring(start + 1)
         val result = JsonSerializer.fromJson(json, clazz)
@@ -108,7 +120,7 @@ object LogEventSerializer {
 
 
 class DeserializedLogEvent(
-  val event: LogEvent,
+  val event: LogEvent?,
   val unknownEventFields: Set<String>,
   val absentEventFields: Set<String>
 ) {

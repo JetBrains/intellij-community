@@ -24,7 +24,7 @@ class EventSerializeDeserializeTest {
 
     private fun serializeDeserializeAndCheck(event: LogEvent) {
         val logLine = LogEventSerializer.toString(event)
-        val eventFromString = LogEventSerializer.fromString(logLine)!!.event
+        val eventFromString = LogEventSerializer.fromString(logLine).event!!
         assertEquals(logLine, LogEventSerializer.toString(eventFromString))
     }
 

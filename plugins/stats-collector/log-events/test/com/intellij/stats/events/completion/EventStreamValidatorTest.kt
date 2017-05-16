@@ -3,21 +3,23 @@ package com.intellij.stats.events.completion
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
+private fun List<LogEvent>.serialize(): List<String> = map { LogEventSerializer.toString(it) }
+
 
 class EventStreamValidatorTest {
-    
+
     @Test
     fun simple_sequence_of_actions() {
         val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_position_0)
-        validate(list, list.join(), "")
+        validate(list, list.map { LogEventSerializer.toString(it) }, emptyList())
     }
 
     @Test
     fun sample_error_sequence_of_actions() {
         val list = listOf(LogEventFixtures.completion_started_3_items_shown, LogEventFixtures.explicit_select_position_1)
-        validate(list, expectedOut = "", expectedErr = list.join())
+        validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
     }
-    
+
     @Test
     fun up_down_actions() {
         val list = listOf(
@@ -28,7 +30,7 @@ class EventStreamValidatorTest {
           LogEventFixtures.up_pressed_new_pos_1,
           LogEventFixtures.explicit_select_position_1
         )
-        validate(list, list.join(), expectedErr = "")
+        validate(list, list.serialize(), expectedErr = emptyList())
     }
 
     @Test
@@ -41,7 +43,7 @@ class EventStreamValidatorTest {
           LogEventFixtures.up_pressed_new_pos_1,
           LogEventFixtures.explicit_select_position_0
         )
-        validate(list, expectedOut = "", expectedErr = list.join())
+        validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
     }
 
     @Test
@@ -52,7 +54,7 @@ class EventStreamValidatorTest {
           LogEventFixtures.type_event_current_pos_0_left_id_0,
           LogEventFixtures.selected_by_typing_0
         )
-        validate(list, expectedOut = "", expectedErr = list.join())
+        validate(list, expectedOut = emptyList(), expectedErr = list.serialize())
     }
 
     @Test
@@ -63,23 +65,19 @@ class EventStreamValidatorTest {
           LogEventFixtures.down_event_new_pos_1,
           LogEventFixtures.explicit_select_position_1
         )
-        validate(list, expectedOut = list.join(), expectedErr = "")
+        validate(list, expectedOut = list.serialize(), expectedErr = emptyList())
     }
 
-    private fun validate(list: List<com.intellij.stats.events.completion.LogEvent>, expectedOut: String, expectedErr: String) {
-        val output = java.io.ByteArrayOutputStream()
-        val err = java.io.ByteArrayOutputStream()
+    private fun validate(list: List<LogEvent>,
+                         expectedOut: List<String>,
+                         expectedErr: List<String>) {
+        val input: List<String> = list.map { LogEventSerializer.toString(it) }
+        val separator = SessionsFilter()
+        separator.filter(input)
 
-        val input = list.join().toByteArray()
-        val separator = com.intellij.stats.events.completion.SessionsInputSeparator(java.io.ByteArrayInputStream(input), output, err)
-        separator.processInput()
-
-        assertThat(err.toString().trim()).isEqualTo(expectedErr)
-        assertThat(output.toString().trim()).isEqualTo(expectedOut)
+        assertThat(separator.errorLines).isEqualTo(expectedErr)
+        assertThat(separator.outputLines).isEqualTo(expectedOut)
     }
 
 }
 
-private fun List<LogEvent>.join(): String {
-    return this.map { LogEventSerializer.toString(it) }.joinToString(System.lineSeparator())
-}

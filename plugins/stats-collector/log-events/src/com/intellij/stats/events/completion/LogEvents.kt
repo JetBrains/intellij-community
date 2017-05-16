@@ -121,7 +121,8 @@ class CompletionStartedEvent(
         completionList, 
         selectedPosition)
 {
-    
+
+    //seems it's not needed, remove when possible
     var completionListLength: Int = completionList.size
     
     var isOneLineMode: Boolean = false
