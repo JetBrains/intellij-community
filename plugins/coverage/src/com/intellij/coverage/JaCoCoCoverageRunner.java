@@ -1,11 +1,16 @@
 package com.intellij.coverage;
 
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ClassData;
@@ -26,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class JaCoCoCoverageRunner extends JavaCoverageRunner {
   private static final Logger LOG = Logger.getInstance(JaCoCoCoverageRunner.class);
@@ -36,7 +42,13 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     try {
       final Project project = baseCoverageSuite instanceof BaseCoverageSuite ? baseCoverageSuite.getProject() : null;
       if (project != null) {
-        loadExecutionData(sessionDataFile, data, project);
+        RunConfigurationBase configuration = ((BaseCoverageSuite)baseCoverageSuite).getConfiguration();
+        
+        Module mainModule = configuration instanceof ModuleBasedConfiguration 
+                            ? ((ModuleBasedConfiguration)configuration).getConfigurationModule().getModule() 
+                            : null;
+      
+        loadExecutionData(sessionDataFile, data, mainModule, project);
       }
     }
     catch (Exception e) {
@@ -46,7 +58,10 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     return data;
   }
 
-  private static void loadExecutionData(@NotNull final File sessionDataFile, ProjectData data, @NotNull Project project) throws IOException {
+  private static void loadExecutionData(@NotNull final File sessionDataFile,
+                                        ProjectData data,
+                                        @Nullable Module mainModule,
+                                        @NotNull Project project) throws IOException {
     final ExecutionDataStore executionDataStore = new ExecutionDataStore();
     FileInputStream fis = null;
     try {
@@ -72,13 +87,22 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     final CoverageBuilder coverageBuilder = new CoverageBuilder();
     final Analyzer analyzer = new Analyzer(executionDataStore, coverageBuilder);
 
-    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    final Module[] modules;
+    if (mainModule != null) {
+      HashSet<Module> mainModuleWithDependencies = new HashSet<>();
+      ReadAction.run(() -> ModuleUtilCore.getDependencies(mainModule, mainModuleWithDependencies));
+      modules = mainModuleWithDependencies.toArray(Module.EMPTY_ARRAY);
+    }
+    else {
+      modules = ModuleManager.getInstance(project).getModules();
+    }
     for (Module module : modules) {
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension != null) {
         final VirtualFile[] roots = compilerModuleExtension.getOutputRoots(true);
         for (VirtualFile root : roots) {
           VfsUtilCore.processFilesRecursively(root, file -> {
+            if (file.getFileSystem() instanceof JarFileSystem) return true;
             if (!file.isDirectory()) {
               try {
                 analyzer.analyzeAll(file.getInputStream(), file.getPath());
