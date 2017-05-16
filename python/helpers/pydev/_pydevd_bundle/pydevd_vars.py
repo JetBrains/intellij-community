@@ -640,7 +640,7 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, 1
 
-    rows = min(rows, 100)
+    rows = min(rows, MAXIMUM_ARRAY_SIZE)
     dtype = df.dtype.kind
     col_bounds = [(df.min(), df.max()) if dtype in "biufc" else (0, 0)]
 
