@@ -37,10 +37,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
@@ -235,7 +232,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         CachedEvaluator cachedEvaluator = new CachedEvaluator() {
           @Override
           protected String getClassName() {
-            return CommonClassNames.JAVA_LANG_OBJECT;
+            return ((ArrayType)array.type()).componentTypeName();
           }
         };
         cachedEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(myExpression));
