@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Collection;
 
 public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
@@ -40,11 +38,13 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     myProject = project;
   }
 
+  @Override
   @Nls
   public String getActionText() {
     return VcsBundle.message("shelve.changes.action");
   }
 
+  @Override
   @NotNull
   public CommitSession createCommitSession() {
     return new ShelveChangesCommitSession();
@@ -56,25 +56,16 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
   }
 
   private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
-
-    @Nullable
-    public JComponent getAdditionalConfigurationUI() {
-      return null;
-    }
-
     @Override
     public void setContext(CommitContext context) {
     }
 
-    @Nullable
-    public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
-      return null;
-    }
-
+    @Override
     public boolean canExecute(Collection<Change> changes, String commitMessage) {
       return changes.size() > 0;
     }
 
+    @Override
     public void execute(Collection<Change> changes, String commitMessage) {
       if (changes.size() > 0 && !ChangesUtil.hasFileChanges(changes)) {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
@@ -102,6 +93,7 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
       }
     }
 
+    @Override
     public void executionCanceled() {
     }
 
