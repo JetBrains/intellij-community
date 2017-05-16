@@ -84,10 +84,6 @@ public class Change {
     return myOtherLayers;
   }
 
-  public boolean hasOtherLayers() {
-    return ! myOtherLayers.isEmpty();
-  }
-
   public Type getType() {
     if (myType == null) {
       if (myBeforeRevision == null) {
