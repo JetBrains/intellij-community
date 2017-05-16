@@ -413,25 +413,16 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
 
 MAXIMUM_ARRAY_SIZE = 100
 
-def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
-    _, type_name, _ = get_type(array)
-    if type_name == 'ndarray':
-        array, metaxml, r, c, f = array_to_meta_xml(array, name, format)
-        xml = metaxml
-        format = '%' + f
-        if rows == -1 and cols == -1:
-            rows = r
-            cols = c
-        xml += array_to_xml(array, roffset, coffset, rows, cols, format)
-    elif type_name == 'DataFrame':
-        xml = dataframe_to_xml(array, name, roffset, coffset, rows, cols, format)
-    elif type_name == 'Series':
-        xml = series_to_xml(array, name, roffset, 0, rows, 1, format)
 
-    else:
-        raise VariableError("Do not know how to convert type %s to table" % (type_name))
-
-    return "<xml>%s</xml>" % xml
+def array_to_xml_converter(array, name, roffset, coffset, rows, cols, format):
+    array, metaxml, r, c, f = array_to_meta_xml(array, name, format)
+    xml = metaxml
+    format = '%' + f
+    if rows == -1 and cols == -1:
+        rows = r
+        cols = c
+    xml += array_to_xml(array, roffset, coffset, rows, cols, format)
+    return xml
 
 
 def array_to_xml(array, roffset, coffset, rows, cols, format):
@@ -672,3 +663,13 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
             value = col_formats[col] % value
             xml += var_to_xml(value, '')
     return xml
+
+TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml_converter, "DataFrame": dataframe_to_xml, "Series": series_to_xml}
+
+
+def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
+    _, type_name, _ = get_type(array)
+    if type_name in TYPE_TO_XML_CONVERTERS:
+        return "<xml>%s</xml>" % TYPE_TO_XML_CONVERTERS[type_name](array, name, roffset, coffset, rows, cols, format)
+    else:
+        raise VariableError("type %s not supported" % type_name)
