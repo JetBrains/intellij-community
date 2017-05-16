@@ -501,7 +501,7 @@ public class JavaCoverageEngine extends CoverageEngine {
       } else {
         String className = testName;
         while (lastIdx > 0) {
-          className = className.substring(0, lastIdx - 1);
+          className = className.substring(0, lastIdx);
           psiClass = facade.findClass(StringUtil.getPackageName(className, '_').replaceAll("\\_", "\\."), projectScope);
           lastIdx = className.lastIndexOf("_");
           if (psiClass != null) {
