@@ -15,7 +15,7 @@
  */
 package com.intellij.compiler.chainsSearch.context;
 
-import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
+import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.MethodChainsSearchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;

@@ -82,7 +82,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertAdvisorLookupElementEquals("p.getBaseDir", 0, 9, 1, 0, assertOneElement(doCompletion()));
   }
 
-  public void testOneChainContainsOther2() {
+  public void _testOneChainContainsOther2() {
     assertLookupElementStringEquals(assertOneElement(doCompletion()), "psiElement.getManager");
   }
 

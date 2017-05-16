@@ -21,7 +21,8 @@ import com.intellij.compiler.backwardRefs.view.CompilerReferenceFindUsagesTestIn
 import com.intellij.compiler.backwardRefs.view.CompilerReferenceHierarchyTestInfo;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
-import com.intellij.compiler.chainsSearch.OccurrencesAware;
+import com.intellij.compiler.chainsSearch.MethodIncompleteSignature;
+import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -222,8 +223,8 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
 
   @NotNull
   @Override
-  public SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                               @SignatureData.IteratorKind byte iteratorKind) {
+  public SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                                      @SignatureData.IteratorKind byte iteratorKind) {
     try {
       myReadDataLock.lock();
       if (myReader == null) throw new ReferenceIndexUnavailableException();
@@ -242,15 +243,15 @@ public class CompilerReferenceServiceImpl extends CompilerReferenceServiceEx imp
           .distinct()
           .map(r -> {
             int count = myReader.getOccurrenceCount(r);
-            return count <= 1 ? null : new OccurrencesAware<>(
+            return count <= 1 ? null : new SignatureAndOccurrences(
               new MethodIncompleteSignature((LightRef.JavaLightMethodRef)r, sd, this),
               count);
           }))
           .filter(Objects::nonNull)
-          .collect(Collectors.groupingBy(x -> x.getUnderlying(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
+          .collect(Collectors.groupingBy(x -> x.getSignature(), Collectors.summarizingInt(x -> x.getOccurrenceCount())))
           .entrySet()
           .stream()
-          .map(e -> new OccurrencesAware<>(e.getKey(), (int)e.getValue().getSum()))
+          .map(e -> new SignatureAndOccurrences(e.getKey(), (int)e.getValue().getSum()))
           .collect(Collectors.toCollection(TreeSet::new));
       }
       catch (Exception e) {

@@ -15,44 +15,43 @@
  */
 package com.intellij.compiler.chainsSearch;
 
-import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 
 import java.util.*;
 
 public class SearchInitializer {
   private final ChainCompletionContext myContext;
-  private final LinkedList<OccurrencesAware<MethodChain>> myVertices;
+  private final LinkedList<MethodChain> myQueue;
   private final LinkedHashMap<MethodIncompleteSignature, MethodChain> myChains;
 
-  public SearchInitializer(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
+  public SearchInitializer(SortedSet<SignatureAndOccurrences> indexValues,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
     List<MethodChain> chains = new ArrayList<>(size);
     populateFrequentlyUsedMethod(indexValues, chains);
-    myVertices = new LinkedList<>();
+    myQueue = new LinkedList<>();
     myChains = new LinkedHashMap<>(chains.size());
     for (MethodChain chain : chains) {
       MethodIncompleteSignature signature = chain.getHeadSignature();
-      myVertices.add(new OccurrencesAware<>(chain, chain.getChainWeight()));
+      myQueue.add(chain);
       myChains.put(signature, chain);
     }
   }
 
-  public LinkedList<OccurrencesAware<MethodChain>> getVertices() {
-    return myVertices;
+  public LinkedList<MethodChain> getChainQueue() {
+    return myQueue;
   }
 
   public LinkedHashMap<MethodIncompleteSignature, MethodChain> getChains() {
     return myChains;
   }
 
-  private void populateFrequentlyUsedMethod(SortedSet<OccurrencesAware<MethodIncompleteSignature>> indexValues,
+  private void populateFrequentlyUsedMethod(SortedSet<SignatureAndOccurrences> signatures,
                                             List<MethodChain> chains) {
     int bestOccurrences = -1;
-    for (OccurrencesAware<MethodIncompleteSignature> indexValue : indexValues) {
-      MethodChain methodChain = MethodChain.create(indexValue.getUnderlying(), indexValue.getOccurrenceCount(), myContext);
+    for (SignatureAndOccurrences indexValue : signatures) {
+      MethodChain methodChain = MethodChain.create(indexValue.getSignature(), indexValue.getOccurrenceCount(), myContext);
       if (methodChain != null) {
         chains.add(methodChain);
         int occurrences = indexValue.getOccurrenceCount();

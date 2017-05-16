@@ -17,17 +17,17 @@ package com.intellij.compiler.chainsSearch;
 
 import org.jetbrains.annotations.NotNull;
 
-public class OccurrencesAware<V> implements Comparable<OccurrencesAware<V>> {
-  private final V myUnderlying;
+public class SignatureAndOccurrences implements Comparable<SignatureAndOccurrences> {
+  private final MethodIncompleteSignature mySignature;
   private final int myOccurrences;
 
-  public OccurrencesAware(final V underlying, final int occurrences) {
-    myUnderlying = underlying;
+  public SignatureAndOccurrences(final MethodIncompleteSignature signature, final int occurrences) {
+    mySignature = signature;
     myOccurrences = occurrences;
   }
 
-  public V getUnderlying() {
-    return myUnderlying;
+  public MethodIncompleteSignature getSignature() {
+    return mySignature;
   }
 
   public int getOccurrenceCount() {
@@ -35,16 +35,16 @@ public class OccurrencesAware<V> implements Comparable<OccurrencesAware<V>> {
   }
 
   @Override
-  public int compareTo(@NotNull final OccurrencesAware<V> that) {
+  public int compareTo(@NotNull final SignatureAndOccurrences that) {
     final int sub = -getOccurrenceCount() + that.getOccurrenceCount();
     if (sub != 0) {
       return sub;
     }
-    return myUnderlying.hashCode() - that.myUnderlying.hashCode();
+    return mySignature.hashCode() - that.mySignature.hashCode();
   }
 
   @Override
   public String toString() {
-    return getOccurrenceCount() + " for " + myUnderlying;
+    return getOccurrenceCount() + " for " + mySignature;
   }
 }

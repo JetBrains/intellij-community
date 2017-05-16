@@ -16,7 +16,7 @@
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
-import com.intellij.compiler.chainsSearch.OccurrencesAware;
+import com.intellij.compiler.chainsSearch.SignatureAndOccurrences;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
@@ -25,7 +25,7 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 import java.util.SortedSet;
 
 /**
- * The service is used for java relevant chain completion / frequently used superclass inspection
+ * The service is used for / java completion sorting / java relevant chain completion / frequently used superclass inspection
  */
 public abstract class CompilerReferenceServiceEx extends CompilerReferenceService {
   protected CompilerReferenceServiceEx(Project project) {
@@ -33,8 +33,8 @@ public abstract class CompilerReferenceServiceEx extends CompilerReferenceServic
   }
 
   @NotNull
-  public abstract SortedSet<OccurrencesAware<MethodIncompleteSignature>> findMethodReferenceOccurrences(@NotNull String rawReturnType,
-                                                                                                        @SignatureData.IteratorKind byte iteratorKind)
+  public abstract SortedSet<SignatureAndOccurrences> findMethodReferenceOccurrences(@NotNull String rawReturnType,
+                                                                                    @SignatureData.IteratorKind byte iteratorKind)
     throws ReferenceIndexUnavailableException;
 
   public abstract boolean mayHappen(@NotNull LightRef qualifier, @NotNull LightRef base, int probabilityThreshold)

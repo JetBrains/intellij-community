@@ -16,26 +16,16 @@
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
-import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.*;
 
 public class ChainSearcher {
-  private static final Logger LOG = Logger.getInstance(ChainSearcher.class);
-
-  private ChainSearcher() {
-  }
-
   @NotNull
   public static List<MethodChain> search(int pathMaximalLength,
                                          ChainSearchTarget searchTarget,
@@ -48,12 +38,12 @@ public class ChainSearcher {
 
   @NotNull
   private static SearchInitializer createInitializer(ChainSearchTarget target,
-                                                     CompilerReferenceServiceEx compilerReferenceServiceEx,
+                                                     CompilerReferenceServiceEx referenceServiceEx,
                                                      ChainCompletionContext context) {
-    SortedSet<OccurrencesAware<MethodIncompleteSignature>> methods = null;
+    SortedSet<SignatureAndOccurrences> methods = null;
     for (byte kind : target.getArrayKind()) {
-      SortedSet<OccurrencesAware<MethodIncompleteSignature>> currentMethods =
-        compilerReferenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind);
+      SortedSet<SignatureAndOccurrences> currentMethods =
+        referenceServiceEx.findMethodReferenceOccurrences(target.getClassQName(), kind);
       if (methods == null) {
         methods = currentMethods;
       } else {
@@ -64,50 +54,48 @@ public class ChainSearcher {
   }
 
   @NotNull
-  private static List<MethodChain> search(CompilerReferenceServiceEx indexReader,
+  private static List<MethodChain> search(CompilerReferenceServiceEx referenceServiceEx,
                                           SearchInitializer initializer,
                                           int pathMaximalLength,
                                           int maxResultSize,
                                           ChainCompletionContext context) {
     Map<MethodIncompleteSignature, MethodChain> knownDistance = initializer.getChains();
-    LinkedList<OccurrencesAware<MethodChain>> q = initializer.getVertices();
+    LinkedList<MethodChain> q = initializer.getChainQueue();
 
-    ResultHolder result = new ResultHolder();
+    List<MethodChain> result = new ArrayList<>();
     while (!q.isEmpty()) {
+
       ProgressManager.checkCanceled();
-      OccurrencesAware<MethodChain> currentVertex = q.poll();
-      int currentVertexDistance = currentVertex.getOccurrenceCount();
-      MethodChain currentChain = currentVertex.getUnderlying();
-      MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
+      MethodChain currentVertex = q.poll();
+      MethodIncompleteSignature headSignature = currentVertex.getHeadSignature();
       MethodChain currentVertexMethodChain = knownDistance.get(headSignature);
-      if (currentVertexDistance != currentVertexMethodChain.getChainWeight()) {
+      if (currentVertex.getChainWeight() != currentVertexMethodChain.getChainWeight()) {
         continue;
       }
+
+      // interrupt a chain if a head method is static or has suitable qualifier
       if (headSignature.isStatic() || context.hasQualifier(context.resolveQualifierClass(headSignature))) {
-        result.add(currentChain);
+        addChainIfNotPresent(currentVertex, result);
         continue;
       }
-      String currentReturnType = headSignature.getOwner();
-      SortedSet<OccurrencesAware<MethodIncompleteSignature>> nextMethods = indexReader.findMethodReferenceOccurrences(currentReturnType, SignatureData.ZERO_DIM);
-      MaxSizeTreeSet<OccurrencesAware<MethodIncompleteSignature>> currentSignatures =
-        new MaxSizeTreeSet<>(maxResultSize);
-      String targetQName = context.getTarget().getClassQName();
-      for (OccurrencesAware<MethodIncompleteSignature> indexValue : nextMethods) {
-        MethodIncompleteSignature vertex = indexValue.getUnderlying();
-        int occurrences = indexValue.getOccurrenceCount();
-        if (vertex.isStatic() || !vertex.getOwner().equals(targetQName)) {
-          int vertexDistance = Math.min(currentVertexDistance, occurrences);
-          MethodChain knownVertexMethodChain = knownDistance.get(vertex);
+
+      // otherwise try to find chain continuation
+      SortedSet<SignatureAndOccurrences> candidates = referenceServiceEx.findMethodReferenceOccurrences(headSignature.getOwner(), SignatureData.ZERO_DIM);
+      MaxSizeTreeSet<SignatureAndOccurrences> chosenCandidates = new MaxSizeTreeSet<>(maxResultSize);
+      for (SignatureAndOccurrences candidate : candidates) {
+        if (candidate.getOccurrenceCount() * ChainSearchMagicConstants.FILTER_RATIO < currentVertex.getChainWeight()) {
+          break;
+        }
+        MethodIncompleteSignature sign = candidate.getSignature();
+        if (sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) {
+          int vertexDistance = Math.min(currentVertex.getChainWeight(), candidate.getOccurrenceCount());
+          MethodChain knownVertexMethodChain = knownDistance.get(sign);
           if ((knownVertexMethodChain == null || knownVertexMethodChain.getChainWeight() < vertexDistance)) {
-            if (currentSignatures.isEmpty() || currentSignatures.last().getOccurrenceCount() < vertexDistance) {
-              if (currentVertexMethodChain.size() < pathMaximalLength - 1) {
-                MethodChain newBestMethodChain =
-                  currentVertexMethodChain.continuation(indexValue.getUnderlying(), vertexDistance, context);
-                if (newBestMethodChain != null) {
-                  currentSignatures
-                    .add(new OccurrencesAware<>(indexValue.getUnderlying(), vertexDistance));
-                  knownDistance.put(vertex, newBestMethodChain);
-                }
+            if ((chosenCandidates.isEmpty() || chosenCandidates.last().getOccurrenceCount() < vertexDistance) && currentVertexMethodChain.size() < pathMaximalLength - 1) {
+              MethodChain newBestMethodChain = currentVertexMethodChain.continuation(candidate.getSignature(), vertexDistance, context);
+              if (newBestMethodChain != null) {
+                chosenCandidates.add(new SignatureAndOccurrences(candidate.getSignature(), vertexDistance));
+                knownDistance.put(sign, newBestMethodChain);
               }
             }
           }
@@ -116,148 +104,65 @@ public class ChainSearcher {
           }
         }
       }
+
       boolean updated = false;
-      if (!currentSignatures.isEmpty()) {
-        boolean isBreak = false;
-        for (OccurrencesAware<MethodIncompleteSignature> sign : currentSignatures) {
-          if (!isBreak) {
-            if (indexReader.mayHappen(sign.getUnderlying().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
-              boolean stopChain = sign.getUnderlying().isStatic() || context.hasQualifier(context.resolveQualifierClass(sign.getUnderlying()));
+      if (!chosenCandidates.isEmpty()) {
+        for (SignatureAndOccurrences candidate : chosenCandidates) {
+          if (referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
+            MethodChain continuation = currentVertex.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
+            if (continuation != null) {
+              boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
               if (stopChain) {
-                updated = true;
-                MethodChain continuation = currentChain.continuation(sign.getUnderlying(), sign.getOccurrenceCount(), context);
-                if (continuation != null) {
-                  result.add(continuation);
-                }
-                continue;
+                addChainIfNotPresent(continuation, result);
               }
               else {
-                updated = true;
-                MethodChain methodChain =
-                  currentChain.continuation(sign.getUnderlying(), sign.getOccurrenceCount(), context);
-                if (methodChain != null) {
-                  q.addFirst(new OccurrencesAware<>(methodChain, sign.getOccurrenceCount()));
-                  continue;
-                }
+                q.addFirst(continuation);
               }
             }
+            updated = true;
           }
-          isBreak = true;
         }
       }
-      if (!updated &&
-          (headSignature.isStatic() ||
-           !targetQName.equals(headSignature.getOwner()))) {
-        result.add(currentVertex.getUnderlying());
+
+      // continuation is not found -> add this chain as result
+      if (!updated && !context.getTarget().getClassQName().equals(headSignature.getOwner())) {
+        addChainIfNotPresent(currentVertex, result);
       }
+
       if (result.size() > maxResultSize) {
-        return result.getResult();
+        return result;
       }
     }
-    return result.getResult();
+    return result;
   }
 
-  private static MethodChain createChainFromFirstElement(MethodChain chain, PsiClass newQualifierClass) {
-    //TODO
-    return new MethodChain(newQualifierClass, Collections.singletonList(chain.getFirst()), null, chain.getChainWeight());
-  }
-
-  private static class ResultHolder {
-    private final List<MethodChain> myResult;
-
-    private ResultHolder() {
-      myResult = new ArrayList<>();
+  private static void addChainIfNotPresent(MethodChain newChain, List<MethodChain> result) {
+    if (result.isEmpty()) {
+      result.add(newChain);
+      return;
     }
-
-    public void add(MethodChain newChain) {
-      if (myResult.isEmpty()) {
-        myResult.add(newChain);
-        return;
-      }
-      boolean doAdd = true;
-      Stack<Integer> indexesToRemove = new Stack<>();
-      for (int i = 0; i < myResult.size(); i++) {
-        MethodChain chain = myResult.get(i);
-        //
-        MethodChain.CompareResult r = MethodChain.compare(chain, newChain);
-        switch (r) {
-          case LEFT_CONTAINS_RIGHT:
-            indexesToRemove.add(i);
-            break;
-          case RIGHT_CONTAINS_LEFT:
-          case EQUAL:
-            doAdd = false;
-            break;
-          case NOT_EQUAL:
-            break;
-        }
-      }
-      while (!indexesToRemove.empty()) {
-        myResult.remove((int)indexesToRemove.pop());
-      }
-      if (doAdd) {
-        myResult.add(newChain);
+    boolean doAdd = true;
+    IntStack indicesToRemove = new IntStack();
+    for (int i = 0; i < result.size(); i++) {
+      MethodChain chain = result.get(i);
+      MethodChain.CompareResult r = MethodChain.compare(chain, newChain);
+      switch (r) {
+        case LEFT_CONTAINS_RIGHT:
+          indicesToRemove.push(i);
+          break;
+        case RIGHT_CONTAINS_LEFT:
+        case EQUAL:
+          doAdd = false;
+          break;
+        case NOT_EQUAL:
+          break;
       }
     }
-
-    public List<MethodChain> getRawResult() {
-      return myResult;
+    while (!indicesToRemove.empty()) {
+      result.remove(indicesToRemove.pop());
     }
-
-    public List<MethodChain> getResult() {
-      return findSimilar(reduceChainsSize(myResult));
-    }
-
-    public int size() {
-      return myResult.size();
-    }
-
-    private static List<MethodChain> reduceChainsSize(List<MethodChain> chains) {
-      return ContainerUtil.map(chains, chain -> {
-        Iterator<PsiMethod[]> chainIterator = chain.iterator();
-        if (!chainIterator.hasNext()) {
-          LOG.error("empty chain");
-          return chain;
-        }
-        PsiMethod[] first = chainIterator.next();
-        while (chainIterator.hasNext()) {
-          PsiMethod psiMethod = chainIterator.next()[0];
-          if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
-            continue;
-          }
-          PsiClass current = psiMethod.getContainingClass();
-          if (current == null) {
-            LOG.error("containing class must be not null");
-            return chain;
-          }
-          PsiMethod[] currentMethods = current.findMethodsByName(first[0].getName(), true);
-          if (currentMethods.length != 0) {
-            for (PsiMethod f : first) {
-              PsiMethod[] fSupers = f.findDeepestSuperMethods();
-              PsiMethod fSuper = fSupers.length == 0 ? first[0] : fSupers[0];
-              for (PsiMethod currentMethod : currentMethods) {
-                if (currentMethod == fSuper) {
-                  return createChainFromFirstElement(chain, currentMethod.getContainingClass());
-                }
-                for (PsiMethod method : currentMethod.findDeepestSuperMethods()) {
-                  if (method == fSuper) {
-                    return createChainFromFirstElement(chain, method.getContainingClass());
-                  }
-                }
-              }
-            }
-          }
-        }
-        return chain;
-      });
-    }
-
-    private static List<MethodChain> findSimilar(List<MethodChain> chains) {
-      ResultHolder resultHolder = new ResultHolder();
-      for (MethodChain chain : chains) {
-        resultHolder.add(chain);
-      }
-      return resultHolder.getRawResult();
+    if (doAdd) {
+      result.add(newChain);
     }
   }
 }

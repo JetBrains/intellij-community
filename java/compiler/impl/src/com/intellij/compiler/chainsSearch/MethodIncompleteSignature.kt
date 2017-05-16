@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.compiler.backwardRefs
+package com.intellij.compiler.chainsSearch
 
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*

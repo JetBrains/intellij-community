@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.chainsSearch;
 
-import com.intellij.compiler.backwardRefs.MethodIncompleteSignature;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -81,8 +80,9 @@ public class MethodChain {
     return myQualifierClass;
   }
 
-  public Iterator<PsiMethod[]> iterator() {
-    return myRevertedPath.iterator();
+  @NotNull
+  public List<PsiMethod[]> getRevertedPath() {
+    return myRevertedPath;
   }
 
   @NotNull
@@ -108,7 +108,7 @@ public class MethodChain {
     ArrayList<PsiMethod[]> newRevertedPath = newArrayList();
     newRevertedPath.addAll(myRevertedPath);
     newRevertedPath.add(head.getPath().get(0));
-    return new MethodChain(head.getQualifierClass(), newRevertedPath, head.getHeadSignature(), weight);
+    return new MethodChain(head.getQualifierClass(), newRevertedPath, head.getHeadSignature(), Math.min(weight, getChainWeight()));
   }
 
   @Override
@@ -151,7 +151,7 @@ public class MethodChain {
     NOT_EQUAL
   }
 
-  private static boolean lookSimilar(PsiMethod[] methods1, PsiMethod[] methods2) {
+  static boolean lookSimilar(PsiMethod[] methods1, PsiMethod[] methods2) {
     PsiMethod repr1 = methods1[0];
     PsiMethod repr2 = methods2[0];
     if (repr1.hasModifierProperty(PsiModifier.STATIC) || repr2.hasModifierProperty(PsiModifier.STATIC)) return false;
