@@ -66,14 +66,10 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   @NonNls private static final String NEGATE_NAME_CONDITION = "negateName";
   @NonNls private static final String NEGATE_EXPRTYPE_CONDITION = "negateExprType";
   @NonNls private static final String NEGATE_FORMALTYPE_CONDITION = "negateFormalType";
-  @NonNls private static final String NEGATE_READ_CONDITION = "negateRead";
-  @NonNls private static final String NEGATE_WRITE_CONDITION = "negateWrite";
   @NonNls private static final String NEGATE_CONTAINS_CONDITION = "negateContains";
   @NonNls private static final String NEGATE_WITHIN_CONDITION = "negateWithin";
   @NonNls private static final String WITHIN_CONDITION = "within";
   @NonNls private static final String CONTAINS_CONDITION = "contains";
-  @NonNls private static final String READ = "readAccess";
-  @NonNls private static final String WRITE = "writeAccess";
   @NonNls private static final String TARGET = "target";
 
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
