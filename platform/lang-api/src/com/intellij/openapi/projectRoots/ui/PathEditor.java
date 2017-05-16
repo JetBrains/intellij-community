@@ -56,8 +56,8 @@ public class PathEditor {
   public static final Color INVALID_COLOR = new JBColor(new Color(210, 0, 0), JBColor.RED);
 
   protected JPanel myPanel;
-  private JBList myList;
-  private final DefaultListModel myModel;
+  private JBList<VirtualFile> myList;
+  private final DefaultListModel<VirtualFile> myModel;
   private final Set<VirtualFile> myAllFiles = new HashSet<>();
   private boolean myModified = false;
   protected boolean myEnabled = false;
@@ -108,9 +108,10 @@ public class PathEditor {
   }
 
   public JComponent createComponent() {
-    myList = new JBList(getListModel());
+    myList = new JBList<>(getListModel());
+    //noinspection unchecked
     myList.setCellRenderer(createListCellRenderer(myList));
-    TreeUIHelper.getInstance().installListSpeedSearch(myList, file -> ((VirtualFile)file).getPresentableUrl());
+    TreeUIHelper.getInstance().installListSpeedSearch(myList, VirtualFile::getPresentableUrl);
 
     ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myList)
       .disableUpDownActions()
@@ -181,15 +182,15 @@ public class PathEditor {
     itemsRemoved(removedItems);
   }
 
-  protected DefaultListModel createListModel() {
-    return new DefaultListModel();
+  protected DefaultListModel<VirtualFile> createListModel() {
+    return new DefaultListModel<>();
   }
 
   protected ListCellRenderer createListCellRenderer(JBList list) {
     return new PathCellRenderer();
   }
 
-  protected void itemsRemoved(List removedItems) {
+  protected void itemsRemoved(List<VirtualFile> removedItems) {
     myAllFiles.removeAll(removedItems);
     if (removedItems.size() > 0) {
       setModified(true);
@@ -213,16 +214,15 @@ public class PathEditor {
 
   protected boolean isUrlInserted() {
     if (getRowCount() > 0) {
-      return ((VirtualFile)getListModel().lastElement()).getFileSystem() instanceof HttpFileSystem;
+      return getListModel().lastElement().getFileSystem() instanceof HttpFileSystem;
     }
     return false;
   }
 
   protected void requestDefaultFocus() {
     if (myList != null) {
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(myList, true);
-      });
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+        () -> IdeFocusManager.getGlobalInstance().requestFocus(myList, true));
     }
   }
 
@@ -249,7 +249,7 @@ public class PathEditor {
         indicesToRemove.add(idx);
       }
     }
-    final List list = ListUtil.removeIndices(myList, indicesToRemove.toNativeArray());
+    final List<VirtualFile> list = ListUtil.removeIndices(myList, indicesToRemove.toNativeArray());
     itemsRemoved(list);
   }
 
@@ -273,7 +273,7 @@ public class PathEditor {
     return true;
   }
 
-  protected DefaultListModel getListModel() {
+  protected DefaultListModel<VirtualFile> getListModel() {
     return myModel;
   }
 
@@ -313,7 +313,7 @@ public class PathEditor {
   }
 
   protected VirtualFile getValueAt(int row) {
-    return (VirtualFile)getListModel().get(row);
+    return getListModel().get(row);
   }
 
   public void clearList() {

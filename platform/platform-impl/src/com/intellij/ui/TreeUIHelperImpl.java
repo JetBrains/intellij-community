@@ -58,12 +58,12 @@ public class TreeUIHelperImpl extends TreeUIHelper {
     new TreeSpeedSearch(tree, convertor, canExpand);
   }
 
-  public void installListSpeedSearch(JList list) {
-    new ListSpeedSearch(list);
+  public void installListSpeedSearch(JList<?> list) {
+    new ListSpeedSearch<>(list);
   }
 
-  public void installListSpeedSearch(JList list, Convertor<Object, String> convertor) {
-    new ListSpeedSearch(list, (Function)convertor::convert);
+  public <T> void installListSpeedSearch(JList<T> list, Convertor<T, String> convertor) {
+    new ListSpeedSearch<>(list, (Function<T, String>)convertor::convert);
   }
 
   public void installEditSourceOnEnterKeyHandler(final JTree tree) {
