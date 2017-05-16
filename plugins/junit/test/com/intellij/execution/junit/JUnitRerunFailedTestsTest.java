@@ -183,7 +183,7 @@ public class JUnitRerunFailedTestsTest extends LightCodeInsightFixtureTestCase  
     final SMTestProxy testProxy = new SMTestProxy("testFoo", false, "java:test://TestClass.testFoo");
     testProxy.setLocator(JavaTestLocator.INSTANCE);
     final String presentation = TestMethods.getTestPresentation(testProxy, myFixture.getProject(), GlobalSearchScope.projectScope(myFixture.getProject()));
-    assertEquals("TestClass,testFoo(A)", presentation);
+    assertEquals("TestClass,testFoo(LA;)", presentation);
   }
 
   public void testMultipleClassesInOneFile() throws Exception {
