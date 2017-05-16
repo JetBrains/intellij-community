@@ -25,8 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.util.ObjectUtils.NULL;
-
 /**
  * @author peter
  */
@@ -34,6 +32,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("factoryMap");
   protected Map<K, V> myMap;
 
+  @NotNull
   protected Map<K, V> createMap() {
     return new THashMap<K, V>();
   }
@@ -51,37 +50,47 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   @Override
   public V get(Object key) {
     final Map<K, V> map = getMap();
-    V value = map.get(getKey(key));
+    K k = notNull(key);
+    V value = map.get(k);
     if (value == null) {
       RecursionGuard.StackStamp stamp = ourGuard.markStack();
       value = create((K)key);
       if (stamp.mayCacheNow()) {
-        map.put((K)getKey(key), value == null ? (V)NULL : value);
+        V v = notNull(value);
+        map.put(k, v);
       }
     }
-    return value == NULL ? null : value;
+    return value == FAKE_NULL() ? null : value;
   }
 
-  private static <K> K getKey(final K key) {
-    return key == null ? (K)NULL : key;
+  private static <T> T FAKE_NULL() {
+    //noinspection unchecked
+    return (T)ObjectUtils.NULL;
+  }
+
+  private static <T> T notNull(final Object key) {
+    //noinspection unchecked
+    return key == null ? FactoryMap.<T>FAKE_NULL() : (T)key;
   }
 
   @Override
   public final boolean containsKey(Object key) {
-    return myMap != null && myMap.containsKey(getKey(key));
+    return myMap != null && myMap.containsKey(notNull(key));
   }
 
   @Override
   public V put(K key, V value) {
-    V v = getMap().put(getKey(key), value == null ? (V)NULL : value);
-    return v == NULL ? null : v;
+    K k = notNull(key);
+    V v = notNull(value);
+    v = getMap().put(k, v);
+    return v == FAKE_NULL() ? null : v;
   }
 
   @Override
   public V remove(Object key) {
     if (myMap == null) return null;
     V v = myMap.remove(key);
-    return v == NULL ? null : v;
+    return v == FAKE_NULL() ? null : v;
   }
 
   @NotNull
@@ -89,22 +98,22 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
   public Set<K> keySet() {
     if (myMap == null) return Collections.emptySet();
     final Set<K> ts = myMap.keySet();
-    //noinspection SuspiciousMethodCalls
-    if (ts.contains(NULL)) {
+    K nullKey = FAKE_NULL();
+    if (ts.contains(nullKey)) {
       final HashSet<K> hashSet = new HashSet<K>(ts);
-      //noinspection SuspiciousMethodCalls
-      hashSet.remove(NULL);
+      hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;
     }
     return ts;
   }
 
+  @NotNull
   public Collection<V> notNullValues() {
     if (myMap == null) return Collections.emptyList();
     final Collection<V> values = ContainerUtil.newArrayList(myMap.values());
     for (Iterator<V> iterator = values.iterator(); iterator.hasNext();) {
-      if (iterator.next() == NULL) {
+      if (iterator.next() == FAKE_NULL()) {
         iterator.remove();
       }
     }
@@ -113,7 +122,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
 
   public boolean removeValue(Object value) {
     if (myMap == null) return false;
-    Object t = ObjectUtils.notNull(value, NULL);
+    Object t = ObjectUtils.notNull(value, FAKE_NULL());
     //noinspection SuspiciousMethodCalls
     return myMap.values().remove(t);
   }

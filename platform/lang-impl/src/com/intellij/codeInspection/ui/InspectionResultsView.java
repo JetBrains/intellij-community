@@ -78,8 +78,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -132,7 +130,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   private InspectionTreeLoadingProgressAware myLoadingProgressPreview;
   private final ExcludedInspectionTreeNodesManager myExcludedInspectionTreeNodesManager;
   private final FactoryMap<String, Set<Object>> mySuppressedNodes = new FactoryMap<String, Set<Object>>() {
-    @Nullable
     @Override
     protected Set<Object> create(String key) {
       return new THashSet<>();
@@ -276,7 +273,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     }
   }
 
-  public void profileChanged() {
+  void profileChanged() {
     myTree.revalidate();
     myTree.repaint();
     syncRightPanel();
@@ -286,14 +283,11 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
-    myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent e) {
-        if (myTree.isUnderQueueUpdate()) return;
-        syncRightPanel();
-        if (isAutoScrollMode()) {
-          OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(InspectionResultsView.this), false);
-        }
+    myTree.getSelectionModel().addTreeSelectionListener(e -> {
+      if (myTree.isUnderQueueUpdate()) return;
+      syncRightPanel();
+      if (isAutoScrollMode()) {
+        OpenSourceUtil.openSourcesFrom(DataManager.getInstance().getDataContext(this), false);
       }
     });
 
@@ -378,7 +372,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     add(westPanel, BorderLayout.WEST);
   }
 
-  @SuppressWarnings({"NonStaticInitializer"})
+  @SuppressWarnings("NonStaticInitializer")
   private JComponent createRightActionsToolbar() {
     DefaultActionGroup specialGroup = new DefaultActionGroup();
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createGroupBySeverityAction(this));
@@ -489,7 +483,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     syncRightPanel();
   }
 
-  public void openRightPanelIfNeed() {
+  void openRightPanelIfNeed() {
     if (mySplitter.getSecondComponent() == null) {
       syncRightPanel();
     }
@@ -652,10 +646,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       myPreviewEditor.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
-    else if (selectedEntity == null) {
+    if (selectedEntity == null) {
       return Pair.create(new InspectionNodeInfo(myTree, myProject), null);
     }
-    else if (selectedEntity.isValid()) {
+    if (selectedEntity.isValid()) {
       return Pair.create(InspectionResultsViewUtil.getPreviewIsNotAvailable(selectedEntity), null);
     }
     return Pair.create(InspectionResultsViewUtil.getInvalidEntityLabel(selectedEntity), null);
@@ -693,7 +687,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   @NotNull
   public Set<SuppressIntentionAction> getSuppressActions(InspectionToolWrapper wrapper) {
-    return mySuppressActions.computeIfAbsent(wrapper.getShortName(), (w) -> {
+    return mySuppressActions.computeIfAbsent(wrapper.getShortName(), __ -> {
       final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(wrapper);
       return actions == null ? Collections.emptySet() : ContainerUtil.newLinkedHashSet(actions);
     });
@@ -717,29 +711,24 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile;
   }
 
-  public void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
+  void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
     myTreeUpdater.submit((Runnable)() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (myTreeStructureUpdateLock) {
-          final InspectionNode toolNode;
           final AnalysisUIOptions uiOptions = myGlobalInspectionContext.getUIOptions();
           final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(wrapper);
           if (presentation.getToolNode() == null) {
             addTool(wrapper, HighlightDisplayLevel.find(presentation.getSeverity((RefElement)refElement)),
                     uiOptions.GROUP_BY_SEVERITY, isSingleInspectionRun());
           }
-          toolNode = presentation.getToolNode();
+          final InspectionNode toolNode = presentation.getToolNode();
           LOG.assertTrue(toolNode != null);
           final Map<RefEntity, CommonProblemDescriptor[]> problems = new HashMap<>();
           problems.put(refElement, descriptors);
           final Map<String, Set<RefEntity>> contents = new HashMap<>();
           final String groupName = refElement.getRefManager().getGroupName((RefElement)refElement);
-          Set<RefEntity> content = contents.get(groupName);
-          if (content == null) {
-            content = new HashSet<>();
-            contents.put(groupName, content);
-          }
+          Set<RefEntity> content = contents.computeIfAbsent(groupName, __ -> new HashSet<>());
           content.add(refElement);
 
           getProvider().appendToolNodeContent(myGlobalInspectionContext,
@@ -1007,7 +996,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return null;
   }
 
-  public void resetTree() {
+  void resetTree() {
     try {
       myTree.setQueueUpdate(true);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
@@ -1015,7 +1004,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       ((DefaultTreeModel)myTree.getModel()).reload();
       TreeUtil.restoreExpandedPaths(myTree, expandedPaths);
       myTree.setSelectionPaths(selectionPath);
-    } finally {
+    }
+    finally {
       myTree.setQueueUpdate(false);
     }
   }
@@ -1165,7 +1155,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private class RerunAction extends AnAction {
-    public RerunAction(JComponent comp) {
+    RerunAction(JComponent comp) {
       super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"),
             AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
