@@ -15,9 +15,33 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 /**
 * @author cdr
 */
 public enum Nullness {
-  NOT_NULL, NULLABLE,UNKNOWN
+  NOT_NULL, NULLABLE,UNKNOWN;
+
+  /**
+   * Convert to boolean which is used to encode nullability in DfaFactType.CAN_BE_NULL
+   *
+   * @return TRUE if NULLABLE, FALSE if NOT_NULL, null if UNKNOWN
+   */
+  @Nullable
+  public Boolean toBoolean() {
+    return this == UNKNOWN ? null : this == NULLABLE;
+  }
+
+  /**
+   * Convert from boolean fact which is used to encode nullability in DfaFactType.CAN_BE_NULL
+   *
+   * @param fact TRUE if NULLABLE, FALSE if NOT_NULL, null if UNKNOWN
+   * @return the corresponding nullness value
+   */
+  @NotNull
+  public static Nullness fromBoolean(@Nullable Boolean fact) {
+    return fact == null ? UNKNOWN : fact ? NULLABLE : NOT_NULL;
+  }
 }

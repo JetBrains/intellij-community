@@ -252,7 +252,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     flushVariable(var);
 
     if (value instanceof DfaUnknownValue) {
-      setVariableState(var, getVariableState(var).withNullable(false));
+      setVariableState(var, getVariableState(var).withNotNull());
       return;
     }
 
@@ -282,8 +282,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private DfaVariableState withValueNullability(DfaValue value, DfaVariableState state) {
-    if (value instanceof DfaTypeValue) return state.withNullability(((DfaTypeValue)value).getNullness());
-    if (isNull(value)) return state.withNullability(Nullness.NULLABLE);
+    if (value instanceof DfaTypeValue) {
+      return state.withFact(DfaFactType.CAN_BE_NULL, ((DfaTypeValue)value).getNullness().toBoolean());
+    }
+    if (isNull(value)) {
+      return state.withFact(DfaFactType.CAN_BE_NULL, true);
+    }
     return state;
   }
 
@@ -795,9 +799,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private void updateVarStateOnComparison(@NotNull DfaVariableValue dfaVar, DfaValue value) {
     if (!isUnknownState(dfaVar)) {
       if (value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == null) {
-        setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.NULLABLE));
+        setVariableState(dfaVar, getVariableState(dfaVar).withFact(DfaFactType.CAN_BE_NULL, true));
       } else if (isNotNull(value) && !isNotNull(dfaVar)) {
-        setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.UNKNOWN));
+        setVariableState(dfaVar, getVariableState(dfaVar).withoutFact(DfaFactType.CAN_BE_NULL));
         applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
       }
     }
@@ -981,7 +985,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       DfaVariableValue varValue = (DfaVariableValue)value;
       if (varValue.getVariableType() instanceof PsiPrimitiveType) return true;
       if (isNotNull(varValue)) return true;
-      if (getVariableState(varValue).isNullable()) return false;
+      if (getVariableState(varValue).getNullability() == Nullness.NULLABLE) return false;
     }
     return true;
   }
@@ -1054,7 +1058,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       
       if (isUnknownState(dfaVar)) {
-        return state.withNullable(false);
+        return state.withNotNull();
       }
     }
 

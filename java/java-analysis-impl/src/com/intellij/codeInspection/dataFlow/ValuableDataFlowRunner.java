@@ -76,10 +76,10 @@ class ValuableDataFlowRunner extends DataFlowRunner {
 
     private ValuableDfaVariableState(Set<DfaPsiType> instanceofValues,
                                      Set<DfaPsiType> notInstanceofValues,
-                                     Nullness nullability, DfaValue value,
+                                     DfaValue value,
                                      @NotNull FList<PsiExpression> concatenation,
                                      @NotNull DfaFactMap factMap) {
-      super(instanceofValues, notInstanceofValues, nullability, factMap);
+      super(instanceofValues, notInstanceofValues, factMap);
       myValue = value;
       myConcatenation = concatenation;
     }
@@ -88,21 +88,20 @@ class ValuableDataFlowRunner extends DataFlowRunner {
     @Override
     protected DfaVariableState createCopy(@NotNull Set<DfaPsiType> instanceofValues,
                                           @NotNull Set<DfaPsiType> notInstanceofValues,
-                                          @NotNull Nullness nullability,
                                           @NotNull DfaFactMap factMap) {
-      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myConcatenation, factMap);
+      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, myValue, myConcatenation, factMap);
     }
 
     @NotNull
     @Override
     public DfaVariableState withValue(@Nullable final DfaValue value) {
       if (value == myValue) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myConcatenation, myFactMap);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, value, myConcatenation, myFactMap);
     }
 
     ValuableDfaVariableState withExpression(@NotNull final FList<PsiExpression> concatenation) {
       if (concatenation == myConcatenation) return this;
-      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, concatenation, myFactMap);
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myValue, concatenation, myFactMap);
     }
 
     @Override
