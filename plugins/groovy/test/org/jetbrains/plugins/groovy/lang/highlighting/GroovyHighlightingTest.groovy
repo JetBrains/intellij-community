@@ -349,6 +349,23 @@ class Baz implements I {
     myFixture.testHighlighting(false, false, false)
   }
 
+  void testMethodDelegateError() {
+    myFixture.configureByText('a.groovy','''
+class A {
+  def foo(){}
+}
+
+class B {
+  <error>@Delegate</error> A getA(int i){return new A()}
+}
+
+new B().fo<caret>o()
+''')
+
+    fixture.checkHighlighting()
+  }
+
+
   void testPrimitiveTypeParams() {
     myFixture.configureByText('a.groovy', '''\
 List<<error descr="Primitive type parameters are not allowed in type parameter list">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>

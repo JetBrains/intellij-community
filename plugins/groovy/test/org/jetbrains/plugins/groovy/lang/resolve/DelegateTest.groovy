@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,20 @@ class A {
 
 class B {
   @Delegate A a
+}
+
+new B().fo<caret>o()
+''')
+  }
+
+  void testSimple2() {
+    doTest('''
+class A {
+  def foo(){}
+}
+
+class B {
+  @Delegate A getA(){return new A()}
 }
 
 new B().fo<caret>o()
@@ -109,6 +123,55 @@ class A2 {
 class B {
   @Delegate A2 a2
   @Delegate A1 a1
+}
+
+new B().fo<caret>o()
+''')
+
+    def prototype = resolved.prototype as PsiMethod
+    def cc = prototype.containingClass
+    assertEquals 'A2', cc.name
+  }
+
+  void testSelectFirst3() {
+    def resolved = doTest('''
+class A1 {
+  def foo(){}
+}
+
+class A2 {
+  def foo(){}
+}
+
+
+class B {
+  @Delegate A2 bar()
+  @Delegate A1 bar2()
+}
+
+new B().fo<caret>o()
+''')
+
+    def prototype = resolved.prototype as PsiMethod
+    def cc = prototype.containingClass
+    assertEquals 'A2', cc.name
+  }
+
+  void testSelectFirst4() {
+    def resolved = doTest('''
+class A1 {
+  def foo(){}
+}
+
+class A2 {
+  def foo(){}
+}
+
+
+class B {
+  @Delegate A1 bar2()
+  @Delegate A2 bar // fields are processed before methods
+  
 }
 
 new B().fo<caret>o()
@@ -278,6 +341,15 @@ class FooImpl implements Foo {
 class MyClass {
     @Delegate
     HashMap<String, Integer> map = new HashMap<String, Integer>()
+}
+''')
+  }
+
+  void 'test delegate method with generics'() {
+    assertAllMethodsImplemented('a.groovy', '''
+class MyClass {
+    @Delegate
+    HashMap<String, Integer> getMap() {return new HashMap<>}
 }
 ''')
   }

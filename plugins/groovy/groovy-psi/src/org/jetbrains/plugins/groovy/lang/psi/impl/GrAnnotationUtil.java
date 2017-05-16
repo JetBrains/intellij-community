@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,8 +131,9 @@ public class GrAnnotationUtil {
     return (PsiElement)owner;
   }
 
-  public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
-    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+  public static List<PsiClass> getClassArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
+    PsiAnnotationMemberValue value =
+      declared ? annotation.findDeclaredAttributeValue(attributeName) : annotation.findAttributeValue(attributeName);
     if (value instanceof PsiArrayInitializerMemberValue) {
       return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), GrAnnotationUtil::getPsiClass);
     }
@@ -144,8 +145,9 @@ public class GrAnnotationUtil {
     return Collections.emptyList();
   }
 
-  public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
-    PsiAnnotationMemberValue value = annotation.findAttributeValue(attributeName);
+  public static List<String> getStringArrayValue(@NotNull PsiAnnotation annotation, @NotNull String attributeName, boolean declared) {
+    PsiAnnotationMemberValue value =
+      declared ? annotation.findDeclaredAttributeValue(attributeName) : annotation.findAttributeValue(attributeName);
     if (value instanceof PsiArrayInitializerMemberValue) {
       return ContainerUtil.mapNotNull(((PsiArrayInitializerMemberValue)value).getInitializers(), memberValue -> {
         String string = getString(memberValue);
