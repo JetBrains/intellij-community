@@ -404,6 +404,7 @@
     <localInspection language="Python" shortName="PyDunderSlotsInspection" suppressId="PyDunderSlots" displayName="Definition of __slots__ in a class" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDunderSlotsInspection"/>
     <localInspection language="Python" shortName="PyMissingTypeHintsInspection" suppressId="PyMissingTypeHints" displayName="Missing type hinting for function definition" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WEAK WARNING" implementationClass="com.jetbrains.python.inspections.PyMissingTypeHintsInspection"/>
     <localInspection language="Python" shortName="PyOverloadsInspection" suppressId="PyOverloads" displayName="Overloads in regular Python files" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyOverloadsInspection"/>
+    <localInspection language="Python" shortName="PyNamedTupleInspection" suppressId="PyNamedTuple" displayName="Namedtuple definition" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNamedTupleInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
