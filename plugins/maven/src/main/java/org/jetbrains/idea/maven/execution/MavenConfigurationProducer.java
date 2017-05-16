@@ -79,6 +79,6 @@ public class MavenConfigurationProducer extends RuntimeConfigurationProducer {
   }
 
   public int compareTo(Object o) {
-    return PREFERED;  //To change body of implemented methods use File | Settings | File Templates.
+    return PREFERED;
   }
 }

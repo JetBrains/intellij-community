@@ -248,7 +248,7 @@ public class GitHandlerUtil {
      * @param showErrors    if true, the errors are shown when process is terminated
      */
     public GitLineHandlerListenerProgress(@Nullable ProgressIndicator indicator, GitHandler handler, String operationName, boolean showErrors) {
-      super(handler, operationName, showErrors);    //To change body of overridden methods use File | Settings | File Templates.
+      super(handler, operationName, showErrors);
       myProgressIndicator = indicator;
     }
 

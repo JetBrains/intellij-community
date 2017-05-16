@@ -141,13 +141,13 @@ public class JBTabsDemo {
 
     final JTree someTree = new Tree() {
       public void addNotify() {
-        super.addNotify();    //To change body of overridden methods use File | Settings | File Templates.
+        super.addNotify();
         System.out.println("JBTabs.addNotify");
       }
 
       public void removeNotify() {
         System.out.println("JBTabs.removeNotify");
-        super.removeNotify();    //To change body of overridden methods use File | Settings | File Templates.
+        super.removeNotify();
       }
     };
     //someTree.setBorder(new LineBorder(Color.cyan));
