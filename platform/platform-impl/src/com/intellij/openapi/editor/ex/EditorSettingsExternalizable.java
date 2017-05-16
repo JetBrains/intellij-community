@@ -59,6 +59,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
+    public boolean SHOW_BREADCRUMBS_ABOVE = false;
     public boolean SHOW_BREADCRUMBS = true;
 
     public boolean SMART_HOME = true;
@@ -257,6 +258,23 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setFoldingOutlineShown(boolean val) {
     myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
+  }
+
+  /**
+   * @return {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsAbove() {
+    return myOptions.SHOW_BREADCRUMBS_ABOVE;
+  }
+
+  /**
+   * @param value {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsAbove(boolean value) {
+    if (myOptions.SHOW_BREADCRUMBS_ABOVE == value) return false;
+    myOptions.SHOW_BREADCRUMBS_ABOVE = value;
+    return true;
   }
 
   /**
