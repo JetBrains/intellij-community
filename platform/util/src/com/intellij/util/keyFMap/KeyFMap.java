@@ -23,6 +23,11 @@ import org.jetbrains.annotations.Nullable;
  * An immutable map optimized for storing few {@link Key} entries with relatively rare updates
  * To construct a map, start with {@link KeyFMap#EMPTY_MAP} and call {@link #plus} and {@link #minus}
  *
+ * <p>
+ *   The hashCode() contract conforms to the hashCode() contract of the {@link java.util.Map} interface:
+ *   it's the sum of hash codes of its entries, which in turn is calculated as key.hashCode() ^ value.hashCode()
+ * </p>
+ *
  * @author peter
  */
 public interface KeyFMap {

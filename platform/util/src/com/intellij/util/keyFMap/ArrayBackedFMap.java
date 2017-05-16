@@ -19,8 +19,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+
 public class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
+  // Invariant: keys are always sorted
   private final int[] keys;
   private final Object[] values;
 
@@ -34,29 +37,19 @@ public class ArrayBackedFMap implements KeyFMap {
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
     int oldSize = size();
     int keyCode = key.hashCode();
-    int[] newKeys = null;
-    Object[] newValues = null;
-    int i;
-    for (i = 0; i < oldSize; i++) {
-      int oldKey = keys[i];
-      if (keyCode == oldKey) {
-        if (value == values[i]) return this;
-        newKeys = new int[oldSize];
-        newValues = new Object[oldSize];
-        System.arraycopy(keys, 0, newKeys, 0, oldSize);
-        System.arraycopy(values, 0, newValues, 0, oldSize);
-        newValues[i] = value;
-        break;
-      }
+    int keyPos = Arrays.binarySearch(keys, keyCode);
+    if (keyPos >= 0) {
+      Object[] newValues = values.clone();
+      newValues[keyPos] = value;
+      // Can reuse keys as it is never mutated
+      return new ArrayBackedFMap(keys, newValues);
     }
-    if (i == oldSize) {
-      if (oldSize == ARRAY_THRESHOLD) {
-        return new MapBackedFMap(keys, keyCode, values, value);
-      }
-      newKeys = ArrayUtil.append(keys, keyCode);
-      newValues = ArrayUtil.append(values, value, ArrayUtil.OBJECT_ARRAY_FACTORY);
+    if (oldSize < ARRAY_THRESHOLD) {
+      int[] newKeys = ArrayUtil.insert(keys, -keyPos - 1, keyCode);
+      Object[] newValues = ArrayUtil.insert(values, -keyPos - 1, value);
+      return new ArrayBackedFMap(newKeys, newValues);
     }
-    return new ArrayBackedFMap(newKeys, newValues);
+    return new MapBackedFMap(keys, keyCode, values, value);
   }
 
   private int size() {
@@ -105,13 +98,13 @@ public class ArrayBackedFMap implements KeyFMap {
 
   @Override
   public String toString() {
-    String s = "";
+    StringBuilder s = new StringBuilder("(");
     for (int i = 0; i < keys.length; i++) {
       int key = keys[i];
       Object value = values[i];
-      s += (s.isEmpty() ? "" : ", ") + Key.getKeyByIndex(key) + " -> " + value;
+      s.append((s.length() == 1) ? "" : ", ").append(Key.getKeyByIndex(key)).append(" -> ").append(value);
     }
-    return "(" + s + ")";
+    return s.append(")").toString();
   }
 
   @Override
@@ -144,5 +137,31 @@ public class ArrayBackedFMap implements KeyFMap {
     }
 
     return result;
+  }
+
+  @Override
+  public int hashCode() {
+    int hash = 0;
+    int length = keys.length;
+    for (int i = 0; i < length; i++) {
+      // key index is its hashcode
+      hash += (keys[i] ^ values[i].hashCode());
+    }
+    return hash;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ArrayBackedFMap)) return false;
+
+    ArrayBackedFMap map = (ArrayBackedFMap)o;
+    if (map.size() != size()) return false;
+
+    int length = keys.length;
+    for (int i = 0; i < length; i++) {
+      if (keys[i] != map.keys[i] || !values[i].equals(map.values[i])) return false;
+    }
+    return true;
   }
 }

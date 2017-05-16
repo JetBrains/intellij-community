@@ -56,4 +56,9 @@ class EmptyFMap implements KeyFMap {
   public boolean isEmpty() {
     return true;
   }
+
+  @Override
+  public int hashCode() {
+    return 0;
+  }
 }

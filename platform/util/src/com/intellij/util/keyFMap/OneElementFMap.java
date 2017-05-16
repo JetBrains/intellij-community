@@ -18,11 +18,11 @@ package com.intellij.util.keyFMap;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-public class OneElementFMap<V> implements KeyFMap {
+public final class OneElementFMap<VV> implements KeyFMap {
   private final Key myKey;
-  private final V myValue;
+  private final VV myValue;
 
-  public OneElementFMap(@NotNull Key key, @NotNull V value) {
+  public OneElementFMap(@NotNull Key key, @NotNull VV value) {
     myKey = key;
     myValue = value;
   }
@@ -66,7 +66,7 @@ public class OneElementFMap<V> implements KeyFMap {
     return myKey;
   }
 
-  public V getValue() {
+  public VV getValue() {
     return myValue;
   }
 
@@ -76,17 +76,11 @@ public class OneElementFMap<V> implements KeyFMap {
     if (!(o instanceof OneElementFMap)) return false;
 
     OneElementFMap map = (OneElementFMap)o;
-
-    if (myKey != map.myKey) return false;
-    if (!myValue.equals(map.myValue)) return false;
-
-    return true;
+    return myKey == map.myKey && myValue.equals(map.myValue);
   }
 
   @Override
   public int hashCode() {
-    int result = myKey.hashCode();
-    result = 31 * result + myValue.hashCode();
-    return result;
+    return myKey.hashCode() ^ myValue.hashCode();
   }
 }
