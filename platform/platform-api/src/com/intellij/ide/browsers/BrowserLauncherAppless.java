@@ -170,11 +170,6 @@ public class BrowserLauncherAppless extends BrowserLauncher {
   }
 
   @Override
-  public void browse(@NotNull String url, @Nullable WebBrowser browser) {
-    browse(url, browser, null);
-  }
-
-  @Override
   public void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project) {
     if (browser == null) {
       openOrBrowse(url, true, project);

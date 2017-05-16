@@ -67,7 +67,14 @@ public final class BrowserLauncherImpl extends BrowserLauncherAppless {
   @Override
   protected void browseUsingNotSystemDefaultBrowserPolicy(@NotNull URI uri, @NotNull GeneralSettings settings, @Nullable Project project) {
     WebBrowserManager browserManager = WebBrowserManager.getInstance();
-    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST || (SystemInfo.isMac && "open".equals(settings.getBrowserPath()))) {
+    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
+      WebBrowser browser = browserManager.getFirstActiveBrowser();
+      if (browser != null) {
+        browse(uri.toString(), browser, project);
+        return;
+      }
+    }
+    else if (SystemInfo.isMac && "open".equals(settings.getBrowserPath())) {
       WebBrowser browser = browserManager.getFirstActiveBrowser();
       if (browser != null) {
         browseUsingPath(uri.toString(), null, browser, project, ArrayUtil.EMPTY_STRING_ARRAY);

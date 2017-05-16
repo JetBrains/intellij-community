@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ public abstract class BrowserLauncher {
 
   public abstract void browse(@NotNull File file);
 
-  public abstract void browse(@NotNull String url, @Nullable WebBrowser browser);
+  public void browse(@NotNull String url, @Nullable WebBrowser browser) {
+    browse(url, browser, null);
+  }
 
   public abstract void browse(@NotNull String url, @Nullable WebBrowser browser, @Nullable Project project);
 
