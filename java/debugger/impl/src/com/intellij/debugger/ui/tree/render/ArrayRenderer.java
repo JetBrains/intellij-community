@@ -30,6 +30,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -222,6 +223,11 @@ public class ArrayRenderer extends NodeRendererImpl{
       if (ENTRIES_LIMIT <= 0) {
         ENTRIES_LIMIT = 1;
       }
+
+      builder.setMessage(DebuggerBundle.message("message.node.filtered", myExpression.getExpression()),
+                         AllIcons.General.Filter,
+                         SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                         null);
 
       ArrayReference array = (ArrayReference)value;
       int arrayLength = array.length();
