@@ -10,6 +10,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
@@ -27,8 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
@@ -103,7 +103,8 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
         final String[] roots = compilerModuleExtension.getOutputRootUrls(true);
         for (String root : roots) {
           try {
-            Files.walkFileTree(Paths.get(new URL(root).toURI()), new SimpleFileVisitor<Path>() {
+            String rootPath = VfsUtilCore.urlToPath(root);
+            Files.walkFileTree(Paths.get(new File(FileUtil.toSystemDependentName(rootPath)).toURI()), new SimpleFileVisitor<Path>() {
               @Override
               public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                 File file = path.toFile();
@@ -118,9 +119,6 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
             });
           }
           catch (NoSuchFileException ignore) {}
-          catch (URISyntaxException e) { 
-            LOG.info(e);
-          }
         }
       }
     }
