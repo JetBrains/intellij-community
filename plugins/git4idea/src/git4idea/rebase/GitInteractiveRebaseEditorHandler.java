@@ -48,8 +48,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   protected boolean myRebaseEditorShown = false;
 
-  private boolean myNoopSituation;
-
   private boolean myEditorCancelled;
 
   public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
@@ -65,7 +63,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     ApplicationManager.getApplication().invokeAndWait(() -> {
       try {
         myEditorCancelled = false;
-        myNoopSituation = false;
         if (myRebaseEditorShown) {
           GitRebaseUnstructuredEditor editor = new GitRebaseUnstructuredEditor(myProject, myRoot, path);
           DialogManager.show(editor);
@@ -104,7 +101,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
                                                           CommonBundle.getCancelButtonText(), Messages.getQuestionIcon());
             if (rebase == Messages.OK) {
               isSuccess.set(true);
-              myNoopSituation = true;
               return;
             }
             else {
@@ -149,13 +145,6 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   @NotNull
   public UUID getHandlerNo() {
     return myHandlerNo;
-  }
-
-  /**
-   * Tells if there was a "noop" situation during rebase (no commits were rebase, just the label was moved).
-   */
-  public boolean wasNoopSituationDetected() {
-    return myNoopSituation;
   }
 
   public boolean wasEditorCancelled() {
