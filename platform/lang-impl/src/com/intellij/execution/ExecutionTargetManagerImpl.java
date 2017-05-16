@@ -59,13 +59,14 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
 
   @Override
   public Element getState() {
+    Element state = new Element("state");
     synchronized (myActiveTargetLock) {
-      Element state = new Element("state");
-
       String id = myActiveTarget == null ? mySavedActiveTargetId : myActiveTarget.getId();
-      if (id != null) state.setAttribute("SELECTED_TARGET", id);
-      return state;
+      if (id != null && !id.equals(DefaultExecutionTarget.INSTANCE.getId())) {
+        state.setAttribute("SELECTED_TARGET", id);
+      }
     }
+    return state;
   }
 
   @Override
