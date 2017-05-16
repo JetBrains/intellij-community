@@ -208,6 +208,10 @@ public class PyStringFormatInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testUnionCallType() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyStringFormatInspection.class);

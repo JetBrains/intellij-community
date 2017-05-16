@@ -605,19 +605,27 @@ public class PyStringFormatInspection extends PyInspection {
         .collect(
           Collectors.summarizingInt(
             callType -> {
-              if (callType instanceof PyTupleType) {
-                return ((PyTupleType)callType).getElementCount();
-              }
-              else if (callType instanceof PyNoneType) {
+              if (callType instanceof PyNoneType) {
                 return 1;
               }
               else if (callType instanceof PyClassType) {
-                if (PyBuiltinCache.getInstance(callExpression).isBuiltin(((PyClassType)callType).getPyClass())) {
-                  return 1;
-                }
+                return countElements(evalContext, (PyClassType)callType);
               }
               else if (callType instanceof PyUnionType) {
-                if (((PyUnionType)callType).getMembers().stream().allMatch(PyType::isBuiltin)) return 1;
+                int maxNumber = 1;
+                boolean allForSure = true;
+                for (PyType member : ((PyUnionType)callType).getMembers()) {
+                  PyClassType classType = as(member, PyClassType.class);
+                  if (classType != null) {
+                    int elementsCount = countElements(evalContext, classType);
+                    allForSure = allForSure && elementsCount != -1;
+                    maxNumber = Math.max(maxNumber, elementsCount);
+                  }
+                  else {
+                    allForSure = false;
+                  }
+                }
+                return allForSure ? maxNumber : -1;
               }
 
               return -1;
@@ -631,6 +639,16 @@ public class PyStringFormatInspection extends PyInspection {
       else {
         return -1;
       }
+    }
+
+    private static int countElements(@NotNull TypeEvalContext evalContext, PyClassType callType) {
+      if (!callType.getPyClass().isSubclass(PyNames.TUPLE, evalContext)) {
+        return 1;
+      }
+      else if (callType instanceof PyTupleType) {
+        return ((PyTupleType)callType).getElementCount();
+      }
+      return -1;
     }
 
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
