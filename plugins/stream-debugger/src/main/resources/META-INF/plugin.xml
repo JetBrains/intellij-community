@@ -34,6 +34,11 @@
     ]]></description>
 
   <change-notes><![CDATA[
+      0.1.1 <br>
+        <ul>
+            <li> Improve lines drawing </li>
+            <li> Minor fixes and improvements </li>
+        </ul>
     ]]>
   </change-notes>
 
