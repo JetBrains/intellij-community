@@ -83,7 +83,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiElement parent = element.getParent();
+      PsiElement parent = element.getParent();
       if (!(parent instanceof PsiTypeCastExpression)) {
         return;
       }
@@ -91,12 +91,17 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       if (isPrimitiveNumericCastNecessary(typeCastExpression)) {
         return;
       }
+      PsiElement grandParent = parent.getParent();
+      while (grandParent instanceof PsiParenthesizedExpression) {
+        parent = grandParent;
+        grandParent = parent.getParent();
+      }
       final PsiExpression operand = typeCastExpression.getOperand();
       if (operand == null) {
-        typeCastExpression.delete();
+        parent.delete();
       }
       else {
-        typeCastExpression.replace(operand);
+        parent.replace(operand);
       }
     }
   }
@@ -163,9 +168,20 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
         }
         if (PsiType.LONG.equals(castType) || PsiType.FLOAT.equals(castType) || PsiType.DOUBLE.equals(castType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
-          for (PsiExpression operand1 : operands) {
+          int expressionIndex = -1;
+          for (int i = 0; i < operands.length; i++) {
+            if (expressionIndex == 0 && i > 1) {
+              return true;
+            }
+            final PsiExpression operand1 = operands[i];
             if (PsiTreeUtil.isAncestor(operand1, expression, false)) {
-              continue;
+              if (i > 0) {
+                return true;
+              }
+              else {
+                expressionIndex = i;
+                continue;
+              }
             }
             final PsiType type = operand1.getType();
             if (castType.equals(type)) {
