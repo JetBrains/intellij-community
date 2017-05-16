@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
+import java.io.File;
+
 /**
  * @author max
  */
@@ -34,6 +36,13 @@ public class InvalidVirtualFileAccessException extends RuntimeException {
     try {
       VirtualFile found = VirtualFileManager.getInstance().findFileByUrl(url);
       message += "; original:" + hashCode(file) + "; found:" + hashCode(found);
+      if (file.isInLocalFileSystem()) {
+        boolean physicalExists = new File(file.getPath()).exists();
+        message += "; File.exists()=" + physicalExists;
+      }
+      else {
+        message += "; file system=" + file.getFileSystem();
+      }
     }
     catch (Throwable t) {
       message += "; lookup failed: " + t.getMessage();
