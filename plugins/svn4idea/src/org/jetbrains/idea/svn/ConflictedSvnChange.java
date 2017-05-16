@@ -55,12 +55,10 @@ public class ConflictedSvnChange extends Change {
     myIsPhantom = isPhantom;
   }
 
-  @Override
   public boolean isTreeConflict() {
     return myConflictState.isTree();
   }
 
-  @Override
   public boolean isPhantom() {
     return myIsPhantom;
   }
