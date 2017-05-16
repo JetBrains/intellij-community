@@ -39,8 +39,7 @@ class UastCreateMethodFix(containingClass: UClass, private val createMethodActio
     val methodsBefore = containingClass.element?.methods ?: return
     createMethodAction.invoke(project, null, file)
     val newMethod = containingClass.element?.methods?.
-      filterNot { method -> methodsBefore.any { it.isEquivalentTo(method) } }?.
-      first() ?: return
+      firstOrNull { method -> methodsBefore.none { it.isEquivalentTo(method) } } ?: return
     reformatAndOpenCreatedMethod(newMethod)
   }
 
