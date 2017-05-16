@@ -143,8 +143,8 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       })
       .joining("       ");
     return "Test: " + testFullPath + "\n" +
-           "Language level: " + PsiUtil.getLanguageLevel(getProject()) + "\n" +
-           "SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n" +
+           "Language level: " + PsiUtil.getLanguageLevel(quickFix.getProject()) + "\n" +
+           (quickFix.getProject().equals(getProject()) ? ("SDK: " + ModuleRootManager.getInstance(getModule()).getSdk() + "\n") : "") +
            "Infos: " + infos;
   }
 
