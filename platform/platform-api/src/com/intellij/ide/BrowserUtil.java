@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.ide.browsers.BrowserLauncherAppless;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
@@ -69,7 +68,7 @@ public class BrowserUtil {
   }
 
   public static void browse(@NotNull VirtualFile file) {
-    browse(VfsUtil.toUri(file));
+    browse(file.getUrl());
   }
 
   public static void browse(@NotNull File file) {
@@ -84,7 +83,7 @@ public class BrowserUtil {
    * @deprecated Use {@link #browse(String)}
    */
   @Deprecated
-  public static void launchBrowser(@NotNull @NonNls String url) {
+  public static void launchBrowser(@NotNull String url) {
     browse(url);
   }
 
@@ -97,12 +96,12 @@ public class BrowserUtil {
     return launcher == null ? new BrowserLauncherAppless() : launcher;
   }
 
-  public static void open(@NotNull @NonNls String url) {
+  public static void open(@NotNull String url) {
     getBrowserLauncher().open(url);
   }
 
   /**
-   * Main method: tries to launch a browser using every possible way
+   * tries to launch a browser using every possible way
    */
   public static void browse(@NotNull URI uri) {
     getBrowserLauncher().browse(uri);
@@ -110,12 +109,6 @@ public class BrowserUtil {
 
   public static void browse(@NotNull String url, @Nullable Project project) {
     getBrowserLauncher().browse(url, null, project);
-  }
-
-  @NotNull
-  @Deprecated
-  public static List<String> getOpenBrowserCommand(@NonNls @NotNull String browserPathOrName) {
-    return getOpenBrowserCommand(browserPathOrName, false);
   }
 
   @NotNull
