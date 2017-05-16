@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,7 +103,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
    */
   private final DesktopLayout myLayout;
 
-  private final HashMap<Project, IdeFrameImpl> myProject2Frame;
+  // null keys must be supported
+  private final HashMap<Project, IdeFrameImpl> myProjectToFrame;
 
   private final HashMap<Project, Set<JDialog>> myDialogsToDispose;
 
@@ -144,7 +145,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
     myLayout = new DesktopLayout();
-    myProject2Frame = new HashMap<>();
+    myProjectToFrame = new HashMap<>();
     myDialogsToDispose = new HashMap<>();
     myFrameExtendedState = Frame.NORMAL;
 
@@ -195,7 +196,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   @NotNull
   public IdeFrameImpl[] getAllProjectFrames() {
-    final Collection<IdeFrameImpl> ideFrames = myProject2Frame.values();
+    final Collection<IdeFrameImpl> ideFrames = myProjectToFrame.values();
     return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
   }
 
@@ -411,12 +412,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
   @Override
   public final StatusBar getStatusBar(final Project project) {
-    if (!myProject2Frame.containsKey(project)) {
-      return null;
-    }
-    final IdeFrameImpl frame = getFrame(project);
-    LOG.assertTrue(frame != null);
-    return frame.getStatusBar();
+    IdeFrameImpl frame = myProjectToFrame.get(project);
+    return frame == null ? null : frame.getStatusBar();
   }
 
   @Override
@@ -447,14 +444,13 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     if (project != null) {
       frame = project.isDefault() ? WelcomeFrame.getInstance() : getFrame(project);
       if (frame == null) {
-          frame =  myProject2Frame.get(null);
+        frame = myProjectToFrame.get(null);
       }
     }
     else {
       Container eachParent = getMostRecentFocusedWindow();
       while(eachParent != null) {
         if (eachParent instanceof IdeFrame) {
-
           frame = (IdeFrame)eachParent;
           break;
         }
@@ -489,7 +485,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   public final IdeFrameImpl getFrame(@Nullable final Project project) {
     // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
-    return myProject2Frame.get(project);
+    return myProjectToFrame.get(project);
   }
 
   @Override
@@ -515,7 +511,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     final IdeFrameImpl frame = new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(),
                                                 myActionManager, myDataManager,
                                                 ApplicationManager.getApplication());
-    myProject2Frame.put(null, frame);
+    myProjectToFrame.put(null, frame);
 
     if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
       myFrameBounds = ScreenUtil.getMainScreenBounds();
@@ -531,18 +527,18 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   private IdeFrameImpl getDefaultEmptyIdeFrame() {
-    return myProject2Frame.get(null);
+    return myProjectToFrame.get(null);
   }
 
   @Override
   public final IdeFrameImpl allocateFrame(final Project project) {
-    LOG.assertTrue(!myProject2Frame.containsKey(project));
+    LOG.assertTrue(!myProjectToFrame.containsKey(project));
 
     final IdeFrameImpl frame;
-    if (myProject2Frame.containsKey(null)) {
+    if (myProjectToFrame.containsKey(null)) {
       frame = getDefaultEmptyIdeFrame();
-      myProject2Frame.remove(null);
-      myProject2Frame.put(project, frame);
+      myProjectToFrame.remove(null);
+      myProjectToFrame.put(project, frame);
       frame.setProject(project);
     }
     else {
@@ -559,7 +555,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
         frame.setBounds(myFrameBounds);
       }
       frame.setProject(project);
-      myProject2Frame.put(project, frame);
+      myProjectToFrame.put(project, frame);
       frame.setExtendedState(myFrameExtendedState);
       frame.setVisible(true);
       if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
@@ -612,9 +608,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     frame.setTitle(null);
     frame.setFileTitle(null, null);
 
-    myProject2Frame.remove(project);
-    if (myProject2Frame.isEmpty()) {
-      myProject2Frame.put(null, frame);
+    myProjectToFrame.remove(project);
+    if (myProjectToFrame.isEmpty()) {
+      myProjectToFrame.put(null, frame);
     }
     else {
       Disposer.dispose(frame.getStatusBar());
@@ -623,8 +619,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   public final void disposeRootFrame() {
-    if (myProject2Frame.size() == 1) {
-      final IdeFrameImpl rootFrame = myProject2Frame.remove(null);
+    if (myProjectToFrame.size() == 1) {
+      final IdeFrameImpl rootFrame = myProjectToFrame.remove(null);
       if (rootFrame != null) {
         // disposing last frame if quitting
         rootFrame.dispose();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,11 +47,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   private static final Logger LOG = Logger.getInstance(WindowStateService.class);
   private final Map<String, WindowState> myStateMap = new TreeMap<>();
 
-  abstract Point getDefaultLocationFor(Object object, @NotNull String key);
+  abstract Point getDefaultLocationFor(@NotNull String key);
 
-  abstract Dimension getDefaultSizeFor(Object object, @NotNull String key);
+  abstract Dimension getDefaultSizeFor(@NotNull String key);
 
-  abstract Rectangle getDefaultBoundsFor(Object object, @NotNull String key);
+  abstract Rectangle getDefaultBoundsFor(@NotNull String key);
 
   abstract boolean getDefaultMaximizedFor(Object object, @NotNull String key);
 
@@ -138,8 +138,8 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       }
     }
     if (location == null && size == null) {
-      location = getDefaultLocationFor(object, key);
-      size = getDefaultSizeFor(object, key);
+      location = getDefaultLocationFor(key);
+      size = getDefaultSizeFor(key);
       if (!isVisible(location, size)) {
         return false;
       }
@@ -178,7 +178,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       location = getFor(object, key, Point.class);
     }
-    return location != null ? location : getDefaultLocationFor(object, key);
+    return location != null ? location : getDefaultLocationFor(key);
   }
 
   @Override
@@ -192,7 +192,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       size = getFor(object, key, Dimension.class);
     }
-    return size != null ? size : getDefaultSizeFor(object, key);
+    return size != null ? size : getDefaultSizeFor(key);
   }
 
   @Override
@@ -206,7 +206,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     synchronized (myStateMap) {
       bounds = getFor(object, key, Rectangle.class);
     }
-    return bounds != null ? bounds : getDefaultBoundsFor(object, key);
+    return bounds != null ? bounds : getDefaultBoundsFor(key);
   }
 
   @Override

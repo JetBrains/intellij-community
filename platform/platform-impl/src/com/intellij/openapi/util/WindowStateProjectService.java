@@ -33,21 +33,20 @@ final class WindowStateProjectService extends WindowStateServiceImpl {
   }
 
   @Override
-  Point getDefaultLocationFor(Object object, @NotNull String key) {
-    Rectangle bounds = getDefaultBoundsFor(object, key);
+  Point getDefaultLocationFor( @NotNull String key) {
+    Rectangle bounds = getDefaultBoundsFor(key);
     return bounds == null ? null : bounds.getLocation();
   }
 
   @Override
-  Dimension getDefaultSizeFor(Object object, @NotNull String key) {
-    Rectangle bounds = getDefaultBoundsFor(object, key);
+  Dimension getDefaultSizeFor(@NotNull String key) {
+    Rectangle bounds = getDefaultBoundsFor(key);
     return bounds == null ? null : bounds.getSize();
   }
 
   @Override
-  Rectangle getDefaultBoundsFor(Object object, @NotNull String key) {
-    //  backward compatibility when this service is used instead of ProjectFrameBounds
-    return !key.equals("ProjectFrameBounds") ? null : ProjectFrameBounds.getInstance(myProject).getBounds();
+  Rectangle getDefaultBoundsFor(@NotNull String key) {
+    return key.equals("ProjectFrameBounds") ? ProjectFrameBounds.getInstance(myProject).getBounds() : null;
   }
 
   @Override
