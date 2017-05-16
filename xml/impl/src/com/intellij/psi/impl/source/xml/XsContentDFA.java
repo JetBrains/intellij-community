@@ -162,7 +162,9 @@ class XsContentDFA extends XmlContentDFA {
       @Override
       protected SAXParser createParser() throws SAXException, ParserConfigurationException {
         SAXParser parser = super.createParser();
-        parser.getXMLReader().setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE, true);
+        if (parser != null) {
+          parser.getXMLReader().setFeature(Constants.XERCES_FEATURE_PREFIX + Constants.CONTINUE_AFTER_FATAL_ERROR_FEATURE, true);
+        }
         return parser;
       }
     };
