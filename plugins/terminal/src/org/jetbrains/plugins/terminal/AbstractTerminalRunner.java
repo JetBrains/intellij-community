@@ -88,7 +88,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   private void initConsoleUI(final T process) {
     final Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
     final DefaultActionGroup toolbarActions = new DefaultActionGroup();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("TerminalRunner", toolbarActions, false);
 
 
     final JPanel panel = new JPanel(new BorderLayout());
