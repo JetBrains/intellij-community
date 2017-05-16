@@ -21,13 +21,14 @@ import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ChainSearcher {
   private static final Logger LOG = Logger.getInstance(ChainSearcher.class);
@@ -42,11 +43,7 @@ public class ChainSearcher {
                                          ChainCompletionContext context,
                                          CompilerReferenceServiceEx compilerReferenceServiceEx) {
     SearchInitializer initializer = createInitializer(searchTarget, compilerReferenceServiceEx, context);
-    return search(compilerReferenceServiceEx,
-                  initializer,
-                  pathMaximalLength,
-                  maxResultSize,
-                  context);
+    return search(compilerReferenceServiceEx, initializer, pathMaximalLength, maxResultSize, context);
   }
 
   @NotNull
@@ -72,18 +69,8 @@ public class ChainSearcher {
                                           int pathMaximalLength,
                                           int maxResultSize,
                                           ChainCompletionContext context) {
-    SearchInitializer.InitResult initResult = initializer.init(Collections.emptySet());
-
-    Map<MethodIncompleteSignature, MethodChain> knownDistance = initResult.getChains();
-
-    LinkedList<OccurrencesAware<MethodChain>> q = initResult
-      .getVertices()
-      .stream()
-      .map(
-        signAndWeight -> new OccurrencesAware<>(MethodChain.create(signAndWeight.getUnderlying(), signAndWeight.getOccurrenceCount(), context),
-                                                signAndWeight.getOccurrenceCount()))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toCollection(LinkedList::new));
+    Map<MethodIncompleteSignature, MethodChain> knownDistance = initializer.getChains();
+    LinkedList<OccurrencesAware<MethodChain>> q = initializer.getVertices();
 
     ResultHolder result = new ResultHolder();
     while (!q.isEmpty()) {
