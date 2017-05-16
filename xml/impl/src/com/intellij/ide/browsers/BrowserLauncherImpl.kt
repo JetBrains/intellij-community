@@ -36,10 +36,25 @@ import java.util.concurrent.TimeUnit
 
 class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+    super.browse(signUrl(url), browser, project)
+  }
+
+  override fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? {
+    var effectiveBrowser = browser
+    if (browser == null) {
+      // https://youtrack.jetbrains.com/issue/WEB-26547
+      val browserManager = WebBrowserManager.getInstance()
+      if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
+        effectiveBrowser = browserManager.firstActiveBrowser
+      }
+    }
+    return effectiveBrowser
+  }
+
+  private fun signUrl(url: String): String {
     @Suppress("NAME_SHADOWING")
     var url = url
     @Suppress("NAME_SHADOWING")
-    var browser = browser
     val serverManager = BuiltInServerManager.getInstance()
     val parsedUrl = Urls.parse(url, false)
     if (parsedUrl != null && serverManager.isOnBuiltInWebServer(parsedUrl)) {
@@ -49,16 +64,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
 
       url = serverManager.addAuthToken(parsedUrl).toExternalForm()
     }
-
-    if (browser == null) {
-      // https://youtrack.jetbrains.com/issue/WEB-26547
-      val browserManager = WebBrowserManager.getInstance()
-      if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
-        browser = browserManager.firstActiveBrowser
-      }
-    }
-
-    super.browse(url, browser, project)
+    return url
   }
 
   override fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {

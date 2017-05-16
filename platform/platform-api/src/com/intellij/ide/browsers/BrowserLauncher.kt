@@ -31,7 +31,9 @@ abstract class BrowserLauncher {
 
   abstract fun open(url: String)
 
-  abstract fun browse(uri: URI)
+  fun browse(uri: URI) = browse(uri, null)
+
+  abstract fun browse(uri: URI, project: Project?)
 
   abstract fun browse(file: File)
 
@@ -39,7 +41,7 @@ abstract class BrowserLauncher {
     browse(url, browser, null)
   }
 
-  abstract fun browse(url: String, browser: WebBrowser?, project: Project?)
+  abstract fun browse(url: String, browser: WebBrowser? = null, project: Project? = null)
 
   abstract fun browseUsingPath(url: String?,
                                browserPath: String? = null,

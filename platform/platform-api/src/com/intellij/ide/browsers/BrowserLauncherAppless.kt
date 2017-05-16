@@ -28,9 +28,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ArrayUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.Contract
 import java.awt.Desktop
 import java.io.File
@@ -104,11 +106,15 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   override fun open(url: String) = openOrBrowse(url, false, null)
 
-  override fun browse(file: File) = browse(VfsUtil.toUri(file))
+  override fun browse(file: File) {
+    var path = file.absolutePath
+    if (SystemInfo.isWindows && path[0] != '/') {
+      path = '/' + path
+    }
+    browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path")
+  }
 
-  override fun browse(uri: URI) = browse(uri, null)
-
-  fun browse(uri: URI, project: Project?) {
+  override fun browse(uri: URI, project: Project?) {
     LOG.debug("Launch browser: [$uri]")
 
     val settings = generalSettings
@@ -179,11 +185,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   override fun browse(url: String, browser: WebBrowser?, project: Project?) {
-    if (browser == null) {
+    val effectiveBrowser = getEffectiveBrowser(browser)
+    // if browser is not passed, UrlOpener should be not used for non-http(s) urls
+    if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
       openOrBrowse(url, true, project)
     }
     else {
-      UrlOpener.EP_NAME.extensions.any { it.openUrl(browser, url, project) }
+      UrlOpener.EP_NAME.extensions.any { it.openUrl(effectiveBrowser, url, project) }
     }
   }
 
@@ -250,4 +258,6 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     // Not started yet. Not able to show message up. (Could happen in License panel under Linux).
     LOG.warn(error)
   }
+
+  open protected fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 }
