@@ -98,6 +98,12 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "TightVNC", libraryName: "tightvnc", license: "Commercial License"),
     new LibraryLicense(name: "Instant App Proto Manifest", libraryName: "aia-manifest-proto-1.0-jarjar.jar",
                        license: "Apache 2.0", url: "http://source.android.com/"),
+    new LibraryLicense(name: "Archive Patcher",
+                       libraryName: "archive-patcher",
+                       url: "https://github.com/andrewhayden/archive-patcher",
+                       additionalLibraryNames: ["explainer.jar", "generator.jar", "shared.jar"],
+                       license: "Apache 2.0",
+                       licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0"),
 
     jetbrainsLibrary("uast")
   ] as List<LibraryLicense>
