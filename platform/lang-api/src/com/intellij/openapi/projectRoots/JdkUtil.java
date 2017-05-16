@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
@@ -311,18 +312,15 @@ public class JdkUtil {
         }
       }
 
-      String classpath = PathUtil.getJarPathForClass(commandLineWrapper);
-      String utilRtPath = PathUtil.getJarPathForClass(StringUtilRt.class);
-      if (!classpath.equals(utilRtPath)) {
-        classpath += File.pathSeparator + utilRtPath;
-      }
-      Class<UrlClassLoader> ourUrlClassLoader = UrlClassLoader.class;
-      if (ourUrlClassLoader.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"))) {
-        classpath += File.pathSeparator + PathUtil.getJarPathForClass(ourUrlClassLoader);
-        classpath += File.pathSeparator + PathUtil.getJarPathForClass(THashMap.class);
+      Set<String> classpath = new LinkedHashSet<>();
+      classpath.add(PathUtil.getJarPathForClass(commandLineWrapper));
+      if (UrlClassLoader.class.getName().equals(vmParameters.getPropertyValue("java.system.class.loader"))) {
+        classpath.add(PathUtil.getJarPathForClass(UrlClassLoader.class));
+        classpath.add(PathUtil.getJarPathForClass(StringUtilRt.class));
+        classpath.add(PathUtil.getJarPathForClass(THashMap.class));
       }
       commandLine.addParameter("-classpath");
-      commandLine.addParameter(classpath);
+      commandLine.addParameter(StringUtil.join(classpath, File.pathSeparator));
 
       commandLine.addParameter(commandLineWrapper.getName());
       commandLine.addParameter(classpathFile.getAbsolutePath());
