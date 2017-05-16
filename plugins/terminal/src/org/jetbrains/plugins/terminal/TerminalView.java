@@ -196,7 +196,7 @@ public class TerminalView {
       group.add(new CloseSession(terminal, toolWindow));
     }
 
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, false);
+    return ActionManager.getInstance().createActionToolbar("Terminal", group, false);
   }
 
   public void createNewSession(Project project, final AbstractTerminalRunner terminalRunner) {
