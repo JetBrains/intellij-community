@@ -38,6 +38,12 @@ public abstract class ProjectView {
   @NotNull
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
+  /**
+   * Changes currently selected view and subview (if any).<br/>
+   * If a view (which is identified by {@code viewId}) has subviews but {@code subId} is {@code null} then no action is taken.
+   *
+   * @param subId subview id. {@code null} means view should not have subviews
+   */
   @NotNull
   public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable String subId);
 
@@ -47,6 +53,9 @@ public abstract class ProjectView {
   // show pane identified by id using default(or currently selected) subId
   public abstract void changeView(@NotNull String viewId);
 
+  /**
+   * @see #changeViewCB(String, String)
+   */
   public abstract void changeView(@NotNull String viewId, @Nullable String subId);
 
   public abstract void changeView();
