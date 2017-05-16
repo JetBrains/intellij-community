@@ -33,7 +33,9 @@ abstract class BrowserLauncher {
 
   fun browse(uri: URI) = browse(uri, null)
 
-  abstract fun browse(uri: URI, project: Project?)
+  fun browse(uri: URI, project: Project?) {
+    browse(uri.toString(), project = project)
+  }
 
   abstract fun browse(file: File)
 

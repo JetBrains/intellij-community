@@ -37,7 +37,6 @@ import org.jetbrains.annotations.Contract
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
-import java.net.URI
 import java.util.*
 
 open class BrowserLauncherAppless : BrowserLauncher() {
@@ -104,58 +103,24 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
   }
 
-  override fun open(url: String) = openOrBrowse(url, false, null)
+  override fun open(url: String) = openOrBrowse(url, false)
 
   override fun browse(file: File) {
     var path = file.absolutePath
     if (SystemInfo.isWindows && path[0] != '/') {
       path = '/' + path
     }
-    browse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path")
+    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
   }
 
-  override fun browse(uri: URI, project: Project?) {
-    LOG.debug("Launch browser: [$uri]")
-
-    val settings = generalSettings
-    if (settings.isUseDefaultBrowser) {
-      var tryToUseCli = true
-      if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-        try {
-          Desktop.getDesktop().browse(uri)
-          LOG.debug("Browser launched using JDK 1.6 API")
-          return
-        }
-        catch (e: Exception) {
-          LOG.warn("Error while using Desktop API, fallback to CLI", e)
-          // if "No application knows how to open", then we must not try to use OS open
-          tryToUseCli = !e.message!!.contains("Error code: -10814")
-        }
-      }
-
-      if (tryToUseCli) {
-        defaultBrowserCommand?.let {
-          doLaunch(uri.toString(), it, null, project)
-          return
-        }
-      }
-    }
-
-    browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project)
+  protected open fun browseUsingNotSystemDefaultBrowserPolicy(url: String, settings: GeneralSettings, project: Project?) {
+    browseUsingPath(url, settings.browserPath, project = project)
   }
 
-  protected open fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {
-    browseUsingPath(uri.toString(), settings.browserPath, project = project)
-  }
+  private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
+    val url = signUrl(_url.trim { it <= ' ' })
 
-  private fun openOrBrowse(_url: String, browse: Boolean, project: Project?) {
-    val url = _url.trim { it <= ' ' }
-
-    val uri: URI?
-    if (BrowserUtil.isAbsoluteURL(url)) {
-      uri = VfsUtil.toUri(url)
-    }
-    else {
+    if (!BrowserUtil.isAbsoluteURL(url)) {
       val file = File(url)
       if (!browse && isDesktopActionSupported(Desktop.Action.OPEN)) {
         if (!file.exists()) {
@@ -176,22 +141,50 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
-    if (uri == null) {
-      showError(IdeBundle.message("error.malformed.url", url), project = project)
+    LOG.debug("Launch browser: [$url]")
+    val settings = generalSettings
+    if (settings.isUseDefaultBrowser) {
+      val uri = VfsUtil.toUri(url)
+      if (uri == null) {
+        showError(IdeBundle.message("error.malformed.url", url), project = project)
+        return
+      }
+
+      var tryToUseCli = true
+      if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
+        try {
+          Desktop.getDesktop().browse(uri)
+          LOG.debug("Browser launched using JDK 1.6 API")
+          return
+        }
+        catch (e: Exception) {
+          LOG.warn("Error while using Desktop API, fallback to CLI", e)
+          // if "No application knows how to open", then we must not try to use OS open
+          tryToUseCli = !e.message!!.contains("Error code: -10814")
+        }
+      }
+
+      if (tryToUseCli) {
+        defaultBrowserCommand?.let {
+          doLaunch(url, it, null, project)
+          return
+        }
+      }
     }
-    else {
-      browse(uri, project)
-    }
+
+    browseUsingNotSystemDefaultBrowserPolicy(url, settings, project = project)
   }
 
-  override fun browse(url: String, browser: WebBrowser?, project: Project?) {
+  open protected fun signUrl(url: String): String = url
+
+  override final fun browse(url: String, browser: WebBrowser?, project: Project?) {
     val effectiveBrowser = getEffectiveBrowser(browser)
     // if browser is not passed, UrlOpener should be not used for non-http(s) urls
     if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
       openOrBrowse(url, true, project)
     }
     else {
-      UrlOpener.EP_NAME.extensions.any { it.openUrl(effectiveBrowser, url, project) }
+      UrlOpener.EP_NAME.extensions.any { it.openUrl(effectiveBrowser, signUrl(url), project) }
     }
   }
 

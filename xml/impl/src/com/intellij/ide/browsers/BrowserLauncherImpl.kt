@@ -28,17 +28,11 @@ import com.intellij.openapi.ui.showOkNoDialog
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AppUIUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.Urls
 import org.jetbrains.ide.BuiltInServerManager
-import java.net.URI
 import java.util.concurrent.TimeUnit
 
 class BrowserLauncherImpl : BrowserLauncherAppless() {
-  override fun browse(url: String, browser: WebBrowser?, project: Project?) {
-    super.browse(signUrl(url), browser, project)
-  }
-
   override fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? {
     var effectiveBrowser = browser
     if (browser == null) {
@@ -51,7 +45,7 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     return effectiveBrowser
   }
 
-  private fun signUrl(url: String): String {
+  override fun signUrl(url: String): String {
     @Suppress("NAME_SHADOWING")
     var url = url
     @Suppress("NAME_SHADOWING")
@@ -67,22 +61,22 @@ class BrowserLauncherImpl : BrowserLauncherAppless() {
     return url
   }
 
-  override fun browseUsingNotSystemDefaultBrowserPolicy(uri: URI, settings: GeneralSettings, project: Project?) {
+  override fun browseUsingNotSystemDefaultBrowserPolicy(url: String, settings: GeneralSettings, project: Project?) {
     val browserManager = WebBrowserManager.getInstance()
-    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST || "open" == settings.browserPath) {
+    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) {
       browserManager.firstActiveBrowser?.let {
-        browse(uri.toString(), it, project)
+        browse(url, it, project)
         return
       }
     }
     else if (SystemInfo.isMac && "open" == settings.browserPath) {
       browserManager.firstActiveBrowser?.let {
-        browseUsingPath(uri.toString(), null, it, project, ArrayUtil.EMPTY_STRING_ARRAY)
+        browseUsingPath(url, null, it, project)
         return
       }
     }
 
-    super.browseUsingNotSystemDefaultBrowserPolicy(uri, settings, project)
+    super.browseUsingNotSystemDefaultBrowserPolicy(url, settings, project)
   }
 
   override fun showError(error: String?, browser: WebBrowser?, project: Project?, title: String?, launchTask: (() -> Unit)?) {
