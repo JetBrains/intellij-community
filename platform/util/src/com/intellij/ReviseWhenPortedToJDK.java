@@ -15,15 +15,12 @@
  */
 package com.intellij;
 
-import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 
 /**
  * Use to mark places in code which are hacks or workarounds which are supposed to be fixed or reworked in the new shiny JDK of the specified version
  */
-@Target({ElementType.METHOD,ElementType.TYPE,ElementType.TYPE_USE,ElementType.ANNOTATION_TYPE,ElementType.CONSTRUCTOR,ElementType.FIELD,ElementType.PARAMETER,ElementType.LOCAL_VARIABLE,ElementType.PACKAGE,ElementType.TYPE_PARAMETER})
 @Retention(RetentionPolicy.SOURCE)
 public @interface ReviseWhenPortedToJDK {
   String value(); // JDK major version

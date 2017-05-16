@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.InspectionManager;
@@ -28,7 +29,6 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -116,6 +116,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   @Override
+  @ReviseWhenPortedToJDK("9")
   public void actionPerformed(final AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
@@ -123,7 +124,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
       //TODO revise when jdk9 arrives. Until then this redundant cast is a workaround to compile under jdk9 b169
-      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously((@ReviseWhenPortedToJDK("9") Runnable)() -> ReadAction.run(() -> {
+      if (!ProgressManager.getInstance().runProcessWithProgressSynchronously((Runnable)() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
         descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
