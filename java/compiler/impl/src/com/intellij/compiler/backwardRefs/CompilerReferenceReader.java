@@ -106,7 +106,7 @@ class CompilerReferenceReader {
   @Nullable
   Integer getAnonymousCount(@NotNull LightRef.LightClassHierarchyElementDef classDef, boolean checkDefinitions) {
     try {
-      if (checkDefinitions && hasMultipleDefinitions(classDef)) {
+      if (checkDefinitions && getDefinitionCount(classDef) != DefCount.ONE) {
         return null;
       }
       final int[] count = {0};
@@ -274,6 +274,17 @@ class CompilerReferenceReader {
 
   private enum DefCount { NONE, ONE, MANY}
   private boolean hasMultipleDefinitions(LightRef.NamedLightRef def) throws StorageException {
+    DefCount count = getDefinitionCount(def);
+    if (count == DefCount.NONE) {
+      //diagnostic
+      String name = def instanceof LightRef.LightAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
+      LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
+    }
+    return count == DefCount.MANY;
+  }
+
+  @NotNull
+  private DefCount getDefinitionCount(LightRef.NamedLightRef def) throws StorageException {
     DefCount[] result = new DefCount[]{DefCount.NONE};
     myIndex.get(CompilerIndices.BACK_CLASS_DEF).getData(def).forEach(new ValueContainer.ContainerAction<Void>() {
       @Override
@@ -289,11 +300,6 @@ class CompilerReferenceReader {
         return false;
       }
     });
-    if (result[0] == DefCount.NONE) {
-      //diagnostic
-      String name = def instanceof LightRef.LightAnonymousClassDef ? String.valueOf(def.getName()) : getNameEnumerator().getName(def.getName());
-      LOG.error("Can't get definition files for: " + name + ", class: " + def.getClass());
-    }
-    return result[0] == DefCount.MANY;
+    return result[0];
   }
 }
