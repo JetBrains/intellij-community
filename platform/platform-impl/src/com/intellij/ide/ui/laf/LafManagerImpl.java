@@ -707,7 +707,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     if (uiSettings.getOverrideLafFonts()) {
       storeOriginalFontDefaults(uiDefaults);
       initFontDefaults(uiDefaults, uiSettings.getFontSize(), new FontUIResource(uiSettings.getFontFace(), Font.PLAIN, uiSettings.getFontSize()));
-      JBUI.setUserScaleFactor(uiSettings.getFontSize() / UIUtil.DEF_SYSTEM_FONT_SIZE);
+      JBUI.setUserScaleFactor(JBUI.getFontScale(uiSettings.getFontSize()));
     }
     else {
       restoreOriginalFontDefaults(uiDefaults);
@@ -722,7 +722,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         defaults.put(resource, lfDefaults.get(resource));
       }
     }
-    JBUI.setUserScaleFactor(JBUI.Fonts.label().getSize() / UIUtil.DEF_SYSTEM_FONT_SIZE);
+    JBUI.setUserScaleFactor(JBUI.getFontScale(JBUI.Fonts.label().getSize()));
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {

@@ -198,7 +198,7 @@ public class JBUI {
     Pair<String, Integer> fdata = UIUtil.getSystemFontData();
 
     int size = fdata == null ? Fonts.label().getSize() : fdata.getSecond();
-    return size / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    return getFontScale(size);
   }
 
   /**
@@ -363,6 +363,14 @@ public class JBUI {
     if (userScaleFactor == 1.25f) return (int)(fontSize * 1.34f);
     if (userScaleFactor == 1.75f) return (int)(fontSize * 1.67f);
     return (int)scale(fontSize);
+  }
+
+  /**
+   * @param fontSize
+   * @return the scale factor of {@code fontSize} relative to the standard font size (currently 12pt)
+   */
+  public static float getFontScale(float fontSize) {
+    return fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
   }
 
   public static JBDimension size(int width, int height) {

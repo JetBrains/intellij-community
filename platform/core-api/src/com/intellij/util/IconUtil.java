@@ -489,7 +489,7 @@ public class IconUtil {
    */
   @NotNull
   public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
-    float scale = fontSize / UIUtil.DEF_SYSTEM_FONT_SIZE;
+    float scale = JBUI.getFontScale(fontSize);
     if (icon instanceof ScalableIcon) {
       if (icon instanceof JBUIScaleTrackable) {
         JBUIScaleTrackable jbuiIcon = (JBUIScaleTrackable)icon;

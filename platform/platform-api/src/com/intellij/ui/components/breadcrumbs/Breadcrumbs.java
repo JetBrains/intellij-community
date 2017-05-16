@@ -25,6 +25,7 @@ import com.intellij.ui.paint.RectanglePainter;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
 
@@ -441,7 +442,7 @@ public class Breadcrumbs extends JComponent {
         }
         if (parent != null && parent.background == background && !Registry.is("editor.breadcrumbs.marker")) {
           Graphics2D g2 = (Graphics2D)g.create();
-          float stroke = getFontSize(getFont()) / DEF_SYSTEM_FONT_SIZE;
+          float stroke = JBUI.getFontScale(getFontSize(getFont()));
           // calculate a visible width of separator (30% of a whole path)
           int delta = (int)(scale * (.3 * getRightGap() + getLeftGap()));
           g2.clipRect(bounds.x - delta, bounds.y, Short.MAX_VALUE, bounds.height);

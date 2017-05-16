@@ -56,7 +56,7 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     public PersistentFontPreferences(FontPreferences fontPreferences) {
       FONT_FAMILY = fontPreferences.getFontFamily();
       FONT_SIZE = fontPreferences.getSize(FONT_FAMILY);
-      FONT_SCALE = UISettings.getNormalizingScale();
+      FONT_SCALE = UISettings.getDefFontScale();
       LINE_SPACING = fontPreferences.getLineSpacing();
       USE_LIGATURES = fontPreferences.useLigatures();
       List<String> fontFamilies = fontPreferences.getEffectiveFontFamilies();

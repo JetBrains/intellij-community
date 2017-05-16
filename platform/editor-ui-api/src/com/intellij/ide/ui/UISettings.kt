@@ -54,7 +54,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SIZE")
-  var fontSize by storedProperty((UIUtil.DEF_SYSTEM_FONT_SIZE * UISettings.normalizingScale).toInt())
+  var fontSize by storedProperty(defFontSize)
 
   @get:Property(filter = FontFilter::class)
   @get:OptionTag("FONT_SCALE")
@@ -191,7 +191,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     val fontData = systemFontFaceAndSize
     if (fontFace == null) fontFace = fontData.first
     if (fontSize <= 0) fontSize = fontData.second
-    if (fontScale <= 0) fontScale = normalizingScale
+    if (fontScale <= 0) fontScale = defFontScale
   }
 
   class FontFilter : SerializationFilter {
@@ -232,7 +232,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
     }
 
     fontSize = restoreFontSize(fontSize, fontScale)
-    fontScale = normalizingScale
+    fontScale = defFontScale
     initDefFont()
 
     // 1. Sometimes system font cannot display standard ASCII symbols. If so we have
@@ -366,21 +366,39 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
       instance.editorAAType?.let { GraphicsUtil.setAntialiasingType(component, it.textInfo) }
     }
 
+    /**
+     * Returns the default font scale, which depends on the HiDPI mode (see JBUI#ScaleType).
+     * <p>
+     * The font is represented:
+     * - in relative (dpi-independent) points in the JRE-managed HiDPI mode, so the method returns 1.0f
+     * - in absolute (dpi-dependent) points in the IDE-managed HiDPI mode, so the method returns the default screen scale
+     *
+     * @return the system font scale
+     */
     @JvmStatic
-    val normalizingScale: Float
+    val defFontScale: Float
       get() = if (UIUtil.isJreHiDPIEnabled()) 1f else JBUI.sysScale()
+
+    /**
+     * Returns the default font size scaled by #defFontScale
+     *
+     * @return the default scaled font size
+     */
+    @JvmStatic
+    val defFontSize: Int
+      get() = Math.round(UIUtil.DEF_SYSTEM_FONT_SIZE * defFontScale)
 
     @JvmStatic
     fun restoreFontSize(readSize: Int, readScale: Float?): Int {
       var size = readSize
       if (readScale == null || readScale <= 0) {
         // Reset font to default on switch from IDE-managed HiDPI to JRE-managed HiDPI. Doesn't affect OSX.
-        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = UIUtil.DEF_SYSTEM_FONT_SIZE.toInt()
+        if (UIUtil.isJreHiDPIEnabled() && !SystemInfo.isMac) size = defFontSize
       }
       else {
-        if (readScale != normalizingScale) size = Math.round((readSize / readScale) * normalizingScale)
+        if (readScale != defFontScale) size = Math.round((readSize / readScale) * defFontScale)
       }
-      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$normalizingScale")
+      LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
     }
   }
