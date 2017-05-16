@@ -272,7 +272,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     DefaultActionGroup goBack = new DefaultActionGroup();
     BackAction back = new BackAction();
     goBack.add(back);
-    ActionToolbar backToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goBack, true);
+    ActionToolbar backToolbar = ActionManager.getInstance().createActionToolbar("IdeErrorsBack", goBack, true);
     backToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
     backToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myBackButtonPanel.add(backToolbar.getComponent(), BorderLayout.CENTER);
@@ -280,7 +280,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     DefaultActionGroup goForward = new DefaultActionGroup();
     ForwardAction forward = new ForwardAction();
     goForward.add(forward);
-    ActionToolbar forwardToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, goForward, true);
+    ActionToolbar forwardToolbar = ActionManager.getInstance().createActionToolbar("IdeErrorsForward", goForward, true);
     forwardToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     forwardToolbar.getComponent().setBorder(IdeBorderFactory.createEmptyBorder());
     myNextButtonPanel.add(forwardToolbar.getComponent(), BorderLayout.CENTER);

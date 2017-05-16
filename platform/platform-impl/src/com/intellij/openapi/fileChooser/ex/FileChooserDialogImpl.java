@@ -294,7 +294,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     createTree();
 
     final DefaultActionGroup group = createActionGroup();
-    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolBar = ActionManager.getInstance().createActionToolbar("FileChooserDialog", group, true);
     toolBar.setTargetComponent(panel);
 
     final JPanel toolbarPanel = new JPanel(new BorderLayout());
