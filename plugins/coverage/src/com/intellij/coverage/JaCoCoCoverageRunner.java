@@ -10,9 +10,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
@@ -30,6 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -99,20 +100,28 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
     for (Module module : modules) {
       final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
       if (compilerModuleExtension != null) {
-        final VirtualFile[] roots = compilerModuleExtension.getOutputRoots(true);
-        for (VirtualFile root : roots) {
-          VfsUtilCore.processFilesRecursively(root, file -> {
-            if (file.getFileSystem() instanceof JarFileSystem) return true;
-            if (!file.isDirectory()) {
-              try {
-                analyzer.analyzeAll(file.getInputStream(), file.getPath());
+        final String[] roots = compilerModuleExtension.getOutputRootUrls(true);
+        for (String root : roots) {
+          try {
+            Files.walkFileTree(Paths.get(new URL(root).toURI()), new SimpleFileVisitor<Path>() {
+              @Override
+              public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
+                File file = path.toFile();
+                if (file.isFile()) {
+                  try {
+                    analyzer.analyzeAll(file);
+                  }
+                  catch (Exception e) {
+                    LOG.error(e);
+                  }
+                }
+                return FileVisitResult.CONTINUE;
               }
-              catch (Exception e) {
-                LOG.error(e);
-              }
-            }
-            return true;
-          });
+            });
+          }
+          catch (URISyntaxException e) { 
+            LOG.info(e);
+          }
         }
       }
     }
