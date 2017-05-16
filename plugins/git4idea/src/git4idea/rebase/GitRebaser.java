@@ -315,7 +315,7 @@ public class GitRebaser {
     }
 
     @Override
-    public int editCommits(String path) {
+    public int editCommits(@NotNull String path) {
       return 0;
     }
   }
@@ -402,7 +402,7 @@ public class GitRebaser {
       myHasMerges = hasMerges;
     }
 
-    public int editCommits(String path) {
+    public int editCommits(@NotNull String path) {
       if (!myRebaseEditorShown) {
         myRebaseEditorShown = true;
         if (myHasMerges) {

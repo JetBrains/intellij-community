@@ -91,7 +91,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    * @param path the path to editing
    * @return the exit code to be returned from editor
    */
-  public int editCommits(final String path) {
+  public int editCommits(@NotNull final String path) {
     ensureOpen();
     final Ref<Boolean> isSuccess = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> {

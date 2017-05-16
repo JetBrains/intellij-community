@@ -99,7 +99,7 @@ class TestGitImpl : GitImpl() {
 
     val service = GitRebaseEditorService.getInstance()
     val editor = object: GitInteractiveRebaseEditorHandler(service, project, root) {
-      override fun editCommits(path: String?): Int {
+      override fun editCommits(path: String): Int {
         try {
           val file = File(path)
           FileUtil.writeToFile(file, myInteractiveRebaseEditor!!(FileUtil.loadFile(file)))
