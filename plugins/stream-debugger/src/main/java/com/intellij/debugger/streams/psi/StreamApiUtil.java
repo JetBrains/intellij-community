@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.psi;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,10 +58,12 @@ public class StreamApiUtil {
     return false;
   }
 
+  @Contract("null -> false")
   private static boolean isStreamType(@Nullable PsiType psiType) {
     return InheritanceUtil.isInheritor(psiType, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }
 
+  @Contract("null -> false")
   private static boolean isStreamType(@Nullable PsiClass psiClass) {
     return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM);
   }

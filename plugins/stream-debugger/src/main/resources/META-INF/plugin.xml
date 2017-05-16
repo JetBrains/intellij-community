@@ -1,7 +1,7 @@
 <idea-plugin>
   <id>org.jetbrains.debugger.streams</id>
   <name>Java Stream Debugger</name>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <vendor url="https://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
@@ -20,15 +20,12 @@
 
       <img src="https://blog.jetbrains.com/idea/files/2017/05/Screen-Shot-2017-05-11-at-15.06.18.png" height="300" width="750">
 
-      <p>The <em>Split Mode button</em> in the left bottom corner lets you choose weather you want to see all operations at once or
+      <p>The <em>Split Mode button</em> in the left bottom corner lets you choose whether you want to see all operations at once or
       separately:</p>
 
       <img src="https://blog.jetbrains.com/idea/files/2017/05/Screen-Shot-2017-05-11-at-15.04.39.png" height="300" width="750">
 
       <p>In the latter mode, you can switch between operations manually using the tabs on top.</p>
-      <p>Watch the following short animation to see these features in action:</p>
-
-      <img src="https://blog.jetbrains.com/idea/files/2017/05/Screen-Shot-2017-05-11-at-15.07.27.gif" height="371" width="751">
 
       <p>The plugin is still under development, so expect a couple of glitches here and there, and, of course, we really appreciate your
       feedback, including error reports, and we have set up an
@@ -37,6 +34,11 @@
     ]]></description>
 
   <change-notes><![CDATA[
+      0.1.1 <br>
+        <ul>
+            <li> Improve lines drawing </li>
+            <li> Minor fixes and improvements </li>
+        </ul>
     ]]>
   </change-notes>
 
