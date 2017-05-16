@@ -19,10 +19,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
@@ -222,7 +219,8 @@ public class MethodChainLookupRangingHelper {
     LookupElement result;
     if (method.isConstructor()) {
       //noinspection ConstantConditions
-      result = LookupElementBuilder.create(String.format("new %s", method.getContainingClass().getName()));
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(method.getProject());
+      result = new ExpressionLookupItem(elementFactory.createExpressionFromText("new " + method.getContainingClass().getQualifiedName() + "()", null));
     } else if (method.hasModifierProperty(PsiModifier.STATIC)) {
       result = new JavaMethodCallElement(method, false, true);
     } else {
