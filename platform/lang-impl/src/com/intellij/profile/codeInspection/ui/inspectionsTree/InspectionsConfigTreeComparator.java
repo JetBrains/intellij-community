@@ -17,7 +17,6 @@
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInspection.ex.Descriptor;
-import com.intellij.profile.codeInspection.ui.ToolDescriptors;
 
 import java.util.Comparator;
 

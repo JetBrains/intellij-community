@@ -97,7 +97,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
         return component;
       }
 
-      @Nullable
       @Override
       protected Icon getIcon(@NotNull Icon value, JTable table, int row) {
         return value;
@@ -429,10 +428,6 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private HighlightSeverity myPrimarySeverity;
     private final Map<String, HighlightSeverity> myOccurrences = new HashMap<>();
 
-    public void setSeverityToMixed() {
-      myPrimarySeverity = ScopesAndSeveritiesTable.MIXED_FAKE_SEVERITY;
-    }
-
     public SeverityAndOccurrences incOccurrences(final String toolName, final HighlightSeverity severity) {
       if (myPrimarySeverity == null) {
         myPrimarySeverity = severity;
@@ -464,7 +459,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private String myDefaultScopeName;
 
     public Icon constructIcon(final InspectionProfileImpl inspectionProfile) {
-      final Map<String, HighlightSeverity> computedSeverities = computeSeverities(inspectionProfile);
+      final Map<String, HighlightSeverity> computedSeverities = computeSeverities();
 
       if (computedSeverities == null) {
         return null;
@@ -483,7 +478,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     }
 
     @Nullable
-    private Map<String, HighlightSeverity> computeSeverities(final InspectionProfileImpl inspectionProfile) {
+    private Map<String, HighlightSeverity> computeSeverities() {
       if (myScopeToAverageSeverityMap.isEmpty()) {
         return null;
       }
