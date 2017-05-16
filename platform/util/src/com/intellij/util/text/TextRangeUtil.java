@@ -18,14 +18,17 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Rustam Vishnyakov
  */
 public class TextRangeUtil {
 
-  private static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
+  public static final Comparator<TextRange> RANGE_COMPARATOR = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange range1, TextRange range2) {
       int startOffsetDiff = range1.getStartOffset() - range2.getStartOffset();
