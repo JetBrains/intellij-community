@@ -132,7 +132,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public Object getData(String dataId) {
-    if (myEditor.isDisposed() || myEditor.isRendererMode()) return null;
+    if (myEditor.isDisposed()) return null;
+
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+      // enable copying from editor in renderer mode
+      return myEditor.getCopyProvider();
+    }
+    
+    if (myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
@@ -145,9 +152,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     }
     if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
       return myEditor.getCutProvider();
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myEditor.getCopyProvider();
     }
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myEditor.getPasteProvider();
@@ -814,11 +818,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     @Nullable
     @Override
     public Rectangle modelToView(JTextComponent tc, int offset) throws BadLocationException {
-      LogicalPosition pos = myEditor.offsetToLogicalPosition(offset);
-      Point point = myEditor.logicalPositionToXY(pos);
-      FontMetrics fontMetrics = myEditor.getFontMetrics(Font.PLAIN);
-      char c = myEditor.getDocument().getCharsSequence().subSequence(offset, offset + 1).charAt(0);
-      return new Rectangle(point.x, point.y, fontMetrics.charWidth(c), fontMetrics.getHeight());
+      return modelToView(tc, offset, Position.Bias.Forward);
     }
 
     @Override
@@ -829,8 +829,15 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
     @Nullable
     @Override
-    public Rectangle modelToView(JTextComponent tc, int pos, Position.Bias ignored) throws BadLocationException {
-      return modelToView(tc, pos);
+    public Rectangle modelToView(JTextComponent tc, int offset, Position.Bias bias) throws BadLocationException {
+      LogicalPosition pos = myEditor.offsetToLogicalPosition(offset).leanForward(bias == Position.Bias.Forward);
+      LogicalPosition posNext = myEditor.offsetToLogicalPosition(bias == Position.Bias.Forward ? offset + 1 : offset - 1)
+        .leanForward(bias != Position.Bias.Forward);
+      Point point = myEditor.logicalPositionToXY(pos);
+      Point pointNext = myEditor.logicalPositionToXY(posNext);
+      return point.y == pointNext.y 
+             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight()) 
+             : new Rectangle(point.x, point.y, 0, myEditor.getLineHeight());
     }
 
     @Override
