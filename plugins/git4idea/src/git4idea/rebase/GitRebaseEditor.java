@@ -48,7 +48,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,8 +65,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
 
-  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries)
-    throws IOException {
+  protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries) {
     super(project, true);
     myProject = project;
     myRoot = gitRoot;
