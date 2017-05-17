@@ -147,7 +147,7 @@ public class GitChangeUtils {
         case 'A':
           before = null;
           status = FileStatus.ADDED;
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, true);
           break;
         case 'U':
           status = FileStatus.MERGED_WITH_CONFLICTS;
@@ -155,22 +155,22 @@ public class GitChangeUtils {
           if (status == null) {
             status = FileStatus.MODIFIED;
           }
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, false, true, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
+          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, true);
           break;
         case 'D':
           status = FileStatus.DELETED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true, true);
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
           after = null;
           break;
         case 'R':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true, true, true);
-          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+          before = GitContentRevision.createRevision(vcsRoot, tokens[1], parentRevision, project, true, true);
+          after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, true);
           break;
         case 'T':
           status = FileStatus.MODIFIED;
-          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true, true);
+          before = GitContentRevision.createRevision(vcsRoot, path, parentRevision, project, true, true);
           after = GitContentRevision.createRevisionForTypeChange(project, vcsRoot, path, thisRevision, true);
           break;
         default:

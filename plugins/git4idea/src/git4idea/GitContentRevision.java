@@ -111,7 +111,6 @@ public class GitContentRevision implements ByteBackedContentRevision {
    * @param path           an path inside with possibly escape sequences
    * @param revisionNumber a revision number, if null the current revision will be created
    * @param project        the context project
-   * @param isDeleted      if true, the file is deleted
    * @param unescapePath
    * @return a created revision
    * @throws VcsException if there is a problem with creating revision
@@ -121,10 +120,9 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @NotNull String path,
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                Project project,
-                                               boolean isDeleted,
                                                boolean canBeDeleted,
                                                boolean unescapePath) throws VcsException {
-    FilePath file = createPath(vcsRoot, path, isDeleted, canBeDeleted, unescapePath);
+    FilePath file = createPath(vcsRoot, path, canBeDeleted, unescapePath);
     return createRevision(file, revisionNumber, project);
   }
 
@@ -152,7 +150,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
     } else {
-      filePath = createPath(vcsRoot, path, false, false, unescapePath);
+      filePath = createPath(vcsRoot, path, false, unescapePath);
     }
     return createRevision(filePath, revisionNumber, project);
   }
@@ -160,7 +158,6 @@ public class GitContentRevision implements ByteBackedContentRevision {
   @NotNull
   public static FilePath createPath(@NotNull VirtualFile vcsRoot,
                                     @NotNull String path,
-                                    boolean isDeleted,
                                     boolean canBeDeleted,
                                     boolean unescapePath) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
