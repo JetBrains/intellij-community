@@ -13,38 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.wm.impl;
+package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.components.*
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.WindowManager
 
-import java.awt.*;
+import java.awt.*
 
-@State(name = "ProjectFrameBounds", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ProjectFrameBounds implements PersistentStateComponent<Rectangle> {
-  public static ProjectFrameBounds getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectFrameBounds.class);
-  }
-  
-  private final Project myProject;
-  private Rectangle myBounds;
+@State(name = "ProjectFrameBounds", storages = Storage(StoragePathMacros.WORKSPACE_FILE))
+class ProjectFrameBounds(private val myProject: Project) : PersistentStateComponent<Rectangle> {
+  var bounds: Rectangle? = null
+    private set
 
-  public ProjectFrameBounds(Project project) {
-    myProject = project;
+  override fun getState(): Rectangle? {
+    return WindowManager.getInstance().getFrame(myProject)!!.bounds
   }
 
-  @Override
-  public Rectangle getState() {
-    return WindowManager.getInstance().getFrame(myProject).getBounds();
+  override fun loadState(state: Rectangle) {
+    bounds = state
   }
 
-  @Override
-  public void loadState(Rectangle state) {
-    myBounds = state;
-  }
-
-  public Rectangle getBounds() {
-    return myBounds;
+  companion object {
+    fun getInstance(project: Project): ProjectFrameBounds {
+      return ServiceManager.getService(project, ProjectFrameBounds::class.java)
+    }
   }
 }
