@@ -34,7 +34,7 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public class StructuralSearchUtil {
-  private static final String REG_EXP_META_CHARS = ".$|()[{^?*+\\";
+  private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Key<StructuralSearchProfile> STRUCTURAL_SEARCH_PROFILE_KEY = new Key<>("Structural Search Profile");
   private static LanguageFileType ourDefaultFileType = null;
 
