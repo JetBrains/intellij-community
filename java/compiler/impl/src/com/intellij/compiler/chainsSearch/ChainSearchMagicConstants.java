@@ -22,7 +22,12 @@ public interface ChainSearchMagicConstants {
   /**
    * Used to know do 2 methods frequently occurred in one file simultaneously
    */
-  int PROBABILITY_THRESHOLD = 5;
+  int METHOD_PROBABILITY_THRESHOLD = 5;
+
+  /**
+   * Used to know do 2 variables frequently occurred in one file simultaneously
+   */
+  int VAR_PROBABILITY_THRESHOLD = 2;
 
   /**
    * Maximum count of completion contributor response chains

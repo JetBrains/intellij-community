@@ -36,6 +36,8 @@ class MethodIncompleteSignature(val ref: LightRef.JavaLightMethodRef,
     refService.getName(ref.name)
   }
 
+  val ownerRef = ref.owner
+
   val owner: String by lazy {
     refService.getName(ref.owner.name)
   }

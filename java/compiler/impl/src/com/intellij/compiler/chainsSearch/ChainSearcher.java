@@ -21,9 +21,13 @@ import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
 
 public class ChainSearcher {
   @NotNull
@@ -85,7 +89,7 @@ public class ChainSearcher {
         }
         MethodIncompleteSignature sign = candidate.getSignature();
         if ((sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) &&
-            referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
+            referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD)) {
           MethodChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
           if (continuation != null) {
             boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
@@ -100,8 +104,10 @@ public class ChainSearcher {
         }
       }
 
-      // continuation is not found -> add this chain as result
-      if (!updated && !context.getTarget().getClassQName().equals(headSignature.getOwner())) {
+      // continuation is not found -> add this chain as result if qualifier can be occurred with context variables
+      if (!updated &&
+          !context.getTarget().getClassQName().equals(headSignature.getOwner()) &&
+          canQualifierOccurWithContextVariables(headSignature.getOwnerRef(), context, referenceServiceEx)) {
         addChainIfNotPresent(currentChain, result);
       }
 
@@ -110,6 +116,17 @@ public class ChainSearcher {
       }
     }
     return result;
+  }
+
+  private static boolean canQualifierOccurWithContextVariables(@NotNull LightRef qualifier,
+                                                               @NotNull ChainCompletionContext context,
+                                                               @NotNull CompilerReferenceServiceEx referenceServiceEx) {
+    for (LightRef ref: context.getContextClassReferences()) {
+      if (referenceServiceEx.mayHappen(qualifier, ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addChainIfNotPresent(MethodChain newChain, List<MethodChain> result) {
