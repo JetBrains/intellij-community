@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,44 +28,78 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
 
-public class NumberValueConverter extends ResolvingConverter<String> {
+public class NumberValueConverter<T extends Number> extends ResolvingConverter<T> {
 
   private final Class myNumberClass;
   private final boolean myAllowEmpty;
 
-
-  public NumberValueConverter(@NotNull final Class numberClass, final boolean allowEmpty) {
+  public NumberValueConverter(@NotNull final Class<T> numberClass, final boolean allowEmpty) {
     myNumberClass = numberClass;
     myAllowEmpty = allowEmpty;
   }
 
   @Override
-  public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
+  public T fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     if (s == null) return null;
 
-    if (myAllowEmpty && s.trim().length() == 0) return s;
+    if (myAllowEmpty && s.trim().length() == 0) {
+      return null;
+    }
 
-    return parseNumber(s, myNumberClass) == null ? null : s;
+    //noinspection unchecked
+    return (T)parseNumber(s, myNumberClass);
   }
 
   @Override
-  public String toString(@Nullable final String s, final ConvertContext context) {
-    return null;
+  public String toString(@Nullable final T value, final ConvertContext context) {
+    return value == null ? null : parseText(value, myNumberClass);
   }
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
     if (s == null) return super.getErrorMessage(s, context);
 
-    return  s.trim().length() == 0 ?
-          DomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
-          DomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
+    final boolean isEmpty = s.trim().length() == 0;
+    if (isEmpty && myAllowEmpty) return null;
+
+    return isEmpty ?
+           DomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
+           DomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
   }
 
   @NotNull
   @Override
-  public Collection<? extends String> getVariants(ConvertContext context) {
+  public Collection<? extends T> getVariants(ConvertContext context) {
     return Collections.emptySet();
+  }
+
+  @Nullable
+  public static String parseText(@NotNull Number value, @NotNull Class targetClass) {
+    if (targetClass.equals(Byte.class) || targetClass.equals(byte.class)) {
+      return Byte.toString((Byte)value);
+    }
+    if (targetClass.equals(Short.class) || targetClass.equals(short.class)) {
+      return Short.toString((Short)value);
+    }
+    if (targetClass.equals(Integer.class) || targetClass.equals(int.class)) {
+      return Integer.toString((Integer)value);
+    }
+    if (targetClass.equals(Long.class) || targetClass.equals(long.class)) {
+      return Long.toString((Long)value);
+    }
+    if (targetClass.equals(BigInteger.class)) {
+      return value.toString();
+    }
+    if (targetClass.equals(Float.class) || targetClass.equals(float.class)) {
+      return Float.toString((Float)value);
+    }
+    if (targetClass.equals(Double.class) || targetClass.equals(double.class)) {
+      return Double.toString((Double)value);
+    }
+    if (targetClass.equals(BigDecimal.class) || targetClass.equals(Number.class)) {
+      return ((BigDecimal)value).toPlainString();
+    }
+    return null;
   }
 
   @Nullable
@@ -76,28 +110,29 @@ public class NumberValueConverter extends ResolvingConverter<String> {
       if (targetClass.equals(Byte.class) || targetClass.equals(byte.class)) {
         return Byte.decode(trimmed);
       }
-      else if (targetClass.equals(Short.class) || targetClass.equals(short.class)) {
+      if (targetClass.equals(Short.class) || targetClass.equals(short.class)) {
         return Short.decode(trimmed);
       }
-      else if (targetClass.equals(Integer.class) || targetClass.equals(int.class)) {
+      if (targetClass.equals(Integer.class) || targetClass.equals(int.class)) {
         return Integer.decode(trimmed);
       }
-      else if (targetClass.equals(Long.class) || targetClass.equals(long.class)) {
+      if (targetClass.equals(Long.class) || targetClass.equals(long.class)) {
         return Long.decode(trimmed);
       }
-      else if (targetClass.equals(BigInteger.class)) {
+      if (targetClass.equals(BigInteger.class)) {
         return decodeBigInteger(trimmed);
       }
-      else if (targetClass.equals(Float.class) || targetClass.equals(float.class)) {
+      if (targetClass.equals(Float.class) || targetClass.equals(float.class)) {
         return Float.valueOf(trimmed);
       }
-      else if (targetClass.equals(Double.class) || targetClass.equals(double.class)) {
+      if (targetClass.equals(Double.class) || targetClass.equals(double.class)) {
         return Double.valueOf(trimmed);
       }
-      else if (targetClass.equals(BigDecimal.class) || targetClass.equals(Number.class)) {
+      if (targetClass.equals(BigDecimal.class) || targetClass.equals(Number.class)) {
         return new BigDecimal(trimmed);
       }
-    } catch (NumberFormatException ex) {
+    }
+    catch (NumberFormatException ex) {
       return null;
     }
     return null;
