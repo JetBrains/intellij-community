@@ -200,17 +200,21 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
       boolean found = false;
       for (Method method : methods) {
         found = true;
-        if (base && method.isNative()) {
+        if (method.isNative()) {
           breakpoint.disableEmulation();
           return;
         }
         Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, debugProcess.getVirtualMachineProxy());
-        if (target != null && !DebuggerUtilsEx.allLineLocations(target).isEmpty()) {
+        if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
           method = target;
         }
 
         List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (!allLineLocations.isEmpty()) {
+        if (allLineLocations == null) { // no line numbers
+          breakpoint.disableEmulation();
+          return;
+        }
+        if (!ContainerUtil.isEmpty(allLineLocations)) {
           if (breakpoint.isWatchEntry()) {
             createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess);
           }

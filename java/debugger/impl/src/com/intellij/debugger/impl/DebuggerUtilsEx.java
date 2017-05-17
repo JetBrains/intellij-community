@@ -590,13 +590,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return new SigReader(s).getSignature();
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(Method method) {
     try {
       return method.allLineLocations();
     }
     catch (AbsentInformationException ignored) {
-      return Collections.emptyList();
+      return null;
     }
   }
 
