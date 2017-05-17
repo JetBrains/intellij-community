@@ -112,7 +112,7 @@ public class JaCoCoCoverageRunner extends JavaCoverageRunner {
                   analyzer.analyzeAll(file);
                 }
                 catch (Exception e) {
-                  LOG.error(e);
+                  LOG.info(e);
                 }
                 return FileVisitResult.CONTINUE;
               }
