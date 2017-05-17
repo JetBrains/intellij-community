@@ -39,7 +39,10 @@ import com.intellij.util.Processors;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.KeyDescriptor;
@@ -49,7 +52,10 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -550,6 +556,10 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponentAdap
 
   public final Lock getWriteLock(StubIndexKey indexKey) {
     return getAsyncState().myIndices.get(indexKey).getWriteLock();
+  }
+
+  public final Lock getReadLock(StubIndexKey indexKey) {
+    return getAsyncState().myIndices.get(indexKey).getReadLock();
   }
 
   Collection<StubIndexKey> getAllStubIndexKeys() {

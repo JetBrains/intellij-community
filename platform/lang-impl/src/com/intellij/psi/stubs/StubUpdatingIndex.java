@@ -447,12 +447,31 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
     @Override
     public void flush() throws StorageException {
+      final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+      final Collection<StubIndexKey> allStubIndexKeys = stubIndex != null? stubIndex.getAllStubIndexKeys() : Collections.<StubIndexKey>emptyList();
+      try {
+        for (StubIndexKey key : allStubIndexKeys) {
+          //noinspection ConstantConditions
+          stubIndex.getReadLock(key).lock();
+        }
+        super.flush();
+      }
+      finally {
+        for (StubIndexKey key : allStubIndexKeys) {
+          //noinspection ConstantConditions
+          stubIndex.getReadLock(key).unlock();
+        }
+      }
+    }
+
+    @Override
+    protected void doFlush() throws IOException, StorageException {
       final StubIndexImpl stubIndex = getStubIndex();
       try {
         stubIndex.flush();
       }
       finally {
-        super.flush();
+        super.doFlush();
       }
     }
 
@@ -514,23 +533,27 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
+    protected void doClear() throws StorageException, IOException {
+      final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+      if (stubIndex != null) {
+        stubIndex.clearAllIndices();
+      }
+      myStubVersionMap.clear();
+      super.doClear();
+    }
+
+    @Override
     public void clear() throws StorageException {
       final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
       final Collection<StubIndexKey> allStubIndexKeys = stubIndex != null? stubIndex.getAllStubIndexKeys() : Collections.<StubIndexKey>emptyList();
+      for (StubIndexKey key : allStubIndexKeys) {
+        //noinspection ConstantConditions
+        stubIndex.getWriteLock(key).lock();
+      }
       try {
-        for (StubIndexKey key : allStubIndexKeys) {
-          //noinspection ConstantConditions
-          stubIndex.getWriteLock(key).lock();
-        }
-        getWriteLock().lock();
-        if (stubIndex != null) {
-          stubIndex.clearAllIndices();
-        }
-        myStubVersionMap.clear();
         super.clear();
       }
       finally {
-        getWriteLock().unlock();
         for (StubIndexKey key : allStubIndexKeys) {
           //noinspection ConstantConditions
           stubIndex.getWriteLock(key).unlock();
@@ -540,8 +563,27 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
     @Override
     public void dispose() {
+      final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
+      final Collection<StubIndexKey> allStubIndexKeys = stubIndex != null? stubIndex.getAllStubIndexKeys() : Collections.<StubIndexKey>emptyList();
+      for (StubIndexKey key : allStubIndexKeys) {
+        //noinspection ConstantConditions
+        stubIndex.getWriteLock(key).lock();
+      }
       try {
         super.dispose();
+      }
+      finally {
+        for (StubIndexKey key : allStubIndexKeys) {
+          //noinspection ConstantConditions
+          stubIndex.getWriteLock(key).unlock();
+        }
+      }
+    }
+
+    @Override
+    protected void doDispose() throws StorageException {
+      try {
+        super.doDispose();
       }
       finally {
         getStubIndex().dispose();
