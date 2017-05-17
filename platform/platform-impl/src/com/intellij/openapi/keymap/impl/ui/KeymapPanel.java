@@ -87,15 +87,15 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       preferKeyPositionOverCharOption = new JCheckBox(new AbstractAction(" " + KeyMapBundle.message("prefer.key.position")) {
         @Override
         public void actionPerformed(ActionEvent e) {
+          KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(preferKeyPositionOverCharOption.isSelected());
           VMOptions.writeOption("com.jetbrains.use.old.keyevent.processing", "=",
-                                Boolean.toString(preferKeyPositionOverCharOption.isSelected()));
+                                Boolean.toString(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption()));
           ApplicationManager.getApplication().invokeLater(
             () -> ApplicationManager.getApplication().restart(),
             ModalityState.NON_MODAL
           );
         }
       });
-      //preferKeyPositionOverCharOption.setSelected();
       preferKeyPositionOverCharOption.setBorder(new EmptyBorder(0, 0, 0, 0));
       keymapPanel.add(preferKeyPositionOverCharOption, BorderLayout.SOUTH);
     }
@@ -438,7 +438,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   @Override
   public void reset() {
     if (preferKeyPositionOverCharOption != null) {
-      preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isNonEnglishKeyboardSupportEnabled());
+      preferKeyPositionOverCharOption.setSelected(KeyboardSettingsExternalizable.getInstance().isPreferKeyPositionOverCharOption());
     }
     myManager.reset();
   }

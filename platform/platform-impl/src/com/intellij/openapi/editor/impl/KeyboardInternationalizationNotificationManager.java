@@ -83,7 +83,7 @@ public class KeyboardInternationalizationNotificationManager {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         final String description = event.getDescription();
         if ("enable".equals(description)) {
-          KeyboardSettingsExternalizable.getInstance().setNonEnglishKeyboardSupportEnabled(true);
+          KeyboardSettingsExternalizable.getInstance().setPreferKeyPositionOverCharOption(true);
         }
         else if ("settings".equals(description)) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
