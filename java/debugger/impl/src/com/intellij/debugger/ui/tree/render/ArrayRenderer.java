@@ -221,11 +221,6 @@ public class ArrayRenderer extends NodeRendererImpl{
         ENTRIES_LIMIT = 1;
       }
 
-      builder.setMessage(DebuggerBundle.message("message.node.filtered", myExpression.getExpression()),
-                         AllIcons.General.Filter,
-                         SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                         null);
-
       ArrayReference array = (ArrayReference)value;
       int arrayLength = array.length();
       if (arrayLength > 0) {
@@ -261,7 +256,13 @@ public class ArrayRenderer extends NodeRendererImpl{
           }
         }
 
-        builder.addChildren(Collections.emptyList(), true);
+        builder.setMessage(DebuggerBundle.message("message.node.filtered", myExpression.getExpression()),
+                           AllIcons.General.Filter,
+                           SimpleTextAttributes.REGULAR_ATTRIBUTES,
+                           null);
+
+        // setMessage removes the loading message
+        //builder.addChildren(Collections.emptyList(), true);
 
         //if (added != 0 && END_INDEX < arrayLength - 1) {
         //  builder.setRemaining(arrayLength - 1 - END_INDEX);
