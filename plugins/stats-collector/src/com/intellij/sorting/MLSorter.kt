@@ -115,12 +115,6 @@ class MLSorter : CompletionFinalSorter() {
                 .map { it.first }
     }
 
-    private fun calcPrefixLength(lookup: LookupImpl): Int {
-        val lookupOriginalStart = lookup.lookupOriginalStart
-        val caretOffset = lookup.editor.caretModel.offset
-        return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart
-    }
-
     private fun getCachedRankInfo(element: LookupElement, prefixLength: Int, position: Int): ItemRankInfo? {
         val cached = cachedScore[element]
         if (cached != null && prefixLength == cached.prefixLength && cached.positionBefore == position) {
@@ -164,4 +158,11 @@ typealias WeightedElement = Pair<LookupElement, Double>
 private fun CompletionParameters.language(): Language? {
     val offset = editor.caretModel.offset
     return  PsiUtilCore.getLanguageAtOffset(originalFile, offset)
+}
+
+
+fun calcPrefixLength(lookup: LookupImpl): Int {
+    val lookupOriginalStart = lookup.lookupOriginalStart
+    val caretOffset = lookup.editor.caretModel.offset
+    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
 }
