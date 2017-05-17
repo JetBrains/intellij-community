@@ -72,12 +72,9 @@ public class ArrayBackedFMap implements KeyFMap {
           int i2 = 3 - (i+2)/2;
           Key<Object> key1 = Key.getKeyByIndex(keys[i1]);
           Key<Object> key2 = Key.getKeyByIndex(keys[i2]);
-          if (key1 == null) {
-            throw new IllegalStateException("Key not found: #" + keys[i1]);
-          }
-          if (key2 == null) {
-            throw new IllegalStateException("Key not found: #" + keys[i2]);
-          }
+          if (key1 == null && key2 == null) return EMPTY_MAP;
+          if (key1 == null) return new OneElementFMap(key2, values[i2]);
+          if (key2 == null) return new OneElementFMap(key1, values[i1]);
           return new PairElementsFMap(key1, values[i1], key2, values[i2]);
         }
         int[] newKeys = ArrayUtil.remove(keys, i);
@@ -139,11 +136,7 @@ public class ArrayBackedFMap implements KeyFMap {
     Key[] result = new Key[indexes.length];
 
     for (int i = 0; i < indexes.length; i++) {
-      Key key = Key.getKeyByIndex(indexes[i]);
-      if (key == null) {
-        throw new IllegalStateException("Key not found: #" + indexes[i]);
-      }
-      result[i] = key;
+      result[i] = Key.getKeyByIndex(indexes[i]);
     }
 
     return result;

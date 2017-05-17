@@ -28,11 +28,6 @@ import org.jetbrains.annotations.Nullable;
  *   it's the sum of hash codes of its entries, which in turn is calculated as {@code key.hashCode() ^ value.hashCode()}
  * </p>
  *
- * <p>
- *   Note that keys are not always strongly referenced, but if key is used in the map, it must exist
- *   during the map lifecycle. A good practice is to use keys declared in static final fields.
- * </p>
- *
  * @author peter
  */
 public interface KeyFMap {
