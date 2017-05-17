@@ -546,13 +546,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     """
     num_rows = df.shape[0]
     num_cols = df.shape[1]
-    if (num_rows, num_cols) != df.shape:
-        df = df.iloc[0:num_rows, 0: num_cols]
-        slice = '.iloc[0:%s, 0:%s]' % (num_rows, num_cols)
-    else:
-        slice = ''
-    slice = name + slice
-    xml = slice_to_xml(slice, num_rows, num_cols, "", "", (0, 0))
+    xml = slice_to_xml(name, num_rows, num_cols, "", "", (0, 0))
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols
