@@ -535,48 +535,41 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   private void showInRightPanel(@Nullable final RefEntity refEntity) {
-    Cursor currentCursor = getCursor();
-    try {
-      setCursor(new Cursor(Cursor.WAIT_CURSOR));
-      final JPanel editorPanel = new JPanel();
-      editorPanel.setLayout(new BorderLayout());
-      final int problemCount = myTree.getSelectedProblemCount(true);
-      JComponent previewPanel = null;
-      final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
-      if (tool != null && refEntity != null && refEntity.isValid()) {
-        final TreePath path = myTree.getSelectionPath();
-        if (path == null || !(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
-          final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
-          previewPanel = presentation.getCustomPreviewPanel(refEntity);
-        }
+    final JPanel editorPanel = new JPanel();
+    editorPanel.setLayout(new BorderLayout());
+    final int problemCount = myTree.getSelectedProblemCount(true);
+    JComponent previewPanel = null;
+    final InspectionToolWrapper tool = myTree.getSelectedToolWrapper(true);
+    if (tool != null && refEntity != null && refEntity.isValid()) {
+      final TreePath path = myTree.getSelectionPath();
+      if (path == null || !(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
+        final InspectionToolPresentation presentation = myGlobalInspectionContext.getPresentation(tool);
+        previewPanel = presentation.getCustomPreviewPanel(refEntity);
       }
-      EditorEx previewEditor = null;
-      if (previewPanel == null) {
-        final Pair<JComponent, EditorEx> panelAndEditor = createBaseRightComponentFor(problemCount, refEntity);
-        previewPanel = panelAndEditor.getFirst();
-        previewEditor = panelAndEditor.getSecond();
-      }
-      editorPanel.add(previewPanel, BorderLayout.CENTER);
-      if (problemCount > 0) {
-        final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(this);
-        if (fixToolbar != null) {
-          if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
-            myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)fixToolbar;
-          }
-          if (previewEditor != null) {
-            previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-          }
-          editorPanel.add(fixToolbar, BorderLayout.NORTH);
-        }
-      }
-      if (previewEditor != null) {
-        new ProblemPreviewEditorPresentation(previewEditor, this);
-      }
-      mySplitter.setSecondComponent(editorPanel);
     }
-    finally {
-      setCursor(currentCursor);
+    EditorEx previewEditor = null;
+    if (previewPanel == null) {
+      final Pair<JComponent, EditorEx> panelAndEditor = createBaseRightComponentFor(problemCount, refEntity);
+      previewPanel = panelAndEditor.getFirst();
+      previewEditor = panelAndEditor.getSecond();
     }
+    editorPanel.add(previewPanel, BorderLayout.CENTER);
+    if (problemCount > 0) {
+      final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(this);
+      if (fixToolbar != null) {
+        if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
+          myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)fixToolbar;
+        }
+        if (previewEditor != null) {
+          previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+        }
+        editorPanel.add(fixToolbar, BorderLayout.NORTH);
+      }
+    }
+    if (previewEditor != null) {
+      new ProblemPreviewEditorPresentation(previewEditor, this);
+    }
+    mySplitter.setSecondComponent(editorPanel);
   }
 
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
