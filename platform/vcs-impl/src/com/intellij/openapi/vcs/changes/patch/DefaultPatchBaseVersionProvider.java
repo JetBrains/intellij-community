@@ -89,26 +89,23 @@ public class DefaultPatchBaseVersionProvider {
         revision = myVcs.parseRevisionNumber(matcher.group(1), filePath);
         final VcsRevisionNumber finalRevision = revision;
         try {
-          final boolean loadedExactRevision = finalRevision != null &&
-                                              computeInBackgroundTask(myProject,
-                                                                      message("progress.text2.loading.revision", finalRevision.asString()),
-                                                                      true, () -> {
-                                                  if (historyProvider instanceof VcsBaseRevisionAdviser) {
-                                                    return ((VcsBaseRevisionAdviser)historyProvider)
-                                                      .getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
-                                                  }
-                                                  else {
-                                                    // use diff provider
-                                                    final DiffProvider diffProvider = myVcs.getDiffProvider();
-                                                    if (diffProvider != null && filePath.getVirtualFile() != null) {
-                                                      final ContentRevision fileContent =
-                                                        diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
-                                                      return fileContent != null && !processor.process(fileContent.getContent());
-                                                    }
-                                                    return false;
-                                                  }
-                                                });
-          if (loadedExactRevision) return;
+          if (finalRevision != null) {
+            final boolean loadedExactRevision =
+              computeInBackgroundTask(myProject, message("progress.text2.loading.revision", finalRevision.asString()), true, () -> {
+                if (historyProvider instanceof VcsBaseRevisionAdviser) {
+                  VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
+                  return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
+                }
+                else {
+                  DiffProvider diffProvider = myVcs.getDiffProvider();
+                  if (diffProvider == null || filePath.getVirtualFile() == null) return false;
+
+                  ContentRevision fileContent = diffProvider.createFileContent(finalRevision, filePath.getVirtualFile());
+                  return fileContent != null && !processor.process(fileContent.getContent());
+                }
+              });
+            if (loadedExactRevision) return;
+          }
         }
         catch (ProcessCanceledException pce) {
           return;
