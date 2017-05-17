@@ -29,22 +29,31 @@ import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
-import java.util.LinkedHashMap;
+import javax.swing.JRadioButton;
+import java.awt.GridLayout;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.openapi.application.ApplicationBundle.message;
+import static javax.swing.SwingConstants.LEFT;
 
 /**
  * @author Sergey.Malenkov
  */
 final class BreadcrumbsConfigurable implements Configurable {
-  private final LinkedHashMap<String, JCheckBox> map = new LinkedHashMap<>();
+  private final TreeMap<String, JCheckBox> map = new TreeMap<>();
   private JComponent component;
-  private JCheckBox box;
+  private JCheckBox show;
+  private JRadioButton above;
+  private JRadioButton below;
+  private JLabel placement;
+  private JLabel languages;
 
   @Override
   public String getDisplayName() {
@@ -54,31 +63,51 @@ final class BreadcrumbsConfigurable implements Configurable {
   @Override
   public JComponent createComponent() {
     if (component == null) {
-      box = new JCheckBox(message("checkbox.show.breadcrumbs"));
-      box.addItemListener(event -> updateEnabled());
-
-      JPanel upper = new JPanel(new HorizontalLayout(JBUI.scale(20)));
-      upper.add(box);
-      upper.add(LinkLabel.create(message("configure.breadcrumbs.colors"), () -> {
-        DataContext context = DataManager.getInstance().getDataContext(component);
-        selectOrEditColor(context, "Breadcrumbs//Current", GeneralColorsPage.class);
-      }));
-
-      JPanel boxes = new JPanel(new VerticalLayout(0));
-      boxes.setBorder(JBUI.Borders.emptyLeft(20));
       for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensions()) {
         for (Language language : provider.getLanguages()) {
           String id = language.getID();
           if (!map.containsKey(id)) {
-            JCheckBox box = new JCheckBox(language.getDisplayName());
-            boxes.add(box);
-            map.put(id, box);
+            map.put(id, new JCheckBox(language.getDisplayName()));
           }
         }
       }
-      component = new JPanel(new VerticalLayout(0));
-      component.add(upper);
-      component.add(boxes);
+      JPanel boxes = new JPanel(new GridLayout(0, 3, JBUI.scale(20), 0));
+      for (JCheckBox box : map.values()) boxes.add(box);
+
+      show = new JCheckBox(message("checkbox.show.breadcrumbs"));
+      show.addItemListener(event -> updateEnabled());
+
+      above = new JRadioButton(message("radio.show.breadcrumbs.above"));
+      below = new JRadioButton(message("radio.show.breadcrumbs.below"));
+
+      ButtonGroup group = new ButtonGroup();
+      group.add(above);
+      group.add(below);
+
+      placement = new JLabel(message("label.breadcrumbs.placement"));
+      placement.setBorder(JBUI.Borders.emptyRight(10));
+
+      JPanel placementPanel = new JPanel(new HorizontalLayout(0));
+      placementPanel.setBorder(JBUI.Borders.emptyLeft(20));
+      placementPanel.add(placement);
+      placementPanel.add(above);
+      placementPanel.add(below);
+
+      languages = new JLabel(message("label.breadcrumbs.languages"));
+
+      JPanel languagesPanel = new JPanel(new VerticalLayout(JBUI.scale(5)));
+      languagesPanel.setBorder(JBUI.Borders.emptyLeft(20));
+      languagesPanel.add(languages);
+      languagesPanel.add(boxes);
+
+      component = new JPanel(new VerticalLayout(JBUI.scale(20), LEFT));
+      component.add(show);
+      component.add(placementPanel);
+      component.add(languagesPanel);
+      component.add(LinkLabel.create(message("configure.breadcrumbs.colors"), () -> {
+        DataContext context = DataManager.getInstance().getDataContext(component);
+        selectOrEditColor(context, "Breadcrumbs//Current", GeneralColorsPage.class);
+      }));
     }
     return component;
   }
@@ -86,7 +115,8 @@ final class BreadcrumbsConfigurable implements Configurable {
   @Override
   public void reset() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (box != null) box.setSelected(settings.isBreadcrumbsShown());
+    setBreadcrumbsAbove(settings.isBreadcrumbsAbove());
+    setBreadcrumbsShown(settings.isBreadcrumbsShown());
     for (Entry<String, JCheckBox> entry : map.entrySet()) {
       entry.getValue().setSelected(settings.isBreadcrumbsShownFor(entry.getKey()));
     }
@@ -96,7 +126,8 @@ final class BreadcrumbsConfigurable implements Configurable {
   @Override
   public boolean isModified() {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (box != null && box.isSelected() != settings.isBreadcrumbsShown()) return true;
+    if (isBreadcrumbsAbove() != settings.isBreadcrumbsAbove()) return true;
+    if (isBreadcrumbsShown() != settings.isBreadcrumbsShown()) return true;
     for (Entry<String, JCheckBox> entry : map.entrySet()) {
       if (settings.isBreadcrumbsShownFor(entry.getKey()) != entry.getValue().isSelected()) return true;
     }
@@ -107,14 +138,37 @@ final class BreadcrumbsConfigurable implements Configurable {
   public void apply() throws ConfigurationException {
     boolean modified = false;
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (box != null && settings.setBreadcrumbsShown(box.isSelected())) modified = true;
+    if (settings.setBreadcrumbsAbove(isBreadcrumbsAbove())) modified = true;
+    if (settings.setBreadcrumbsShown(isBreadcrumbsShown())) modified = true;
     for (Entry<String, JCheckBox> entry : map.entrySet()) {
       if (settings.setBreadcrumbsShownFor(entry.getKey(), entry.getValue().isSelected())) modified = true;
     }
     if (modified) UISettings.getInstance().fireUISettingsChanged();
   }
 
+  private boolean isBreadcrumbsAbove() {
+    return above != null && above.isSelected();
+  }
+
+  private void setBreadcrumbsAbove(boolean value) {
+    JRadioButton button = value ? above : below;
+    if (button != null) button.setSelected(true);
+  }
+
+  private boolean isBreadcrumbsShown() {
+    return show != null && show.isSelected();
+  }
+
+  private void setBreadcrumbsShown(boolean value) {
+    if (show != null) show.setSelected(value);
+  }
+
   private void updateEnabled() {
-    for (JCheckBox box : map.values()) box.setEnabled(this.box.isSelected());
+    boolean enabled = isBreadcrumbsShown();
+    if (above != null) above.setEnabled(enabled);
+    if (below != null) below.setEnabled(enabled);
+    if (placement != null) placement.setEnabled(enabled);
+    if (languages != null) languages.setEnabled(enabled);
+    for (JCheckBox box : map.values()) box.setEnabled(enabled);
   }
 }

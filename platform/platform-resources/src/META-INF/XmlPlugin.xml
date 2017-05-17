@@ -170,7 +170,9 @@
 
     <editorAppearanceConfigurable instance="com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingConfigurable"/>
 
-    <editorAppearanceConfigurable instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
+    <applicationConfigurable parentId="preferences.editor" id="editor.breadcrumbs"
+                             key="configurable.breadcrumbs" bundle="messages.ApplicationBundle"
+                             instance="com.intellij.xml.breadcrumbs.BreadcrumbsConfigurable"/>
 
     <autoImportOptionsProvider instance="com.intellij.application.options.XmlAutoImportOptionsProvider"/>
 
