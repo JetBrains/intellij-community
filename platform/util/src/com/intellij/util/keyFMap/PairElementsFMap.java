@@ -18,7 +18,7 @@ package com.intellij.util.keyFMap;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 
-public final class PairElementsFMap implements KeyFMap {
+final class PairElementsFMap implements KeyFMap {
   // invariant: key1.hashCode() < key2.hashCode()
   private final @NotNull Key key1;
   private final @NotNull Key key2;
@@ -44,8 +44,12 @@ public final class PairElementsFMap implements KeyFMap {
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    if (key == key1) return new PairElementsFMap(key, value, key2, value2);
-    if (key == key2) return new PairElementsFMap(key, value, key1, value1);
+    if (key == key1) {
+      return value == value1 ? this : new PairElementsFMap(key, value, key2, value2);
+    }
+    if (key == key2) {
+      return value == value2 ? this : new PairElementsFMap(key, value, key1, value1);
+    }
     if(key.hashCode() < key1.hashCode()) {
       return new ArrayBackedFMap(new int[]{key.hashCode(), key1.hashCode(), key2.hashCode()}, new Object[]{value, value1, value2});
     } else if(key.hashCode() < key2.hashCode()) {
@@ -57,8 +61,8 @@ public final class PairElementsFMap implements KeyFMap {
   @NotNull
   @Override
   public KeyFMap minus(@NotNull Key<?> key) {
-    if (key == key1) return new OneElementFMap<Object>(key2, value2);
-    if (key == key2) return new OneElementFMap<Object>(key1, value1);
+    if (key == key1) return new OneElementFMap(key2, value2);
+    if (key == key2) return new OneElementFMap(key1, value1);
     return this;
   }
 
@@ -66,6 +70,11 @@ public final class PairElementsFMap implements KeyFMap {
   public <V> V get(@NotNull Key<V> key) {
     //noinspection unchecked
     return key == key1 ? (V)value1 : key == key2 ? (V)value2 : null;
+  }
+
+  @Override
+  public int size() {
+    return 2;
   }
 
   @NotNull
@@ -76,7 +85,7 @@ public final class PairElementsFMap implements KeyFMap {
 
   @Override
   public String toString() {
-    return "Pair: (" + key1 + " -> " + value1 + "; " + key2 + " -> " + value2 + ")";
+    return "{" + key1 + "=" + value1 + ", " + key2 + "=" + value2 + "}";
   }
 
   @Override
@@ -84,24 +93,11 @@ public final class PairElementsFMap implements KeyFMap {
     return false;
   }
 
-  @NotNull
-  public Key getKey1() {
-    return key1;
-  }
-
-  @NotNull
-  public Key getKey2() {
-    return key2;
-  }
-
-  @NotNull
-  public Object getValue1() {
-    return value1;
-  }
-
-  @NotNull
-  public Object getValue2() {
-    return value2;
+  @Override
+  public int identityHashCode() {
+    int hash = key1.hashCode() * 31 + System.identityHashCode(value1);
+    hash = (hash * 31 + key2.hashCode()) * 31 + System.identityHashCode(value2);
+    return hash;
   }
 
   @Override
@@ -117,5 +113,15 @@ public final class PairElementsFMap implements KeyFMap {
     PairElementsFMap map = (PairElementsFMap)o;
 
     return key1 == map.key1 && value1.equals(map.value1) && key2 == map.key2 && value2.equals(map.value2);
+  }
+
+  @Override
+  public boolean equalsByReference(KeyFMap o) {
+    if (this == o) return true;
+    if (!(o instanceof PairElementsFMap)) return false;
+
+    PairElementsFMap map = (PairElementsFMap)o;
+
+    return key1 == map.key1 && value1 == map.value1 && key2 == map.key2 && value2 == map.value2;
   }
 }

@@ -93,6 +93,24 @@ public class KeyFMapTest extends TestCase {
     }
   }
 
+  public void testIdentityHashCode() {
+    KeyFMap map = KeyFMap.EMPTY_MAP;
+    for(int i=0; i<15; i++) {
+      String val1 = "Value#"+i;
+      String val2 = "Value#"+i;
+      KeyFMap map1 = map.plus(KEYS.get(i), val1);
+      KeyFMap map2 = map.plus(KEYS.get(i), val2);
+      assertEquals(map1.hashCode(), map2.hashCode());
+      assertEquals(map1, map2);
+      assertFalse(map1.identityHashCode() == map2.identityHashCode());
+      assertFalse(map1.equalsByReference(map2));
+      map2 = map.plus(KEYS.get(i), val1);
+      assertTrue(map1.identityHashCode() == map2.identityHashCode());
+      assertTrue(map1.equalsByReference(map2));
+      map = map1;
+    }
+  }
+
   public void testGetKeysOnEmptyFMap() {
     doTestGetKeys(0);
   }

@@ -27,7 +27,7 @@ class EmptyFMap implements KeyFMap {
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    return new OneElementFMap<V>(key, value);
+    return new OneElementFMap(key, value);
   }
 
   @NotNull
@@ -41,6 +41,11 @@ class EmptyFMap implements KeyFMap {
     return null;
   }
 
+  @Override
+  public int size() {
+    return 0;
+  }
+
   @NotNull
   @Override
   public Key[] getKeys() {
@@ -49,12 +54,22 @@ class EmptyFMap implements KeyFMap {
 
   @Override
   public String toString() {
-    return "<empty>";
+    return "{}";
   }
 
   @Override
   public boolean isEmpty() {
     return true;
+  }
+
+  @Override
+  public int identityHashCode() {
+    return 0;
+  }
+
+  @Override
+  public boolean equalsByReference(KeyFMap other) {
+    return other == this;
   }
 
   @Override

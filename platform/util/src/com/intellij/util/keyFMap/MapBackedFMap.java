@@ -99,6 +99,32 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   }
 
   @Override
+  public int identityHashCode() {
+    final int[] hash = {0};
+    forEachEntry(new TIntObjectProcedure<Object>() {
+      @Override
+      public boolean execute(int key, Object value) {
+        hash[0] = (hash[0] * 31 + key) * 31 + System.identityHashCode(value);
+        return true;
+      }
+    });
+    return hash[0];
+  }
+
+  @Override
+  public boolean equalsByReference(KeyFMap other) {
+    if(other == this) return true;
+    if (!(other instanceof MapBackedFMap) || other.size() != size()) return false;
+    final MapBackedFMap map = (MapBackedFMap)other;
+    return forEachEntry(new TIntObjectProcedure<Object>() {
+      @Override
+      public boolean execute(int key, Object value) {
+        return map.get(key) == value;
+      }
+    });
+  }
+
+  @Override
   public String toString() {
     final StringBuilder s = new StringBuilder();
     forEachEntry(new TIntObjectProcedure<Object>() {

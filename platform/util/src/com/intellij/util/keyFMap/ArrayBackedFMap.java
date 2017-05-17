@@ -39,6 +39,9 @@ public class ArrayBackedFMap implements KeyFMap {
     int keyCode = key.hashCode();
     int keyPos = Arrays.binarySearch(keys, keyCode);
     if (keyPos >= 0) {
+      if (values[keyPos] == value) {
+        return this;
+      }
       Object[] newValues = values.clone();
       newValues[keyPos] = value;
       // Can reuse keys as it is never mutated
@@ -52,7 +55,7 @@ public class ArrayBackedFMap implements KeyFMap {
     return new MapBackedFMap(keys, keyCode, values, value);
   }
 
-  private int size() {
+  public int size() {
     return keys.length;
   }
 
@@ -69,9 +72,12 @@ public class ArrayBackedFMap implements KeyFMap {
           int i2 = 3 - (i+2)/2;
           Key<Object> key1 = Key.getKeyByIndex(keys[i1]);
           Key<Object> key2 = Key.getKeyByIndex(keys[i2]);
-          if (key1 == null && key2 == null) return EMPTY_MAP;
-          if (key1 == null) return new OneElementFMap<Object>(key2, values[i2]);
-          if (key2 == null) return new OneElementFMap<Object>(key1, values[i1]);
+          if (key1 == null) {
+            throw new IllegalStateException("Key not found: #" + keys[i1]);
+          }
+          if (key2 == null) {
+            throw new IllegalStateException("Key not found: #" + keys[i2]);
+          }
           return new PairElementsFMap(key1, values[i1], key2, values[i2]);
         }
         int[] newKeys = ArrayUtil.remove(keys, i);
@@ -98,13 +104,13 @@ public class ArrayBackedFMap implements KeyFMap {
 
   @Override
   public String toString() {
-    StringBuilder s = new StringBuilder("(");
+    StringBuilder s = new StringBuilder("{");
     for (int i = 0; i < keys.length; i++) {
       int key = keys[i];
       Object value = values[i];
-      s.append((s.length() == 1) ? "" : ", ").append(Key.getKeyByIndex(key)).append(" -> ").append(value);
+      s.append((s.length() == 1) ? "" : ", ").append(Key.getKeyByIndex(key)).append("=").append(value);
     }
-    return s.append(")").toString();
+    return s.append("}").toString();
   }
 
   @Override
@@ -112,9 +118,14 @@ public class ArrayBackedFMap implements KeyFMap {
     return false;
   }
 
-  @NotNull
-  public int[] getKeyIds() {
-    return keys;
+  @Override
+  public int identityHashCode() {
+    int hash = 0;
+    for (int i = 0; i < keys.length; i++) {
+      hash = hash * 31 + keys[i];
+      hash = hash * 31 + System.identityHashCode(values[i]);
+    }
+    return hash;
   }
 
   @NotNull
@@ -124,16 +135,15 @@ public class ArrayBackedFMap implements KeyFMap {
   }
 
   @NotNull
-  public Object[] getValues() {
-    return values;
-  }
-
-  @NotNull
   static Key[] getKeysByIndices(int[] indexes) {
     Key[] result = new Key[indexes.length];
 
-    for (int i =0; i < indexes.length; i++) {
-      result[i] = Key.getKeyByIndex(indexes[i]);
+    for (int i = 0; i < indexes.length; i++) {
+      Key key = Key.getKeyByIndex(indexes[i]);
+      if (key == null) {
+        throw new IllegalStateException("Key not found: #" + indexes[i]);
+      }
+      result[i] = key;
     }
 
     return result;
@@ -161,6 +171,21 @@ public class ArrayBackedFMap implements KeyFMap {
     int length = keys.length;
     for (int i = 0; i < length; i++) {
       if (keys[i] != map.keys[i] || !values[i].equals(map.values[i])) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public boolean equalsByReference(KeyFMap o) {
+    if (this == o) return true;
+    if (!(o instanceof ArrayBackedFMap)) return false;
+
+    ArrayBackedFMap map = (ArrayBackedFMap)o;
+    if (map.size() != size()) return false;
+
+    int length = keys.length;
+    for (int i = 0; i < length; i++) {
+      if (keys[i] != map.keys[i] || values[i] != map.values[i]) return false;
     }
     return true;
   }
