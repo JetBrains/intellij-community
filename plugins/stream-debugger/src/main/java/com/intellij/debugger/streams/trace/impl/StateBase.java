@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class StateBase implements IntermediateState {
+abstract class StateBase implements IntermediateState {
   private final List<TraceElement> myElements;
 
   StateBase(@NotNull List<TraceElement> elements) {
