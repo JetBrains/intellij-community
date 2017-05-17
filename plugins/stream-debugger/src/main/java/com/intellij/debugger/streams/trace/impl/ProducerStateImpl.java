@@ -15,10 +15,9 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.trace.PrevAwareState;
+import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -28,36 +27,27 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class TerminationState extends StateBase implements PrevAwareState {
-  private final Value myResult;
-  private final StreamCall myPrevCall;
-  private final Map<TraceElement, List<TraceElement>> myToPrev;
+public class ProducerStateImpl extends StateBase implements NextAwareState {
+  @NotNull private final StreamCall myNextCall;
+  @NotNull private final Map<TraceElement, List<TraceElement>> myToNext;
 
-  public TerminationState(@NotNull Value result,
-                          @NotNull StreamCall prevCall,
-                          @NotNull List<TraceElement> elements,
-                          @NotNull Map<TraceElement, List<TraceElement>> toPrevMapping) {
+  public ProducerStateImpl(@NotNull List<TraceElement> elements,
+                           @NotNull StreamCall nextCall,
+                           @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
     super(elements);
-    myResult = result;
-    myPrevCall = prevCall;
-    myToPrev = toPrevMapping;
+    myNextCall = nextCall;
+    myToNext = toNextMapping;
   }
 
   @NotNull
   @Override
-  public List<Value> getRawValues() {
-    return Collections.singletonList(myResult);
+  public StreamCall getNextCall() {
+    return myNextCall;
   }
 
   @NotNull
   @Override
-  public StreamCall getPrevCall() {
-    return myPrevCall;
-  }
-
-  @NotNull
-  @Override
-  public List<TraceElement> getPrevValues(@NotNull TraceElement value) {
-    return myToPrev.getOrDefault(value, Collections.emptyList());
+  public List<TraceElement> getNextValues(@NotNull TraceElement value) {
+    return myToNext.getOrDefault(value, Collections.emptyList());
   }
 }
