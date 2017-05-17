@@ -422,4 +422,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       BEGIN + END,
       serializeWithFixedMeta(editorColorsScheme));
   }
+
+  public void testSettingsEqual() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.DEFAULT_SCHEME_NAME);
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)defaultScheme.clone();
+    editorColorsScheme.setName("Test");
+    editorColorsScheme.setColor(EditorColors.TEARLINE_COLOR, new Color(255, 0, 0));
+    assertFalse(editorColorsScheme.settingsEqual(defaultScheme));
+  }
 }
