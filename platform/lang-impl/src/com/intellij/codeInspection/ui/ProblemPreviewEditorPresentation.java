@@ -19,7 +19,6 @@ import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.util.DiffDrawUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -39,7 +38,6 @@ import java.util.stream.Collectors;
  * @author Dmitry Batkovich
  */
 public class ProblemPreviewEditorPresentation {
-  private final static Logger LOG = Logger.getInstance(ProblemPreviewEditorPresentation.class);
   private final static int VIEW_ADDITIONAL_OFFSET = 4;
 
   private final EditorEx myEditor;

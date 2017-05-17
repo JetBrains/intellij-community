@@ -352,7 +352,7 @@ public class InspectionTree extends Tree {
   }
 
   public void queueUpdate() {
-    ((InspectionRootNode) getRoot()).getUpdater().update(null, true);
+    ((InspectionRootNode) getRoot()).getUpdater().update(true);
   }
 
   public void restoreExpansionAndSelection(boolean treeNodesMightChange) {
