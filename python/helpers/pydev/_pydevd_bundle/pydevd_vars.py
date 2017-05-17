@@ -447,22 +447,19 @@ def array_to_xml(array, roffset, coffset, rows, cols, format):
             array = array[roffset:]
             rows = min(rows, len(array))
 
-    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>" % (rows, cols)
-    for row in range(rows):
-        def get_value(col):
-            value = array
-            if rows == 1 or cols == 1:
-                if rows == 1 and cols == 1:
-                    value = array[0]
-                else:
-                    value = array[(col if rows == 1 else row)]
-                    if "ndarray" in str(type(value)):
-                        value = value[0]
+    def get_value(row, col):
+        value = array
+        if rows == 1 or cols == 1:
+            if rows == 1 and cols == 1:
+                value = array[0]
             else:
-                value = array[row][col]
-            return value
-        xml += row_to_xml(row, (get_value(col) for col in range(cols)))
-
+                value = array[(col if rows == 1 else row)]
+                if "ndarray" in str(type(value)):
+                    value = value[0]
+        else:
+            value = array[row][col]
+        return value
+    xml += array_data_to_xml(rows, cols, lambda r: (get_value(r, c) for c in range(cols)))
     return xml
 
 
@@ -598,9 +595,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
                (str(row), get_label(label))
     xml += "</headerdata>\n"
-    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
-    for row in range(rows):
-        xml += row_to_xml(row, (col_formats[col] % df.iat[row, col] for col in range(cols)))
+    xml += array_data_to_xml(rows, cols, lambda r: (col_formats[c] % df.iat[row, c] for c in range(cols)))
     return xml
 
 
@@ -647,16 +642,16 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
                (str(row), 1)
     xml += "</headerdata>\n"
-    xml += "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
-    for row in range(rows):
-            xml += row_to_xml(row, (col_formats[col] % df.iat[row] for col in range(cols)))
+    xml += array_data_to_xml(rows, cols, lambda r: (col_formats[c] % df.iat[r] for c in range(cols)))
     return xml
 
 
-def row_to_xml(index, formatted_values):
-    xml = "<row index=\"%s\"/>\n" % to_string(index)
-    for value in formatted_values:
-        xml += var_to_xml(value, '')
+def array_data_to_xml(rows, cols, get_row):
+    xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
+    for row in range(rows):
+        xml += "<row index=\"%s\"/>\n" % to_string(row)
+        for value in get_row(row):
+            xml += var_to_xml(value, '')
     return xml
 
 
