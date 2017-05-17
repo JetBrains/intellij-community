@@ -463,7 +463,12 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void removeNotify() {
-    super.removeNotify();
+    try {
+      super.removeNotify();
+    }
+    catch (Exception e) {
+      GuiUtils.printDebugInfo(this);
+    }
 
     setFocused(false);
 
