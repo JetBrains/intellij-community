@@ -14,13 +14,13 @@ class ValidatorTest {
         separator = SessionsFilter()
     }
 
-    private fun getFile(path: String): java.io.File {
+    private fun file(path: String): File {
         return File(javaClass.classLoader.getResource(path).file)
     }
 
     @Test
     fun testDataWithDeserializationErrors() {
-        val file = getFile("data/validation_data")
+        val file = file("data/validation_data")
         val separator = TestSessionSeparator()
         separator.filter(file.readLines())
 
