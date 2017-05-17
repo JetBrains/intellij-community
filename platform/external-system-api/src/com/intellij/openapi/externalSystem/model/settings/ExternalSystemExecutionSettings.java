@@ -17,7 +17,7 @@ import java.util.*;
 public class ExternalSystemExecutionSettings implements Serializable, UserDataHolder {
 
   public static final String REMOTE_PROCESS_IDLE_TTL_IN_MS_KEY = "external.system.remote.process.idle.ttl.ms";
-  private static final int DEFAULT_REMOTE_PROCESS_TTL_MS = 60000;
+  private static final int DEFAULT_REMOTE_PROCESS_TTL_MS = -1;
 
   private static final long serialVersionUID = 1L;
 

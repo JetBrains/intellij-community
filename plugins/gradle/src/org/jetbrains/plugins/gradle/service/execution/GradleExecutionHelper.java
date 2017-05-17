@@ -357,12 +357,11 @@ public class GradleExecutionHelper {
       ttl = (int)settings.getRemoteProcessIdleTtlInMs();
     }
 
+    // do not spawn gradle daemons during test execution
+    final Application app = ApplicationManager.getApplication();
+    ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
+
     if (ttl > 0 && connector instanceof DefaultGradleConnector) {
-
-      // do not spawn gradle daemons during test execution
-      final Application app = ApplicationManager.getApplication();
-      ttl = (app != null && app.isUnitTestMode()) ? 10000 : ttl;
-
       ((DefaultGradleConnector)connector).daemonMaxIdleTime(ttl, TimeUnit.MILLISECONDS);
     }
     connector.forProjectDirectory(projectDir);
