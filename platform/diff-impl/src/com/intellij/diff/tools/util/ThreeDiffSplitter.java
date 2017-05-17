@@ -18,6 +18,8 @@ package com.intellij.diff.tools.util;
 import com.intellij.diff.tools.util.DiffSplitter.Painter;
 import com.intellij.diff.util.Side;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,7 +152,7 @@ public class ThreeDiffSplitter extends JPanel {
   }
 
   private static int getDividerWidth() {
-    return DiffSplitter.DIVIDER_WIDTH;
+    return JBUI.scale(Registry.intValue("diff.divider.width"));
   }
 
   private class Divider extends JPanel {

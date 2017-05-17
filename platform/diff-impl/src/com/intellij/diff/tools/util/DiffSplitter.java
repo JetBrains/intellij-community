@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -35,14 +36,13 @@ import java.util.List;
 
 
 public class DiffSplitter extends Splitter {
-  public static final int DIVIDER_WIDTH = JBUI.scale(20);
 
   @Nullable private Painter myPainter;
   @Nullable private AnAction myTopAction;
   @Nullable private AnAction myBottomAction;
 
   public DiffSplitter() {
-    setDividerWidth(DIVIDER_WIDTH);
+    setDividerWidth(JBUI.scale(Registry.intValue("diff.divider.width")));
   }
 
   @Override
