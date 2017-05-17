@@ -133,7 +133,7 @@ public class IDEATestNGRemoteListener {
       invocationCount = 0;
     }
     Integer normalizedIndex = normalizeInvocationCountInsideIncludedMethods(invocationCount, result);
-    final String paramString = getParamsString(parameters, normalizedIndex);
+    final String paramString = getParamsString(parameters, config, normalizedIndex);
     onTestStart(result, paramString, normalizedIndex, config);
     myInvocationCounts.put(qualifiedName, invocationCount + 1);
   }
@@ -265,10 +265,27 @@ public class IDEATestNGRemoteListener {
     return methodName;
   }
 
-  private static String getParamsString(Object[] parameters, int invocationCount) {
+  private static String getParamsString(Object[] parameters, boolean config, int invocationCount) {
     String paramString = "";
     if (parameters.length > 0) {
-      paramString = Arrays.deepToString(parameters);
+      if (config) {
+        Object parameter = parameters[0];
+        Class<?> parameterClass = parameter.getClass();
+        if (ITestResult.class.isAssignableFrom(parameterClass) || ITestContext.class.isAssignableFrom(parameterClass)) {
+          try {
+            paramString = "[" + parameterClass.getMethod("getName").invoke(parameter) + "]";
+          }
+          catch (Throwable e) {
+            paramString = "";
+          }
+        }
+        else {
+          paramString = parameter.toString();
+        }
+      }
+      else {
+        paramString = Arrays.deepToString(parameters);
+      }
     }
     if (invocationCount > 0) {
       paramString += " (" + invocationCount + ")";
