@@ -72,12 +72,12 @@ class EventStreamValidatorTest {
                          expectedOut: List<String>,
                          expectedErr: List<String>) {
         val input: List<String> = list.map { LogEventSerializer.toString(it) }
-        val separator = SessionsFilter()
+        val result = SimpleSessionValidationResult()
+        val separator = InputSessionValidator(result)
         separator.filter(input)
 
-        assertThat(separator.errorLines).isEqualTo(expectedErr)
-        assertThat(separator.outputLines).isEqualTo(expectedOut)
+        assertThat(result.errorLines).isEqualTo(expectedErr)
+        assertThat(result.validLines).isEqualTo(expectedOut)
     }
 
 }
-

@@ -7,11 +7,24 @@ import java.io.File
 
 class ValidatorTest {
 
-    lateinit var separator: SessionsFilter
+    lateinit var separator: InputSessionValidator
+    val sessionStatuses = hashMapOf<String, Boolean>()
 
     @Before
     fun setup() {
-        separator = SessionsFilter()
+        sessionStatuses.clear()
+        val result = object : SessionValidationResult {
+            override fun addErrorSession(errorSession: List<EventLine>) {
+                val sessionUid = errorSession.first().sessionUid ?: return
+                sessionStatuses[sessionUid] = false
+            }
+
+            override fun addValidSession(validSession: List<EventLine>) {
+                val sessionUid = validSession.first().sessionUid ?: return
+                sessionStatuses[sessionUid] = true
+            }
+        }
+        separator = InputSessionValidator(result)
     }
 
     private fun file(path: String): File {
@@ -21,25 +34,11 @@ class ValidatorTest {
     @Test
     fun testDataWithDeserializationErrors() {
         val file = file("data/validation_data")
-        val separator = TestSessionSeparator()
         separator.filter(file.readLines())
 
-        val statuses = separator.sessionsStatus
-        assertThat(statuses["520198a29326"]).isFalse()
-        assertThat(statuses["620198a29326"]).isTrue()
-        assertThat(statuses["720198a29326"]).isFalse()
-    }
-
-}
-
-
-class TestSessionSeparator : SessionsFilter() {
-
-    val sessionsStatus = mutableMapOf<String, Boolean>()
-
-    override fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
-        val sessionUid = session.first().event!!.sessionUid
-        sessionsStatus[sessionUid] = isValidSession
+        assertThat(sessionStatuses["520198a29326"]).isFalse()
+        assertThat(sessionStatuses["620198a29326"]).isTrue()
+        assertThat(sessionStatuses["720198a29326"]).isFalse()
     }
 
 }

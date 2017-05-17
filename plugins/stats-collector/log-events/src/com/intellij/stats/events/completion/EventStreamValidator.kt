@@ -15,6 +15,7 @@
  */
 package com.intellij.stats.events.completion
 
+
 data class EventLine(val event: LogEvent?,
                      val unknownLogEventFields: Set<String>,
                      val absentLogEventFields: Set<String>,
@@ -29,21 +30,37 @@ data class EventLine(val event: LogEvent?,
         get() = event != null && unknownLogEventFields.isEmpty() && absentLogEventFields.isEmpty()
 }
 
-open class SessionsFilter {
 
-    private val output = mutableListOf<String>()
+interface SessionValidationResult {
+    fun addErrorSession(errorSession: List<EventLine>)
+    fun addValidSession(validSession: List<EventLine>)
+}
+
+
+open class SimpleSessionValidationResult: SessionValidationResult {
     private val error = mutableListOf<String>()
-
-    val outputLines: List<String>
-        get() = output
+    private val valid = mutableListOf<String>()
 
     val errorLines: List<String>
         get() = error
 
+    val validLines: List<String>
+        get() = valid
+
+    override fun addErrorSession(errorSession: List<EventLine>) {
+        error.addAll(errorSession.map { it.originalLine })
+    }
+
+    override fun addValidSession(validSession: List<EventLine>) {
+        valid.addAll(validSession.map { it.originalLine })
+    }
+}
+
+
+class InputSessionValidator(private val sessionValidationResult: SessionValidationResult) {
 
     fun filter(input: Iterable<String>) {
-        var currentSession: String? = null
-
+        var currentSessionUid: String? = null
         val session = mutableListOf<EventLine>()
 
         for (line in input) {
@@ -52,13 +69,13 @@ open class SessionsFilter {
             val event = LogEventSerializer.fromString(line)
             val eventLine = EventLine(event, line)
 
-            if (eventLine.sessionUid == currentSession) {
+            if (eventLine.sessionUid == currentSessionUid) {
                 session.add(eventLine)
             }
             else {
                 processCompletionSession(session)
                 session.clear()
-                currentSession = eventLine.sessionUid
+                currentSessionUid = eventLine.sessionUid
                 session.add(eventLine)
             }
         }
@@ -85,10 +102,12 @@ open class SessionsFilter {
         dumpSession(session, isValidSession)
     }
 
-    open protected fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
-        val writer = if (isValidSession) output else error
-        session.forEach {
-            writer.add(it.originalLine)
+    private fun dumpSession(session: List<EventLine>, isValidSession: Boolean) {
+        if (isValidSession) {
+            sessionValidationResult.addValidSession(session)
+        }
+        else {
+            sessionValidationResult.addErrorSession(session)
         }
     }
 
