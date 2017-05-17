@@ -72,10 +72,8 @@ public class PatchDiffRequestFactory {
     if (file == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
     if (file.getFileType().isBinary()) throw new DiffRequestProducerException("Can't show diff for binary file '" + name + "'");
 
-    if (texts.getLocal() == null) throw new DiffRequestProducerException("Can't show diff for '" + file.getPresentableUrl() + "'");
-
     if (texts.getBase() == null) {
-      String localContent = texts.getLocal().toString();
+      String localContent = texts.getLocal();
 
       final GenericPatchApplier applier = new GenericPatchApplier(localContent, patch.getHunks());
       applier.execute();
@@ -84,8 +82,8 @@ public class PatchDiffRequestFactory {
       return createBadDiffRequest(project, file, localContent, appliedTextPatch, null, null, "Current Version", null);
     }
     else {
-      String localContent = texts.getLocal().toString();
-      String baseContent = texts.getBase().toString();
+      String localContent = texts.getLocal();
+      String baseContent = texts.getBase();
       String patchedContent = texts.getPatched();
 
       return createDiffRequest(project, file, ContainerUtil.list(localContent, baseContent, patchedContent), null,

@@ -182,11 +182,9 @@ public class ApplyPatchAction extends DumbAwareAction {
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return ApplyPatchStatus.FAILURE;
 
-    String baseContent = toString(mergeData.getBase());
-    String localContent = toString(mergeData.getLocal());
+    String baseContent = convertLineSeparators(mergeData.getBase());
+    String localContent = convertLineSeparators(mergeData.getLocal());
     String patchedContent = mergeData.getPatched();
-
-    if (localContent == null) return ApplyPatchStatus.FAILURE;
 
     final Ref<ApplyPatchStatus> applyPatchStatusReference = new Ref<>();
     Consumer<MergeResult> callback = result13 -> {
@@ -268,7 +266,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static String toString(@Nullable CharSequence charSequence) {
-    return charSequence != null ? StringUtil.convertLineSeparators(charSequence.toString()) : null;
+  private static String convertLineSeparators(@Nullable String charSequence) {
+    return charSequence != null ? StringUtil.convertLineSeparators(charSequence) : null;
   }
 }

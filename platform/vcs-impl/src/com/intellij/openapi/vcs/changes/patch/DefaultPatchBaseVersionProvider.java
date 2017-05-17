@@ -74,7 +74,7 @@ public class DefaultPatchBaseVersionProvider {
 
   @CalledInAny
   public void getBaseVersionContent(final FilePath filePath,
-                                    final Processor<CharSequence> processor,
+                                    final Processor<String> processor,
                                     final List<String> warnings) throws VcsException {
     if (myVcs == null) {
       return;
@@ -159,7 +159,8 @@ public class DefaultPatchBaseVersionProvider {
       if (found) {
         try {
           fileRevision.loadContent();
-          processor.process(LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false, false));
+          CharSequence content = LoadTextUtil.getTextByBinaryPresentation(fileRevision.getContent(), myFile, false, false);
+          processor.process(content.toString());
           // TODO: try to download more than one version
           break;
         }

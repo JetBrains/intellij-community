@@ -41,8 +41,8 @@ public class ApplyPatchForBaseRevisionTexts {
 
   private static final Logger LOG = Logger.getInstance(ApplyPatchForBaseRevisionTexts.class);
 
-  private final CharSequence myLocal;
-  private CharSequence myBase;
+  @NotNull private final String myLocal;
+  @Nullable private String myBase;
   private String myPatched;
   private boolean myIsAppliedSomehow;
   private final List<String> myWarnings;
@@ -52,7 +52,7 @@ public class ApplyPatchForBaseRevisionTexts {
   @CalledInAny
   public static ApplyPatchForBaseRevisionTexts create(final Project project, @NotNull final VirtualFile file, final FilePath pathBeforeRename,
                                                        final TextFilePatch patch, @Nullable final CharSequence baseContents) {
-    assert ! patch.isNewFile();
+    assert !patch.isNewFile();
     final String beforeVersionId = patch.getBeforeVersionId();
     DefaultPatchBaseVersionProvider provider = null;
     if (beforeVersionId != null) {
@@ -119,21 +119,23 @@ public class ApplyPatchForBaseRevisionTexts {
   }
 
   @NotNull
-  private static CharSequence getLocalFileContent(@NotNull VirtualFile file) {
+  private static String getLocalFileContent(@NotNull VirtualFile file) {
     return ReadAction.compute(() -> {
       Document document = FileDocumentManager.getInstance().getDocument(file);
       if (document != null) {
         return document.getText();
       }
-      return LoadTextUtil.loadText(file);
+      return LoadTextUtil.loadText(file).toString();
     });
   }
 
-  public CharSequence getLocal() {
+  @NotNull
+  public String getLocal() {
     return myLocal;
   }
 
-  public CharSequence getBase() {
+  @Nullable
+  public String getBase() {
     return myBase;
   }
 
