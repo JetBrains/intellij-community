@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -32,90 +33,120 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class ApplyPatchForBaseRevisionTexts {
-
   private static final Logger LOG = Logger.getInstance(ApplyPatchForBaseRevisionTexts.class);
 
   @NotNull private final String myLocal;
-  @Nullable private String myBase;
-  private String myPatched;
-  private boolean myIsAppliedSomehow;
-  private final List<String> myWarnings;
-  private boolean myBaseRevisionLoaded;
+  @Nullable private final String myBase;
+  @NotNull private final String myPatched;
+  private final boolean myIsAppliedSomehow;
+
+  public ApplyPatchForBaseRevisionTexts(@NotNull String patched, @NotNull String local, @Nullable String base, boolean isAppliedSomehow) {
+    myLocal = local;
+    myBase = base;
+    myPatched = patched;
+    myIsAppliedSomehow = isAppliedSomehow;
+  }
 
   @NotNull
   @CalledInAny
-  public static ApplyPatchForBaseRevisionTexts create(final Project project, @NotNull final VirtualFile file, final FilePath pathBeforeRename,
-                                                       final TextFilePatch patch, @Nullable final CharSequence baseContents) {
+  public static ApplyPatchForBaseRevisionTexts create(@NotNull Project project,
+                                                      @NotNull VirtualFile file,
+                                                      @NotNull FilePath pathBeforeRename,
+                                                      @NotNull TextFilePatch patch,
+                                                      @Nullable CharSequence baseContents) {
     assert !patch.isNewFile();
-    final String beforeVersionId = patch.getBeforeVersionId();
-    DefaultPatchBaseVersionProvider provider = null;
-    if (beforeVersionId != null) {
-      provider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
+
+    String localContent = getLocalFileContent(file);
+
+    if (baseContents != null) {
+      ApplyPatchForBaseRevisionTexts result = createFromStoredBase(localContent, patch, baseContents);
+      if (result != null) return result;
     }
-    if (provider != null && provider.canProvideContent()) {
-      return new ApplyPatchForBaseRevisionTexts(provider, pathBeforeRename, patch, file, baseContents);
-    } else {
-      return new ApplyPatchForBaseRevisionTexts(null, pathBeforeRename, patch, file, baseContents);
+
+    String beforeVersionId = patch.getBeforeVersionId();
+    if (beforeVersionId != null) {
+      ApplyPatchForBaseRevisionTexts result =
+        createFromBaseVersionProvider(project, localContent, patch, beforeVersionId, file, pathBeforeRename);
+      if (result != null) return result;
+    }
+
+    return createFromLocal(localContent, patch);
+  }
+
+  @NotNull
+  private static ApplyPatchForBaseRevisionTexts createFromLocal(@NotNull String localContent, @NotNull TextFilePatch patch) {
+    final GenericPatchApplier applier = new GenericPatchApplier(localContent, patch.getHunks());
+    boolean exactlyApplied = applier.execute();
+    if (!exactlyApplied) {
+      applier.trySolveSomehow();
+    }
+    String patched = StringUtil.convertLineSeparators(applier.getAfter());
+
+    return new ApplyPatchForBaseRevisionTexts(patched, localContent, null, !exactlyApplied);
+  }
+
+  @Nullable
+  private static ApplyPatchForBaseRevisionTexts createFromBaseVersionProvider(@NotNull Project project,
+                                                                              @NotNull String localContent,
+                                                                              @NotNull TextFilePatch patch,
+                                                                              @NotNull String beforeVersionId,
+                                                                              @NotNull VirtualFile file,
+                                                                              @NotNull FilePath pathBeforeRename) {
+    DefaultPatchBaseVersionProvider baseVersionProvider = new DefaultPatchBaseVersionProvider(project, file, beforeVersionId);
+    if (!baseVersionProvider.canProvideContent()) return null;
+
+    try {
+      List<PatchHunk> hunks = patch.getHunks();
+
+      Ref<String> baseRef = new Ref<>();
+      Ref<String> patchedRef = new Ref<>();
+
+      baseVersionProvider.getBaseVersionContent(pathBeforeRename, base -> {
+        final GenericPatchApplier applier = new GenericPatchApplier(base, hunks);
+        if (!applier.execute()) return true;
+
+        baseRef.set(base);
+        patchedRef.set(StringUtil.convertLineSeparators(applier.getAfter()));
+        return false;
+      });
+
+      String base = baseRef.get();
+      String patched = patchedRef.get();
+      if (base == null || patched == null) return null;
+
+      return new ApplyPatchForBaseRevisionTexts(patched, localContent, base, false);
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+      return null;
     }
   }
 
-  @CalledInAny
-  private ApplyPatchForBaseRevisionTexts(final DefaultPatchBaseVersionProvider provider,
-                                         final FilePath pathBeforeRename,
-                                         final TextFilePatch patch,
-                                         @NotNull final VirtualFile file,
-                                         @Nullable CharSequence baseContents) {
-    myWarnings = new ArrayList<>();
-    myLocal = getLocalFileContent(file);
-
+  @Nullable
+  private static ApplyPatchForBaseRevisionTexts createFromStoredBase(@NotNull String localContent,
+                                                                     @NotNull TextFilePatch patch,
+                                                                     @NotNull CharSequence baseContents) {
     final List<PatchHunk> hunks = patch.getHunks();
 
-    if (baseContents != null) {
-      myBase = StringUtil.convertLineSeparators(baseContents.toString());
-      myBaseRevisionLoaded = true;
-      final GenericPatchApplier applier = new GenericPatchApplier(myBase, hunks);
-      if (!applier.execute()) {
-        myIsAppliedSomehow = true;
-        LOG.warn(
-          String.format("Patch for %s has wrong base and can't be applied properly",
-                        chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
-        applier.trySolveSomehow();
-      }
-      setPatched(applier.getAfter());
-      return;
+    String base = StringUtil.convertLineSeparators(baseContents.toString());
+    final GenericPatchApplier applier = new GenericPatchApplier(base, hunks);
+    boolean exactlyApplied = applier.execute();
+
+    if (!exactlyApplied) {
+      LOG.warn(String.format("Patch for %s has wrong base and can't be applied properly",
+                             chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
+
+      return null;
     }
 
-    if (provider != null) {
-      try {
-        provider.getBaseVersionContent(pathBeforeRename, text -> {
-          final GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
-          if (!applier.execute()) {
-            return true;
-          }
-          myBase = text;
-          myBaseRevisionLoaded = true;
-          setPatched(applier.getAfter());
-          return false;
-        }, myWarnings);
-      }
-      catch (VcsException e) {
-        myWarnings.add(e.getMessage());
-      }
-      if (myPatched != null) return;
-    }
+    String patched = StringUtil.convertLineSeparators(applier.getAfter());
 
-    final GenericPatchApplier applier = new GenericPatchApplier(myLocal, hunks);
-    if (!applier.execute()) {
-      myIsAppliedSomehow = true;
-      applier.trySolveSomehow();
-    }
-    setPatched(applier.getAfter());
+    return new ApplyPatchForBaseRevisionTexts(patched, localContent, base, false);
   }
 
   @NotNull
@@ -139,14 +170,7 @@ public class ApplyPatchForBaseRevisionTexts {
     return myBase;
   }
 
-  public void clearBase() {
-    myBase = null;
-  }
-  
-  private void setPatched(final String text) {
-    myPatched = StringUtil.convertLineSeparators(text);
-  }
-
+  @NotNull
   public String getPatched() {
     return myPatched;
   }
@@ -156,6 +180,6 @@ public class ApplyPatchForBaseRevisionTexts {
   }
 
   public boolean isBaseRevisionLoaded() {
-    return myBaseRevisionLoaded;
+    return myBase != null;
   }
 }

@@ -149,11 +149,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  public boolean getBaseVersionContent(FilePath filePath,
-                                       Processor<String> processor,
-                                       String beforeVersionId,
-                                       List<String> warnings)
-    throws VcsException {
+  public boolean getBaseVersionContent(FilePath filePath, Processor<String> processor, String beforeVersionId) throws VcsException {
     if (StringUtil.isEmptyOrSpaces(beforeVersionId) || filePath.getVirtualFile() == null) return false;
     // apply if base revision id matches revision
     final VirtualFile root = GitUtil.getGitRoot(filePath);

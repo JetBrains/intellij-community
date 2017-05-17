@@ -74,8 +74,7 @@ public class DefaultPatchBaseVersionProvider {
 
   @CalledInAny
   public void getBaseVersionContent(final FilePath filePath,
-                                    final Processor<String> processor,
-                                    final List<String> warnings) throws VcsException {
+                                    final Processor<String> processor) throws VcsException {
     if (myVcs == null) {
       return;
     }
@@ -94,7 +93,7 @@ public class DefaultPatchBaseVersionProvider {
               computeInBackgroundTask(myProject, message("progress.text2.loading.revision", finalRevision.asString()), true, () -> {
                 if (historyProvider instanceof VcsBaseRevisionAdviser) {
                   VcsBaseRevisionAdviser revisionAdviser = (VcsBaseRevisionAdviser)historyProvider;
-                  return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString(), warnings);
+                  return revisionAdviser.getBaseVersionContent(filePath, processor, finalRevision.asString());
                 }
                 else {
                   DiffProvider diffProvider = myVcs.getDiffProvider();
