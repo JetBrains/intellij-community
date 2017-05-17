@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,8 @@ public class MyLookupExpression extends Expression {
           break;
         }
       }
+      // avoid suggesting the same name when renaming
+      names.remove(elementToRename.getName());
     }
     final LookupElement[] lookupElements = new LookupElement[names.size()];
     final Iterator<String> iterator = names.iterator();

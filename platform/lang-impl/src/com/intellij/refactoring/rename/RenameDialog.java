@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
@@ -187,6 +188,10 @@ public class RenameDialog extends RefactoringDialog {
         mySuggestedNameInfo = info;
         if (provider instanceof PreferrableNameSuggestionProvider && !((PreferrableNameSuggestionProvider)provider).shouldCheckOthers()) break;
       }
+    }
+    // avoid suggesting the same name when renaming
+    if (myPsiElement instanceof PsiNamedElement) {
+      result.remove(((PsiNamedElement)myPsiElement).getName());
     }
     return ArrayUtil.toStringArray(result);
   }
