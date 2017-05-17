@@ -375,7 +375,7 @@ public final class IconLoader {
     return icon;
   }
 
-  private static final class CachedImageIcon extends JBUI.AuxJBIcon implements ScalableIcon {
+  private static final class CachedImageIcon extends JBUI.UpdatingJBIcon implements ScalableIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -587,7 +587,7 @@ public final class IconLoader {
     }
   }
 
-  public abstract static class LazyIcon extends JBUI.AuxJBIcon {
+  public abstract static class LazyIcon extends JBUI.UpdatingJBIcon {
     private boolean myWasComputed;
     private Icon myIcon;
     private boolean isDarkVariant = USE_DARK_ICONS;

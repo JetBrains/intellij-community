@@ -202,12 +202,12 @@ public class JBUI {
   }
 
   /**
-   * Returns the system scale factor based on the JBUIScaleTrackable.
+   * Returns the system scale factor based on the JBUIScaleUpdatable.
    * In the IDE-managed HiDPI mode defaults to {@link #sysScale()}
    */
-  public static float sysScale(JBUIScaleTrackable trackable) {
-    if (UIUtil.isJreHiDPIEnabled() && trackable != null) {
-      return trackable.getJBUIScale(ScaleType.SYS);
+  public static float sysScale(JBUIScaleUpdatable updatable) {
+    if (UIUtil.isJreHiDPIEnabled() && updatable != null) {
+      return updatable.getJBUIScale(ScaleType.SYS);
     }
     return sysScale();
   }
@@ -281,10 +281,10 @@ public class JBUI {
   }
 
   /**
-   * Returns the pixel scale factor based on the JBUIScaleTrackable.
+   * Returns the pixel scale factor based on the JBUIScaleUpdatable.
    */
-  public static float pixScale(@NotNull JBUIScaleTrackable trackable) {
-    return UIUtil.isJreHiDPIEnabled() ? sysScale(trackable) * trackable.getJBUIScale(ScaleType.USR) : trackable.getJBUIScale(ScaleType.USR);
+  public static float pixScale(@NotNull JBUIScaleUpdatable updatableable) {
+    return UIUtil.isJreHiDPIEnabled() ? sysScale(updatableable) * updatableable.getJBUIScale(ScaleType.USR) : updatableable.getJBUIScale(ScaleType.USR);
   }
 
   /**
@@ -756,9 +756,9 @@ public class JBUI {
   }
 
   /**
-   * An interface to track JBUI scale factors.
+   * An interface to update JBUI scale factors.
    */
-  public interface JBUIScaleTrackable {
+  public interface JBUIScaleUpdatable {
     /**
      * Checks if tracked user scale should be updated and updates it.
      *
@@ -807,9 +807,9 @@ public class JBUI {
   }
 
   /**
-   * A helper class to track JBUI scale factors.
+   * A helper class to update JBUI scale factors.
    */
-  private static class JBUIScaleTracker implements JBUIScaleTrackable {
+  private static class JBUIScaleUpdater implements JBUIScaleUpdatable {
     // ScaleType.USR - tracked
     // ScaleType.SYS - tracked
     // ScaleType.PIX - derived
@@ -879,12 +879,12 @@ public class JBUI {
   }
 
   /**
-   * A JBIcon lazily tracking JBUI scale factors change.
+   * A JBIcon lazily updating JBUI scale factors change.
    *
    * @author tav
    */
-  public abstract static class AuxJBIcon extends JBIcon implements JBUIScaleTrackable {
-    private final JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
+  public abstract static class UpdatingJBIcon extends JBIcon implements JBUIScaleUpdatable {
+    private final JBUIScaleUpdater myJBUIScaleDelegate = new JBUIScaleUpdater();
 
     @Override
     public boolean updateJBUIScale() {
@@ -923,16 +923,18 @@ public class JBUI {
   }
 
   /**
-   * A ScalableJBIcon lazily tracking JBUI scale factors change.
+   * A ScalableJBIcon lazily updating JBUI scale factors change.
    *
    * @author tav
    */
-  public abstract static class AuxScalableJBIcon extends CachingScalableJBIcon implements JBUIScaleTrackable {
-    private final JBUIScaleTracker myJBUIScaleDelegate = new JBUIScaleTracker();
+  public abstract static class UpdatingScalableJBIcon<T extends UpdatingScalableJBIcon>
+    extends CachingScalableJBIcon<T> implements JBUIScaleUpdatable {
 
-    protected AuxScalableJBIcon() {}
+    private final JBUIScaleUpdater myJBUIScaleDelegate = new JBUIScaleUpdater();
 
-    protected AuxScalableJBIcon(AuxScalableJBIcon icon) {
+    protected UpdatingScalableJBIcon() {}
+
+    protected UpdatingScalableJBIcon(UpdatingScalableJBIcon icon) {
       super(icon);
     }
 

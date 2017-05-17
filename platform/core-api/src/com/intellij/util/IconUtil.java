@@ -30,7 +30,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.JBUI.JBUIScaleTrackable;
+import com.intellij.util.ui.JBUI.JBUIScaleUpdatable;
 import com.intellij.util.ui.JBUI.ScaleType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -466,8 +466,8 @@ public class IconUtil {
   @NotNull
   public static Icon scale(@NotNull Icon icon, @Nullable Component ancestor, float scale) {
     if (icon instanceof ScalableIcon) {
-      if (icon instanceof JBUIScaleTrackable) {
-        ((JBUIScaleTrackable)icon).updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
+      if (icon instanceof JBUI.JBUIScaleUpdatable) {
+        ((JBUI.JBUIScaleUpdatable)icon).updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
       }
       return ((ScalableIcon)icon).scale(scale);
     }
@@ -491,8 +491,8 @@ public class IconUtil {
   public static Icon scaleByFont(@NotNull Icon icon, @Nullable Component ancestor, float fontSize) {
     float scale = JBUI.getFontScale(fontSize);
     if (icon instanceof ScalableIcon) {
-      if (icon instanceof JBUIScaleTrackable) {
-        JBUIScaleTrackable jbuiIcon = (JBUIScaleTrackable)icon;
+      if (icon instanceof JBUIScaleUpdatable) {
+        JBUI.JBUIScaleUpdatable jbuiIcon = (JBUI.JBUIScaleUpdatable)icon;
         jbuiIcon.updateJBUIScale(ancestor != null ? ancestor.getGraphicsConfiguration() : null);
         // take into account the user scale of the icon
         float usrScale = jbuiIcon.getJBUIScale(ScaleType.USR);

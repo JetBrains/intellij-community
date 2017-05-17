@@ -28,7 +28,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class RowIcon extends JBUI.AuxScalableJBIcon {
+public class RowIcon extends JBUI.UpdatingScalableJBIcon<RowIcon> {
   private final Alignment myAlignment;
 
   private int myWidth;
