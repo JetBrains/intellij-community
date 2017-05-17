@@ -37,6 +37,9 @@ public class ExpandBooleanIntentionTest extends IPPTestCase {
     }
   }
 
+  public void testIncomplete1() { doTest("Expand boolean return to 'if else'"); }
+  public void testIncomplete2() { doTest("Expand boolean assignment to 'if else'"); }
+
   @Override
   protected String getRelativePath() {
     return "trivialif/expand_boolean";
