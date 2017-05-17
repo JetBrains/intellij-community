@@ -298,8 +298,12 @@ public class VcsUtil {
     return VcsContextFactory.SERVICE.getInstance().createFilePathOn(file, isDirectory);
   }
 
+  /**
+   * @deprecated use {@link #getFilePath(String, boolean)}
+   */
+  @Deprecated
   public static FilePath getFilePathForDeletedFile(@NotNull String path, boolean isDirectory) {
-    return VcsContextFactory.SERVICE.getInstance().createFilePathOnDeleted(new File(path), isDirectory);
+    return VcsContextFactory.SERVICE.getInstance().createFilePathOn(new File(path), isDirectory);
   }
 
   @NotNull

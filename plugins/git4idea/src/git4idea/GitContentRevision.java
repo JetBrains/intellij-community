@@ -164,7 +164,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                     boolean canBeDeleted,
                                     boolean unescapePath) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
-    FilePath file = isDeleted ? VcsUtil.getFilePathForDeletedFile(absolutePath, false) : VcsUtil.getFilePath(absolutePath, false);
+    FilePath file = VcsUtil.getFilePath(absolutePath, false);
     if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil.caseDiffers(file.getPath(), absolutePath)) {
       // as for deleted file
       file = VcsUtil.getFilePath(absolutePath, false);

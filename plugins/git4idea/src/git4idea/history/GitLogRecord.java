@@ -78,7 +78,7 @@ class GitLogRecord {
     String prefix = root.getPath() + "/";
     for (String strPath : getPaths()) {
       final String subPath = GitUtil.unescapePath(strPath);
-      final FilePath revisionPath = VcsUtil.getFilePathForDeletedFile(prefix + subPath, false);
+      final FilePath revisionPath = VcsUtil.getFilePath(prefix + subPath, false);
       res.add(revisionPath);
     }
     return res;

@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -59,8 +58,11 @@ public interface VcsContextFactory {
    * @param file the file for which the FilePath should be created.
    * @param isDirectory whether {@code file} specifies a file or a directory.
    * @return the FilePath instance.
+   *
+   * @deprecated use {@link #createFilePathOn(File, boolean)}
    */
   @NotNull
+  @Deprecated
   FilePath createFilePathOnDeleted(@NotNull File file, boolean isDirectory);
 
   /**

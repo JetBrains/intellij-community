@@ -333,7 +333,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
       final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
       final File file = urlMapping.getLocalPath(fullPath);
       if (file != null) {
-        return VcsUtil.getFilePathForDeletedFile(file.getAbsolutePath(), isDir || file.isDirectory());
+        return VcsUtil.getFilePath(file.getAbsolutePath(), isDir || file.isDirectory());
       }
 
       return null;
