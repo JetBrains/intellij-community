@@ -75,7 +75,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
   private final static int IS_ENABLED_COLUMN = 2;
 
   public static int getAdditionalPadding() {
-    return SystemInfo.isMac ? 10 : 0;
+    return SystemInfo.isMac ? 16 : 0;
   }
 
   public static InspectionsConfigTreeTable create(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
