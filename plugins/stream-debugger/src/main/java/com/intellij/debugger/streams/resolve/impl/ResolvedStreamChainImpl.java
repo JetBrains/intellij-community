@@ -57,4 +57,37 @@ public class ResolvedStreamChainImpl implements ResolvedStreamChain {
   public List<ResolvedStreamCall.Intermediate> getIntermediateCalls() {
     return myIntermediateCalls;
   }
+
+  public static class Builder {
+    private ResolvedStreamCall.Producer myProducer;
+    private ResolvedStreamCall.Terminator myTerminator;
+    private List<ResolvedStreamCall.Intermediate> myIntermediates = new ArrayList<>();
+
+    public Builder setProducer(@NotNull ResolvedStreamCall.Producer producer) {
+      myProducer = producer;
+      return this;
+    }
+
+    public Builder addIntermediate(@NotNull ResolvedStreamCall.Intermediate intermediate) {
+      myIntermediates.add(intermediate);
+      return this;
+    }
+
+    public Builder setTerminator(@NotNull ResolvedStreamCall.Terminator terminator) {
+      myTerminator = terminator;
+      return this;
+    }
+
+    public ResolvedStreamChain build() {
+      if (myProducer == null) {
+        throw new IllegalStateException("producer not specified");
+      }
+
+      if (myTerminator == null) {
+        throw new IllegalStateException("terminator not specified");
+      }
+
+      return new ResolvedStreamChainImpl(myProducer, myTerminator, myIntermediates);
+    }
+  }
 }
