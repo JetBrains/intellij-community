@@ -600,12 +600,15 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  @NotNull
+  @Nullable
   public static List<Location> allLineLocations(ReferenceType cls) {
     try {
       return cls.allLineLocations();
     }
-    catch (AbsentInformationException | ObjectCollectedException ignored) {
+    catch (AbsentInformationException ignored) {
+      return null;
+    }
+    catch (ObjectCollectedException ignored) {
       return Collections.emptyList();
     }
   }
