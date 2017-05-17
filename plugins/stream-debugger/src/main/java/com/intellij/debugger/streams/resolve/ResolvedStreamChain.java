@@ -31,4 +31,8 @@ public interface ResolvedStreamChain {
 
   @NotNull
   List<ResolvedStreamCall.Intermediate> getIntermediateCalls();
+
+  default int length() {
+    return getIntermediateCalls().size() + 2;
+  }
 }
