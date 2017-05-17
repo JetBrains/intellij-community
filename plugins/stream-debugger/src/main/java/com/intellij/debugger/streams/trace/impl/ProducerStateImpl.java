@@ -28,8 +28,8 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class ProducerStateImpl extends StateBase implements NextAwareState {
-  @NotNull private final StreamCall myNextCall;
-  @NotNull private final Map<TraceElement, List<TraceElement>> myToNext;
+  private final StreamCall myNextCall;
+  private final Map<TraceElement, List<TraceElement>> myToNext;
 
   public ProducerStateImpl(@NotNull List<TraceElement> elements,
                            @NotNull StreamCall nextCall,

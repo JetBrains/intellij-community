@@ -15,23 +15,21 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
-import com.intellij.debugger.streams.resolve.ResolvedTraceImpl;
-import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
-import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
+import com.intellij.debugger.streams.resolve.*;
+import com.intellij.debugger.streams.resolve.impl.ResolvedStreamChainImpl;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCall;
+import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,10 +39,12 @@ public class TracingResultImpl implements TracingResult {
   private final Value myStreamResult;
   private final List<TraceInfo> myTrace;
   private final boolean myIsResultException;
+  private final StreamChain mySourceChain;
 
-  TracingResultImpl(@Nullable Value streamResult, @NotNull List<TraceInfo> trace, boolean isResultException) {
+  TracingResultImpl(@NotNull StreamChain chain, @Nullable Value streamResult, @NotNull List<TraceInfo> trace, boolean isResultException) {
     myStreamResult = streamResult;
     myTrace = trace;
+    mySourceChain = chain;
     myIsResultException = isResultException;
   }
 
@@ -68,22 +68,15 @@ public class TracingResultImpl implements TracingResult {
   @NotNull
   @Override
   public ResolvedTracingResult resolve() {
-    if (myTrace.size() == 0) {
-      return new MyResolvedResult(Collections.emptyList());
-    }
+    assert myTrace.size() == mySourceChain.length();
 
-    final List<ResolvedTrace> result = new ArrayList<>();
     final TraceInfo producerTrace = myTrace.get(0);
     ValuesOrderResolver.Result prevResolved =
       ResolverFactoryImpl.getInstance().getResolver(producerTrace.getCall().getName()).resolve(producerTrace);
+    final List<IntermediateStreamCall> intermediateCalls = mySourceChain.getIntermediateCalls();
+    final StreamCall nextCall = intermediateCalls.isEmpty() ? mySourceChain.getTerminationCall() : intermediateCalls.get(0);
 
-    final ResolvedTraceImpl resolvedProducerTrace = new ResolvedTraceImpl(
-      producerTrace.getCall(),
-      TraceUtil.sortedByTime(producerTrace.getValuesOrderAfter().values()),
-      Collections.emptyMap(), prevResolved.getDirectOrder()
-    );
-
-    result.add(resolvedProducerTrace);
+    final ResolvedStreamChainImpl.Builder chainBuilder = new ResolvedStreamChainImpl.Builder();
     for (int i = 1; i < myTrace.size(); i++) {
       final TraceInfo traceInfo = myTrace.get(i);
       final StreamCall currentCall = traceInfo.getCall();
@@ -91,28 +84,35 @@ public class TracingResultImpl implements TracingResult {
       final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(currentCall.getName());
       final ValuesOrderResolver.Result currentResolve = resolver.resolve(traceInfo);
 
-      final Collection<TraceElement> values = traceInfo.getValuesOrderBefore().values();
+      final Collection<TraceElement> values = TraceUtil.sortedByTime(traceInfo.getValuesOrderBefore().values());
       final ResolvedTrace resolvedTrace =
         new ResolvedTraceImpl(currentCall, values, prevResolved.getReverseOrder(), currentResolve.getDirectOrder());
-      result.add(resolvedTrace);
 
       prevResolved = currentResolve;
     }
 
-    return new MyResolvedResult(result);
+    // TODO: construct chain
+    return new MyResolvedResult(chainBuilder.build());
   }
 
   private class MyResolvedResult implements ResolvedTracingResult {
-    private final List<ResolvedTrace> myTrace;
 
-    MyResolvedResult(@NotNull List<ResolvedTrace> trace) {
-      myTrace = trace;
+    @NotNull private final ResolvedStreamChain myChain;
+
+    MyResolvedResult(@NotNull ResolvedStreamChain resolvedStreamChain) {
+      myChain = resolvedStreamChain;
     }
 
     @NotNull
     @Override
-    public List<ResolvedTrace> getResolvedTraces() {
-      return Collections.unmodifiableList(myTrace);
+    public ResolvedStreamChain getResolvedChain() {
+      return myChain;
+    }
+
+    @NotNull
+    @Override
+    public StreamChain getSourceChain() {
+      return mySourceChain;
     }
 
     @Override
