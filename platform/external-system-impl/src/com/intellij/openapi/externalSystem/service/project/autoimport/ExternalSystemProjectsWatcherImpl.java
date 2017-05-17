@@ -121,7 +121,7 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
 
     myNotificationMap = ContainerUtil.newConcurrentMap();
 
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+    ApplicationManager.getApplication().getMessageBus().connect(myProject).subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
       @Override
       public void batchChangeStarted(Project project) {
         myRefreshRequestsQueue.suspend();
