@@ -59,6 +59,11 @@ public class JavaCompletionSorting {
     boolean afterNew = JavaSmartCompletionContributor.AFTER_NEW.accepts(position);
 
     List<LookupElementWeigher> afterProximity = new ArrayList<>();
+    final PreferMostUsedWeigher preferMostUsedWeigher = PreferMostUsedWeigher.create(position);
+    if (preferMostUsedWeigher != null) {
+      afterProximity.add(preferMostUsedWeigher);
+      ContainerUtil.addIfNotNull(afterProximity, preferStatics(position, expectedTypes));
+    }
     afterProximity.add(new PreferContainingSameWords(expectedTypes));
     afterProximity.add(new PreferShorter(expectedTypes));
 
@@ -72,7 +77,6 @@ public class JavaCompletionSorting {
       sorter = sorter.weighAfter("priority", new PreferDefaultTypeWeigher(expectedTypes, parameters));
     }
 
-    final PreferMostUsedWeigher preferMostUsedWeigher = PreferMostUsedWeigher.create(position);
     List<LookupElementWeigher> afterStats = ContainerUtil.newArrayList();
     afterStats.add(new PreferByKindWeigher(type, position, expectedTypes));
     if (!smart) {
@@ -83,10 +87,7 @@ public class JavaCompletionSorting {
         afterStats.add(new PreferExpected(false, expectedTypes, position));
       }
     }
-    if (preferMostUsedWeigher != null) {
-      afterStats.add(preferMostUsedWeigher);
-      ContainerUtil.addIfNotNull(afterStats, preferStatics(position, expectedTypes));
-    }
+
     ContainerUtil.addIfNotNull(afterStats, recursion(parameters, expectedTypes));
     afterStats.add(new PreferSimilarlyEnding(expectedTypes));
     if (ContainerUtil.or(expectedTypes, info -> !info.getType().equals(PsiType.VOID))) {

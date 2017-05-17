@@ -56,7 +56,7 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
   //  doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "asd(3)", "asd(0)");
   //}
 
-  public void testConstructor() {
+  public void _testConstructor() {
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "LinkedList", "ArrayList");
   }
 
@@ -68,12 +68,12 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "A a = new ", "B", "C");
   }
 
-  public void testAnonymous() {
+  public void _testAnonymous() {
     doTestConstructorCompletionOrdering(new String[] {"Foo.java"}, "List l = new ", "AbstractList", "ArrayList");
   }
 
   public void testHelperMethodIsNotAffected() {
-    doTestStaticMemberCompletionOrdering(new String[] {"Foo.java"}, "someMethod2(1)", "someMethod1(0)", "m(0)", "nonNull(1)");
+    doTestStaticMemberCompletionOrdering(new String[] {"Foo.java"}, "someMethod2(1)", "someMethod1(0)", "nonNull(1)", "m(0)");
   }
 
   public void testExpectedByTypeAreFirst() {
