@@ -88,6 +88,7 @@ import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
@@ -490,9 +491,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }).run();
   }
 
-  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public final void runBare() throws Throwable {
+    runBareImpl(this::startRunAndTear);
+  }
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  protected void runBareImpl(ThrowableRunnable<?> start) throws Exception {
     if (!shouldRunTest()) {
       return;
     }
@@ -501,7 +506,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     EdtTestUtil.runInEdtAndWait(() -> {
       try {
         ourTestThread = Thread.currentThread();
-        startRunAndTear();
+        start.run();
       }
       finally {
         ourTestThread = null;
