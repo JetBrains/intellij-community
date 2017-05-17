@@ -71,4 +71,29 @@ public class TextRangeUtil {
     }
     return Collections.singletonList(original);
   }
+
+  /**
+   * Return least text range that contains all of passed text ranges.
+   * For example for {[0, 3],[3, 7],[10, 17]} this method will return [0, 17]
+   * @param textRanges The list of ranges to process
+   * @return least text range that contains all of passed text ranges
+   */
+  @NotNull
+  public static TextRange getCoveringTextRange(@NotNull List<TextRange> textRanges) {
+    if(textRanges.isEmpty())
+      return TextRange.EMPTY_RANGE;
+    TextRange coveringTextRange = textRanges.get(0);
+    for(TextRange textRange : textRanges) {
+      coveringTextRange = getCoveringTextRange(coveringTextRange, textRange);
+    }
+    return coveringTextRange;
+  }
+
+  @NotNull
+  public static TextRange getCoveringTextRange(@NotNull TextRange left, @NotNull TextRange right) {
+    return new TextRange(
+      Math.min(left.getStartOffset(), right.getStartOffset()),
+      Math.max(left.getEndOffset(), right.getEndOffset())
+    );
+  }
 }
