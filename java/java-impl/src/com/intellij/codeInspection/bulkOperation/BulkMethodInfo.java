@@ -82,7 +82,8 @@ public class BulkMethodInfo {
     PsiClass parameterClass = PsiUtil.resolveClassInClassTypeOnly(parameterType);
     return parameterClass != null &&
            (CommonClassNames.JAVA_LANG_ITERABLE.equals(parameterClass.getQualifiedName()) && isIterable ||
-            CommonClassNames.JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName()) && isCollection);
+            CommonClassNames.JAVA_UTIL_COLLECTION.equals(parameterClass.getQualifiedName()) && isCollection) &&
+           parameterType.isAssignableFrom(type);
   }
 
   public String getClassName() {
