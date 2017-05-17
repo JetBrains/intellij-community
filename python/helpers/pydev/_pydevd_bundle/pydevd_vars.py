@@ -520,9 +520,7 @@ def array_to_meta_xml(array, name, format):
     bounds = (0, 0)
     if type in "biufc":
         bounds = (array.min(), array.max())
-    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
-          (slice, rows, cols, format, type, bounds[1], bounds[0])
-    return array, xml, rows, cols, format
+    return array, slice_to_xml(slice, rows, cols, format, type, bounds), rows, cols, format
 
 
 def array_default_format(type):
@@ -554,8 +552,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     else:
         slice = ''
     slice = name + slice
-    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"\" type=\"\" max=\"0\" min=\"0\"/>\n' % \
-          (slice, num_rows, num_cols)
+    xml = slice_to_xml(slice, num_rows, num_cols, "", "", (0, 0))
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols
@@ -612,14 +609,14 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     """
     num_rows = df.shape[0]
-    xml = '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"\" type=\"\" max=\"0\" min=\"0\"/>\n' % \
-          (name, num_rows, 1)
+    dtype = df.dtype.kind
+    format = format.replace('%', '')
+    xml = slice_to_xml(name, num_rows, 1, dtype, format, (0, 0))
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, 1
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
-    dtype = df.dtype.kind
     col_bounds = [(df.min(), df.max()) if dtype in "biufc" else (0, 0)]
 
     df = df.iloc[roffset: roffset + rows]
@@ -627,7 +624,6 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
 
 
     xml += "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
-    format = format.replace('%', '')
     col_formats = []
 
 
@@ -653,6 +649,11 @@ def array_data_to_xml(rows, cols, get_row):
         for value in get_row(row):
             xml += var_to_xml(value, '')
     return xml
+
+
+def slice_to_xml(slice, rows, cols, format, type, bounds):
+    return '<array slice=\"%s\" rows=\"%s\" cols=\"%s\" format=\"%s\" type=\"%s\" max=\"%s\" min=\"%s\"/>' % \
+           (slice, rows, cols, format, type, bounds[1], bounds[0])
 
 
 TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml_converter, "DataFrame": dataframe_to_xml, "Series": series_to_xml}
