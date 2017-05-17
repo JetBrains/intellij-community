@@ -29,6 +29,7 @@ import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -756,6 +757,21 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     myBusPublisher.projectOpened(project);
+    // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
+    // projectOpened in the project components is called _after_ message bus event projectOpened for ages
+    // old behavior is preserved for now (smooth transition, to not break all), but this order is not logical,
+    // because ProjectComponent.projectOpened it is part of project initialization contract, but message bus projectOpened it is just an event
+    // (and, so, should be called after project initialization)
+    if (project instanceof ProjectImpl) {
+      for (ProjectComponent component : ((ProjectImpl)project).getComponentInstancesOfType(ProjectComponent.class)) {
+        try {
+          component.projectOpened();
+        }
+        catch (Throwable e) {
+          LOG.error(component.toString(), e);
+        }
+      }
+    }
   }
 
   private void fireProjectClosed(@NotNull Project project) {
@@ -764,6 +780,19 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     }
 
     myBusPublisher.projectClosed(project);
+    // see "why is called after message bus" in the fireProjectOpened
+    if (project instanceof ProjectImpl) {
+      List<ProjectComponent> components = ((ProjectImpl)project).getComponentInstancesOfType(ProjectComponent.class);
+      for (int i = components.size() - 1; i >= 0; i--) {
+        ProjectComponent component = components.get(i);
+        try {
+          component.projectClosed();
+        }
+        catch (Throwable e) {
+          LOG.error(component.toString(), e);
+        }
+      }
+    }
   }
 
   @Override

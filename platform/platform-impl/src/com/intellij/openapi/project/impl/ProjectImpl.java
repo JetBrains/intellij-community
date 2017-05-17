@@ -41,8 +41,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
@@ -64,7 +62,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
 
 import javax.swing.*;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProjectImpl extends PlatformComponentManagerImpl implements ProjectEx {
@@ -296,41 +293,6 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       myName = getStateStore().getProjectName();
     }
     application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsInitialized(this);
-
-    //noinspection SynchronizeOnThis
-    synchronized (this) {
-      getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-        @Override
-        public void projectOpened(Project project) {
-          if (project == ProjectImpl.this) {
-            for (ProjectComponent component : getComponentInstancesOfType(ProjectComponent.class)) {
-              try {
-                component.projectOpened();
-              }
-              catch (Throwable e) {
-                LOG.error(component.toString(), e);
-              }
-            }
-            ourClassesAreLoaded = true;
-          }
-        }
-
-        @Override
-        public void projectClosed(Project project) {
-          if (project == ProjectImpl.this) {
-            List<ProjectComponent> components = getComponentInstancesOfType(ProjectComponent.class);
-            for (int i = components.size() - 1; i >= 0; i--) {
-              try {
-                components.get(i).projectClosed();
-              }
-              catch (Throwable e) {
-                LOG.error(e);
-              }
-            }
-          }
-        }
-      });
-    }
   }
 
   @Override

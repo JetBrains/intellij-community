@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -30,8 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
@@ -49,7 +48,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.*;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -67,7 +65,7 @@ import java.util.concurrent.Future;
 /**
  * @author max
  */
-public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element> {
+public abstract class ModuleManagerImpl extends ModuleManager implements Disposable, PersistentStateComponent<Element>, ProjectComponent {
   public static final String COMPONENT_NAME = "ProjectModuleManager";
 
   public static final String ELEMENT_MODULES = "modules";
@@ -83,7 +81,6 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   protected final Project myProject;
   protected final MessageBus myMessageBus;
-  protected final MessageBusConnection myMessageBusConnection;
   protected volatile ModuleModelImpl myModuleModel = new ModuleModelImpl(this);
 
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
@@ -96,29 +93,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public ModuleManagerImpl(@NotNull Project project) {
     myProject = project;
     myMessageBus = project.getMessageBus();
+  }
 
-    myMessageBusConnection = myMessageBus.connect();
-    myMessageBusConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(Project project) {
-        if (project == myProject) {
-          fireModulesAdded();
+  @Override
+  public void projectOpened() {
+    fireModulesAdded();
 
-          for (Module module : myModuleModel.getModules()) {
-            ((ModuleEx)module).projectOpened();
-          }
-        }
-      }
+    for (Module module : myModuleModel.getModules()) {
+      ((ModuleEx)module).projectOpened();
+    }
+  }
 
-      @Override
-      public void projectClosed(Project project) {
-        if (project == myProject) {
-          for (Module module : myModuleModel.getModules()) {
-            ((ModuleEx)module).projectClosed();
-          }
-        }
-      }
-    });
+  @Override
+  public void projectClosed() {
+    for (Module module : myModuleModel.getModules()) {
+      ((ModuleEx)module).projectClosed();
+    }
   }
 
   protected void cleanCachedStuff() {
