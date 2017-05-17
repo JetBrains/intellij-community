@@ -256,7 +256,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
 
   private void onActiveSessionChanged() {
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
-    ValueLookupManager.getInstance(myProject).hideHint();
+    ApplicationManager.getApplication().invokeLater(() -> ValueLookupManager.getInstance(myProject).hideHint(), myProject.getDisposed());
   }
 
   @Override
