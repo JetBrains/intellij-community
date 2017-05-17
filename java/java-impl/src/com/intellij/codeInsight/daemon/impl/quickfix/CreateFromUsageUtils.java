@@ -237,6 +237,7 @@ public class CreateFromUsageUtils {
     throws IncorrectOperationException {
     PsiManager psiManager = method.getManager();
     JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+    if (factory == null) return;
 
     PsiParameterList parameterList = method.getParameterList();
 
@@ -244,9 +245,11 @@ public class CreateFromUsageUtils {
 
     GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
 
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
     final PsiClass containingClass = method.getContainingClass();
     final boolean isInterface = containingClass != null && containingClass.isInterface();
-    for (int i = 0; i < arguments.size(); i++) {
+    //255 is the maximum number of method parameters
+    for (int i = 0; i < Math.min(arguments.size(), 255); i++) {
       Pair<PsiExpression, PsiType> arg = arguments.get(i);
       PsiExpression exp = arg.first;
 
@@ -268,11 +271,11 @@ public class CreateFromUsageUtils {
       }
       PsiParameter parameter;
       if (parameterList.getParametersCount() <= i) {
-        parameter = factory.createParameter(names[0], argType);
+        PsiParameter param = factory.createParameter(names[0], argType);
         if (isInterface) {
-          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, false);
+          PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
-        parameter = (PsiParameter) parameterList.add(parameter);
+        parameter = codeStyleManager.performActionWithFormatterDisabled(() -> (PsiParameter) parameterList.add(param));
       } else {
         parameter = parameterList.getParameters()[i];
       }
