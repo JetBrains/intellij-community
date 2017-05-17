@@ -640,7 +640,7 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
                (str(col), 1, dtype, fmt, bounds[1], bounds[0])
     for row, label in enumerate(iter(df.axes[0])):
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
-               (str(row), 1)
+               (str(row), str(label))
     xml += "</headerdata>\n"
     xml += array_data_to_xml(rows, cols, lambda r: (col_formats[c] % df.iat[r] for c in range(cols)))
     return xml
