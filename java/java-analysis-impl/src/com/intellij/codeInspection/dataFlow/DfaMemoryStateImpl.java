@@ -720,20 +720,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaLeft instanceof DfaUnknownValue || dfaRight instanceof DfaUnknownValue) return true;
     RelationType relationType = dfaRelation.getRelation();
 
-    if (dfaLeft instanceof DfaVariableValue) {
-      LongRangeSet right = getValueFact(DfaFactType.RANGE, dfaRight);
-      if (right != null) {
-        if (!applyFact((DfaVariableValue)dfaLeft, DfaFactType.RANGE, right.fromRelation(relationType))) {
-          return false;
-        }
+    LongRangeSet left = getValueFact(DfaFactType.RANGE, dfaLeft);
+    LongRangeSet right = getValueFact(DfaFactType.RANGE, dfaRight);
+
+    if (left != null && right != null) {
+      if (dfaLeft instanceof DfaVariableValue &&
+          !applyFact((DfaVariableValue)dfaLeft, DfaFactType.RANGE, right.fromRelation(relationType))) {
+        return false;
       }
-    }
-    if (dfaRight instanceof DfaVariableValue) {
-      LongRangeSet left = getValueFact(DfaFactType.RANGE, dfaLeft);
-      if (left != null) {
-        if (!applyFact((DfaVariableValue)dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
-          return false;
-        }
+      if (dfaRight instanceof DfaVariableValue &&
+          !applyFact((DfaVariableValue)dfaRight, DfaFactType.RANGE, left.fromRelation(relationType.getFlipped()))) {
+        return false;
       }
     }
 
