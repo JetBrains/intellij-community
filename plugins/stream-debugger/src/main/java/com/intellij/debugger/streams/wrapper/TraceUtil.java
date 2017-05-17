@@ -20,13 +20,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class TraceUtil {
-  public static Collection<TraceElement> sortedByTime(@NotNull Collection<TraceElement> values) {
+  public static List<TraceElement> sortedByTime(@NotNull Collection<TraceElement> values) {
     return values.stream().sorted(Comparator.comparing(TraceElement::getTime)).collect(Collectors.toList());
   }
 }
