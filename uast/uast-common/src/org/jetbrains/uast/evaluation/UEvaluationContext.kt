@@ -31,6 +31,8 @@ interface UEvaluationContext {
 
     fun valueOf(expression: UExpression): UValue
 
+    fun valueOfIfAny(expression: UExpression): UValue?
+
     fun getEvaluator(declaration: UDeclaration): UEvaluator
 }
 

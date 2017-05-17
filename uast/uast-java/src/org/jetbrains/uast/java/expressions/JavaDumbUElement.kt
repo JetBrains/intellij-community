@@ -20,7 +20,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.internal.log
 
 class JavaDumbUElement(
-        override val psi: PsiElement?,
+        override val psi: PsiElement,
         override val uastParent: UElement?,
         private val customRenderString: String? = null
 ) : JavaAbstractUElement(), UElement {

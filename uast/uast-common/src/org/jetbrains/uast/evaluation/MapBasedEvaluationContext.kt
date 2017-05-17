@@ -74,6 +74,12 @@ class MapBasedEvaluationContext(
         return null
     }
 
+    fun cachedValueOf(expression: UExpression) =
+            (getEvaluator(expression) as? TreeBasedEvaluator)?.getCached(expression)
+
     override fun valueOf(expression: UExpression) =
-            getEvaluator(expression)?.evaluate(expression) ?: UUndeterminedValue
+            valueOfIfAny(expression) ?: UUndeterminedValue
+
+    override fun valueOfIfAny(expression: UExpression) =
+        getEvaluator(expression)?.evaluate(expression)
 }

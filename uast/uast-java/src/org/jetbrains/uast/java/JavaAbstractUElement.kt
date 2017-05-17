@@ -27,8 +27,10 @@ import org.jetbrains.uast.java.internal.JavaUElementWithComments
 abstract class JavaAbstractUElement : JavaUElementWithComments {
     override fun equals(other: Any?): Boolean {
         if (other !is UElement || other.javaClass != this.javaClass) return false
-        return this.psi == other.psi
+        return if (this.psi != null) this.psi == other.psi else this === other
     }
+
+    override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
 
     override fun asSourceString(): String {
         return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
