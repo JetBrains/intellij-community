@@ -16,7 +16,10 @@
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
+import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
+import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
+import com.intellij.debugger.streams.trace.IntermediateState;
+import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.ui.TraceController;
@@ -41,7 +44,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -99,13 +101,15 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   }
 
   public void setTrace(@NotNull ResolvedTracingResult resolvedTrace, @NotNull EvaluationContextImpl context) {
-    final List<ResolvedTrace> traces = resolvedTrace.getResolvedTraces();
-    assert myTabContents.size() == traces.size();
+    final ResolvedStreamChain chain = resolvedTrace.getResolvedChain();
+
+    assert chain.length() == myTabContents.size();
+    chain.getProducer().getStateAfter().getTrace();
 
     final List<TraceControllerImpl> controllers = createControllers(resolvedTrace);
 
     if (controllers.isEmpty()) return;
-    final CollectionView sourceView = new SourceView(context, controllers.get(0).getResolvedTrace().getValues());
+    final CollectionView sourceView = new SourceView(context, controllers.get(0).getTrace());
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
 
@@ -166,29 +170,32 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
   @NotNull
   private static List<TraceControllerImpl> createControllers(@NotNull ResolvedTracingResult resolvedResult) {
     List<TraceControllerImpl> controllers = new ArrayList<>();
-    TraceControllerImpl prev = null;
-    final List<ResolvedTrace> traces = resolvedResult.getResolvedTraces();
-    for (final ResolvedTrace trace : traces.subList(0, traces.size() - 1)) {
-      final TraceControllerImpl current = new TraceControllerImpl(trace);
-      if (prev != null) {
-        current.setPreviousListener(prev);
-        prev.setNextListener(current);
-      }
+    final ResolvedStreamChain chain = resolvedResult.getResolvedChain();
 
-      controllers.add(current);
-      prev = current;
+    final TraceControllerImpl producerController = new TraceControllerImpl(chain.getProducer().getStateAfter());
+    final List<ResolvedStreamCall.Intermediate> intermediateCalls = chain.getIntermediateCalls();
+
+    controllers.add(producerController);
+    TraceControllerImpl prevController = producerController;
+    for (final ResolvedStreamCall.Intermediate intermediate : intermediateCalls) {
+      final PrevAwareState after = intermediate.getStateAfter();
+      final TraceControllerImpl controller = new TraceControllerImpl(after);
+
+      prevController.setNextListener(controller);
+      controller.setPreviousListener(prevController);
+      prevController = controller;
+
+      controllers.add(controller);
     }
 
-    if (!traces.isEmpty()) {
-      final ResolvedTrace lastTrace = traces.get(traces.size() - 1);
-      final TraceControllerImpl terminatorController =
-        new TraceControllerImpl(lastTrace, Collections.singletonList(resolvedResult.getResult()));
-      if (!controllers.isEmpty()) {
-        final TraceControllerImpl lastController = controllers.get(controllers.size() - 1);
-        lastController.setNextListener(terminatorController);
-        terminatorController.setPreviousListener(lastController);
-      }
-      controllers.add(terminatorController);
+    final IntermediateState afterTerminationState = chain.getTerminator().getStateAfter();
+    if (afterTerminationState != null) {
+
+      final TraceControllerImpl terminationController = new TraceControllerImpl(afterTerminationState);
+
+      terminationController.setPreviousListener(prevController);
+      prevController.setNextListener(terminationController);
+      controllers.add(terminationController);
     }
 
     return controllers;
