@@ -9,14 +9,17 @@ abstract class LogEvent(@Transient var userUid: String, sessionId: String, type:
     
     abstract fun accept(visitor: LogEventVisitor)
 }
-    
 
-abstract class LookupStateLogData(userId: String,
-                                  sessionId: String,
-                                  action: Action,
-                                  var completionListIds: List<Int>,
-                                  var newCompletionListItems: List<LookupEntryInfo>,
-                                  var currentPosition: Int): LogEvent(userId, sessionId, action)
+
+abstract class LookupStateLogData(
+  userId: String,
+  sessionId: String,
+  action: Action,
+  @JvmField var completionListIds: List<Int>,
+  @JvmField var newCompletionListItems: List<LookupEntryInfo>,
+  @JvmField var currentPosition: Int
+) : LogEvent(userId, sessionId, action)
+
 
 class UpPressedEvent(
         userId: String, 
@@ -54,7 +57,7 @@ class CompletionCancelledEvent(userId: String, sessionId: String) : LogEvent(use
 /**
  * selectedId here, because position is 0 here
  */
-class TypedSelectEvent(userId: String, sessionId: String, var selectedId: Int) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
+class TypedSelectEvent(userId: String, sessionId: String, @JvmField var selectedId: Int) : LogEvent(userId, sessionId, Action.TYPED_SELECT) {
     
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -67,7 +70,7 @@ class ExplicitSelectEvent(userId: String,
                           completionListIds: List<Int>,
                           newCompletionListItems: List<LookupEntryInfo>,
                           selectedPosition: Int,
-                          var selectedId: Int) : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
+                          @JvmField var selectedId: Int) : LookupStateLogData(userId, sessionId, Action.EXPLICIT_SELECT, completionListIds, newCompletionListItems, selectedPosition) {
     
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
@@ -102,16 +105,16 @@ class TypeEvent(
 }
 
 class CompletionStartedEvent(
-        var ideVersion: String, 
-        var pluginVersion: String, 
-        var mlRankingVersion: String,
-        userId: String,
-        sessionId: String,
-        var language: String?,
-        var performExperiment: Boolean,
-        var experimentVersion: Int,
-        completionList: List<LookupEntryInfo>,
-        selectedPosition: Int) 
+  @JvmField var ideVersion: String,
+  @JvmField var pluginVersion: String,
+  @JvmField var mlRankingVersion: String,
+  userId: String,
+  sessionId: String,
+  @JvmField var language: String?,
+  @JvmField var performExperiment: Boolean,
+  @JvmField var experimentVersion: Int,
+  completionList: List<LookupEntryInfo>,
+  selectedPosition: Int)
     
     : LookupStateLogData(
         userId, 
@@ -123,16 +126,15 @@ class CompletionStartedEvent(
 {
 
     //seems it's not needed, remove when possible
-    var completionListLength: Int = completionList.size
-    
-    var isOneLineMode: Boolean = false
+    @JvmField var completionListLength: Int = completionList.size
+    @JvmField var isOneLineMode: Boolean = false
 
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
 }
 
-class CustomMessageEvent(userId: String, sessionId: String, var text: String): LogEvent(userId, sessionId, Action.CUSTOM) {
+class CustomMessageEvent(userId: String, sessionId: String, @JvmField var text: String): LogEvent(userId, sessionId, Action.CUSTOM) {
     override fun accept(visitor: LogEventVisitor) {
         visitor.visit(this)
     }
@@ -142,34 +144,15 @@ class LookupEntryInfo(val id: Int, val length: Int, val relevance: Map<String, S
 
 
 abstract class LogEventVisitor {
-
-    open fun visit(event: CompletionStartedEvent) {
-    }
-
-    open fun visit(event: TypeEvent) {
-    }
-
-    open fun visit(event: DownPressedEvent) {
-    }
-
-    open fun visit(event: UpPressedEvent) {
-    }
-
-    open fun visit(event: BackspaceEvent) {
-    }
-    
-    open fun visit(event: CompletionCancelledEvent) {
-    }
-
-    open fun visit(event: ExplicitSelectEvent) {
-    }
-    
-    open fun visit(event: TypedSelectEvent) {
-    }
-
-    open fun visit(custom: CustomMessageEvent) {
-    }
-    
+    open fun visit(event: CompletionStartedEvent) {}
+    open fun visit(event: TypeEvent) {}
+    open fun visit(event: DownPressedEvent) {}
+    open fun visit(event: UpPressedEvent) {}
+    open fun visit(event: BackspaceEvent) {}
+    open fun visit(event: CompletionCancelledEvent) {}
+    open fun visit(event: ExplicitSelectEvent) {}
+    open fun visit(event: TypedSelectEvent) {}
+    open fun visit(event: CustomMessageEvent) {}
 }
 
 
