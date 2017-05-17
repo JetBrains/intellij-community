@@ -39,8 +39,8 @@ import java.util.List;
  * @author konstantin.aleev
  */
 public abstract class ExecutorAction extends RunDashboardTreeLeafAction<DashboardRunConfigurationNode> {
-  protected ExecutorAction() {
-    super(null, null, null);
+  protected ExecutorAction(String text, String description, Icon icon) {
+    super(text, description, icon);
   }
 
   @Override
