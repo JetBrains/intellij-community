@@ -165,6 +165,16 @@ public class InspectionResultsViewComparator implements Comparator<InspectionTre
       if (p1 != null && p2 != null) {
         final VirtualFile file1 = p1.getVirtualFile();
         final VirtualFile file2 = p2.getVirtualFile();
+        if (file1 != null && file2 != null && file1.isValid() && file2.isValid()) {
+          if (file1.equals(file2)) {
+            final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
+            if (positionComparing != 0) {
+              return positionComparing;
+            }
+          } else {
+            return file1.hashCode() - file2.hashCode();
+          }
+        }
         if (file1 != null && Comparing.equal(file1, file2) && file1.isValid()) {
           final int positionComparing = PsiUtilCore.compareElementsByPosition(((RefElement)entity1).getElement(), ((RefElement)entity2).getElement());
           if (positionComparing != 0) {
