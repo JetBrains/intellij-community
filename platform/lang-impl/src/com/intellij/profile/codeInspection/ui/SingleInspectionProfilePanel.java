@@ -56,6 +56,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Queue;
 import com.intellij.util.ui.JBInsets;
@@ -834,13 +835,17 @@ public class SingleInspectionProfilePanel extends JPanel {
             @Override
             protected void onChosen(final HighlightSeverity severity) {
               final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
+              final List<InspectionConfigTreeNode> toUpdate = new SmartList<>();
               for (final InspectionConfigTreeNode node : nodes) {
                 final HighlightDisplayKey key = node.getDefaultDescriptor().getKey();
                 final NamedScope scope = node.getDefaultDescriptor().getScope();
-                final boolean toUpdate = myProfile.getErrorLevel(key, scope, project) != level;
-                myProfile.setErrorLevel(key, level, null, project);
-                if (toUpdate) node.dropCache();
+                final boolean doUpdate = myProfile.getErrorLevel(key, scope, project) != level;
+                if (doUpdate) {
+                  myProfile.setErrorLevel(key, level, null, project);
+                  toUpdate.add(node);
+                }
               }
+              updateRecursively(toUpdate, false);
               myTreeTable.updateUI();
             }
           };
