@@ -31,13 +31,21 @@ class DelegateTest extends GroovyResolveTestCase {
     return "${TestUtils.testDataPath}resolve/delegate/"
   }
 
-  private PsiMirrorElement doTest(String text) {
+  private <T> T doTest(String text, Class<T> clazz) {
     def ref = configureByText(text)
     def resolved = ref.resolve()
 
-    assertNotNull resolved
-    assertInstanceOf resolved, PsiMirrorElement
-    return resolved as PsiMirrorElement
+    if (clazz != null) {
+      assertNotNull resolved
+      assertInstanceOf resolved, clazz
+      return resolved.asType(clazz)
+    } else {
+      assertNull resolved
+    }
+  }
+
+  private PsiMirrorElement doTest(String text) {
+    return doTest(text, PsiMirrorElement)
   }
 
 
@@ -67,6 +75,20 @@ class B {
 
 new B().fo<caret>o()
 ''')
+  }
+
+  void testMethodDelegateUnresolved() {
+    doTest('''
+class A {
+  def foo(){}
+}
+
+class B {
+  @Delegate A getA(int i){return new A()}
+}
+
+new B().fo<caret>o()
+''', null)
   }
 
   void testInheritance() {

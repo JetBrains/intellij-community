@@ -349,6 +349,27 @@ class Baz implements I {
     myFixture.testHighlighting(false, false, false)
   }
 
+  void testMethodDelegate() {
+    myFixture.addClass('''\
+package groovy.lang;
+@Target({ElementType.FIELD, ElementType.METHOD})
+public @interface Delegate {}
+''')
+    myFixture.configureByText('a.groovy','''
+class A {
+  def foo(){}
+}
+
+class B {
+  @Delegate A getA(){return new A()}
+}
+
+new B().foo()
+''')
+
+    fixture.checkHighlighting()
+  }
+
   void testMethodDelegateError() {
     myFixture.configureByText('a.groovy','''
 class A {
@@ -359,7 +380,7 @@ class B {
   <error>@Delegate</error> A getA(int i){return new A()}
 }
 
-new B().fo<caret>o()
+new B().foo()
 ''')
 
     fixture.checkHighlighting()
