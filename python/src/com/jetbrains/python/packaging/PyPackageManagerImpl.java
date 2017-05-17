@@ -118,7 +118,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   private boolean refreshAndCheckForSetuptools() throws ExecutionException {
     try {
       final List<PyPackage> packages = refreshAndGetPackages(false);
-      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null || 
+      return PyPackageUtil.findPackage(packages, PyPackageUtil.SETUPTOOLS) != null ||
              PyPackageUtil.findPackage(packages, PyPackageUtil.DISTRIBUTE) != null;
     }
     catch (PyExecutionException e) {
@@ -233,7 +233,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         if (canModify) {
           final String location = pkg.getLocation();
           if (location != null) {
-            canModify = FileUtil.ensureCanCreateFile(new File(location));
+            canModify = ensureCanCreateFile(new File(location));
           }
         }
         args.add(pkg.getName());
@@ -247,6 +247,29 @@ public class PyPackageManagerImpl extends PyPackageManager {
       LOG.debug("Packages cache is about to be refreshed because these packages were uninstalled: " + packages);
       refreshPackagesSynchronously();
     }
+  }
+
+  // TODO: Move to FileUtil.ensureCanCreateFile ?
+
+  /**
+   * When file it protected with UAC on Windows, you can't relay on {@link File#canWrite()}.
+   *
+   * @param file file to check if writable (works in UAC too)
+   */
+  private static boolean ensureCanCreateFile(@NotNull final File file) {
+    if (SystemInfo.isWinVistaOrNewer) {
+      try {
+        final File folder = (file.isFile() ? file.getParentFile() : file);
+        final File tmpFile = File.createTempFile("pycharm", null, folder);
+        tmpFile.deleteOnExit();
+        tmpFile.delete();
+      }
+      catch (final IOException ignored) {
+        return false;
+      }
+      return true;
+    }
+    return FileUtil.ensureCanCreateFile(file);
   }
 
 
@@ -439,8 +462,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     cmdline.addAll(args);
     LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
-    final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
-    final boolean useSudo = !canCreate && !SystemInfo.isWindows && askForSudo;
+    final boolean canCreate = ensureCanCreateFile(new File(homePath));
+    final boolean useSudo = !canCreate && askForSudo;
 
     try {
       final GeneralCommandLine commandLine = new GeneralCommandLine(cmdline).withWorkDirectory(workingDir);

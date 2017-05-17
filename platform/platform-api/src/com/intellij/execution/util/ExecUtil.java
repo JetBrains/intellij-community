@@ -144,8 +144,17 @@ public class ExecUtil {
     command.add(commandLine.getExePath());
     command.addAll(commandLine.getParametersList().getList());
 
-    GeneralCommandLine sudoCommandLine;
-    if (SystemInfo.isMac) {
+    final GeneralCommandLine sudoCommandLine;
+    if (SystemInfo.isWinVistaOrNewer) {
+      // launcher.exe process with elevated permissions on UAC.
+      final File launcherExe = PathManager.findBinFileWithException("launcher.exe");
+      sudoCommandLine = new GeneralCommandLine(launcherExe.getPath());
+      sudoCommandLine.setWorkDirectory(commandLine.getWorkDirectory());
+      sudoCommandLine.addParameter(commandLine.getExePath());
+      sudoCommandLine.addParameters(commandLine.getParametersList().getParameters());
+      sudoCommandLine.getEnvironment().putAll(commandLine.getEffectiveEnvironment());
+    }
+    else if (SystemInfo.isMac) {
       String escapedCommandLine = StringUtil.join(command, ExecUtil::escapeAppleScriptArgument, " & \" \" & ");
       String escapedScript = "tell current application\n" +
                              "   activate\n" +
