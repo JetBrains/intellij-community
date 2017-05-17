@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -38,15 +39,11 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * GoF builder for external system backed projects.
@@ -134,24 +131,41 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     final boolean isFromUI = model != null;
 
     final List<Module> modules = ContainerUtil.newSmartList();
+    final Map<ModifiableRootModel, Module> moduleMap = ContainerUtil.newIdentityHashMap();
     final IdeModifiableModelsProvider modelsProvider = isFromUI ? new IdeUIModifiableModelsProvider(
       project, model, (ModulesConfigurator)modulesProvider, artifactModel) {
-      @NotNull
+
       @Override
-      public Module newModule(@NotNull @NonNls String filePath,
-                              String moduleTypeId) {
-        final Module module = super.newModule(filePath, moduleTypeId);
-        modules.add(module);
-        return module;
+      protected ModifiableRootModel doGetModifiableRootModel(Module module) {
+        ModifiableRootModel modifiableRootModel = super.doGetModifiableRootModel(module);
+        moduleMap.put(modifiableRootModel, module);
+        return modifiableRootModel;
+      }
+
+      @Override
+      public void commit() {
+        super.commit();
+        for (Map.Entry<ModifiableRootModel, Module> moduleEntry : moduleMap.entrySet()) {
+          modules.add(moduleEntry.getValue());
+        }
       }
     } : new IdeModifiableModelsProviderImpl(project){
       @NotNull
       @Override
-      public Module newModule(@NotNull @NonNls String filePath,
-                              String moduleTypeId) {
-        final Module module = super.newModule(filePath, moduleTypeId);
-        modules.add(module);
-        return module;
+      protected ModifiableRootModel doGetModifiableRootModel(@NotNull Module module) {
+        ModifiableRootModel modifiableRootModel = super.doGetModifiableRootModel(module);
+        moduleMap.put(modifiableRootModel, module);
+        return modifiableRootModel;
+      }
+
+      @Override
+      public void commit() {
+        super.commit();
+        for (Map.Entry<ModifiableRootModel, Module> moduleEntry : moduleMap.entrySet()) {
+          if (!moduleEntry.getKey().isWritable()) {
+            modules.add(moduleEntry.getValue());
+          }
+        }
       }
     };
     AbstractExternalSystemSettings systemSettings = ExternalSystemApiUtil.getSettings(project, myExternalSystemId);
