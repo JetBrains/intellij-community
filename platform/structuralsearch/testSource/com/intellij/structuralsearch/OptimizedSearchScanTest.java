@@ -39,7 +39,7 @@ public class OptimizedSearchScanTest extends StructuralSearchTestCase {
     assertEquals("", plan);
 
     final String plan2 = findWordsToBeUsedWhenSearchingFor("'x:[ regex(a}) ]");
-    assertEquals("[in code:a}]", plan2);
+    assertEquals("", plan2);
   }
 
   private String findWordsToBeUsedWhenSearchingFor(final String s) {
