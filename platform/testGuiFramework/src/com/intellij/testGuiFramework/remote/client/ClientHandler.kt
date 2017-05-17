@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.remote.server
+package com.intellij.testGuiFramework.remote.client
 
-import org.junit.runner.RunWith
+import com.intellij.testGuiFramework.remote.transport.TransportMessage
 
 /**
  * @author Sergey Karashevich
  */
-@RunWith(RemoteTestRunner::class)
-abstract class RemoteTestCase
+interface ClientHandler {
+
+  fun accept(message: TransportMessage): Boolean
+  fun handle(message: TransportMessage): Unit
+
+}

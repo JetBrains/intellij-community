@@ -14,6 +14,10 @@ import com.intellij.testGuiFramework.launcher.teamcity.TeamCityManager.JUNIT_PAT
 import com.intellij.testGuiFramework.launcher.teamcity.TeamCityManager.PLATFORM_PREFIX
 import com.intellij.testGuiFramework.launcher.teamcity.TeamCityManager.TEST_CLASSES_DIR
 import com.intellij.testGuiFramework.launcher.teamcity.TeamCityManager.TEST_GUI_FRAMEWORK_PATH
+import com.intellij.testGuiFramework.remote.transport.JUnitTestContainer
+import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
+import com.intellij.testGuiFramework.remote.transport.MessageType
+import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.junit.Assert
 import java.io.BufferedReader
 import java.io.File
@@ -74,8 +78,14 @@ object GuiTestLauncher {
     return resultingArgs
   }
 
-  fun runTest(ide: Ide, testClass: String) {
-    TODO("Run test with currrent IDE")
+  fun runTest(ide: Ide, testClassAndMethod: String) {
+    val testClassName = testClassAndMethod.split("#")[0]
+    val testMethodName = testClassAndMethod.split("#")[1]
+    val testClass = Class.forName(testClassName)
+    if (!JUnitServerHolder.getServer().isConnected()) //if not connected to JUnitClient
+      GuiTestLocalLauncher.runIdeLocally(port = JUnitServerHolder.getServer().getPort(), ide = ide) //todo: add IDE specification here
+    val jUnitTestContainer = JUnitTestContainer(testClass, testMethodName)
+    JUnitServerHolder.getServer().send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
   }
 
   fun runIde(ide: Ide, ideRunArgs: IdeRunArgs): Unit {
@@ -94,7 +104,7 @@ object GuiTestLauncher {
       }
     }
     val ideaTestThread = Thread(runnable, "IdeaTestThread")
-    ideaTestThread.run()
+    ideaTestThread.start()
   }
 
   fun runIde(ide: Ide, testClasses: List<String>): Unit {
@@ -113,7 +123,7 @@ object GuiTestLauncher {
       }
     }
     val ideaTestThread = Thread(runnable, "IdeaTestThread")
-    ideaTestThread.run()
+    ideaTestThread.start()
   }
 
   fun runIdeLocally(ide: Ide, args: List<String>) {
@@ -129,7 +139,7 @@ object GuiTestLauncher {
       }
     }
     val ideaTestThread = Thread(runnable, "IdeaTestThread")
-    ideaTestThread.run()
+    ideaTestThread.start()
   }
 
   fun runIde(ide: Ide, func: IdeTestFixture.() -> Unit) {

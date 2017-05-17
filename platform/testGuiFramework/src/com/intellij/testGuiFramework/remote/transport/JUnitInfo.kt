@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.remote
+package com.intellij.testGuiFramework.remote.transport
 
-import com.intellij.openapi.diagnostic.Logger
-import java.io.ObjectOutputStream
+import java.io.Serializable
 
 /**
  * @author Sergey Karashevich
  */
-class ObjectSender(val objectStream: ObjectOutputStream) {
-
-  val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.remote.ObjectSender")
-
-  fun send(obj: Any) {
-    LOG.info("Sending to sever: $obj")
-    objectStream.writeObject(obj)
-  }
-}
+enum class Type {RUN_STARTED, STARTED, ASSUMPTION_FAILURE, RUN_FINISHED, FAILURE, FINISHED, IGNORED}
+data class JUnitInfo(val type: Type, val obj: Any?) : Serializable

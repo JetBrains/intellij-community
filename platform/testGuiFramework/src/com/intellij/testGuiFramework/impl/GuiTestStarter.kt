@@ -18,14 +18,11 @@ package com.intellij.testGuiFramework.impl
 import com.intellij.idea.IdeaApplication
 import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.diagnostic.Logger
-import org.junit.runner.Request
 
 /**
  * @author Sergey Karashevich
  */
 class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
-
-  private val LOG = Logger.getInstance(this.javaClass)
 
   companion object {
     val COMMAND_NAME = "guitest"
@@ -37,95 +34,24 @@ class GuiTestStarter : IdeaApplication.IdeStarter(), ApplicationStarter {
     fun isGuiTestThread(): Boolean = Thread.currentThread().name == GuiTestThread.GUI_TEST_THREAD_NAME
   }
 
-
-  val host: String? by lazy {
-    System.getProperty(GUI_TEST_HOST)
-  }
-
-  val port: Int? by lazy {
-    val guiTestPort = System.getProperty(GUI_TEST_PORT)
-    if (guiTestPort == null || guiTestPort == PORT_UNDEFINED) null
-    else guiTestPort.toInt()
-  }
-
-  val guiTestNamesList: List<String> by lazy {
-    System.getProperty(GUI_TEST_LIST)?.split(",")!!
-  }
-
-
+  private val LOG = Logger.getInstance(this.javaClass)
+  private val PORT_UNDEFINED = "undefined"
+  private val HOST_LOCALHOST = "localhost"
 
   private val guiTestThread = GuiTestThread()
 
   override fun getCommandName() = COMMAND_NAME
 
-  private val PORT_UNDEFINED = "undefined"
-
-  private val HOST_LOCALHOST = "localhost"
-
   override fun premain(args: Array<String>) {
     processArgs(args)
-    runActivity(args)
+    LOG.info("Starting GuiTest activity")
+    guiTestThread.start()
     super.premain(args)
   }
 
   override fun main(args: Array<String>) {
     val myArgs = removeGuiTestArgs(args)
     super.main(myArgs)
-  }
-
-//  fun stopGuiTestThread() {
-//    LOG.info("Stopping guiTestThread")
-//    assert(Thread.currentThread() != guiTestThread)
-//    guiTestThread.join()
-//    if (myClient != null) myClient!!.stopClient()
-//  }
-
-  fun runActivity(args: Array<String>) {
-    LOG.info("Starting GuiTest activity")
-    guiTestThread.start()
-  }
-
-
-//  fun run() {
-//    assert(myClient == null)
-//    val isMethodBased: Boolean = guiTestNamesList.any { it.contains("#") }
-//    if (port != null) {
-//      myClient = JUnitClient(host!!, port!!)
-//      if (isMethodBased)
-//        myClient!!.runTestMethod(createTestRequest())
-//      else
-//        myClient!!.runTests(*classesFromTestNames())
-//    }
-//    else {
-//      val core = JUnitCore()
-//      if (isMethodBased)
-//        core.run(createTestRequest())
-//      else
-//        core.run(*classesFromTestNames())
-//    }
-//  }
-//
-//  //run on GuiTestThread
-//  fun run2() {
-//    assert(myClient == null)
-//    val isMethodBased: Boolean = guiTestNamesList.any { it.contains("#") }
-//    assert (port != null)
-//    myClient = JUnitClient(host!!, port!!)
-//    if (isMethodBased)
-//      myClient!!.runTestMethod(createTestRequest())
-//    else
-//      myClient!!.runTests(*classesFromTestNames())
-//
-//  }
-
-  private fun classesFromTestNames(): Array<Class<*>> =
-    guiTestNamesList.map { Class.forName(it) }.toTypedArray()
-
-  private fun createTestRequest(): Request {
-    assert(guiTestNamesList.size == 1) //we can perform junit test request only for one test class and one method in it
-    val classAndMethod = guiTestNamesList.first().split("#")
-    val request = Request.method(Class.forName(classAndMethod[0]), classAndMethod[1])!!
-    return request
   }
 
   /**

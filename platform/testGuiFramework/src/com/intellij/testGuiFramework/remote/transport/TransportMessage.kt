@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.remote.server
+package com.intellij.testGuiFramework.remote.transport
 
-import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import java.io.Serializable
+import java.util.concurrent.ThreadLocalRandom
 
 /**
  * @author Sergey Karashevich
  */
-abstract class ServerHandler {
-    abstract fun acceptObject(message: TransportMessage): Boolean
-    abstract fun handleObject(message: TransportMessage): Unit
-}
+
+enum class MessageType {RUN_TEST, CLOSE_IDE, RESPONSE, JUNIT_INFO}
+data class TransportMessage(val type: MessageType, val content: Any? = null, val id: Long = ThreadLocalRandom.current().nextLong()): Serializable
+

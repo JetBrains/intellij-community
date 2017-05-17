@@ -22,12 +22,12 @@ import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.util.containers.HashSet
+import junit.framework.Assert.fail
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import org.junit.runners.model.FrameworkMethod
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -47,46 +47,49 @@ object GuiTestLocalLauncher {
   fun killProcessIfPossible() {
     try {
       if (process?.isAlive ?: false) process!!.destroyForcibly()
-    } catch (e: KotlinNullPointerException) {
+    }
+    catch (e: KotlinNullPointerException) {
       LOG.error("Seems that process has already destroyed, right after condition")
     }
   }
 
-  fun runTestLocally(method: FrameworkMethod, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
-    LOG.info("Starting test \"${method.declaringClass.name}.$method\" locally")
+  fun runIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
-    val testClassName = method.method.declaringClass.name
-    val methodName = method.name
-    val testClassAndMethodName = "$testClassName#$methodName"
-    val args = createArgs(testClassName, ide.ideType.mainModule, port)
-    return startIdeFromCompiledSources(ide, args)
+    val args = createArgs(ide, port)
+    return startIde(ide, args)
   }
 
-  fun startIdeFromCompiledSources(ide: Ide, args: List<String>) {
+  fun runIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
+    //todo: check that we are going to run test locally
+    val args = createArgs(path, port)
+    return startIde(ide, args)
+  }
+
+  private fun startIde(ide: Ide, args: List<String>) {
     LOG.info("Running $ide locally")
     val runnable: () -> Unit = {
       val ideaStartTest = ProcessBuilder().inheritIO().command(args)
       process = ideaStartTest.start()
       val wait = process!!.waitFor()
-      if (process!!.exitValue() != 1) println("Execution successful")
+      if (process!!.exitValue() != 1) println("${ide.ideType} started successfully")
       else {
         System.err.println("Process execution error:")
         System.err.println(BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n")))
+        fail("Starting ${ide.ideType} failed.")
       }
     }
     val ideaTestThread = Thread(runnable, "IdeaTestThread")
     ideaTestThread.start()
   }
 
-  private fun createArgs(testName: String, moduleName: String, port: Int = 0): List<String> {
+  private fun createArgs(ide: Ide, port: Int = 0): List<String> {
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
-      .plus(getDefaultVmOptions())
+      .plus(getDefaultVmOptions(ide))
       .plus("-classpath")
-      .plus(getOsSpecificClasspath(moduleName))
+      .plus(getOsSpecificClasspath(ide.ideType.mainModule))
       .plus("com.intellij.idea.Main")
       .plus(GuiTestStarter.COMMAND_NAME)
-      .plus(testName)
 
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
 
@@ -94,7 +97,21 @@ object GuiTestLocalLauncher {
     return resultingArgs
   }
 
-  private fun getDefaultVmOptions(configPath: String = "./config",
+  private fun createArgs(path: String, port: Int = 0): List<String> {
+    var resultingArgs = listOf<String>()
+      .plus("open")
+      .plus(path) //path to exec
+      .plus("--args")
+      .plus(GuiTestStarter.COMMAND_NAME)
+      .plus("-Didea.additional.classpath=/Users/jetbrains/IdeaProjects/idea-ultimate/out/classes/test/testGuiFramework/")
+    if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
+    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+    return resultingArgs
+  }
+
+
+  private fun getDefaultVmOptions(ide: Ide,
+                                  configPath: String = "./config",
                                   systemPath: String = "./system",
                                   bootClasspath: String = "./out/classes/production/boot",
                                   encoding: String = "UTF-8",
@@ -113,8 +130,10 @@ object GuiTestLocalLauncher {
       .plus("-Didea.config.path=$configPath")
       .plus("-Didea.system.path=$systemPath")
       .plus("-Dfile.encoding=$encoding")
+      .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus("-Xdebug")
-      .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendDebug,address=$debugPort") //todo: add System.getProperty(...) to customize debug port
+      .plus(
+        "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendDebug,address=$debugPort") //todo: add System.getProperty(...) to customize debug port
 
   private fun getCurrentJavaExec(): String {
     val homePath = System.getProperty("java.home")

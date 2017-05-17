@@ -15,194 +15,31 @@
  */
 package com.intellij.testGuiFramework.remote.server
 
-import com.intellij.testGuiFramework.impl.GuiTestStarter
-import com.intellij.testGuiFramework.remote.server.JUnitServer.Companion.poolOfObjects
-import java.io.EOFException
-import java.io.IOException
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
-import java.net.ServerSocket
-import java.net.Socket
-import java.net.SocketTimeoutException
-import java.util.*
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.LinkedBlockingQueue
+import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import java.util.concurrent.TimeUnit
 
 /**
  * @author Sergey Karashevich
  */
+interface JUnitServer {
 
-class JUnitServer : Thread("JUnitServer thread") {
+  fun send(message: TransportMessage)
 
-  private var serverSocket: ServerSocket = ServerSocket(0)
+  fun sendAndWaitAnswer(message: TransportMessage)
 
-  init {
-    serverSocket.soTimeout = 180000 //give 3 minutes timeout to startServer JUnit client with IntelliJ IDEA (should startServer right after MainImpl#main())
-  }
+  fun sendAndWaitAnswer(message: TransportMessage, timeout: Long, timeUnit: TimeUnit)
 
-  val myServerHandlers = ArrayList<ServerHandler>()
-  val myLifeCycle = LifeCycle()
-  var connection: Socket? = null
+  fun addHandler(serverHandler: ServerHandler)
 
-  var myServerFailsHandler: ((Throwable) -> Unit)? = null
+  fun setFailHandler(failHandler: (Throwable) -> Unit)
 
-  override fun run() {
-    try {
-      while (myLifeCycle.isAlive()) {
-        setListeningPort(serverSocket.localPort)
-        LOG.info("Waiting for JUnit client on port $myListeningPort...")
-        println("Waiting for JUnit client on port $myListeningPort...")
-        connection = serverSocket.accept()
+  fun removeHandler(serverHandler: ServerHandler)
 
-        LOG.info("Just connected to ${connection!!.remoteSocketAddress}")
-        println("Just connected to ${connection!!.remoteSocketAddress}")
-        val ois = ObjectInputStream(connection!!.getInputStream())
-        val out = ObjectOutputStream(connection!!.getOutputStream())
+  fun removeAllHandlers()
 
-        senderThread = SenderThread(connection!!, out)
-        senderThread!!.start()
+  fun isConnected(): Boolean
 
-        try {
-          while (myLifeCycle.isAlive() && connection!!.isConnected) {
-            val receivedObject = ois.readObject()
-            if (myServerHandlers.isNotEmpty()) {
-              myServerHandlers
-                .filter { it.acceptObject(receivedObject) }
-                .forEach {
-                  it.handleObject(receivedObject)
-                  val answer = it.answerToClient(receivedObject)
-                  if (answer != null) out.writeUTF(answer)
-                }
-            }
-            else {
-              LOG.error("Handler list is empty!")
-              throw Exception("No one handler to process received object!")
-            }
-          }
-        }
-        catch (e: EOFException) {
-          LOG.warn("Test state transport problem (EOFException): ${e.message}")
-        }
-        finally {
-          ois.close()
-          out.close()
-        }
-      }
-    }
-    catch (s: SocketTimeoutException) {
-      myLifeCycle.setAliveFlag(false)
-      myServerFailsHandler?.invoke(s)
-      stopServer()
-      LOG.error("Socket timed out!")
-    }
-    catch (e: IOException) {
-      e.printStackTrace()
-      myLifeCycle.setAliveFlag(false)
-      myServerFailsHandler?.invoke(e)
-      stopServer()
-    }
-    catch (e: Exception) {
-      myLifeCycle.setAliveFlag(false)
-      myServerFailsHandler?.invoke(e)
-      stopServer()
-      LOG.error("Exception: ", e)
-    }
-    finally {
-      if (connection != null) connection!!.close()
-    }
-  }
+  fun getPort(): Int
 
-  fun setServerFailsHandler(runnableThrowable: (Throwable) -> Unit) {
-    myServerFailsHandler = runnableThrowable
-  }
-
-  fun registerServerHandler(serverHandler: ServerHandler) {
-    myServerHandlers.add(serverHandler)
-  }
-
-  fun unregisterServerHandler(serverHandler: ServerHandler) {
-    myServerHandlers.remove(serverHandler)
-  }
-
-  fun removeAllServerHandlers() {
-    myServerHandlers.clear()
-  }
-
-  fun sendObject(obj: Any) {
-    assert(senderThread != null)
-    poolOfObjects.put(obj)
-  }
-
-  companion object {
-
-    val poolOfObjects: BlockingQueue<Any> = LinkedBlockingQueue<Any>()
-
-    private val LOG = com.intellij.openapi.diagnostic.Logger.getInstance("#com.intellij.testGuiFramework.remote.server.JUnitServer")
-    private var senderThread: SenderThread? = null
-
-    var isStarted: Boolean = false
-    var myServerThread: JUnitServer? = null
-    private var myListeningPort: Int = 0
-
-    fun setListeningPort(newPort: Int) {
-      myListeningPort = newPort
-      System.setProperty(GuiTestStarter.GUI_TEST_PORT, newPort.toString())
-    }
-
-    fun getListeningPort(): Int = myListeningPort
-
-    fun startServer() {
-      try {
-        LOG.info("Starting server...")
-        println("Starting server...")
-        myServerThread = JUnitServer()
-        myServerThread!!.start()
-        isStarted = true
-      }
-      catch (e: IOException) {
-        e.printStackTrace()
-      }
-    }
-
-    fun stopServer() {
-      if (isStarted) {
-        isStarted = false
-        setListeningPort(0)
-        myServerThread!!.join()
-      }
-    }
-
-    fun getServer(): JUnitServer {
-      if (!isStarted) startServer()
-      return myServerThread!!
-    }
-  }
-
-
-}
-
-class LifeCycle {
-
-  private var aliveFlag: Boolean = true
-
-  fun isAlive(): Boolean = aliveFlag
-
-  fun setAliveFlag(flag: Boolean) {
-    aliveFlag = flag
-  }
-}
-
-class SenderThread(val connection: Socket, val objectOutputStream: ObjectOutputStream): Thread("JUnitServer sender thread") {
-
-  override fun run() {
-    try {
-      while (connection.isConnected) {
-        objectOutputStream.writeObject(poolOfObjects.take())
-      }
-    } catch(e: InterruptedException) {
-      Thread.currentThread().interrupt()
-    } finally {
-      objectOutputStream.close()
-    }
-  }
+  fun stopServer()
 }

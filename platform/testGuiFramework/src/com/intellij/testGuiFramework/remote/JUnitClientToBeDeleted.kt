@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.remote
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.remote.transport.JUnitTestContainer
 import java.io.EOFException
 import java.io.InputStream
 import java.io.ObjectInputStream
@@ -32,7 +33,7 @@ import java.util.concurrent.LinkedBlockingQueue
  */
 
 
-class JUnitClient(val host: String = "localhost", val port: Int) {
+class JUnitClientToBeDeleted(val host: String = "localhost", val port: Int) {
 
   val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClient")
 
@@ -42,44 +43,6 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
 
   var isAlive: Boolean = false
   val testQueue: BlockingQueue<JUnitTestContainer> = LinkedBlockingQueue<JUnitTestContainer>()
-
-//  private fun runClient(serverName: String, port: Int) {
-//    LOG.info("Connecting to $serverName on port $port")
-//    try {
-//      myClient = Socket(serverName, port)
-//    }
-//    catch (e: ConnectException) {
-//      LOG.error("Connection to JUnit Server is refused", e)
-//      ApplicationManager.getApplication().invokeAndWait(Runnable {
-//        ApplicationManager.getApplication().exit()
-//      })
-//      return
-//    }
-//
-//    LOG.info("Just connected to " + myClient!!.remoteSocketAddress)
-//    val outToServer = myClient!!.getOutputStream()
-//    val inFromServer = myClient!!.getInputStream()
-//
-//    try {
-//      objectOutputStream = ObjectOutputStream(outToServer)
-//      clientInit.countDown()
-//
-//      val inputStream = DataInputStream(inFromServer)
-//      try {
-//        while (myClient != null && myClient!!.isConnected)
-//          LOG.info("Server response: ${inputStream.readUTF()}")
-//      } catch (eof: EOFException) {
-//        LOG.warn("Client message transport exception: ${eof.message}")
-//      } finally {
-//        inputStream.close()
-//      }
-//
-//    } finally {
-//      stopClient()
-//      outToServer.close()
-//      inFromServer.close()
-//    }
-//  }
 
   private fun runClientInWaitMode(serverName: String, port: Int) {
     LOG.info("Connecting to $serverName on port $port")
@@ -103,7 +66,8 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
       clientInit.countDown()
       processIncomingObjects(inFromServer) { handleObject(it) }
 
-    } finally {
+    }
+    finally {
       stopClient()
       outToServer.close()
       inFromServer.close()
@@ -125,11 +89,13 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
   }
 
   private fun handleObject(obj: Any) {
-    when(obj) {
+    LOG.info("Trying to process ${obj.toString()} received from server")
+    when (obj) {
       is JUnitTestContainer -> {
         //todo: check that class is derived from GuiTestCase
         testQueue.put(obj)
       }
+//      is IdeControlCommand -> IdeCommandProcessor.process(obj)
       else -> LOG.error("Unsupported type to handle it: ${obj.toString()}")
     }
   }
@@ -138,9 +104,7 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
     if (!isAlive) {
       LOG.info("Client hasn't been started yet or is not alive => starting...")
       object : Thread("IDE JUnit client thread") {
-        override fun run() {
-          runClientInWaitMode(host, port)
-        }
+        override fun run() = runClientInWaitMode(host, port)
       }.start()
       clientInit.await()
       isAlive = true
@@ -154,4 +118,13 @@ class JUnitClient(val host: String = "localhost", val port: Int) {
     LOG.info("Client disconnected")
   }
 
+}
+
+object IdeCommandProcessor {
+
+//  fun process(command: IdeControlCommand) {
+//    when(command.command) {
+//      CLOSE_IDE -> { ApplicationManager.getApplication().exit() }
+//    }
+//  }
 }

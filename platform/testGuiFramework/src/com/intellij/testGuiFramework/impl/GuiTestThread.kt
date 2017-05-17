@@ -15,61 +15,83 @@
  */
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.testGuiFramework.remote.JUnitClient
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.JUnitClientListener
-import com.intellij.testGuiFramework.remote.ObjectSender
+import com.intellij.testGuiFramework.remote.client.ClientHandler
+import com.intellij.testGuiFramework.remote.client.JUnitClient
+import com.intellij.testGuiFramework.remote.client.JUnitClientImpl
+import com.intellij.testGuiFramework.remote.transport.*
 import org.junit.runner.JUnitCore
 import org.junit.runner.Request
+import java.util.concurrent.BlockingQueue
+import java.util.concurrent.LinkedBlockingQueue
 
 /**
  * @author Sergey Karashevich
  */
-class GuiTestThread() : Thread(GUI_TEST_THREAD_NAME) {
+class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
-  private var myClient: JUnitClient? = null
+  lateinit private var myClient: JUnitClient
+  private var testQueue: BlockingQueue<JUnitTestContainer> = LinkedBlockingQueue()
   private val core = JUnitCore()
+  private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.impl.GuiTestThread")
 
   companion object {
-    val GUI_TEST_THREAD_NAME = "GuiTest thread"
+    val GUI_TEST_THREAD_NAME = "GuiTest Thread"
   }
 
   override fun run() {
-    createAndStartClient()
-    addListenerToCore()
+    myClient = JUnitClientImpl(host(), port(), createInitHandlers())
+    myClient.addHandler(createCloseHandler())
+
+    val myListener = JUnitClientListener({ jUnitInfo -> myClient.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) })
+    core.addListener(myListener)
 
     try {
-      while (true) {
-        val jUnitTestContainer = myClient!!.testQueue.take()
-        runTest(jUnitTestContainer.testClass, jUnitTestContainer.methodName)
-      }
-    }
-    catch (e: InterruptedException) {
+      while (true)
+        runTest(testQueue.take())
+    } catch (e: InterruptedException) {
       Thread.currentThread().interrupt()
     }
   }
 
-  private fun addListenerToCore() {
-    assert(myClient!!.objectOutputStream != null)
-    val objectSender = ObjectSender(myClient!!.objectOutputStream!!)
-    val myListener = JUnitClientListener(objectSender)
-    core.addListener(myListener)
+
+  private fun createInitHandlers(): Array<ClientHandler> {
+    val testHandler = object: ClientHandler {
+      override fun accept(message: TransportMessage) = message.type == MessageType.RUN_TEST
+
+      override fun handle(message: TransportMessage) {
+        val content = (message.content as JUnitTestContainer)
+        assert(content is JUnitTestContainer)
+        LOG.info("Added test to testQueue: ${content.toString()}")
+        testQueue.add(content)
+      }
+    }
+    return arrayOf(testHandler)
   }
 
-  private fun createAndStartClient() {
-    assert(myClient == null)
-    myClient = JUnitClient(host(), port())
-    myClient!!.startClientIfNecessary()
+
+  private fun createCloseHandler(): ClientHandler {
+    return object: ClientHandler {
+      override fun accept(message: TransportMessage) = message.type == MessageType.CLOSE_IDE
+
+      override fun handle(message: TransportMessage) {
+        myClient.send(TransportMessage(MessageType.RESPONSE, null, message.id))
+        val application = ApplicationManager.getApplication()
+        (application as ApplicationImpl).exit(true, true)
+      }
+    }
   }
 
   private fun host(): String = System.getProperty(GuiTestStarter.GUI_TEST_HOST)
 
   private fun port(): Int = System.getProperty(GuiTestStarter.GUI_TEST_PORT).toInt()
 
-  private fun runTest(testClass: Class<*>, methodName: String) {
-    //todo: assert that testClass is derived from GuiTestCase
-    val request = Request.method(testClass, methodName)
+  private fun runTest(testContainer: JUnitTestContainer) {
+    val request = Request.method(testContainer.testClass, testContainer.methodName)
     core.run(request)
   }
-
 
 }

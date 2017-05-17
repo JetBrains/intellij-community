@@ -15,7 +15,9 @@
  */
 package com.intellij.testGuiFramework.tests
 
-import com.intellij.testGuiFramework.remote.server.RemoteTestCase
+import com.intellij.testGuiFramework.launcher.ide.Ide
+import com.intellij.testGuiFramework.launcher.ide.IdeType
+import com.intellij.testGuiFramework.remote.RemoteTestCase
 import org.junit.Test
 
 /**
@@ -25,7 +27,14 @@ class ControlTest: RemoteTestCase() {
 
   @Test
   fun testColorSchemeTest() {
-//    runTest()
+
+    val ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0) // if path is not specified than run current IntelliJ IDEA from compiled sources
+
+    startAndClose(ide, "localhost", 5009, "/Users/jetbrains/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/172.2300/IntelliJ IDEA 2017.2 EAP.app") {
+//    startIde(ide, "localhost", 5009) {
+      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testFail")
+//      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testColorScheme2")
+    }
   }
 
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.testGuiFramework.remote
 
+import com.intellij.testGuiFramework.remote.transport.JUnitInfo
+import com.intellij.testGuiFramework.remote.transport.Type
 import org.junit.AssumptionViolatedException
 import org.junit.runner.Description
 import org.junit.runner.notification.Failure
@@ -23,26 +25,26 @@ import org.junit.runner.notification.RunListener
 /**
  * @author Sergey Karashevich
  */
-class JUnitClientListener(val objectSender: ObjectSender) : RunListener() {
+class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
 
   override fun testStarted(description: Description?) {
-    objectSender.send(JUnitInfo(Type.STARTED, description))
+    sendObjectFun(JUnitInfo(Type.STARTED, description))
   }
 
   override fun testAssumptionFailure(failure: Failure?) {
-    objectSender.send(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable()))
+    sendObjectFun(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable()))
   }
 
   override fun testFailure(failure: Failure?) {
-    objectSender.send(JUnitInfo(Type.FAILURE, failure))
+    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception.stackTrace))
   }
 
   override fun testFinished(description: Description?) {
-    objectSender.send(JUnitInfo(Type.FINISHED, description))
+    sendObjectFun(JUnitInfo(Type.FINISHED, description))
   }
 
   override fun testIgnored(description: Description?) {
-    objectSender.send(JUnitInfo(Type.IGNORED, description))
+    sendObjectFun(JUnitInfo(Type.IGNORED, description))
   }
 
   private fun Failure?.friendlySerializable(): Failure? {
@@ -51,4 +53,5 @@ class JUnitClientListener(val objectSender: ObjectSender) : RunListener() {
     val newException = AssumptionViolatedException(e.toString(), e.cause)
     return Failure(this.description, newException)
   }
+
 }

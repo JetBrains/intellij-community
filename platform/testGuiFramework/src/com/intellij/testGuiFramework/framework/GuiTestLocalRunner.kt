@@ -18,12 +18,10 @@ package com.intellij.testGuiFramework.framework
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.killProcessIfPossible
-import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runTestLocally
-import com.intellij.testGuiFramework.remote.JUnitInfo
-import com.intellij.testGuiFramework.remote.JUnitTestContainer
-import com.intellij.testGuiFramework.remote.Type
-import com.intellij.testGuiFramework.remote.server.JUnitServer
+import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
+import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.server.ServerHandler
+import com.intellij.testGuiFramework.remote.transport.*
 import org.junit.Assert
 import org.junit.internal.AssumptionViolatedException
 import org.junit.internal.runners.model.EachTestNotifier
@@ -60,13 +58,13 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     val description = this@GuiTestLocalRunner.describeChild(method)
     val eachNotifier = EachTestNotifier(notifier, description)
     val cdl = CountDownLatch(1)
+    val server = JUnitServerHolder.getServer()
 
     val myServerHandler = object : ServerHandler() {
 
-      override fun acceptObject(obj: Any) = obj is JUnitInfo && obj.obj is Description && obj.obj.methodName == method.name
-      override fun handleObject(obj: Any) {
-        assert(acceptObject(obj))
-        val jUnitInfo = obj as JUnitInfo
+      override fun acceptObject(message: TransportMessage) = message.content is JUnitInfo && message.content.obj is Description && message.content.obj.methodName == method.name
+      override fun handleObject(message: TransportMessage) {
+        val jUnitInfo = message.content as JUnitInfo
         when (jUnitInfo.type) {
           Type.STARTED -> eachNotifier.fireTestStarted()
           Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((jUnitInfo.obj as Failure).exception as AssumptionViolatedException)
@@ -81,11 +79,12 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     }
 
     try {
-      JUnitServer.getServer().registerServerHandler(myServerHandler)
-      JUnitServer.getServer().setServerFailsHandler(runnableThrowable = { throwable -> cdl.countDown(); throw throwable })
-      if (!(JUnitServer.getServer().connection?.isConnected ?: false)) //if not connected to JUnitClient
-        runTestLocally(method = method, port = JUnitServer.getListeningPort()) //todo: add IDE specification here
-      JUnitServer.getServer().sendObject(JUnitTestContainer(method.declaringClass, method.name))
+      server.addHandler(myServerHandler)
+      server.setFailHandler({ throwable -> cdl.countDown(); throw throwable })
+      if (!server.isConnected())
+        runIdeLocally(port = server.getPort()) //todo: add IDE specification here
+      val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
+      server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }
     catch (e: Exception) {
       notifier.fireTestIgnored(description)
@@ -94,7 +93,7 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     }
     if (!cdl.await(10, TimeUnit.MINUTES)) //kill idea if tests exceeded timeout
       killProcessIfPossible()
-    JUnitServer.getServer().unregisterServerHandler(myServerHandler)
+    server.removeAllHandlers()
   }
 
   private fun runOnClientSide(method: FrameworkMethod, notifier: RunNotifier) {
@@ -129,7 +128,7 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     }
     else {
       if (!GuiTestStarter.isGuiTestThread())
-        runTestLocally(method)
+        runIdeLocally()
       else
         super.runChild(method, notifier)
     }

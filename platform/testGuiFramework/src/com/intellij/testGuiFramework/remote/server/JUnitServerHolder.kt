@@ -15,12 +15,19 @@
  */
 package com.intellij.testGuiFramework.remote.server
 
-import com.intellij.testGuiFramework.remote.transport.TransportMessage
-
 /**
  * @author Sergey Karashevich
  */
-abstract class ServerHandler {
-    abstract fun acceptObject(message: TransportMessage): Boolean
-    abstract fun handleObject(message: TransportMessage): Unit
+object JUnitServerHolder {
+
+  private var myServer: JUnitServer? = null
+
+  fun getServer(): JUnitServer {
+    if (myServer == null) {
+      myServer = JUnitServerImpl()
+      (myServer as JUnitServerImpl).start()
+    }
+    return myServer!!
+  }
+
 }

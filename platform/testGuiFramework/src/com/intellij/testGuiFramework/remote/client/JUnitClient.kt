@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testGuiFramework.remote
+package com.intellij.testGuiFramework.remote.client
 
-import java.io.Serializable
+import com.intellij.testGuiFramework.remote.transport.TransportMessage
 
 /**
  * @author Sergey Karashevich
  */
-enum class Type {RUN_STARTED, STARTED, ASSUMPTION_FAILURE, RUN_FINISHED, FAILURE, FINISHED, IGNORED}
-data class JUnitInfo(val type: Type, val obj: Any?) : Serializable
+interface JUnitClient {
+
+  fun send(message: TransportMessage)
+
+  fun addHandler(handler: ClientHandler)
+
+  fun removeHandler(handler: ClientHandler)
+
+  fun removeAllHandlers()
+
+  fun stopClient()
+
+}
