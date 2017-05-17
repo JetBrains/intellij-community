@@ -30,12 +30,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 
@@ -59,12 +58,13 @@ public class ImplementAbstractMethodHandler {
   public void invoke() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
+    Ref<String> problemDetected = new Ref<>();
     final PsiElement[][] result = new PsiElement[1][];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass psiClass = myMethod.getContainingClass();
       if (!psiClass.isValid()) return;
       if (!psiClass.isEnum()) {
-        result[0] = getClassImplementations(psiClass);
+        result[0] = getClassImplementations(psiClass, problemDetected);
       }
       else {
         final List<PsiElement> enumConstants = new ArrayList<>();
@@ -90,7 +90,7 @@ public class ImplementAbstractMethodHandler {
 
     if (result[0].length == 0) {
       Messages.showMessageDialog(myProject,
-                                 CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message"),
+                                 problemDetected.isNull() ? CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.message") : problemDetected.get(),
                                  CodeInsightBundle.message("intention.implement.abstract.method.error.no.classes.title"),
                                  Messages.getInformationIcon());
       return;
@@ -154,18 +154,29 @@ public class ImplementAbstractMethodHandler {
     }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  private PsiClass[] getClassImplementations(final PsiClass psiClass) {
+  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<String> problemDetected) {
     ArrayList<PsiClass> list = new ArrayList<>();
+    Set<String> classNamesWithPotentialImplementations = new LinkedHashSet<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {
       if (!inheritor.isInterface() || PsiUtil.isLanguageLevel8OrHigher(inheritor)) {
         final PsiSubstitutor classSubstitutor = TypeConversionUtil.getClassSubstitutor(psiClass, inheritor, PsiSubstitutor.EMPTY);
         PsiMethod method = classSubstitutor != null ? MethodSignatureUtil.findMethodBySignature(inheritor, myMethod.getSignature(classSubstitutor), true)
                                                     : inheritor.findMethodBySignature(myMethod, true);
-        if (method == null || !psiClass.equals(method.getContainingClass())) continue;
+        if (method == null) continue;
+        PsiClass containingClass = method.getContainingClass();
+        if (!psiClass.equals(containingClass)) {
+          if (containingClass != null) {
+            classNamesWithPotentialImplementations.add(PsiFormatUtil.formatClass(containingClass, PsiFormatUtilBase.SHOW_NAME));
+          }
+          continue;
+        }
         list.add(inheritor);
       }
     }
 
+    if (!classNamesWithPotentialImplementations.isEmpty()) {
+      problemDetected.set("Potential implementations with weaker access privileges are found: " + StringUtil.join(classNamesWithPotentialImplementations, ", "));
+    }
     return list.toArray(new PsiClass[list.size()]);
   }
 
