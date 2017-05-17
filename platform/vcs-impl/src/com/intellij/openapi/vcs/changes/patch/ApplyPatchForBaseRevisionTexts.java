@@ -53,6 +53,29 @@ public class ApplyPatchForBaseRevisionTexts {
   }
 
   @NotNull
+  public String getLocal() {
+    return myLocal;
+  }
+
+  @Nullable
+  public String getBase() {
+    return myBase;
+  }
+
+  @NotNull
+  public String getPatched() {
+    return myPatched;
+  }
+
+  public boolean isAppliedSomehow() {
+    return myIsAppliedSomehow;
+  }
+
+  public boolean isBaseRevisionLoaded() {
+    return myBase != null;
+  }
+
+  @NotNull
   @CalledInAny
   public static ApplyPatchForBaseRevisionTexts create(@NotNull Project project,
                                                       @NotNull VirtualFile file,
@@ -158,28 +181,5 @@ public class ApplyPatchForBaseRevisionTexts {
       }
       return LoadTextUtil.loadText(file).toString();
     });
-  }
-
-  @NotNull
-  public String getLocal() {
-    return myLocal;
-  }
-
-  @Nullable
-  public String getBase() {
-    return myBase;
-  }
-
-  @NotNull
-  public String getPatched() {
-    return myPatched;
-  }
-
-  public boolean isAppliedSomehow() {
-    return myIsAppliedSomehow;
-  }
-
-  public boolean isBaseRevisionLoaded() {
-    return myBase != null;
   }
 }
