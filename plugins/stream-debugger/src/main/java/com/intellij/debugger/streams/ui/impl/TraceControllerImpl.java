@@ -15,14 +15,16 @@
  */
 package com.intellij.debugger.streams.ui.impl;
 
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
+import com.intellij.debugger.streams.trace.IntermediateState;
+import com.intellij.debugger.streams.trace.NextAwareState;
+import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.*;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,25 +38,24 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   };
   private final List<TraceContainer> myListeners = new CopyOnWriteArrayList<>();
   private final ValuesSelectionListener mySelectionListener;
-  private final ResolvedTrace myResolvedTrace;
+  private final IntermediateState myState;
+  private final PrevAwareState myToPrev;
+  private final NextAwareState myToNext;
 
   private ValuesHighlightingListener myPrevListener = EMPTY_LISTENER;
   private ValuesHighlightingListener myNextListener = EMPTY_LISTENER;
-  private List<Value> myValues;
 
-  TraceControllerImpl(@NotNull ResolvedTrace trace, @NotNull List<Value> values) {
-    myResolvedTrace = trace;
-    myValues = new ArrayList<>(values);
+  TraceControllerImpl(@NotNull IntermediateState state) {
+    myState = state;
+    myToPrev = state instanceof PrevAwareState ? (PrevAwareState)state : null;
+    myToNext = state instanceof NextAwareState ? (NextAwareState)state : null;
+
     mySelectionListener = elements -> {
       selectAll(elements);
 
       propagateForward(elements);
       propagateBackward(elements);
     };
-  }
-
-  TraceControllerImpl(@NotNull ResolvedTrace trace) {
-    this(trace, trace.getValues().stream().map(TraceElement::getValue).collect(Collectors.toList()));
   }
 
   void setPreviousListener(@NotNull ValuesHighlightingListener listener) {
@@ -68,19 +69,36 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
   @NotNull
   @Override
   public List<Value> getValues() {
-    return Collections.unmodifiableList(myValues);
+    return myState.getRawValues();
+  }
+
+  @NotNull
+  public List<TraceElement> getTrace() {
+    return myState.getTrace();
+  }
+
+  @Nullable
+  @Override
+  public StreamCall getNextCall() {
+    return myToNext == null ? null : myToNext.getNextCall();
+  }
+
+  @Nullable
+  @Override
+  public StreamCall getPrevCall() {
+    return myToPrev == null ? null : myToPrev.getPrevCall();
   }
 
   @NotNull
   @Override
-  public StreamCall getCall() {
-    return myResolvedTrace.getCall();
+  public List<TraceElement> getNextValues(@NotNull TraceElement element) {
+    return myToNext == null ? Collections.emptyList() : myToNext.getNextValues(element);
   }
 
   @NotNull
   @Override
-  public ResolvedTrace getResolvedTrace() {
-    return myResolvedTrace;
+  public List<TraceElement> getPrevValues(@NotNull TraceElement element) {
+    return myToPrev == null ? Collections.emptyList() : myToPrev.getPrevValues(element);
   }
 
   @Override
@@ -106,14 +124,14 @@ public class TraceControllerImpl implements TraceController, ValuesHighlightingL
 
   private void propagateForward(@NotNull List<TraceElement> values) {
     final List<TraceElement> nextValues =
-      values.stream().flatMap(x -> myResolvedTrace.getNextValues(x).stream()).collect(Collectors.toList());
+      values.stream().flatMap(x -> getNextValues(x).stream()).collect(Collectors.toList());
 
     myNextListener.highlightingChanged(nextValues, PropagationDirection.FORWARD);
   }
 
   private void propagateBackward(@NotNull List<TraceElement> values) {
     final List<TraceElement> prevValues =
-      values.stream().flatMap(x -> myResolvedTrace.getPreviousValues(x).stream()).collect(Collectors.toList());
+      values.stream().flatMap(x -> getPrevValues(x).stream()).collect(Collectors.toList());
     myPrevListener.highlightingChanged(prevValues, PropagationDirection.BACKWARD);
   }
 
