@@ -18,6 +18,7 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -92,6 +93,7 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
   }
 
   private static void reinitBreadcrumbsComponent(@NotNull final FileEditorManager fileEditorManager, @NotNull VirtualFile file) {
+    boolean above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
     for (FileEditor fileEditor : fileEditorManager.getAllEditors(file)) {
       if (fileEditor instanceof TextEditor) {
         TextEditor textEditor = (TextEditor)fileEditor;
@@ -99,6 +101,11 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
         BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsComponent(editor);
         if (isSuitable(textEditor, file)) {
           if (wrapper != null) {
+            if (wrapper.breadcrumbs.above != above) {
+              remove(fileEditorManager, fileEditor, wrapper);
+              wrapper.breadcrumbs.above = above;
+              add(fileEditorManager, fileEditor, wrapper);
+            }
             wrapper.queueUpdate();
           }
           else {
@@ -120,29 +127,35 @@ public class BreadcrumbsInitializingActivity implements StartupActivity, DumbAwa
     return editor.isValid() && BreadcrumbsXmlWrapper.findInfoProvider(editor.getEditor(), file) != null;
   }
 
+  private static void add(@NotNull FileEditorManager manager, @NotNull FileEditor editor, @NotNull BreadcrumbsXmlWrapper wrapper) {
+    if (wrapper.breadcrumbs.above) {
+      manager.addTopComponent(editor, wrapper);
+    }
+    else {
+      manager.addBottomComponent(editor, wrapper);
+    }
+  }
+
+  private static void remove(@NotNull FileEditorManager manager, @NotNull FileEditor editor, @NotNull BreadcrumbsXmlWrapper wrapper) {
+    if (wrapper.breadcrumbs.above) {
+      manager.removeTopComponent(editor, wrapper);
+    }
+    else {
+      manager.removeBottomComponent(editor, wrapper);
+    }
+  }
+
   private static void registerWrapper(@NotNull FileEditorManager fileEditorManager,
                                       @NotNull FileEditor fileEditor,
                                       @NotNull BreadcrumbsXmlWrapper wrapper) {
-    //noinspection deprecation
-    if (wrapper.breadcrumbs.above) {
-      fileEditorManager.addTopComponent(fileEditor, wrapper);
-    }
-    else {
-      fileEditorManager.addBottomComponent(fileEditor, wrapper);
-    }
+    add(fileEditorManager, fileEditor, wrapper);
     Disposer.register(fileEditor, () -> disposeWrapper(fileEditorManager, fileEditor, wrapper));
   }
 
   private static void disposeWrapper(@NotNull FileEditorManager fileEditorManager,
                                      @NotNull FileEditor fileEditor,
                                      @NotNull BreadcrumbsXmlWrapper wrapper) {
-    //noinspection deprecation
-    if (wrapper.breadcrumbs.above) {
-      fileEditorManager.removeTopComponent(fileEditor, wrapper);
-    }
-    else {
-      fileEditorManager.removeBottomComponent(fileEditor, wrapper);
-    }
+    remove(fileEditorManager, fileEditor, wrapper);
     Disposer.dispose(wrapper);
   }
 }

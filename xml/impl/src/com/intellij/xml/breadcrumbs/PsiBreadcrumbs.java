@@ -18,8 +18,8 @@ package com.intellij.xml.breadcrumbs;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 
@@ -31,7 +31,7 @@ import java.awt.Graphics2D;
  * @author Sergey.Malenkov
  */
 final class PsiBreadcrumbs extends Breadcrumbs {
-  final boolean above = Registry.is("editor.breadcrumbs.above");
+  boolean above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove();
 
   void updateBorder(int offset) {
     // do not use scaling here because this border is used to align breadcrumbs with a gutter
