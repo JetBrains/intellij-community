@@ -628,9 +628,10 @@ def series_to_xml(df, name, roffset, coffset, rows, cols, format):
 
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
                (str(col), 1, dtype, fmt, bounds[1], bounds[0])
+    get_label = lambda label: str(label) if not isinstance(label, tuple) else '/'.join(map(str, label))
     for row, label in enumerate(iter(df.axes[0])):
         xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % \
-               (str(row), str(label))
+               (str(row), get_label(label))
     xml += "</headerdata>\n"
     xml += array_data_to_xml(rows, cols, lambda r: (col_formats[c] % df.iat[r] for c in range(cols)))
     return xml
