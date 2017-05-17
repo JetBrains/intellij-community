@@ -69,14 +69,16 @@ public class MethodChainCompletionContributor extends CompletionContributor {
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
           final Set<PsiMethod> alreadySuggested = new THashSet<>();
+          CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, completionResult -> {
             LookupElement lookupElement = completionResult.getLookupElement();
             PsiElement psi = lookupElement.getPsiElement();
             if (psi instanceof PsiMethod) {
               alreadySuggested.add((PsiMethod)psi);
             }
-            result.passResult(completionResult);
+            finalResult.passResult(completionResult);
           });
+          result = JavaCompletionSorting.addJavaSorting(parameters, result);
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
           if (!UNIT_TEST_MODE) {
             Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();

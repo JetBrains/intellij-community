@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -48,6 +49,8 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
 */
 public class PreferByKindWeigher extends LookupElementWeigher {
+  public static final Key<Boolean> INTRODUCED_VARIABLE = Key.create("INTRODUCED_VARIABLE");
+
   static final ElementPattern<PsiElement> IN_CATCH_TYPE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
       withParent(psiElement(PsiTypeElement.class).
@@ -144,6 +147,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     suitableClass,
     nonInitialized,
     classNameOrGlobalStatic,
+    introducedVariable,
     unlikelyClass,
     improbableKeyword,
   }
@@ -200,6 +204,9 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       }
       if (isGetter(qualifier)) {
         return MyResult.qualifiedWithGetter;
+      }
+      if (chain.getQualifier().getUserData(INTRODUCED_VARIABLE) == Boolean.TRUE) {
+        return MyResult.introducedVariable;
       }
     }
 

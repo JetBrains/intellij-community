@@ -17,9 +17,8 @@ package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
-import com.intellij.compiler.chainsSearch.ChainRelevance;
-import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,6 +30,6 @@ public class MethodChainWeigher extends CompletionWeigher {
     if (element instanceof WeightableChainLookupElement) {
       return ((WeightableChainLookupElement)element).getChainRelevance();
     }
-    return ChainRelevance.LOWEST;
+    return null;
   }
 }

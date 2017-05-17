@@ -1881,7 +1881,7 @@
 
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainCompletionContributor"/>
-    <weigher order="first" key="completion" id="methodsChains"
+    <weigher order="after mostUsed" key="completion" id="methodsChains"
              implementationClass="com.intellij.compiler.chainsSearch.completion.MethodChainWeigher"/>
 
     <applicationService serviceInterface="org.jetbrains.java.generate.template.toString.ToStringTemplatesManager"

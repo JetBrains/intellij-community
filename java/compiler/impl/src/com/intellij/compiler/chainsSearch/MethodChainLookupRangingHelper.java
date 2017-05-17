@@ -19,7 +19,10 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaChainLookupElement;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.ExpressionLookupItem;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
@@ -35,17 +38,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-
 public class MethodChainLookupRangingHelper {
   @Nullable
   public static LookupElement chainToWeightableLookupElement(MethodChain chain,
                                                              ChainCompletionContext context) {
     int chainLength = chain.length();
     assert chainLength != 0;
-    int lastMethodWeight = chain.getChainWeight();
     int unreachableParametersCount = 0;
-    int notMatchedStringVars = 0;
     int matchedParametersInContext = 0;
     Boolean isFirstMethodStatic = null;
     Boolean hasQualifierInContext = null;
@@ -83,7 +82,6 @@ public class MethodChainLookupRangingHelper {
       }
       matchedParametersInContext += procResult.getMatchedParametersInContext();
       unreachableParametersCount += procResult.getUnreachableParametersCount();
-      notMatchedStringVars += procResult.getNotMatchedStringVars();
       chainLookupElement =
         isHead ? procResult.getLookupElement() : new JavaChainLookupElement(chainLookupElement, procResult.getLookupElement());
     }
@@ -93,13 +91,7 @@ public class MethodChainLookupRangingHelper {
     }
 
     ChainRelevance relevance =
-      new ChainRelevance(chainLength,
-                         lastMethodWeight,
-                         unreachableParametersCount,
-                         notMatchedStringVars,
-                         hasQualifierInContext,
-                         isFirstMethodStatic,
-                         matchedParametersInContext);
+      new ChainRelevance(chainLength, unreachableParametersCount, matchedParametersInContext);
 
     if (context.getTarget().isIteratorAccess()) {
       chainLookupElement = new LookupElementDecorator<LookupElement>(chainLookupElement) {
@@ -141,7 +133,6 @@ public class MethodChainLookupRangingHelper {
                                                 ChainCompletionContext context,
                                                 NullableNotNullManager nullableNotNullManager) {
     int unreachableParametersCount = 0;
-    int notMatchedStringVars = 0;
     int matchedParametersInContext = 0;
     boolean hasCallingVariableInContext = false;
     boolean introduceNewVariable = false;
@@ -149,13 +140,7 @@ public class MethodChainLookupRangingHelper {
     PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
       PsiType type = parameter.getType();
-      if (type.equalsToText(JAVA_LANG_STRING)) {
-        PsiElement relevantStringElement = context.findRelevantStringInContext(parameter.getName());
-        if (relevantStringElement == null) {
-          notMatchedStringVars++;
-        }
-      }
-      else if (!ChainCompletionContext.isWidelyUsed(type)) {
+      if (!ChainCompletionContext.isWidelyUsed(type)) {
         Collection<PsiElement> contextVariables = context.getQualifiers(type).collect(Collectors.toList());
         PsiElement contextVariable = ContainerUtil.getFirstItem(contextVariables, null);
         if (contextVariable != null) {
@@ -208,7 +193,6 @@ public class MethodChainLookupRangingHelper {
     }
     return new MethodProcResult(lookupElement,
                                 unreachableParametersCount,
-                                notMatchedStringVars,
                                 hasCallingVariableInContext,
                                 introduceNewVariable,
                                 matchedParametersInContext);
@@ -232,20 +216,17 @@ public class MethodChainLookupRangingHelper {
   private static class MethodProcResult {
     private final LookupElement myMethodLookup;
     private final int myUnreachableParametersCount;
-    private final int myNotMatchedStringVars;
     private final boolean myHasCallingVariableInContext;
     private final boolean myIntroduceNewVariable;
     private final int myMatchedParametersInContext;
 
     private MethodProcResult(LookupElement methodLookup,
                              int unreachableParametersCount,
-                             int notMatchedStringVars,
                              boolean hasCallingVariableInContext,
                              boolean introduceNewVariable,
                              int matchedParametersInContext) {
       myMethodLookup = methodLookup;
       myUnreachableParametersCount = unreachableParametersCount;
-      myNotMatchedStringVars = notMatchedStringVars;
       myHasCallingVariableInContext = hasCallingVariableInContext;
       myIntroduceNewVariable = introduceNewVariable;
       myMatchedParametersInContext = matchedParametersInContext;
@@ -265,10 +246,6 @@ public class MethodChainLookupRangingHelper {
 
     private int getUnreachableParametersCount() {
       return myUnreachableParametersCount;
-    }
-
-    private int getNotMatchedStringVars() {
-      return myNotMatchedStringVars;
     }
 
     public int getMatchedParametersInContext() {

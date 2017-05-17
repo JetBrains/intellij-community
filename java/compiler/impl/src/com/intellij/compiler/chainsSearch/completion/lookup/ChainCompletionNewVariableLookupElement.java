@@ -16,6 +16,7 @@
 package com.intellij.compiler.chainsSearch.completion.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.completion.PreferByKindWeigher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
@@ -48,6 +49,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElement {
       .findFirst()
       .orElseThrow(IllegalStateException::new);
     myQualifierClass = qualifierClass;
+    putUserData(PreferByKindWeigher.INTRODUCED_VARIABLE, Boolean.TRUE);
   }
 
   @Override
