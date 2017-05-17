@@ -29,13 +29,13 @@ import java.util.List;
 public class StateBase implements IntermediateState {
   private final List<TraceElement> myElements;
 
-  public StateBase(@NotNull List<TraceElement> elements) {
+  StateBase(@NotNull List<TraceElement> elements) {
     myElements = Collections.unmodifiableList(new ArrayList<>(elements));
   }
 
   @NotNull
   @Override
-  public List<TraceElement> getValues() {
+  public List<TraceElement> getTrace() {
     return myElements;
   }
 }

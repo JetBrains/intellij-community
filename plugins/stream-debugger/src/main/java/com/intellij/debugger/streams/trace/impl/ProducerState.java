@@ -17,6 +17,7 @@ package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -27,11 +28,21 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class ProducerState extends StateBase implements NextAwareState {
+  @NotNull private final StreamCall myNextCall;
   @NotNull private final Map<TraceElement, List<TraceElement>> myToNext;
 
-  public ProducerState(@NotNull List<TraceElement> elements, @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
+  public ProducerState(@NotNull List<TraceElement> elements,
+                       @NotNull StreamCall nextCall,
+                       @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
     super(elements);
+    myNextCall = nextCall;
     myToNext = toNextMapping;
+  }
+
+  @NotNull
+  @Override
+  public StreamCall getNextCall() {
+    return myNextCall;
   }
 
   @NotNull

@@ -17,10 +17,10 @@ package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,20 +30,29 @@ import java.util.Map;
  */
 public class TerminationState extends StateBase implements PrevAwareState {
   private final Value myResult;
-  @NotNull private final Map<TraceElement, List<TraceElement>> myToPrev;
+  private final StreamCall myPrevCall;
+  private final Map<TraceElement, List<TraceElement>> myToPrev;
 
   public TerminationState(@NotNull Value result,
+                          @NotNull StreamCall prevCall,
                           @NotNull List<TraceElement> elements,
                           @NotNull Map<TraceElement, List<TraceElement>> toPrevMapping) {
     super(elements);
     myResult = result;
+    myPrevCall = prevCall;
     myToPrev = toPrevMapping;
   }
 
   @NotNull
   @Override
-  public Collection<Value> getRawValues() {
-    return Collections.singleton(myResult);
+  public List<Value> getRawValues() {
+    return Collections.singletonList(myResult);
+  }
+
+  @NotNull
+  @Override
+  public StreamCall getPrevCall() {
+    return myPrevCall;
   }
 
   @NotNull

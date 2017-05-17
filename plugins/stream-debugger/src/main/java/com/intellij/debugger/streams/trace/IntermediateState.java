@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 public interface IntermediateState {
 
   @NotNull
-  List<TraceElement> getValues();
+  List<TraceElement> getTrace();
 
   @NotNull
-  default Collection<Value> getRawValues() {
-    return getValues().stream().map(TraceElement::getValue).collect(Collectors.toList());
+  default List<Value> getRawValues() {
+    return getTrace().stream().map(TraceElement::getValue).collect(Collectors.toList());
   }
 }

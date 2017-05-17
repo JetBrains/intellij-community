@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.trace.impl;
 import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -28,21 +29,40 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class IntermediateStateImpl extends StateBase implements NextAwareState, PrevAwareState {
-  @NotNull private final Map<TraceElement, List<TraceElement>> myToPrev;
-  @NotNull private final Map<TraceElement, List<TraceElement>> myToNext;
+  private final Map<TraceElement, List<TraceElement>> myToPrev;
+  private final Map<TraceElement, List<TraceElement>> myToNext;
+  private final StreamCall myNextCall;
+  private final StreamCall myPrevCall;
 
   public IntermediateStateImpl(@NotNull List<TraceElement> elements,
+                               @NotNull StreamCall nextCall,
+                               @NotNull StreamCall prevCall,
                                @NotNull Map<TraceElement, List<TraceElement>> toPrevMapping,
                                @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
     super(elements);
     myToPrev = toPrevMapping;
     myToNext = toNextMapping;
+
+    myPrevCall = prevCall;
+    myNextCall = nextCall;
+  }
+
+  @NotNull
+  @Override
+  public StreamCall getPrevCall() {
+    return myPrevCall;
   }
 
   @NotNull
   @Override
   public List<TraceElement> getPrevValues(@NotNull TraceElement value) {
     return myToPrev.getOrDefault(value, Collections.emptyList());
+  }
+
+  @NotNull
+  @Override
+  public StreamCall getNextCall() {
+    return myNextCall;
   }
 
   @NotNull
