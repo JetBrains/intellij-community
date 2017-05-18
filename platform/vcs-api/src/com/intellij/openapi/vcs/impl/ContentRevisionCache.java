@@ -45,23 +45,16 @@ import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author irengrig
- *         Date: 6/8/11
- *         Time: 6:53 PM
- */
 public class ContentRevisionCache {
   private final Object myLock;
   private final SLRUMap<Key, SoftReference<byte[]>> myCache;
   private final SLRUMap<CurrentKey, VcsRevisionNumber> myCurrentRevisionsCache;
-  private final SLRUMap<Pair<FilePath, VcsRevisionNumber>, Object> myCustom;
   private long myCounter;
 
   public ContentRevisionCache() {
     myLock = new Object();
     myCache = new SLRUMap<>(100, 50);
     myCurrentRevisionsCache = new SLRUMap<>(200, 50);
-    myCustom = new SLRUMap<>(30, 30);
     myCounter = 0;
   }
 
@@ -69,28 +62,6 @@ public class ContentRevisionCache {
     if (bytes == null) return;
     synchronized (myLock) {
       myCache.put(new Key(path, number, vcsKey, type), new SoftReference<>(bytes));
-    }
-  }
-
-  @Nullable
-  public String get(FilePath path, VcsRevisionNumber number, @NotNull VcsKey vcsKey, @NotNull UniqueType type) {
-    synchronized (myLock) {
-      final byte[] bytes = getBytes(path, number, vcsKey, type);
-      if (bytes == null) return null;
-      return bytesToString(path, bytes);
-    }
-  }
-
-  public void putCustom(FilePath path, VcsRevisionNumber number, final Object o) {
-    synchronized (myLock) {
-      myCustom.put(Pair.create(path, number), o);
-    }
-  }
-
-  @Nullable
-  public Object getCustom(FilePath path, VcsRevisionNumber number) {
-    synchronized (myLock) {
-      return myCustom.get(Pair.create(path, number));
     }
   }
 
@@ -176,6 +147,7 @@ public class ContentRevisionCache {
     return getOrLoadAsString(project, path, number, vcsKey, type, loader, null);
   }
 
+  @NotNull
   private static String bytesToString(FilePath path, @NotNull byte[] bytes) {
     Charset charset = null;
     if (path.getVirtualFile() != null) {
@@ -280,12 +252,6 @@ public class ContentRevisionCache {
 
     cache.put(path, currentRevision, vcsKey, UniqueType.REPOSITORY_CONTENT, loaded.getSecond());
     return loaded;
-  }
-
-  public static Pair<VcsRevisionNumber, String> getOrLoadCurrentAsString(final Project project, FilePath path, @NotNull VcsKey vcsKey,
-      final CurrentRevisionProvider loader) throws VcsException, IOException {
-    Pair<VcsRevisionNumber, byte[]> pair = getOrLoadCurrentAsBytes(project, path, vcsKey, loader);
-    return Pair.create(pair.getFirst(), bytesToString(path, pair.getSecond()));
   }
 
   private static class CurrentKey {
