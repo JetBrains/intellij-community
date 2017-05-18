@@ -20,10 +20,10 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
 import org.jetbrains.annotations.NotNull;
 
-public final class WeightableChainLookupElement extends LookupElementDecorator<LookupElement> {
+public final class JavaRelevantChainLookupElement extends LookupElementDecorator<LookupElement> {
   private final ChainRelevance myChainRelevance;
 
-  public WeightableChainLookupElement(final @NotNull LookupElement delegate, final @NotNull ChainRelevance relevance) {
+  public JavaRelevantChainLookupElement(final @NotNull LookupElement delegate, final @NotNull ChainRelevance relevance) {
     super(delegate);
     myChainRelevance = relevance;
   }

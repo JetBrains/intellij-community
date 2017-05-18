@@ -24,7 +24,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.compiler.chainsSearch.completion.lookup.ChainCompletionNewVariableLookupElement;
-import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
@@ -122,7 +122,7 @@ public class MethodChainLookupRangingHelper {
       };
     }
 
-    return new WeightableChainLookupElement(chainLookupElement, relevance);
+    return new JavaRelevantChainLookupElement(chainLookupElement, relevance);
   }
 
 
