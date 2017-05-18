@@ -173,10 +173,8 @@ public class ExistingTemplatesComponent {
 
   public void setUserTemplates(ConfigurationManager configurationManager) {
     userTemplatesNode.removeAllChildren();
-    if (configurationManager.getConfigurations() != null) {
-      for (final Configuration config : configurationManager.getConfigurations()) {
-        userTemplatesNode.add(new DefaultMutableTreeNode(config));
-      }
+    for (final Configuration config : configurationManager.getConfigurations()) {
+      userTemplatesNode.add(new DefaultMutableTreeNode(config));
     }
     patternTreeModel.reload(userTemplatesNode);
 

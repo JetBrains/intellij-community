@@ -23,12 +23,12 @@ import com.intellij.openapi.ui.NonEmptyInputValidator;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
+import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -39,122 +39,104 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   @NonNls static final String REPLACE_TAG_NAME = "replaceConfiguration";
   @NonNls private static final String SAVE_HISTORY_ATTR_NAME = "history";
 
-  private List<Configuration> configurations;
-  private List<Configuration> historyConfigurations;
+  private final List<Configuration> configurations = new SmartList<>();
+  private final List<Configuration> historyConfigurations = new SmartList<>();
 
   public static ConfigurationManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ConfigurationManager.class);
   }
 
-  @Nullable
   @Override
   public Element getState() {
     final Element state = new Element("state");
-    saveConfigurations(state);
+    writeConfigurations(state, configurations, historyConfigurations);
     return state;
   }
 
   @Override
   public void loadState(Element state) {
-    loadConfigurations(state);
+    configurations.clear();
+    historyConfigurations.clear();
+    readConfigurations(state, configurations, historyConfigurations);
   }
 
   public void addHistoryConfigurationToFront(Configuration configuration) {
-    if (historyConfigurations == null) historyConfigurations = new ArrayList<>();
-
     historyConfigurations.remove(configuration);
     historyConfigurations.add(0, configuration);
     configuration.setCreated(System.currentTimeMillis());
   }
 
   public void removeHistoryConfiguration(Configuration configuration) {
-    if (historyConfigurations != null) {
-      historyConfigurations.remove(configuration);
-    }
+    historyConfigurations.remove(configuration);
   }
 
   public void addConfiguration(Configuration configuration) {
-    if (configurations == null) configurations = new ArrayList<>();
-
-    if (configurations.indexOf(configuration) == -1) {
-      configurations.add(configuration);
-    }
+    configurations.remove(configuration);
+    configurations.add(configuration);
   }
 
   public void removeConfiguration(Configuration configuration) {
-    if (configurations != null) {
-      configurations.remove(configuration);
+    configurations.remove(configuration);
+  }
+
+  public static void writeConfigurations(@NotNull Element element,
+                                         @NotNull Collection<Configuration> configurations,
+                                         @NotNull Collection<Configuration> historyConfigurations) {
+    for (final Configuration configuration : configurations) {
+      saveConfiguration(element, configuration);
+    }
+
+    for (final Configuration historyConfiguration : historyConfigurations) {
+      final Element infoElement = saveConfiguration(element, historyConfiguration);
+      infoElement.setAttribute(SAVE_HISTORY_ATTR_NAME, "1");
     }
   }
 
-  public void saveConfigurations(Element element) {
-    writeConfigurations(element, configurations, historyConfigurations);
-  }
-
-  public static void writeConfigurations(final Element element,
-                                   final Collection<Configuration> configurations,
-                                   final Collection<Configuration> historyConfigurations) {
-    if (configurations != null) {
-      for (final Configuration configuration : configurations) {
-        saveConfiguration(element, configuration);
-      }
-    }
-
-    if (historyConfigurations != null) {
-      for (final Configuration historyConfiguration : historyConfigurations) {
-        final Element infoElement = saveConfiguration(element, historyConfiguration);
-        infoElement.setAttribute(SAVE_HISTORY_ATTR_NAME, "1");
-      }
-    }
-  }
-
-  public static Element saveConfiguration(Element element, final Configuration config) {
-    Element infoElement = new Element(config instanceof SearchConfiguration ? SEARCH_TAG_NAME : REPLACE_TAG_NAME);
+  private static Element saveConfiguration(@NotNull Element element, @NotNull Configuration config) {
+    final Element infoElement = new Element(config instanceof SearchConfiguration ? SEARCH_TAG_NAME : REPLACE_TAG_NAME);
     element.addContent(infoElement);
     config.writeExternal(infoElement);
-
     return infoElement;
   }
 
-  public void loadConfigurations(Element element) {
-    if (configurations != null) return;
-    ArrayList<Configuration> configurations = new ArrayList<>();
-    ArrayList<Configuration> historyConfigurations = new ArrayList<>();
-    readConfigurations(element, configurations, historyConfigurations);
-    this.configurations = configurations;
-    this.historyConfigurations = historyConfigurations;
-  }
+  public static void readConfigurations(@NotNull Element element,
+                                        @NotNull Collection<Configuration> configurations,
+                                        @NotNull Collection<Configuration> historyConfigurations) {
+    for (final Element pattern : element.getChildren()) {
+      final Configuration config = readConfiguration(pattern);
+      if (config == null) continue;
 
-  public static void readConfigurations(final Element element, @NotNull Collection<Configuration> configurations, @NotNull Collection<Configuration> historyConfigurations) {
-    final List<Element> patterns = element.getChildren();
-
-    if (patterns != null && patterns.size() > 0) {
-      for (final Element pattern : patterns) {
-        final Configuration config = readConfiguration(pattern);
-        if (config == null) continue;
-
-        if (pattern.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
-          historyConfigurations.add(config);
-        }
-        else {
-          configurations.add(config);
-        }
+      if (pattern.getAttribute(SAVE_HISTORY_ATTR_NAME) != null) {
+        historyConfigurations.add(config);
+      }
+      else {
+        configurations.add(config);
       }
     }
   }
 
-  public static Configuration readConfiguration(final Element childElement) {
-    String s = childElement.getName();
-    final Configuration config =
-      s.equals(SEARCH_TAG_NAME) ? new SearchConfiguration() : s.equals(REPLACE_TAG_NAME) ? new ReplaceConfiguration():null;
-    if (config != null) config.readExternal(childElement);
+  private static Configuration readConfiguration(@NotNull Element childElement) {
+    final String name = childElement.getName();
+    final Configuration config;
+    if (name.equals(SEARCH_TAG_NAME)) {
+      config = new SearchConfiguration();
+    }
+    else if (name.equals(REPLACE_TAG_NAME)) {
+      config = new ReplaceConfiguration();
+    }
+    else {
+      return null;
+    }
+    config.readExternal(childElement);
     return config;
   }
 
+  @NotNull
   public Collection<Configuration> getConfigurations() {
-    return configurations;
+    return Collections.unmodifiableList(configurations);
   }
 
+  @Nullable
   public Configuration findConfigurationByName(String name) {
     final Configuration configuration = findConfigurationByName(configurations, name);
     if (configuration != null) {
@@ -163,20 +145,17 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return findConfigurationByName(StructuralSearchUtil.getPredefinedTemplates(), name);
   }
 
-  public static Configuration findConfigurationByName(final Collection<Configuration> configurations, final String name) {
-    for(Configuration config:configurations) {
+  @Nullable
+  private static Configuration findConfigurationByName(final Collection<Configuration> configurations, final String name) {
+    for(Configuration config : configurations) {
       if (config.getName().equals(name)) return config;
     }
-
     return null;
   }
 
   @NotNull
   public Collection<Configuration> getHistoryConfigurations() {
-    if (historyConfigurations == null) {
-      return Collections.emptyList();
-    }
-    return historyConfigurations;
+    return Collections.unmodifiableList(historyConfigurations);
   }
 
   public static @Nullable String findAppropriateName(@NotNull final Collection<Configuration> configurations, @NotNull String _name,
