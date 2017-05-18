@@ -37,8 +37,10 @@ class WinProcessManager {
    * @return pid of the {@code process}
    */
   public static int getProcessPid(Process process) {
-    if (process.getClass().getName().equals("java.lang.Win32Process") ||
-        process.getClass().getName().equals("java.lang.ProcessImpl")) {
+    String processClassName = process.getClass().getName();
+
+    if (processClassName.equals("java.lang.Win32Process") ||
+        processClassName.equals("java.lang.ProcessImpl")) {
       try {
         long handle = ReflectionUtil.getField(process.getClass(), process, long.class, "handle");
 
@@ -50,7 +52,7 @@ class WinProcessManager {
         throw new IllegalStateException(e);
       }
     } else {
-      throw new IllegalStateException("Unknown Process implementation");
+      throw new IllegalStateException("Unknown Process implementation: " + processClassName);
     }
   }
 
