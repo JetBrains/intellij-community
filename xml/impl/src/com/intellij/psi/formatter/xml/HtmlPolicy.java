@@ -278,9 +278,10 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   @Nullable
   @Override
   public Spacing getSpacingAfterLastAttribute(XmlAttribute attribute) {
-    final int spaces = getShouldAddSpaceAroundTagName() ? 1 : 0;
+    XmlTag parent = attribute.getParent();
+    final int spaces = parent.isEmpty() && addSpaceIntoEmptyTag() ? 1 : 0;
     boolean isEnabled = mySettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
-    return getStartTagDependantSpacingOrNull(attribute.getParent(), isEnabled, spaces);
+    return getStartTagDependantSpacingOrNull(parent, isEnabled, spaces);
   }
 
   @Nullable
