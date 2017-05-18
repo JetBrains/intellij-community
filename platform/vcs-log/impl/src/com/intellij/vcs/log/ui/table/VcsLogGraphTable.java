@@ -737,7 +737,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
     @Override
     protected void paintComponent(Graphics g) {
-      setFont(getTableFont());
       g.setColor(myColor);
 
       int width = getWidth();
