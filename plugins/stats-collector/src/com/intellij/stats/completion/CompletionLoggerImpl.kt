@@ -25,9 +25,14 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.events.completion.*
 
 
+interface CompletionEventLogger {
+    fun log(event: LogEvent)
+}
+
+
 class CompletionFileLogger(private val installationUID: String,
                            private val completionUID: String,
-                           private val logFileManager: LogFileManager) : CompletionLogger() {
+                           private val eventLogger: CompletionEventLogger) : CompletionLogger() {
 
     val elementToId = mutableMapOf<String, Int>()
 
@@ -47,12 +52,6 @@ class CompletionFileLogger(private val installationUID: String,
     private fun getElementId(item: LookupElement): Int? {
         val itemString = item.toIdString()
         return elementToId[itemString]
-    }
-
-    //sout here to debug
-    private fun logEvent(event: LogEvent) {
-        val line = LogEventSerializer.toString(event)
-        logFileManager.println(line)
     }
 
     private fun getRecentlyAddedLookupItems(items: List<LookupElement>): List<LookupElement> {
@@ -98,8 +97,8 @@ class CompletionFileLogger(private val installationUID: String,
                 lookupEntryInfos, selectedPosition = 0)
         
         event.isOneLineMode = lookup.editor.isOneLineMode
-        
-        logEvent(event)
+
+        eventLogger.log(event)
     }
 
     private fun calcPluginVersion(): String? {
@@ -117,7 +116,7 @@ class CompletionFileLogger(private val installationUID: String,
 
     override fun customMessage(message: String) {
         val event = CustomMessageEvent(installationUID, completionUID, message)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun afterCharTyped(c: Char, lookup: LookupImpl) {
@@ -128,7 +127,7 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = TypeEvent(installationUID, completionUID, ids, newItems, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun downPressed(lookup: LookupImpl) {
@@ -139,7 +138,7 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = DownPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun upPressed(lookup: LookupImpl) {
@@ -150,12 +149,12 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = UpPressedEvent(installationUID, completionUID, ids, newInfos, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun completionCancelled() {
         val event = CompletionCancelledEvent(installationUID, completionUID)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun itemSelectedByTyping(lookup: LookupImpl) {
@@ -163,7 +162,7 @@ class CompletionFileLogger(private val installationUID: String,
         val id = if (current != null) getElementId(current)!! else -1
         
         val event = TypedSelectEvent(installationUID, completionUID, id)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
     override fun itemSelectedCompletionFinished(lookup: LookupImpl) {
@@ -176,7 +175,7 @@ class CompletionFileLogger(private val installationUID: String,
         }
         
         val event = ExplicitSelectEvent(installationUID, completionUID, emptyList(), emptyList(), index, id)
-        logEvent(event)
+        eventLogger.log(event)
     }
     
     override fun afterBackspacePressed(lookup: LookupImpl) {
@@ -187,7 +186,7 @@ class CompletionFileLogger(private val installationUID: String,
         val currentPosition = lookupItems.indexOf(lookup.currentItem)
 
         val event = BackspaceEvent(installationUID, completionUID, ids, newInfos, currentPosition)
-        logEvent(event)
+        eventLogger.log(event)
     }
 
 }
