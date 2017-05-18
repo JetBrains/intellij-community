@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.LocalVariableProxyImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -71,7 +70,9 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvider {
@@ -327,21 +328,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   protected abstract void build(DebuggerContextImpl context);
-
-  protected final void buildWhenPaused(DebuggerContextImpl context, RefreshDebuggerTreeCommand command) {
-    DebuggerSession session = context.getDebuggerSession();
-
-    if (ApplicationManager.getApplication().isUnitTestMode() || (session != null && session.getState() == DebuggerSession.State.PAUSED)) {
-      showMessage(MessageDescriptor.EVALUATING);
-      context.getDebugProcess().getManagerThread().schedule(command);
-    }
-    else {
-      showMessage(session != null? session.getStateDescription() : DebuggerBundle.message("status.debug.stopped"));
-      if (session == null || session.isStopped()) {
-        getNodeFactory().clearHistory(); // save memory by clearing references on JDI objects
-      }
-    }
-  }
 
   public void rebuild(final DebuggerContextImpl context) {
     ApplicationManager.getApplication().assertIsDispatchThread();
