@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -145,7 +146,7 @@ public class CheckboxTreeBase extends Tree {
       myCheckbox.setSelected(false);
       myCheckbox.setThirdStateEnabled(false);
       myTextRenderer = new ColoredTreeCellRenderer() {
-        public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
+        public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) { }
       };
       myTextRenderer.setOpaque(opaque);
       add(myCheckbox, BorderLayout.WEST);
@@ -168,6 +169,14 @@ public class CheckboxTreeBase extends Tree {
         myCheckbox.setOpaque(false);
         myCheckbox.setBackground(null);
         setBackground(null);
+
+        if (Registry.is("ide.intellij.laf.win10.ui")) {
+          Object hoverValue = getClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY);
+          myCheckbox.getModel().setRollover(hoverValue == value);
+
+          Object pressedValue = getClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY);
+          myCheckbox.getModel().setPressed(pressedValue == value);
+        }
       }
       else {
         myCheckbox.setVisible(false);
@@ -229,7 +238,7 @@ public class CheckboxTreeBase extends Tree {
     }
 
     /**
-     * @see CheckboxTreeCellRendererBase#customizeRenderer(javax.swing.JTree, Object, boolean, boolean, boolean, int, boolean)
+     * @see CheckboxTreeCellRendererBase#customizeRenderer(JTree, Object, boolean, boolean, boolean, int, boolean)
      * @deprecated
      */
     @Deprecated

@@ -29,7 +29,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ui.InspectionsAggregationUtil;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
@@ -114,55 +113,33 @@ public class InspectionsConfigTreeTable extends TreeTable {
     addMouseMotionListener(new MouseAdapter() {
       @Override
       public void mouseMoved(final MouseEvent e) {
-        Point point = e.getPoint();
-        int column = columnAtPoint(point);
-        int row = rowAtPoint(point);
+      Point point = e.getPoint();
+      int column = columnAtPoint(point);
+      int row = rowAtPoint(point);
 
-        if (row < 0 || row >= getModel().getRowCount()) return;
-
-        UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
-
-        switch (column) {
-          case SEVERITIES_COLUMN:
-            Object maybeIcon = getModel().getValueAt(row, column);
-            if (maybeIcon instanceof MultiScopeSeverityIcon) {
-              MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
-              LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
-                icon.getScopeToAverageSeverityMap();
-              JComponent component = null;
-              if (scopeToAverageSeverityMap.size() == 1 &&
-                  icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
-                HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
-                if (level != null) {
-                  JLabel label = new JLabel();
-                  label.setIcon(level.getIcon());
-                  label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
-                  component = label;
-                }
-              } else {
-                component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
-              }
-              IdeTooltipManager.getInstance().show(
-                new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
+      if (column == SEVERITIES_COLUMN && row >= 0 && row < getRowCount()) {
+        Object maybeIcon = getModel().getValueAt(row, column);
+        if (maybeIcon instanceof MultiScopeSeverityIcon) {
+          MultiScopeSeverityIcon icon = (MultiScopeSeverityIcon)maybeIcon;
+          LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap =
+            icon.getScopeToAverageSeverityMap();
+          JComponent component = null;
+          if (scopeToAverageSeverityMap.size() == 1 &&
+              icon.getDefaultScopeName().equals(ContainerUtil.getFirstItem(scopeToAverageSeverityMap.keySet()))) {
+            HighlightDisplayLevel level = ContainerUtil.getFirstItem(scopeToAverageSeverityMap.values());
+            if (level != null) {
+              JLabel label = new JLabel();
+              label.setIcon(level.getIcon());
+              label.setText(SingleInspectionProfilePanel.renderSeverity(level.getSeverity()));
+              component = label;
             }
-            break;
-
-          case IS_ENABLED_COLUMN:
-            if (Registry.is("ide.intellij.laf.win10.ui")) {
-              JComponent rc = (JComponent)getColumnModel().getColumn(column).getCellRenderer();
-              rc.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, row);
-              ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
-            }
-            break;
-
-          default: break;
+          } else {
+            component = new ScopesAndSeveritiesHintTable(scopeToAverageSeverityMap, icon.getDefaultScopeName());
+          }
+          IdeTooltipManager.getInstance().show(
+            new IdeTooltip(InspectionsConfigTreeTable.this, point, component), false);
         }
       }
-    });
-
-    addMouseListener(new MouseAdapter() {
-      @Override public void mouseExited(MouseEvent e) {
-        UIUtil.resetEnabledRollOver(InspectionsConfigTreeTable.this, IS_ENABLED_COLUMN);
       }
     });
 

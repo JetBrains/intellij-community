@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
@@ -31,9 +32,7 @@ import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.Map;
 
@@ -41,9 +40,12 @@ import java.util.Map;
  * @author oleg
  */
 public class CheckBoxList<T> extends JBList<JCheckBox> {
+  private final static int    RESET_ROLLOVER = -1;
+
   private final CellRenderer myCellRenderer;
   private CheckBoxListListener checkBoxListListener;
   private final BidirectionalMap<T, JCheckBox> myItemMap = new BidirectionalMap<>();
+  private int rollOverIndex = RESET_ROLLOVER;
 
   public CheckBoxList(final CheckBoxListListener checkBoxListListener) {
     this(new DefaultListModel<>(), checkBoxListListener);
@@ -108,6 +110,57 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
         return false;
       }
     }.installOn(this);
+
+    if (Registry.is("ide.intellij.laf.win10.ui")) {
+      addMouseMotionListener(new MouseMotionAdapter() {
+        @Override public void mouseMoved(MouseEvent e) {
+          Point point = e.getPoint();
+          int index = locationToIndex(point);
+          fireRollOverUpdated(index);
+        }
+      });
+
+      addMouseListener(new MouseAdapter() {
+        @Override public void mouseExited(MouseEvent e) {
+          fireRollOverUpdated(RESET_ROLLOVER);
+        }
+
+        @Override public void mousePressed(MouseEvent e) {
+          setPressed(e, true);
+        }
+
+        @Override public void mouseReleased(MouseEvent e) {
+          setPressed(e, false);
+        }
+
+        private void setPressed(MouseEvent e, boolean pressed) {
+          Point point = e.getPoint();
+          int index = locationToIndex(point);
+          JCheckBox cb = getModel().getElementAt(index);
+          cb.getModel().setPressed(pressed);
+          UIUtil.repaintViewport(CheckBoxList.this);
+        }
+      });
+    }
+  }
+
+  /**
+   * Reset old rollover row and set new rollover row.
+   * @param newIndex new rollover row. If newIndex is -1 then reset old rollover row only.
+   */
+  private void fireRollOverUpdated(int newIndex) {
+    if (rollOverIndex >= 0) {
+      JCheckBox oldRollover = getModel().getElementAt(rollOverIndex);
+      oldRollover.getModel().setRollover(false);
+    }
+
+    rollOverIndex = newIndex;
+
+    if (rollOverIndex >= 0) {
+      JCheckBox newRollover = getModel().getElementAt(rollOverIndex);
+      newRollover.getModel().setRollover(true);
+    }
+    UIUtil.repaintViewport(this);
   }
 
   @NotNull
@@ -339,7 +392,9 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
 
       rootComponent.setBorder(isSelected ? mySelectedBorder : myBorder);
 
+      boolean isRollOver = checkbox.getModel().isRollover();
       rootComponent = adjustRendering(rootComponent, checkbox, index, isSelected, cellHasFocus);
+      checkbox.getModel().setRollover(isRollOver);
 
       return rootComponent;
     }
