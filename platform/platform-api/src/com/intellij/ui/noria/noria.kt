@@ -350,7 +350,9 @@ fun<Node> mount(parentDisposable: Disposable,
   toolkit.performUpdates(updates, root)
 
   Disposer.register(parentDisposable, Disposable {
-    toolkit.performUpdates(listOf(RemoveChild(parent = root, child = rootC!!.node)), root)
+    toolkit.scheduleReconcile {
+      toolkit.performUpdates(listOf(RemoveChild(parent = root, child = rootC!!.node)), root)
+    }
   })
   return object: NoriaHandle<Node> {
     override fun getPreferredFocusedNode(): Node? = firstDescendant(rootC!!, {it.props is Focusable && it.props.autoFocus})?.node
