@@ -136,9 +136,10 @@ public class ModuleRootModificationUtil {
       task.consume(model);
       ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(model::commit));
     }
-    catch (RuntimeException | Error e) {
-      model.dispose();
-      throw e;
+    finally {
+      if (!model.isDisposed()) {
+        model.dispose();
+      }
     }
   }
 
