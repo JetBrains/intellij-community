@@ -116,7 +116,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new IpnbSaveAction(this));
-    toolbarGroup.add(new IpnbConvertToPythonAction());
+    toolbarGroup.add(new IpnbConvertToPythonAction(this));
     toolbarGroup.add( new Separator());
     toolbarGroup.add(new IpnbAddCellBelowAction(this));
     toolbarGroup.add(new Separator());
