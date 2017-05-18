@@ -283,7 +283,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private DfaVariableState withValueNullability(DfaValue value, DfaVariableState state) {
     if (value instanceof DfaTypeValue) {
-      return state.withFact(DfaFactType.CAN_BE_NULL, ((DfaTypeValue)value).getNullness().toBoolean());
+      return state.withFact(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(((DfaTypeValue)value).getNullness()));
     }
     if (isNull(value)) {
       return state.withFact(DfaFactType.CAN_BE_NULL, true);

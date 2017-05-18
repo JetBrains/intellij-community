@@ -15,33 +15,15 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Key;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.patterns.PsiJavaPatterns.psiMember;
-import static com.intellij.patterns.PsiJavaPatterns.psiParameter;
-import static com.intellij.patterns.StandardPatterns.or;
 
 /**
  * A type of the fact which restricts some value.
@@ -54,7 +36,33 @@ public abstract class DfaFactType<T> extends Key<T> {
   /**
    * This fact specifies whether the value can be null. The absence of the fact means that the nullability is unknown.
    */
-  public static final DfaFactType<Boolean> CAN_BE_NULL = new CanBeNullFactType();
+  public static final DfaFactType<Boolean> CAN_BE_NULL = new DfaFactType<Boolean>("Can be null") {
+    @Override
+    String toString(Boolean fact) {
+      return fact ? "Nullable" : "NotNull";
+    }
+
+    @Nullable
+    @Override
+    Boolean fromDfaValue(DfaValue value) {
+      if (value instanceof DfaConstValue) {
+        return ((DfaConstValue)value).getValue() == null;
+      }
+      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue || value instanceof DfaRangeValue) {
+        return false;
+      }
+      if (value instanceof DfaTypeValue) {
+        return NullnessUtil.toBoolean(((DfaTypeValue)value).getNullness());
+      }
+      return null;
+    }
+
+    @Nullable
+    @Override
+    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
+      return NullnessUtil.calcCanBeNull(value);
+    }
+  };
 
   /**
    * This fact is applied to the Optional values (like {@link java.util.Optional} or Guava Optional).
@@ -158,138 +166,5 @@ public abstract class DfaFactType<T> extends Key<T> {
 
   static List<DfaFactType<?>> getTypes() {
     return Collections.unmodifiableList(ourFactTypes);
-  }
-
-  private static class CanBeNullFactType extends DfaFactType<Boolean> {
-    private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
-      or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
-
-    private CanBeNullFactType() {super("Can be null");}
-
-    @Override
-    String toString(Boolean fact) {
-      return fact ? "Nullable" : "NotNull";
-    }
-
-    @Nullable
-    @Override
-    Boolean fromDfaValue(DfaValue value) {
-      if (value instanceof DfaConstValue) {
-        return ((DfaConstValue)value).getValue() == null;
-      }
-      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue || value instanceof DfaRangeValue) {
-        return false;
-      }
-      if (value instanceof DfaTypeValue) {
-        return ((DfaTypeValue)value).getNullness().toBoolean();
-      }
-      return null;
-    }
-
-    @Nullable
-    @Override
-    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
-      PsiModifierListOwner var = value.getPsiVariable();
-      Nullness nullability = DfaPsiUtil.getElementNullability(value.getVariableType(), var);
-      if (nullability != Nullness.UNKNOWN) {
-        return nullability.toBoolean();
-      }
-
-      Nullness defaultNullability =
-        value.getFactory().isUnknownMembersAreNullable() && MEMBER_OR_METHOD_PARAMETER.accepts(var) ? Nullness.NULLABLE : Nullness.UNKNOWN;
-
-      if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-        PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-        if (iteratedValue != null) {
-          PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-          if (itemType != null) {
-            return DfaPsiUtil.getElementNullability(itemType, var).toBoolean();
-          }
-        }
-      }
-
-      if (var instanceof PsiField && value.getFactory().isHonorFieldInitializers()) {
-        return getNullabilityFromFieldInitializers((PsiField)var, defaultNullability).toBoolean();
-      }
-
-      return defaultNullability.toBoolean();
-    }
-
-    private static Nullness getNullabilityFromFieldInitializers(PsiField field, Nullness defaultNullability) {
-      if (DfaPsiUtil.isFinalField(field)) {
-        PsiExpression initializer = field.getInitializer();
-        if (initializer != null) {
-          return getFieldInitializerNullness(initializer);
-        }
-
-        List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
-        if (initializers.isEmpty()) {
-          return defaultNullability;
-        }
-
-        for (PsiExpression expression : initializers) {
-          if (getFieldInitializerNullness(expression) == Nullness.NULLABLE) {
-            return Nullness.NULLABLE;
-          }
-        }
-
-        if (DfaPsiUtil.isInitializedNotNull(field)) {
-          return Nullness.NOT_NULL;
-        }
-      }
-      else if (isOnlyImplicitlyInitialized(field)) {
-        return Nullness.NOT_NULL;
-      }
-      return defaultNullability;
-    }
-
-    private static boolean isOnlyImplicitlyInitialized(PsiField field) {
-      return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-        isImplicitlyInitializedNotNull(field) && weAreSureThereAreNoExplicitWrites(field),
-        PsiModificationTracker.MODIFICATION_COUNT));
-    }
-
-    private static boolean isImplicitlyInitializedNotNull(PsiField field) {
-      return ContainerUtil.exists(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME), p -> p.isImplicitlyNotNullInitialized(field));
-    }
-
-    private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
-      String name = field.getName();
-      if (name == null || field.getInitializer() != null) return false;
-
-      if (!isCheapEnoughToSearch(field, name)) return false;
-
-      return ReferencesSearch
-        .search(field).forEach(
-          reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
-    }
-
-    private static boolean isCheapEnoughToSearch(PsiField field, String name) {
-      SearchScope scope = field.getUseScope();
-      if (!(scope instanceof GlobalSearchScope)) return true;
-
-      PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(field.getProject());
-      PsiSearchHelper.SearchCostResult result =
-        helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
-      return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-    }
-
-    private static Nullness getFieldInitializerNullness(@NotNull PsiExpression expression) {
-      if (expression.textMatches(PsiKeyword.NULL)) return Nullness.NULLABLE;
-      if (expression instanceof PsiNewExpression ||
-          expression instanceof PsiLiteralExpression ||
-          expression instanceof PsiPolyadicExpression) {
-        return Nullness.NOT_NULL;
-      }
-      if (expression instanceof PsiReferenceExpression) {
-        PsiElement target = ((PsiReferenceExpression)expression).resolve();
-        return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
-      }
-      if (expression instanceof PsiMethodCallExpression) {
-        PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-        return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullness.UNKNOWN;
-      }
-      return Nullness.UNKNOWN;
-    }
   }
 }

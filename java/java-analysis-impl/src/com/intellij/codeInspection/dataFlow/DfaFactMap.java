@@ -136,13 +136,10 @@ public final class DfaFactMap {
    * @return a calculated fact map.
    */
   public static DfaFactMap calcFromVariable(@NotNull DfaVariableValue value) {
-    DfaFactMap map = EMPTY;
-    for (DfaFactType<?> type : DfaFactType.getTypes()) {
-      @SuppressWarnings("unchecked")
-      DfaFactType<Object> objectType = (DfaFactType<Object>)type;
-      Object fact = objectType.calcFromVariable(value);
-      map = map.with(objectType, fact);
-    }
-    return map;
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (factMap, type) -> updateMap(factMap, type, value));
+  }
+
+  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
+    return map.with(factType, factType.calcFromVariable(value));
   }
 }

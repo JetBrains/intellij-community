@@ -174,7 +174,7 @@ class DfaVariableState {
 
   @NotNull
   Nullness getNullability() {
-    return Nullness.fromBoolean(myFactMap.get(DfaFactType.CAN_BE_NULL));
+    return NullnessUtil.fromBoolean(myFactMap.get(DfaFactType.CAN_BE_NULL));
   }
 
   public boolean isNotNull() {
