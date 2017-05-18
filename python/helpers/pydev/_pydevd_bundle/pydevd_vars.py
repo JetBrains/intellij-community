@@ -548,73 +548,45 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
 
     """
+    dim = len(df.axes)
     num_rows = df.shape[0]
-    num_cols = df.shape[1]
+    num_cols = df.shape[1] if dim > 1 else 1
     xml = slice_to_xml(name, num_rows, num_cols, "", "", (0, 0))
 
     if (rows, cols) == (-1, -1):
         rows, cols = num_rows, num_cols
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
-    cols = min(min(cols, MAXIMUM_ARRAY_SIZE), num_cols)
+    cols = min(cols, MAXIMUM_ARRAY_SIZE, num_cols)
     # need to precompute column bounds here before slicing!
     col_bounds = [None] * cols
-    for col in range(cols):
-        dtype = df.dtypes.iloc[coffset + col].kind
-        if dtype in "biufc":
-            cvalues = df.iloc[:, coffset + col]
-            bounds = (cvalues.min(), cvalues.max())
-        else:
-            bounds = (0, 0)
-        col_bounds[col] = bounds
+    dtypes = [None] * cols
+    if dim > 1:
+        for col in range(cols):
+            dtype = df.dtypes.iloc[coffset + col].kind
+            dtypes[col] = dtype
+            if dtype in "biufc":
+                cvalues = df.iloc[:, coffset + col]
+                bounds = (cvalues.min(), cvalues.max())
+            else:
+                bounds = (0, 0)
+            col_bounds[col] = bounds
+    else:
+        dtype = df.dtype.kind
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in "biufc" else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
-    rows, cols = df.shape
+    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    rows = df.shape[0]
+    cols = df.shape[1] if dim > 1 else 1
     format = format.replace('%', '')
 
-    col_to_label = lambda col: get_label(df.axes[1].values[col])
-    col_to_type = lambda col: df.dtypes.iloc[col].kind
-    col_to_bounds = lambda col: col_bounds[col]
-    col_to_format = lambda col: format if col_to_type(col) == 'f' and format else array_default_format(col_to_type(col))
-    row_to_label = lambda row: get_label(df.axes[0].values[row])
+    def col_to_format(c):
+        return format if dtypes[c] == 'f' and format else array_default_format(dtypes[c])
 
-    xml += header_data_to_xml(rows, cols, col_to_label, col_to_type, col_to_bounds, col_to_format, row_to_label)
-
-    xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % df.iat[r, c] for c in range(cols)))
-    return xml
-
-
-def series_to_xml(df, name, roffset, coffset, rows, cols, format):
-    """
-    :type df: pandas.core.frame.DataFrame
-    :type name: str
-    :type coffset: int
-    :type roffset: int
-    :type rows: int
-    :type cols: int
-    :type format: str
-
-
-    """
-    num_rows = df.shape[0]
-
-    xml = slice_to_xml(name, num_rows, 1, "", "", (0, 0))
-
-    if (rows, cols) == (-1, -1):
-        rows, cols = num_rows, 1
-
-    rows = min(rows, MAXIMUM_ARRAY_SIZE)
-    dtype = df.dtype.kind
-    col_bounds = (df.min(), df.max()) if dtype in "biufc" else (0, 0)
-
-    df = df.iloc[roffset: roffset + rows]
-    rows, cols = df.shape[0], 1
-    format = format.replace('%', '')
-    format = format if (dtype == 'f' and format) else array_default_format(dtype)
-    xml += header_data_to_xml(rows, cols, lambda col: str(col), lambda col: dtype, lambda col: col_bounds,
-                              lambda col: format, lambda row: get_label(df.axes[0].values[row]))
-
-    xml += array_data_to_xml(rows, cols, lambda r: (('%' + format) % df.iat[r] for c in range(cols)))
+    xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
+    xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
+                                                    for c in range(cols)))
     return xml
 
 
@@ -632,17 +604,19 @@ def slice_to_xml(slice, rows, cols, format, type, bounds):
            (slice, rows, cols, format, type, bounds[1], bounds[0])
 
 
-def header_data_to_xml(rows, cols, col_to_labels, col_to_type, col_to_bounds, col_to_format, row_to_label):
+def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     xml = "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
     for col in range(cols):
+        col_label = get_label(df.axes[1].values[col]) if dim > 1 else str(col)
+        bounds = col_bounds[col]
         xml += '<colheader index=\"%s\" label=\"%s\" type=\"%s\" format=\"%s\" max=\"%s\" min=\"%s\" />\n' % \
-               (str(col), col_to_labels(col), col_to_type(col), col_to_format(col), col_to_bounds(col)[1], col_to_bounds(col)[0])
+               (str(col), col_label, dtypes[col], col_to_format(col), bounds[1], bounds[0])
     for row in range(rows):
-        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), row_to_label(row))
+        xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), get_label(df.axes[0].values[row]))
     xml += "</headerdata>\n"
     return xml
 
-TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml_converter, "DataFrame": dataframe_to_xml, "Series": series_to_xml}
+TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml_converter, "DataFrame": dataframe_to_xml, "Series": dataframe_to_xml}
 
 
 def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
