@@ -61,6 +61,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -201,10 +202,14 @@ public class PyCharmEduInitialConfigurator {
             if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
               GeneralSettings.getInstance().setShowTipsOnStartup(false);
               patchKeymap();
-              showInitialConfigurationDialog();
               propertiesComponent.setValue(DISPLAYED_PROPERTY, "true");
             }
           });
+        }
+
+        @Override
+        public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+          showInitialConfigurationDialog();
         }
       });
     }

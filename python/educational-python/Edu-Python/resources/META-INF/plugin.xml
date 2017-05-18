@@ -45,6 +45,11 @@
       <add-to-group group-id="CCProjectViewGroup" anchor="last"/>
     </action>
     <action class="com.jetbrains.edu.coursecreator.PyCCChangeCourseInfo" id="ChangeCourseInfo" overrides="true"/>
+
+    <action id="Edu.CCNewCourse" class="com.jetbrains.edu.coursecreator.PyCCCreateCourseAction">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="after" relative-to-action="Edu.StartCourse"/>
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="Edu.StartCourse"/>
+    </action>
   </actions>
 
   <project-components>
