@@ -79,18 +79,21 @@ public class TextRangeUtil {
    * @return least text range that contains all of passed text ranges
    */
   @NotNull
-  public static TextRange getCoveringTextRange(@NotNull List<TextRange> textRanges) {
+  public static TextRange getEnclosingTextRange(@NotNull List<TextRange> textRanges) {
     if(textRanges.isEmpty())
       return TextRange.EMPTY_RANGE;
-    TextRange coveringTextRange = textRanges.get(0);
-    for(TextRange textRange : textRanges) {
-      coveringTextRange = getCoveringTextRange(coveringTextRange, textRange);
+    int lowerBound = textRanges.get(0).getStartOffset();
+    int upperBound = textRanges.get(0).getEndOffset();
+    for(int i = 1; i < textRanges.size(); ++i) {
+      TextRange textRange = textRanges.get(i);
+      lowerBound = Math.min(lowerBound, textRange.getStartOffset());
+      upperBound = Math.max(upperBound, textRange.getEndOffset());
     }
-    return coveringTextRange;
+    return new TextRange(lowerBound, upperBound);
   }
 
   @NotNull
-  public static TextRange getCoveringTextRange(@NotNull TextRange left, @NotNull TextRange right) {
+  public static TextRange getEnclosingTextRange(@NotNull TextRange left, @NotNull TextRange right) {
     return new TextRange(
       Math.min(left.getStartOffset(), right.getStartOffset()),
       Math.max(left.getEndOffset(), right.getEndOffset())
