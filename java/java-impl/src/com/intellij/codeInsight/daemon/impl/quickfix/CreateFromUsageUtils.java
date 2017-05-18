@@ -581,7 +581,7 @@ public class CreateFromUsageUtils {
         PsiExpressionList expressionList = ObjectUtils
           .tryCast(PsiUtil.skipParenthesizedExprUp(isAssignmentToFunctionalExpression ? parent.getParent() : parent),
                    PsiExpressionList.class);
-        boolean forCompletion = expressionList != null;
+        boolean forCompletion = expressionList != null || parent.getParent() instanceof PsiPolyadicExpression;
         ExpectedTypeInfo[] someExpectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, forCompletion);
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
