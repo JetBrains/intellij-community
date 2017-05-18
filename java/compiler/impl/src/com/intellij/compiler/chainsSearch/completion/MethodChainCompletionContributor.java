@@ -113,7 +113,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
     return searchResult
       .stream()
       .filter(ch -> ch.getChainWeight() * ChainSearchMagicConstants.FILTER_RATIO >= maxWeight)
-      .map(ch -> MethodChainLookupRangingHelper.chainToWeightableLookupElement(ch, context))
+      .map(ch -> MethodChainLookupRangingHelper.toLookupElement(ch, context))
       .collect(Collectors.toList());
   }
 
