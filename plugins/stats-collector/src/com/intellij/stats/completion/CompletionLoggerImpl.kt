@@ -21,34 +21,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.lang.Language
-import com.intellij.openapi.application.PermanentInstallationID
-import com.intellij.openapi.components.ApplicationComponent
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.stats.events.completion.*
-import java.util.*
-
-
-class CompletionFileLoggerProvider(filePathProvider: FilePathProvider) : ApplicationComponent, CompletionLoggerProvider() {
-    private val logFileManager = LogFileManager(filePathProvider)
-
-    override fun disposeComponent() {
-        logFileManager.dispose()
-    }
-
-    private fun String.shortedUUID(): String {
-        val start = this.lastIndexOf('-')
-        if (start > 0 && start + 1 < this.length) {
-            return this.substring(start + 1)
-        }
-        return this
-    }
-
-    override fun newCompletionLogger(): CompletionLogger {
-        val installationUID = PermanentInstallationID.get()
-        val completionUID = UUID.randomUUID().toString()
-        return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), logFileManager)
-    }
-}
 
 
 class CompletionFileLogger(private val installationUID: String,
@@ -89,7 +63,7 @@ class CompletionFileLogger(private val installationUID: String,
         return newElements
     }
 
-    fun List<LookupElement>.toLookupInfos(lookup: LookupImpl): List<LookupEntryInfo> {
+    private fun List<LookupElement>.toLookupInfos(lookup: LookupImpl): List<LookupEntryInfo> {
         val relevanceObjects = lookup.getRelevanceObjects(this, false)
         return this.map {
             val id = getElementId(it)!!

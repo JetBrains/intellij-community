@@ -297,3 +297,10 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         }
     }
 }
+
+
+fun LookupImpl.prefixLength(): Int {
+    val lookupOriginalStart = this.lookupOriginalStart
+    val caretOffset = this.editor.caretModel.offset
+    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
+}
