@@ -1,6 +1,6 @@
 // "Use existing implementation of 'foo'" "true"
 interface I {
-    void <caret>foo();
+    void foo();
 }
 class IImpl implements I {
   @Override
@@ -8,4 +8,6 @@ class IImpl implements I {
 }
 
 interface II extends I {}
-class IImpl2 extends IImpl implements II {}
+class IImpl2 extends IImpl implements II {
+    public void foo() {}
+}
