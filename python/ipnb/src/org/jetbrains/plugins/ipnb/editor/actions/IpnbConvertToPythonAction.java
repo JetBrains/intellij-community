@@ -82,7 +82,7 @@ public class IpnbConvertToPythonAction extends AnAction {
     if (module == null) return;
 
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    if (sdk == null) {
+    if (sdk == null || PythonSdkType.isInvalid(sdk)) {
       return;
     }
     final String homePath = sdk.getHomePath();
