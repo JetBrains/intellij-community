@@ -466,4 +466,27 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       "</div>"
     );
   }
+
+  public void testMultilineTags_NewlinesBeforeAndAfterAttributes() throws Exception {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
+    doTextTest(
+      "<div class=\"singleline\" foo=\"1\" bar=\"2\">\n" +
+      "    <span class=\"multiline\" foo=\"1\"\n" +
+      "          bar=\"2\"></span>\n" +
+      "  <span class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
+      "  />\n" +
+      "</div>",
+
+      "<div class=\"singleline\" foo=\"1\" bar=\"2\">\n" +
+      "    <span\n" +
+      "            class=\"multiline\" foo=\"1\"\n" +
+      "            bar=\"2\"\n" +
+      "    ></span>\n" +
+      "    <span\n" +
+      "            class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
+      "    />\n" +
+      "</div>");
+  }
 }

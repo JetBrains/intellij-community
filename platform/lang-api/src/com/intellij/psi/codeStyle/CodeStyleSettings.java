@@ -503,6 +503,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   @NonNls public String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
   public QuoteStyle HTML_QUOTE_STYLE = QuoteStyle.Double;
   public boolean HTML_ENFORCE_QUOTES = false;
+  public HtmlTagNewLineStyle HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
+  public HtmlTagNewLineStyle HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = HtmlTagNewLineStyle.Never;
 
 // endregion
 
@@ -1110,6 +1112,22 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     }
     //noinspection deprecation
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
+  }
+
+  public enum HtmlTagNewLineStyle {
+    Never("Never"),
+    WhenMultiline("When multiline");
+
+    public final String description;
+
+    HtmlTagNewLineStyle(String description) {
+      this.description = description;
+    }
+
+    @Override
+    public String toString() {
+      return description;
+    }
   }
 
   public enum QuoteStyle {
