@@ -37,14 +37,12 @@ public class ToggleUseSoftWrapsInPreviewAction extends ToggleAction {
   @Override
   public boolean isSelected(AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    assert editor != null;
-    return editor.getSettings().isUseSoftWraps();
+    return editor != null && editor.getSettings().isUseSoftWraps();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    assert editor != null;
-    AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, SoftWrapAppliancePlaces.PREVIEW, state);
+    if (editor != null) AbstractToggleUseSoftWrapsAction.toggleSoftWraps(editor, SoftWrapAppliancePlaces.PREVIEW, state);
   }
 }
