@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.*;
@@ -146,62 +147,69 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
           return aValue.getIcon(0);
         }
       };
-
-    final ListPopupImpl popup = new ListPopupImpl(step) {
-      final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return new PsiElementListCellRenderer<T>() {
-          public String getElementText(T element) {
-            return getElementPresentableName(element);
-          }
-
-          public String getContainerText(final T element, final String name) {
-            return PsiClassListCellRenderer.getContainerTextStatic(element);
-          }
-
-          public int getIconFlags() {
-            return 0;
-          }
-
-          @Nullable
-          @Override
-          protected TextAttributes getNavigationItemAttributes(Object value) {
-            TextAttributes attrs = super.getNavigationItemAttributes(value);
-            if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
-              PsiClass psiClass = ((T)value).getContainingClass();
-              if (psiClass != null && psiClass.isDeprecated()) {
-                return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
-              }
+    if (ApplicationManager.getApplication().isOnAir()) {
+      JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(editor);
+    } else {
+      final ListPopupImpl popup = new ListPopupImpl(step) {
+        final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
+        @Override
+        protected ListCellRenderer getListElementRenderer() {
+          return new PsiElementListCellRenderer<T>() {
+            public String getElementText(T element) {
+              return getElementPresentableName(element);
             }
-            return attrs;
-          }
 
-          @Override
-          protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);
-            return new DefaultListCellRenderer(){
-              @Override
-              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JPanel panel = new JPanel(new BorderLayout());
-                if (moduleRenderer != null) {
-                  Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  if (!isSelected) {
-                    moduleComponent.setBackground(getBackgroundColor(value));
-                  }
-                  panel.add(moduleComponent, BorderLayout.CENTER);
+            public String getContainerText(final T element, final String name) {
+              return PsiClassListCellRenderer.getContainerTextStatic(element);
+            }
+
+            public int getIconFlags() {
+              return 0;
+            }
+
+            @Nullable
+            @Override
+            protected TextAttributes getNavigationItemAttributes(Object value) {
+              TextAttributes attrs = super.getNavigationItemAttributes(value);
+              if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
+                PsiClass psiClass = ((T)value).getContainingClass();
+                if (psiClass != null && psiClass.isDeprecated()) {
+                  return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
                 }
-                rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                Component rightArrowComponent = rightArrow.getNextStepLabel();
-                panel.add(rightArrowComponent, BorderLayout.EAST);
-                return panel;
               }
-            };
-          }
-        };
-      }
-    };
-    popup.showInBestPositionFor(editor);
+              return attrs;
+            }
+
+            @Override
+            protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
+              final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);
+              return new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList list,
+                                                              Object value,
+                                                              int index,
+                                                              boolean isSelected,
+                                                              boolean cellHasFocus) {
+                  JPanel panel = new JPanel(new BorderLayout());
+                  if (moduleRenderer != null) {
+                    Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if (!isSelected) {
+                      moduleComponent.setBackground(getBackgroundColor(value));
+                    }
+                    panel.add(moduleComponent, BorderLayout.CENTER);
+                  }
+                  rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                  Component rightArrowComponent = rightArrow.getNextStepLabel();
+                  panel.add(rightArrowComponent, BorderLayout.EAST);
+                  return panel;
+                }
+              };
+            }
+          };
+        }
+      };
+      popup.showInBestPositionFor(editor);
+    }
   }
 
   private String getElementPresentableName(T element) {
