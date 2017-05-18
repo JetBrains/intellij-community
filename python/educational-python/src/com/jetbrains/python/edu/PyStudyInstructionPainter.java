@@ -23,6 +23,5 @@ public class PyStudyInstructionPainter extends EditorEmptyTextPainter {
     appendAction(painter, "Reset current task file", getActionShortcutText(StudyRefreshTaskFileAction.ACTION_ID));
     appendAction(painter, "Check task", getActionShortcutText(StudyCheckAction.ACTION_ID));
     appendAction(painter, "Get hint for the answer placeholder", getActionShortcutText(StudyShowHintAction.ACTION_ID));
-    appendAction(painter, "Open this task on Stepik", getActionShortcutText(StudyOpenTaskInStepikAction.ACTION_ID));
   }
 }
