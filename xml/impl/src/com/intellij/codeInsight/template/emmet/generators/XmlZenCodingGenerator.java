@@ -68,14 +68,14 @@ public abstract class XmlZenCodingGenerator extends ZenCodingGenerator {
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
       if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-        new HtmlQuotesFormatPreprocessor.HtmlQuotesConverter(quoteStyle, tag, tag.getTextRange()).run();
+        HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, tag);
       }
       return replaceQuotesIfNeeded(toString(tag, token.getAttributes(), hasChildren, context), context.getContainingFile());
     }
 
     PsiFile file = token.getFile();
     if (quoteStyle != CodeStyleSettings.QuoteStyle.None) {
-      new HtmlQuotesFormatPreprocessor.HtmlQuotesConverter(quoteStyle, file, file.getTextRange()).run();
+      HtmlQuotesFormatPreprocessor.HtmlQuotesConverter.runOnElement(quoteStyle, file);
     }
     return replaceQuotesIfNeeded(file.getText(), context.getContainingFile());
   }
