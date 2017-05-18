@@ -206,6 +206,14 @@ public class UsageViewTest extends LightPlatformCodeInsightFixtureTestCase {
     });
 
     assertEmpty(excluded);
+
+    String text = new ExporterToTextFile(usageView).getReportText();
+    assertEquals("Found usages  (1 usage found)\n" +
+                 "    Unclassified usage  (1 usage found)\n" +
+                 "        light_idea_test_case  (1 usage found)\n" +
+                 "              (1 usage found)\n" +
+                 "                X.java  (1 usage found)\n" +
+                 "                    1 public class X{ int xxx; } //comment\n", StringUtil.convertLineSeparators(text));
   }
 
   public void testExcludeNodeMustExcludeChildrenAndParents() throws Exception {
