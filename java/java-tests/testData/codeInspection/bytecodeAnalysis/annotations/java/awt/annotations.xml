@@ -1,4 +1,9 @@
 <root>
+    <item name='java.awt.Component boolean areFocusTraversalKeysSet(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.awt.Component boolean areInputMethodsEnabled()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -239,6 +244,11 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Component.FlipBufferStrategy boolean contentsRestored()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.awt.Container boolean areFocusTraversalKeysSet(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>

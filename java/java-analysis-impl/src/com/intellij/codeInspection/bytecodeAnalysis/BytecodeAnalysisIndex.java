@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.GistManager;
@@ -52,7 +53,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
   private static final ID<Bytes, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
   private static final VirtualFileGist<Map<Bytes, HEquations>> ourGist = GistManager.getInstance().newVirtualFileGist(
-    "BytecodeAnalysisIndex", 1, new HEquationsExternalizer(), new ClassDataIndexer());
+    "BytecodeAnalysisIndex", 2, new HEquationsExternalizer(), new ClassDataIndexer());
 
   @NotNull
   @Override
@@ -162,7 +163,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
   public static class HEquationsExternalizer implements DataExternalizer<Map<Bytes, HEquations>> {
     @Override
     public void save(@NotNull DataOutput out, Map<Bytes, HEquations> value) throws IOException {
-      DataInputOutputUtil.writeSeq(out, value.entrySet(), entry -> {
+      DataInputOutputUtilRt.writeSeq(out, value.entrySet(), entry -> {
         KEY_DESCRIPTOR.save(out, entry.getKey());
         saveEquations(out, entry.getValue());
       });
@@ -170,7 +171,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
 
     @Override
     public Map<Bytes, HEquations> read(@NotNull DataInput in) throws IOException {
-      return DataInputOutputUtil.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in))).
+      return DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in))).
         stream().collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
     }
 

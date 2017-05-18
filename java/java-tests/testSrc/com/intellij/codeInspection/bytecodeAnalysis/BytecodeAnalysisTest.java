@@ -38,6 +38,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.stream.Stream;
 
 /**
  * @author lambdamix
@@ -135,24 +136,18 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       Annotation[][] annotations = javaMethod.getParameterAnnotations();
 
       // not-null parameters
-      params: for (int i = 0; i < annotations.length; i++) {
+      for (int i = 0; i < annotations.length; i++) {
         Annotation[] parameterAnnotations = annotations[i];
         PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[i];
         PsiAnnotation inferredAnnotation = myBytecodeAnalysisService.findInferredAnnotation(psiParameter, AnnotationUtil.NOT_NULL);
-        for (Annotation parameterAnnotation : parameterAnnotations) {
-          if (parameterAnnotation.annotationType() == ExpectNotNull.class) {
-            assertNotNull(javaMethod.toString() + " " + i, inferredAnnotation);
-            continue params;
-          }
-        }
-        assertNull(javaMethod.toString() + " " + i, inferredAnnotation);
+        boolean expectNotNull = Stream.of(parameterAnnotations).anyMatch(anno -> anno.annotationType() == ExpectNotNull.class);
+        assertNullity(getMethodDisplayName(javaMethod) + "/arg#" + i, expectNotNull, inferredAnnotation);
       }
 
       // not-null result
       ExpectNotNull expectedAnnotation = javaMethod.getAnnotation(ExpectNotNull.class);
       PsiAnnotation actualAnnotation = myBytecodeAnalysisService.findInferredAnnotation(psiMethod, AnnotationUtil.NOT_NULL);
-      assertEquals(javaMethod.toString(), expectedAnnotation == null, actualAnnotation == null);
-
+      assertNullity(getMethodDisplayName(javaMethod), expectedAnnotation != null, actualAnnotation);
 
       // contracts
       ExpectContract expectedContract = javaMethod.getAnnotation(ExpectContract.class);
@@ -161,19 +156,31 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
       String expectedText = expectedContract == null ? "null" : expectedContract.toString();
       String inferredText = actualContract == null ? "null" : actualContract.getText();
 
-      assertEquals(javaMethod.toString() + ":" + expectedText + " <> " + inferredText,
+      assertEquals(getMethodDisplayName(javaMethod) + ":" + expectedText + " <> " + inferredText,
                    expectedContract == null, actualContract == null);
 
       if (expectedContract != null && actualContract != null) {
         String expectedContractValue = expectedContract.value();
         String actualContractValue = AnnotationUtil.getStringAttributeValue(actualContract, null);
-        assertEquals(javaMethod.toString(), expectedContractValue, actualContractValue);
+        assertEquals(getMethodDisplayName(javaMethod), expectedContractValue, actualContractValue);
 
         boolean expectedPureValue = expectedContract.pure();
         boolean actualPureValue = getPureAttribute(actualContract);
-        assertEquals(javaMethod.toString(), expectedPureValue, actualPureValue);
+        assertEquals(getMethodDisplayName(javaMethod), expectedPureValue, actualPureValue);
       }
     }
+  }
+
+  private static void assertNullity(String message, boolean expectedNotNull, PsiAnnotation inferredAnnotation) {
+    if(expectedNotNull && inferredAnnotation == null) {
+      fail(message+": @NotNull expected, but not inferred");
+    } else if(!expectedNotNull && inferredAnnotation != null) {
+      fail(message+": @NotNull inferred, but not expected");
+    }
+  }
+
+  private static String getMethodDisplayName(java.lang.reflect.Method javaMethod) {
+    return javaMethod.getDeclaringClass().getSimpleName()+"."+javaMethod.getName();
   }
 
   private static boolean getPureAttribute(PsiAnnotation annotation) {

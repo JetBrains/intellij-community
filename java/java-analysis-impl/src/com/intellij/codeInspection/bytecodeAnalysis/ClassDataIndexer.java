@@ -59,10 +59,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
       Map<Key, List<Equation>> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
-      for (Map.Entry<Key, List<Equation>> entry: allEquations.entrySet()) {
-        Key methodKey = entry.getKey();
-        map.put(compressKey(md, methodKey), convertEquations(md, methodKey, entry.getValue()));
-      }
+      allEquations.forEach((methodKey, equations) -> map.put(compressKey(md, methodKey), convertEquations(md, methodKey, equations)));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -172,7 +169,10 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<Byte
               return equations;
             }
           }
-          return topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable);
+          // We can visit here if method body is absent (e.g. native method)
+          // Make sure to preserve hardcoded purity, if any.
+          equations.addAll(topEquations(method, argumentTypes, isReferenceResult, isInterestingResult, stable));
+          return equations;
         }
         catch (ProcessCanceledException e) {
           throw e;

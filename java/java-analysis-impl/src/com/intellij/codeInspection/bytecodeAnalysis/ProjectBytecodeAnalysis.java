@@ -40,7 +40,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
@@ -138,10 +137,6 @@ public class ProjectBytecodeAnalysis {
       }
       return PsiAnnotation.EMPTY_ARRAY;
     }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error(e);
-      return PsiAnnotation.EMPTY_ARRAY;
-    }
   }
 
   /**
@@ -230,7 +225,7 @@ public class ProjectBytecodeAnalysis {
   public PsiAnnotation createContractAnnotation(String contractValue) {
     Map<String, PsiAnnotation> cache = CachedValuesManager.getManager(myProject).getCachedValue(myProject, () -> {
       Map<String, PsiAnnotation> map = new ConcurrentFactoryMap<String, PsiAnnotation>() {
-        @Nullable
+        @NotNull
         @Override
         protected PsiAnnotation create(String attrs) {
           return createAnnotationFromText("@org.jetbrains.annotations.Contract(" + attrs + ")");
@@ -306,7 +301,7 @@ public class ProjectBytecodeAnalysis {
 
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
-    BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, arity);
+    BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
 
     if (nullableMethod) {

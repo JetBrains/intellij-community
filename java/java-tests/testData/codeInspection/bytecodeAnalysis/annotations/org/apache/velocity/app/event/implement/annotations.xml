@@ -60,6 +60,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.app.event.implement.IncludeNotFound IncludeNotFound()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.event.implement.IncludeNotFound java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -99,6 +104,11 @@
     <item name='org.apache.velocity.app.event.implement.InvalidReferenceInfo java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.app.event.implement.PrintExceptions PrintExceptions()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.app.event.implement.PrintExceptions java.lang.Object methodException(java.lang.Class, java.lang.String, java.lang.Exception)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -113,6 +123,11 @@
     </item>
     <item name='org.apache.velocity.app.event.implement.PrintExceptions java.lang.String getStackTrace(java.lang.Throwable) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.app.event.implement.ReportInvalidReferences ReportInvalidReferences()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.app.event.implement.ReportInvalidReferences boolean invalidSetMethod(org.apache.velocity.context.Context, java.lang.String, java.lang.String, org.apache.velocity.util.introspection.Info)'>
         <annotation name='org.jetbrains.annotations.Contract'>

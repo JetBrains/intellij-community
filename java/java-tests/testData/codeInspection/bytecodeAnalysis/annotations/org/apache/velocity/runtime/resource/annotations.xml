@@ -1,4 +1,9 @@
 <root>
+    <item name='org.apache.velocity.runtime.resource.Resource Resource()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.resource.Resource int getType()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -39,6 +44,11 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.ResourceFactory org.apache.velocity.runtime.resource.Resource getResource(java.lang.String, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='org.apache.velocity.runtime.resource.ResourceManagerImpl ResourceManagerImpl()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.resource.ResourceManagerImpl java.lang.String getLoaderNameForResource(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

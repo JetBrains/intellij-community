@@ -59,7 +59,7 @@ public class BytecodeAnalysisConverter {
     }
   };
 
-  public static MessageDigest getMessageDigest() throws NoSuchAlgorithmException {
+  public static MessageDigest getMessageDigest() {
     return HASHER_CACHE.getValue();
   }
 
@@ -456,7 +456,10 @@ public class BytecodeAnalysisConverter {
 
   }
 
-  public static void addEffectAnnotations(Map<HKey, Set<HEffectQuantum>> puritySolutions, MethodAnnotations result, HKey methodKey, int arity) {
+  public static void addEffectAnnotations(Map<HKey, Set<HEffectQuantum>> puritySolutions,
+                                          MethodAnnotations result,
+                                          HKey methodKey,
+                                          boolean constructor) {
     for (Map.Entry<HKey, Set<HEffectQuantum>> entry : puritySolutions.entrySet()) {
       Set<HEffectQuantum> effects = entry.getValue();
       HKey key = entry.getKey().mkStable();
@@ -464,7 +467,8 @@ public class BytecodeAnalysisConverter {
       if (!methodKey.equals(baseKey)) {
         continue;
       }
-      if (effects.isEmpty()) {
+      if (effects.isEmpty() || (constructor && effects.size() == 1 && effects.contains(HEffectQuantum.ThisChangeQuantum))) {
+        // Pure constructor is allowed to change "this" object as this is a new object anyways
         result.pures.add(methodKey);
       }
     }

@@ -25,6 +25,16 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='javax.swing.AbstractButton int checkHorizontalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.AbstractButton int checkVerticalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='javax.swing.AbstractButton int getDisplayedMnemonicIndex()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -311,6 +321,16 @@
     <item name='javax.swing.JFrame java.lang.String paramString()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='javax.swing.JLabel int checkHorizontalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='javax.swing.JLabel int checkVerticalKey(int, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='javax.swing.JLabel int getDisplayedMnemonic()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -569,6 +589,11 @@
     </item>
     <item name='javax.swing.JTable void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='javax.swing.SwingUtilities SwingUtilities()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='javax.swing.SwingUtilities boolean isDescendingFrom(java.awt.Component, java.awt.Component)'>
         <annotation name='org.jetbrains.annotations.Contract'>

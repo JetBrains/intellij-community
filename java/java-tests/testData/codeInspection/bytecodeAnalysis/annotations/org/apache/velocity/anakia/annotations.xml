@@ -34,6 +34,11 @@
     <item name='org.apache.velocity.anakia.AnakiaTask void setTemplatePath(java.io.File) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.anakia.AnakiaTask.Context Context()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.anakia.AnakiaTask.Context java.lang.String getName()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -52,6 +57,11 @@
     </item>
     <item name='org.apache.velocity.anakia.Escape java.lang.String getText(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.anakia.NodeList NodeList()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.anakia.NodeList NodeList(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
