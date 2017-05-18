@@ -92,20 +92,8 @@ public class ChainCompletionContext {
     myResolveScope = context.getResolveScope();
     myProject = context.getProject();
     myResolveHelper = PsiResolveHelper.SERVICE.getInstance(myProject);
-    myQualifierClassResolver = new FactoryMap<MethodIncompleteSignature, PsiClass>() {
-      @Nullable
-      @Override
-      protected PsiClass create(MethodIncompleteSignature sign) {
-        return sign.resolveQualifier(myProject, myResolveScope, accessValidator());
-      }
-    };
-    myResolver = new FactoryMap<MethodIncompleteSignature, PsiMethod[]>() {
-      @NotNull
-      @Override
-      protected PsiMethod[] create(MethodIncompleteSignature sign) {
-        return sign.resolve(myProject, myResolveScope, accessValidator());
-      }
-    };
+    myQualifierClassResolver = FactoryMap.createMap(sign -> sign.resolveQualifier(myProject, myResolveScope, accessValidator()));
+    myResolver = FactoryMap.createMap(sign -> sign.resolve(myProject, myResolveScope, accessValidator()));
   }
 
   @NotNull

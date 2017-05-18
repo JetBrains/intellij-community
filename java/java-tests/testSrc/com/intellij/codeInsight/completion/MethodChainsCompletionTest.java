@@ -41,16 +41,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   protected void setUp() throws Exception {
     super.setUp();
     installCompiler();
-    Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(false);
-    } finally {
-      super.tearDown();
-    }
+    Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true, myFixture.getTestRootDisposable());
   }
 
   protected String getTestDataPath() {
