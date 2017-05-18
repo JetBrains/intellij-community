@@ -17,6 +17,7 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -69,6 +70,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
+import static com.intellij.ui.RelativeFont.SMALL;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.ui.UIUtil.getLabelFont;
 
@@ -524,7 +526,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   private static Font getNewFont(Editor editor) {
     Font font = editor == null || Registry.is("editor.breadcrumbs.system.font") ? getLabelFont() : getEditorFont(editor);
-    return font == null || !Registry.is("editor.breadcrumbs.small.font") ? font : font.deriveFont(font.getSize2D() / 1.09f);
+    return UISettings.getInstance().getUseSmallLabelsOnTabs() ? SMALL.derive(font) : font;
   }
 
   private static Font getEditorFont(Editor editor) {
