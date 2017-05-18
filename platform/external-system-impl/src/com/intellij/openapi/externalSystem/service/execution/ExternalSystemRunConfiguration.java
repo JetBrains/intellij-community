@@ -50,6 +50,7 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,17 +68,16 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
-  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
+  public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
 
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
@@ -353,9 +353,19 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   private static class MyProcessHandler extends ProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
     private final ExternalSystemExecuteTaskTask myTask;
     private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
+    @Nullable
+    private OutputStream myProcessInput;
 
     public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
       myTask = task;
+      try {
+        PipedInputStream inputStream = new PipedInputStream();
+        myProcessInput = new PipedOutputStream(inputStream);
+        task.putUserData(RUN_INPUT_KEY, inputStream);
+      }
+      catch (IOException e) {
+        LOG.warn("Unable to setup process input", e);
+      }
     }
 
     @Override
@@ -366,11 +376,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Override
     protected void destroyProcessImpl() {
       myTask.cancel();
+      StreamUtil.closeStream(myProcessInput);
     }
 
     @Override
     protected void detachProcessImpl() {
       notifyProcessDetached();
+      StreamUtil.closeStream(myProcessInput);
     }
 
     @Override
@@ -381,7 +393,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Nullable
     @Override
     public OutputStream getProcessInput() {
-      return null;
+      return myProcessInput;
     }
 
     @Override
