@@ -24,10 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BlockUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -117,11 +114,11 @@ public class ObviousNullCheckInspection extends BaseJavaBatchLocalInspectionTool
       PsiElement parent = call.getParent();
       CommentTracker ct = new CommentTracker();
       if (parent instanceof PsiExpressionStatement) {
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiStatement[] sideEffectStatements = StreamEx.of(call.getArgumentList().getExpressions())
+        List<PsiExpression> expressions = StreamEx.of(call.getArgumentList().getExpressions())
           .flatCollection(SideEffectChecker::extractSideEffectExpressions)
-          .map(expr -> factory.createStatementFromText(ct.text(expr) + ";", call))
-          .toArray(PsiStatement[]::new);
+          .peek(ct::markUnchanged)
+          .toList();
+        PsiStatement[] sideEffectStatements = StatementExtractor.generateStatements(expressions, call);
         if(sideEffectStatements.length > 0) {
           BlockUtils.addBefore((PsiStatement)parent, sideEffectStatements);
         }
