@@ -127,7 +127,7 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
     ProjectManagerListener projectListener = new ProjectManagerListener() {
       @Override
       public void projectOpened(Project project) {
-        project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
+        project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, editorListener);
         FileEditorManager editorManager = FileEditorManager.getInstance(project);
         for (VirtualFile virtualFile : editorManager.getOpenFiles()) {
           editorListener.fileOpened(editorManager, virtualFile);
