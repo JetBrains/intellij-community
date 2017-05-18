@@ -172,6 +172,8 @@ public abstract class QuickFixFactory {
 
   @NotNull public abstract IntentionAction createInsertSuperFix(@NotNull PsiMethod constructor);
 
+  @NotNull public abstract IntentionAction createInsertThisFix(@NotNull PsiMethod constructor);
+  
   @NotNull public abstract IntentionAction createChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
                                       @NotNull PsiExpression[] expressions,
                                       @NotNull PsiSubstitutor substitutor,

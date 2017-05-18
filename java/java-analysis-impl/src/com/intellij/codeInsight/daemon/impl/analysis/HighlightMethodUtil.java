@@ -1316,6 +1316,7 @@ public class HighlightMethodUtil {
     HighlightInfo info = HighlightClassUtil.checkBaseClassDefaultConstructorProblem(aClass, refCountHolder, resolveHelper, textRange, handledExceptions);
     if (info != null) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createInsertSuperFix(constructor));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createInsertThisFix(constructor));
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createAddDefaultConstructorFix(aClass.getSuperClass()));
     }
     return info;

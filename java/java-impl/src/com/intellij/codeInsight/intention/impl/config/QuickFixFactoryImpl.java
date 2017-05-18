@@ -454,6 +454,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public IntentionAction createInsertThisFix(@NotNull PsiMethod constructor) {
+    return new InsertThisFix(constructor);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
                                                                  @NotNull PsiExpression[] expressions,
                                                                  @NotNull PsiSubstitutor substitutor,
