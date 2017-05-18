@@ -112,6 +112,12 @@ public final class CalleeMethodsTreeStructure extends HierarchyTreeStructure {
           methods.add(method);
         }
       }
+      else if (child instanceof PsiMethodReferenceExpression) {
+        PsiElement method = ((PsiMethodReferenceExpression)child).resolve();
+        if (method instanceof PsiMethod) {
+          methods.add((PsiMethod)method);
+        }
+      }
     }
   }
 }
