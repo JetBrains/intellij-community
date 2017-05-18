@@ -38,7 +38,6 @@
         <jvmarg line="&quot;-Dmodules.output=${modules.output}&quot;"/>
         <jvmarg line="&quot;-Dgant.script=@{script}&quot;"/>
         <jvmarg line="&quot;-Dgant.target=@{target}&quot;"/>
-        <jvmarg line="-DmaySkipAndroidPlugin=true"/>
 
         <classpath>
           <fileset dir="${project.home}/lib/ant/lib">
