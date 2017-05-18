@@ -47,6 +47,7 @@ import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -76,12 +77,17 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       if (gotoData != null) {
         show(project, editor, file, gotoData);
       }
+      else {
+        chooseFromAmbiguousSources(editor, file, data -> show(project, editor, file, data));
+      }
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(project).showDumbModeNotification("Navigation is not available here during index update");
     }
   }
 
+  protected void chooseFromAmbiguousSources(Editor editor, PsiFile file, Consumer<GotoData> successCallback) { }
+  
   @NonNls
   protected abstract String getFeatureUsedKey();
 
