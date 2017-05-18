@@ -91,12 +91,4 @@ public class TextRangeUtil {
     }
     return new TextRange(lowerBound, upperBound);
   }
-
-  @NotNull
-  public static TextRange getEnclosingTextRange(@NotNull TextRange left, @NotNull TextRange right) {
-    return new TextRange(
-      Math.min(left.getStartOffset(), right.getStartOffset()),
-      Math.max(left.getEndOffset(), right.getEndOffset())
-    );
-  }
 }
