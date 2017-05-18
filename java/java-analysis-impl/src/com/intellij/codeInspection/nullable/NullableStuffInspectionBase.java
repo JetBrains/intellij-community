@@ -177,17 +177,25 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
       private void checkNullableNotNullInstantiationConflict(PsiJavaCodeReferenceElement reference) {
         PsiElement element = reference.resolve();
-        if (element instanceof PsiClass && ((PsiClass)element).getTypeParameters().length > 0) {
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-          if (isNullableNotNullCollectionConflict(reference, 
-                                                  factory.createType((PsiClass)element, PsiSubstitutor.EMPTY),
-                                                  factory.createType(reference))) {
-            holder.registerProblem(reference,
-                                   "Nullable type arguments where non-null ones are expected",
-                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-
+        if (element instanceof PsiClass) {
+          PsiTypeParameter[] typeParameters = ((PsiClass)element).getTypeParameters();
+          PsiTypeElement[] typeArguments = getReferenceTypeArguments(reference);
+          if (typeParameters.length > 0 && typeParameters.length == typeArguments.length) {
+            for (int i = 0; i < typeParameters.length; i++) {
+              if (isNullityConflict(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i]), typeArguments[i].getType())) {
+                holder.registerProblem(typeArguments[i],
+                                       "Nullable type argument where non-null one is expected",
+                                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                
+              }
+            }
           }
         }
+      }
+
+      private PsiTypeElement[] getReferenceTypeArguments(PsiJavaCodeReferenceElement reference) {
+        PsiReferenceParameterList typeArgList = reference.getParameterList();
+        return typeArgList == null ? PsiTypeElement.EMPTY_ARRAY : typeArgList.getTypeParameterElements();
       }
 
       @Override
