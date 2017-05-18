@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,19 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.builder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+
+import java.util.Arrays;
+import java.util.Collection;
 
 public abstract class BuilderAnnotationContributor implements AstTransformationSupport {
 
@@ -37,5 +45,23 @@ public abstract class BuilderAnnotationContributor implements AstTransformationS
     PsiClass aClass = GrAnnotationUtil.inferClassAttribute(annotation, STRATEGY_ATTRIBUTE);
     if (aClass == null) return false;
     return StringUtil.getQualifiedName(BUILDER_PACKAGE, strategy).equals(aClass.getQualifiedName());
+  }
+
+  public static PsiField[] getFields(@NotNull GrTypeDefinition clazz, @NotNull PsiAnnotation annotation) {
+    Collection<? extends PsiField> collectedFields;
+    if (isIncludeSuperProperties(annotation) ) {
+      collectedFields = Arrays.asList(GrClassImplUtil.getAllFields(clazz, false));
+    } else {
+      collectedFields = Arrays.asList(clazz.getCodeFields());
+    }
+
+    return collectedFields.stream()
+      .filter(field -> field.getName() != null)
+      .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
+      .toArray(PsiField[]::new);
+  }
+
+  public static boolean isIncludeSuperProperties(@NotNull PsiAnnotation annotation) {
+    return PsiUtil.getAnnoAttributeValue(annotation, "includeSuperProperties", false);
   }
 }

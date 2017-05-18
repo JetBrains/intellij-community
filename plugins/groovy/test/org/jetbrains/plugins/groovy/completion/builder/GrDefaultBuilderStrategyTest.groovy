@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.completion.builder
 
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.completion.CompletionResult
 
 @CompileStatic
 class GrDefaultBuilderStrategyTest extends GrBuilderTransformationCompletionTestBase {
@@ -301,5 +302,59 @@ class Pojo {
 
 Pojo.builder().counter(1).name("Janet").<caret>
 ''', 'build', 'name', 'dynamic', 'counter')
+  }
+
+  void 'test include super properties'() {
+    doVariantableTest '''
+import groovy.transform.builder.Builder
+class Animal {
+    String color
+    int legs
+}
+
+@Builder(includeSuperProperties = true)
+class Pet extends Animal{
+    String name
+}
+
+new Pet().builder().color("Grey").<caret>
+''', 'legs', 'name'
+  }
+
+  void 'test include super properties 2'() {
+    doVariantableTest '''
+import groovy.transform.builder.Builder
+class Animal {
+    String color
+    int legs
+}
+
+@Builder(includeSuperProperties = true)
+class Pet extends Animal{
+    String name
+}
+
+new Pet().builder().name("Janet").<caret>
+''', 'color', 'legs'
+  }
+
+  void 'test not include super properties'() {
+     String code = '''
+import groovy.transform.builder.Builder
+class Animal {
+    String color
+    int legs
+}
+
+@Builder
+class Pet extends Animal{
+    String name
+}
+
+new Pet().builder().<caret>
+'''
+    doVariantableTest code, CompletionResult.contain, 'name'
+    doVariantableTest code, CompletionResult.notContain, 'color', 'legs'
+
   }
 }
