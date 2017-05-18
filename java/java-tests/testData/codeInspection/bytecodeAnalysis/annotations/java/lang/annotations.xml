@@ -1715,6 +1715,11 @@
     <item name='java.lang.String String(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.String String(java.lang.StringBuilder)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.String String(java.lang.StringBuilder) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2193,6 +2198,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuilder java.lang.StringBuilder append(boolean)'>
