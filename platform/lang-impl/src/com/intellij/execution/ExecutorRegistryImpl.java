@@ -31,14 +31,13 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,13 +53,13 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
   private List<Executor> myExecutors = new ArrayList<>();
   private ActionManager myActionManager;
-  private final Map<String, Executor> myId2Executor = new HashMap<>();
-  private final Set<String> myContextActionIdSet = new HashSet<>();
-  private final Map<String, AnAction> myId2Action = new HashMap<>();
-  private final Map<String, AnAction> myContextActionId2Action = new HashMap<>();
+  private final Map<String, Executor> myId2Executor = new THashMap<>();
+  private final Set<String> myContextActionIdSet = new THashSet<>();
+  private final Map<String, AnAction> myId2Action = new THashMap<>();
+  private final Map<String, AnAction> myContextActionId2Action = new THashMap<>();
 
   // [Project, ExecutorId, RunnerId]
-  private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new java.util.HashSet<Trinity<Project, String, String>>());
+  private final Set<Trinity<Project, String, String>> myInProgress = Collections.synchronizedSet(new THashSet<>());
 
   public ExecutorRegistryImpl(ActionManager actionManager) {
     myActionManager = actionManager;
@@ -163,9 +162,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       }
     });
 
-
-    final Executor[] executors = Extensions.getExtensions(Executor.EXECUTOR_EXTENSION_NAME);
-    for (Executor executor : executors) {
+    for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
       initExecutor(executor);
     }
   }
