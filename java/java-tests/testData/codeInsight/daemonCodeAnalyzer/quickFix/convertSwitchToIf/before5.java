@@ -1,7 +1,9 @@
 // "Replace 'switch' with 'if'" "true"
-class Test {
-  void foo(Object e) {
-    <caret>switch(e.getClass()) {
+abstract class Test {
+  abstract Object getObject();
+
+  void foo() {
+    <caret>switch(getObject().getClass()) {
       case RuntimeException.class:
         break;
       case IOException.class:
