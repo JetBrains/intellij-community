@@ -50,7 +50,7 @@ public class FrequentlyUsedInheritorInspection extends BaseJavaLocalInspectionTo
   public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
                                         @NotNull final InspectionManager manager,
                                         final boolean isOnTheFly) {
-    if (aClass instanceof PsiTypeParameter) {
+    if (aClass instanceof PsiTypeParameter || aClass.isEnum()) {
       return null;
     }
 
