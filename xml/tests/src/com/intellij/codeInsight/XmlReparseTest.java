@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.AbstractReparseTestCase;
@@ -27,13 +27,11 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.xml.XmlFileImpl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.ParsingTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.IncorrectOperationException;
 
 import java.io.File;
 
-@PlatformTestCase.WrapInCommand
 public class XmlReparseTest extends AbstractReparseTestCase {
   @Override
   protected void setUp() throws Exception {
@@ -144,7 +142,7 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   }
   private static final String marker = "<marker>";
   public void testXmlDeclDtd() throws Exception {
-    PsiFile file = createFile("x.xml", "<!DOCTYPE name [\n" +
+    PsiFile file = myFixture.addFileToProject("x.xml", "<!DOCTYPE name [\n" +
                                        "  <!ELEMENT name (" + marker+ "a b c d" + marker+ ")>\n" +
                                        "  <!ELEMENT name2 (" + marker+ "%entity;" + marker+ ")>\n" +
                                        "]>\n" +
@@ -160,10 +158,10 @@ public class XmlReparseTest extends AbstractReparseTestCase {
     ParsingTestCase.doCheckResult(myFullDataPath, file, true, "testXmlDeclDtd", false, false);
   }
 
-  private static void removeGarbage(Document document) {
+  private void removeGarbage(Document document) {
     int i = document.getText().indexOf(marker);
     if (i==-1) return;
-    ApplicationManager.getApplication().runWriteAction(() -> document.replaceString(i, i + marker.length(), ""));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(i, i + marker.length(), ""));
 
     removeGarbage(document);
   }
@@ -172,4 +170,16 @@ public class XmlReparseTest extends AbstractReparseTestCase {
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/";
   }
+
+  public void testXml() throws Exception{
+    setFileType(StdFileTypes.XML);
+    String text2 = "</root>";
+    final String text1 = "<root>/n";
+    prepareFile(text1, text2);
+    insert("<");
+    PsiElement element = myDummyFile.findElementAt(10);
+    assert element != null;
+    assertNotNull(element.getTextRange());
+  }
+
 }
