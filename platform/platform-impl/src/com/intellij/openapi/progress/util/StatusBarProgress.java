@@ -32,6 +32,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
   private final Map<StatusBar, Pair<String, String>> myStatusBar2SavedText = ContainerUtil.newHashMap();
+  private boolean myScheduledStatusBarTextSave;
 
   public StatusBarProgress() {
     super(true);
@@ -39,41 +40,26 @@ public class StatusBarProgress extends ProgressIndicatorBase {
 
   @Override
   public void start() {
+    myScheduledStatusBarTextSave = false;
     super.start();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(
-      () -> {
-        if (ApplicationManager.getApplication().isDisposed()) return;
-        WindowManager windowManager = WindowManager.getInstance();
-        if (windowManager == null) return;
-
-        Project[] projects = ProjectManager.getInstance().getOpenProjects();
-        if (projects.length == 0) projects = new Project[]{null};
-
-        for (Project project : projects) {
-          StatusBar statusBar = windowManager.getStatusBar(project);
-          if (statusBar != null) {
-            String info = notNull(statusBar.getInfo(), "");
-            myStatusBar2SavedText.put(statusBar, pair(info, info));  // initial value
-          }
-        }
-      }
-    );
   }
 
   @Override
   public void stop() {
     super.stop();
-    //noinspection SSBasedInspection
-    SwingUtilities.invokeLater(
-      () -> {
-        for (StatusBar statusBar : myStatusBar2SavedText.keySet()) {
-          String textToRestore = updateRestoreText(statusBar);
-          statusBar.setInfo(textToRestore);
+
+    if (myScheduledStatusBarTextSave) {
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(
+        () -> {
+          for (StatusBar statusBar : myStatusBar2SavedText.keySet()) {
+            String textToRestore = updateRestoreText(statusBar);
+            statusBar.setInfo(textToRestore);
+          }
+          myStatusBar2SavedText.clear();
         }
-        myStatusBar2SavedText.clear();
-      }
-    );
+      );
+    }
   }
 
   @Override
@@ -101,6 +87,28 @@ public class StatusBarProgress extends ProgressIndicatorBase {
       }
     }
     final String _text = text;
+    if (!myScheduledStatusBarTextSave) {
+      myScheduledStatusBarTextSave = true;
+      //noinspection SSBasedInspection
+      SwingUtilities.invokeLater(
+        () -> {
+          if (ApplicationManager.getApplication().isDisposed()) return;
+          WindowManager windowManager = WindowManager.getInstance();
+          if (windowManager == null) return;
+
+          Project[] projects = ProjectManager.getInstance().getOpenProjects();
+          if (projects.length == 0) projects = new Project[]{null};
+
+          for (Project project : projects) {
+            StatusBar statusBar = windowManager.getStatusBar(project);
+            if (statusBar != null) {
+              String info = notNull(statusBar.getInfo(), "");
+              myStatusBar2SavedText.put(statusBar, pair(info, info));  // initial value
+            }
+          }
+        }
+      );
+    }
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(
       () -> {
