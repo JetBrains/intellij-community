@@ -60,7 +60,7 @@ public class ChainSearcher {
   @NotNull
   private static List<MethodChain> search(CompilerReferenceServiceEx referenceServiceEx,
                                           SearchInitializer initializer,
-                                          int pathMaximalLength,
+                                          int chainMaxLength,
                                           int maxResultSize,
                                           ChainCompletionContext context) {
     LinkedList<MethodChain> q = initializer.getChainQueue();
@@ -72,13 +72,7 @@ public class ChainSearcher {
       MethodChain currentChain = q.poll();
       MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
 
-      // interrupt a chain if it can be terminal
-      if (headSignature.isStatic() ||
-          context.hasQualifier(context.resolveQualifierClass(headSignature)) ||
-          currentChain.length() >= pathMaximalLength) {
-        addChainIfNotPresent(currentChain, result);
-        continue;
-      }
+      if (addChainIfTerminal(currentChain, result, chainMaxLength, context)) continue;
 
       // otherwise try to find chain continuation
       boolean updated = false;
@@ -104,11 +98,8 @@ public class ChainSearcher {
         }
       }
 
-      // continuation is not found -> add this chain as result if qualifier can be occurred with context variables
-      if (!updated &&
-          !context.getTarget().getClassQName().equals(headSignature.getOwner()) &&
-          canQualifierOccurWithContextVariables(headSignature.getOwnerRef(), context, referenceServiceEx)) {
-        addChainIfNotPresent(currentChain, result);
+      if (!updated) {
+        addChainIfQualifierCanBeOccurredInContext(currentChain, result, context, referenceServiceEx);
       }
 
       if (result.size() > maxResultSize) {
@@ -118,13 +109,36 @@ public class ChainSearcher {
     return result;
   }
 
-  private static boolean canQualifierOccurWithContextVariables(@NotNull LightRef qualifier,
-                                                               @NotNull ChainCompletionContext context,
-                                                               @NotNull CompilerReferenceServiceEx referenceServiceEx) {
-    for (LightRef ref: context.getContextClassReferences()) {
-      if (referenceServiceEx.mayHappen(qualifier, ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
-        return true;
+  /**
+   * To reduce false-positives we add a method to result only if its qualifier can be occurred together with context variables.
+   */
+  private static void addChainIfQualifierCanBeOccurredInContext(MethodChain currentChain,
+                                                                List<MethodChain> result,
+                                                                ChainCompletionContext context,
+                                                                CompilerReferenceServiceEx referenceServiceEx) {
+    if (!context.getTarget().getClassQName().equals(currentChain.getHeadSignature().getOwner())) {
+
+      boolean isRelevantQualifier = false;
+      for (LightRef ref: context.getContextClassReferences()) {
+        if (referenceServiceEx.mayHappen(currentChain.getHeadSignature().getOwnerRef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
+          isRelevantQualifier = true;
+          break;
+        }
       }
+
+      if (isRelevantQualifier) {
+        addChainIfNotPresent(currentChain, result);
+      }
+    }
+  }
+
+  private static boolean addChainIfTerminal(MethodChain currentChain, List<MethodChain> result, int pathMaximalLength,
+                                            ChainCompletionContext context) {
+    if (currentChain.getHeadSignature().isStatic() ||
+        context.hasQualifier(context.resolveQualifierClass(currentChain.getHeadSignature())) ||
+        currentChain.length() >= pathMaximalLength) {
+      addChainIfNotPresent(currentChain, result);
+      return true;
     }
     return false;
   }
