@@ -331,7 +331,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   }
 
   @Override
-  public void onSuccessImport(@NotNull Project project) {
+  public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project) {
     final Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
     if (orphanFiles != null && !orphanFiles.isEmpty()) {
       ExternalSystemApiUtil.executeOnEdt(false, () -> {

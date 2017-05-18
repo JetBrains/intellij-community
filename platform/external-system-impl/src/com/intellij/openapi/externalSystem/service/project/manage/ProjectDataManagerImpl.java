@@ -285,7 +285,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
         for (ProjectDataService<?, ?> service : services) {
           if (service instanceof AbstractProjectDataService) {
             final long taskStartTime = System.currentTimeMillis();
-            ((AbstractProjectDataService)service).onSuccessImport(project);
+            ((AbstractProjectDataService)service).onSuccessImport(toImport, projectData, project);
             if (LOG.isDebugEnabled()) {
               final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
               LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));

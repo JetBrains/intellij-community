@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
@@ -70,6 +71,15 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
 
+  /**
+   * @deprecated use {@link #onSuccessImport(Collection, ProjectData, Project)}
+   */
   public void onSuccessImport(@NotNull Project project) {
+  }
+
+  public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project) {
+    onSuccessImport(project);
   }
 }
