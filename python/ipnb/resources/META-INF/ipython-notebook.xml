@@ -32,7 +32,9 @@
     </action>
 
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertToPythonAction" id="IpnbConvertToPythonAction"
-            text="Convert to Python Script"/>
+            text="Convert to Python Script">
+      <add-to-group group-id="ProjectViewPopupMenuSettingsGroup"/>
+    </action>
 
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertFromPythonAction" id="IpnbConvertFromPythonAction"
             text="Convert to Jupyter Notebook">

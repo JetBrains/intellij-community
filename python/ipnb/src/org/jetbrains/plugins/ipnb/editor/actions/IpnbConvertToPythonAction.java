@@ -7,7 +7,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -45,14 +48,14 @@ public class IpnbConvertToPythonAction extends AnAction {
     }
 
     if (myFileEditor != null) {
-      convertToPythonScript(myFileEditor);
+      VirtualFile virtualFile = myFileEditor.getVirtualFile();
+      convertToPythonScript(project, virtualFile);
     }
     else {
       final DataContext context = event.getDataContext();
-      final IpnbFileEditor fileEditor = IpnbFileEditor.DATA_KEY.getData(context);
-      if (fileEditor == null) return;
-
-      convertToPythonScript(fileEditor);
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+      if (virtualFile == null) return;
+      convertToPythonScript(project, virtualFile);
     }
   }
 
@@ -64,18 +67,17 @@ public class IpnbConvertToPythonAction extends AnAction {
     }
 
     final DataContext context = e.getDataContext();
-    final IpnbFileEditor fileEditor = IpnbFileEditor.DATA_KEY.getData(context);
-    if (fileEditor == null) {
-      e.getPresentation().setEnabled(false);
+    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+    if (virtualFile != null && "ipynb".equals(virtualFile.getExtension())) {
+      e.getPresentation().setEnabledAndVisible(true);
     }
     else {
-      e.getPresentation().setEnabled(true);
+      e.getPresentation().setEnabledAndVisible(false);
     }
   }
 
-  public static void convertToPythonScript(IpnbFileEditor fileEditor) {
-    final Project project = fileEditor.getIpnbFilePanel().getProject();
-    final VirtualFile virtualFile = fileEditor.getVirtualFile();
+  public static void convertToPythonScript(@NotNull final Project project,
+                                           @NotNull final VirtualFile virtualFile) {
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
     if (module == null) return;
 
