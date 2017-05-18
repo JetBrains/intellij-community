@@ -17,7 +17,6 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
   private StepicUser myUser;
   public long LAST_TIME_CHECKED = 0;
   private boolean myEnableTestingFromSamples = false;
-  private boolean isCourseCreatorEnabled = false;
 
   public StudySettings() {
   }
@@ -69,15 +68,6 @@ public class StudySettings implements PersistentStateComponent<StudySettings> {
 
   public void setEnableTestingFromSamples(boolean enableTestingFromSamples) {
     myEnableTestingFromSamples = enableTestingFromSamples;
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(SETTINGS_CHANGED).settingsChanged();
-  }
-
-  public boolean isCourseCreatorEnabled() {
-    return isCourseCreatorEnabled;
-  }
-
-  public void setCourseCreatorEnabled(boolean courseCreatorEnabled) {
-    isCourseCreatorEnabled = courseCreatorEnabled;
     ApplicationManager.getApplication().getMessageBus().syncPublisher(SETTINGS_CHANGED).settingsChanged();
   }
 

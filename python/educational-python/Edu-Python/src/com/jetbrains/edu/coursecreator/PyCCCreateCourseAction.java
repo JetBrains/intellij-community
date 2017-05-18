@@ -1,12 +1,14 @@
 package com.jetbrains.edu.coursecreator;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.AbstractNewProjectDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.jetbrains.edu.learning.StudySettings;
 import icons.EducationalCoreIcons;
+
+import static com.jetbrains.edu.coursecreator.actions.CCPluginToggleAction.COURSE_CREATOR_ENABLED;
 
 public class PyCCCreateCourseAction extends AnAction {
   public PyCCCreateCourseAction() {
@@ -27,6 +29,6 @@ public class PyCCCreateCourseAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    presentation.setEnabledAndVisible(StudySettings.getInstance().isCourseCreatorEnabled());
+    presentation.setEnabledAndVisible(PropertiesComponent.getInstance().getBoolean(COURSE_CREATOR_ENABLED));
   }
 }

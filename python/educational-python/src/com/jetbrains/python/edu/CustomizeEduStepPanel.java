@@ -1,8 +1,8 @@
 package com.jetbrains.python.edu;
 
 import com.intellij.ide.customize.AbstractCustomizeWizardStep;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.jetbrains.edu.learning.StudySettings;
 import icons.PythonEducationalIcons;
 
 import javax.swing.*;
@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
+  static final String COURSE_CREATOR_ENABLED = "Edu.CourseCreator.Enabled";
 
   public CustomizeEduStepPanel() {
     int iconSize = 180;
@@ -20,7 +21,7 @@ public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
     student.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        StudySettings.getInstance().setCourseCreatorEnabled(false);
+        PropertiesComponent.getInstance().setValue(COURSE_CREATOR_ENABLED, false);
       }
     });
     studentPanel.add(student);
@@ -35,7 +36,7 @@ public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
     teacher.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        StudySettings.getInstance().setCourseCreatorEnabled(true);
+        PropertiesComponent.getInstance().setValue(COURSE_CREATOR_ENABLED, true);
       }
     });
     add(teacherPanel);
