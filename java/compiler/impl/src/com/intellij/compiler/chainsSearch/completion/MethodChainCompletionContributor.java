@@ -54,12 +54,11 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodChainCompletionContributor.class);
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
-  public static final CompletionType COMPLETION_TYPE = UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
 
   @SuppressWarnings("unchecked")
   public MethodChainCompletionContributor() {
-    ElementPattern<PsiElement> pattern = or(patternForMethodCallParameter(), patternForVariableAssignment());
-    extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
+    ElementPattern<PsiElement> pattern = or(patternForMethodCallArgument(), patternForVariableAssignment());
+    extend(CompletionType.SMART, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
@@ -80,15 +79,11 @@ public class MethodChainCompletionContributor extends CompletionContributor {
           });
           result = JavaCompletionSorting.addJavaSorting(parameters, result);
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
-          if (!UNIT_TEST_MODE) {
-            Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
-            while (it.hasNext()) {
-              LookupElement lookupElement = it.next();
+          if (!UNIT_TEST_MODE && !alreadySuggested.isEmpty()) {
+            elementsFoundByMethodsChainsSearch = elementsFoundByMethodsChainsSearch.stream().filter(lookupElement -> {
               PsiElement psi = lookupElement.getPsiElement();
-              if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
-                it.remove();
-              }
-            }
+              return !(psi instanceof PsiMethod) || !alreadySuggested.contains(psi);
+            }).collect(Collectors.toList());
           }
           result.addAllElements(elementsFoundByMethodsChainsSearch);
         }
@@ -172,7 +167,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   @NotNull
-  private static ElementPattern<PsiElement> patternForMethodCallParameter() {
+  private static ElementPattern<PsiElement> patternForMethodCallArgument() {
     return psiElement().withSuperParent(3, PsiMethodCallExpressionImpl.class);
   }
 

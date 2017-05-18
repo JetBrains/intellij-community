@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
@@ -36,12 +37,24 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private final static String TEST_COMPLETION_FILE_NAME = "TestCompletion.java";
   private final static String BEFORE_COMPLETION_FILE = "BeforeCompletion.java";
   private final static String AFTER_COMPLETION_FILE = "AfterCompletion.java";
+  private boolean myDefaultAutoCompleteOnCodeCompletion;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     installCompiler();
     Registry.get(MethodChainCompletionContributor.REGISTRY_KEY).setValue(true, myFixture.getTestRootDisposable());
+    myDefaultAutoCompleteOnCodeCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
+    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = false;
+  }
+
+  @Override
+  public void tearDown() throws Exception {
+    try {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = myDefaultAutoCompleteOnCodeCompletion;
+    } finally {
+      super.tearDown();
+    }
   }
 
   protected String getTestDataPath() {
@@ -235,7 +248,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private void doTestRendering() {
     compileAndIndexData(TEST_INDEX_FILE_NAME);
     myFixture.configureByFiles(getBeforeCompletionFilePath());
-    for (LookupElement element : myFixture.complete(CompletionType.BASIC)) {
+    for (LookupElement element : myFixture.complete(CompletionType.SMART)) {
       if (element instanceof JavaRelevantChainLookupElement) {
         myFixture.getLookup().setCurrentItem(element);
         myFixture.finishLookup(Lookup.AUTO_INSERT_SELECT_CHAR);
@@ -260,7 +273,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private LookupElement[] runCompletion() {
     myFixture.configureByFiles(getTestCompletionFilePath());
     LookupElement[] lookupElements =
-      myFixture.complete(CompletionType.BASIC);
+      myFixture.complete(CompletionType.SMART);
     return lookupElements == null ? LookupElement.EMPTY_ARRAY : lookupElements;
   }
 
