@@ -143,7 +143,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
     if (type2 == XmlElementType.XML_ATTRIBUTE) {
       int minLineFeeds = 0;
 
-      if (type1 == XmlTokenType.XML_NAME) {
+      if (type1 == XmlTokenType.XML_NAME || type1 == XmlTokenType.XML_TAG_NAME) {
         final PsiElement psi2 = node2.getPsi();
         minLineFeeds = psi2 instanceof XmlAttribute &&
                        myXmlFormattingPolicy.insertLineBreakBeforeFirstAttribute((XmlAttribute)psi2)
