@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.remote
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.remote.transport.JUnitInfo
 import com.intellij.testGuiFramework.remote.transport.Type
 import org.junit.AssumptionViolatedException
@@ -27,6 +28,8 @@ import org.junit.runner.notification.RunListener
  */
 class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener() {
 
+  val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
+
   override fun testStarted(description: Description?) {
     sendObjectFun(JUnitInfo(Type.STARTED, description))
   }
@@ -36,7 +39,8 @@ class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener(
   }
 
   override fun testFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception.stackTrace))
+    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception))
+    LOG.error(failure.exception)
   }
 
   override fun testFinished(description: Description?) {

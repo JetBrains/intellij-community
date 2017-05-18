@@ -127,7 +127,13 @@ class IdeTestFixture(val ide: Ide,
             println("Test '$testName' ignored"); conditionToFinish.countDown()
           }
           Type.FAILURE -> {
-            println("Test '$testName' failed"); conditionToFinish.countDown()
+            println("Test '$testName' failed");
+//            (jUnitInfo.obj as Array<StackTraceElement>)
+//              .forEach { System.err.println(it) }
+            val t = jUnitInfo.obj as Throwable
+            System.err.println(t)
+            t.printStackTrace(System.err)
+            conditionToFinish.countDown()
           }
           Type.FINISHED -> {
             println("Test '$testName' finished"); conditionToFinish.countDown()

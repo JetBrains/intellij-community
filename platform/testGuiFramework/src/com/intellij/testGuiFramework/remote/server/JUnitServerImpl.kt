@@ -170,9 +170,10 @@ class JUnitServerImpl: JUnitServer {
           println("Receiving message: $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
-          for (handler in handlers) {
-            if (handler.acceptObject(message)) handler.handleObject(message)
-          }
+          val copied: Array<ServerHandler> = handlers.toTypedArray().copyOf()
+          copied
+            .filter { it.acceptObject(message) }
+            .forEach { it.handleObject(message) }
         }
       } catch (e: Exception) {
         failHandler?.invoke(e)

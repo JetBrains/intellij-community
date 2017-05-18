@@ -50,8 +50,11 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
     core.addListener(myListener)
 
     try {
-      while (true)
-        runTest(testQueue.take())
+      while (true) {
+        val testContainer = testQueue.take()
+        LOG.info("Running test: $testContainer")
+        runTest(testContainer)
+      }
     } catch (e: InterruptedException) {
       Thread.currentThread().interrupt()
     }
