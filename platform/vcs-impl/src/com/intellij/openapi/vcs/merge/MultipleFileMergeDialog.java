@@ -154,7 +154,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       myMergeSession = null;
     }
     myModel = new ListTableModel<>(columns.toArray(new ColumnInfo[columns.size()]));
-    myModel.setItems(files);
+    myModel.setItems(new ArrayList<>(myFiles));
     myTable.setModelAndUpdateColumns(myModel);
     myVirtualFileRenderer.setFont(UIUtil.getListFont());
     myTable.setRowHeight(myVirtualFileRenderer.getPreferredSize().height);
@@ -323,7 +323,7 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     }
     else {
       int selIndex = myTable.getSelectionModel().getMinSelectionIndex();
-      myModel.setItems(myFiles);
+      myModel.setItems(new ArrayList<>(myFiles));
       if (selIndex >= myFiles.size()) {
         selIndex = myFiles.size() - 1;
       }
