@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class EduStepikUtils {
   @Nullable
-  public static String getLink(@Nullable Task task) {
+  public static String getLink(@Nullable Task task, int stepNumber) {
     if (task == null) {
       return null;
     }
@@ -31,6 +31,12 @@ public class EduStepikUtils {
       return null;
     }
 
-    return String.format("%s/lesson/%d/step/%d", EduStepicNames.STEPIC_URL, lesson.getId(), task.getPosition());
+    return String.format("%s/lesson/%d/step/%d", EduStepicNames.STEPIC_URL, lesson.getId(), stepNumber);
+  }
+
+  @Nullable
+  public static String getAdaptiveLink(@Nullable Task task) {
+    String link = getLink(task, 1);
+    return link == null ? null : link + "?adaptive=true";
   }
 }

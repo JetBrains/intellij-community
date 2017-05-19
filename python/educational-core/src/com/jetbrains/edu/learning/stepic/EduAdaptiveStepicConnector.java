@@ -300,7 +300,7 @@ public class EduAdaptiveStepicConnector {
     if (user == null) {
       LOG.warn("Can't get next recommendation: user is null");
       ApplicationManager.getApplication().invokeLater(() -> StudyUtils.showErrorPopupOnToolbar(project,
-                                                                                               "Can't get next recommendation: you're not authorized"));
+                                                                                               "Can't get next recommendation: you're not logged in"));
       return;
     }
 
@@ -363,7 +363,7 @@ public class EduAdaptiveStepicConnector {
     }
   }
 
-  private static void replaceCurrentTask(@NotNull Project project, @NotNull Task task, @NotNull Lesson lesson) {
+  public static void replaceCurrentTask(@NotNull Project project, @NotNull Task task, @NotNull Lesson lesson) {
     Course course = StudyTaskManager.getInstance(project).getCourse();
     assert course != null;
 

@@ -67,6 +67,7 @@ import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.courseFormat.tasks.TheoryTask;
 import com.jetbrains.edu.learning.editor.StudyEditor;
+import com.jetbrains.edu.learning.stepic.EduStepikUtils;
 import com.jetbrains.edu.learning.stepic.OAuthDialog;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import com.jetbrains.edu.learning.ui.StudyStepicUserWidget;
@@ -430,14 +431,23 @@ public class StudyUtils {
   }
 
   private static String wrapAdaptiveCourseText(Task task, @NotNull String text) {
+    String finalText = text;
     if (task instanceof TheoryTask) {
-      return text + "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
+      finalText += "\n\n<b>Note</b>: This theory task aims to help you solve difficult tasks. " +
              "Please, read it and press \"Check\" to go further.";
     }
     else if (!(task instanceof ChoiceTask)) {
-      return text + "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
+      finalText += "\n\n<b>Note</b>: Use standard input to obtain input for the task.";
     }
-    return text;
+    finalText += getFooterWithLink(task);
+
+    return finalText;
+  }
+
+  @NotNull
+  private static String getFooterWithLink(Task task) {
+    return
+    "<div class=\"footer\">" + "<a href=" + EduStepikUtils.getAdaptiveLink(task) + ">Open on Stepik</a>"  + "</div>";
   }
 
   @NotNull

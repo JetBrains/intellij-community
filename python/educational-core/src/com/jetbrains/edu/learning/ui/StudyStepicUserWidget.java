@@ -92,7 +92,7 @@ public class StudyStepicUserWidget implements IconLikeCustomStatusBarWidget {
       setLayout(layout);
 
       if (user == null) {
-        createUserPanel("You're not logged in", "Authorize on Stepik", createAuthorizeUserListener());
+        createUserPanel("You're not logged in", "Log in to Stepik", createAuthorizeUserListener());
       }
       else {
         String firstName = user.getFirstName();
