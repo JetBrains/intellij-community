@@ -1032,6 +1032,8 @@ public class AbstractPopup implements JBPopup {
           return result;
         }
       }, true).doWhenRejected(() -> afterShow.run());
+
+      delayKeyEventsUntilFocusSettlesDown();
     } else {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
@@ -1054,6 +1056,12 @@ public class AbstractPopup implements JBPopup {
     }
     debugState("popup shown", State.SHOWING);
     myState = State.SHOWN;
+  }
+
+  private void delayKeyEventsUntilFocusSettlesDown() {
+    ActionCallback typeAhead = new ActionCallback();
+    getFocusManager().typeAheadUntil(typeAhead, "AbstractPopup");
+    getFocusManager().doWhenFocusSettlesDown(() -> typeAhead.setDone());
   }
 
   public void focusPreferredComponent() {
