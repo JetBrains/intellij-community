@@ -21,6 +21,7 @@ import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.ArrayViewStrategy;
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel;
 import com.jetbrains.python.debugger.dataframe.DataFrameViewStrategy;
+import com.jetbrains.python.debugger.dataframe.SeriesViewStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ import java.util.Set;
 
 public abstract class DataViewStrategy {
   private static class StrategyHolder {
-    private static final Set<DataViewStrategy> STRATEGIES = ContainerUtil.newHashSet(new ArrayViewStrategy(), new DataFrameViewStrategy(), new DataFrameViewStrategy(), new SeriesViewStrategy());
+    private static final Set<DataViewStrategy> STRATEGIES = ContainerUtil.newHashSet(new ArrayViewStrategy(), new DataFrameViewStrategy(), new SeriesViewStrategy());
   }
 
   public abstract AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel panel, @NotNull PyDebugValue debugValue);
@@ -56,18 +57,5 @@ public abstract class DataViewStrategy {
       }
     }
     return null;
-  }
-
-  private static class SeriesViewStrategy extends DataFrameViewStrategy {
-    @NotNull
-    @Override
-    public String getTypeName() {
-      return "Series";
-    }
-
-    @Override
-    public boolean showColumnHeader() {
-      return false;
-    }
   }
 }
