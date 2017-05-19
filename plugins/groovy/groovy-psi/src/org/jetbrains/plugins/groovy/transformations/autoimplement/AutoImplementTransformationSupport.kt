@@ -62,8 +62,8 @@ class AutoImplementTransformation : AstTransformationSupport {
           }
         }
 
-        for ((index, value) in signature.parameterTypes.withIndex()){
-          addParameter(toImplementMethod.parameterList.parameters[index].name ?: ("var" + index) , value)
+        for ((index, value) in signature.parameterTypes.withIndex()) {
+          addParameter(toImplementMethod.parameterList.parameters[index].name ?: ("var" + index), value)
         }
       }
     }
@@ -72,14 +72,10 @@ class AutoImplementTransformation : AstTransformationSupport {
   fun getMapToOverrideImplement(context: TransformationContext): Map<MethodSignature, CandidateInfo> {
     val signatures = ContainerUtil.newArrayList<HierarchicalMethodSignature>()
 
-    context.extendsTypes.forEach {
-      val visibleSignatures = it.resolve()?.visibleSignatures
-      if (visibleSignatures != null) signatures.addAll(visibleSignatures)
-    }
-
-    context.implementsTypes.forEach {
-      val visibleSignatures = it.resolve()?.visibleSignatures
-      if (visibleSignatures != null) signatures.addAll(visibleSignatures)
+    context.superTypes.forEach {
+      it.resolve()?.visibleSignatures?.let {
+        signatures.addAll(it)
+      }
     }
 
     return GroovyOverrideImplementExploreUtil.getMapToOverrideImplement(context.codeClass, signatures, true, false)
