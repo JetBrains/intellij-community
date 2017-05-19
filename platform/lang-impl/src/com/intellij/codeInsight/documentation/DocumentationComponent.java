@@ -74,7 +74,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.plaf.FontUIResource;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
@@ -687,7 +686,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
                       myEditorPane.getFont().getFontName();
 
     // changing font will change the doc's CSS as myEditorPane has JEditorPane.HONOR_DISPLAY_PROPERTIES via UIUtil.getHTMLEditorKit
-    myEditorPane.setFont(new FontUIResource(fontName, Font.PLAIN, JBUI.scale(getQuickDocFontSize().getSize())));
+    myEditorPane.setFont(UIUtil.getFontWithFallback(fontName, Font.PLAIN, JBUI.scale(getQuickDocFontSize().getSize())));
   }
 
   private void goBack() {
