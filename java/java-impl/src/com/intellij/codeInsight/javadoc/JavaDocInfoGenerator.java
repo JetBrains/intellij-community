@@ -44,6 +44,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.EverythingGlobalScope;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -1341,6 +1342,26 @@ public class JavaDocInfoGenerator {
         buffer.append(BR_TAG);
         generateValue(buffer, elements, pair.second);
         buffer.append("</DD></DL></DD>");
+      }
+    }
+    else {
+      PsiField field = PropertyUtil.getFieldOfGetter(method);
+      if (field == null) {
+        field = PropertyUtil.getFieldOfSetter(method);
+      }
+      
+      if (field != null) {
+        PsiDocComment fieldDocComment = field.getDocComment();
+        if (fieldDocComment != null && !isEmptyDescription(fieldDocComment)) {
+          buffer.append("<DD><DL>");
+          buffer.append("<DT><b>");
+          buffer.append(CodeInsightBundle.message("javadoc.description.copied.from.field"));
+          buffer.append("</b>&nbsp;");
+          generateLink(buffer, field, field.getName(), false);
+          buffer.append(BR_TAG);
+          generateValue(buffer, fieldDocComment.getDescriptionElements(), ourEmptyElementsProvider);
+          buffer.append("</DD></DL></DD>");
+        }
       }
     }
   }
