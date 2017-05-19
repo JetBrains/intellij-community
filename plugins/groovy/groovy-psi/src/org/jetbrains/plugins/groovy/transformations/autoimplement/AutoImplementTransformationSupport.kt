@@ -15,9 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.transformations.autoimplement
 
-import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.psi.HierarchicalMethodSignature
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.infos.CandidateInfo
@@ -25,13 +23,11 @@ import com.intellij.psi.util.MethodSignature
 import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 import org.jetbrains.plugins.groovy.transformations.plusAssign
 import org.jetbrains.plugins.groovy.util.GroovyOverrideImplementExploreUtil
-import java.util.*
 
 internal val autoImplementFqn = GroovyCommonClassNames.GROOVY_TRANSFORM_AUTOIMPLEMENT
 internal val autoImplementOriginInfo = "by @AutoImplement"
@@ -76,42 +72,19 @@ class AutoImplementTransformation : AstTransformationSupport {
   }
 
   fun getMapToOverrideImplement(context: TransformationContext): Map<MethodSignature, CandidateInfo> {
-    val abstracts = ContainerUtil.newLinkedHashMap<MethodSignature, PsiMethod>()
-    val finals = ContainerUtil.newLinkedHashMap<MethodSignature, PsiMethod>()
-    val concretes = ContainerUtil.newLinkedHashMap<MethodSignature, PsiMethod>()
-
-    val extendsTypes = context.extendsTypes
-    val implementTypes = context.implementsTypes
-
     val signatures = ContainerUtil.newArrayList<HierarchicalMethodSignature>()
 
-    extendsTypes.forEach {
+    context.extendsTypes.forEach {
       val visibleSignatures = it.resolve()?.visibleSignatures
       if (visibleSignatures != null) signatures.addAll(visibleSignatures)
     }
 
-    implementTypes.forEach {
+    context.implementsTypes.forEach {
       val visibleSignatures = it.resolve()?.visibleSignatures
       if (visibleSignatures != null) signatures.addAll(visibleSignatures)
     }
 
-    val resolveHelper = JavaPsiFacade.getInstance(context.project).resolveHelper
-    for (signature in signatures) {
-      val method = signature.method
-      if (method is GrTraitMethod) {
-        for (superSignature in signature.superSignatures) {
-          GroovyOverrideImplementExploreUtil.processMethod(context.codeClass, false, abstracts, finals, concretes, resolveHelper, superSignature, superSignature.method)
-        }
-      }
-      else {
-        GroovyOverrideImplementExploreUtil.processMethod(context.codeClass, false, abstracts, finals, concretes, resolveHelper, signature, method)
-      }
-    }
-
-    val result = TreeMap<MethodSignature, CandidateInfo>(OverrideImplementExploreUtil.MethodSignatureComparator())
-
-    GroovyOverrideImplementExploreUtil.collectMethodsToImplement(context.codeClass, abstracts, finals, concretes, result)
-
-    return result
+    return GroovyOverrideImplementExploreUtil.getMapToOverrideImplement(context.codeClass, signatures, true, false)
   }
+
 }
