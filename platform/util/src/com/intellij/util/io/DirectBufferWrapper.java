@@ -83,19 +83,13 @@ abstract class DirectBufferWrapper extends ByteBufferWrapper {
         throw new RuntimeException(e);
       }
     }
-    return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-      @Override
-      @Nullable
-      public Object run() {
-        try {
-          Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-          if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
-          return null;
-        }
-        catch (Throwable e) {
-          return buffer;
-        }
-      }
-    }) == null;
+    try {
+      Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
+      if (cleaner != null) cleaner.clean(); // Already cleaned otherwise
+      return true;
+    }
+    catch (Throwable e) {
+      return false;
+    }
   }
 }
