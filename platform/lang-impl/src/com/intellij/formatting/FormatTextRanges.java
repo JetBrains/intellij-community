@@ -39,8 +39,8 @@ public class FormatTextRanges implements FormattingRangesInfo {
   }
   
   public FormatTextRanges(@NotNull ChangedRangesInfo changedRangesInfo) {
-    changedRangesInfo.allChangedRanges.forEach((range) -> add(range, true));
-    myInsertedRanges = changedRangesInfo.insertedRanges;
+    changedRangesInfo.optimizedChangedRanges().forEach((range) -> add(range, true));
+    myInsertedRanges = changedRangesInfo.insertedRanges();
   }
 
   public void add(TextRange range, boolean processHeadingWhitespace) {
