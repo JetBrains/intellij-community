@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,12 +117,12 @@ class TabContentLayout extends ContentLayout {
 
     for (final ContentTabLabel each : tabs) {
       final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
-      if (myUi.myManager.isSelected(each.myContent)) {
+      if (myUi.myManager.isSelected(each.getContent())) {
         item.setSelected(true);
       }
       item.addActionListener(new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          myUi.myManager.setSelectedContent(each.myContent, true);
+          myUi.myManager.setSelectedContent(each.getContent(), true);
         }
       });
       myPopup.add(item);
@@ -173,7 +173,7 @@ class TabContentLayout extends ContentLayout {
         myLastLayout.contentCount == manager.getContentCount()) {
       for (ContentTabLabel each : myTabs) {
         if (!each.isValid()) break;
-        if (each.myContent == selected && each.getBounds().width != 0) {
+        if (each.getContent() == selected && each.getBounds().width != 0) {
           data = myLastLayout;
           data.fullLayout = false;
         }
@@ -429,11 +429,11 @@ class TabContentLayout extends ContentLayout {
     myUi.removeAll();
 
     myUi.add(myIdLabel);
-    myUi.initMouseListeners(myIdLabel, myUi);
+    ToolWindowContentUi.initMouseListeners(myIdLabel, myUi);
 
     for (ContentTabLabel each : myTabs) {
       myUi.add(each);
-      myUi.initMouseListeners(each, myUi);
+      ToolWindowContentUi.initMouseListeners(each, myUi);
     }
     
     myCached.clear();

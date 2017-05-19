@@ -31,7 +31,7 @@ import java.awt.event.MouseEvent;
 
 class ContentTabLabel extends BaseLabel {
 
-  Content myContent;
+  private final Content myContent;
   private final TabContentLayout myLayout;
 
   public ContentTabLabel(@NotNull Content content, @NotNull TabContentLayout layout) {
@@ -108,6 +108,7 @@ class ContentTabLabel extends BaseLabel {
     return myUi.myWindow.getContentManager();
   }
 
+  @NotNull
   @Override
   public Content getContent() {
     return myContent;
