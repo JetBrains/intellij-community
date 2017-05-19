@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.killProcessIfPossible
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
+import com.intellij.testGuiFramework.launcher.ide.Ide
+import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.server.ServerHandler
 import com.intellij.testGuiFramework.remote.transport.*
@@ -46,7 +48,6 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     else
       runOnClientSide(method, notifier)
   }
-
 
   /**
    * it suites only to test one test class. IntelliJ IDEA starting with "guitest" argument and list of tests. So we cannot calculate a list
@@ -82,7 +83,7 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       server.addHandler(myServerHandler)
       server.setFailHandler({ throwable -> cdl.countDown(); throw throwable })
       if (!server.isConnected())
-        runIdeLocally(port = server.getPort()) //todo: add IDE specification here
+        runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation())
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
       server.send(TransportMessage(MessageType.RUN_TEST, jUnitTestContainer))
     }
@@ -94,6 +95,12 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     if (!cdl.await(10, TimeUnit.MINUTES)) //kill idea if tests exceeded timeout
       killProcessIfPossible()
     server.removeAllHandlers()
+  }
+
+  private fun getIdeFromAnnotation(): Ide {
+    val annotation = testClass.getAnnotation(RunWithIde::class.java)
+    val ideType = annotation?.value ?: IdeType.IDEA_COMMUNITY //ide community by default
+    return Ide(ideType, 0, 0)
   }
 
   private fun runOnClientSide(method: FrameworkMethod, notifier: RunNotifier) {
