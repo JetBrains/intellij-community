@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2009 Bas Leijdekkers
+ * Copyright 2007-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 class VarargArgumentsPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(@NotNull PsiElement element) {
     if (!(element instanceof PsiExpressionList)) {
       return false;
@@ -31,8 +32,7 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     if (!(grandParent instanceof PsiMethodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression methodCallExpression =
-      (PsiMethodCallExpression)grandParent;
+    final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null || !method.isVarArgs()) {
       return false;
@@ -64,6 +64,20 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
       }
     }
 
+    final PsiParameter[] parameters = parameterList.getParameters();
+    final PsiParameter lastParameter = parameters[parameters.length - 1];
+    final PsiEllipsisType lastParameterType = (PsiEllipsisType)lastParameter.getType();
+    final PsiType lastType = lastParameterType.getComponentType();
+    final JavaResolveResult resolveResult = methodCallExpression.resolveMethodGenerics();
+    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+    final PsiType substitutedType = substitutor.substitute(lastType);
+    if (substitutedType instanceof PsiCapturedWildcardType) {
+      final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)substitutedType;
+      if (!capturedWildcardType.getWildcard().isSuper()) {
+        // red code
+        return false;
+      }
+    }
     if (arguments.length != parametersCount) {
       return true;
     }
@@ -85,15 +99,6 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     }
     final PsiArrayType arrayType = (PsiArrayType)lastArgumentType;
     final PsiType type = arrayType.getComponentType();
-    final PsiParameter[] parameters = parameterList.getParameters();
-    final PsiParameter lastParameter = parameters[parameters.length - 1];
-    final PsiEllipsisType lastParameterType =
-      (PsiEllipsisType)lastParameter.getType();
-    final PsiType lastType = lastParameterType.getComponentType();
-    final JavaResolveResult resolveResult =
-      methodCallExpression.resolveMethodGenerics();
-    final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
-    final PsiType substitutedType = substitutor.substitute(lastType);
     return !substitutedType.equals(type);
   }
 }
