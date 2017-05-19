@@ -1,0 +1,18 @@
+LineBreakpoint created at Nulls.java:6
+!JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! Nulls
+Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+Nulls.java:6
+Stream.of(null, null)
+.count()
+Stream.of
+    before: nothing
+    after: 1,2
+count
+    before: 1,2
+    after: nothing
+mappings for count
+    nothing -> 1 -> nothing
+    nothing -> 2 -> nothing
+Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
+
+Process finished with exit code 0
