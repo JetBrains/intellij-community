@@ -106,7 +106,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
         assertNotNull(myItems);
         LookupManager.getInstance(getProject()).hideActiveLookup();
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
 
   }
 

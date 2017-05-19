@@ -53,7 +53,7 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
     PlatformTestUtil.startPerformanceTest("Property files editing", 2500, () -> {
       type("aaaa=bbb");
       PsiDocumentManager.getInstance(ourProject).commitAllDocuments();
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 
   private void doTest() throws Exception {

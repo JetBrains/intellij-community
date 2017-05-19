@@ -74,7 +74,7 @@ public class DictionaryTest {
     final Ref<Dictionary> ref = Ref.create();
 
     PlatformTestUtil.startPerformanceTest("load dictionary", time,
-                                          () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))).cpuBound().useLegacyScaling().assertTiming();
+                                          () -> ref.set(CompressedDictionary.create(getLoader(name), myTransformation))).useLegacyScaling().assertTiming();
 
     assertFalse(ref.isNull());
     return ref.get();
@@ -88,7 +88,7 @@ public class DictionaryTest {
       for (String s : wordsToCheck) {
         assertEquals(Boolean.TRUE, dictionary.contains(s));
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   private void containsWordTest(Dictionary dictionary) {

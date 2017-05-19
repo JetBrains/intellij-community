@@ -113,7 +113,7 @@ public class FileTypesTest extends PlatformTestCase {
           myFileTypeManager.isFileIgnored(name);
         }
       }
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 
   public void testMaskToPattern() {

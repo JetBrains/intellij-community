@@ -545,7 +545,7 @@ public class PlatformTestUtil {
     private int usedReferenceCpuCores = 1;
     private int attempts = 4;             // number of retries if performance failed
     private final String message;         // to print on fail
-    private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
+    private boolean adjustForIO = false;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
     private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
     private boolean useLegacyScaling;
 
@@ -558,11 +558,28 @@ public class PlatformTestUtil {
 
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo setup(@NotNull ThrowableRunnable setup) { assert this.setup==null; this.setup = setup; return this; }
+
+    /**
+     * Invoke this method if and only if the code under performance tests is using all CPU cores.
+     * The "standard" expected time then should be given for a machine which has 8 CPU cores.
+     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
+     */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo usesAllCPUCores() { return usesMultipleCPUCores(8); }
+
+    /**
+     * Invoke this method if and only if the code under performance tests is using {@code maxCores} CPU cores (or less if the computer has less).
+     * The "standard" expected time then should be given for a machine which has {@code maxCores} CPU cores.
+     * Actual test expected time will be adjusted according to the number of cores the actual computer has.
+     */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo usesMultipleCPUCores(int maxCores) { assert adjustForCPU : "This test configured to be io-bound, it cannot use all cores"; usedReferenceCpuCores = maxCores; return this; }
+
+    /**
+     * @deprecated tests are CPU-bound by default, so no need to call this method. 
+     */
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
+    @Deprecated
     public TestInfo cpuBound() { adjustForIO = false; adjustForCPU = true; return this; }
     @Contract(pure = true) // to warn about not calling .assertTiming() in the end
     public TestInfo ioBound() { adjustForIO = true; adjustForCPU = false; return this; }

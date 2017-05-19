@@ -266,7 +266,7 @@ public class XmlParsingTest extends ParsingTestCase {
             PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
             System.out.println("Reparsed for: " + (System.currentTimeMillis() - tm));
           }
-        }).cpuBound().useLegacyScaling().assertTiming();
+        }).useLegacyScaling().assertTiming();
       }
     }.execute();
   }

@@ -37,7 +37,7 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
       for (i in 0..100000) {
         assertEquals(root, fs.getRootByEntry(entry))
       }
-    }).cpuBound().assertTiming()
+    }).assertTiming()
   }
 
   @Test fun getLocalByEntry() {
@@ -46,6 +46,6 @@ class ArchiveFileSystemPerformanceTest : BareTestFixtureTestCase() {
       for (i in 0..100000) {
         assertEquals(local, fs.getLocalByEntry(entry))
       }
-    }).cpuBound().assertTiming()
+    }).assertTiming()
   }
 }

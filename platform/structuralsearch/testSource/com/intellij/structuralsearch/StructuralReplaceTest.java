@@ -1734,7 +1734,7 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                                                 doTest(testName, ext, message);
                                               }
                                             }
-      ).cpuBound().useLegacyScaling().assertTiming();
+      ).useLegacyScaling().assertTiming();
     } finally {
       options.setToReformatAccordingToStyle(false);
       options.setToShortenFQN(false);

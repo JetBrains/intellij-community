@@ -49,7 +49,6 @@ public class JavaSmartReformatPerformanceTest extends AbstractJavaFormatterTest 
     PlatformTestUtil
       .startPerformanceTest("Testing smart reformat on big file", 110, getReformatRunnable(file, ranges))
       .setup(getSetupRunnable(initial, document))
-      .cpuBound()
       .useLegacyScaling().assertTiming();
 
   }

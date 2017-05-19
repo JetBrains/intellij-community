@@ -182,6 +182,6 @@ class DiffPerformanceTest : TestCase() {
       for (i in 0..iterations) {
         test()
       }
-    }.cpuBound().assertTiming()
+    }.assertTiming()
   }
 }

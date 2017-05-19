@@ -760,6 +760,6 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       files = FilenameIndex.getFilesByName(project, filename, GlobalSearchScope.moduleScope(myModule))
       assert files?.length == 1
-    }).cpuBound().assertTiming()
+    }).assertTiming()
   }
 }

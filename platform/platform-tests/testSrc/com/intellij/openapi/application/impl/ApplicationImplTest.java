@@ -164,7 +164,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         }
         ConcurrencyUtil.joinAll(threads);
         threads.clear();
-      }).cpuBound().assertTiming();
+      }).assertTiming();
     }
     finally {
       Disposer.dispose(disposable);
@@ -531,7 +531,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         threads.add(thread);
       }
       ConcurrencyUtil.joinAll(threads);
-    }).cpuBound().usesAllCPUCores().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
   public void testCheckCanceledReadAction() throws Exception {
