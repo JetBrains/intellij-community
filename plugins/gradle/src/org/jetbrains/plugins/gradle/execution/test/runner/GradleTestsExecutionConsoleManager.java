@@ -49,6 +49,8 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.io.File;
+
 /**
  * @author Vladislav.Soroka
  * @since 2/18/14
@@ -130,12 +132,17 @@ public class GradleTestsExecutionConsoleManager
       if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
 
       return ContainerUtil.find(taskTask.getTasksToExecute(), taskToExecute -> {
+        String projectPath = taskTask.getExternalProjectPath();
+        File file = new File(projectPath);
+        if (file.isFile()) {
+          projectPath = StringUtil.trimEnd(projectPath, "/" + file.getName());
+        }
         final ExternalProjectInfo externalProjectInfo =
-          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), taskTask.getExternalProjectPath());
+          ExternalSystemUtil.getExternalProjectInfo(taskTask.getIdeProject(), getExternalSystemId(), projectPath);
         if (externalProjectInfo == null) return false;
 
         final DataNode<TaskData> taskDataNode = GradleProjectResolverUtil.findTask(
-          externalProjectInfo.getExternalProjectStructure(), taskTask.getExternalProjectPath(), taskToExecute);
+          externalProjectInfo.getExternalProjectStructure(), projectPath, taskToExecute);
         return taskDataNode != null &&
                (("check".equals(taskDataNode.getData().getName()) && "verification".equals(taskDataNode.getData().getGroup())
                  || GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(taskDataNode.getData().getType())));
