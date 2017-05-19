@@ -58,7 +58,14 @@ public class EvaluateExpressionTracer implements StreamTracer {
           if (result instanceof JavaValue) {
             final Value reference = ((JavaValue)result).getDescriptor().getValue();
             if (reference instanceof ArrayReference) {
-              final TracingResult interpretedResult = myResultInterpreter.interpret(chain, (ArrayReference)reference);
+              final TracingResult interpretedResult;
+              try {
+                interpretedResult = myResultInterpreter.interpret(chain, (ArrayReference)reference);
+              }
+              catch (Throwable t) {
+                callback.evaluationFailed(streamTraceExpression, "Cannot interpret trace result. " + t.getMessage());
+                throw t;
+              }
               final EvaluationContextImpl context = ((JavaValue)result).getEvaluationContext();
               callback.evaluated(interpretedResult, context);
               return;
