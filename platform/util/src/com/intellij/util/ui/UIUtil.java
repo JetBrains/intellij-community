@@ -36,7 +36,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import sun.font.FontUtilities;
 import sun.java2d.SunGraphicsEnvironment;
 
 import javax.sound.sampled.AudioInputStream;
@@ -2559,7 +2558,7 @@ public class UIUtil {
             Font font = getLabelFont();
             assert font instanceof FontUIResource;
             if (SystemInfo.isWindows) {
-              font = getFontWithFallback(new Font("Tahoma", font.getStyle(), font.getSize()));
+              font = new FontUIResource("Tahoma", font.getStyle(), font.getSize());
             }
             // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
             // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
@@ -2573,15 +2572,6 @@ public class UIUtil {
       }
     }
   }
-
-  public static FontUIResource getFontWithFallback(@NotNull Font font) {
-    return FontUtilities.getCompositeFontUIResource(font);
-    // Implementation above uses non-public API
-    // Here's a simple example of getting similar result using public API
-    //Font fontWithFallback = new StyleContext().getFont(font.getFamily(), font.getStyle(), font.getSize());
-    //return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
-  }
-
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
     if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
