@@ -447,7 +447,7 @@ public class StudyUtils {
   @NotNull
   private static String getFooterWithLink(Task task) {
     return
-    "<div class=\"footer\">" + "<a href=" + EduStepikUtils.getLink(task) + ">Open on Stepik</a>"  + "</div>";
+    "<div class=\"footer\">" + "<a href=" + EduStepikUtils.getAdaptiveLink(task) + ">Open on Stepik</a>"  + "</div>";
   }
 
   @NotNull

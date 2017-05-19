@@ -84,6 +84,8 @@
             text="Switch Task Description Panel">
     </action>
 
+    <action id="Edu.UpdateRecommendation" class="com.jetbrains.edu.learning.actions.StudyUpdateRecommendationAction"/>
+
     <!--course creator-->
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">
       <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
