@@ -13,48 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.components.impl.stores;
+package com.intellij.openapi.components.impl.stores
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.ReflectionUtil;
-import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.JDOMExternalizable
+import com.intellij.openapi.util.JDOMUtil
+import com.intellij.util.ReflectionUtil
+import com.intellij.util.xmlb.XmlSerializer
+import org.jdom.Element
 
-@SuppressWarnings({"deprecation"})
-public class DefaultStateSerializer {
-  private static final Logger LOG = Logger.getInstance(DefaultStateSerializer.class);
+object DefaultStateSerializer {
+  private val LOG = Logger.getInstance(DefaultStateSerializer::class.java)
 
-  private DefaultStateSerializer() {
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @Nullable
-  public static <T> T deserializeState(@Nullable Element stateElement, Class <T> stateClass, @Nullable T mergeInto) {
+  fun <T> deserializeState(stateElement: Element?, stateClass: Class<T>, mergeInto: T?): T? {
     if (stateElement == null) {
-      return mergeInto;
+      return mergeInto
     }
-    else if (stateClass == Element.class) {
-      return (T)stateElement;
+    else if (stateClass == Element::class.java) {
+      return stateElement as T?
     }
-    else if (JDOMExternalizable.class.isAssignableFrom(stateClass)) {
+    else if (JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
       if (mergeInto != null) {
-        String elementText = JDOMUtil.writeElement(stateElement);
-        LOG.error("State is " + stateClass.getName() + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText);
+        val elementText = JDOMUtil.writeElement(stateElement)
+        LOG.error("State is " + stateClass.name + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText)
       }
 
-      T t = ReflectionUtil.newInstance(stateClass);
-      ((JDOMExternalizable)t).readExternal(stateElement);
-      return t;
+      val t = ReflectionUtil.newInstance(stateClass)
+      (t as JDOMExternalizable).readExternal(stateElement)
+      return t
     }
     else if (mergeInto == null) {
-      return XmlSerializer.deserialize(stateElement, stateClass);
+      return XmlSerializer.deserialize(stateElement, stateClass)
     }
     else {
-      XmlSerializer.deserializeInto(mergeInto, stateElement);
-      return mergeInto;
+      XmlSerializer.deserializeInto(mergeInto, stateElement)
+      return mergeInto
     }
   }
 }
