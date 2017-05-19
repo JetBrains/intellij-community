@@ -242,6 +242,8 @@
             <action class="com.intellij.ide.ManageRecentProjectsAction" id="ManageRecentProjects"/>
           </group>
           <action id="CloseProject" class="com.intellij.ide.actions.CloseProjectAction"/>
+          <action id="CloseOtherProjects" class="com.intellij.ide.actions.CloseOtherProjectsAction"/>
+          <action id="CloseAllProject" class="com.intellij.ide.actions.CloseAllProjectsAction"/>
         </group>
         <separator/>
         <group id="FileMainSettingsGroup">
