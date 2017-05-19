@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   private JPanel myCenterPanel;
 
   private String myInfo;
-  private String myRequestor;
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
@@ -442,7 +441,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
       if (myInfoAndProgressPanel != null) {
         Couple<String> pair = myInfoAndProgressPanel.setText(s, requestor);
         myInfo = pair.first;
-        myRequestor = pair.second;
       }
     });
   }
@@ -450,11 +448,6 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   @Override
   public String getInfo() {
     return myInfo;
-  }
-
-  @Override
-  public String getInfoRequestor() {
-    return myRequestor;
   }
 
   @Override
