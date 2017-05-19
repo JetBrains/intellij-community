@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,46 +48,54 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     init(parentScheme, null);
   }
 
-  private void init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
+  @NotNull
+  private CodeStyleSettings init(@Nullable CodeStyleScheme parentScheme, @Nullable Element root) {
+    final CodeStyleSettings settings;
     if (parentScheme == null) {
-      myCodeStyleSettings = new CodeStyleSettings();
+      settings = new CodeStyleSettings();
     }
     else {
       CodeStyleSettings parentSettings = parentScheme.getCodeStyleSettings();
-      myCodeStyleSettings = parentSettings.clone();
+      settings = parentSettings.clone();
       while (parentSettings.getParentSettings() != null) {
         parentSettings = parentSettings.getParentSettings();
       }
-      myCodeStyleSettings.setParentSettings(parentSettings);
+      settings.setParentSettings(parentSettings);
     }
+
     if (root != null) {
       try {
-        myCodeStyleSettings.readExternal(root);
+        settings.readExternal(root);
       }
       catch (InvalidDataException e) {
         LOG.error(e);
       }
     }
+
+    myCodeStyleSettings = settings;
+    return settings;
   }
 
   @Override
   @NotNull
   public CodeStyleSettings getCodeStyleSettings() {
     SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
-    if (dataHolder != null) {
-      myDataHolder = null;
-      init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
-      dataHolder.updateDigest(this);
-      myParentSchemeName = null;
+    if (dataHolder == null) {
+      return myCodeStyleSettings;
     }
-    return myCodeStyleSettings;
+
+    myDataHolder = null;
+    CodeStyleSettings settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+    dataHolder.updateDigest(this);
+    myParentSchemeName = null;
+    return settings;
   }
 
   boolean isInitialized() {
     return myDataHolder == null;
   }
 
-  public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings){
+  public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings) {
     myCodeStyleSettings = codeStyleSettings;
     myParentSchemeName = null;
     myDataHolder = null;
