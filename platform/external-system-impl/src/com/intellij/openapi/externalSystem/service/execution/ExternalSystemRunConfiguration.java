@@ -376,13 +376,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Override
     protected void destroyProcessImpl() {
       myTask.cancel();
-      StreamUtil.closeStream(myProcessInput);
+      closeInput();
     }
 
     @Override
     protected void detachProcessImpl() {
       notifyProcessDetached();
-      StreamUtil.closeStream(myProcessInput);
+      closeInput();
     }
 
     @Override
@@ -399,11 +399,17 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Override
     public void notifyProcessTerminated(int exitCode) {
       super.notifyProcessTerminated(exitCode);
+      closeInput();
     }
 
     @Override
     public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
       super.notifyTextAvailable(text, attributes);
+    }
+
+    private void closeInput() {
+      StreamUtil.closeStream(myProcessInput);
+      myProcessInput = null;
     }
   }
 
