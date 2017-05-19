@@ -232,6 +232,9 @@ public class EduCoursesPanel extends JPanel {
       myErrorLabel.setForeground((selectedCourse.isAdaptive() ? MessageType.ERROR : MessageType.WARNING).getTitleForeground());
       notifyListeners(!selectedCourse.isAdaptive());
     }
+    else {
+      notifyListeners(true);
+    }
   }
 
   @NotNull
