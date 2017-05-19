@@ -41,6 +41,10 @@ public abstract class DataViewStrategy {
   @NotNull
   public abstract String getTypeName();
 
+  public boolean showColumnHeader() {
+    return true;
+  }
+
   /**
    * @return null if no strategy for this type
    */
@@ -59,6 +63,11 @@ public abstract class DataViewStrategy {
     @Override
     public String getTypeName() {
       return "Series";
+    }
+
+    @Override
+    public boolean showColumnHeader() {
+      return false;
     }
   }
 }
