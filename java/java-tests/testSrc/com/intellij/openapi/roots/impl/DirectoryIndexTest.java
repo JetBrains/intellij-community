@@ -52,7 +52,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private VirtualFile myTestSrc1;
   private VirtualFile myPack1Dir, myPack2Dir;
   private VirtualFile myFileLibDir, myFileLibSrc, myFileLibCls;
-  private VirtualFile myLibDir, myLibSrcDir, myLibAdditionalSrcDir, myLibClsDir;
+  private VirtualFile myLibDir, myLibSrcDir, myLibAdditionalDir, myLibAdditionalSrcDir, myLibAdditionalExcludedDir, myLibClsDir;
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
@@ -83,7 +83,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
                 lib
                     src
                       exc
-                    additional-src
+                    additional-lib
+                      src
+                      excluded
                     cls
                       exc
                 module2
@@ -111,7 +113,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
       myLibDir = createChildDirectory(myModule1Dir, "lib");
       myLibSrcDir = createChildDirectory(myLibDir, "src");
       myExcludedLibSrcDir = createChildDirectory(myLibSrcDir, "exc");
-      myLibAdditionalSrcDir = createChildDirectory(myLibDir, "additional-src");
+      myLibAdditionalDir = createChildDirectory(myLibDir, "additional-lib");
+      myLibAdditionalSrcDir = createChildDirectory(myLibAdditionalDir, "src");
+      myLibAdditionalExcludedDir = createChildDirectory(myLibAdditionalDir, "excluded");
       myLibClsDir = createChildDirectory(myLibDir, "cls");
       myExcludedLibClsDir = createChildDirectory(myLibClsDir, "exc");
       myModule2Dir = createChildDirectory(myModule1Dir, "module2");
@@ -160,7 +164,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
         @Override
         public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
           return myProject == project ? Collections.singletonList(
-            SyntheticLibrary.newImmutableLibrary(Collections.singletonList(myLibAdditionalSrcDir))
+            SyntheticLibrary.newImmutableLibrary(Collections.singletonList(myLibAdditionalDir), Collections.singleton(myLibAdditionalExcludedDir))
           ) : Collections.emptyList();
         }
       }, getTestRootDisposable());
@@ -619,7 +623,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     //myModule is included into order entries instead of myModule2 because classes root for libraries dominates on source roots
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
+    checkInfo(myLibAdditionalDir, myModule, true, true, null, null, myModule);
+
     checkInfo(myLibAdditionalSrcDir, myModule, true, true, null, null, myModule);
+    checkInfo(myLibAdditionalExcludedDir, myModule, true, false, "lib.additional-lib.excluded", null, myModule);
 
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
