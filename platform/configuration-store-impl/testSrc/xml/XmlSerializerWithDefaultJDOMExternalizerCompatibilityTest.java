@@ -21,9 +21,7 @@ public class XmlSerializerWithDefaultJDOMExternalizerCompatibilityTest extends T
 
   private static String serializeWithXmlSerializer(final Object data) throws Exception {
     Element element = serialize(data);
-
-    String s = JDOMUtil.writeElement(element, "\n");
-    return StringUtil.trimStart(s, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>").trim();
+    return StringUtil.trimStart(JDOMUtil.writeElement(element), "<?xml version=\"1.0\" encoding=\"UTF-8\"?>").trim();
   }
 
   private static String serializeWithJDom(final Object data) throws Exception {
