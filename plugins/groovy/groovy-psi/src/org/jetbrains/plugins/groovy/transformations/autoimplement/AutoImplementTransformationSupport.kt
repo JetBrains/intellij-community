@@ -40,14 +40,12 @@ class AutoImplementTransformation : AstTransformationSupport {
     val candidateInfo = getMapToOverrideImplement(context).values
 
 
-    candidateInfo.filter { it.element is PsiMethod }.forEach {
-
-      val toImplementMethod = it.element as PsiMethod
-      val methodSubstitutor = it.substitutor
+    for (info in candidateInfo) {
+      val toImplementMethod = info.element as? PsiMethod ?: continue
 
       val substitutor = toImplementMethod.containingClass?.let {
         TypeConversionUtil.getClassSubstitutor(it, context.codeClass, PsiSubstitutor.EMPTY)
-      } ?: methodSubstitutor
+      } ?: info.substitutor
 
 
       val signature = toImplementMethod.getSignature(substitutor)
