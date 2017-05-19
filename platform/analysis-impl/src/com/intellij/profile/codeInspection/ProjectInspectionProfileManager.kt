@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.concurrency.runAsync
@@ -173,8 +174,10 @@ class ProjectInspectionProfileManager(val project: Project,
     override fun runActivity(project: Project) {
       getInstance(project).apply {
         initialLoadSchemesFuture.done {
-          currentProfile.initInspectionTools(project)
-          fireProfilesInitialized()
+          if (!project.isDisposed) {
+            currentProfile.initInspectionTools(project)
+            fireProfilesInitialized()
+          }
         }
 
         scopeListener = NamedScopesHolder.ScopeListener {
@@ -188,6 +191,7 @@ class ProjectInspectionProfileManager(val project: Project,
         Disposer.register(project, Disposable {
           scopeManager.removeScopeListener(scopeListener!!)
           localScopesHolder.removeScopeListener(scopeListener!!)
+          (initialLoadSchemesFuture as? AsyncPromise<*>)?.cancel()
         })
       }
     }
