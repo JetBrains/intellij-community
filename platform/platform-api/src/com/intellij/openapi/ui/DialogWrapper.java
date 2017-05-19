@@ -955,9 +955,6 @@ public abstract class DialogWrapper {
     unregisterKeyboardActions(rootPane);
     Container contentPane = rootPane.getContentPane();
     if (contentPane != null) contentPane.removeAll();
-    if (rootPane.getGlassPane() instanceof IdeGlassPane && rootPane.getClass() == JRootPane.class) {
-      rootPane.setGlassPane(new JPanel()); // resizeable AbstractPopup but not DialogWrapperPeer
-    }
     Disposer.clearOwnFields(rootPane, field -> {
       String clazz = field.getDeclaringClass().getName();
       // keep AWT and Swing fields intact, except some

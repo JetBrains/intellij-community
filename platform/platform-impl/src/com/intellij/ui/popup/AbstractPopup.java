@@ -1442,8 +1442,18 @@ public class AbstractPopup implements JBPopup {
         myWindow.removeWindowListener(myWindowListener);
       }
 
-      if (myWindow instanceof JWindow) {
-        ((JWindow)myWindow).getRootPane().putClientProperty(KEY, null);
+      if (myWindow instanceof RootPaneContainer) {
+        RootPaneContainer container = (RootPaneContainer)myWindow;
+        JRootPane root = container.getRootPane();
+        root.putClientProperty(KEY, null);
+        if (root.getGlassPane() instanceof IdeGlassPaneImpl) {
+          // replace installed glass pane with the default one: JRootPane.createGlassPane()
+          JPanel glass = new JPanel();
+          glass.setName(root.getName() + ".glassPane");
+          glass.setVisible(false);
+          glass.setOpaque(false);
+          root.setGlassPane(glass);
+        }
       }
 
       myWindow = null;
