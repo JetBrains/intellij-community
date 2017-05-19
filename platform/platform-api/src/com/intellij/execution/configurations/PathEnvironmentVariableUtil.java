@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,7 +130,7 @@ public class PathEnvironmentVariableUtil {
       return Collections.emptyList();
     }
     List<File> result = new SmartList<>();
-    List<String> dirPaths = StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
+    List<String> dirPaths = getPathDirs(pathEnvVarValue);
     for (String dirPath : dirPaths) {
       File dir = new File(dirPath);
       if (dir.isAbsolute() && dir.isDirectory()) {
@@ -146,6 +146,11 @@ public class PathEnvironmentVariableUtil {
       }
     }
     return result;
+  }
+
+  @NotNull
+  public static List<String> getPathDirs(@NotNull String pathEnvVarValue) {
+    return StringUtil.split(pathEnvVarValue, File.pathSeparator, true, true);
   }
 
   /**
