@@ -73,17 +73,7 @@ public class SuppressActionWrapper extends ActionGroup implements CompactActionG
       actions[i++] = new SuppressTreeAction(action);
     }
     actions[suppressActions.size()] = Separator.getInstance();
-
-    Arrays.sort(actions, new Comparator<AnAction>() {
-      @Override
-      public int compare(AnAction a1, AnAction a2) {
-        return getWeight(a1) - getWeight(a2);
-      }
-
-      public int getWeight(AnAction a) {
-        return a instanceof Separator ? 0 : ((SuppressTreeAction)a).isSuppressAll() ? 1 : -1;
-      }
-    });
+    Arrays.sort(actions, Comparator.comparingInt(a -> a instanceof Separator ? 0 : ((SuppressTreeAction)a).isSuppressAll() ? 1 : -1));
     return actions;
   }
 
