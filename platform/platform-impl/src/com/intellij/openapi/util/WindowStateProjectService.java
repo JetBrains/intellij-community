@@ -19,7 +19,6 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.impl.ProjectFrameBounds;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -46,7 +45,7 @@ final class WindowStateProjectService extends WindowStateServiceImpl {
 
   @Override
   Rectangle getDefaultBoundsFor(@NotNull String key) {
-    return key.equals("ProjectFrameBounds") ? ProjectFrameBounds.getInstance(myProject).getBounds() : null;
+    return null;
   }
 
   @Override

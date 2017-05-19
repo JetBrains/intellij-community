@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.awt.*;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, WindowInfo {
+public final class WindowInfoImpl implements Cloneable, JDOMExternalizable, WindowInfo {
   /**
    * XML tag.
    */
@@ -73,10 +73,6 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   @NonNls private static final String WEIGHT_ATTR = "weight";
   @NonNls private static final String SIDE_WEIGHT_ATTR = "sideWeight";
   @NonNls private static final String ORDER_ATTR = "order";
-  @NonNls private static final String X_ATTR = "x";
-  @NonNls private static final String Y_ATTR = "y";
-  @NonNls private static final String WIDTH_ATTR = "width";
-  @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String SIDE_TOOL_ATTR = "side_tool";
   @NonNls private static final String CONTENT_UI_ATTR = "content_ui";
   @NonNls private static final String SHOW_STRIPE_BUTTON = "show_stripe_button";
@@ -262,17 +258,13 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   public void readExternal(final Element element) {
     myId = element.getAttributeValue(ID_ATTR);
     myWasRead = true;
-    try {
-      myActive = Boolean.valueOf(element.getAttributeValue(ACTIVE_ATTR)).booleanValue() && canActivateOnStart(myId);
-    }
-    catch (NumberFormatException ignored) {
-    }
+    myActive = Boolean.parseBoolean(element.getAttributeValue(ACTIVE_ATTR)) && canActivateOnStart(myId);
     try {
       myAnchor = ToolWindowAnchor.fromText(element.getAttributeValue(ANCHOR_ATTR));
     }
     catch (IllegalArgumentException ignored) {
     }
-    myAutoHide = Boolean.valueOf(element.getAttributeValue(AUTOHIDE_ATTR)).booleanValue();
+    myAutoHide = Boolean.parseBoolean(element.getAttributeValue(AUTOHIDE_ATTR));
     try {
       myInternalType = ToolWindowType.valueOf(element.getAttributeValue(INTERNAL_TYPE_ATTR));
     }
@@ -283,9 +275,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     }
     catch (IllegalArgumentException ignored) {
     }
-    myVisible = Boolean.valueOf(element.getAttributeValue(VISIBLE_ATTR)).booleanValue() && canActivateOnStart(myId);
+    myVisible = Boolean.parseBoolean(element.getAttributeValue(VISIBLE_ATTR)) && canActivateOnStart(myId);
     if (element.getAttributeValue(SHOW_STRIPE_BUTTON) != null) {
-      myShowStripeButton = Boolean.valueOf(element.getAttributeValue(SHOW_STRIPE_BUTTON)).booleanValue();
+      myShowStripeButton = Boolean.parseBoolean(element.getAttributeValue(SHOW_STRIPE_BUTTON));
     }
     try {
       myWeight = Float.parseFloat(element.getAttributeValue(WEIGHT_ATTR));
@@ -301,19 +293,11 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     catch (NumberFormatException ignored) {
     }
     try {
-      myOrder = Integer.valueOf(element.getAttributeValue(ORDER_ATTR)).intValue();
+      myOrder = Integer.parseInt(element.getAttributeValue(ORDER_ATTR));
     }
     catch (NumberFormatException ignored) {
     }
-    try {
-      int x = Integer.parseInt(element.getAttributeValue(X_ATTR));
-      int y = Integer.parseInt(element.getAttributeValue(Y_ATTR));
-      int width = Integer.parseInt(element.getAttributeValue(WIDTH_ATTR));
-      int height = Integer.parseInt(element.getAttributeValue(HEIGHT_ATTR));
-      myFloatingBounds = new Rectangle(x, y, width, height);
-    }
-    catch (NumberFormatException ignored) {
-    }
+    myFloatingBounds = ProjectFrameBoundsKt.deserializeBounds(element);
     mySplitMode = Boolean.parseBoolean(element.getAttributeValue(SIDE_TOOL_ATTR));
 
     myContentUiType = ToolWindowContentUiType.getInstance(element.getAttributeValue(CONTENT_UI_ATTR));
@@ -389,11 +373,9 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
     element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));
     element.setAttribute(SIDE_TOOL_ATTR, Boolean.toString(mySplitMode));
     element.setAttribute(CONTENT_UI_ATTR, myContentUiType.getName());
-    if(myFloatingBounds!=null){
-      element.setAttribute(X_ATTR,Integer.toString(myFloatingBounds.x));
-      element.setAttribute(Y_ATTR,Integer.toString(myFloatingBounds.y));
-      element.setAttribute(WIDTH_ATTR,Integer.toString(myFloatingBounds.width));
-      element.setAttribute(HEIGHT_ATTR,Integer.toString(myFloatingBounds.height));
+
+    if (myFloatingBounds != null) {
+      ProjectFrameBoundsKt.serializeBounds(myFloatingBounds, element);
     }
   }
 
