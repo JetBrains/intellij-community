@@ -178,10 +178,8 @@ public class RootIndex {
           if (!ensureValid(root, project)) continue;
 
           info.libraryOrSdkSources.add(root);
-          info.sourceOfLibraries.putValue(root, descriptor);
-
           info.classAndSourceRoots.add(root);
-          info.classOfLibraries.putValue(root, descriptor);
+          info.sourceOfLibraries.putValue(root, descriptor);
         }
         for (VirtualFile file : descriptor.getExcludedRoots()) {
           if (!ensureValid(file, project)) continue;
@@ -545,7 +543,7 @@ public class RootIndex {
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
     @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<>();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
-    @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
+    @NotNull final MultiMap<VirtualFile, Library> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
     @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> excludedFromModule = ContainerUtil.newHashMap();
