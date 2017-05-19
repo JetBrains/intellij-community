@@ -91,10 +91,13 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   private static boolean mustBeLoadedByPlatform(String className) {
-    //FunctionX interfaces from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
-    // of kotlin-runtime.jar it won't be possible to call platform's methods with Kotlin functional types in signatures from such a plugin.
-    //We assume that FunctionX interfaces don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
-    return className.startsWith("kotlin.jvm.functions.");
+    //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
+    //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.")
+                                               || className.equals("kotlin.sequences.Sequence")
+                                               || className.equals("kotlin.Pair")
+                                               || className.equals("kotlin.Triple"));
   }
 
   @Nullable
