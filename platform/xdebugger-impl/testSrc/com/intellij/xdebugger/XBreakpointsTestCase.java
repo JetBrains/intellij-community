@@ -19,12 +19,12 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.TempFiles;
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,12 +49,12 @@ public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
     super.tearDown();
   }
 
-  protected void load(final Element element) {
-    myBreakpointManager.loadState(XmlSerializer.deserialize(element, XBreakpointManagerImpl.BreakpointManagerState.class));
+  protected void load(@Nullable Element element) {
+    myBreakpointManager.loadState(element == null ? new XBreakpointManagerImpl.BreakpointManagerState() : XmlSerializer.deserialize(element, XBreakpointManagerImpl.BreakpointManagerState.class));
   }
 
   protected Element save() {
-    return XmlSerializer.serialize(myBreakpointManager.getState(), new SkipDefaultValuesSerializationFilters());
+    return XmlSerializer.serialize(myBreakpointManager.getState());
   }
 
   protected List<XBreakpoint<?>> getAllBreakpoints() {
