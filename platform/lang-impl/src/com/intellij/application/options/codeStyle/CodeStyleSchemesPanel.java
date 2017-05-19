@@ -35,7 +35,12 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
   
   private boolean myIsReset = false;
 
+  public CodeStyleSchemesPanel(CodeStyleSchemesModel model, int vGap) {
+    super(vGap);
+    myModel = model;
+  }
   public CodeStyleSchemesPanel(CodeStyleSchemesModel model) {
+    super();
     myModel = model;
   }
 

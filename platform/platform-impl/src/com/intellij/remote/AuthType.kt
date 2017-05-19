@@ -13,25 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.intellij.remote
 
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-
-import java.util.EventListener;
-
-public interface CodeStyleSettingsListener extends EventListener {
-  default void currentSchemeChanged(Object source) {
-  }
-
-  default void schemeListChanged() {
-  }
-
-  default void beforeCurrentSettingsChanged() {
-  }
-  
-  default void afterCurrentSettingsChanged() {
-  }
-
-  default void schemeChanged(CodeStyleScheme scheme) {
-  }
+/**
+ * @author Alexander Koshevoy
+ */
+enum class AuthType {
+  PASSWORD, KEY_PAIR, AUTH_AGENT
 }

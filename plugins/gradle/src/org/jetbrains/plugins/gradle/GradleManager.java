@@ -41,6 +41,7 @@ import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.Configurable;
@@ -299,7 +300,8 @@ public class GradleManager
   @Nullable
   @Override
   public FileChooserDescriptor getExternalProjectConfigDescriptor() {
-    return GradleUtil.getGradleProjectFileChooserDescriptor();
+    // project *.gradle script can be absent for gradle subproject
+    return FileChooserDescriptorFactory.createSingleFolderDescriptor();
   }
 
   @Nullable

@@ -42,15 +42,14 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
 
     final PsiClass constructedClass = GrAnnotationUtil.inferClassAttribute(annotation, "forClass");
     if (constructedClass == null || "groovy.transform.Undefined.CLASS".equals(constructedClass.getQualifiedName())) return;
-
+    boolean includeSuper = isIncludeSuperProperties(annotation);
     if (constructedClass instanceof GrTypeDefinition) {
-      PsiField[] fields = getFields((GrTypeDefinition)constructedClass, annotation);
+      PsiField[] fields = getFields((GrTypeDefinition)constructedClass, includeSuper);
       for (PsiField field : fields) {
         context.addMethod(DefaultBuilderStrategySupport.createFieldSetter(context.getCodeClass(), field, annotation));
       }
     } else {
-      boolean superProperties = isIncludeSuperProperties(annotation);
-      Collection<PsiMethod> properties = PropertyUtil.getAllProperties(constructedClass, true, false, superProperties).values();
+      Collection<PsiMethod> properties = PropertyUtil.getAllProperties(constructedClass, true, false, includeSuper).values();
       for (PsiMethod setter : properties) {
         final PsiMethod builderSetter = createFieldSetter(context.getCodeClass(), setter, annotation);
         if (builderSetter != null) context.addMethod(builderSetter);

@@ -26,11 +26,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
+import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import java.util.Arrays;
 import java.util.Collection;
+
+import static java.util.Arrays.asList;
 
 public abstract class BuilderAnnotationContributor implements AstTransformationSupport {
 
@@ -47,17 +50,26 @@ public abstract class BuilderAnnotationContributor implements AstTransformationS
     return StringUtil.getQualifiedName(BUILDER_PACKAGE, strategy).equals(aClass.getQualifiedName());
   }
 
-  public static PsiField[] getFields(@NotNull GrTypeDefinition clazz, @NotNull PsiAnnotation annotation) {
-    Collection<? extends PsiField> collectedFields;
-    if (isIncludeSuperProperties(annotation) ) {
-      collectedFields = Arrays.asList(GrClassImplUtil.getAllFields(clazz, false));
-    } else {
-      collectedFields = Arrays.asList(clazz.getCodeFields());
-    }
+  public static PsiField[] getFields(@NotNull TransformationContext context, boolean includeSuper) {
+    return filterFields(includeSuper ? context.getAllFields(false) : context.getFields());
+  }
 
+  public static PsiField[] getFields(@NotNull GrTypeDefinition clazz, boolean includeSuper) {
+    return filterFields(includeSuper ? asList(GrClassImplUtil.getAllFields(clazz, false)) : asList(clazz.getFields()));
+  }
+
+  private static PsiField[] filterFields(Collection<? extends PsiField> collectedFields) {
     return collectedFields.stream()
       .filter(field -> field.getName() != null)
       .filter(field -> !field.hasModifierProperty(PsiModifier.STATIC))
+      .filter(field -> {
+        PsiClass aClass = field.getContainingClass();
+        if (aClass == null || aClass.getQualifiedName() == null) {
+          return false;
+        }
+        String name = aClass.getQualifiedName();
+        return !name.equals(GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT) && !name.equals(GroovyCommonClassNames.GROOVY_OBJECT);
+      })
       .toArray(PsiField[]::new);
   }
 

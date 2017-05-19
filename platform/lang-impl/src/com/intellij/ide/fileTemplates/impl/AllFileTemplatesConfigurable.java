@@ -37,7 +37,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.border.CustomLineBorder;
@@ -687,6 +686,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private final class SchemesPanel extends SimpleSchemesPanel<FileTemplatesScheme> implements SchemesModel<FileTemplatesScheme> {
+
     @Override
     protected AbstractSchemeActions<FileTemplatesScheme> createSchemeActions() {
       return new AbstractSchemeActions<FileTemplatesScheme>(this) {

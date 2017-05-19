@@ -34,14 +34,25 @@ import kotlin.concurrent.write
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.primaryConstructor
 
+private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
+
+private fun getDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
+  var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
+  if (result == null) {
+    result = SkipDefaultsSerializationFilter()
+    skipDefaultsSerializationFilter.set(SoftReference(result))
+  }
+  return result
+}
+
 @JvmOverloads
-fun <T : Any> T.serialize(filter: SerializationFilter? = SkipDefaultsSerializationFilter()): Element {
+fun <T : Any> T.serialize(filter: SerializationFilter? = getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
   try {
     val clazz = javaClass
     val binding = serializer.getClassBinding(clazz)
     return if (binding is BeanBinding) {
       // top level expects not null (null indicates error, empty element will be omitted)
-      binding.serialize(this, true, filter)
+      binding.serialize(this, createElementIfEmpty, filter)
     }
     else {
       binding.serialize(this, null, filter) as Element

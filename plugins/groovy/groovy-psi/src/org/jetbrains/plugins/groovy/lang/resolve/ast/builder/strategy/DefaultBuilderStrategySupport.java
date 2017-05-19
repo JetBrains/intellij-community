@@ -60,7 +60,8 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     private void processTypeDefinition() {
       final PsiAnnotation builderAnno = PsiImplUtil.getAnnotation(myContainingClass, BUILDER_FQN);
       if (!isApplicable(builderAnno, DEFAULT_STRATEGY_NAME)) return;
-      final PsiClass builderClass = createBuilderClass(builderAnno, getFields(myContext.getCodeClass(), builderAnno));
+      boolean includeSuper = isIncludeSuperProperties(builderAnno);
+      final PsiClass builderClass = createBuilderClass(builderAnno, getFields(myContext, includeSuper));
       myContext.addMethod(createBuilderMethod(builderClass, builderAnno));
       myContext.addInnerClass(builderClass);
     }
@@ -79,7 +80,8 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
       );
 
       for (PsiVariable field : setters) {
-        builderClass.addMethod(createFieldSetter(builderClass, field, annotation));
+        LightMethodBuilder setter = createFieldSetter(builderClass, field, annotation);
+        builderClass.addMethod(setter);
       }
 
       final LightMethodBuilder buildMethod = createBuildMethod(

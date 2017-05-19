@@ -62,16 +62,15 @@ public class CacheUpdateRunner {
       @Override
       public void processingStarted(VirtualFile virtualFile) {
         indicator.checkCanceled();
+        boolean added;
         synchronized (myFilesBeingProcessed) {
-          boolean added = myFilesBeingProcessed.add(virtualFile);
-          if (added) {
-            indicator.setFraction(myNumberOfFilesProcessed.incrementAndGet() / total);
-          }
+          added = myFilesBeingProcessed.add(virtualFile);
+        }
+        if (added) {
+          indicator.setFraction(myNumberOfFilesProcessed.incrementAndGet() / total);
 
-          if (added) {
-            VirtualFile parent = virtualFile.getParent();
-            if (parent != null) indicator.setText2(parent.getPresentableUrl());
-          }
+          VirtualFile parent = virtualFile.getParent();
+          if (parent != null) indicator.setText2(parent.getPresentableUrl());
         }
       }
 

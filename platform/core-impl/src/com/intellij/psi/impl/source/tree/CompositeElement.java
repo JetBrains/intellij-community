@@ -23,7 +23,6 @@ import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.ChangeInfo;
 import com.intellij.pom.tree.events.TreeChangeEvent;
@@ -221,12 +220,7 @@ public class CompositeElement extends TreeElement {
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
 
-    ASTNode child = anchor;
-    while (true) {
-      if (child == null) return null;
-      if (type == child.getElementType()) return child;
-      child = child.getTreeNext();
-    }
+    return TreeUtil.findSibling(anchor, type);
   }
 
   @Override
@@ -247,12 +241,7 @@ public class CompositeElement extends TreeElement {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
       ApplicationManager.getApplication().assertReadAccessAllowed();
     }
-    ASTNode child = anchor;
-    while (true) {
-      if (child == null) return null;
-      if (typesSet.contains(child.getElementType())) return child;
-      child = child.getTreeNext();
-    }
+    return TreeUtil.findSibling(anchor, typesSet);
   }
 
   @Override

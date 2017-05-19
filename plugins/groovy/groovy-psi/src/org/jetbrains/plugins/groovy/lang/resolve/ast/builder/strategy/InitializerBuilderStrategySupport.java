@@ -65,8 +65,8 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
     private void processTypeDefinition() {
       final PsiAnnotation builderAnno = PsiImplUtil.getAnnotation(myContainingClass, BUILDER_FQN);
       if (!isApplicable(builderAnno, INITIALIZER_STRATEGY_NAME)) return;
-
-      final PsiClass builderClass = createBuilderClass(builderAnno, getFields(myContext.getCodeClass(), builderAnno));
+      boolean includeSuper = isIncludeSuperProperties(builderAnno);
+      final PsiClass builderClass = createBuilderClass(builderAnno, getFields(myContext, includeSuper));
       myContext.addMethod(createBuilderMethod(builderClass, builderAnno));
       myContext.addMethod(createBuilderConstructor(myContainingClass, builderClass, builderAnno));
       myContext.addInnerClass(builderClass);

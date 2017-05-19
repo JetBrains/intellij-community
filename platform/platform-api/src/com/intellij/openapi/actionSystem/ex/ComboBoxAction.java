@@ -149,9 +149,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setVisible(presentation.isVisible());
       setHorizontalAlignment(LEFT);
       setFocusable(false);
-      if (isSmallVariant()) {
-        putClientProperty("styleCombo", Boolean.TRUE);
-      }
+      putClientProperty("styleCombo", Boolean.TRUE);
       Insets margins = getMargin();
       setMargin(JBUI.insets(margins.top, 2, margins.bottom, 2));
       if (isSmallVariant()) {

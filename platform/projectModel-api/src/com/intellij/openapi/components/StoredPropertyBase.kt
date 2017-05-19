@@ -13,25 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.intellij.openapi.components
 
-import com.intellij.psi.codeStyle.CodeStyleScheme;
+import kotlin.properties.ReadWriteProperty
 
-import java.util.EventListener;
+internal interface StoredProperty {
+  val defaultValue: Any?
+  val value: Any?
 
-public interface CodeStyleSettingsListener extends EventListener {
-  default void currentSchemeChanged(Object source) {
-  }
+  var name: String?
 
-  default void schemeListChanged() {
-  }
+  // true if changed
+  fun setValue(other: StoredProperty): Boolean
+}
 
-  default void beforeCurrentSettingsChanged() {
-  }
-  
-  default void afterCurrentSettingsChanged() {
-  }
+// type must be exposed otherwise `provideDelegate` doesn't work
+abstract class StoredPropertyBase<T> : ReadWriteProperty<BaseState, T>, StoredProperty {
+  override final var name: String? = null
 
-  default void schemeChanged(CodeStyleScheme scheme) {
-  }
+//  operator fun provideDelegate(thisRef: Any, property: KProperty<*>): ReadWriteProperty<BaseState, T> {
+//    name = property.name
+//    return this
+//  }
 }

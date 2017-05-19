@@ -105,6 +105,7 @@ public class PyCharmEduInitialConfigurator {
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
   @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
+  @NonNls private static final String CONFIGURED_V3 = "PyCharmEDU.InitialConfiguration.V3";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -192,12 +193,10 @@ public class PyCharmEduInitialConfigurator {
     editorColorsScheme.setEditorFontSize(14);
 
     MessageBusConnection connection = bus.connect();
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void welcomeScreenDisplayed() {
-
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void welcomeScreenDisplayed() {
+        if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
               GeneralSettings.getInstance().setShowTipsOnStartup(false);
@@ -206,13 +205,16 @@ public class PyCharmEduInitialConfigurator {
             }
           });
         }
+      }
 
-        @Override
-        public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        if (!propertiesComponent.isValueSet(CONFIGURED_V3)) {
           showInitialConfigurationDialog();
+          propertiesComponent.setValue(CONFIGURED_V3, "true");
         }
-      });
-    }
+      }
+    });
 
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override

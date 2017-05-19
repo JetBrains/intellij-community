@@ -298,19 +298,20 @@ public class ModuleHighlightUtil {
   static HighlightInfo checkPackageReference(@NotNull PsiPackageAccessibilityStatement statement) {
     PsiJavaCodeReferenceElement refElement = statement.getPackageReference();
     if (refElement != null) {
-      PsiElement target = refElement.resolve();
       Module module = findModule(refElement);
-      PsiDirectory[] directories =
-        target instanceof PsiPackage && module != null ? ((PsiPackage)target).getDirectories(module.getModuleScope(false)) : null;
-      String packageName = refText(refElement);
-      HighlightInfoType type = statement.getRole() == Role.OPENS ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-      if (directories == null || directories.length == 0) {
-        String message = JavaErrorMessages.message("package.not.found", packageName);
-        return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
-      }
-      if (PsiUtil.isPackageEmpty(directories, packageName)) {
-        String message = JavaErrorMessages.message("package.is.empty", packageName);
-        return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+      if (module != null) {
+        PsiElement target = refElement.resolve();
+        PsiDirectory[] directories = target instanceof PsiPackage ? ((PsiPackage)target).getDirectories(module.getModuleScope(false)) : null;
+        String packageName = refText(refElement);
+        HighlightInfoType type = statement.getRole() == Role.OPENS ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
+        if (directories == null || directories.length == 0) {
+          String message = JavaErrorMessages.message("package.not.found", packageName);
+          return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+        }
+        if (PsiUtil.isPackageEmpty(directories, packageName)) {
+          String message = JavaErrorMessages.message("package.is.empty", packageName);
+          return HighlightInfo.newHighlightInfo(type).range(refElement).descriptionAndTooltip(message).create();
+        }
       }
     }
 

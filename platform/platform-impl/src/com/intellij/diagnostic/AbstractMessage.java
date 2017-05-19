@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.diagnostic;
 
-import com.intellij.notification.Notification;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.SubmittedReportInfo;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,7 +31,7 @@ public abstract class AbstractMessage {
   private boolean myIsSubmitting = false;
   private SubmittedReportInfo mySubmissionInfo;
   private String myAdditionalInfo;
-  private Notification myNotification;
+  private Runnable myOnReadCallback;
   private Integer myAssigneeId;
 
   private final Date myDate;
@@ -51,9 +50,9 @@ public abstract class AbstractMessage {
 
   public void setRead(boolean aReadFlag) {
     myIsRead = aReadFlag;
-    if (myNotification != null && aReadFlag) {
-      myNotification.expire();
-      myNotification = null;
+    if (myOnReadCallback != null && aReadFlag) {
+      myOnReadCallback.run();
+      myOnReadCallback = null;
     }
   }
 
@@ -66,8 +65,8 @@ public abstract class AbstractMessage {
     return mySubmissionInfo;
   }
 
-  public void setNotification(Notification notification) {
-    myNotification = notification;
+  public void setOnReadCallback(Runnable callback) {
+    myOnReadCallback = callback;
   }
 
   public boolean isSubmitting() {

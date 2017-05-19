@@ -64,15 +64,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   public static final Key<TripleFunction<ASTNode, LighterASTNode, FlyweightCapableTreeStructure<LighterASTNode>, ThreeState>>
     CUSTOM_COMPARATOR = Key.create("CUSTOM_COMPARATOR");
 
-  private static final Key<LazyParseableTokensCache> LAZY_PARSEABLE_TOKENS = Key.create("LAZY_PARSEABLE_TOKENS");
+  private static final Key<TokenSequence> LAZY_PARSEABLE_TOKENS = Key.create("LAZY_PARSEABLE_TOKENS");
 
   private static TokenSet ourAnyLanguageWhitespaceTokens = TokenSet.EMPTY;
 
   private final Project myProject;
   private PsiFile myFile;
 
-  private int[] myLexStarts;
-  private IElementType[] myLexTypes;
+  private final int[] myLexStarts;
+  private final IElementType[] myLexTypes;
   private int myCurrentLexeme;
 
   private final MyList myProduction = new MyList();
@@ -86,7 +86,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private final CharSequence myLastCommittedText;
   private final char[] myTextArray;
   private boolean myDebugMode;
-  private int myLexemeCount;
+  private final int myLexemeCount;
   private boolean myTokenTypeChecked;
   private ITokenTypeRemapper myRemapper;
   private WhitespaceSkippedCallback myWhitespaceSkippedCallback;
@@ -192,112 +192,38 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     myParentLightTree = parentLightTree;
     myOffset = parentCachingNode instanceof LazyParseableToken ? ((LazyParseableToken)parentCachingNode).getStartOffset() : 0;
 
-    cacheLexemes(parentCachingNode);
+    TokenSequence tokens = performLexing(parentCachingNode);
+    myLexStarts = tokens.lexStarts;
+    myLexTypes = tokens.lexTypes;
+    myLexemeCount = tokens.lexemeCount;
   }
 
-  private void cacheLexemes(@Nullable Object parentCachingNode) {
-    int[] lexStarts = null;
-    IElementType[] lexTypes = null;
-    int lexemeCount = -1;
-    // set this to true to check that re-lexing of lazy parseables produces the same sequence as cached one
-    boolean doLexingOptimizationCorrectionCheck = false;
+  private TokenSequence performLexing(@Nullable Object parentCachingNode) {
+    TokenSequence fromParent = null;
 
     if (parentCachingNode instanceof LazyParseableToken) {
-      final LazyParseableToken parentToken = (LazyParseableToken)parentCachingNode;
-      // there are two types of lazy parseable tokens out there: collapsed out of individual tokens or single token that needs to be expanded
-      // in first case parent PsiBuilder has all our text lexed so no need to do it again
-      int tokenCount = parentToken.myEndIndex - parentToken.myStartIndex;
-      if (tokenCount != 1) { // not expand single lazy parseable token case
-        lexStarts = new int[tokenCount + 1];
-        System.arraycopy(parentToken.myBuilder.myLexStarts, parentToken.myStartIndex, lexStarts, 0, tokenCount);
-        int diff = parentToken.myBuilder.myLexStarts[parentToken.myStartIndex];
-        for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
-        lexStarts[tokenCount] = myText.length();
-
-        lexTypes = new IElementType[tokenCount];
-        System.arraycopy(parentToken.myBuilder.myLexTypes, parentToken.myStartIndex, lexTypes, 0, tokenCount);
-        lexemeCount = tokenCount;
-      }
+      fromParent = ((LazyParseableToken)parentCachingNode).getParsedTokenSequence();
+      assert fromParent == null || fromParent.lexStarts[fromParent.lexemeCount] == myText.length();
       ProgressIndicatorProvider.checkCanceled();
-
-      //noinspection ConstantConditions
-      if (!doLexingOptimizationCorrectionCheck && lexemeCount != -1) {
-        myLexStarts = lexStarts;
-        myLexTypes = lexTypes;
-        myLexemeCount = lexemeCount;
-        return;
-      }
     }
     else if (parentCachingNode instanceof LazyParseableElement) {
-      final LazyParseableElement parentElement = (LazyParseableElement)parentCachingNode;
-      final LazyParseableTokensCache cachedTokens = parentElement.getUserData(LAZY_PARSEABLE_TOKENS);
+      LazyParseableElement parentElement = (LazyParseableElement)parentCachingNode;
+      fromParent = parentElement.getUserData(LAZY_PARSEABLE_TOKENS);
       parentElement.putUserData(LAZY_PARSEABLE_TOKENS, null);
-      //noinspection ConstantConditions
-      if (!doLexingOptimizationCorrectionCheck && cachedTokens != null) {
-        myLexStarts = cachedTokens.myLexStarts;
-        myLexTypes = cachedTokens.myLexTypes;
-        myLexemeCount = myLexTypes.length;
-        return;
-      }
     }
 
-    int approxLexCount = Math.max(10, myText.length() / 5);
-
-    myLexStarts = new int[approxLexCount];
-    myLexTypes = new IElementType[approxLexCount];
-
-    myLexer.start(myText);
-    int i = 0;
-    int offset = 0;
-    while (true) {
-      IElementType type = myLexer.getTokenType();
-      if (type == null) break;
-      
-      if (i % 20 == 0) ProgressIndicatorProvider.checkCanceled();
-
-      if (i >= myLexTypes.length - 1) {
-        resizeLexemes(i * 3 / 2);
+    if (fromParent != null) {
+      if (doLexingOptimizationCorrectionCheck()) {
+        fromParent.assertMatches(myText, myLexer);
       }
-      int tokenStart = myLexer.getTokenStart();
-      if (tokenStart < offset) {
-        final StringBuilder sb = new StringBuilder();
-        final IElementType tokenType = myLexer.getTokenType();
-        sb.append("Token sequence broken")
-          .append("\n  this: '").append(myLexer.getTokenText()).append("' (").append(tokenType).append(':')
-          .append(tokenType != null ? tokenType.getLanguage() : null).append(") ").append(tokenStart).append(":")
-          .append(myLexer.getTokenEnd());
-        if (i > 0) {
-          final int prevStart = myLexStarts[i - 1];
-          sb.append("\n  prev: '").append(myText.subSequence(prevStart, offset)).append("' (").append(myLexTypes[i - 1]).append(':')
-            .append(myLexTypes[i - 1].getLanguage()).append(") ").append(prevStart).append(":").append(offset);
-        }
-        final int quoteStart = Math.max(tokenStart - 256, 0);
-        final int quoteEnd = Math.min(tokenStart + 256, myText.length());
-        sb.append("\n  quote: [").append(quoteStart).append(':').append(quoteEnd)
-          .append("] '").append(myText.subSequence(quoteStart, quoteEnd)).append('\'');
-        LOG.error(sb);
-      }
-      myLexStarts[i] = offset = tokenStart;
-      myLexTypes[i] = type;
-      i++;
-      myLexer.advance();
+      return fromParent;
     }
 
-    myLexStarts[i] = myText.length();
+    return new TokenSequence.Builder(myText, myLexer).performLexing();
+  }
 
-    myLexemeCount = i;
-    clearCachedTokenType();
-
-    //noinspection ConstantConditions
-    if (doLexingOptimizationCorrectionCheck && lexemeCount != -1) {
-      assert lexemeCount == myLexemeCount;
-      for(int j = 0; j < lexemeCount; ++j) {
-        if (myLexStarts[j] != lexStarts[j] || myLexTypes[j] != lexTypes[j]) {
-          assert false;
-        }
-      }
-      assert myLexStarts[lexemeCount] == lexStarts[lexemeCount];
-    }
+  private static boolean doLexingOptimizationCorrectionCheck() {
+    return false; // set to true to check that re-lexing of lazy parseables produces the same sequence as cached one
   }
 
   @Override
@@ -661,6 +587,23 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
       return true;
     }
+
+    @Nullable
+    private TokenSequence getParsedTokenSequence() {
+      int tokenCount = myEndIndex - myStartIndex;
+      if (tokenCount == 1) return null; // not expand single lazy parseable token case
+      
+      int[] lexStarts = new int[tokenCount + 1];
+      System.arraycopy(myBuilder.myLexStarts, myStartIndex, lexStarts, 0, tokenCount);
+      int diff = myBuilder.myLexStarts[myStartIndex];
+      for(int i = 0; i < tokenCount; ++i) lexStarts[i] -= diff;
+      lexStarts[tokenCount] = getEndOffset() - getStartOffset();
+      
+      IElementType[] lexTypes = new IElementType[tokenCount + 1];
+      System.arraycopy(myBuilder.myLexTypes, myStartIndex, lexTypes, 0, tokenCount);
+      
+      return new TokenSequence(lexStarts, lexTypes, tokenCount);
+    }
   }
 
   private static class DoneMarker extends ProductionMarker {
@@ -899,12 +842,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return ((TokenWrapper)type).getValue();
     }
     return myText.subSequence(myLexStarts[myCurrentLexeme], myLexStarts[myCurrentLexeme + 1]).toString();
-  }
-
-  private void resizeLexemes(final int newSize) {
-    myLexStarts = ArrayUtil.realloc(myLexStarts, newSize+1);
-    myLexTypes = ArrayUtil.realloc(myLexTypes, newSize, IElementType.ARRAY_FACTORY);
-    clearCachedTokenType();
   }
 
   public boolean whitespaceOrComment(IElementType token) {
@@ -1262,14 +1199,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       LOG.error("Tokens " + missed + " are outside of root element \"" + rootMarker.myType + "\". Text:\n" + myText);
     }
 
-    if (myLexStarts.length <= myCurrentLexeme + 1) {
-      resizeLexemes(myCurrentLexeme + 1);
-    }
-
-    myLexStarts[myCurrentLexeme] = myText.length(); // $ terminating token.;
-    myLexStarts[myCurrentLexeme + 1] = 0;
-    myLexTypes[myCurrentLexeme] = null;
-
     assertMarkersBalanced(curNode == rootMarker, curNode);
 
     checkTreeDepth(maxDepth, rootMarker.getTokenType() instanceof IFileElementType);
@@ -1444,15 +1373,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     final TreeElement leaf = createLeaf(markerType, start, end);
     if (markerType instanceof ILazyParseableElementType && ((ILazyParseableElementType)markerType).reuseCollapsedTokens() &&
         startMarker.myLexemeIndex < startMarker.myDoneMarker.myLexemeIndex) {
-      final int length = startMarker.myDoneMarker.myLexemeIndex - startMarker.myLexemeIndex;
-      final int[] relativeStarts = new int[length + 1];
-      final IElementType[] types = new IElementType[length];
+      int length = startMarker.myDoneMarker.myLexemeIndex - startMarker.myLexemeIndex;
+      int[] relativeStarts = new int[length + 1];
+      IElementType[] types = new IElementType[length + 1];
       for (int i = startMarker.myLexemeIndex; i < startMarker.myDoneMarker.myLexemeIndex; i++) {
         relativeStarts[i - startMarker.myLexemeIndex] = myLexStarts[i] - start;
         types[i - startMarker.myLexemeIndex] = myLexTypes[i];
       }
       relativeStarts[length] = end - start;
-      leaf.putUserData(LAZY_PARSEABLE_TOKENS, new LazyParseableTokensCache(relativeStarts, types));
+      leaf.putUserData(LAZY_PARSEABLE_TOKENS, new TokenSequence(relativeStarts, types, length));
     }
     ast.rawAddChildrenWithoutNotifications(leaf);
     return startMarker.myDoneMarker.myLexemeIndex;

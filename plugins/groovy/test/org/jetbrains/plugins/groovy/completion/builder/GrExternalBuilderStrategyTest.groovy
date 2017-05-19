@@ -265,13 +265,6 @@ new PojoBuilder().counter(1).name("Janet").<caret>
   }
 
   void 'test not include super properties'() {
-    myFixture.addClass('''
-class Child extends Pojo {
-  String secondName;
-  public void setSecondName(String secondName) {}
-}
-''')
-
     String code = '''
 import groovy.transform.builder.Builder
 import groovy.transform.builder.ExternalStrategy

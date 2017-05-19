@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public abstract class ForcedCopyModeAction extends AnAction {
     Presentation p = e.getPresentation();
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     p.setVisible(RichCopySettings.getInstance().isEnabled() != myRichCopyEnabled && 
-                 (!e.getPlace().equals(ActionPlaces.EDITOR_POPUP) ||
+                 (ActionPlaces.isToolbarPlace(e.getPlace()) ||
                   editor != null && editor.getSelectionModel().hasSelection(true)));
     p.setEnabled(true);
   }

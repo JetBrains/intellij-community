@@ -50,6 +50,10 @@ public abstract class AbstractDescriptionAwareSchemesPanel<T extends Scheme> ext
   private CardLayout myLayout;
   private AbstractPainter myPainter;
 
+  public AbstractDescriptionAwareSchemesPanel() {
+    super(0);
+  }
+
   @NotNull
   @Override
   protected JPanel createInfoComponent() {

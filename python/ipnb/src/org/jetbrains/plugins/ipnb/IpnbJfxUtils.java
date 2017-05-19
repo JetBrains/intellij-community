@@ -123,6 +123,7 @@ public class IpnbJfxUtils {
   }
 
   private static String convertToHtml(@NotNull String source) {
+    if (source.trim().startsWith("<iframe")) return source;
     final String result = wrapMath(source);
 
     final ExtDecorator decorator = new ExtDecorator();
