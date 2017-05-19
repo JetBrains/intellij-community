@@ -25,6 +25,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
@@ -47,12 +48,12 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class EduCoursesPanel extends JPanel {
+  private static final Set<String> FEATURED_COURSES = ContainerUtil.newHashSet("Introduction to Python", "Adaptive Python");
   private static final JBColor LIST_COLOR = new JBColor(Gray.xFF, Gray.x39);
   public static final Color COLOR = new Color(70, 130, 180, 70);
   private static final Logger LOG = Logger.getInstance(EduCoursesPanel.class);
@@ -316,8 +317,17 @@ public class EduCoursesPanel extends JPanel {
     return label;
   }
 
+  private static int getWeight(@NotNull Course course) {
+    String name = course.getName();
+    if (FEATURED_COURSES.contains(name)) {
+      return FEATURED_COURSES.size() - 1 - new ArrayList<>(FEATURED_COURSES).indexOf(name);
+    }
+    return FEATURED_COURSES.size();
+  }
+
   private void updateModel(List<Course> courses, @Nullable String courseToSelect) {
     DefaultListModel<Course> listModel = new DefaultListModel<>();
+    Collections.sort(courses, Comparator.comparingInt(EduCoursesPanel::getWeight));
     for (Course course : courses) {
       listModel.addElement(course);
     }
