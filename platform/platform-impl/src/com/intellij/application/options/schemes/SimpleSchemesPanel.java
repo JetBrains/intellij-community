@@ -29,6 +29,15 @@ import javax.swing.*;
  * @see SchemesModel
  */
 public abstract class SimpleSchemesPanel<T extends Scheme> extends AbstractSchemesPanel<T, JLabel> {
+
+  public SimpleSchemesPanel(int vGap) {
+    super(vGap);
+  }
+
+  public SimpleSchemesPanel() {
+    super();
+  }
+
   @NotNull
   @Override
   protected JLabel createInfoComponent() {

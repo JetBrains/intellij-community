@@ -36,11 +36,7 @@ import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SchemeManager;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.colors.*;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
@@ -517,7 +513,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @NotNull
     public NewColorAndFontPanel createPanel(@NotNull ColorAndFontOptions options) {
       FontEditorPreview previewPanel = new FontEditorPreview(()->options.getSelectedScheme(), true);
-      return new NewColorAndFontPanel(new SchemesPanel(options), new FontOptions(options), previewPanel, FONT_CONFIGURABLE_NAME, null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new FontOptions(options), previewPanel, FONT_CONFIGURABLE_NAME, null, null){
         @Override
         public boolean containsFontOptions() {
           return true;
@@ -542,7 +538,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           return ConsoleViewUtil.updateConsoleColorScheme(selectedScheme);
         }
       };
-      return new NewColorAndFontPanel(new SchemesPanel(options), new ConsoleFontOptions(options), previewPanel, "Font", null, null){
+      return new NewColorAndFontPanel(new SchemesPanel(options, 0), new ConsoleFontOptions(options), previewPanel, "Font", null, null){
         @Override
         public boolean containsFontOptions() {
           return true;

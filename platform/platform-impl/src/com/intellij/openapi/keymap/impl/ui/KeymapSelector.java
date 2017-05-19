@@ -38,6 +38,7 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
   private boolean internal;
 
   KeymapSelector(Consumer<Keymap> consumer) {
+    super(0);
     this.consumer = consumer;
   }
 

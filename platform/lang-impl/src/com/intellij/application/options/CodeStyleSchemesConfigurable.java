@@ -215,7 +215,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   CodeStyleSchemesModel ensureModel() {
     if (myModel == null) {
       myModel = new CodeStyleSchemesModel(myProject);
-      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel);
+      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel, 0);
 
       myModel.addListener(new CodeStyleSettingsListener(){
         @Override
