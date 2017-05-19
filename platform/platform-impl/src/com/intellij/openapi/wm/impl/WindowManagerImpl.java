@@ -554,12 +554,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     frame.setProject(project);
     myProjectToFrame.put(project, frame);
     frame.setVisible(true);
-    if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
-      frame.toBack();
-    }
 
     frame.addWindowListener(myActivationListener);
     if (addComponentListener) {
+      if (RecentProjectsManagerBase.getInstanceEx().isBatchOpening()) {
+        frame.toBack();
+      }
       addFrameStateListener(frame);
     }
     myEventDispatcher.getMulticaster().frameCreated(frame);
