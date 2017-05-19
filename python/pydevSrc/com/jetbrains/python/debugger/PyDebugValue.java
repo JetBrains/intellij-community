@@ -22,7 +22,7 @@ public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
-  private static final Map<String, String> EVALUATOR_PREFIXES =
+  private static final Map<String, String> EVALUATOR_POSTFIXES =
     ContainerUtil.newHashMap(Pair.create("ndarray", "Array"), Pair.create(DATA_FRAME, DATA_FRAME), Pair.create(SERIES, SERIES));
   public static final int MAX_VALUE = 256;
 
@@ -213,7 +213,7 @@ public class PyDebugValue extends XNamedValue {
 
   private void setFullValueEvaluator(XValueNode node, String value) {
     String treeName = getFullTreeName();
-    String postfix = EVALUATOR_PREFIXES.get(myType);
+    String postfix = EVALUATOR_POSTFIXES.get(myType);
     if (postfix == null) {
       if (value.length() >= MAX_VALUE) {
         node.setFullValueEvaluator(new PyFullValueEvaluator(myFrameAccessor, treeName));
