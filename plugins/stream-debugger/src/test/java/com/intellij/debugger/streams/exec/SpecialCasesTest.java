@@ -30,4 +30,16 @@ public class SpecialCasesTest extends TraceExecutionTestCase {
   public void testParallelStream() {
     doTest(false);
   }
+
+  public void testNulls() {
+    doTest(false);
+  }
+
+  public void testMapToNull() {
+    doTest(false);
+  }
+
+  public void testMapNullToValue() {
+    doTest(false);
+  }
 }
