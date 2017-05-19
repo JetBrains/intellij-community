@@ -15,10 +15,10 @@
  */
 package com.intellij.core;
 
+import com.intellij.configurationStore.DefaultStateSerializerKt;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.impl.stores.DefaultStateSerializerKt;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.module.ModuleManager;

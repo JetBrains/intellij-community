@@ -39,7 +39,7 @@ abstract class StateStorageBase<T : Any> : StateStorage {
   }
 
   open fun <S: Any> deserializeState(serializedState: Element?, stateClass: Class<S>, mergeInto: S?): S? {
-    return com.intellij.openapi.components.impl.stores.deserializeState(serializedState, stateClass, mergeInto)
+    return com.intellij.configurationStore.deserializeState(serializedState, stateClass, mergeInto)
   }
 
   abstract fun getSerializedState(storageData: T, component: Any?, componentName: String, archive: Boolean = true): Element?
