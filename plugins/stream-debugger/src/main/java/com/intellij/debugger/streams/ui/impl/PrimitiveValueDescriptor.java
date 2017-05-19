@@ -40,7 +40,7 @@ public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
   public String calcValueName() {
     final Value value = getValue();
     if (value == null) {
-      return "null";
+      return "value";
     }
     if (value instanceof ObjectReference) {
       return super.calcValueName();
