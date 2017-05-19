@@ -12,10 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.OnePixelDivider;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -165,6 +162,8 @@ public class EduCoursesPanel extends JPanel {
                                  if (course != null) {
                                    myCourses.add(course);
                                    updateModel(myCourses, course.getName());
+                                 } else {
+                                   Messages.showErrorDialog("Selected archive doesn't contain a valid course", "Failed to Add Local Course");
                                  }
                                });
       }
