@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,23 +18,22 @@ package com.intellij.openapi.wm.impl.content;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.ClickListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.content.TabbedContent;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -54,46 +53,46 @@ public class TabbedContentTabLabel extends ContentTabLabel {
   private final TabbedContent myContent;
   private Reference<JBPopup> myPopupReference = null;
 
-  public TabbedContentTabLabel(TabbedContent content, TabContentLayout layout) {
+  public TabbedContentTabLabel(@NotNull TabbedContent content, @NotNull TabContentLayout layout) {
     super(content, layout);
     myContent = content;
-    new ClickListener() {
-      @Override
-      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        showPopup();
-        return true;
-      }
-    }.installOn(this);
   }
 
-  private void showPopup() {
+  @Override
+  protected void selectContent() {
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups();
-    ArrayList<String> names = new ArrayList<String>();
-    for (Pair<String, JComponent> tab : myContent.getTabs()) {
-      names.add(tab.first);
+
+    final List<Pair<String, JComponent>> tabs = myContent.getTabs();
+    if (tabs.size() == 1) {
+      selectContent(0);
+      return;
     }
-    final JBList list = new JBList(names);
-    list.installCellRenderer(new NotNullFunction<Object, JComponent>() {
-      private final JLabel label = new JLabel();
-      {
-        label.setBorder(new EmptyBorder(UIUtil.getListCellPadding()));
-      }
-      @NotNull
-      @Override
-      public JComponent fun(Object dom) {
-        label.setText(dom.toString());
-        return label;
-      }
+    else if (tabs.isEmpty()) {
+      return;
+    }
+
+    final List<String> names = ContainerUtil.map(tabs, tab -> tab.first);
+    final JBList<String> list = new JBList<>(names);
+    list.installCellRenderer((String name) -> {
+      final JLabel label = new JLabel(name);
+      label.setBorder(new EmptyBorder(UIUtil.getListCellPadding()));
+      return label;
     });
-    final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setItemChoosenCallback(() -> {
-        int index = list.getSelectedIndex();
-        if (index != -1) {
-          myContent.selectContent(index);
-        }
-      }).createPopup();
-    myPopupReference = new WeakReference<JBPopup>(popup);
+
+    final PopupChooserBuilder popupBuilder = JBPopupFactory.getInstance().createListPopupBuilder(list);
+    final JBPopup popup = popupBuilder.setItemChoosenCallback(() -> {
+      int index = list.getSelectedIndex();
+      if (index != -1) {
+        selectContent(index);
+      }
+    }).createPopup();
+    myPopupReference = new WeakReference<>(popup);
     popup.showUnderneathOf(this);
+  }
+
+  private void selectContent(int index) {
+    myContent.selectContent(index);
+    super.selectContent();
   }
 
   @Override
@@ -102,19 +101,23 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     if (myContent != null) {
       setText(myContent.getTabName());
     }
-    setHorizontalAlignment(LEFT);
+    if (hasMultipleTabs()) {
+      setHorizontalAlignment(LEFT);
+    }
   }
 
   @Override
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    return new Dimension(size.width + 12, size.height);
+    return hasMultipleTabs() ? new Dimension(size.width + 12, size.height) : size;
   }
 
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    myComboIcon.paintIcon(this, g);
+    if (hasMultipleTabs()) {
+      myComboIcon.paintIcon(this, g);
+    }
   }
 
   @Override
@@ -125,5 +128,9 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       Disposer.dispose(popup);
       myPopupReference = null;
     }
+  }
+
+  private boolean hasMultipleTabs() {
+    return myContent != null && myContent.getTabs().size() > 1;
   }
 }
