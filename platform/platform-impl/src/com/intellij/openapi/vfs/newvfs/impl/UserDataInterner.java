@@ -58,7 +58,7 @@ class MapReference extends WeakReference<KeyFMap> {
 
   MapReference(KeyFMap referent) {
     super(referent);
-    myHash = referent.identityHashCode();
+    myHash = referent.getValueIdentityHashCode();
   }
 
   @Override
