@@ -20,13 +20,14 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.events.completion.Action
+import com.intellij.stats.events.completion.CompletionStartedEvent
 import com.intellij.stats.events.completion.LogEvent
 import org.assertj.core.api.Assertions
 import org.mockito.Mockito
 import org.picocontainer.MutablePicoContainer
 
 
-val runnableInterface = "interface Runnable { void run(); }"
+val runnableInterface = "interface Runnable { void run(); void runFast(); }"
 val testText = """
 class Test {
     public void run() {
@@ -48,7 +49,7 @@ fun List<LogEvent>.assertOrder(vararg actions: Action) {
 }
 
 
-open class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
+abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
 
   val trackedEvents = mutableListOf<LogEvent>()
 
@@ -56,6 +57,11 @@ open class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
   lateinit var mockLoggerProvider: CompletionLoggerProvider
 
   lateinit var container: MutablePicoContainer
+
+
+  val completionStartedEvent: CompletionStartedEvent
+    get() = trackedEvents.first() as CompletionStartedEvent
+
 
   open fun completionFileLogger(): CompletionFileLogger {
     val eventLogger = object : CompletionEventLogger {

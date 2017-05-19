@@ -18,7 +18,6 @@ package com.intellij.stats.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.stats.events.completion.Action.*
-import com.intellij.stats.events.completion.CompletionStartedEvent
 import com.intellij.stats.events.completion.ExplicitSelectEvent
 import org.assertj.core.api.Assertions.assertThat
 
@@ -51,15 +50,13 @@ class CompletionEventsLoggingTest : CompletionLoggingTestBase() {
     }
 
     private fun checkLoggedAllElements(itemsOnStart: MutableList<LookupElement>) {
-        val start = trackedEvents.first() as CompletionStartedEvent
-        assertThat(start.newCompletionListItems).hasSize(itemsOnStart.size)
-        assertThat(start.completionListIds).hasSize(itemsOnStart.size)
+        assertThat(completionStartedEvent.newCompletionListItems).hasSize(itemsOnStart.size)
+        assertThat(completionStartedEvent.completionListIds).hasSize(itemsOnStart.size)
     }
 
     private fun checkSelectedCorrectId(itemsOnStart: MutableList<LookupElement>, selectedString: String) {
-        val start = trackedEvents.first() as CompletionStartedEvent
         val selectedIndex = itemsOnStart.indexOfFirst { it.lookupString == selectedString }
-        val selectedId = start.completionListIds[selectedIndex]
+        val selectedId = completionStartedEvent.completionListIds[selectedIndex]
         val select = trackedEvents.last() as ExplicitSelectEvent
         assertThat(select.selectedId).isEqualTo(selectedId)
     }
