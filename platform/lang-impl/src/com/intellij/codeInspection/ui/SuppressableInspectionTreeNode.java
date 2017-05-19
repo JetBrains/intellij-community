@@ -28,17 +28,18 @@ import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.TreeNode;
 import java.util.Collections;
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich
- */
-public abstract class SuppressableInspectionTreeNode extends CachedInspectionTreeNode implements RefElementAndDescriptorAware {
+public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
   @NotNull
   private final InspectionResultsView myView;
+  @NotNull
+  private final InspectionToolPresentation myPresentation;
   private volatile Set<SuppressIntentionAction> myAvailableSuppressActions;
-  protected final InspectionToolPresentation myPresentation;
+  private volatile String myPresentableName;
+  private volatile Boolean myValid;
 
   protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
@@ -62,16 +63,6 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
 
   public abstract boolean isQuickFixAppliedFromView();
 
-  @Nullable
-  @Override
-  public String getCustomizedTailText() {
-    final String text = super.getCustomizedTailText();
-    if (text != null) {
-      return text;
-    }
-    return isAlreadySuppressedFromView() ? "Suppressed" : null;
-  }
-
   @NotNull
   public Set<SuppressIntentionAction> getAvailableSuppressActions() {
     return myAvailableSuppressActions;
@@ -81,12 +72,48 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
     myAvailableSuppressActions.remove(action);
   }
 
-  @Override
   protected void init(Project project) {
-    super.init(project);
+    myPresentableName = calculatePresentableName();
+    myValid = calculateIsValid();
     myAvailableSuppressActions = getElement() == null
                                  ? Collections.emptySet()
                                  : getOnlyAvailableSuppressActions(project);
+  }
+
+
+  @Nullable
+  public abstract RefEntity getElement();
+
+  @Nullable
+  public abstract CommonProblemDescriptor getDescriptor();
+
+  @Override
+  public final synchronized boolean isValid() {
+    Boolean valid = myValid;
+    if (valid == null) {
+      valid = calculateIsValid();
+      myValid = valid;
+    }
+    return valid;
+  }
+
+  @Override
+  public final synchronized String toString() {
+    String name = myPresentableName;
+    if (name == null) {
+      name = calculatePresentableName();
+      myPresentableName = name;
+    }
+    return name;
+  }
+
+  @Nullable
+  @Override
+  public String getTailText() {
+    if (!isValid()) {
+      return "No longer valid";
+    }
+    return isAlreadySuppressedFromView() ? "Suppressed" : null;
   }
 
   @NotNull
@@ -103,7 +130,7 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
 
   @NotNull
   private Set<SuppressIntentionAction> getOnlyAvailableSuppressActions(@NotNull Project project) {
-    final Set<SuppressIntentionAction> actions = getSuppressActions();
+    final Set<SuppressIntentionAction> actions = myView.getSuppressActions(myPresentation.getToolWrapper());
     if (actions.isEmpty()) {
       return Collections.emptySet();
     }
@@ -125,8 +152,18 @@ public abstract class SuppressableInspectionTreeNode extends CachedInspectionTre
     return availableActions == null ? Collections.emptySet() : availableActions;
   }
 
-  @NotNull
-  private Set<SuppressIntentionAction> getSuppressActions() {
-    return myView.getSuppressActions(myPresentation.getToolWrapper());
+  protected abstract String calculatePresentableName();
+
+  protected abstract boolean calculateIsValid();
+
+  protected void dropCache(Project project) {
+    myValid = calculateIsValid();
+    myPresentableName = calculatePresentableName();
+    for (int i = 0; i < getChildCount(); i++) {
+      TreeNode child = getChildAt(i);
+      if (child instanceof SuppressableInspectionTreeNode) {
+        ((SuppressableInspectionTreeNode)child).dropCache(project);
+      }
+    }
   }
 }

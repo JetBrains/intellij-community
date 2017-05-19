@@ -428,12 +428,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return new RefElementNode(entity, this) {
       @Nullable
       @Override
-      public String getCustomizedTailText() {
+      public String getTailText() {
         final UnusedDeclarationHint hint = myFixedElements.get(getElement());
         if (hint != null) {
           return hint.getDescription();
         }
-        return super.getCustomizedTailText();
+        return super.getTailText();
       }
 
       @Override
