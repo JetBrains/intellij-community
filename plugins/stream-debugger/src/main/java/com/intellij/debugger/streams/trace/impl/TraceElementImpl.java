@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.trace.impl;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
@@ -26,7 +27,7 @@ public class TraceElementImpl implements TraceElement, Comparable<TraceElement> 
   private final int myTime;
   private final Value myValue;
 
-  public TraceElementImpl(int time, @NotNull Value value) {
+  public TraceElementImpl(int time, @Nullable Value value) {
     myTime = time;
     myValue = value;
   }
@@ -51,7 +52,7 @@ public class TraceElementImpl implements TraceElement, Comparable<TraceElement> 
     return myTime;
   }
 
-  @NotNull
+  @Nullable
   @Override
   public Value getValue() {
     return myValue;
