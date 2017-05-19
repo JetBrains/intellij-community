@@ -22,32 +22,32 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
-object DefaultStateSerializer {
-  private val LOG = Logger.getInstance(DefaultStateSerializer::class.java)
+private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DefaultStateSerializer")
 
-  fun <T> deserializeState(stateElement: Element?, stateClass: Class<T>, mergeInto: T?): T? {
-    if (stateElement == null) {
-      return mergeInto
+fun <T> deserializeState(stateElement: Element?, stateClass: Class<T>, mergeInto: T?): T? {
+  @Suppress("DEPRECATION")
+  if (stateElement == null) {
+    return mergeInto
+  }
+  else if (stateClass == Element::class.java) {
+    @Suppress("UNCHECKED_CAST")
+    return stateElement as T?
+  }
+  else if (JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
+    if (mergeInto != null) {
+      val elementText = JDOMUtil.writeElement(stateElement)
+      LOG.error("State is ${stateClass.name}, merge into is ${mergeInto.toString()}, state element text is $elementText")
     }
-    else if (stateClass == Element::class.java) {
-      return stateElement as T?
-    }
-    else if (JDOMExternalizable::class.java.isAssignableFrom(stateClass)) {
-      if (mergeInto != null) {
-        val elementText = JDOMUtil.writeElement(stateElement)
-        LOG.error("State is " + stateClass.name + ", merge into is " + mergeInto.toString() + ", state element text is " + elementText)
-      }
 
-      val t = ReflectionUtil.newInstance(stateClass)
-      (t as JDOMExternalizable).readExternal(stateElement)
-      return t
-    }
-    else if (mergeInto == null) {
-      return XmlSerializer.deserialize(stateElement, stateClass)
-    }
-    else {
-      XmlSerializer.deserializeInto(mergeInto, stateElement)
-      return mergeInto
-    }
+    val t = ReflectionUtil.newInstance(stateClass)
+    (t as JDOMExternalizable).readExternal(stateElement)
+    return t
+  }
+  else if (mergeInto == null) {
+    return XmlSerializer.deserialize(stateElement, stateClass)
+  }
+  else {
+    XmlSerializer.deserializeInto(mergeInto, stateElement)
+    return mergeInto
   }
 }

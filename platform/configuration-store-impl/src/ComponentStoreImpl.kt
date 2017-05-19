@@ -24,10 +24,10 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.components.impl.ComponentManagerImpl
-import com.intellij.openapi.components.impl.stores.DefaultStateSerializer
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.StoreUtil
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
+import com.intellij.openapi.components.impl.stores.deserializeState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -319,7 +319,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           if (changedStorages != null && changedStorages.contains(storage)) {
             // state will be null if file deleted
             // we must create empty (initial) state to reinit component
-            state = DefaultStateSerializer.deserializeState(Element("state"), stateClass, null)!!
+            state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
             continue
@@ -368,7 +368,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     try {
       val documentElement = JDOMXIncluder.resolve(JDOMUtil.loadDocument(url), url.toExternalForm()).detachRootElement()
       getPathMacroManagerForDefaults()?.expandPaths(documentElement)
-      return DefaultStateSerializer.deserializeState(documentElement, stateClass, null)
+      return deserializeState(documentElement, stateClass, null)
     }
     catch (e: Throwable) {
       throw IOException("Error loading default state from $url", e)
@@ -500,14 +500,7 @@ internal fun executeSave(session: SaveSession, readonlyFiles: MutableList<JBPair
   return errors
 }
 
-private fun findNonDeprecated(storages: Array<Storage>): Storage {
-  for (storage in storages) {
-    if (!storage.deprecated) {
-      return storage
-    }
-  }
-  throw AssertionError("All storages are deprecated")
-}
+private fun findNonDeprecated(storages: Array<Storage>) = storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
 
 enum class StateLoadPolicy {
   LOAD, LOAD_ONLY_DEFAULT, NOT_LOAD
