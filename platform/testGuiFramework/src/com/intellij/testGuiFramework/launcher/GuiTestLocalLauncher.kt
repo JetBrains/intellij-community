@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
+import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.util.containers.HashSet
@@ -33,6 +34,7 @@ import java.io.File
 import java.io.InputStreamReader
 import java.net.URL
 import java.nio.file.Paths
+import java.util.jar.JarInputStream
 import java.util.stream.Collectors
 
 /**
@@ -162,7 +164,13 @@ object GuiTestLocalLauncher {
     val urlClassLoaderClass = classLoader.javaClass
     val getUrlsMethod = urlClassLoaderClass.getMethod("getUrls")
     @Suppress("UNCHECKED_CAST")
-    val urls = getUrlsMethod.invoke(classLoader) as List<URL>
+    var urls = getUrlsMethod.invoke(classLoader) as List<URL>
+    if (isWin()) {
+      val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
+      val jarStream = JarInputStream(File(classPathUrl!!.path).inputStream())
+      val mf = jarStream.manifest
+      urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
+    }
     return urls.map { Paths.get(it.toURI()).toFile() }
   }
 
