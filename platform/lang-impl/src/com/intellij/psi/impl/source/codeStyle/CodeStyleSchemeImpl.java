@@ -35,6 +35,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   private final boolean myIsDefault;
   private volatile CodeStyleSettings myCodeStyleSettings;
 
+  private final Object lock = new Object();
+
   CodeStyleSchemeImpl(@NotNull String name, String parentSchemeName, @NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder) {
     setName(name);
     myDataHolder = dataHolder;
@@ -79,26 +81,31 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   @Override
   @NotNull
   public CodeStyleSettings getCodeStyleSettings() {
-    SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
-    if (dataHolder == null) {
-      return myCodeStyleSettings;
+    CodeStyleSettings settings = myCodeStyleSettings;
+    if (settings != null) {
+      return settings;
     }
 
-    myDataHolder = null;
-    CodeStyleSettings settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
-    dataHolder.updateDigest(this);
-    myParentSchemeName = null;
+    synchronized (lock) {
+      SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder = myDataHolder;
+      if (dataHolder == null) {
+        return myCodeStyleSettings;
+      }
+
+      myDataHolder = null;
+      settings = init(myParentSchemeName == null ? null : CodeStyleSchemesImpl.getSchemeManager().findSchemeByName(myParentSchemeName), dataHolder.read());
+      dataHolder.updateDigest(this);
+      myParentSchemeName = null;
+    }
     return settings;
   }
 
-  boolean isInitialized() {
-    return myDataHolder == null;
-  }
-
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings) {
-    myCodeStyleSettings = codeStyleSettings;
-    myParentSchemeName = null;
-    myDataHolder = null;
+    synchronized (lock) {
+      myCodeStyleSettings = codeStyleSettings;
+      myParentSchemeName = null;
+      myDataHolder = null;
+    }
   }
 
   @Override
@@ -114,20 +121,27 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   @Nullable
   @Override
   public SchemeState getSchemeState() {
-    return isInitialized() ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+    synchronized (lock) {
+      return myDataHolder == null ? SchemeState.POSSIBLY_CHANGED : SchemeState.UNCHANGED;
+    }
   }
 
   @Override
   @NotNull
   public Element writeScheme() {
-    if (myDataHolder == null) {
+    SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder;
+    synchronized (lock) {
+      dataHolder = myDataHolder;
+    }
+
+    if (dataHolder == null) {
       Element newElement = new Element("code_scheme");
       newElement.setAttribute("name", getName());
       myCodeStyleSettings.writeExternal(newElement);
       return newElement;
     }
     else {
-      return myDataHolder.read();
+      return dataHolder.read();
     }
   }
 }
