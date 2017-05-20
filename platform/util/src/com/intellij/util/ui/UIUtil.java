@@ -393,14 +393,17 @@ public class UIUtil {
     if (SystemInfo.isLinux) {
       return false; // pending support
     }
-    try {
-      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      if (ge instanceof SunGraphicsEnvironment) {
-        Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-        jreHiDPI = (Boolean)m.invoke(ge);
-        jreHiDPI_earlierVersion = false;
+    if (SystemInfo.isJetbrainsJvm) {
+      try {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        if (ge instanceof SunGraphicsEnvironment) {
+          Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+          jreHiDPI = (Boolean)m.invoke(ge);
+          jreHiDPI_earlierVersion = false;
+        }
       }
-    } catch (Throwable ignore) {
+      catch (Throwable ignore) {
+      }
     }
     if (SystemInfo.isMac) {
       return jreHiDPI = (!SystemInfo.isAppleJvm);
