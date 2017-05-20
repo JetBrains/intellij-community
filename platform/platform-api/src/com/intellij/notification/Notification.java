@@ -105,8 +105,7 @@ public class Notification {
     myIcon = icon;
     mySubtitle = subtitle;
 
-    LOG.assertTrue(hasTitle() || hasContent(),
-                   "Notification should have title: " + title + " and/or subtitle and/or content groupId: " + myGroupId);
+    assertHasTitleOrContent();
     id = calculateId(this);
   }
 
@@ -134,7 +133,7 @@ public class Notification {
     myListener = listener;
     myTimestamp = System.currentTimeMillis();
 
-    LOG.assertTrue(hasContent(), "Notification should have content, title: " + title + ", groupId: " + myGroupId);
+    assertHasTitleOrContent();
     id = calculateId(this);
   }
 
@@ -350,5 +349,10 @@ public class Notification {
   @NotNull
   private static String calculateId(@NotNull Object notification) {
     return String.valueOf(System.currentTimeMillis()) + "." + String.valueOf(System.identityHashCode(notification));
+  }
+
+  private void assertHasTitleOrContent() {
+    LOG.assertTrue(hasTitle() || hasContent(),
+                   "Notification should have title: [" + myTitle + "] and/or content: [" + myContent + "]; groupId: " + myGroupId);
   }
 }
