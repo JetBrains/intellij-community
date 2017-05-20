@@ -27,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupManager;
@@ -66,7 +65,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
     myProject = project;
     myIdeEncodingManager = (EncodingManagerImpl)ideEncodingManager;
-    ProjectUtil.runWhenProjectOpened(project, () -> StartupManager.getInstance(project).runWhenProjectIsInitialized(this::reloadAlreadyLoadedDocuments));
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(this::reloadAlreadyLoadedDocuments);
   }
 
   private final Map<VirtualFile, Charset> myMapping = ContainerUtil.newConcurrentMap();

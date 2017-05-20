@@ -23,11 +23,12 @@ import com.intellij.testFramework.SkipSlowTestLocally;
 public class CreateMethodFromUsagePerformanceTest extends LightQuickFixTestCase {
 
   public void testWithHugeNumberOfParameters() {
-    PlatformTestUtil.startPerformanceTest("100 args for a new method", 200000, () -> {
+    PlatformTestUtil.startPerformanceTest("5000 args for a new method", 2000000, () -> {
       configureFromFileText("Foo.java", "class Foo {{ f<caret>oo(" + StringUtil.repeat("\"a\", ", 5000) + " \"a\");}}");
       doAction("Create method 'foo'");
     })
-      .useLegacyScaling()
+      .cpuBound()
+      .usesAllCPUCores()
       .assertTiming();
   }
 

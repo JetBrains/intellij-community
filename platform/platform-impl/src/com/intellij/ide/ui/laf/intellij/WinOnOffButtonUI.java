@@ -42,7 +42,7 @@ public class WinOnOffButtonUI extends BasicToggleButtonUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension size = new JBDimension(BUTTON_SIZE.width, BUTTON_SIZE.height);
+    Dimension size = new Dimension(BUTTON_SIZE); // Don't scale it twice.
     JBInsets.addTo(size, BUTTON_BORDER.getBorderInsets(c));
     return size;
   }

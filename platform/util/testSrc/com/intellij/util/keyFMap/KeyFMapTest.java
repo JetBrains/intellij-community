@@ -102,10 +102,10 @@ public class KeyFMapTest extends TestCase {
       KeyFMap map2 = map.plus(KEYS.get(i), val2);
       assertEquals(map1.hashCode(), map2.hashCode());
       assertEquals(map1, map2);
-      assertFalse(map1.identityHashCode() == map2.identityHashCode());
+      assertFalse(map1.getValueIdentityHashCode() == map2.getValueIdentityHashCode());
       assertFalse(map1.equalsByReference(map2));
       map2 = map.plus(KEYS.get(i), val1);
-      assertTrue(map1.identityHashCode() == map2.identityHashCode());
+      assertTrue(map1.getValueIdentityHashCode() == map2.getValueIdentityHashCode());
       assertTrue(map1.equalsByReference(map2));
       map = map1;
     }

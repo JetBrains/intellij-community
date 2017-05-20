@@ -38,15 +38,26 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   @Override
   protected void drawCheckIcon(JComponent c, Graphics2D g, JCheckBox b, Rectangle iconRect, boolean selected, boolean enabled) {
     ButtonModel bm = b.getModel();
-    boolean focused = c.hasFocus() || bm.isRollover();
+    boolean focused = c.hasFocus() || bm.isRollover() || isCellRollover(b);
+    boolean pressed = bm.isPressed() || isCellPressed(b);
 
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, bm.isPressed());
+    Icon icon = MacIntelliJIconCache.getIcon(iconName, false, selected || isIndeterminate(b), focused, enabled, pressed);
 
     Rectangle viewRect = new Rectangle(c.getSize());
     int x = (iconRect.width - icon.getIconWidth()) / 2;
     int y = (viewRect.height - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
+  }
+
+  private static boolean isCellRollover(JCheckBox checkBox) {
+    Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY);
+    return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
+  }
+
+  private static boolean isCellPressed(JCheckBox checkBox) {
+    Rectangle cellPosition = (Rectangle)checkBox.getClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY);
+    return cellPosition != null && cellPosition.getBounds().equals(checkBox.getBounds());
   }
 
   @Override

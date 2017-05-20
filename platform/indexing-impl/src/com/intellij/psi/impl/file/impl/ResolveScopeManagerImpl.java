@@ -209,7 +209,7 @@ public class ResolveScopeManagerImpl extends ResolveScopeManager {
   private boolean isFromAdditionalLibraries(@NotNull final VirtualFile file) {
     for (final AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
       for (final SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
-        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots()))) {
+        if (VfsUtilCore.isUnder(file, asSet(library.getSourceRoots())) && !VfsUtilCore.isUnder(file, library.getExcludedRoots())) {
           return true;
         }
       }

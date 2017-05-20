@@ -232,7 +232,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         }
         LightPlatformCodeInsightTestCase.type('\n', console.getEditor(), getProject());
         console.waitAllRequests();
-      }).cpuBound().assertTiming());
+      }).assertTiming());
   }
 
   public void testPerformanceOfMergeableTokens() throws Exception {
@@ -247,7 +247,7 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
         MarkupModel model = DocumentMarkupModel.forDocument(console.getEditor().getDocument(), getProject(), true);
         RangeHighlighter highlighter = assertOneElement(model.getAllHighlighters());
         assertEquals(new TextRange(0, console.getEditor().getDocument().getTextLength()), TextRange.create(highlighter));
-      }).cpuBound().assertTiming());
+      }).assertTiming());
   }
 
   private static void withCycleConsole(int capacityKB, Consumer<ConsoleViewImpl> runnable) {

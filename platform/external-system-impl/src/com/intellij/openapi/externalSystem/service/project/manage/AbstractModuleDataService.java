@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.OrderAware;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -331,7 +332,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   }
 
   @Override
-  public void onSuccessImport(@NotNull Project project) {
+  public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
+                              @Nullable ProjectData projectData,
+                              @NotNull Project project,
+                              @NotNull IdeModelsProvider modelsProvider) {
     final Set<String> orphanFiles = project.getUserData(ORPHAN_MODULE_FILES);
     if (orphanFiles != null && !orphanFiles.isEmpty()) {
       ExternalSystemApiUtil.executeOnEdt(false, () -> {

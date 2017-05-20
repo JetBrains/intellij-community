@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -262,5 +262,55 @@ class PojoBuilder {}
 
 new PojoBuilder().counter(1).name("Janet").<caret>
 ''', 'build', 'name', 'dynamic', 'counter'
+  }
+
+  void 'test not include super properties'() {
+    String code = '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.ExternalStrategy
+
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+
+class Child extends Pojo {
+  String secondName
+}
+
+@Builder(builderStrategy = ExternalStrategy, forClass = Child)
+class PojoBuilder {}
+
+new PojoBuilder().<caret>
+'''
+    doVariantableTest code, CompletionResult.contain, 'secondName'
+    doVariantableTest code, CompletionResult.notContain, 'name', 'dynamic', 'counter'
+  }
+
+  void 'test include super properties'() {
+    doVariantableTest '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.ExternalStrategy
+
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+
+class Child extends Pojo {
+  String secondName
+}
+
+@Builder(builderStrategy = ExternalStrategy, forClass = Child, includeSuperProperties = true)
+class PojoBuilder {}
+
+new PojoBuilder().<caret>
+''', CompletionResult.contain, 'secondName', 'name', 'dynamic', 'counter'
   }
 }

@@ -22,7 +22,7 @@ public class MakeMethodDefaultTest extends IPPTestCase {
  
   @Override
   protected String getIntentionName() {
-    return "Make method default";
+    return "Make 'foo()' default";
   }
 
   @Override

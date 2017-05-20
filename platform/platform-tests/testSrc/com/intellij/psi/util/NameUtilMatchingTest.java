@@ -679,7 +679,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
           Assert.assertFalse(matcher.toString(), matcher.matches(longName));
         }
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testOnlyUnderscoresPerformance() {
@@ -688,7 +688,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
       assertDoesntMatch("*" + big, small);
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testRepeatedLetterPerformance() {
@@ -696,7 +696,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       String big = StringUtil.repeat("Aaaaaa", 50);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testMatchingAllOccurrences() {

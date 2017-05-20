@@ -15,8 +15,10 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.keyFMap.KeyFMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,5 +120,26 @@ public final class DfaFactMap {
   @Override
   public int hashCode() {
     return myMap.hashCode();
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public String toString() {
+    return StreamEx.of(myMap.getKeys()).map(key -> ((DfaFactType<Object>)key).toString(myMap.get(key))).joining(", ");
+  }
+
+  /**
+   * Calculate facts from variable itself (not knowing its state). This method should not be used directly.
+   * Instead use {@link DfaVariableValue#getInherentFacts()} which caches the calculated value.
+   *
+   * @param value variable value to calculate facts from
+   * @return a calculated fact map.
+   */
+  public static DfaFactMap calcFromVariable(@NotNull DfaVariableValue value) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (factMap, type) -> updateMap(factMap, type, value));
+  }
+
+  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
+    return map.with(factType, factType.calcFromVariable(value));
   }
 }

@@ -17,11 +17,14 @@ package com.intellij.openapi.roots;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * A lightweight library definition comparing to {@link com.intellij.openapi.roots.libraries.Library}.
@@ -31,6 +34,9 @@ import java.util.Collection;
  *   (in UI, "Project and Libraries" scope).
  *   Files contained inside the returned roots are considered as library source files:
  *   {@link ProjectFileIndex#isInLibrarySource(VirtualFile)} returns {@code true} for them.
+ *   <br>
+ *   <li>File exclusions for provided sources roots ({@link #getExcludedRoots()}).
+ *   These roots won't be indexed and will be handled as {@link LibraryEx#getExcludedRoots()}</li>
  *   <br>
  *   Generally, {@link #getSourceRoots()} are handled similarly to {@code library.getFiles(OrderRootType.SOURCES)}.
  *   <li>An item in "External Libraries" in Project view if library is instance of {@link ItemPresentation}</li>.
@@ -50,6 +56,11 @@ public abstract class SyntheticLibrary {
 
   @NotNull
   public abstract Collection<VirtualFile> getSourceRoots();
+
+  @NotNull
+  public Set<VirtualFile> getExcludedRoots() {
+    return Collections.emptySet();
+  }
 
   /**
    * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
@@ -75,6 +86,11 @@ public abstract class SyntheticLibrary {
 
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
+    return newImmutableLibrary(sourceRoots, Collections.emptySet());
+  }
+
+  @NotNull
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots, @NotNull Set<VirtualFile> excludedRoots) {
     return new SyntheticLibrary() {
       @NotNull
       @Override
@@ -82,17 +98,27 @@ public abstract class SyntheticLibrary {
         return sourceRoots;
       }
 
+      @NotNull
+      @Override
+      public Set<VirtualFile> getExcludedRoots() {
+        return excludedRoots;
+      }
+
       @Override
       public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         SyntheticLibrary library = (SyntheticLibrary)o;
-        return getSourceRoots().equals(library.getSourceRoots());
+        if (!sourceRoots.equals(library.getSourceRoots())) return false;
+        if (!excludedRoots.equals(library.getExcludedRoots())) return false;
+        return true;
       }
 
       @Override
       public int hashCode() {
-        return sourceRoots.hashCode();
+        int result = sourceRoots.hashCode();
+        result = 31 * result + excludedRoots.hashCode();
+        return result;
       }
     };
   }

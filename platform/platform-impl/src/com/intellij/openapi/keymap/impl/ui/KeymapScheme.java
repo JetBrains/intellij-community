@@ -120,7 +120,7 @@ final class KeymapScheme implements Scheme {
    * @see #reset()
    */
   boolean canReset() {
-    return getCurrent().getOwnActionIds().length > 0;
+    return isMutable() && getCurrent().getOwnActionIds().length > 0;
   }
 
   /**
@@ -139,7 +139,7 @@ final class KeymapScheme implements Scheme {
    * @see #reset(String)
    */
   boolean canReset(@NotNull String actionId) {
-    return getCurrent().hasOwnActionId(actionId);
+    return isMutable() && getCurrent().hasOwnActionId(actionId);
   }
 
   /**

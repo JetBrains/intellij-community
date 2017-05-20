@@ -31,6 +31,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,6 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicRadioButtonUI;
 import javax.swing.plaf.basic.ComboPopup;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -245,12 +245,12 @@ public class UIUtil {
   @NonNls public static final String CENTER_TOOLTIP_DEFAULT = "ToCenterTooltip";
   @NonNls public static final String CENTER_TOOLTIP_STRICT = "ToCenterTooltip.default";
 
-  public static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
+  private static final Pattern CLOSE_TAG_PATTERN = Pattern.compile("<\\s*([^<>/ ]+)([^<>]*)/\\s*>", Pattern.CASE_INSENSITIVE);
 
-  @NonNls public static final String FOCUS_PROXY_KEY = "isFocusProxy";
+  @NonNls private static final String FOCUS_PROXY_KEY = "isFocusProxy";
 
-  public static Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
-  private static Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
+  public static final Key<Integer> KEEP_BORDER_SIDES = Key.create("keepBorderSides");
+  private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
   private static final AbstractAction REDO_ACTION = new AbstractAction() {
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -393,17 +393,20 @@ public class UIUtil {
     if (SystemInfo.isLinux) {
       return false; // pending support
     }
-    try {
-      GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-      if (ge instanceof SunGraphicsEnvironment) {
-        Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
-        jreHiDPI = (Boolean)m.invoke(ge);
-        jreHiDPI_earlierVersion = false;
+    if (SystemInfo.isJetbrainsJvm) {
+      try {
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        if (ge instanceof SunGraphicsEnvironment) {
+          Method m = ReflectionUtil.getDeclaredMethod(SunGraphicsEnvironment.class, "isUIScaleOn");
+          jreHiDPI = (Boolean)m.invoke(ge);
+          jreHiDPI_earlierVersion = false;
+        }
       }
-    } catch (Throwable ignore) {
+      catch (Throwable ignore) {
+      }
     }
     if (SystemInfo.isMac) {
-      return jreHiDPI = (!SystemInfo.isAppleJvm);
+      jreHiDPI = !SystemInfo.isAppleJvm;
     }
     return jreHiDPI;
   }
@@ -421,9 +424,9 @@ public class UIUtil {
   /**
    * Utility class for retina routine
    */
-  final static class DetectRetinaKit {
+  static final class DetectRetinaKit {
 
-    private final static WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
+    private static final WeakHashMap<GraphicsDevice, Boolean> devicesToRetinaSupportCacheMap = new WeakHashMap<GraphicsDevice, Boolean>();
 
     /**
      * The best way to understand whether we are on a retina device is [NSScreen backingScaleFactor]
@@ -538,9 +541,8 @@ public class UIUtil {
   public static boolean isRetina (Graphics2D graphics) {
     if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7")) {
       return DetectRetinaKit.isMacRetina(graphics);
-    } else {
-      return isRetina();
     }
+    return isRetina();
   }
 
   //public static boolean isMacRetina(Graphics2D g) {
@@ -639,7 +641,6 @@ public class UIUtil {
 
   /**
    * @param component a Swing component that may hold a client property value
-   * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
    */
   public static <T> T getClientProperty(Object component, @NotNull Class<T> type) {
@@ -799,7 +800,7 @@ public class UIUtil {
         currentAtom.setLength(0);
       }
 
-      String s = currentLine + currentAtom.toString();
+      String s = currentLine + currentAtom;
       int width = fontMetrics.stringWidth(s);
 
       if (width >= widthLimit - fontMetrics.charWidth('w')) {
@@ -814,7 +815,7 @@ public class UIUtil {
       }
     }
 
-    String s = currentLine + currentAtom.toString();
+    String s = currentLine + currentAtom;
     if (!s.isEmpty()) {
       lines.add(s);
     }
@@ -1370,7 +1371,7 @@ public class UIUtil {
   }
 
   public static Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
-    boolean white = (selected && focused) || isUnderDarcula();
+    boolean white = selected && focused || isUnderDarcula();
 
     Icon selectedIcon = getTreeSelectedExpandedIcon();
     Icon notSelectedIcon = getTreeExpandedIcon();
@@ -1400,7 +1401,7 @@ public class UIUtil {
         isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
-        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+        isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
       return AllIcons.Mac.Tree_white_right_arrow;
     }
     return getTreeCollapsedIcon();
@@ -1411,7 +1412,7 @@ public class UIUtil {
         isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
-        (isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui")))) {
+        isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
       return AllIcons.Mac.Tree_white_down_arrow;
     }
     return getTreeExpandedIcon();
@@ -1433,47 +1434,47 @@ public class UIUtil {
     return UIManager.getColor("OptionPane.background");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Alloy");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return isUnderAlloyLookAndFeel() && UIManager.getLookAndFeel().getName().contains("IDEA");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsLookAndFeel() {
     return SystemInfo.isWindows && UIManager.getLookAndFeel().getName().equals("Windows");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderWindowsClassicLookAndFeel() {
     return UIManager.getLookAndFeel().getName().equals("Windows Classic");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderNimbusLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("Nimbus");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaLookAndFeel() {
     return SystemInfo.isMac && UIManager.getLookAndFeel().getName().contains("Mac OS X");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
     return UIManager.getLookAndFeel().getName().contains("JGoodies");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula() || isUnderIntelliJLaF());
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
   }
@@ -1486,12 +1487,12 @@ public class UIUtil {
     return SystemInfo.isWindows && isUnderIntelliJLaF() && Registry.is("ide.intellij.laf.win10.ui");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderIntelliJLaF() {
     return UIManager.getLookAndFeel().getName().contains("IntelliJ");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderGTKLookAndFeel() {
     return SystemInfo.isXWindow && UIManager.getLookAndFeel().getName().contains("GTK");
   }
@@ -1499,7 +1500,7 @@ public class UIUtil {
   public static final Color GTK_AMBIANCE_TEXT_COLOR = new Color(223, 219, 210);
   public static final Color GTK_AMBIANCE_BACKGROUND_COLOR = new Color(67, 66, 63);
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   @Nullable
   public static String getGtkThemeName() {
     final LookAndFeel laf = UIManager.getLookAndFeel();
@@ -1518,7 +1519,7 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isMurrineBasedTheme() {
     final String gtkTheme = getGtkThemeName();
     return "Ambiance".equalsIgnoreCase(gtkTheme) ||
@@ -1716,7 +1717,7 @@ public class UIUtil {
                                         final Color bgColor,
                                         final Color fgColor,
                                         final boolean opaque) {
-    if ((SystemInfo.isMac && !isRetina()) || SystemInfo.isLinux) {
+    if (SystemInfo.isMac && !isRetina() || SystemInfo.isLinux) {
       drawAppleDottedLine(g, startX, endX, lineY, bgColor, fgColor, opaque);
     }
     else {
@@ -1906,7 +1907,6 @@ public class UIUtil {
 
   /** This method is intended to use when user settings are not accessible yet.
    *  Use it to set up default RenderingHints.
-   *  @param g
    */
   public static void applyRenderingHints(final Graphics g) {
     Graphics2D g2d = (Graphics2D)g;
@@ -1990,12 +1990,12 @@ public class UIUtil {
   @NotNull
   public static BufferedImage createImage(Component comp, int width, int height, int type) {
     return comp != null ?
-           createImage(comp != null ? comp.getGraphicsConfiguration() : null, width, height, type) :
+           createImage(comp.getGraphicsConfiguration(), width, height, type) :
            createImage(width, height, type);
   }
 
   /**
-   * @deprecated use {@link #createImage(Graphics2D, int, int, int)}
+   * @deprecated use {@link #createImage(Graphics, int, int, int)}
    */
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
@@ -2524,7 +2524,7 @@ public class UIUtil {
   }
 
   public static class JBHtmlEditorKit extends HTMLEditorKit {
-    private StyleSheet style;
+    private final StyleSheet style;
 
     public JBHtmlEditorKit() {
       this(true);
@@ -2559,7 +2559,7 @@ public class UIUtil {
             Font font = getLabelFont();
             assert font instanceof FontUIResource;
             if (SystemInfo.isWindows) {
-              font = new FontUIResource("Tahoma", font.getStyle(), font.getSize());
+              font = getFontWithFallback("Tahoma", font.getStyle(), font.getSize());
             }
             // In case JBUI user scale factor changes, the font will be auto-updated by BasicTextUI.installUI()
             // with a font of the properly scaled size. And is then propagated to CSS, making HTML text scale dynamically.
@@ -2573,6 +2573,12 @@ public class UIUtil {
       }
     }
   }
+
+  public static FontUIResource getFontWithFallback(@NotNull String familyName, @JdkConstants.FontStyle int style, int size) {
+    Font fontWithFallback = new StyleContext().getFont(familyName, style, size);
+    return fontWithFallback instanceof FontUIResource ? (FontUIResource)fontWithFallback : new FontUIResource(fontWithFallback);
+  }
+
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
     if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
@@ -2792,7 +2798,7 @@ public class UIUtil {
     if (systemLaFClassName != null) {
       return systemLaFClassName;
     }
-    else if (SystemInfo.isLinux) {
+    if (SystemInfo.isLinux) {
       // Normally, GTK LaF is considered "system" when:
       // 1) Gnome session is run
       // 2) gtk lib is available
@@ -2867,7 +2873,8 @@ public class UIUtil {
     int dpi = 96;
     try {
       dpi = Toolkit.getDefaultToolkit().getScreenResolution();
-    } catch (HeadlessException e) {
+    }
+    catch (HeadlessException ignored) {
     }
     float scale = 1f;
     if (dpi < 120) scale = 1f;
@@ -2948,7 +2955,7 @@ public class UIUtil {
     return null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public static void fixFormattedField(JFormattedTextField field) {
     if (SystemInfo.isMac) {
       final Toolkit toolkit = Toolkit.getDefaultToolkit();
@@ -3126,7 +3133,7 @@ public class UIUtil {
   @Nullable
   public static <T extends JComponent> T findComponentOfType(JComponent parent, Class<T> cls) {
     if (parent == null || cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings({"unchecked"}) final T t = (T)parent;
+      @SuppressWarnings("unchecked") final T t = (T)parent;
       return t;
     }
     for (Component component : parent.getComponents()) {
@@ -3147,7 +3154,7 @@ public class UIUtil {
   private static <T extends JComponent> void findComponentsOfType(JComponent parent, Class<T> cls, ArrayList<T> result) {
     if (parent == null) return;
     if (cls.isAssignableFrom(parent.getClass())) {
-      @SuppressWarnings({"unchecked"}) final T t = (T)parent;
+      @SuppressWarnings("unchecked") final T t = (T)parent;
       result.add(t);
     }
     for (Component c : parent.getComponents()) {
@@ -3239,10 +3246,10 @@ public class UIUtil {
      * _position(block width, block height) => (x, y) of the block
      */
     public void draw(@NotNull final Graphics g, final PairFunction<Integer, Integer, Couple<Integer>> _position) {
+      GraphicsUtil.setupAntialiasing(g, true, true);
       final int[] maxWidth = {0};
       final int[] height = {0};
       final int[] maxBulletWidth = {0};
-      GraphicsUtil.setupAntialiasing(g, true, true);
       ContainerUtil.process(myLines, new Processor<Pair<String, LineInfo>>() {
         @Override
         public boolean process(final Pair<String, LineInfo> pair) {
@@ -3375,7 +3382,7 @@ public class UIUtil {
     Component eachParent = c;
     while (eachParent != null) {
       if (eachParent instanceof JComponent) {
-        @SuppressWarnings({"unchecked"}) WeakReference<JRootPane> pane =
+        @SuppressWarnings("unchecked") WeakReference<JRootPane> pane =
           (WeakReference<JRootPane>)((JComponent)eachParent).getClientProperty(ROOT_PANE);
         if (pane != null) return pane.get();
       }
@@ -3553,7 +3560,7 @@ public class UIUtil {
           lcdContrastValue = 140;
         } else {
           Object o = map.get(RenderingHints.KEY_TEXT_LCD_CONTRAST);
-          lcdContrastValue = (o == null) ? 140 : ((Integer)o);
+          lcdContrastValue = o == null ? 140 : (Integer)o;
         }
       }
     }
@@ -3592,7 +3599,7 @@ public class UIUtil {
 
   @NotNull
   public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
-    return (Registry.is("ui.no.bangs.and.whistles")) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
+    return Registry.is("ui.no.bangs.and.whistles") ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
 
   @Nullable
@@ -3698,6 +3705,7 @@ public class UIUtil {
           for (final UndoableEditListener listener : undoableEditListeners) {
             if (listener instanceof UndoManager) {
               Runnable runnable = new Runnable() {
+                @Override
                 public void run() {
                   ((UndoManager)listener).discardAllEdits();
                 }
@@ -4012,36 +4020,15 @@ public class UIUtil {
     });
   }
 
-  public static final String CHECKBOX_ROLLOVER_PROPERTY = "CheckBoxRenderer.rolloverRow";
+  public static final String CHECKBOX_ROLLOVER_PROPERTY = "JCheckBox.rollOver.rectangle";
+  public static final String CHECKBOX_PRESSED_PROPERTY = "JCheckBox.pressed.rectangle";
 
-  public static void resetEnabledRollOver(JTable table, int column) {
-    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
+  public static void repaintViewport(@NotNull JComponent c) {
+    if (!c.isDisplayable() || !c.isVisible()) return;
 
-    JComponent rc = (JComponent)table.getColumnModel().getColumn(column).getCellRenderer();
-    AbstractTableModel tm = (AbstractTableModel)table.getModel();
-    int lastRow = -1;
-
-    //noinspection EmptyCatchBlock
-    try {
-      lastRow = Integer.valueOf(String.valueOf(rc.getClientProperty(CHECKBOX_ROLLOVER_PROPERTY)));
-    } catch (NumberFormatException nfe) {}
-
-    rc.putClientProperty(CHECKBOX_ROLLOVER_PROPERTY, null);
-
-    if (lastRow >= 0) {
-      tm.fireTableCellUpdated(lastRow, column);
-    }
-  }
-
-  public static void setCellRolloverState(AbstractButton cellRenderer, int row) {
-    if (!Registry.is("ide.intellij.laf.win10.ui")) return;
-
-    try {
-      Object cv = cellRenderer.getClientProperty(CHECKBOX_ROLLOVER_PROPERTY);
-      Integer rr = Integer.valueOf(String.valueOf(cv));
-      cellRenderer.getModel().setRollover(rr == row);
-    } catch (NumberFormatException ex) {
-      cellRenderer.getModel().setRollover(false);
+    Container p = c.getParent();
+    if (p instanceof JViewport) {
+      p.repaint();
     }
   }
 }

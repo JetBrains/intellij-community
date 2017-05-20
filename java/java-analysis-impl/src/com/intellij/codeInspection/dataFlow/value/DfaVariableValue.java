@@ -16,23 +16,13 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
-import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.SpecialField;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiSearchHelper;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,12 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.patterns.PsiJavaPatterns.*;
-
 public class DfaVariableValue extends DfaValue {
-
-  private static final ElementPattern<? extends PsiModifierListOwner> MEMBER_OR_METHOD_PARAMETER =
-    or(psiMember(), psiParameter().withSuperParent(2, psiMember()));
 
   public static class Factory {
     private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<>();
@@ -92,7 +77,7 @@ public class DfaVariableValue extends DfaValue {
   @Nullable private final DfaVariableValue myQualifier;
   private DfaVariableValue myNegatedValue;
   private final boolean myIsNegated;
-  private Nullness myInherentNullability;
+  private DfaFactMap myInherentFacts;
   private final DfaTypeValue myTypeValue;
   private final List<DfaVariableValue> myDependents = new SmartList<>();
 
@@ -158,110 +143,17 @@ public class DfaVariableValue extends DfaValue {
     return myQualifier;
   }
 
+  public DfaFactMap getInherentFacts() {
+    if(myInherentFacts == null) {
+      myInherentFacts = DfaFactMap.calcFromVariable(this);
+    }
+
+    return myInherentFacts;
+  }
+
   @NotNull
   public Nullness getInherentNullability() {
-    if (myInherentNullability != null) {
-      return myInherentNullability;
-    }
-
-    return myInherentNullability = calcInherentNullability();
-  }
-
-  @NotNull
-  private Nullness calcInherentNullability() {
-    PsiModifierListOwner var = getPsiVariable();
-    Nullness nullability = DfaPsiUtil.getElementNullability(getVariableType(), var);
-    if (nullability != Nullness.UNKNOWN) {
-      return nullability;
-    }
-
-    Nullness defaultNullability = myFactory.isUnknownMembersAreNullable() && MEMBER_OR_METHOD_PARAMETER.accepts(var) ? Nullness.NULLABLE : Nullness.UNKNOWN;
-
-    if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-      if (iteratedValue != null) {
-        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType != null) {
-          return DfaPsiUtil.getElementNullability(itemType, var);
-        }
-      }
-    }
-
-    if (var instanceof PsiField && myFactory.isHonorFieldInitializers()) {
-      return getNullabilityFromFieldInitializers((PsiField)var, defaultNullability);
-    }
-
-    return defaultNullability;
-  }
-
-  private static Nullness getNullabilityFromFieldInitializers(PsiField field, Nullness defaultNullability) {
-    if (DfaPsiUtil.isFinalField(field)) {
-      PsiExpression initializer = field.getInitializer();
-      if (initializer != null) {
-        return getFieldInitializerNullness(initializer);
-      }
-
-      List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
-      if (initializers.isEmpty()) {
-        return defaultNullability;
-      }
-
-      for (PsiExpression expression : initializers) {
-        if (getFieldInitializerNullness(expression) == Nullness.NULLABLE) {
-          return Nullness.NULLABLE;
-        }
-      }
-
-      if (DfaPsiUtil.isInitializedNotNull(field)) {
-        return Nullness.NOT_NULL;
-      }
-    }
-    else if (isOnlyImplicitlyInitialized(field)) {
-      return Nullness.NOT_NULL;
-    }
-    return defaultNullability;
-  }
-
-  private static boolean isOnlyImplicitlyInitialized(PsiField field) {
-    return CachedValuesManager.getCachedValue(field, () -> CachedValueProvider.Result.create(
-      isImplicitlyInitializedNotNull(field) && weAreSureThereAreNoExplicitWrites(field),
-      PsiModificationTracker.MODIFICATION_COUNT));
-  }
-
-  private static boolean isImplicitlyInitializedNotNull(PsiField field) {
-    return ContainerUtil.exists(Extensions.getExtensions(ImplicitUsageProvider.EP_NAME), p -> p.isImplicitlyNotNullInitialized(field));
-  }
-
-  private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
-    String name = field.getName();
-    if (name == null || field.getInitializer() != null) return false;
-
-    if (!isCheapEnoughToSearch(field, name)) return false;
-
-    return ReferencesSearch.search(field).forEach(reference -> reference instanceof PsiReferenceExpression && !PsiUtil.isAccessedForWriting((PsiReferenceExpression)reference));
-  }
-
-  private static boolean isCheapEnoughToSearch(PsiField field, String name) {
-    SearchScope scope = field.getUseScope();
-    if (!(scope instanceof GlobalSearchScope)) return true;
-
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(field.getProject());
-    PsiSearchHelper.SearchCostResult result = helper.isCheapEnoughToSearch(name, (GlobalSearchScope)scope, field.getContainingFile(), null);
-    return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
-  }
-
-  private static Nullness getFieldInitializerNullness(@NotNull PsiExpression expression) {
-    if (expression.textMatches(PsiKeyword.NULL)) return Nullness.NULLABLE;
-    if (expression instanceof PsiNewExpression || expression instanceof PsiLiteralExpression || expression instanceof PsiPolyadicExpression) return Nullness.NOT_NULL;
-    if (expression instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)expression).resolve();
-      return DfaPsiUtil.getElementNullability(expression.getType(), (PsiModifierListOwner)target);
-    }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-      return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullness.UNKNOWN;
-    }
-    return Nullness.UNKNOWN;
+    return NullnessUtil.fromBoolean(getInherentFacts().get(DfaFactType.CAN_BE_NULL));
   }
 
   public boolean isFlushableByCalls() {

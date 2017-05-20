@@ -133,6 +133,6 @@ public class LineSetIncrementalUpdateTest extends LightCodeInsightTestCase {
           document.insertString(offset, "b");
         }
       });
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 }

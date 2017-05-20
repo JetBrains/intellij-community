@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.PropertyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
+
+import java.util.Collection;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy.DefaultBuilderStrategySupport.createBuildMethod;
@@ -44,14 +42,15 @@ public class ExternalBuilderStrategySupport extends BuilderAnnotationContributor
 
     final PsiClass constructedClass = GrAnnotationUtil.inferClassAttribute(annotation, "forClass");
     if (constructedClass == null || "groovy.transform.Undefined.CLASS".equals(constructedClass.getQualifiedName())) return;
-
+    boolean includeSuper = isIncludeSuperProperties(annotation);
     if (constructedClass instanceof GrTypeDefinition) {
-      for (GrField field : ((GrTypeDefinition)constructedClass).getCodeFields()) {
+      PsiField[] fields = getFields((GrTypeDefinition)constructedClass, includeSuper);
+      for (PsiField field : fields) {
         context.addMethod(DefaultBuilderStrategySupport.createFieldSetter(context.getCodeClass(), field, annotation));
       }
-    }
-    else {
-      for (PsiMethod setter : PropertyUtil.getAllProperties(constructedClass, true, false).values()) {
+    } else {
+      Collection<PsiMethod> properties = PropertyUtil.getAllProperties(constructedClass, true, false, includeSuper).values();
+      for (PsiMethod setter : properties) {
         final PsiMethod builderSetter = createFieldSetter(context.getCodeClass(), setter, annotation);
         if (builderSetter != null) context.addMethod(builderSetter);
       }

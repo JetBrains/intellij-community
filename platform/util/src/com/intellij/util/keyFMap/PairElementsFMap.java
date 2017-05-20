@@ -94,7 +94,7 @@ final class PairElementsFMap implements KeyFMap {
   }
 
   @Override
-  public int identityHashCode() {
+  public int getValueIdentityHashCode() {
     int hash = key1.hashCode() * 31 + System.identityHashCode(value1);
     hash = (hash * 31 + key2.hashCode()) * 31 + System.identityHashCode(value2);
     return hash;

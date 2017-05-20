@@ -242,7 +242,7 @@ internal class XmlSerializerTest {
     bean.INT_V = 987
     bean.STRING_V = "1234"
 
-    val element = bean.serialize()
+    val element = bean.serialize()!!
 
     val node = element.children.get(0)
     element.removeContent(node)
@@ -660,8 +660,8 @@ internal class XmlSerializerTest {
 private val XML_PREFIX = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 
 internal fun assertSerializer(bean: Any, expected: String, filter: SerializationFilter?, description: String = "Serialization failure"): Element {
-  val element = bean.serialize(filter)
-  var actual = JDOMUtil.writeElement(element, "\n").trim()
+  val element = bean.serialize(filter, createElementIfEmpty = true)!!
+  var actual = JDOMUtil.writeElement(element).trim()
   if (!expected.startsWith(XML_PREFIX) && actual.startsWith(XML_PREFIX)) {
     actual = actual.substring(XML_PREFIX.length).trim()
   }

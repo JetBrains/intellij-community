@@ -24,16 +24,18 @@ import java.lang.reflect.Field;
 
 /**
  * Thread unsafe field accessor.
+ *
+ * @param <E> the type of the field's class
  * @param <T> the type of the field
  */
-public class FieldAccessor<T> {
+public class FieldAccessor<E, T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.FieldAccessor");
 
   private Ref<Field> myFieldRef;
-  private final Class<?> myClass;
+  private final Class<E> myClass;
   private final String myName;
 
-  public FieldAccessor(@NotNull Class<?> cls, @NotNull String name) {
+  public FieldAccessor(@NotNull Class<E> cls, @NotNull String name) {
     myClass = cls;
     myName = name;
   }
@@ -52,7 +54,7 @@ public class FieldAccessor<T> {
     return myFieldRef.get() != null;
   }
 
-  public T get(@Nullable Object object) {
+  public T get(@Nullable E object) {
     if (!isAvailable() || object == null) return null;
     try {
       @SuppressWarnings("unchecked")
@@ -65,7 +67,7 @@ public class FieldAccessor<T> {
     return null;
   }
 
-  public void set(@Nullable Object object, @Nullable T value) {
+  public void set(@Nullable E object, @Nullable T value) {
     if (!isAvailable() || object == null) return;
     try {
       myFieldRef.get().set(object, value);

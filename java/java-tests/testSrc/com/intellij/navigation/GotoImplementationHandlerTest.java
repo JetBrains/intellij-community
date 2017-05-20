@@ -97,7 +97,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
      PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> {
        PsiElement[] impls = getTargets(file);
        assertEquals(3, impls.length);
-     }).cpuBound().usesAllCPUCores().assertTiming();
+     }).usesAllCPUCores().assertTiming();
   }
 
   public void testToStringOnQualified() {
@@ -124,7 +124,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     PlatformTestUtil.startPerformanceTest(getTestName(false), 150, () -> {
       PsiElement[] impls = getTargets(file);
       assertEquals(3, impls.length);
-    }).cpuBound().usesAllCPUCores().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
   public void testShowSelfNonAbstract() {

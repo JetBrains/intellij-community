@@ -31,9 +31,12 @@
       <add-to-group group-id="EditorToggleActions" relative-to-action="EditorToggleShowIndentLines" anchor="after"/>
     </action>
 
-    <action id="EditorGutterToggleShowBreadcrumbs" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction">
+    <group id="EditorBreadcrumbsSettings" popup="true">
       <add-to-group group-id="EditorGutterPopupMenu" relative-to-action="EditorGutterToggleGlobalIndentLines" anchor="after"/>
-    </action>
+      <action id="EditorBreadcrumbsShowAbove" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowAbove"/>
+      <action id="EditorBreadcrumbsShowBelow" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$ShowBelow"/>
+      <action id="EditorBreadcrumbsHideBoth" class="com.intellij.xml.breadcrumbs.ToggleBreadcrumbsSettingsAction$HideBoth"/>
+    </group>
 
     <action id="DomElementsTreeView.GotoDomElementDeclarationAction"
             class="com.intellij.util.xml.tree.actions.GotoDomElementDeclarationAction"

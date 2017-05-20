@@ -32,6 +32,7 @@ import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -46,8 +47,6 @@ import org.picocontainer.MutablePicoContainer;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.module.impl.ModulePathKt.getModuleNameByFilePath;
-
 /**
  * @author max
  */
@@ -61,15 +60,15 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
-  public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
-    super(project, "Module " + getModuleNameByFilePath(filePath));
+  ModuleImpl(@NotNull String filePath, @NotNull Project project) {
+    super(project, "Module " + ModulePathKt.getModuleNameByFilePath(filePath));
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    myName = getModuleNameByFilePath(filePath);
+    myName = ModulePathKt.getModuleNameByFilePath(filePath);
   }
 
   @Override
@@ -80,7 +79,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   @Override
   public void init(@NotNull final String path, @Nullable VirtualFile file, @Nullable final Runnable beforeComponentCreation) {
-    init((ProgressIndicator)null, () -> {
+    init(null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
       ServiceKt.getStateStore(this).setPath(path, file);
@@ -96,6 +95,12 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   protected ProgressIndicator getProgressIndicator() {
     // module loading progress is not tracked, progress updated by ModuleManagerImpl on module load
     return null;
+  }
+
+  @Override
+  public boolean isDisposed() {
+    // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
+    return super.isDisposed() || ((ProjectImpl)myProject).isLight() && myProject.isDisposed();
   }
 
   @Override
@@ -304,7 +309,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
     myModuleScopeProvider.clearCache();
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   public String toString() {
     if (myName == null) return "Module (not initialized)";
     return "Module: '" + getName() + "'";

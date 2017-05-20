@@ -2,13 +2,15 @@ package com.intellij.ide.hierarchy;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.ide.hierarchy.actions.BrowseTypeHierarchyAction;
+import com.intellij.ide.hierarchy.call.CalleeMethodsTreeStructure;
 import com.intellij.ide.hierarchy.call.CallerMethodsTreeStructure;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.ProjectScope;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestBase;
 
@@ -58,6 +60,14 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     doJavaCallTypeHierarchyTest("A", "A", "A.java", "B.java");
   }
 
+  public void testMethodRef() throws Exception {
+    doHierarchyTest(() -> {
+      final PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("A", ProjectScope.getProjectScope(getProject()));
+      final PsiMethod method = psiClass.findMethodsByName("testMethod", false) [0];
+      return new CalleeMethodsTreeStructure(getProject(), method, HierarchyBrowserBaseEx.SCOPE_PROJECT);
+    }, "A.java");
+  }
+
   public void testAnonymous2() throws Exception {
     doJavaCallTypeHierarchyTest("A", "doIt", "A.java");
   }
@@ -68,5 +78,10 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     TestActionEvent e = new TestActionEvent(action);
     action.beforeActionPerformedUpdate(e);
     assertTrue(e.getPresentation().isEnabled() && e.getPresentation().isVisible());
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    return IdeaTestUtil.getMockJdk18();
   }
 }

@@ -29,7 +29,7 @@ public class EditorMultiCaretPerformanceTest extends AbstractEditorTest {
       for (int i = 0; i < charactersToType; i++) {
         type('a');
       }
-    }).cpuBound().attempts(1).assertTiming();
+    }).attempts(1).assertTiming();
     checkResultByText(StringUtil.repeat(StringUtil.repeat("a", charactersToType) + "<caret>\n", caretCount));
   }
 }

@@ -331,9 +331,9 @@ public class CCStepicConnector {
 
   private static void showStepicNotification(@NotNull Project project,
                                              @NotNull NotificationType notificationType, @NotNull String failedActionName) {
-    String text = "Authorize on Stepik to " + failedActionName;
+    String text = "Log in to Stepik to " + failedActionName;
     Notification notification = new Notification("Stepik", "Failed to " + failedActionName, text, notificationType);
-    notification.addAction(new AnAction("Authorize") {
+    notification.addAction(new AnAction("Log in") {
 
       @Override
       public void actionPerformed(AnActionEvent e) {

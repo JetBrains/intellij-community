@@ -172,6 +172,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     List<String> words = StringUtil.split(value, " ");
     if (words.size() == 0) return true;
     if (Character.isLetter(words.get(0).charAt(0)) && !isCapitalizedWord(words.get(0))) return false;
+    if (words.size() == 1) return true;
     int capitalized = 1;
     for (int i = 1, size = words.size(); i < size; i++) {
       String word = words.get(i);

@@ -1090,9 +1090,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
     @Override
     public boolean isAvailable() {
-      if (SystemInfo.isWayland) {
-        return false;
-      }
       if (myRobot != null) {
         myRobot.createScreenCapture(new Rectangle(0, 0, 1, 1));
         return WindowManager.getInstance().isAlphaModeSupported();

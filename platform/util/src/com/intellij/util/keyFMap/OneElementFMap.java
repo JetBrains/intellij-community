@@ -70,7 +70,7 @@ final class OneElementFMap implements KeyFMap {
   }
 
   @Override
-  public int identityHashCode() {
+  public int getValueIdentityHashCode() {
     return myKey.hashCode() * 31 + System.identityHashCode(myValue);
   }
 

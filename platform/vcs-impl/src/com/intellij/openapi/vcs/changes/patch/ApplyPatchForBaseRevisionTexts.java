@@ -156,7 +156,7 @@ public class ApplyPatchForBaseRevisionTexts {
                                                                      @NotNull CharSequence baseContents) {
     final List<PatchHunk> hunks = patch.getHunks();
 
-    String base = StringUtil.convertLineSeparators(baseContents.toString());
+    String base = baseContents.toString();
     final GenericPatchApplier applier = new GenericPatchApplier(base, hunks);
     boolean exactlyApplied = applier.execute();
 

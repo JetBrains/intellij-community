@@ -615,7 +615,7 @@ public class VirtualFilePointerTest extends PlatformTestCase {
         myVirtualFilePointerManager.createContainer(parent);
       }
       Disposer.dispose(parent);
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   private static void doVfsRefresh(File dir) {

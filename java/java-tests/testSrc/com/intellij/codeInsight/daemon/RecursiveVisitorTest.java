@@ -51,7 +51,7 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
         });
         assertEquals(N+2, n[0]);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
   public void testHugeMethodChainingVisitingPerformance() throws IncorrectOperationException {
     StringBuilder text = new StringBuilder("Object s = new StringBuilder()");
@@ -76,6 +76,6 @@ public class RecursiveVisitorTest extends LightDaemonAnalyzerTestCase{
         });
         assertEquals(N, n[0]);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 }

@@ -613,6 +613,7 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
         configuration.workingDirectory = targetForConfig.second
       }
     }
+    configuration.module = context?.module
     configuration.setGeneratedName()
     return true
   }

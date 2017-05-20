@@ -15,10 +15,10 @@
  */
 package com.intellij.core;
 
+import com.intellij.configurationStore.DefaultStateSerializerKt;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.impl.stores.DefaultStateSerializer;
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil;
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil;
 import com.intellij.openapi.module.ModuleManager;
@@ -81,7 +81,7 @@ public class CoreProjectLoader {
     VirtualFile libraries = dotIdea.findChild("libraries");
     if (libraries != null) {
       Map<String, Element> data = DirectoryStorageUtil.loadFrom(libraries, PathMacroManager.getInstance(project));
-      Element libraryTable = DefaultStateSerializer.deserializeState(DirectoryStorageUtil.getCompositeState(data, new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
+      Element libraryTable = DefaultStateSerializerKt.deserializeState(DirectoryStorageUtil.getCompositeState(data, new ProjectLibraryTable.LibraryStateSplitter()), Element.class, null);
       ((LibraryTableBase) ProjectLibraryTable.getInstance(project)).loadState(libraryTable);
     }
 

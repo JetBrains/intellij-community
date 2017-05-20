@@ -91,6 +91,14 @@ public abstract class DebuggerTreePanel extends UpdatableDebuggerView implements
   protected abstract DebuggerTree createTreeView();
 
   @Override
+  protected void changeEvent(DebuggerContextImpl newContext, DebuggerSession.Event event) {
+    super.changeEvent(newContext, event);
+    if (event == DebuggerSession.Event.DISPOSE) {
+      getTree().getNodeFactory().dispose();
+    }
+  }
+
+  @Override
   protected void rebuild(DebuggerSession.Event event) {
     myRebuildAlarm.cancelAndRequest();
   }

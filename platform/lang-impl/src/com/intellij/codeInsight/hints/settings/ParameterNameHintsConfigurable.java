@@ -131,8 +131,6 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
-    
     myEditors.forEach((language, editor) -> {
       String blacklist = editor.getText();
       storeBlackListDiff(language, blacklist);
@@ -141,6 +139,15 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     myOptions.forEach((option, checkBox) -> option.set(checkBox.isSelected()));
     saveLastEditedLanguage();
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass();
+
+    super.doOKAction();
+  }
+
+  @Override
+  public void doCancelAction() {
+    saveLastEditedLanguage();
+
+    super.doCancelAction();
   }
 
   private void saveLastEditedLanguage() {

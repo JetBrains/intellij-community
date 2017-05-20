@@ -66,7 +66,7 @@ public interface KeyFMap {
    *
    * @param key a key to get the value associated with
    * @param <V> a type of the value
-   * @return a value associated with given key or null if there's not such value
+   * @return a value associated with given key or null if there's no such value
    */
   @Nullable
   <V> V get(@NotNull Key<V> key);
@@ -90,7 +90,7 @@ public interface KeyFMap {
   /**
    * @return a hashCode function for this map which uses {@link System#identityHashCode(Object)} for values.
    */
-  int identityHashCode();
+  int getValueIdentityHashCode();
 
   /**
    * Checks if other {@code KeyFMap} equals to this, assuming reference equality for the values

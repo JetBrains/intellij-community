@@ -25,9 +25,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.customize.AbstractCustomizeWizardStep;
-import com.intellij.ide.customize.CustomizeIDEWizardDialog;
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
@@ -59,6 +56,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -92,7 +90,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -105,6 +102,7 @@ public class PyCharmEduInitialConfigurator {
   @NonNls private static final String CONFIGURED = "PyCharmEDU.InitialConfiguration";
   @NonNls private static final String CONFIGURED_V1 = "PyCharmEDU.InitialConfiguration.V1";
   @NonNls private static final String CONFIGURED_V2 = "PyCharmEDU.InitialConfiguration.V2";
+  @NonNls private static final String CONFIGURED_V3 = "PyCharmEDU.InitialConfiguration.V3";
 
   private static final Set<String> UNRELATED_TIPS = Sets.newHashSet("LiveTemplatesDjango.html", "TerminalOpen.html",
                                                                     "Terminal.html", "ConfiguringTerminal.html");
@@ -192,12 +190,10 @@ public class PyCharmEduInitialConfigurator {
     editorColorsScheme.setEditorFontSize(14);
 
     MessageBusConnection connection = bus.connect();
-    if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
-
-      connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-        @Override
-        public void welcomeScreenDisplayed() {
-
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void welcomeScreenDisplayed() {
+        if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
               GeneralSettings.getInstance().setShowTipsOnStartup(false);
@@ -206,13 +202,16 @@ public class PyCharmEduInitialConfigurator {
             }
           });
         }
+      }
 
-        @Override
-        public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        if (!propertiesComponent.isValueSet(CONFIGURED_V3)) {
           showInitialConfigurationDialog();
+          propertiesComponent.setValue(CONFIGURED_V3, "true");
         }
-      });
-    }
+      }
+    });
 
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
@@ -407,11 +406,11 @@ public class PyCharmEduInitialConfigurator {
     }
   }
   private static void showInitialConfigurationDialog() {
-    new CustomizeIDEWizardDialog(new CustomizeIDEWizardStepsProvider() {
-      @Override
-      public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<AbstractCustomizeWizardStep> steps) {
-        steps.add(new CustomizeEduStepPanel());
-      }
-    }).show();
+    DialogBuilder dialog = new DialogBuilder();
+    final CustomizeEduStepPanel panel = new CustomizeEduStepPanel();
+    dialog.setPreferredFocusComponent(panel.getStudentButton());
+    dialog.title("Are you Student or Teacher?").centerPanel(panel);
+    dialog.addOkAction().setText("Start using Pycharm Edu");
+    dialog.show();
   }
 }

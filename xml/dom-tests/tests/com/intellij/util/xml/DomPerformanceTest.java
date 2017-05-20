@@ -58,7 +58,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
       for (int i = 0; i < 239; i++) {
         element.addChildElement().copyFrom(child);
       }
-    })).cpuBound().attempts(1).useLegacyScaling().assertTiming();
+    })).attempts(1).useLegacyScaling().assertTiming();
 
     final MyElement newElement = createElement(DomUtil.getFile(element).getText(), MyElement.class);
 
@@ -73,7 +73,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
         });
 
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testShouldntParseNonDomFiles() throws Throwable {
@@ -118,7 +118,7 @@ public class DomPerformanceTest extends DomHardCoreTestCase{
     final XmlFile file = (XmlFile)getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
     assertTrue(StringUtil.isNotEmpty(file.getText()));
-    PlatformTestUtil.startPerformanceTest("", 100, () -> assertNull(getDomManager().getFileElement(file))).cpuBound().useLegacyScaling().assertTiming();
+    PlatformTestUtil.startPerformanceTest("", 100, () -> assertNull(getDomManager().getFileElement(file))).useLegacyScaling().assertTiming();
   }
 
   public void testDontParseNamespacedDomFiles() throws Exception {

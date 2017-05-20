@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,13 +22,14 @@ import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.light.LightPsiClassBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderAnnotationContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.builder.BuilderHelperLightPsiClass;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
+
+import java.util.Objects;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.createType;
 
@@ -59,26 +60,28 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
     private void processTypeDefinition() {
       final PsiAnnotation builderAnno = PsiImplUtil.getAnnotation(myContainingClass, BUILDER_FQN);
       if (!isApplicable(builderAnno, DEFAULT_STRATEGY_NAME)) return;
-      final PsiClass builderClass = createBuilderClass(builderAnno, myContext.getCodeClass().getCodeFields());
+      boolean includeSuper = isIncludeSuperProperties(builderAnno);
+      final PsiClass builderClass = createBuilderClass(builderAnno, getFields(myContext, includeSuper));
       myContext.addMethod(createBuilderMethod(builderClass, builderAnno));
       myContext.addInnerClass(builderClass);
     }
 
     @NotNull
-    private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation, @NotNull GrVariable[] setters) {
+    private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation, @NotNull PsiVariable[] setters) {
       return createBuilderClass(annotation, setters, null);
     }
 
     @NotNull
     private LightPsiClassBuilder createBuilderClass(@NotNull final PsiAnnotation annotation,
-                                                    @NotNull GrVariable[] setters,
+                                                    @NotNull PsiVariable[] setters,
                                                     @Nullable PsiType builtType) {
       final LightPsiClassBuilder builderClass = new BuilderHelperLightPsiClass(
         myContainingClass, getBuilderClassName(annotation, myContainingClass)
       );
 
-      for (GrVariable field : setters) {
-        builderClass.addMethod(createFieldSetter(builderClass, field, annotation));
+      for (PsiVariable field : setters) {
+        LightMethodBuilder setter = createFieldSetter(builderClass, field, annotation);
+        builderClass.addMethod(setter);
       }
 
       final LightMethodBuilder buildMethod = createBuildMethod(
@@ -149,9 +152,10 @@ public class DefaultBuilderStrategySupport extends BuilderAnnotationContributor 
 
   @NotNull
   public static LightMethodBuilder createFieldSetter(@NotNull PsiClass builderClass,
-                                                     @NotNull GrVariable field,
+                                                     @NotNull PsiVariable field,
                                                      @NotNull PsiAnnotation annotation) {
-    return createFieldSetter(builderClass, field.getName(), field.getType(), annotation, field);
+    String name = Objects.requireNonNull(field.getName());
+    return createFieldSetter(builderClass, name, field.getType(), annotation, field);
   }
 
   @NotNull

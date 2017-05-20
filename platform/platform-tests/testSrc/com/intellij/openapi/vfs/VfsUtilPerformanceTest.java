@@ -189,7 +189,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
         for (int i = 0; i < 1000000; ++i) {
           file.getPath();
         }
-      }).cpuBound().useLegacyScaling().assertTiming();
+      }).useLegacyScaling().assertTiming();
     });
   }
 

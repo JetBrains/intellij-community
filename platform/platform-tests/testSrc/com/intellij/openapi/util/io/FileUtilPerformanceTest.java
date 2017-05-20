@@ -36,7 +36,7 @@ public class FileUtilPerformanceTest {
         final String canonicalPath = FileUtil.toCanonicalPath(myTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 18 : canonicalPath;
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   @Test
@@ -48,7 +48,7 @@ public class FileUtilPerformanceTest {
         final String canonicalPath = FileUtil.toCanonicalPath(mySimpleTestPath, '/');
         assert canonicalPath != null && canonicalPath.length() == 8 : canonicalPath;
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   @Test
@@ -60,6 +60,6 @@ public class FileUtilPerformanceTest {
         assert FileUtil.isAncestor(myTestPath, myCanonicalPath, false);
         assert !FileUtil.isAncestor(myTestPath, myCanonicalPath, true);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 }

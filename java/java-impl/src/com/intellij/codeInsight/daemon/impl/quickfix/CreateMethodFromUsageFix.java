@@ -249,10 +249,6 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     final Editor newEditor = positionCursor(project, targetFile, method);
     if (newEditor == null) return;
     Template template = builder.buildTemplate();
-    if (arguments.size() > 20) {
-      template.setToShortenLongNames(false);
-      template.setToReformat(false);
-    }
     newEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
     newEditor.getDocument().deleteString(rangeMarker.getStartOffset(), rangeMarker.getEndOffset());
     rangeMarker.dispose();

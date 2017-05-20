@@ -72,7 +72,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
       ((FormatterImpl)FormatterEx.getInstanceEx()).formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings,
                                                                               settings.getIndentOptions(StdFileTypes.JAVA),
                                                                               file.getTextRange());
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testPerformance2() throws Exception {
@@ -85,7 +85,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
       catch (Exception e) {
         throw new RuntimeException(e);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   public void testPerformance3() throws Exception {
@@ -105,7 +105,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
       catch (Exception e) {
         throw new RuntimeException(e);
       }
-    }).cpuBound().useLegacyScaling().assertTiming();
+    }).useLegacyScaling().assertTiming();
   }
 
   private static void transformAllChildren(final ASTNode file) {

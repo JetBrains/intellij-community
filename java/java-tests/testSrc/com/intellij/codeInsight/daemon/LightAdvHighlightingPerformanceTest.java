@@ -109,7 +109,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     PlatformTestUtil.startPerformanceTest(getTestName(false), maxMillis, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       doHighlighting();
-    }).cpuBound().usesAllCPUCores().useLegacyScaling().assertTiming();
+    }).usesAllCPUCores().useLegacyScaling().assertTiming();
 
     return highlightErrors();
   }

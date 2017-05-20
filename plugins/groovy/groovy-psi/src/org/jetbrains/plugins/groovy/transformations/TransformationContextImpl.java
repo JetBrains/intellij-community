@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,25 @@ public class TransformationContextImpl implements TransformationContext {
   @NotNull
   public Collection<GrField> getFields() {
     return myFields;
+  }
+
+  @NotNull
+  @Override
+  public Collection<PsiField> getAllFields(boolean includeSynthetic) {
+    if (!includeSynthetic) {
+      return Arrays.asList(GrClassImplUtil.getAllFields(getCodeClass(), false));
+    }
+
+    Set<PsiField> fields = ContainerUtil.newHashSet(myFields);
+    ArrayList<PsiClassType> superTypes = ContainerUtil.newArrayList(myExtendsTypes);
+    superTypes.addAll(myImplementsTypes);
+    for (PsiClassType type: superTypes) {
+      PsiClass psiClass = type.resolve();
+      if (psiClass != null) {
+        fields.addAll(Arrays.asList(psiClass.getAllFields()));
+      }
+    }
+    return fields;
   }
 
   @NotNull

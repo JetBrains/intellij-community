@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.completion.builder
 
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.groovy.completion.CompletionResult
 
 @CompileStatic
 class GrInitializerBuilderStrategyTest extends GrBuilderTransformationCompletionTestBase {
@@ -216,5 +217,46 @@ class Pojo {
 
 Pojo.createInitializer().counter(1).name("Janet").<caret>
 ''', 'name', 'dynamic', 'counter'
+  }
+
+  void 'test include super properties'() {
+    doVariantableTest '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.InitializerStrategy
+
+class Animal {
+    String color
+    int legs
+}
+
+@Builder(includeSuperProperties = true, builderStrategy = InitializerStrategy)
+class Pet extends Animal{
+    String name
+}
+
+Pet.createInitializer().<caret>
+''', 'legs', 'color', 'name'
+  }
+
+  void 'test not include super properties'() {
+    String code = '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.InitializerStrategy
+
+class Animal {
+    String color
+    int legs
+}
+
+@Builder(builderStrategy = InitializerStrategy)
+class Pet extends Animal{
+    String name
+}
+
+Pet.createInitializer().<caret>
+'''
+    doVariantableTest code, CompletionResult.contain, 'name'
+    doVariantableTest code, CompletionResult.notContain, 'color', 'legs'
+
   }
 }

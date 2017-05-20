@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
@@ -57,6 +58,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private final MySelectionModel mySelectionModel = new MySelectionModel();
   private boolean myHorizontalAutoScrolling = true;
 
+  private TreePath rollOverPath;
+
   public Tree() {
     this(getDefaultTreeModel());
   }
@@ -75,6 +78,29 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     };
 
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+
+    if (Registry.is("ide.intellij.laf.win10.ui")) {
+      addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          Point p = e.getPoint();
+          TreePath newPath = getPathForLocation(p.x, p.y);
+          if (newPath != null && !newPath.equals(rollOverPath)) {
+            TreeCellRenderer renderer = getCellRenderer();
+            TreeNode node = (TreeNode)newPath.getLastPathComponent();
+            JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
+                                                                             isPathSelected(newPath),
+                                                                             isExpanded(newPath),
+                                                                             getModel().isLeaf(node),
+                                                                             getRowForPath(newPath), hasFocus());
+
+            c.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, c instanceof JCheckBox ? getPathBounds(newPath) : node);
+            rollOverPath = newPath;
+            UIUtil.repaintViewport(Tree.this);
+          }
+        }
+      });
+    }
 
     addMouseListener(new MyMouseListener());
     addFocusListener(new MyFocusListener());
@@ -672,6 +698,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private class MyMouseListener extends MouseAdapter {
     @Override
     public void mousePressed(MouseEvent event) {
+      setPressed(event, true);
+
       if (!JBSwingUtilities.isLeftMouseButton(event) &&
           (JBSwingUtilities.isRightMouseButton(event) || JBSwingUtilities.isMiddleMouseButton(event))) {
         TreePath path = getClosestPathForLocation(event.getX(), event.getY());
@@ -693,9 +721,48 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     @Override
-    public void mouseReleased(MouseEvent e) {
-      if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2 && isLocationInExpandControl(getClosestPathForLocation(e.getX(), e.getY()), e.getX())) {
-        e.consume();
+    public void mouseReleased(MouseEvent event) {
+      setPressed(event, false);
+      if (event.getButton() == MouseEvent.BUTTON1 && event.getClickCount() == 2 && isLocationInExpandControl(getClosestPathForLocation(event.getX(), event.getY()), event.getX())) {
+        event.consume();
+      }
+    }
+
+    @Override public void mouseExited(MouseEvent e) {
+      if (Registry.is("ide.intellij.laf.win10.ui") && rollOverPath != null) {
+        TreeCellRenderer renderer = getCellRenderer();
+        TreeNode node = (TreeNode)rollOverPath.getLastPathComponent();
+        JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
+                                                                         isPathSelected(rollOverPath),
+                                                                         isExpanded(rollOverPath),
+                                                                         getModel().isLeaf(node),
+                                                                         getRowForPath(rollOverPath), hasFocus());
+
+        c.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, null);
+        rollOverPath = null;
+        UIUtil.repaintViewport(Tree.this);
+      }
+    }
+
+    private void setPressed(MouseEvent e, boolean pressed) {
+      if (Registry.is("ide.intellij.laf.win10.ui")) {
+        Point p = e.getPoint();
+        TreePath path = getPathForLocation(p.x, p.y);
+        if (path != null) {
+          TreeCellRenderer renderer = getCellRenderer();
+          TreeNode node = (TreeNode)path.getLastPathComponent();
+          JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
+                                                                           isPathSelected(path), isExpanded(path),
+                                                                           getModel().isLeaf(node),
+                                                                           getRowForPath(path), hasFocus());
+          if (pressed) {
+            c.putClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY, c instanceof JCheckBox ? getPathBounds(path) : node);
+          } else {
+            c.putClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY, null);
+          }
+
+          UIUtil.repaintViewport(Tree.this);
+        }
       }
     }
   }

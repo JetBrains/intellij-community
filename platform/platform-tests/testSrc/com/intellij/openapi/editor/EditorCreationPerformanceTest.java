@@ -31,6 +31,6 @@ public class EditorCreationPerformanceTest extends AbstractEditorTest {
       finally {
         EditorFactory.getInstance().releaseEditor(editor);
       }
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 }

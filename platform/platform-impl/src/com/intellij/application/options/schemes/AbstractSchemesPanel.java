@@ -59,15 +59,21 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   protected static final Color HINT_FOREGROUND = JBColor.GRAY;
   @SuppressWarnings("UseJBColor")
   protected static final Color ERROR_MESSAGE_FOREGROUND = Color.RED;
+
+  protected static final int DEFAULT_VGAP = 8;
   
   // endregion
 
   public AbstractSchemesPanel() {
+    this(DEFAULT_VGAP);
+  }
+
+  public AbstractSchemesPanel(int vGap) {
     setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-    createUIComponents();
+    createUIComponents(vGap);
   }
   
-  private void createUIComponents() {
+  private void createUIComponents(int vGap) {
     JPanel controlsPanel = new JPanel();
     controlsPanel.setLayout(new BoxLayout(controlsPanel, BoxLayout.LINE_AXIS));
     String label = getComboBoxLabel();
@@ -89,8 +95,10 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     add(controlsPanel);
     add(Box.createRigidArea(new JBDimension(0, 12)));
     add(new JSeparator());
-    add(Box.createVerticalGlue());
-    add(Box.createRigidArea(new JBDimension(0, 10)));
+    if (vGap > 0) {
+      add(Box.createVerticalGlue());
+      add(Box.createRigidArea(new JBDimension(0, vGap)));
+    }
   }
   
   private JComponent createToolbar() {

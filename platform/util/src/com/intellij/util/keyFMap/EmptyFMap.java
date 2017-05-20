@@ -63,7 +63,7 @@ class EmptyFMap implements KeyFMap {
   }
 
   @Override
-  public int identityHashCode() {
+  public int getValueIdentityHashCode() {
     return 0;
   }
 

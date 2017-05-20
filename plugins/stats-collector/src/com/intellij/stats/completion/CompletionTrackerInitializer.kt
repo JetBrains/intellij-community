@@ -155,21 +155,43 @@ class LookupActionsListener : AnActionListener.Adapter() {
     }
 }
 
+
+
+class DeferredLog {
+
+    companion object {
+        private val DO_NOTHING: () -> Unit = { }
+    }
+
+    private var lastAction: () -> Unit = DO_NOTHING
+
+    fun clear() {
+        lastAction = DO_NOTHING
+    }
+
+    fun defer(action: () -> Unit) {
+        lastAction = action
+    }
+
+    fun log() {
+        lastAction()
+        clear()
+    }
+
+}
+
+
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val logger: CompletionLogger,
                                private val experimentHelper: WebServiceStatusProvider)
       : CompletionPopupListener, 
         PrefixChangeListener, 
         LookupAdapter() {
-    
-    companion object {
-        private val DO_NOTHING: () -> Unit = { }
-    }
-    
+
     private var completionStarted = false
     private var selectedByDotTyping = false
 
-    private var lastAction: () -> Unit = DO_NOTHING
+    private val deferredLog = DeferredLog()
     
     private fun isCompletionActive(): Boolean {
         return completionStarted && !lookup.isLookupDisposed
@@ -181,7 +203,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
 
         val items = lookup.items
         if (lookup.currentItem == null) {
-            lastAction = DO_NOTHING
+            deferredLog.clear()
             logger.completionCancelled()
             return
         }
@@ -189,33 +211,22 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val prefix = lookup.itemPattern(lookup.currentItem!!)
         val wasTyped = items.firstOrNull()?.lookupString?.equals(prefix) ?: false
         if (wasTyped || selectedByDotTyping) {
-            logLastAction()
+            deferredLog.log()
             logger.itemSelectedByTyping(lookup)
         }
         else {
-            lastAction = DO_NOTHING
+            deferredLog.clear()
             logger.completionCancelled()
         }
     }
 
-    fun logLastAction() {
-        lastAction()
-        lastAction = DO_NOTHING
-    }
-
-    fun setLastAction(block: () -> Unit) {
-        lastAction = block
-    }
-    
     override fun currentItemChanged(event: LookupEvent) {
         if (completionStarted) {
             return
         }
 
         completionStarted = true
-        lastAction = {
-            //this is not robust -> since at the moment of completion here could be another values
-            //real approach would be to somehow detect if completion list is reordered 
+        deferredLog.defer {
             val isPerformExperiment = experimentHelper.isPerformExperiment()
             val experimentVersion = experimentHelper.getExperimentVersion()
             logger.completionStarted(lookup, isPerformExperiment, experimentVersion)
@@ -225,46 +236,46 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun itemSelected(event: LookupEvent) {
         if (!completionStarted) return
         
-        logLastAction()
+        deferredLog.log()
         logger.itemSelectedCompletionFinished(lookup)
     }
 
     override fun beforeDownPressed() {
-        logLastAction()
+        deferredLog.log()
     }
 
     override fun downPressed() {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.downPressed(lookup)
         }
     }
 
     override fun beforeUpPressed() {
-        logLastAction()
+        deferredLog.log()
     }
 
     override fun upPressed() {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.upPressed(lookup)
         }
     }
 
     override fun beforeBackspacePressed() {
         if (!isCompletionActive()) return
-        logLastAction()
+        deferredLog.log()
     }
 
     override fun afterBackspacePressed() {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.afterBackspacePressed(lookup)
         }
     }
@@ -272,8 +283,8 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun beforeCharTyped(c: Char) {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        
+        deferredLog.log()
+
         if (c == '.') {
             val item = lookup.currentItem
             if (item == null) {
@@ -291,9 +302,16 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
     override fun afterAppend(c: Char) {
         if (!isCompletionActive()) return
 
-        logLastAction()
-        setLastAction {
+        deferredLog.log()
+        deferredLog.defer {
             logger.afterCharTyped(c, lookup)
         }
     }
+}
+
+
+fun LookupImpl.prefixLength(): Int {
+    val lookupOriginalStart = this.lookupOriginalStart
+    val caretOffset = this.editor.caretModel.offset
+    return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
 }

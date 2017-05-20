@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,7 +135,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
       Messages.showErrorDialog(project, e.getMessage() + (cause != null ? ": " + cause.getMessage() : ""), CommonBundle.getErrorTitle());
       return;
     }
-    final String text = JDOMUtil.writeElement(element, "\n");
+    final String text = JDOMUtil.writeElement(element);
     Messages.showIdeaMessageDialog(project, text, "Serialized XML for '" + className + "'",
                                    new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);
   }

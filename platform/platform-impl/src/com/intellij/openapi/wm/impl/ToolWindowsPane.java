@@ -89,7 +89,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   private final ToolWindowManagerImpl myManager;
 
   private boolean myStripesOverlayed;
-  private final Disposable myDisposable = Disposer.newDisposable();
   private boolean myWidescreen;
   private boolean myLeftHorizontalSplit;
   private boolean myRightHorizontalSplit;
@@ -190,17 +189,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @Override
   public final void addNotify() {
     super.addNotify();
-  }
-
-  /**
-   * Invoked when enclosed frame is being disposed.
-   */
-  @Override
-  public final void removeNotify() {
-    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      Disposer.dispose(myDisposable);
-    }
-    super.removeNotify();
   }
 
   public Project getProject() {

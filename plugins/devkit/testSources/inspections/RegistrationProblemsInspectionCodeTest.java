@@ -42,9 +42,9 @@ public class RegistrationProblemsInspectionCodeTest extends PluginModuleTestCase
     myFixture.testHighlighting("AbstractApplicationComponent.java");
   }
 
-  public void testComponentWrongClass() {
-    setPluginXml("ApplicationComponentWrongClass.xml");
-    myFixture.testHighlighting("MyApplicationComponentWrongClass.java");
+  public void testApplicationComponentMustNotInherit() {
+    setPluginXml("ApplicationComponentMustNotInherit.xml");
+    myFixture.testHighlighting("MyApplicationComponentMustNotInherit.java");
   }
 
   public void testActionAbstractClass() {

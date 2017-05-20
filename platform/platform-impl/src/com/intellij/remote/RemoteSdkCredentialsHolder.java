@@ -192,8 +192,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     if (getLiteralPort() != null ? !getLiteralPort().equals(holder.getLiteralPort()) : holder.getLiteralPort() != null) return false;
     if (isStorePassphrase() != holder.isStorePassphrase()) return false;
     if (isStorePassword() != holder.isStorePassword()) return false;
-    if (isUseKeyPair() != holder.isUseKeyPair()) return false;
-    if (isUseAuthAgent() != holder.isUseAuthAgent()) return false;
+    if (getAuthType() != holder.getAuthType()) return false;
     if (getHost() != null ? !getHost().equals(holder.getHost()) : holder.getHost() != null) return false;
     if (getKnownHostsFile() != null ? !getKnownHostsFile().equals(holder.getKnownHostsFile()) : holder.getKnownHostsFile() != null) {
       return false;
@@ -218,8 +217,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
     result = 31 * result + (getLiteralPort() != null ? getLiteralPort().hashCode() : 0);
     result = 31 * result + (getUserName() != null ? getUserName().hashCode() : 0);
     result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
-    result = 31 * result + (isUseKeyPair() ? 1 : 0);
-    result = 31 * result + (isUseAuthAgent() ? 1 : 0);
+    result = 31 * result + getAuthType().hashCode();
     result = 31 * result + (getPrivateKeyFile() != null ? getPrivateKeyFile().hashCode() : 0);
     result = 31 * result + (getKnownHostsFile() != null ? getKnownHostsFile().hashCode() : 0);
     result = 31 * result + (getPassphrase() != null ? getPassphrase().hashCode() : 0);

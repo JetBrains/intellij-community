@@ -19,9 +19,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
@@ -38,6 +38,7 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
@@ -68,6 +69,8 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private int myMaxItemsForSizeCalculation = Integer.MAX_VALUE;
 
+  private TableCell rollOverCell;
+
   public JBTable() {
     this(new DefaultTableModel());
   }
@@ -94,6 +97,38 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     addMouseListener(new MyMouseListener());
 
+    if (Registry.is("ide.intellij.laf.win10.ui")) {
+      addMouseMotionListener(new MouseMotionAdapter() {
+        @Override public void mouseMoved(MouseEvent e) {
+          Point point = e.getPoint();
+          int column = columnAtPoint(point);
+          int row = rowAtPoint(point);
+
+          resetRollOverCell();
+
+          if (row >= 0 && row < getRowCount() && column >= 0 && column < getColumnCount()) {
+            TableCellRenderer cellRenderer = getCellRenderer(row, column);
+            if (cellRenderer != null) {
+              Component rc = cellRenderer.getTableCellRendererComponent(JBTable.this,
+                                                                        getValueAt(row, column),
+                                                                        isCellSelected(row, column),
+                                                                        hasFocus(),
+                                                                        row, column);
+              if (rc instanceof JCheckBox && (rollOverCell == null || !rollOverCell.at(row, column))) {
+                Rectangle cellRect = getCellRect(row, column, false);
+                rollOverCell = new TableCell(row, column);
+                ((JCheckBox)rc).putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, cellRect);
+
+                if (getModel() instanceof AbstractTableModel) {
+                  ((AbstractTableModel)getModel()).fireTableCellUpdated(row, column);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
     final TableModelListener modelListener = new TableModelListener() {
       @Override
       public void tableChanged(@NotNull final TableModelEvent e) {
@@ -105,7 +140,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     addPropertyChangeListener("model", new PropertyChangeListener() {
       @Override
       public void propertyChange(@NotNull PropertyChangeEvent evt) {
-        repaintViewport();
+        UIUtil.repaintViewport(JBTable.this);
 
         if (evt.getOldValue() instanceof TableModel) {
           ((TableModel)evt.getOldValue()).removeTableModelListener(modelListener);
@@ -125,8 +160,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (!myRowHeightIsExplicitlySet) {
       myRowHeight = -1;
     }
-    if (e.getType() == TableModelEvent.DELETE && isEmpty() || e.getType() == TableModelEvent.INSERT && !isEmpty()) {
-      repaintViewport();
+    if (e.getType() == TableModelEvent.DELETE && isEmpty() ||
+        e.getType() == TableModelEvent.INSERT && !isEmpty() ||
+        e.getType() == TableModelEvent.UPDATE) {
+      UIUtil.repaintViewport(this);
     }
   }
 
@@ -198,15 +235,6 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
     finally {
       myUiUpdating = false;
-    }
-  }
-
-  private void repaintViewport() {
-    if (!isDisplayable() || !isVisible()) return;
-
-    Container p = getParent();
-    if (p instanceof JBViewport) {
-      p.repaint();
     }
   }
 
@@ -523,6 +551,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     if (myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column))) {
       result = ExpandedItemRendererComponentWrapper.wrap(result);
     }
+
+    if(renderer instanceof JCheckBox) {
+      ((JCheckBox)renderer).getModel().setRollover(rollOverCell != null && rollOverCell.at(row, column));
+    }
     return result;
   }
 
@@ -634,6 +666,10 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
           }
         }
       }
+    }
+
+    @Override public void mouseExited(MouseEvent e) {
+      resetRollOverCell();
     }
   }
 
@@ -965,6 +1001,26 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         // and 2) the super implementation is incorrect anyways
         return null;
       }
+    }
+  }
+
+  private void resetRollOverCell() {
+    if (Registry.is("ide.intellij.laf.win10.ui") && getModel() instanceof AbstractTableModel && rollOverCell != null) {
+      TableCellRenderer cellRenderer = getCellRenderer(rollOverCell.row, rollOverCell.column);
+      if (cellRenderer != null) {
+        Object value = getValueAt(rollOverCell.row, rollOverCell.column);
+        boolean selected = isCellSelected(rollOverCell.row, rollOverCell.column);
+
+        Component rc = cellRenderer.getTableCellRendererComponent(this, value, selected, hasFocus(), rollOverCell.row, rollOverCell.column);
+        if (rc instanceof JCheckBox) {
+          ((JCheckBox)rc).putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, null);
+        }
+      }
+
+      if (getModel() instanceof AbstractTableModel) {
+        ((AbstractTableModel)getModel()).fireTableCellUpdated(rollOverCell.row, rollOverCell.column);
+      }
+      rollOverCell = null;
     }
   }
 }

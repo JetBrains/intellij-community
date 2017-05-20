@@ -99,7 +99,7 @@ final class MapBackedFMap extends TIntObjectHashMap<Object> implements KeyFMap {
   }
 
   @Override
-  public int identityHashCode() {
+  public int getValueIdentityHashCode() {
     final int[] hash = {0};
     forEachEntry(new TIntObjectProcedure<Object>() {
       @Override

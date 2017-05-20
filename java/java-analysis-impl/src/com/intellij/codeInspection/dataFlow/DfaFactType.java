@@ -16,13 +16,14 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.value.DfaOptionalValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.Key;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A type of the fact which restricts some value.
@@ -30,6 +31,39 @@ import org.jetbrains.annotations.Nullable;
  * @author Tagir Valeev
  */
 public abstract class DfaFactType<T> extends Key<T> {
+  private static final List<DfaFactType<?>> ourFactTypes = new ArrayList<>();
+
+  /**
+   * This fact specifies whether the value can be null. The absence of the fact means that the nullability is unknown.
+   */
+  public static final DfaFactType<Boolean> CAN_BE_NULL = new DfaFactType<Boolean>("Can be null") {
+    @Override
+    String toString(Boolean fact) {
+      return fact ? "Nullable" : "NotNull";
+    }
+
+    @Nullable
+    @Override
+    Boolean fromDfaValue(DfaValue value) {
+      if (value instanceof DfaConstValue) {
+        return ((DfaConstValue)value).getValue() == null;
+      }
+      if (value instanceof DfaBoxedValue || value instanceof DfaUnboxedValue || value instanceof DfaRangeValue) {
+        return false;
+      }
+      if (value instanceof DfaTypeValue) {
+        return NullnessUtil.toBoolean(((DfaTypeValue)value).getNullness());
+      }
+      return null;
+    }
+
+    @Nullable
+    @Override
+    Boolean calcFromVariable(@NotNull DfaVariableValue value) {
+      return NullnessUtil.calcCanBeNull(value);
+    }
+  };
+
   /**
    * This fact is applied to the Optional values (like {@link java.util.Optional} or Guava Optional).
    * When its value is true, then optional is known to be present.
@@ -52,7 +86,7 @@ public abstract class DfaFactType<T> extends Key<T> {
    * This fact is applied to the integral values (of types byte, char, short, int, long).
    * Its value represents a range of possible values.
    */
-  public static final DfaFactType<LongRangeSet> RANGE = new DfaFactType<LongRangeSet>("Mutability") {
+  public static final DfaFactType<LongRangeSet> RANGE = new DfaFactType<LongRangeSet>("Range") {
     @Override
     boolean isSuper(@NotNull LongRangeSet superFact, @NotNull LongRangeSet subFact) {
       return superFact.contains(subFact);
@@ -62,17 +96,22 @@ public abstract class DfaFactType<T> extends Key<T> {
     @Override
     LongRangeSet fromDfaValue(DfaValue value) {
       if(value instanceof DfaVariableValue) {
-        DfaVariableValue var = (DfaVariableValue)value;
-        if(var.getQualifier() != null) {
-          LongRangeSet specialRange =
-            StreamEx.of(SpecialField.values()).findFirst(sf -> sf.isMyAccessor(var.getPsiVariable())).map(SpecialField::getRange)
-              .orElse(null);
-          if(specialRange != null) {
-            return specialRange;
+        return calcFromVariable((DfaVariableValue)value);
+      }
+      return LongRangeSet.fromDfaValue(value);
+    }
+
+    @Nullable
+    @Override
+    LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
+      if (var.getQualifier() != null) {
+        for (SpecialField sf : SpecialField.values()) {
+          if (sf.isMyAccessor(var.getPsiVariable())) {
+            return sf.getRange();
           }
         }
       }
-      return LongRangeSet.fromDfaValue(value);
+      return LongRangeSet.fromType(var.getVariableType());
     }
 
     @Nullable
@@ -89,11 +128,19 @@ public abstract class DfaFactType<T> extends Key<T> {
   };
 
   private DfaFactType(String name) {
-    super(name);
+    super("DfaFactType: " + name);
+    // Thread-safe as all DfaFactType instances are created only from DfaFactType class static initializer
+    ourFactTypes.add(this);
   }
 
   @Nullable
   T fromDfaValue(DfaValue value) {
+    return null;
+  }
+
+  // Could be expensive
+  @Nullable
+  T calcFromVariable(@NotNull DfaVariableValue value) {
     return null;
   }
 
@@ -115,5 +162,9 @@ public abstract class DfaFactType<T> extends Key<T> {
 
   String toString(T fact) {
     return fact.toString();
+  }
+
+  static List<DfaFactType<?>> getTypes() {
+    return Collections.unmodifiableList(ourFactTypes);
   }
 }

@@ -387,6 +387,74 @@ new B().foo()
   }
 
 
+  void testBuilderSimpleStrategyError() {
+    myFixture.addClass('''\
+package groovy.transform.builder;
+@Target({ ElementType.TYPE})
+
+public @interface Builder {
+  Class<?> builderStrategy();
+  boolean includeSuperProperties() default false;
+}
+''')
+
+    myFixture.addClass('''
+package groovy.transform.builder;
+public class SimpleStrategy {}
+''')
+
+    myFixture.configureByText('a.groovy', '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+<error>@Builder(builderStrategy = SimpleStrategy, includeSuperProperties = true)</error>
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+''')
+
+    fixture.checkHighlighting()
+  }
+
+  void testBuilderSimpleStrategy() {
+    myFixture.addClass('''\
+package groovy.transform.builder;
+@Target({ ElementType.TYPE})
+
+public @interface Builder {
+  Class<?> builderStrategy();
+  boolean includeSuperProperties() default false;
+}
+''')
+
+    myFixture.addClass('''
+package groovy.transform.builder;
+public class SimpleStrategy {}
+''')
+
+    myFixture.configureByText('a.groovy', '''
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy)
+class Pojo {
+    String name
+    def dynamic
+    int counter
+
+    def method() {}
+}
+new Pojo().setName("sd").setCounter(5)
+''')
+
+    fixture.checkHighlighting()
+  }
+
+
   void testPrimitiveTypeParams() {
     myFixture.configureByText('a.groovy', '''\
 List<<error descr="Primitive type parameters are not allowed in type parameter list">int</error>> list = new ArrayList<int><EOLError descr="'(' expected"></EOLError>

@@ -24,25 +24,51 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.FileViewProvider;
 
-final class ToggleBreadcrumbsSettingsAction extends ToggleAction implements DumbAware {
+class ToggleBreadcrumbsSettingsAction extends ToggleAction implements DumbAware {
+
+  static final class ShowAbove extends ToggleBreadcrumbsSettingsAction {
+    ShowAbove() {
+      super(true, true);
+    }
+  }
+
+  static final class ShowBelow extends ToggleBreadcrumbsSettingsAction {
+    ShowBelow() {
+      super(true, false);
+    }
+  }
+
+  static final class HideBoth extends ToggleBreadcrumbsSettingsAction {
+    HideBoth() {
+      super(false, false);
+    }
+  }
+
+  private final boolean show;
+  private final boolean above;
+
+  private ToggleBreadcrumbsSettingsAction(boolean show, boolean above) {
+    this.show = show;
+    this.above = above;
+  }
+
   @Override
   public boolean isSelected(AnActionEvent event) {
-    return isSelected(findEditor(event));
+    boolean selected = isSelected(findEditor(event));
+    if (!show && !selected) return true;
+    if (!show || !selected) return false;
+    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
+    return above == settings.isBreadcrumbsAbove();
   }
 
   @Override
   public void setSelected(AnActionEvent event, boolean selected) {
-    boolean modified;
-
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-
-    String languageID = findLanguageID(!selected ? null : findEditor(event));
-    if (languageID == null) {
-      modified = settings.setBreadcrumbsShown(selected);
-    }
-    else {
-      modified = settings.setBreadcrumbsShownFor(languageID, selected);
-      if (selected && settings.setBreadcrumbsShown(true)) modified = true;
+    boolean modified = settings.setBreadcrumbsShown(show);
+    if (show) {
+      if (settings.setBreadcrumbsAbove(above)) modified = true;
+      String languageID = findLanguageID(findEditor(event));
+      if (languageID != null && settings.setBreadcrumbsShownFor(languageID, true)) modified = true;
     }
     if (modified) {
       UISettings.getInstance().fireUISettingsChanged();

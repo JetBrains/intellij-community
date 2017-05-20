@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,7 +104,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     else {
       revert();
     }
-
   }
 
   private void resetImpl() {
@@ -181,7 +180,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
     final List<CodeStyleSettingsProvider> providers =
       Arrays.asList(Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME));
-    Collections.sort(providers, (p1, p2) -> {
+    providers.sort((p1, p2) -> {
       if (!p1.getPriority().equals(p2.getPriority())) {
         return p1.getPriority().compareTo(p2.getPriority());
       }
@@ -215,7 +214,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   CodeStyleSchemesModel ensureModel() {
     if (myModel == null) {
       myModel = new CodeStyleSchemesModel(myProject);
-      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel);
+      myRootSchemesPanel = new CodeStyleSchemesPanel(myModel, 0);
 
       myModel.addListener(new CodeStyleSettingsListener(){
         @Override
@@ -228,14 +227,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
         @Override
         public void schemeListChanged() {
           myRootSchemesPanel.resetSchemesCombo();
-        }
-
-        @Override
-        public void beforeCurrentSettingsChanged() {
-        }
-
-        @Override
-        public void afterCurrentSettingsChanged() {
         }
 
         @Override
@@ -255,11 +246,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public String getHelpTopic() {
     return "reference.settingsdialog.IDE.globalcodestyle";
-  }
-
-  public void selectPage(Class pageToSelect) {
-    //TODO lesya
-    //getActivePanel().selectTab(pageToSelect);
   }
 
   @Override

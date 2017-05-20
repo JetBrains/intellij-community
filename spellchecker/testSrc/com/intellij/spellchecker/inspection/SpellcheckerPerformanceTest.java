@@ -61,7 +61,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     PlatformTestUtil.startPerformanceTest("many typos highlighting", 10000, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertSize(typoCount, runLocalInspections());
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 
   public void testManyWhitespaces() {
@@ -84,7 +84,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4000, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertEmpty(runLocalInspections());
-    }).cpuBound().assertTiming();
+    }).assertTiming();
   }
 
   @NotNull
