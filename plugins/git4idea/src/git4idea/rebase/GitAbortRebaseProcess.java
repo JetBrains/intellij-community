@@ -59,19 +59,22 @@ class GitAbortRebaseProcess {
   @NotNull private final Map<GitRepository, String> myInitialCurrentBranches;
   @NotNull private final ProgressIndicator myIndicator;
   @Nullable private final GitChangesSaver mySaver;
+  private final boolean myNotifySuccess;
 
   GitAbortRebaseProcess(@NotNull Project project,
                         @Nullable GitRepository repositoryToAbort,
                         @NotNull Map<GitRepository, String> repositoriesToRollback,
                         @NotNull Map<GitRepository, String> initialCurrentBranches,
                         @NotNull ProgressIndicator progressIndicator,
-                        @Nullable GitChangesSaver changesSaver) {
+                        @Nullable GitChangesSaver changesSaver,
+                        boolean notifySuccess) {
     myProject = project;
     myRepositoryToAbort = repositoryToAbort;
     myRepositoriesToRollback = repositoriesToRollback;
     myInitialCurrentBranches = initialCurrentBranches;
     myIndicator = progressIndicator;
     mySaver = changesSaver;
+    myNotifySuccess = notifySuccess;
 
     myGit = Git.getInstance();
     myNotifier = VcsNotifier.getInstance(myProject);
@@ -90,6 +93,12 @@ class GitAbortRebaseProcess {
     else if (ref.get() == AbortChoice.ABORT) {
       doAbort(false);
     }
+  }
+
+  void abortAndRollback() {
+    LOG.info("Abort rebase. " + (myRepositoryToAbort == null ? "Nothing to abort" : getShortRepositoryName(myRepositoryToAbort)) +
+              ". Roots to rollback: " + DvcsUtil.joinShortNames(myRepositoriesToRollback.keySet()));
+    doAbort(true);
   }
 
   @NotNull
@@ -182,7 +191,9 @@ class GitAbortRebaseProcess {
         if (mySaver != null) {
           mySaver.load();
         }
-        myNotifier.notifySuccess("Rebase abort succeeded");
+        if (myNotifySuccess) {
+          myNotifier.notifySuccess("Rebase abort succeeded");
+        }
       }
       finally {
         refresh(repositoriesToRefresh);
