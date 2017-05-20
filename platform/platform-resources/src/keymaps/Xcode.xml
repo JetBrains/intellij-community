@@ -561,4 +561,8 @@
     <keyboard-shortcut first-keystroke="control alt X" second-keystroke="F" />
   </action>
 
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control meta E"/>
+    <keyboard-shortcut first-keystroke="shift F6"/>
+  </action>
 </keymap>

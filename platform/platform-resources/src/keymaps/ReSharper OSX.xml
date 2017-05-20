@@ -163,6 +163,9 @@
   <action id="context.load"/>
   <action id="org.jetbrains.plugins.ruby.console.LoadInIrbConsoleAction"/>
   <action id="tasks.switch"/>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  </action>
 </keymap>
 
 

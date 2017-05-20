@@ -75,4 +75,7 @@
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  </action>
 </keymap>

@@ -1045,4 +1045,9 @@
   <action id="QuickActionPopup">
     <keyboard-shortcut first-keystroke="control alt ENTER"/>
   </action>
+
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
 </keymap>
