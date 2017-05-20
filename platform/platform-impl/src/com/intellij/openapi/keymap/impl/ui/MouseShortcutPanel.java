@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.apple.eawt.event.GestureUtilities;
+import com.apple.eawt.event.PressureListener;
 import com.intellij.openapi.actionSystem.MouseShortcut;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.actionSystem.PressureShortcut;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.mac.MacGestureSupportForMouseShortcutPanel;
+import com.intellij.ui.mac.MacGestureSupportUtils;
 
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
@@ -70,8 +71,13 @@ public final class MouseShortcutPanel extends ShortcutPanel<MouseShortcut> {
     myClickCount = allowDoubleClick ? 2 : 1;
     addMouseListener(myMouseListener);
     addMouseWheelListener(myMouseListener);
-    if (SystemInfo.isJavaVersionAtLeast("1.8") && SystemInfo.isMacIntel64 && SystemInfo.isJetBrainsJvm && Registry.is("ide.mac.forceTouch")) {
-      new MacGestureSupportForMouseShortcutPanel(this, () -> myMouseShortcut = null);
+    if (MacGestureSupportUtils.isSupported()) {
+      GestureUtilities.addGestureListenerTo(this, (PressureListener)e -> {
+        if (e.getStage() == 2) {
+          setShortcut(new PressureShortcut(e.getStage()));
+          myMouseShortcut = null;
+        }
+      });
     }
     setBackground(BACKGROUND);
     setOpaque(true);
