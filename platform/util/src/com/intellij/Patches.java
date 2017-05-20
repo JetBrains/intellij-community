@@ -110,7 +110,7 @@ public class Patches {
   static {
     boolean value;
     if (!SystemInfo.isMac || SystemInfo.isJavaVersionAtLeast("9")) value = false;
-    else if (!SystemInfo.isJetbrainsJvm) value = true;
+    else if (!SystemInfo.isJetBrainsJvm) value = true;
     else {
       try {
         Class.forName("sun.font.CCompositeFont");

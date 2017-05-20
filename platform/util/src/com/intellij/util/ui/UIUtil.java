@@ -2831,7 +2831,7 @@ public class UIUtil {
     if (Registry.is("ide.ui.scale.override")) {
       forcedScale = Float.valueOf((float)Registry.get("ide.ui.scale").asDouble());
     }
-    else if (SystemInfo.isLinux && !SystemInfo.isJetbrainsJvm) {
+    else if (SystemInfo.isLinux && !SystemInfo.isJetBrainsJvm) {
       // With Oracle JDK: derive scale from X server DPI
       float scale = getScreenScale();
       if (scale > 1f) {

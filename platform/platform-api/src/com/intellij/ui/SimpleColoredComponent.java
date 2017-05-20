@@ -955,7 +955,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   public static int getTextBaseLine(@NotNull FontMetrics metrics, final int height) {
     // adding leading to ascent, just like in editor (leads to bad presentation for certain fonts with Oracle JDK, see IDEA-167541)
     return (height - metrics.getHeight()) / 2 + metrics.getAscent() +
-           (SystemInfo.isJetbrainsJvm ? metrics.getLeading() : 0);
+           (SystemInfo.isJetBrainsJvm ? metrics.getLeading() : 0);
   }
 
   private static void checkCanPaint(Graphics g) {
