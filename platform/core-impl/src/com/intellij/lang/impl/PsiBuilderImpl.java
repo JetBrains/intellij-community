@@ -44,6 +44,7 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,6 +100,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private IElementType myCachedTokenType;
 
   private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
+  private final THashMap<StartMarker, Throwable> myDebugAllocationPositions = new THashMap<>(0, ContainerUtil.identityStrategy());
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @NotNull
@@ -280,7 +282,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private PsiBuilderImpl myBuilder;
     private IElementType myType;
     private DoneMarker myDoneMarker;
-    private Throwable myDebugAllocationPosition;
     private ProductionMarker myFirstChild;
     private ProductionMarker myLastChild;
     private int myHC = -1;
@@ -295,7 +296,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder = null;
       myType = null;
       myDoneMarker = null;
-      myDebugAllocationPosition = null;
       myFirstChild = myLastChild = null;
       myHC = -1;
       myEdgeTokenBinder = WhitespacesBinders.DEFAULT_LEFT_BINDER;
@@ -867,7 +867,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     marker.myBuilder = this;
 
     if (myDebugMode) {
-      marker.myDebugAllocationPosition = new Throwable("Created at the following trace.");
+      myDebugAllocationPositions.put(marker, new Throwable("Created at the following trace."));
     }
     return marker;
   }
@@ -1025,12 +1025,16 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof StartMarker) {
         StartMarker otherMarker = (StartMarker)item;
         if (otherMarker.myDoneMarker == null) {
-          final Throwable debugAllocOther = otherMarker.myDebugAllocationPosition;
-          final Throwable debugAllocThis = ((StartMarker)marker).myDebugAllocationPosition;
-          if (debugAllocOther != null) {
+          if (myDebugMode) {
+            Throwable debugAllocThis = myDebugAllocationPositions.get(((StartMarker)marker));
             Throwable currentTrace = new Throwable();
-            ExceptionUtil.makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace(System.err);
-            ExceptionUtil.makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace(System.err);
+            if (debugAllocThis != null) {
+              ExceptionUtil.makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace(System.err);
+            }
+            Throwable debugAllocOther = myDebugAllocationPositions.get(otherMarker);
+            if (debugAllocOther != null) {
+              ExceptionUtil.makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace(System.err);
+            }
           }
           LOG.error("Another not done marker added after this one. Must be done before this.");
         }
