@@ -33,25 +33,28 @@ internal class ProjectViewTabbedContent(
     Tab(it, subTitleProvider(it))
   }
 
+  private var mySelectedIndex: Int = -1
+  private val selectedTab: Tab? get() = myTabs.getOrNull(mySelectedIndex)
+  val selectedSubId: String? get() = selectedTab?.subId
+
   private val myTabsOut by lazy(LazyThreadSafetyMode.NONE) {
     myTabs.map {
       Pair.create<String, JComponent?>(it.subTitle, null)
     }
   }
 
-  private var mySelectedTab: Tab = myTabs.first()
-
   init {
-    updateDisplayName()
+    doSelectContent(-1)
   }
 
   override fun getTabs() = myTabsOut
 
   override fun getTitlePrefix() = myTitle
 
+  override fun getSelectedIndex() = mySelectedIndex
+
   override fun selectContent(index: Int) {
-    mySelectedTab = myTabs[index]
-    updateDisplayName()
+    doSelectContent(index)
     myProjectView.viewSelectionChanged()
   }
 
@@ -59,10 +62,13 @@ internal class ProjectViewTabbedContent(
     selectContent(myTabs.indexOfFirst { it.subId == subId })
   }
 
-  val selectedSubId: String get() = mySelectedTab.subId
+  private fun doSelectContent(index: Int) {
+    mySelectedIndex = index
+    updateDisplayName()
+  }
 
   private fun updateDisplayName() {
-    displayName = mySelectedTab.let { "$myTitle: ${it.subTitle}" }
+    displayName = selectedTab?.let { "$myTitle: ${it.subTitle}" } ?: myTitle
   }
 
   override fun addContent(content: JComponent, name: String, selectTab: Boolean) {}
