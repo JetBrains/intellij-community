@@ -272,6 +272,31 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
 
 
   /**
+   * Raising SkipTest on class setup should not lead to KeyError
+   */
+  @Test
+  public void testSkipInSetup() throws Exception {
+    runPythonTest(new PyUnitTestProcessWithConsoleTestTask("testRunner/env/unit/skipInSetup", "test_test.py") {
+
+
+      @Override
+      protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all) {
+        Assert.assertEquals("Output tree broken for skipped exception thrown in setup method" ,"Test tree:\n" +
+                                "[root]\n" +
+                                ".test_test\n" +
+                                "..TestSimple\n" +
+                                "...setUpClass(~)\n" +
+                                "..TestSubSimple\n" +
+                                "...setUpClass(~)\n", runner.getFormattedTestTree());
+      }
+    });
+  }
+
+
+  /**
    * Ensure that sys.path[0] is script folder, not helpers folder
    */
   @Test
