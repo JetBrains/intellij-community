@@ -507,7 +507,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout() == layout;
   }
 
-  public void toggleContentPopup() {
+  @NotNull
+  ListPopup createContentPopup() {
     final Ref<AnAction> selected = Ref.create();
     final Ref<AnAction> selectedTab = Ref.create();
     final Content[] contents = myManager.getContents();
@@ -541,7 +542,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             selectedTab.set(tabActions[selectedIndex]);
           }
         }
-      } else {
+      }
+      else {
         actions[i] = new DumbAwareAction() {
           {
             getTemplatePresentation().setText(content.getTabName(), false);
@@ -558,15 +560,21 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     }
 
-    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(actions),
-                                                                                DataManager.getInstance()
-                                                                                  .getDataContext(myManager.getComponent()), false, true,
-                                                                                true, null, -1, action -> action == selected.get() || action == selectedTab.get());
-
-    getCurrentLayout().showContentPopup(popup);
+    final DataContext dataContext = DataManager.getInstance().getDataContext(myManager.getComponent());
+    final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
+      null, new DefaultActionGroup(actions), dataContext, false, true,
+      true, null, -1,
+      action -> action == selected.get() || action == selectedTab.get()
+    );
 
     if (selectedContent instanceof TabbedContent) {
       new Alarm(Alarm.ThreadToUse.SWING_THREAD, popup).addRequest(() -> popup.handleSelect(true), 30);
     }
+
+    return popup;
+  }
+
+  public void toggleContentPopup() {
+    getCurrentLayout().showContentPopup(createContentPopup());
   }
 }

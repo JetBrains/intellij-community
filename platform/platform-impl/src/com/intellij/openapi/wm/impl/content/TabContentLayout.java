@@ -17,28 +17,23 @@ package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.dnd.DnDTarget;
-import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Pair;
 import com.intellij.ui.UIBundle;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
-import com.intellij.ui.components.JBMenu;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
-import com.intellij.util.ContentUtilEx;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 class TabContentLayout extends ContentLayout {
@@ -75,7 +70,7 @@ class TabContentLayout extends ContentLayout {
         if (myLastLayout != null) {
           final Rectangle moreRect = myLastLayout.moreRect;
           if (moreRect != null && moreRect.contains(e.getPoint())) {
-            showPopup();
+            myUi.createContentPopup().show(new RelativePoint(e));
           }
         }
       }
@@ -102,40 +97,6 @@ class TabContentLayout extends ContentLayout {
     myTabs.clear();
     myContent2Tabs.clear();
     myIdLabel = null;
-  }
-
-  private void showPopup() {
-    JPopupMenu menu = new JBPopupMenu();
-    ArrayList<ContentTabLabel> tabs = myTabs;
-
-    for (final ContentTabLabel each : tabs) {
-      boolean selected = myUi.myManager.isSelected(each.getContent());
-      if (each instanceof TabbedContentTabLabel) {
-        TabbedContent content = ((TabbedContentTabLabel)each).getContent();
-        JBMenu subMenu = new JBMenu();
-        subMenu.setText(content.getTitlePrefix());
-        int i = 0;
-        List<Pair<String, JComponent>> contentTabs = content.getTabs();
-        for (Pair<String, JComponent> tab : contentTabs) {
-          final int index = i++;
-          final JCheckBoxMenuItem subItem = new JCheckBoxMenuItem(tab.first);
-          subItem.setSelected(selected && ContentUtilEx.getSelectedTab(content) == index);
-          subItem.addActionListener(e -> {
-            content.selectContent(index);
-            myUi.myManager.setSelectedContent(content, true);
-          });
-          subMenu.add(subItem);
-        }
-        menu.add(subMenu);
-      }
-      else {
-        final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
-        item.setSelected(selected);
-        item.addActionListener(e -> myUi.myManager.setSelectedContent(each.getContent(), true));
-        menu.add(item);
-      }
-    }
-    menu.show(myUi, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
   }
 
   @Override
