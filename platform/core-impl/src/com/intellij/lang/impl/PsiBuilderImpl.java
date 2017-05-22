@@ -35,7 +35,10 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.psi.tree.*;
-import com.intellij.util.*;
+import com.intellij.util.CharTable;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.LimitedPool;
@@ -1834,15 +1837,5 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
     if (myUserData == null) myUserData = ContainerUtil.newHashMap();
     myUserData.put(key, value);
-  }
-
-  private static class LazyParseableTokensCache {
-    final int[] myLexStarts;
-    final IElementType[] myLexTypes;
-
-    LazyParseableTokensCache(int[] lexStarts, IElementType[] lexTypes) {
-      myLexStarts = lexStarts;
-      myLexTypes = lexTypes;
-    }
   }
 }
