@@ -20,6 +20,7 @@ import com.intellij.find.FindBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -30,6 +31,7 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
@@ -119,6 +121,19 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         elementsToSearch.add(parameters[idx]);
       }
     }
+
+    final PsiClass aClass = ReadAction.compute(method::getContainingClass);
+    if (aClass != null) {
+      FunctionalExpressionSearch.search(aClass).forEach(element -> {
+        if (element instanceof PsiLambdaExpression) {
+          PsiParameter[] parameters = ((PsiLambdaExpression)element).getParameterList().getParameters();
+          if (idx < parameters.length) {
+            elementsToSearch.add(parameters[idx]);
+          }
+        } 
+      });
+    }
+    
     return PsiUtilCore.toPsiElementArray(elementsToSearch);
   }
 
@@ -137,6 +152,9 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
 
           boolean hasOverridden = OverridingMethodsSearch.search(method).findFirst() != null;
+          if (!hasOverridden) {
+            hasOverridden = FunctionalExpressionSearch.search(aClass).findFirst() != null;
+          }
           if (hasOverridden && askWhetherShouldSearchForParameterInOverridingMethods(element, parameter)) {
             return getParameterElementsToSearch(parameter, method);
           }

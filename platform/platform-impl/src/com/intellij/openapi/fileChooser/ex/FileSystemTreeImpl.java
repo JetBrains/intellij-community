@@ -77,6 +77,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   private final Project myProject;
   private final ArrayList<Runnable> myOkActions = new ArrayList<>(2);
   private final FileChooserDescriptor myDescriptor;
+  private final FileTreeModel myFileTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -99,10 +100,12 @@ public class FileSystemTreeImpl implements FileSystemTree {
     myProject = project;
     if (renderer == null && Registry.is("file.chooser.async.tree.model")) {
       renderer = new FileRenderer().forTree();
-      myAsyncTreeModel = new AsyncTreeModel(new FileTreeModel(descriptor, new FileRefresher(true, 3)));
+      myFileTreeModel = new FileTreeModel(descriptor, new FileRefresher(true, 3));
+      myAsyncTreeModel = new AsyncTreeModel(myFileTreeModel);
       myTreeStructure = null;
     }
     else {
+      myFileTreeModel = null;
       myAsyncTreeModel = null;
       myTreeStructure = new FileTreeStructure(project, descriptor);
     }
@@ -244,7 +247,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   public void showHiddens(boolean showHidden) {
     if (myAsyncTreeModel != null) {
       myDescriptor.withShowHiddenFiles(showHidden);
-      //TODO:refresh
+      if (myFileTreeModel != null) myFileTreeModel.invalidate();
     }
     else {
       myTreeStructure.showHiddens(showHidden);
