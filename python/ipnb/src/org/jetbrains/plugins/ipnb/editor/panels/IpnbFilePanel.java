@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
-import com.intellij.ide.BrowserUtil;
+import com.intellij.ide.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.Messages;
@@ -36,10 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbCutCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbDeleteCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbPasteCellAction;
-import org.jetbrains.plugins.ipnb.editor.actions.IpnbToggleLineNumbersAction;
+import org.jetbrains.plugins.ipnb.editor.actions.*;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
@@ -62,6 +61,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   private final DocumentListener myDocumentListener;
   private final Document myDocument;
   private final MessageBusConnection myBusConnection;
+  private final EditActionsProvider myEditable;
   private IpnbFile myIpnbFile;
   private final Project myProject;
   @NotNull private final IpnbFileEditor myParent;
@@ -84,6 +84,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     myParent = parent;
     myVirtualFile = vFile;
     myListener = listener;
+    myEditable = new EditActionsProvider();
     setBackground(IpnbEditorUtil.getBackground());
     addKeyListener(new KeyStrokeAdapter() {
       @Override
@@ -606,31 +607,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
         selectNext(mySelectedCellPanel, false);
       }
-      else if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-        if (!mySelectedCellPanel.isEditing()) {
-          IpnbDeleteCellAction.deleteCell(this);
-        }
-      }
       else if (e.getKeyCode() == KeyEvent.VK_L) {
         if (mySelectedCellPanel instanceof IpnbCodePanel && !mySelectedCellPanel.isEditing()) {
           IpnbToggleLineNumbersAction.toggleLineNumbers((IpnbCodePanel)mySelectedCellPanel);
-        }
-      }
-      else if (e.getModifiers() == Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) {
-        if (e.getKeyCode() == KeyEvent.VK_X) {
-          if (!mySelectedCellPanel.isEditing()) {
-            IpnbCutCellAction.cutCell(this);
-          }
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_C) {
-          if (!mySelectedCellPanel.isEditing()) {
-            copyCell();
-          }
-        }
-        else if (e.getKeyCode() == KeyEvent.VK_V) {
-          if (!mySelectedCellPanel.isEditing()) {
-            IpnbPasteCellAction.pasteCell(this);
-          }
         }
       }
       else {
@@ -792,7 +771,84 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         if (o != null) return o;
       }
     }
+    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)
+        || PlatformDataKeys.PASTE_PROVIDER.is(dataId)
+        || PlatformDataKeys.CUT_PROVIDER.is(dataId)
+        || PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return myEditable;
+    }
     return null;
+  }
+
+  private class EditActionsProvider implements CutProvider, CopyProvider, PasteProvider, DeleteProvider, DumbAware {
+
+    @Override
+    public void performCopy(@NotNull DataContext dataContext) {
+      copyCell();
+    }
+
+    @Override
+    public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+    @Override
+    public boolean isCopyVisible(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+    @Override
+    public void deleteElement(@NotNull DataContext dataContext) {
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+        () -> {
+          deleteSelectedCell();
+          saveToFile(false);
+        }), "Ipnb.deleteCell", new Object());
+    }
+
+    @Override
+    public boolean canDeleteElement(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null && !mySelectedCellPanel.isEditing();
+    }
+
+    @Override
+    public void performPaste(@NotNull DataContext dataContext) {
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+        () -> {
+          pasteCell();
+          saveToFile(false);
+        }), "Ipnb.pasteCell", new Object());
+    }
+
+    @Override
+    public boolean isPastePossible(@NotNull DataContext dataContext) {
+      return myBufferPanel != null;
+    }
+
+    @Override
+    public boolean isPasteEnabled(@NotNull DataContext dataContext) {
+      return myBufferPanel != null;
+    }
+
+    @Override
+    public void performCut(@NotNull DataContext dataContext) {
+      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+        () -> {
+          cutCell();
+          saveToFile(false);
+        }), "Ipnb.cutCell", new Object());
+    }
+
+    @Override
+    public boolean isCutEnabled(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
+    @Override
+    public boolean isCutVisible(@NotNull DataContext dataContext) {
+      return mySelectedCellPanel != null;
+    }
+
   }
 
   public Project getProject() {

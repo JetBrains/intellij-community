@@ -87,8 +87,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
     registerHeadingActions();
     registerActions();
-
-    new IpnbDeleteCellAction(this);
   }
 
   public void loaded() {
@@ -101,10 +99,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   private void registerActions() {
     new IpnbAddCellAboveAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift EQUALS")),
-                                                               myIpnbFilePanel);
-    new IpnbMoveCellDownAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift DOWN")),
-                                                               myIpnbFilePanel);
-    new IpnbMoveCellUpAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift UP")),
                                                                myIpnbFilePanel);
     new IpnbMarkdownCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift M")),
                                                              myIpnbFilePanel);
@@ -130,8 +124,6 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     toolbarGroup.add(new IpnbConvertToPythonAction(this));
     toolbarGroup.add(new Separator());
     toolbarGroup.add(new IpnbAddCellBelowAction(this));
-    toolbarGroup.add(new Separator());
-    toolbarGroup.addAll(new IpnbCutCellAction(this), new IpnbCopyCellAction(this), new IpnbPasteCellAction(this));
     JComponent toolbar = createToolbar(toolbarGroup);
     controlPanel.add(toolbar);
 
