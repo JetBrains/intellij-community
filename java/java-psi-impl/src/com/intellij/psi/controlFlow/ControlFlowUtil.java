@@ -21,10 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ReflectionUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.IntStack;
 import gnu.trove.THashMap;
@@ -1152,6 +1149,10 @@ public class ControlFlowUtil {
       for (int i = 0; i < processedInstructions.length; i++) {
         if (!processedInstructions[i]) {
           PsiElement element = myFlow.getElement(i);
+
+          final PsiElement unreachableParent = getUnreachableExpressionParent(element);
+          if (unreachableParent != null) return unreachableParent;
+
           if (element == null || !PsiUtil.isStatement(element)) continue;
           if (element.getParent() instanceof PsiExpression) continue;
 
@@ -1170,8 +1171,56 @@ public class ControlFlowUtil {
           final int startOffset = myFlow.getStartOffset(element);
           // this offset actually is a part of reachable statement
           if (0 <= startOffset && startOffset < processedInstructions.length && processedInstructions[startOffset]) continue;
-          return element;
+          final PsiElement enclosingStatement = getEnclosingUnreachableStatement(element);
+          return enclosingStatement != null ? enclosingStatement : element;
         }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiElement getUnreachableExpressionParent(@Nullable PsiElement element) {
+      if (element instanceof PsiExpression) {
+        final PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
+        if (expression != null) {
+          final PsiElement parent = expression.getParent();
+          if (parent instanceof PsiExpressionStatement) {
+            return getUnreachableStatementParent(parent);
+          }
+          if (parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getCondition() == expression ||
+              parent instanceof PsiSwitchStatement && ((PsiSwitchStatement)parent).getExpression() == expression ||
+              parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
+              parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
+            return parent;
+          }
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static PsiElement getEnclosingUnreachableStatement(@NotNull PsiElement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiDoWhileStatement && ((PsiDoWhileStatement)parent).getBody() == statement) {
+        return parent;
+      }
+      if (parent instanceof PsiCodeBlock && PsiTreeUtil.getNextSiblingOfType(parent.getFirstChild(), PsiStatement.class) == statement) {
+        final PsiBlockStatement blockStatement = ObjectUtils.tryCast(parent.getParent(), PsiBlockStatement.class);
+        if (blockStatement != null) {
+          final PsiElement blockParent = blockStatement.getParent();
+          if (blockParent instanceof PsiDoWhileStatement && ((PsiDoWhileStatement)blockParent).getBody() == blockStatement) {
+            return blockParent;
+          }
+        }
+      }
+      return getUnreachableStatementParent(statement);
+    }
+
+    @Nullable
+    private static PsiElement getUnreachableStatementParent(@NotNull PsiElement statement) {
+      final PsiElement parent = statement.getParent();
+      if (parent instanceof PsiForStatement && ((PsiForStatement)parent).getInitialization() == statement) {
+        return parent;
       }
       return null;
     }

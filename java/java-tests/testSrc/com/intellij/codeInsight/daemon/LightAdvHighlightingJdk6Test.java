@@ -61,6 +61,7 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   public void testUnreachableAssignments() { doTest(false, false); }
   public void testCompileTypeConstantsAccessibleFromStaticFieldInitializers() { doTest(false, false);}
   public void testInheritUnrelatedConcreteMethodsWithSameSignature() { doTest(false, false);}
+  public void testStatementWithExpression() { doTest(false, false); }
 
   public void testAssignmentFromStringToObject() {
     doTest(true, false);
