@@ -33,5 +33,5 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
 
   void setTextAttributes(@NotNull TextAttributes textAttributes);
 
-  Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = (r1, r2) -> r1.getAffectedAreaStartOffset() - r2.getAffectedAreaStartOffset();
+  Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);
 }
