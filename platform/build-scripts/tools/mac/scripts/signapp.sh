@@ -76,7 +76,7 @@ set +e
 while [ $attemp -le $limit ]
 do
   echo "signing (attemp $attemp) ${EXPLODED}/$BUILD_NAME"
-  codesign -v --deep --force -s "${CODESIGN_STRING}" ${EXPLODED}/"$BUILD_NAME"
+  codesign -v --deep --force -s "${CODESIGN_STRING}" "${EXPLODED}/$BUILD_NAME"
   if [ "$?" != "0" ]; then
     let "attemp += 1"
     if [ $attemp -eq $limit ]; then
