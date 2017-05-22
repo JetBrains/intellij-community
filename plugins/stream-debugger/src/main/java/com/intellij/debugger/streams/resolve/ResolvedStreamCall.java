@@ -45,19 +45,19 @@ public interface ResolvedStreamCall<CALL extends StreamCall, STATE_BEFORE extend
     BidirectionalAwareState getStateAfter();
   }
 
-  interface Intermediate extends ResolvedStreamCall<IntermediateStreamCall, NextAwareState, PrevAwareState> {
+  interface Intermediate extends ResolvedStreamCall<IntermediateStreamCall, BidirectionalAwareState, BidirectionalAwareState> {
     @NotNull
     @Override
-    NextAwareState getStateBefore();
+    BidirectionalAwareState getStateBefore();
 
     @NotNull
     @Override
-    PrevAwareState getStateAfter();
+    BidirectionalAwareState getStateAfter();
   }
 
-  interface Terminator extends ResolvedStreamCall<TerminatorStreamCall, NextAwareState, PrevAwareState> {
+  interface Terminator extends ResolvedStreamCall<TerminatorStreamCall, BidirectionalAwareState, PrevAwareState> {
     @NotNull
     @Override
-    NextAwareState getStateBefore();
+    BidirectionalAwareState getStateBefore();
   }
 }

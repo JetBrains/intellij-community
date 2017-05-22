@@ -16,8 +16,7 @@
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
-import com.intellij.debugger.streams.trace.NextAwareState;
-import com.intellij.debugger.streams.trace.PrevAwareState;
+import com.intellij.debugger.streams.trace.BidirectionalAwareState;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,12 +25,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ResolvedIntermediateCallImpl implements ResolvedStreamCall.Intermediate {
   private final IntermediateStreamCall myCall;
-  private final NextAwareState myStateBefore;
-  private final PrevAwareState myStateAfter;
+  private final BidirectionalAwareState myStateBefore;
+  private final BidirectionalAwareState myStateAfter;
 
   public ResolvedIntermediateCallImpl(@NotNull IntermediateStreamCall call,
-                                      @NotNull NextAwareState stateBefore,
-                                      @NotNull PrevAwareState stateAfter) {
+                                      @NotNull BidirectionalAwareState stateBefore,
+                                      @NotNull BidirectionalAwareState stateAfter) {
     myCall = call;
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
@@ -45,13 +44,13 @@ public class ResolvedIntermediateCallImpl implements ResolvedStreamCall.Intermed
 
   @NotNull
   @Override
-  public PrevAwareState getStateAfter() {
+  public BidirectionalAwareState getStateAfter() {
     return myStateAfter;
   }
 
   @NotNull
   @Override
-  public NextAwareState getStateBefore() {
+  public BidirectionalAwareState getStateBefore() {
     return myStateBefore;
   }
 }
