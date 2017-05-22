@@ -36,7 +36,9 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
+import com.intellij.xdebugger.impl.evaluate.EvaluationInputComponent;
+import com.intellij.xdebugger.impl.evaluate.ExpressionInputComponent;
+import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
@@ -190,13 +192,11 @@ public abstract class ArrayAction extends DebuggerAction {
     }
 
     private static class ExpressionDialog extends DialogWrapper {
-      private final XDebuggerExpressionEditor myEditor;
+      private final EvaluationInputComponent myInputComponent;
 
       public ExpressionDialog(@NotNull Project project, XExpression expression) {
         super(project);
-        myEditor = new XDebuggerExpressionEditor(project, new JavaDebuggerEditorsProvider(), "filter", null,
-                                                 expression, false, true, false);
-
+        myInputComponent = new ExpressionInputComponent(project, new JavaDebuggerEditorsProvider(), "filterExpression", null, expression, null, false);
         setTitle("Filter");
         init();
       }
@@ -204,17 +204,19 @@ public abstract class ArrayAction extends DebuggerAction {
       @Nullable
       @Override
       protected JComponent createCenterPanel() {
-        return myEditor.getComponent();
+        return myInputComponent.getMainComponent();
       }
 
       @Nullable
       @Override
       public JComponent getPreferredFocusedComponent() {
-        return myEditor.getPreferredFocusedComponent();
+        return myInputComponent.getInputEditor().getPreferredFocusedComponent();
       }
 
       XExpression getExpression() {
-        return myEditor.getExpression();
+        XDebuggerEditorBase editor = myInputComponent.getInputEditor();
+        editor.saveTextInHistory();
+        return editor.getExpression();
       }
     }
   }
