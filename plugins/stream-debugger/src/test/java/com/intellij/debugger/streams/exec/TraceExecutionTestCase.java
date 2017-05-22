@@ -22,6 +22,8 @@ import com.intellij.debugger.streams.psi.DebuggerPositionResolver;
 import com.intellij.debugger.streams.psi.impl.AdvancedStreamChainBuilder;
 import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
+import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
+import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
@@ -42,10 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -235,10 +234,12 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
   @SuppressWarnings("WeakerAccess")
   protected void handleResolvedTrace(@NotNull ResolvedTracingResult result) {
-    final List<ResolvedTrace> traces = result.getResolvedTraces();
+    final ResolvedStreamChain resolvedChain = result.getResolvedChain();
 
-    checkTracesIsCorrectInBothDirections(traces);
+    checkChain(resolvedChain);
+    checkTracesIsCorrectInBothDirections(resolvedChain);
 
+    List<IntermediateState> states = new ArrayList<>();
     for (final ResolvedTrace trace : traces) {
       final String name = trace.getCall().getName();
       final List<TraceElement> values = trace.getValues();
@@ -246,10 +247,47 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
       println("mappings for " + name, ProcessOutputTypes.SYSTEM);
 
       for (final TraceElement element : StreamEx.of(values).sortedBy(TraceElement::getTime)) {
-        final String beforeTimes = StreamEx.of(trace.getPreviousValues(element)).map(TraceElement::getTime).sorted().joining(", ");
+        final String beforeTimes = StreamEx.of(trace.getPreviousValues(element)).map(TraceElement::getTime).sorted().joining(",");
         final String afterTimes = StreamEx.of(trace.getNextValues(element)).map(TraceElement::getTime).sorted().joining(",");
         println(evalTimesRepresentation(beforeTimes, element.getTime(), afterTimes), ProcessOutputTypes.SYSTEM);
       }
+    }
+  }
+
+  private static void checkChain(@NotNull ResolvedStreamChain chain) {
+    final ResolvedStreamCall.Producer producer = chain.getProducer();
+    final NextAwareState before = producer.getStateBefore();
+    if (before != null) {
+      assertEquals(before.getNextCall().getName(), producer.getCall().getName());
+    }
+
+    assertEquals(producer.getCall(), producer.getStateAfter().getPrevCall());
+    final List<ResolvedStreamCall.Intermediate> intermediates = chain.getIntermediateCalls();
+    final ResolvedStreamCall.Terminator terminator = chain.getTerminator();
+    if (intermediates.isEmpty()) {
+      assertEquals(producer.getCall().getName(), terminator.getStateBefore().getPrevCall().getName());
+    }
+
+    checkIntermediates(chain.getIntermediateCalls());
+
+    assertEquals(terminator.getCall().getName(), terminator.getStateBefore().getNextCall().getName());
+    final PrevAwareState after = terminator.getStateAfter();
+    if (after != null) {
+      assertEquals(terminator.getCall().getName(), after.getPrevCall().getName());
+    }
+
+    if (!intermediates.isEmpty()) {
+      assertEquals(terminator.getCall().getName(), intermediates.get(intermediates.size() - 1).getStateAfter().getNextCall().getName());
+    }
+  }
+
+  private static void checkIntermediates(@NotNull List<ResolvedStreamCall.Intermediate> intermediates) {
+    for (int i = 0; i < intermediates.size() - 1; i++) {
+      final ResolvedStreamCall.Intermediate prev = intermediates.get(i);
+      final ResolvedStreamCall.Intermediate next = intermediates.get(i + 1);
+      assertSame(prev.getStateAfter(), next.getStateBefore());
+      assertEquals(prev.getCall().getName(), prev.getStateAfter().getPrevCall().getName());
+      assertEquals(next.getCall().getName(), next.getStateBefore().getNextCall().getName());
     }
   }
 
@@ -260,20 +298,36 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     return String.format("    %s -> %d -> %s", before, elementTime, after);
   }
 
-  private static void checkTracesIsCorrectInBothDirections(@NotNull List<ResolvedTrace> resolvedTraces) {
-    for (int i = 1, size = resolvedTraces.size(); i < size; i++) {
-      final ResolvedTrace previous = resolvedTraces.get(i - 1);
-      final ResolvedTrace current = resolvedTraces.get(i);
-      checkNeighborTraces(previous, current);
+  private static void checkTracesIsCorrectInBothDirections(@NotNull ResolvedStreamChain resolvedChain) {
+    final ResolvedStreamCall.Producer producer = resolvedChain.getProducer();
+    final NextAwareState before = producer.getStateBefore();
+    if (before != null) {
+      checkNeighborTraces(before, producer.getStateAfter());
+    }
+
+    final ResolvedStreamCall.Terminator terminator = resolvedChain.getTerminator();
+    final PrevAwareState after = terminator.getStateAfter();
+    if (after != null) {
+      checkNeighborTraces(terminator.getStateBefore(), after);
+    }
+
+    final List<ResolvedStreamCall.Intermediate> intermediates = resolvedChain.getIntermediateCalls();
+    if (intermediates.isEmpty()) {
+      checkNeighborTraces(producer.getStateAfter(), terminator.getStateBefore());
+    }
+    else {
+      for (final ResolvedStreamCall.Intermediate intermediate : intermediates) {
+        checkNeighborTraces(intermediate.getStateBefore(), intermediate.getStateAfter());
+      }
     }
   }
 
-  private static void checkNeighborTraces(@NotNull ResolvedTrace left, @NotNull ResolvedTrace right) {
-    final Set<TraceElement> leftValues = new HashSet<>(left.getValues());
-    final Set<TraceElement> rightValues = new HashSet<>(right.getValues());
+  private static void checkNeighborTraces(@NotNull NextAwareState left, @NotNull PrevAwareState right) {
+    final Set<TraceElement> leftValues = new HashSet<>(left.getTrace());
+    final Set<TraceElement> rightValues = new HashSet<>(right.getTrace());
 
-    checkThatMappingsIsCorrect(leftValues, rightValues, left::getNextValues, right::getPreviousValues);
-    checkThatMappingsIsCorrect(rightValues, leftValues, right::getPreviousValues, left::getNextValues);
+    checkThatMappingsIsCorrect(leftValues, rightValues, left::getNextValues, right::getPrevValues);
+    checkThatMappingsIsCorrect(rightValues, leftValues, right::getPrevValues, left::getNextValues);
   }
 
   private static void checkThatMappingsIsCorrect(@NotNull Set<TraceElement> prev,
