@@ -75,7 +75,11 @@ public class CommandLineProcessor {
         options.add(PlatformProjectOpenProcessor.Option.TEMP_PROJECT);
         options.add(PlatformProjectOpenProcessor.Option.FORCE_NEW_FRAME);
       }
-      Project project = PlatformProjectOpenProcessor.doOpenProject(file, null, line, null, options);
+      Project project = null;
+      PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+      if (processor != null) {
+        project = processor.doOpenProject(file, null, line, options);
+      }
       if (project == null) {
         Messages.showErrorDialog("No project found to open file in", "Cannot Open File");
       }
