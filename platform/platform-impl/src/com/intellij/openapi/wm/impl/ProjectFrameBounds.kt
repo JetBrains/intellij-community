@@ -38,6 +38,9 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   var rawFrameInfo: FrameInfo? = null
     private set
 
+  val isInFullScreen: Boolean
+    get() = rawFrameInfo?.fullScreen ?: false
+
   override fun getState() = rawFrameInfo
 
   override fun loadState(state: FrameInfo) {
@@ -46,7 +49,8 @@ class ProjectFrameBounds(private val project: Project) : PersistentStateComponen
   }
 
   override fun getModificationCount(): Long {
-    val frameInfoInDeviceSpace = (WindowManager.getInstance() as WindowManagerImpl).getFrameInfoInDeviceSpace(project)
+    val windowManager = WindowManager.getInstance() as WindowManagerImpl
+    val frameInfoInDeviceSpace = windowManager.getFrameInfoInDeviceSpace(project)
     if (frameInfoInDeviceSpace != null) {
       if (rawFrameInfo == null) {
         rawFrameInfo = frameInfoInDeviceSpace
@@ -63,6 +67,8 @@ class FrameInfo : BaseState() {
   // flat is used due to backward compatibility
   @get:Property(flat = true) var bounds by storedProperty<Rectangle>()
   @get:Attribute var extendedState by storedProperty(Frame.NORMAL)
+
+  @get:Attribute var fullScreen by storedProperty(false)
 }
 
 fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {
@@ -76,6 +82,10 @@ fun WindowManagerImpl.getFrameInfoInDeviceSpace(project: Project): FrameInfo? {
   frameInfo.bounds = convertToDeviceSpace(frame.graphicsConfiguration, myDefaultFrameInfo.bounds!!)
   if (!(frame.isInFullScreen && SystemInfo.isAppleJvm)) {
     frameInfo.extendedState = extendedState
+  }
+
+  if (isFullScreenSupportedInCurrentOS) {
+    frameInfo.fullScreen = frame.isInFullScreen
   }
   return frameInfo
 }

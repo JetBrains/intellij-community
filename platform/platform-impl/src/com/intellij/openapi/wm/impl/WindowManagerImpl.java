@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.Disposable;
@@ -41,7 +39,6 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.FrameState;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -116,9 +113,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   /**
    * invoked by reflection
    */
-  public WindowManagerImpl(DataManager dataManager,
-                           ActionManagerEx actionManager,
-                           MessageBus bus) {
+  public WindowManagerImpl(DataManager dataManager, ActionManagerEx actionManager) {
     myDataManager = dataManager;
     myActionManager = actionManager;
     if (myDataManager instanceof DataManagerImpl) {
@@ -152,26 +147,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
         }
       }
     };
-
-    bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appClosing() {
-        // save full screen window states
-        if (isFullScreenSupportedInCurrentOS() && GeneralSettings.getInstance().isReopenLastProject()) {
-          Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
-
-          if (openProjects.length > 0) {
-            WindowManagerEx wm = WindowManagerEx.getInstanceEx();
-            for (Project project : openProjects) {
-              IdeFrameImpl frame  = wm.getFrame(project);
-              if (frame != null) {
-                frame.storeFullScreenStateIfNeeded();
-              }
-            }
-          }
-        }
-      }
-    });
 
     if (UIUtil.hasLeakingAppleListeners()) {
       UIUtil.addAwtListener(new AWTEventListener() {
