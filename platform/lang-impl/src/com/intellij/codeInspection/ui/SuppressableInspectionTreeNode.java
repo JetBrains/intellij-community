@@ -24,13 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode {
   @NotNull
@@ -77,7 +78,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     myValid = calculateIsValid();
     myAvailableSuppressActions = getElement() == null
                                  ? Collections.emptySet()
-                                 : getOnlyAvailableSuppressActions(project);
+                                 : calculateAvailableSuppressActions(project);
   }
 
 
@@ -129,27 +130,17 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   @NotNull
-  private Set<SuppressIntentionAction> getOnlyAvailableSuppressActions(@NotNull Project project) {
-    final Set<SuppressIntentionAction> actions = myView.getSuppressActions(myPresentation.getToolWrapper());
-    if (actions.isEmpty()) {
-      return Collections.emptySet();
-    }
-    final Pair<PsiElement, CommonProblemDescriptor> suppress = getSuppressContent();
-    final PsiElement suppressElement = suppress.getFirst();
-    if (suppressElement == null) {
-      return actions;
-    }
-    Set<SuppressIntentionAction> availableActions = null;
-    for (SuppressIntentionAction action : actions) {
-      if (action.isAvailable(project, null, suppressElement)) {
-        if (availableActions == null) {
-          availableActions = ContainerUtil.newConcurrentSet(TObjectHashingStrategy.IDENTITY);
-        }
-        availableActions.add(action);
-      }
-    }
-
-    return availableActions == null ? Collections.emptySet() : availableActions;
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions(@NotNull Project project) {
+    if (myPresentation.isDummy()) return Collections.emptySet();
+    final Pair<PsiElement, CommonProblemDescriptor> suppressContent = getSuppressContent();
+    PsiElement element = suppressContent.getFirst();
+    if (element == null) return Collections.emptySet();
+    InspectionViewSuppressActionHolder suppressActionHolder = myView.getSuppressActionHolder();
+    final SuppressIntentionAction[] actions = suppressActionHolder.getSuppressActions(myPresentation.getToolWrapper(), element);
+    if (actions.length == 0) return Collections.emptySet();
+    return suppressActionHolder.internSuppressActions(Arrays.stream(actions)
+      .filter(action -> action.isAvailable(project, null, element))
+      .collect(Collectors.toCollection(() -> ContainerUtil.newConcurrentSet(ContainerUtil.identityStrategy()))));
   }
 
   protected abstract String calculatePresentableName();
