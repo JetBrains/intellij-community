@@ -16,11 +16,6 @@
 package com.intellij.codeInsight.lookup.impl;
 
 public interface PrefixChangeListener {
-
-    void afterAppend(char c);
-    
-    abstract class Adapter implements PrefixChangeListener {
-        @Override
-        public void afterAppend(char c) {}
-    }
+    default void afterAppend(char c) {}
+    default void afterTruncate() {}
 }
