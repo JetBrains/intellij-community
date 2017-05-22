@@ -33,8 +33,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -47,9 +45,6 @@ class TabContentLayout extends ContentLayout {
 
   static final int MORE_ICON_BORDER = 6;
   LayoutData myLastLayout;
-
-  JPopupMenu myPopup;
-  final PopupMenuListener myPopupListener;
 
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
@@ -72,8 +67,6 @@ class TabContentLayout extends ContentLayout {
 
   TabContentLayout(ToolWindowContentUi ui) {
     super(ui);
-
-    myPopupListener = new MyPopupListener();
 
     new BaseButtonBehavior(myUi) {
       protected void execute(final MouseEvent e) {
@@ -112,9 +105,7 @@ class TabContentLayout extends ContentLayout {
   }
 
   private void showPopup() {
-    myPopup = new JBPopupMenu();
-    myPopup.addPopupMenuListener(myPopupListener);
-
+    JPopupMenu menu = new JBPopupMenu();
     ArrayList<ContentTabLabel> tabs = myTabs;
 
     for (final ContentTabLabel each : tabs) {
@@ -135,32 +126,16 @@ class TabContentLayout extends ContentLayout {
           });
           subMenu.add(subItem);
         }
-        myPopup.add(subMenu);
+        menu.add(subMenu);
       }
       else {
         final JCheckBoxMenuItem item = new JCheckBoxMenuItem(each.getText());
         item.setSelected(selected);
         item.addActionListener(e -> myUi.myManager.setSelectedContent(each.getContent(), true));
-        myPopup.add(item);
+        menu.add(item);
       }
     }
-    myPopup.show(myUi, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
-  }
-
-
-  private class MyPopupListener implements PopupMenuListener {
-    public void popupMenuWillBecomeVisible(final PopupMenuEvent e) {
-    }
-
-    public void popupMenuWillBecomeInvisible(final PopupMenuEvent e) {
-      if (myPopup != null) {
-        myPopup.removePopupMenuListener(this);
-      }
-      myPopup = null;
-    }
-
-    public void popupMenuCanceled(final PopupMenuEvent e) {
-    }
+    menu.show(myUi, myLastLayout.moreRect.x, myLastLayout.moreRect.y);
   }
 
   @Override
