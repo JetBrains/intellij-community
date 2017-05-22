@@ -16,7 +16,6 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -44,13 +43,5 @@ public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
     int x = (iconRect.width - icon.getIconWidth()) / 2;
     int y = (viewRect.height - icon.getIconHeight()) / 2;
     icon.paintIcon(c, g, x, y);
-  }
-
-  @Override
-  protected void paintFocus(Graphics g, Rectangle t, Dimension d) {
-    g.setColor(getFocusColor());
-    t.x -= 2; t.y -=1;
-    t.width += 3; t.height +=2;
-    UIUtil.drawDottedRectangle(g, t);
   }
 }

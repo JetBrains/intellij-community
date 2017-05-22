@@ -61,20 +61,6 @@ public class WinIntelliJCheckBoxUI extends IntelliJCheckBoxUI {
   }
 
   @Override
-  protected void drawText(JComponent c, Graphics2D g, JCheckBox b, FontMetrics fm, Rectangle textRect, String text) {
-    super.drawText(c, g, b, fm, textRect, text);
-    if (b.hasFocus() && !textRect.isEmpty()) {
-      g.setColor(b.getForeground());
-      textRect.x -= 2;
-      textRect.y -=1;
-      textRect.width += 3;
-      textRect.height += 2;
-
-      UIUtil.drawDottedRectangle(g, textRect);
-    }
-  }
-
-  @Override
   public Icon getDefaultIcon() {
     return JBUI.scale(EmptyIcon.create(18)).asUIResource();
   }
