@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.killProcessIfPossible
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
@@ -41,6 +42,9 @@ import java.util.concurrent.TimeUnit
 class GuiTestLocalRunner @Throws(InitializationError::class)
 constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
+  val SERVER_LOG = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestLocalRunner")
+  val criticalError = Ref<Boolean>(false)
+
   override fun runChild(method: FrameworkMethod, notifier: RunNotifier) {
 
     if (!GuiTestStarter.isGuiTestThread())
@@ -56,9 +60,13 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
    * We are not relaunching IDE if it has been already started. We assume that test argument passed and it is only one.
    */
   private fun runOnServerSide(method: FrameworkMethod, notifier: RunNotifier) {
+
     val description = this@GuiTestLocalRunner.describeChild(method)
     val eachNotifier = EachTestNotifier(notifier, description)
+    if (criticalError.get()) { eachNotifier.fireTestIgnored(); return }
+
     val cdl = CountDownLatch(1)
+    SERVER_LOG.info("Starting test on server side: ${testClass.name}#${method.name}")
     val server = JUnitServerHolder.getServer()
 
     val myServerHandler = object : ServerHandler() {
@@ -69,10 +77,10 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
         when (jUnitInfo.type) {
           Type.STARTED -> eachNotifier.fireTestStarted()
           Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((jUnitInfo.obj as Failure).exception as AssumptionViolatedException)
-          Type.IGNORED -> notifier.fireTestIgnored(description)
+          Type.IGNORED -> { notifier.fireTestIgnored(description); cdl.countDown() }
           Type.FAILURE -> eachNotifier.addFailure((jUnitInfo.obj as Failure).exception)
           Type.FINISHED -> {
-            eachNotifier.fireTestFinished(); cdl.countDown()
+            cdl.countDown()
           }
           else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
         }
@@ -81,7 +89,15 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
     try {
       server.addHandler(myServerHandler)
-      server.setFailHandler({ throwable -> cdl.countDown(); throw throwable })
+      server.setFailHandler({
+                              throwable ->
+                              notifier.pleaseStop()
+                              eachNotifier.addFailure(throwable)
+                              criticalError.set(true)
+                              cdl.countDown()
+                              throw throwable
+                            }
+      )
       if (!server.isConnected())
         runIdeLocally(port = server.getPort(), ide = getIdeFromAnnotation())
       val jUnitTestContainer = JUnitTestContainer(method.declaringClass, method.name)
@@ -92,9 +108,14 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
       Assert.fail(e.message)
       cdl.countDown()
     }
-    if (!cdl.await(10, TimeUnit.MINUTES)) //kill idea if tests exceeded timeout
+    if (!cdl.await(10, TimeUnit.MINUTES)) {
+      //kill idea if tests exceeded timeout
       killProcessIfPossible()
-    server.removeAllHandlers()
+    } else {
+      if (criticalError.get()) killProcessIfPossible()
+      server.removeAllHandlers()
+      eachNotifier.fireTestFinished()
+    }
   }
 
   private fun getIdeFromAnnotation(): Ide {
