@@ -73,3 +73,4 @@ Haskell 0.5.2
 cco.atoth.intellij.plugin.chucknorris 1.1
 de.halirutan.mathematica 2.0.24
 com.intellij.plugin.applescript 0.115
+org.argus.cit.intellij 1.0.2 1.0.3 1.0.4
