@@ -87,6 +87,10 @@ public class StudyProjectComponent implements ProjectComponent {
       updateAvailable(course);
     }
 
+    if (course != null) {
+      addStepicWidget();
+    }
+
     StudyUtils.registerStudyToolWindow(course, myProject);
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(() -> ApplicationManager.getApplication().invokeLater(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().runWriteAction((DumbAwareRunnable)() -> {
@@ -95,7 +99,6 @@ public class StudyProjectComponent implements ProjectComponent {
           instance.setHideToolStripes(false);
           instance.fireUISettingsChanged();
           registerShortcuts();
-          addStepicWidget();
           EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
         }
       })));
