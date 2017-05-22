@@ -52,7 +52,6 @@ public class CompositeElement extends TreeElement {
   private TreeElement firstChild;
   private TreeElement lastChild;
 
-  private volatile int myModificationsCount;
   private volatile int myCachedLength = -1;
   private volatile int myHC = -1;
   private volatile PsiElement myWrapper;
@@ -65,10 +64,6 @@ public class CompositeElement extends TreeElement {
     super(type);
   }
 
-  public int getModificationCount() {
-    return myModificationsCount;
-  }
-
   @NotNull
   @Override
   public CompositeElement clone() {
@@ -76,7 +71,6 @@ public class CompositeElement extends TreeElement {
 
     clone.firstChild = null;
     clone.lastChild = null;
-    clone.myModificationsCount = 0;
     clone.myWrapper = null;
     for (ASTNode child = rawFirstChild(); child != null; child = child.getTreeNext()) {
       clone.rawAddChildrenWithoutNotifications((TreeElement)child.clone());
@@ -108,7 +102,6 @@ public class CompositeElement extends TreeElement {
     assertThreading();
     myCachedLength = -1;
 
-    myModificationsCount++;
     myHC = -1;
 
     clearRelativeOffsets(rawFirstChild());
@@ -278,20 +271,8 @@ public class CompositeElement extends TreeElement {
   @NotNull
   public char[] textToCharArray() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    int startStamp = myModificationsCount;
 
     final int len = getTextLength();
-
-    if (startStamp != myModificationsCount) {
-      throw new AssertionError(
-        "Tree changed while calculating text. startStamp:"+startStamp+
-        "; current:"+myModificationsCount+
-        "; myHC:"+myHC+
-        "; assertThreading:"+ASSERT_THREADING+
-        "; this: " + this + 
-        "\n" + getThreadingDiagnostics());
-    }
-
     char[] buffer = new char[len];
     final int endOffset;
     try {
@@ -299,7 +280,6 @@ public class CompositeElement extends TreeElement {
     }
     catch (ArrayIndexOutOfBoundsException e) {
       @NonNls String msg = "Underestimated text length: " + len;
-      msg += diagnoseTextInconsistency(new String(buffer), startStamp);
       try {
         int length = AstBufferUtil.toBuffer(this, new char[len], 0);
         msg += ";\n repetition gives success (" + length + ")";
@@ -311,15 +291,14 @@ public class CompositeElement extends TreeElement {
     }
     if (endOffset != len) {
       @NonNls String msg = "len=" + len + ";\n endOffset=" + endOffset;
-      msg += diagnoseTextInconsistency(new String(buffer, 0, Math.min(len, endOffset)), startStamp);
+      msg += diagnoseTextInconsistency(new String(buffer, 0, Math.min(len, endOffset)));
       throw new AssertionError(msg);
     }
     return buffer;
   }
 
-  private String diagnoseTextInconsistency(String text, int startStamp) {
+  private String diagnoseTextInconsistency(String text) {
     @NonNls String msg = "";
-    msg += ";\n changed=" + (startStamp != myModificationsCount);
     msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected();
     msg += ";\n buffer=" + text;
     try {
