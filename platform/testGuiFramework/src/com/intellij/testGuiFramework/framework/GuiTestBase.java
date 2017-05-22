@@ -57,6 +57,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 import static com.intellij.ide.impl.ProjectUtil.closeAndDispose;
@@ -93,6 +96,10 @@ public abstract class GuiTestBase {
 
     try {
       File file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), screenshotName + ".png");
+      if (file.exists()) {
+        String dateAndTime = getDateAndTime();
+        file = new File(IdeTestApplication.getFailedTestScreenshotDirPath(), screenshotName + "." + dateAndTime + ".png");
+      }
       //noinspection ResultOfMethodCallIgnored
       file.delete();
       LOG.error(getHierarchy() + "\n" + "caused by:", e);
@@ -114,11 +121,11 @@ public abstract class GuiTestBase {
   }
 
 
-  public void setRobot(Robot robot){
+  public void setRobot(Robot robot) {
     myRobot = robot;
   }
 
-  public GuiTestBase(){
+  public GuiTestBase() {
 
   }
 
@@ -355,15 +362,19 @@ public abstract class GuiTestBase {
     return new String(out.toByteArray());
   }
 
+  private static String getDateAndTime() {
+    DateFormat dateFormat = new SimpleDateFormat("yyyy_MM_dd.HH_mm_ss_SSS");
+    Date date = new Date();
+    return dateFormat.format(date); //2016/11/16 12:08:43
+  }
+
   @NotNull
   protected IdeFrameFixture findIdeFrame(@NotNull File projectPath) {
     return IdeFrameFixture.find(myRobot, projectPath, null);
   }
 
 
-  protected IdeFrameFixture findIdeFrame(){
+  protected IdeFrameFixture findIdeFrame() {
     return IdeFrameFixture.find(myRobot, null, null);
   }
-
-
 }
