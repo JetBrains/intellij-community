@@ -76,7 +76,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   ContentLayout myComboLayout = new ComboContentLayout(this);
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
-  private boolean myShouldNotShowPopup;
 
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
@@ -509,10 +508,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   }
 
   public void toggleContentPopup() {
-    if (myShouldNotShowPopup) {
-      myShouldNotShowPopup = false;
-      return;
-    }
     final Ref<AnAction> selected = Ref.create();
     final Ref<AnAction> selectedTab = Ref.create();
     final Content[] contents = myManager.getContents();
