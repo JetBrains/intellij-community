@@ -118,6 +118,15 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   }
 
   @Nullable
+  public Project doOpenProject(@NotNull VirtualFile virtualFile,
+                               @Nullable Project projectToClose,
+                               int line,
+                               @NotNull EnumSet<Option> options) {
+    return doOpenProject(virtualFile, projectToClose, line, null, options);
+
+  }
+
+  @Nullable
   public static Project doOpenProject(@NotNull VirtualFile virtualFile,
                                       @Nullable Project projectToClose,
                                       int line,
@@ -288,7 +297,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return false;
   }
 
-  private static void openFileFromCommandLine(final Project project, final VirtualFile file, final int line) {
+  protected static void openFileFromCommandLine(final Project project, final VirtualFile file, final int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
         if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
