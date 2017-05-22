@@ -131,7 +131,7 @@ abstract class ProjectStoreBase(override final val project: ProjectImpl) : Compo
   protected fun setPath(filePath: String, refreshVfs: Boolean, useOldWorkspaceContentIfExists: Boolean) {
     val storageManager = storageManager
     val fs = LocalFileSystem.getInstance()
-    if (FileUtilRt.extensionEquals(filePath, ProjectFileType.DEFAULT_EXTENSION)) {
+    if (filePath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
       scheme = StorageScheme.DEFAULT
 
       storageManager.addMacro(PROJECT_FILE, filePath)
