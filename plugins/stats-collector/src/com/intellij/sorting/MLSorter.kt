@@ -104,7 +104,7 @@ class MLSorter : CompletionFinalSorter() {
                                 lookup: LookupImpl,
                                 relevanceObjects: Map<LookupElement, List<Pair<String, Any?>>>): Iterable<LookupElement>?
     {
-        val prefixLength = calcPrefixLength(lookup)
+        val prefixLength = lookup.prefixLenght()
         return items
                 .mapIndexed { index, lookupElement ->
                     val relevance = relevanceObjects[lookupElement] ?: emptyList()
@@ -161,8 +161,8 @@ private fun CompletionParameters.language(): Language? {
 }
 
 
-fun calcPrefixLength(lookup: LookupImpl): Int {
-    val lookupOriginalStart = lookup.lookupOriginalStart
-    val caretOffset = lookup.editor.caretModel.offset
+fun LookupImpl.prefixLenght(): Int {
+    val lookupOriginalStart = this.lookupOriginalStart
+    val caretOffset = this.editor.caretModel.offset
     return if (lookupOriginalStart < 0) 0 else caretOffset - lookupOriginalStart + 1
 }

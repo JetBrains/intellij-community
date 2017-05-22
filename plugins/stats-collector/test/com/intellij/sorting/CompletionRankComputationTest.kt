@@ -47,16 +47,16 @@ class CompletionOrderTest : LightFixtureCompletionTestCase() {
         val lookup = myFixture.lookup as LookupImpl
         assertThat(lookup.items.size > 0)
 
-        lookup.checkMlRanking(ranker, prefix_length = 0)
+        lookup.checkMlRanking(ranker, lookup.prefixLenght())
 
         myFixture.type('t')
-        lookup.checkMlRanking(ranker, prefix_length = 1)
+        lookup.checkMlRanking(ranker, lookup.prefixLenght())
 
         myFixture.type('e')
-        lookup.checkMlRanking(ranker, prefix_length = 2)
+        lookup.checkMlRanking(ranker, lookup.prefixLenght())
 
         myFixture.type('s')
-        lookup.checkMlRanking(ranker, prefix_length = 3)
+        lookup.checkMlRanking(ranker, lookup.prefixLenght())
     }
 
 }
