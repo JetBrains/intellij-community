@@ -22,17 +22,21 @@ import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.Charset;
+import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class PatchWriter {
   private PatchWriter() {
@@ -65,5 +69,14 @@ public class PatchWriter {
     finally {
       writer.close();
     }
+  }
+
+  @NotNull
+  public static VirtualFile calculateBaseForWritingPatch(@NotNull Project project, @NotNull Collection<Change> changes) {
+    File commonAncestor = ChangesUtil.findCommonAncestor(changes);
+    boolean multiVcs = ChangesUtil.getAffectedVcses(changes, project).size() != 1;
+    if (multiVcs || commonAncestor == null) return project.getBaseDir();
+    VirtualFile vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
+    return chooseNotNull(vcsRoot, project.getBaseDir());
   }
 }

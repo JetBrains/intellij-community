@@ -32,16 +32,13 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +48,6 @@ import javax.swing.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
@@ -128,13 +124,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(patchPath), null));
       File commonAncestor = ChangesUtil.findCommonAncestor(changes);
       myPanel.setCommonParentPath(commonAncestor);
-      Set<AbstractVcs> affectedVcses = ChangesUtil.getAffectedVcses(changes, myProject);
-      if (affectedVcses.size() == 1 && commonAncestor != null) {
-        VirtualFile vcsRoot = VcsUtil.getVcsRootFor(myProject, VcsUtil.getFilePath(commonAncestor));
-        if (vcsRoot != null) {
-          myPanel.selectBasePath(vcsRoot);
-        }
-      }
+      myPanel.selectBasePath(PatchWriter.calculateBaseForWritingPatch(myProject, changes));
       myPanel.setReversePatch(false);
 
       JComponent panel = myPanel.getPanel();
