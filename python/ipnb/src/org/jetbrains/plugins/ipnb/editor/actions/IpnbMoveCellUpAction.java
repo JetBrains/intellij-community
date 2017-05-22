@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ipnb.editor.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +15,10 @@ public class IpnbMoveCellUpAction extends AnAction {
   public IpnbMoveCellUpAction(IpnbFileEditor editor) {
     super("Move Cell Up");
     myEditor = editor;
+  }
+
+  public IpnbMoveCellUpAction() {
+    super("Move cell up", "Move cell up", AllIcons.Actions.MoveUp);
   }
 
   @Override
