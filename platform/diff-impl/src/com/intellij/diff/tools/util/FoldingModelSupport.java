@@ -50,6 +50,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 
 /**
@@ -135,7 +136,7 @@ public class FoldingModelSupport {
 
       myLineCount = new int[myCount];
       for (int i = 0; i < myCount; i++) {
-        myLineCount[i] = myEditors[i].getDocument().getLineCount();
+        myLineCount[i] = getLineCount(myEditors[i].getDocument());
       }
     }
 

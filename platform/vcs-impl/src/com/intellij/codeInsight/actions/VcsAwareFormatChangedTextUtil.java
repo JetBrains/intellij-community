@@ -48,7 +48,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   @NotNull
   public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
     ChangedRangesInfo helper = getChangedRangesInfo(file);
-    return helper != null ? helper.optimizedChangedRanges() : ContainerUtil.newArrayList();
+    return helper != null ? helper.allChangedRanges : ContainerUtil.newArrayList();
   }
 
   @Override

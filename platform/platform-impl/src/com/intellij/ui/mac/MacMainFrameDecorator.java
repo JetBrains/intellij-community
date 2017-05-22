@@ -98,7 +98,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void enterFullscreen() {
     myInFullScreen = true;
-    myFrame.storeFullScreenStateIfNeeded(true);
+    myFrame.storeFullScreenStateIfNeeded();
     myFullscreenQueue.runFromQueue();
   }
 
@@ -113,7 +113,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
   private void exitFullscreen() {
     myInFullScreen = false;
-    myFrame.storeFullScreenStateIfNeeded(false);
+    myFrame.storeFullScreenStateIfNeeded();
 
     JRootPane rootPane = myFrame.getRootPane();
     if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);

@@ -15,31 +15,25 @@
  */
 package com.intellij.xml.breadcrumbs;
 
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.psi.FileViewProvider;
 
-class ToggleBreadcrumbsSettingsAction extends ToggleAction implements DumbAware {
+class ToggleBreadcrumbsSettingsAction extends ToggleBreadcrumbsAction {
 
   static final class ShowAbove extends ToggleBreadcrumbsSettingsAction {
-    ShowAbove() {
+    public ShowAbove() {
       super(true, true);
     }
   }
 
   static final class ShowBelow extends ToggleBreadcrumbsSettingsAction {
-    ShowBelow() {
+    public ShowBelow() {
       super(true, false);
     }
   }
 
   static final class HideBoth extends ToggleBreadcrumbsSettingsAction {
-    HideBoth() {
+    public HideBoth() {
       super(false, false);
     }
   }
@@ -53,8 +47,8 @@ class ToggleBreadcrumbsSettingsAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public boolean isSelected(AnActionEvent event) {
-    boolean selected = isSelected(findEditor(event));
+  boolean isSelected(Editor editor) {
+    boolean selected = super.isSelected(editor);
     if (!show && !selected) return true;
     if (!show || !selected) return false;
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
@@ -62,35 +56,15 @@ class ToggleBreadcrumbsSettingsAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public void setSelected(AnActionEvent event, boolean selected) {
+  boolean setSelected(Boolean selected, Editor editor) {
+    boolean modified = super.setSelected(null, editor);
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    boolean modified = settings.setBreadcrumbsShown(show);
+    if (settings.setBreadcrumbsShown(show)) modified = true;
     if (show) {
       if (settings.setBreadcrumbsAbove(above)) modified = true;
-      String languageID = findLanguageID(findEditor(event));
+      String languageID = findLanguageID(editor);
       if (languageID != null && settings.setBreadcrumbsShownFor(languageID, true)) modified = true;
     }
-    if (modified) {
-      UISettings.getInstance().fireUISettingsChanged();
-    }
-  }
-
-  static boolean isSelected(Editor editor) {
-    EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-
-    boolean selected = settings.isBreadcrumbsShown();
-    if (!selected) return false;
-
-    String languageID = findLanguageID(editor);
-    return languageID == null || settings.isBreadcrumbsShownFor(languageID);
-  }
-
-  static Editor findEditor(AnActionEvent event) {
-    return event == null ? null : event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
-  }
-
-  private static String findLanguageID(Editor editor) {
-    FileViewProvider provider = BreadcrumbsXmlWrapper.findViewProvider(editor);
-    return provider == null ? null : provider.getBaseLanguage().getID();
+    return modified;
   }
 }

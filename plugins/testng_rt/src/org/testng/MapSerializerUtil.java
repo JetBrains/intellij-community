@@ -16,7 +16,6 @@
 package org.testng;
 
 
-import java.util.Iterator;
 import java.util.Map;
 
 public class MapSerializerUtil {
@@ -47,6 +46,9 @@ public class MapSerializerUtil {
       switch (c) {
         case '\n': return 'n';
         case '\r': return 'r';
+        case '\b': return 'b';
+        case '\t': return 't';
+        case '\f': return 'f';
         case '\u0085': return 'x'; // next-line character
         case '\u2028': return 'l'; // line-separator character
         case '\u2029': return 'p'; // paragraph-separator character

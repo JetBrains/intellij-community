@@ -53,6 +53,7 @@ import java.util.BitSet;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -737,7 +738,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
         if (!helper.process(diffChange.getStartLine(Side.LEFT), diffChange.getStartLine(Side.RIGHT))) return;
         if (!helper.process(diffChange.getEndLine(Side.LEFT), diffChange.getEndLine(Side.RIGHT))) return;
       }
-      helper.process(getEditor1().getDocument().getLineCount(), getEditor2().getDocument().getLineCount());
+      helper.process(getLineCount(getEditor1().getDocument()), getLineCount(getEditor2().getDocument()));
     }
   }
 

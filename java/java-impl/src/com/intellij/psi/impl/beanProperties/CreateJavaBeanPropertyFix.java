@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,91 +27,49 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+public class CreateJavaBeanPropertyFix implements LocalQuickFix, IntentionAction {
 
-/**
- * @author Dmitry Avdeev
- */
-public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionAction {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.beanProperties.CreateBeanPropertyFix");
-  private static final CreateBeanPropertyFix[] NO_FIXES = new CreateBeanPropertyFix[0];
-
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix");
   protected final String myPropertyName;
-  @NotNull protected final PsiClass myPsiClass;
+  @NotNull protected final SmartPsiElementPointer<PsiClass> myPsiClass;
   @NotNull protected final PsiType myType;
+  private final boolean myGetter;
+  private final boolean mySetter;
+  private final boolean myField;
 
-  public static LocalQuickFix[] createFixes(String propertyName, @NotNull PsiClass psiClass, @Nullable PsiType type, final boolean createSetter) {
-    return (LocalQuickFix[])create(propertyName, psiClass, type, createSetter);
-  }
-
-  public static IntentionAction[] createActions(String propertyName, @NotNull PsiClass psiClass, @Nullable PsiType type, final boolean createSetter) {
-    return (IntentionAction[])create(propertyName, psiClass, type, createSetter);
-  }
-
-  private static Object[] create(final String propertyName, final PsiClass psiClass, PsiType type, final boolean createSetter) {
-    if (psiClass instanceof PsiCompiledElement) return NO_FIXES;
-    if (type == null) {
-      final Project project = psiClass.getProject();
-      final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-      final PsiClass aClass = facade.findClass(JAVA_LANG_STRING, GlobalSearchScope.allScope(project));
-      if (aClass == null) {
-        return NO_FIXES;
-      }
-      type = facade.getElementFactory().createType(aClass);
-    }
-    if (psiClass.isInterface()) {
-      return new CreateBeanPropertyFix[] { new CreateAccessorFix(propertyName, psiClass, type, createSetter) };
-    }
-    return new CreateBeanPropertyFix[] {
-        new CreateBeanPropertyFix(propertyName, psiClass, type) {
-
-          @Override
-          @NotNull
-          public String getName() {
-            return QuickFixBundle.message("create.readable.writable.property.with.field", myPropertyName);
-          }
-
-          @Override
-          protected void doFix() throws IncorrectOperationException {
-            createField();
-            createSetter(true);
-            createGetter(true);
-          }
-        },
-        new CreateAccessorFix(propertyName, psiClass, type, createSetter),
-        new CreateBeanPropertyFix(propertyName, psiClass, type) {
-          @Override
-          protected void doFix() throws IncorrectOperationException {
-            createField();
-            if (createSetter) {
-              createSetter(true);
-            }
-            else {
-              createGetter(true);
-            }
-          }
-
-          @Override
-          @NotNull
-          public String getName() {
-            return QuickFixBundle.message(createSetter ? "create.writable.property.with.field" : "create.readable.property.with.field", myPropertyName);
-          }
-        }
-    };
-  }
-
-  protected CreateBeanPropertyFix(String propertyName, @NotNull PsiClass psiClass, @NotNull PsiType type) {
+  public CreateJavaBeanPropertyFix(@NotNull PsiClass psiClass, @NotNull String propertyName,
+                                   @NotNull PsiType propertyType,
+                                   boolean getterRequired,
+                                   boolean setterRequired,
+                                   boolean fieldRequired) {
     myPropertyName = propertyName;
-    myPsiClass = psiClass;
-    myType = type;
+    myPsiClass = SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
+    myType = propertyType;
+    myGetter = getterRequired;
+    mySetter = setterRequired;
+    myField = fieldRequired;
+  }
+
+  @Override
+  @NotNull
+  public String getName() {
+    if (myGetter && mySetter && myField) return QuickFixBundle.message("create.readable.writable.property.with.field", myPropertyName);
+    if (myField && myGetter) return QuickFixBundle.message("create.readable.property.with.field", myPropertyName);
+    if (myField && mySetter) return QuickFixBundle.message("create.writable.property.with.field", myPropertyName);
+    if (!myField && myGetter) return QuickFixBundle.message("create.readable.property", myPropertyName);
+    if (!myField && mySetter) return QuickFixBundle.message("create.writable.property", myPropertyName);
+    return QuickFixBundle.message("create.readable.writable.property.with.field", myPropertyName);
+  }
+
+  protected void doFix() throws IncorrectOperationException {
+    if (myField) createField();
+    if (mySetter) createSetter(myField);
+    if (myGetter) createGetter(myField);
   }
 
   @Override
@@ -160,20 +118,20 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
     return false;
   }
 
-  protected abstract void doFix() throws IncorrectOperationException;
-
   private String getFieldName() {
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(myPsiClass.getProject());
     return styleManager.suggestVariableName(VariableKind.FIELD, myPropertyName, null, myType).names[0];
   }
 
-  protected PsiElement createSetter(final boolean createField) throws IncorrectOperationException {
+  private void createSetter(final boolean createField) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
     final String methodName = PropertyUtil.suggestSetterName(myPropertyName);
     final String typeName = myType.getCanonicalText();
 
     @NonNls final String text;
-    boolean isInterface = myPsiClass.isInterface();
+    PsiClass psiClass = myPsiClass.getElement();
+    if (psiClass == null) return;
+    boolean isInterface = psiClass.isInterface();
     if (isInterface) {
       text = "public void " + methodName + "(" + typeName + " " + myPropertyName + ");";
     }
@@ -188,23 +146,25 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
       text = "public void " + methodName + "(" + typeName + " " + myPropertyName + ") {}";
     }
     final PsiMethod method = elementFactory.createMethodFromText(text, null);
-    final PsiMethod psiElement = (PsiMethod)myPsiClass.add(method);
+    final PsiMethod psiElement = (PsiMethod)psiClass.add(method);
     if (!isInterface && !createField) {
-      CreateFromUsageUtils.setupMethodBody(psiElement, myPsiClass);
+      CreateFromUsageUtils.setupMethodBody(psiElement, psiClass);
     }
-    return psiElement;
   }
 
-  protected PsiElement createGetter(final boolean createField) throws IncorrectOperationException {
+  private void createGetter(final boolean createField) throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
     final String methodName = PropertyUtil.suggestGetterName(myPropertyName, myType);
     final String typeName = myType.getCanonicalText();
     @NonNls final String text;
-    boolean isInterface = myPsiClass.isInterface();
+    PsiClass psiClass = myPsiClass.getElement();
+    if (psiClass == null) return;
+    boolean isInterface = psiClass.isInterface();
     if (createField) {
       final String fieldName = getFieldName();
       text = "public " + typeName + " " + methodName + "() { return " + fieldName + "; }";
-    } else {
+    }
+    else {
       if (isInterface) {
         text = typeName + " " + methodName + "();";
       }
@@ -213,42 +173,18 @@ public abstract class CreateBeanPropertyFix implements LocalQuickFix, IntentionA
       }
     }
     final PsiMethod method = elementFactory.createMethodFromText(text, null);
-    final PsiMethod psiElement = (PsiMethod)myPsiClass.add(method);
+    final PsiMethod psiElement = (PsiMethod)psiClass.add(method);
     if (!createField && !isInterface) {
       CreateFromUsageUtils.setupMethodBody(psiElement);
     }
-    return psiElement;
   }
 
-  protected PsiElement createField() throws IncorrectOperationException {
+  private void createField() throws IncorrectOperationException {
     final String fieldName = getFieldName();
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myPsiClass.getProject()).getElementFactory();
     final PsiField psiField = elementFactory.createField(fieldName, myType);
-    return myPsiClass.add(psiField);
-  }
-
-  private static class CreateAccessorFix extends CreateBeanPropertyFix {
-    private final boolean myCreateSetter;
-
-    public CreateAccessorFix(String propertyName, PsiClass psiClass, PsiType type, boolean createSetter) {
-      super(propertyName, psiClass, type);
-      myCreateSetter = createSetter;
-    }
-
-    @Override
-    protected void doFix() throws IncorrectOperationException {
-      if (myCreateSetter) {
-        createSetter(false);
-      }
-      else {
-        createGetter(false);
-      }
-    }
-
-    @Override
-    @NotNull
-    public String getName() {
-      return QuickFixBundle.message(myCreateSetter ? "create.writable.property" : "create.readable.property", myPropertyName);
-    }
+    PsiClass psiClass = myPsiClass.getElement();
+    if (psiClass == null) return;
+    psiClass.add(psiField);
   }
 }

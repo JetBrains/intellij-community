@@ -43,7 +43,7 @@ public abstract class PrevNextDifferenceIterableBase<T> implements PrevNextDiffe
 
     EditorEx editor = getEditor();
     int line = editor.getCaretModel().getLogicalPosition().line;
-    if (line == editor.getDocument().getLineCount() - 1) return false;
+    if (line == DiffUtil.getLineCount(editor.getDocument()) - 1) return false;
 
     T lastChange = changes.get(changes.size() - 1);
     if (getStartLine(lastChange) <= line) return false;

@@ -32,6 +32,8 @@ import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+
 public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   private final LineStatusTrackerBase myLineStatusTracker;
   private final Range myRange;
@@ -77,7 +79,7 @@ public class ShowLineStatusRangeDiffAction extends DumbAwareAction {
   @NotNull
   private static Range expand(@NotNull Range range, @NotNull Document document, @NotNull Document uDocument) {
     boolean canExpandBefore = range.getLine1() != 0 && range.getVcsLine1() != 0;
-    boolean canExpandAfter = range.getLine2() < document.getLineCount() && range.getVcsLine2() < uDocument.getLineCount();
+    boolean canExpandAfter = range.getLine2() < getLineCount(document) && range.getVcsLine2() < getLineCount(uDocument);
     int offset1 = range.getLine1() - (canExpandBefore ? 1 : 0);
     int uOffset1 = range.getVcsLine1() - (canExpandBefore ? 1 : 0);
     int offset2 = range.getLine2() + (canExpandAfter ? 1 : 0);
