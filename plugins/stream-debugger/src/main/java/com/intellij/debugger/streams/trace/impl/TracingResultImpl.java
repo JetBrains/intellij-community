@@ -15,22 +15,25 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.resolve.*;
+import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
+import com.intellij.debugger.streams.resolve.ResolverFactory;
+import com.intellij.debugger.streams.resolve.ResolverFactoryImpl;
+import com.intellij.debugger.streams.resolve.ValuesOrderResolver;
+import com.intellij.debugger.streams.resolve.impl.ResolvedProducerCallImpl;
 import com.intellij.debugger.streams.resolve.impl.ResolvedStreamChainImpl;
+import com.intellij.debugger.streams.resolve.impl.ResolvedTerminatorCallImpl;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
 import com.intellij.debugger.streams.trace.TracingResult;
-import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.intellij.debugger.streams.wrapper.TraceUtil;
+import com.intellij.debugger.streams.wrapper.*;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -70,29 +73,67 @@ public class TracingResultImpl implements TracingResult {
   public ResolvedTracingResult resolve() {
     assert myTrace.size() == mySourceChain.length();
 
+    final ResolverFactory resolverFactory = ResolverFactoryImpl.getInstance();
+    List<ValuesOrderResolver.Result> resolvedTraces = myTrace.stream()
+      .map(x -> resolverFactory.getResolver(x.getCall().getName()).resolve(x))
+      .collect(Collectors.toList());
+
     final TraceInfo producerTrace = myTrace.get(0);
     ValuesOrderResolver.Result prevResolved =
-      ResolverFactoryImpl.getInstance().getResolver(producerTrace.getCall().getName()).resolve(producerTrace);
+      resolverFactory.getResolver(producerTrace.getCall().getName()).resolve(producerTrace);
     final List<IntermediateStreamCall> intermediateCalls = mySourceChain.getIntermediateCalls();
-    final StreamCall nextCall = intermediateCalls.isEmpty() ? mySourceChain.getTerminationCall() : intermediateCalls.get(0);
 
     final ResolvedStreamChainImpl.Builder chainBuilder = new ResolvedStreamChainImpl.Builder();
-    for (int i = 1; i < myTrace.size(); i++) {
-      final TraceInfo traceInfo = myTrace.get(i);
-      final StreamCall currentCall = traceInfo.getCall();
+    final List<TraceElement> valuesAfterProducer = TraceUtil.sortedByTime(producerTrace.getValuesOrderAfter().values());
+    if (intermediateCalls.isEmpty()) {
+      buildResolvedChainWithoutIntermediateCalls(myTrace.get(1), chainBuilder, valuesAfterProducer);
+    }
+    else {
+      final TraceInfo firstIntermediateTrace = myTrace.get(1);
+      final ValuesOrderResolver.Result resolve =
+        resolverFactory.getResolver(firstIntermediateTrace.getCall().getName()).resolve(firstIntermediateTrace);
 
-      final ValuesOrderResolver resolver = ResolverFactoryImpl.getInstance().getResolver(currentCall.getName());
-      final ValuesOrderResolver.Result currentResolve = resolver.resolve(traceInfo);
+      final ProducerStateImpl producerState =
+        new ProducerStateImpl(valuesAfterProducer, mySourceChain.getIntermediateCalls().get(0), resolve.getDirectOrder());
+      chainBuilder.setProducer(new ResolvedProducerCallImpl(mySourceChain.getProducerCall(), producerState));
 
-      final Collection<TraceElement> values = TraceUtil.sortedByTime(traceInfo.getValuesOrderBefore().values());
-      final ResolvedTrace resolvedTrace =
-        new ResolvedTraceImpl(currentCall, values, prevResolved.getReverseOrder(), currentResolve.getDirectOrder());
+      IntermediateCallStateBuilder prevStateBuilder = new IntermediateCallStateBuilder();
+      prevStateBuilder.prevCall = mySourceChain.getProducerCall();
+      prevStateBuilder.toPrev = resolve.getReverseOrder();
+      for (int i = 1; i < myTrace.size() - 1; i++) {
+        final TraceInfo info = myTrace.get(i);
+        final StreamCall call = info.getCall();
 
-      prevResolved = currentResolve;
+        assert StreamCallType.INTERMEDIATE.equals(call.getType());
+
+        final ValuesOrderResolver.Result result = resolverFactory.getResolver(call.getName()).resolve(info);
+        final List<TraceElement> elementsBefore = TraceUtil.sortedByTime(info.getValuesOrderBefore().values());
+        final List<TraceElement> elementsAfter = TraceUtil.sortedByTime(info.getValuesOrderAfter().values());
+      }
     }
 
-    // TODO: construct chain
     return new MyResolvedResult(chainBuilder.build());
+  }
+
+  private void buildResolvedChainWithoutIntermediateCalls(@NotNull TraceInfo terminatorTrace,
+                                                          @NotNull ResolvedStreamChainImpl.Builder chainBuilder,
+                                                          @NotNull List<TraceElement> previousTrace) {
+    final TerminatorStreamCall terminator = mySourceChain.getTerminationCall();
+    final ValuesOrderResolver.Result terminatorResolvedResult =
+      ResolverFactoryImpl.getInstance().getResolver(terminator.getName()).resolve(terminatorTrace);
+    final ProducerStateImpl producerState =
+      new ProducerStateImpl(previousTrace, mySourceChain.getTerminationCall(), terminatorResolvedResult.getDirectOrder());
+
+    final ResolvedProducerCallImpl resolvedProducer = new ResolvedProducerCallImpl(mySourceChain.getProducerCall(), producerState);
+    chainBuilder.setProducer(resolvedProducer);
+
+    final TraceElementImpl resultValue = new TraceElementImpl(Integer.MAX_VALUE, myStreamResult);
+    final List<TraceElement> after = TraceUtil.sortedByTime(terminatorTrace.getValuesOrderAfter().values());
+    final TerminationStateImpl terminatorState =
+      new TerminationStateImpl(resultValue, mySourceChain.getProducerCall(), after, terminatorResolvedResult.getReverseOrder());
+    final ResolvedTerminatorCallImpl resolvedTerminatorCall =
+      new ResolvedTerminatorCallImpl(mySourceChain.getTerminationCall(), producerState, terminatorState);
+    chainBuilder.setTerminator(resolvedTerminatorCall);
   }
 
   private class MyResolvedResult implements ResolvedTracingResult {
@@ -124,6 +165,18 @@ public class TracingResultImpl implements TracingResult {
     @Override
     public Value getResult() {
       return myStreamResult;
+    }
+  }
+
+  private static class IntermediateCallStateBuilder {
+    List<TraceElement> elements;
+    StreamCall prevCall;
+    StreamCall nextCall;
+    Map<TraceElement, List<TraceElement>> toPrev;
+    Map<TraceElement, List<TraceElement>> toNext;
+
+    public IntermediateStateImpl build() {
+      return new IntermediateStateImpl(elements, nextCall, prevCall, toPrev, toNext);
     }
   }
 }
