@@ -75,7 +75,7 @@ abstract class ModuleStoreBase : ComponentStoreImpl(), ModuleStore {
   }
 
   override fun setPath(path: String, isNew: Boolean) {
-    val isAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
+    val isMacroAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
     // if file not null - update storage
     storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
       if (this !is FileBasedStorage) {
@@ -83,12 +83,17 @@ abstract class ModuleStoreBase : ComponentStoreImpl(), ModuleStore {
         return@getOrCreateStorage
       }
 
-      setFile(null, if (isAdded) null else Paths.get(path))
+      setFile(null, if (isMacroAdded) null else Paths.get(path))
       // ModifiableModuleModel#newModule should always create a new module from scratch
       // https://youtrack.jetbrains.com/issue/IDEA-147530
 
-      // preload to ensure that we will get FileNotFound error (no module file) during init, and not later in some unexpected place (because otherwise will be loaded by demand)
-      preloadStorageData(isNew)
+      if (isMacroAdded) {
+        // preload to ensure that we will get FileNotFound error (no module file) during init, and not later in some unexpected place (because otherwise will be loaded by demand)
+        preloadStorageData(isNew)
+      }
+      else {
+        storageManager.updatePath(StoragePathMacros.MODULE_FILE, path)
+      }
     })
   }
 }

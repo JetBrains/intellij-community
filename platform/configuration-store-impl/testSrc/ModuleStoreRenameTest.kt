@@ -92,6 +92,10 @@ internal class ModuleStoreRenameTest {
 
   // project view
   @Test fun `rename module using rename virtual file`() {
+    testRenameModule()
+  }
+
+  private fun testRenameModule() {
     runInEdtAndWait { module.saveStore() }
     val storage = module.storage
     val oldFile = storage.file
@@ -130,6 +134,8 @@ internal class ModuleStoreRenameTest {
       assertThat(newFile).isRegularFile
       assertRename(module.name, oldFile)
       assertThat(oldModuleNames).isEmpty()
+
+      testRenameModule()
     }
     finally {
       runInEdtAndWait { runWriteAction { parentVirtualDir.delete(this) } }

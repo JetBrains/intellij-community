@@ -32,6 +32,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -201,6 +202,17 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   fun getCachedFileStorages(changed: Collection<String>, deleted: Collection<String>, pathNormalizer: ((String) -> String)? = null) = storageLock.read {
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
+  }
+
+  fun updatePath(spec: String, newPath: String) {
+    val storage = getCachedFileStorages(listOf(spec)).firstOrNull() ?: return
+    if (storage is StorageVirtualFileTracker.TrackedStorage) {
+      virtualFileTracker?.let { tracker ->
+        tracker.remove(storage.file.systemIndependentPath)
+        tracker.put(newPath, storage)
+      }
+    }
+    storage.setFile(null, Paths.get(newPath))
   }
 
   fun getCachedFileStorages(fileSpecs: Collection<String>, pathNormalizer: ((String) -> String)? = null): Collection<FileBasedStorage> {
