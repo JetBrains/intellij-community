@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -530,8 +530,8 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           tabActions[j] = new DumbAwareAction(tabs.get(index).first) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-              myManager.setSelectedContent(tabbedContent);
               tabbedContent.selectContent(index);
+              myManager.setSelectedContent(tabbedContent);
             }
           };
         }
