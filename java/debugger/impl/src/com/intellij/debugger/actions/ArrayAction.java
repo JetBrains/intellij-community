@@ -21,6 +21,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
@@ -33,6 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
@@ -179,7 +181,10 @@ public abstract class ArrayAction extends DebuggerAction {
         new ExpressionDialog(project, original instanceof ArrayRenderer.Filtered ? ((ArrayRenderer.Filtered)original).getExpression()
                                                                                  : XExpressionImpl.EMPTY_EXPRESSION);
       if (dialog.showAndGet()) {
-        return new ArrayRenderer.Filtered(dialog.getExpression());
+        XExpression expression = dialog.getExpression();
+        return XDebuggerUtilImpl.isEmptyExpression(expression) ?
+                 NodeRendererSettings.getInstance().getArrayRenderer() :
+                 new ArrayRenderer.Filtered(expression);
       }
       return null;
     }
