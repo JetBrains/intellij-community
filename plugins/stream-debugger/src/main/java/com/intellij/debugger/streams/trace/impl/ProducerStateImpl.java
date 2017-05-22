@@ -15,8 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl;
 
-import com.intellij.debugger.streams.trace.NextAwareState;
-import com.intellij.debugger.streams.trace.PrevAwareState;
+import com.intellij.debugger.streams.trace.BidirectionalAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -29,7 +28,7 @@ import java.util.Map;
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerStateImpl extends StateBase implements NextAwareState, PrevAwareState {
+public class ProducerStateImpl extends StateBase implements BidirectionalAwareState {
   private final StreamCall myNextCall;
   private final ProducerStreamCall myProducerCall;
   private final Map<TraceElement, List<TraceElement>> myToNext;

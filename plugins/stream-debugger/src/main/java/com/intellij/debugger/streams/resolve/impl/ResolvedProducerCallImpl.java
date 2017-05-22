@@ -16,7 +16,8 @@
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
-import com.intellij.debugger.streams.trace.IntermediateState;
+import com.intellij.debugger.streams.trace.BidirectionalAwareState;
+import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.wrapper.ProducerStreamCall;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
 public class ResolvedProducerCallImpl implements ResolvedStreamCall.Producer {
 
   private final ProducerStreamCall myCall;
-  private final IntermediateState myStateAfter;
+  private final BidirectionalAwareState myStateAfter;
 
-  public ResolvedProducerCallImpl(@NotNull ProducerStreamCall call, @NotNull IntermediateState stateAfter) {
+  public ResolvedProducerCallImpl(@NotNull ProducerStreamCall call, @NotNull BidirectionalAwareState stateAfter) {
     myCall = call;
     myStateAfter = stateAfter;
   }
@@ -40,9 +41,15 @@ public class ResolvedProducerCallImpl implements ResolvedStreamCall.Producer {
     return myCall;
   }
 
+  @Nullable
+  @Override
+  public NextAwareState getStateBefore() {
+    return null;
+  }
+
   @NotNull
   @Override
-  public IntermediateState getStateAfter() {
+  public BidirectionalAwareState getStateAfter() {
     return myStateAfter;
   }
 }

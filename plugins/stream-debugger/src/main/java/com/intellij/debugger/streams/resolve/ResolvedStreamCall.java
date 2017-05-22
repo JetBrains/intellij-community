@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.resolve;
 
+import com.intellij.debugger.streams.trace.BidirectionalAwareState;
 import com.intellij.debugger.streams.trace.IntermediateState;
 import com.intellij.debugger.streams.trace.NextAwareState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
@@ -38,16 +39,10 @@ public interface ResolvedStreamCall<CALL extends StreamCall, STATE_BEFORE extend
   @Nullable
   STATE_AFTER getStateAfter();
 
-  interface Producer extends ResolvedStreamCall<ProducerStreamCall, IntermediateState, IntermediateState> {
+  interface Producer extends ResolvedStreamCall<ProducerStreamCall, NextAwareState, BidirectionalAwareState> {
     @NotNull
     @Override
-    IntermediateState getStateAfter();
-
-    @Nullable
-    @Override
-    default IntermediateState getStateBefore() {
-      return null;
-    }
+    BidirectionalAwareState getStateAfter();
   }
 
   interface Intermediate extends ResolvedStreamCall<IntermediateStreamCall, NextAwareState, PrevAwareState> {
@@ -60,9 +55,9 @@ public interface ResolvedStreamCall<CALL extends StreamCall, STATE_BEFORE extend
     PrevAwareState getStateAfter();
   }
 
-  interface Terminator extends ResolvedStreamCall<TerminatorStreamCall, IntermediateState, IntermediateState> {
+  interface Terminator extends ResolvedStreamCall<TerminatorStreamCall, NextAwareState, PrevAwareState> {
     @NotNull
     @Override
-    IntermediateState getStateBefore();
+    NextAwareState getStateBefore();
   }
 }
