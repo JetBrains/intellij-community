@@ -180,10 +180,7 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   }
 
   public static boolean doChooseLanguageToInject(Editor editor, final Processor<Injectable> onChosen) {
-    final List<Injectable> injectables = getAllInjectables();
-
-    final JList list = new JBList(injectables);
-    list.setCellRenderer(new ColoredListCellRendererWrapper<Injectable>() {
+    ColoredListCellRendererWrapper<Injectable> renderer = new ColoredListCellRendererWrapper<Injectable>() {
       @Override
       protected void doCustomize(JList list, Injectable language, int index, boolean selected, boolean hasFocus) {
         setIcon(language.getIcon());
@@ -193,25 +190,43 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
           append(description, SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
       }
-    });
-    Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
-    minSize.height *= 4;
-    list.setMinimumSize(minSize);
-    JBPopup popup = JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(list)
-      .setItemChoosenCallback(() -> {
-      Injectable value = (Injectable)list.getSelectedValue();
-      if (value != null) {
-        onChosen.process(value);
-        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
+    };
+
+    final List<Injectable> injectables = getAllInjectables();
+
+    final String lastInjectedId = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
+    Injectable lastInjected = lastInjectedId != null ? ContainerUtil.find(injectables, injectable1 -> lastInjectedId.equals(lastInjectedId)) : null;
+
+    if (ApplicationManager.getApplication().isOnAir()) {
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(injectables)
+        .setRenderer(renderer)
+        .setItemChoosenCallback(injectable -> {
+          onChosen.process(injectable);
+          PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, injectable.getId());
+        })
+        .setSelectedValue(lastInjected, true)
+        .createPopup().showInBestPositionFor(editor);
+    } else {
+      final JList list = new JBList(injectables);
+      list.setCellRenderer(renderer);
+      Dimension minSize = new JLabel(PlainTextLanguage.INSTANCE.getDisplayName(), EmptyIcon.ICON_16, SwingConstants.LEFT).getMinimumSize();
+      minSize.height *= 4;
+      list.setMinimumSize(minSize);
+      JBPopup popup = JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(list)
+        .setItemChoosenCallback(() -> {
+          Injectable value = (Injectable)list.getSelectedValue();
+          if (value != null) {
+            onChosen.process(value);
+            PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
+          }
+        }).setFilteringEnabled(language -> ((Injectable)language).getDisplayName()).setMinSize(minSize).createPopup();
+      if (lastInjectedId != null) {
+        list.setSelectedValue(lastInjected, true);
       }
-    }).setFilteringEnabled(language -> ((Injectable)language).getDisplayName()).setMinSize(minSize).createPopup();
-    final String lastInjected = PropertiesComponent.getInstance().getValue(LAST_INJECTED_LANGUAGE);
-    if (lastInjected != null) {
-      Injectable injectable = ContainerUtil.find(injectables, injectable1 -> lastInjected.equals(injectable1.getId()));
-      list.setSelectedValue(injectable, true);
+      popup.showInBestPositionFor(editor);
     }
-    popup.showInBestPositionFor(editor);
     return true;
   }
 
