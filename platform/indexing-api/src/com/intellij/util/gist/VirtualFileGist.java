@@ -45,9 +45,9 @@ import org.jetbrains.annotations.Nullable;
 public interface VirtualFileGist<Data> {
 
   /**
-   * Calculate or get the cached data by the current virtual file content in the given project.
+   * Calculate or get the cached data by the current virtual file content in the given project (or null, if the data is project-independent).
    */
-  Data getFileData(@NotNull Project project, @NotNull VirtualFile file);
+  Data getFileData(@Nullable Project project, @NotNull VirtualFile file);
 
   /**
    * Used by {@link VirtualFileGist} to calculate the data when it's needed and to recalculate it after file changes.
@@ -56,6 +56,6 @@ public interface VirtualFileGist<Data> {
   interface GistCalculator<Data> {
 
     @Nullable
-    Data calcData(@NotNull Project project, @NotNull VirtualFile file);
+    Data calcData(Project project, @NotNull VirtualFile file);
   }
 }

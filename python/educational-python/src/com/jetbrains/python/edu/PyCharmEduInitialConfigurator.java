@@ -25,9 +25,6 @@ import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.SelectInTarget;
-import com.intellij.ide.customize.AbstractCustomizeWizardStep;
-import com.intellij.ide.customize.CustomizeIDEWizardDialog;
-import com.intellij.ide.customize.CustomizeIDEWizardStepsProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.UISettings;
@@ -59,6 +56,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -92,7 +90,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -409,11 +406,11 @@ public class PyCharmEduInitialConfigurator {
     }
   }
   private static void showInitialConfigurationDialog() {
-    new CustomizeIDEWizardDialog(new CustomizeIDEWizardStepsProvider() {
-      @Override
-      public void initSteps(@NotNull CustomizeIDEWizardDialog dialog, @NotNull List<AbstractCustomizeWizardStep> steps) {
-        steps.add(new CustomizeEduStepPanel());
-      }
-    }).show();
+    DialogBuilder dialog = new DialogBuilder();
+    final CustomizeEduStepPanel panel = new CustomizeEduStepPanel();
+    dialog.setPreferredFocusComponent(panel.getStudentButton());
+    dialog.title("Are you Student or Teacher?").centerPanel(panel);
+    dialog.addOkAction().setText("Start using Pycharm Edu");
+    dialog.show();
   }
 }

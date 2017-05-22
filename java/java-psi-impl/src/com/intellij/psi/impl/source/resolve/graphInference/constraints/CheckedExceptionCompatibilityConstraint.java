@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -76,7 +75,7 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
         return false;
       }
 
-      final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
+      final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(groundTargetType));
       if (myExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)myExpression).hasFormalParameterTypes() ||
           myExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)myExpression).isExact()) {
         for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {

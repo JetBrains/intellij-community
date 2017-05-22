@@ -42,11 +42,13 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isSolaris = SystemInfoRt.isSolaris;
   public static final boolean isUnix = SystemInfoRt.isUnix;
 
-  public static final boolean isAppleJvm = isAppleJvm();
-  public static final boolean isOracleJvm = isOracleJvm();
-  public static final boolean isSunJvm = isSunJvm();
-  public static final boolean isIbmJvm = isIbmJvm();
-  public static final boolean isJetbrainsJvm = isJetbrainsJvm();
+  public static final boolean isAppleJvm = vendorContains("Apple");
+  public static final boolean isOracleJvm = vendorContains("Oracle");
+  public static final boolean isSunJvm = vendorContains("Sun") && vendorContains("Microsystems");
+  public static final boolean isIbmJvm = vendorContains("IBM");
+  public static final boolean isJetBrainsJvm = vendorContains("JetBrains");
+  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
+  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   public static final boolean IS_AT_LEAST_JAVA9 = isJavaVersionAtLeast("9");
 
   public static boolean isOsVersionAtLeast(@NotNull String version) {
@@ -197,29 +199,9 @@ public class SystemInfo extends SystemInfoRt {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
-  private static boolean isOracleJvm() {
+  private static boolean vendorContains(String s) {
     final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Oracle");
-  }
-
-  private static boolean isSunJvm() {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Sun") && StringUtil.containsIgnoreCase(vendor, "Microsystems");
-  }
-
-  private static boolean isIbmJvm() {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "IBM");
-  }
-
-  private static boolean isAppleJvm() {
-    final String vendor = SystemProperties.getJavaVmVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "Apple");
-  }
-
-  private static boolean isJetbrainsJvm() {
-    final String vendor = SystemProperties.getJavaVendor();
-    return vendor != null && StringUtil.containsIgnoreCase(vendor, "JetBrains");
+    return vendor != null && StringUtil.containsIgnoreCase(vendor, s);
   }
 
   //<editor-fold desc="Deprecated stuff.">

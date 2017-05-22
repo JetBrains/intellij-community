@@ -95,6 +95,7 @@ public class StudyProjectComponent implements ProjectComponent {
           instance.setHideToolStripes(false);
           instance.fireUISettingsChanged();
           registerShortcuts();
+          addStepicWidget();
           EduUsagesCollector.projectTypeOpened(course.isAdaptive() ? EduNames.ADAPTIVE : EduNames.STUDY);
         }
       })));
@@ -110,6 +111,10 @@ public class StudyProjectComponent implements ProjectComponent {
       }
     });
 
+    selectStep();
+  }
+
+  private void addStepicWidget() {
     StudyStepicUserWidget widget = StudyUtils.getStepicWidget();
     if (widget == null) {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -118,8 +123,6 @@ public class StudyProjectComponent implements ProjectComponent {
     else {
       widget.update();
     }
-
-    selectStep();
   }
 
   private void selectStep() {

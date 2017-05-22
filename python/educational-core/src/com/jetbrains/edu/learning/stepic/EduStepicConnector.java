@@ -260,7 +260,7 @@ public class EduStepicConnector {
     }
     else {
       final Lesson lesson = new Lesson();
-      lesson.setName("Adaptive");
+      lesson.setName(EduNames.ADAPTIVE);
       remoteCourse.addLesson(lesson);
       //TODO: more specific name?
       final Task recommendation = EduAdaptiveStepicConnector.getNextRecommendation(project, remoteCourse);

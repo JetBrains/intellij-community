@@ -28,6 +28,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.StudySettings;
 import com.jetbrains.edu.learning.StudyUtils;
+import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.RemoteCourse;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
@@ -440,7 +441,7 @@ public class EduCoursesPanel extends JPanel {
     List<String> tags = new ArrayList<>();
     tags.add(course.getLanguageById().getDisplayName());
     if (course.isAdaptive()) {
-      tags.add("Adaptive");
+      tags.add(EduNames.ADAPTIVE);
     }
     return tags;
   }

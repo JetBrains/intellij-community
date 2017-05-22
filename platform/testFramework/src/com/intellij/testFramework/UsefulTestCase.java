@@ -105,7 +105,7 @@ public abstract class UsefulTestCase extends TestCase {
       CodeInsightSettings defaultSettings = new CodeInsightSettings();
       Element oldS = new Element("temp");
       defaultSettings.writeExternal(oldS);
-      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS, "\n");
+      DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -258,7 +258,7 @@ public abstract class UsefulTestCase extends TestCase {
         try {
           Element newS = new Element("temp");
           settings.writeExternal(newS);
-          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS, "\n"));
+          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
         }
         catch (AssertionError error) {
           CodeInsightSettings clean = new CodeInsightSettings();
@@ -808,8 +808,8 @@ public abstract class UsefulTestCase extends TestCase {
     Element newS = new Element("temp");
     settings.writeExternal(newS);
 
-    String newString = JDOMUtil.writeElement(newS, "\n");
-    String oldString = JDOMUtil.writeElement(oldS, "\n");
+    String newString = JDOMUtil.writeElement(newS);
+    String oldString = JDOMUtil.writeElement(oldS);
     Assert.assertEquals("Code style settings damaged", oldString, newString);
   }
 

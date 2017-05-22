@@ -191,7 +191,7 @@ public class ComplementaryFontsRegistry {
                                               FontRenderContext context) {
     boolean tryDefaultFont = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
-    boolean useLigatures = SystemInfo.isJetbrainsJvm && preferences.useLigatures();
+    boolean useLigatures = SystemInfo.isJetBrainsJvm && preferences.useLigatures();
     FontInfo result;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, len = fontFamilies.size(); i < len; ++i) { // avoid foreach, it instantiates ArrayList$Itr, this traversal happens very often
@@ -228,7 +228,7 @@ public class ComplementaryFontsRegistry {
                                               FontRenderContext context) {
     boolean tryDefaultFont = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
-    boolean useLigatures = SystemInfo.isJetbrainsJvm && preferences.useLigatures();
+    boolean useLigatures = SystemInfo.isJetBrainsJvm && preferences.useLigatures();
     FontInfo result;
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0, len = fontFamilies.size(); i < len; ++i) { // avoid foreach, it instantiates ArrayList$Itr, this traversal happens very often

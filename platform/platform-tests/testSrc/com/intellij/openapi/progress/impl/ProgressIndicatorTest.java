@@ -23,6 +23,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -681,5 +683,32 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
     assertFalse(canceled.get());
+  }
+
+  public void testProgressRestoresModalityOnPumpingException() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
+    String msg = "expected message";
+    try {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Title", true) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            throw new AssertionError(msg);
+          });
+          
+          // ensure previous runnable is executed during progress, not after it
+          ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
+        }
+      });
+      fail("should fail");
+    }
+    catch (Throwable e) {
+      assertTrue(e.getMessage(), e.getMessage().endsWith(msg));
+      assertSame(ModalityState.NON_MODAL, ModalityState.current());
+    }
+    finally {
+      LaterInvocator.leaveAllModals();
+    }
   }
 }

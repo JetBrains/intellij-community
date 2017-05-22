@@ -27,8 +27,6 @@ public class CreateMethodFromUsagePerformanceTest extends LightQuickFixTestCase 
       configureFromFileText("Foo.java", "class Foo {{ f<caret>oo(" + StringUtil.repeat("\"a\", ", 5000) + " \"a\");}}");
       doAction("Create method 'foo'");
     })
-      .cpuBound()
-      .usesAllCPUCores()
       .assertTiming();
   }
 

@@ -71,7 +71,7 @@ final class BreadcrumbsConfigurable implements Configurable {
           }
         }
       }
-      JPanel boxes = new JPanel(new GridLayout(0, 3, JBUI.scale(20), 0));
+      JPanel boxes = new JPanel(new GridLayout(0, 3));
       for (JCheckBox box : map.values()) boxes.add(box);
 
       show = new JCheckBox(message("checkbox.show.breadcrumbs"));
@@ -85,22 +85,22 @@ final class BreadcrumbsConfigurable implements Configurable {
       group.add(below);
 
       placement = new JLabel(message("label.breadcrumbs.placement"));
-      placement.setBorder(JBUI.Borders.emptyRight(10));
+      placement.setBorder(JBUI.Borders.emptyRight(12));
 
       JPanel placementPanel = new JPanel(new HorizontalLayout(0));
-      placementPanel.setBorder(JBUI.Borders.emptyLeft(20));
+      placementPanel.setBorder(JBUI.Borders.emptyLeft(24));
       placementPanel.add(placement);
       placementPanel.add(above);
       placementPanel.add(below);
 
       languages = new JLabel(message("label.breadcrumbs.languages"));
 
-      JPanel languagesPanel = new JPanel(new VerticalLayout(JBUI.scale(5)));
-      languagesPanel.setBorder(JBUI.Borders.emptyLeft(20));
+      JPanel languagesPanel = new JPanel(new VerticalLayout(JBUI.scale(6)));
+      languagesPanel.setBorder(JBUI.Borders.emptyLeft(24));
       languagesPanel.add(languages);
       languagesPanel.add(boxes);
 
-      component = new JPanel(new VerticalLayout(JBUI.scale(20), LEFT));
+      component = new JPanel(new VerticalLayout(JBUI.scale(12), LEFT));
       component.add(show);
       component.add(placementPanel);
       component.add(languagesPanel);

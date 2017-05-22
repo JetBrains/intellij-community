@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -254,7 +254,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   private synchronized void writeOutput(@NotNull final CommonProblemDescriptor[] descriptions, @NotNull RefEntity refElement) {
     final Element parentNode = new Element(InspectionsBundle.message("inspection.problems"));
     exportResults(descriptions, refElement, parentNode, d -> false);
-    final List list = parentNode.getChildren();
+    final List<Element> list = parentNode.getChildren();
 
     @NonNls final String ext = ".xml";
     final String fileName = ourOutputPath + File.separator + myToolWrapper.getShortName() + ext;
@@ -263,13 +263,12 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
     try {
       new File(ourOutputPath).mkdirs();
       final File file = new File(fileName);
-      final CharArrayWriter writer = new CharArrayWriter();
+      final StringWriter writer = new StringWriter();
       if (!file.exists()) {
         writer.append("<").append(InspectionsBundle.message("inspection.problems")).append(" " + GlobalInspectionContextBase.LOCAL_TOOL_ATTRIBUTE + "=\"")
           .append(Boolean.toString(myToolWrapper instanceof LocalInspectionToolWrapper)).append("\">\n");
       }
-      for (Object o : list) {
-        final Element element = (Element)o;
+      for (Element element : list) {
         pathMacroManager.collapsePaths(element);
         JDOMUtil.writeElement(element, writer, "\n");
       }

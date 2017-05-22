@@ -84,7 +84,7 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
            !descriptor.isForcedToUseIdeaFileChooser() &&
            SystemProperties.getBooleanProperty("native.mac.file.chooser.enabled", true) &&
            Registry.is("ide.mac.file.chooser.native") &&
-           SystemInfo.isJetbrainsJvm;
+           SystemInfo.isJetBrainsJvm;
   }
 
   @NotNull

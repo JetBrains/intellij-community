@@ -122,14 +122,14 @@ public class EduStepikRestService extends RestService {
         if (stepicUser != null) {
           StudySettings.getInstance().setUser(stepicUser);
           sendHtmlResponse(request, context, "/oauthResponsePages/okPage.html");
-          showStepicNotification(NotificationType.INFORMATION, "Authorized as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
+          showStepicNotification(NotificationType.INFORMATION, "Logged in as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
           focusOnApplicationWindow();
           return null;
         }
       }
 
       sendHtmlResponse(request, context, "/oauthResponsePages/errorPage.html");
-      showStepicNotification(NotificationType.ERROR, "Failed to authorize");
+      showStepicNotification(NotificationType.ERROR, "Failed to log in");
       return "Couldn't find code parameter for Stepik OAuth";
     }
 

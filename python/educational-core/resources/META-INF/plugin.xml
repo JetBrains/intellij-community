@@ -83,9 +83,8 @@
     <action id="StudySwitchPanel" class="com.jetbrains.edu.learning.actions.StudySwitchTaskPanelAction"
             text="Switch Task Description Panel">
     </action>
-    <action id="Edu.OpenTaskInStepik" class="com.jetbrains.edu.learning.actions.StudyOpenTaskInStepikAction"
-            text="Open this task in Stepik">
-    </action>
+
+    <action id="Edu.UpdateRecommendation" class="com.jetbrains.edu.learning.actions.StudyUpdateRecommendationAction"/>
 
     <!--course creator-->
     <action id="CreateLesson" class="com.jetbrains.edu.coursecreator.actions.CCCreateLesson">

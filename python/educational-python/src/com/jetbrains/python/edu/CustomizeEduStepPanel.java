@@ -1,6 +1,5 @@
 package com.jetbrains.python.edu;
 
-import com.intellij.ide.customize.AbstractCustomizeWizardStep;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import icons.PythonEducationalIcons;
@@ -10,21 +9,22 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
+public class CustomizeEduStepPanel extends JPanel {
   static final String COURSE_CREATOR_ENABLED = "Edu.CourseCreator.Enabled";
+  private final JButton myStudent;
 
   public CustomizeEduStepPanel() {
     int iconSize = 180;
     final JPanel studentPanel = new JPanel(new VerticalFlowLayout());
-    final JButton student = new JButton(PythonEducationalIcons.Student);
-    student.setPreferredSize(new Dimension(iconSize, iconSize));
-    student.addActionListener(new ActionListener() {
+    myStudent = new JButton(PythonEducationalIcons.Student);
+    myStudent.setPreferredSize(new Dimension(iconSize, iconSize));
+    myStudent.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         PropertiesComponent.getInstance().setValue(COURSE_CREATOR_ENABLED, false);
       }
     });
-    studentPanel.add(student);
+    studentPanel.add(myStudent);
     studentPanel.add(new JLabel("Student", SwingConstants.CENTER));
     add(studentPanel);
 
@@ -42,13 +42,7 @@ public class CustomizeEduStepPanel extends AbstractCustomizeWizardStep {
     add(teacherPanel);
   }
 
-  @Override
-  protected String getTitle() {
-    return "Are you student or teacher?";
-  }
-
-  @Override
-  protected String getHTMLHeader() {
-    return "";
+  public JComponent getStudentButton() {
+    return myStudent;
   }
 }

@@ -114,7 +114,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("MARK_MODIFIED_TABS_WITH_ASTERISK") var markModifiedTabsWithAsterisk by storedProperty(false)
   @get:OptionTag("SHOW_TABS_TOOLTIPS") var showTabsTooltips by storedProperty(true)
   @get:OptionTag("SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES") var showDirectoryForNonUniqueFilenames by storedProperty(true)
-  var smoothScrolling by storedProperty(SystemInfo.isMac && (SystemInfo.isJetbrainsJvm || SystemInfo.isJavaVersionAtLeast("9")))
+  var smoothScrolling by storedProperty(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.isJavaVersionAtLeast("9")))
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by storedProperty(false)
 
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by storedProperty(false)

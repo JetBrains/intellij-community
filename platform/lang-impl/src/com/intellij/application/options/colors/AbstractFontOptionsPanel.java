@@ -106,7 +106,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
                                                ApplicationBundle.message("ligatures.jre.warning",
                                                                          ApplicationNamesInfo.getInstance().getFullProductName())));
     warningIcon.setBorder(JBUI.Borders.emptyLeft(5));
-    warningIcon.setVisible(!SystemInfo.isJetbrainsJvm);
+    warningIcon.setVisible(!SystemInfo.isJetBrainsJvm);
     panel.add(warningIcon);
     add(panel, "newline, sx 2");
 
@@ -291,7 +291,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     mySizeLabel.setEnabled(!readOnly);
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
-    myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetbrainsJvm);
+    myEnableLigaturesCheckbox.setEnabled(!readOnly && SystemInfo.isJetBrainsJvm);
     myEnableLigaturesCheckbox.setSelected(fontPreferences.useLigatures());
 
     myIsInSchemeChange = false;
