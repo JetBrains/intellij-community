@@ -488,7 +488,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
           super.doDestroyProcess();
           myKernels.clear();
           myToken = null;
-          UnixProcessManager.sendSigIntToProcessTree(getProcess());
+          UnixProcessManager.sendSigKillToProcessTree(getProcess());
         }
 
         @Override
@@ -514,7 +514,7 @@ public final class IpnbConnectionManager implements ProjectComponent, Disposable
         .withStop(() -> {
           myKernels.clear();
           processHandler.destroyProcess();
-          UnixProcessManager.sendSigIntToProcessTree(processHandler.getProcess());
+          UnixProcessManager.sendSigKillToProcessTree(processHandler.getProcess());
         }, () -> !processHandler.isProcessTerminated())
         .withRerun(() -> startIpythonServer(url, fileEditor))
         .withHelpId("reference.manage.py")
