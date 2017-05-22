@@ -296,6 +296,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     @Override
     public void clean() {
       super.clean();
+      if (myBuilder.myDebugMode) {
+        myBuilder.myDebugAllocationPositions.remove(this);
+      }
       myBuilder = null;
       myType = null;
       myDoneMarker = null;
