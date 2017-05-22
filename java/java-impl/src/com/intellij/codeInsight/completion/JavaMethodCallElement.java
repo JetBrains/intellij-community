@@ -34,6 +34,7 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -343,13 +344,20 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     handler.findElementForParameterInfo(infoContext);
     
     parameterOwner.putUserData(COMPLETION_HINTS, addedHints);
-    Disposer.register(new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
-                                                  parameterOwner, handler, false, false), () -> {
+    ParameterInfoController controller = new ParameterInfoController(project, editor, braceOffset, infoContext.getItemsToShow(), null,
+                                                                 parameterOwner, handler, false, false);
+    Disposable hintsDisposal = () -> {
       for (Inlay inlay : addedHints) {
         if (inlay != null) ParameterHintsPresentationManager.getInstance().unpin(inlay);
       }
       addedHints.clear();
-    });
+    };
+    if (Disposer.isDisposed(controller)) {
+      Disposer.dispose(hintsDisposal);
+    }
+    else {
+      Disposer.register(controller, hintsDisposal);
+    }
   }
 
   private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {

@@ -44,6 +44,7 @@ import java.awt.*;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.ArrayUtil.toObjectArray;
 
 public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer {
@@ -376,7 +377,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
         if (!helper.process(diffChange.getStartLine(left), diffChange.getStartLine(right))) return;
         if (!helper.process(diffChange.getEndLine(left), diffChange.getEndLine(right))) return;
       }
-      helper.process(getEditor(left).getDocument().getLineCount(), getEditor(right).getDocument().getLineCount());
+      helper.process(getLineCount(getEditor(left).getDocument()), getLineCount(getEditor(right).getDocument()));
     }
   }
 

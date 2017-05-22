@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -31,6 +32,7 @@ import org.jetbrains.plugins.ipnb.format.cells.output.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Arrays;
@@ -54,6 +56,12 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     myViewPanel = createViewPanel();
     add(myViewPanel);
     addRightClickMenu();
+    addKeyListener(new KeyStrokeAdapter() {
+      @Override
+      public void keyPressed(KeyEvent event) {
+        myParent.getIpnbFilePanel().processKeyPressed(event);
+      }
+    });
   }
 
   @NotNull

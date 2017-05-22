@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,5 +103,12 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   public IntentionAction getDelegate() {
     return myAction;
   }
-}
 
+  @Contract("null, _ -> null")
+  public static LocalQuickFix wrapToQuickFix(@Nullable IntentionAction action, @NotNull PsiFile file) {
+    if (action == null) return null;
+    if (action instanceof LocalQuickFix) return (LocalQuickFix)action;
+    return new IntentionWrapper(action, file);
+  }
+
+}

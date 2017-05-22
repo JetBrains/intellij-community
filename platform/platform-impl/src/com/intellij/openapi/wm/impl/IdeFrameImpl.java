@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.impl.ShadowPainter;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -71,12 +74,9 @@ import java.lang.reflect.Field;
  * @author Vladimir Kondratyev
  */
 public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContextAccessor, DataProvider {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.IdeFrameImpl");
 
   public static final Key<Boolean> SHOULD_OPEN_IN_FULL_SCREEN = Key.create("should.open.in.full.screen");
-
-  private static final String FULL_SCREEN = "FullScreen";
 
   private static boolean myUpdatingTitle;
 
@@ -127,7 +127,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     IdeMenuBar.installAppMenuIfNeeded(this);
 
     // UIUtil.suppressFocusStealing();
-
   }
 
   @Override
@@ -308,18 +307,23 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     return null;
   }
 
-  public void setProject(final Project project) {
-    if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS() && myProject != project && project != null) {
-      myRestoreFullScreen = myProject == null && shouldRestoreFullScreen(project);
-
-      if (myProject != null) {
-        storeFullScreenStateIfNeeded(false); // disable for old project
-      }
+  public void setProject(@Nullable Project project) {
+    if (myProject == project) {
+      return;
     }
 
     myProject = project;
     if (project != null) {
-      ProjectFrameBounds.getInstance(project);   // make sure the service is initialized and its state will be saved
+      if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
+        myRestoreFullScreen = SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE ||
+                              ProjectFrameBounds.getInstance(project).isInFullScreen();
+
+        if (!myRestoreFullScreen && PropertiesComponent.getInstance(project).getBoolean("FullScreen")) {
+          myRestoreFullScreen = true;
+          PropertiesComponent.getInstance(project).unsetValue("FullScreen");
+        }
+      }
+
       if (myRootPane != null) {
         myRootPane.installNorthComponents(project);
         project.getMessageBus().connect().subscribe(StatusBar.Info.TOPIC, myRootPane.getStatusBar());
@@ -331,13 +335,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       if (myRootPane != null) { //already disposed
         myRootPane.deinstallNorthComponents();
       }
-    }
 
-    if (project == null) {
       FocusTrackback.release(this);
     }
 
-    if (isVisible() && myRestoreFullScreen) {
+    if (myRestoreFullScreen && isVisible()) {
       toggleFullScreen(true);
       myRestoreFullScreen = false;
     }
@@ -435,25 +437,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     return myRootPane != null && myRootPane.getClientProperty(ScreenUtil.DISPOSE_TEMPORARY) != null;
   }
 
-  void storeFullScreenStateIfNeeded() {
-    if (myFrameDecorator != null) {
-      storeFullScreenStateIfNeeded(myFrameDecorator.isInFullScreen());
-    }
-  }
-
-  public void storeFullScreenStateIfNeeded(boolean state) {
-    if (!WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) return;
-
+  public void storeFullScreenStateIfNeeded() {
     if (myProject != null) {
-      PropertiesComponent.getInstance(myProject).setValue(FULL_SCREEN, state);
       doLayout();
     }
-  }
-
-  private static boolean shouldRestoreFullScreen(@Nullable Project project) {
-    return WindowManager.getInstance().isFullScreenSupportedInCurrentOS() &&
-           project != null &&
-           (SHOULD_OPEN_IN_FULL_SCREEN.get(project) == Boolean.TRUE || PropertiesComponent.getInstance(project).getBoolean(FULL_SCREEN));
   }
 
   private static final ShadowPainter ourShadowPainter = new ShadowPainter(AllIcons.Windows.Shadow.Top,

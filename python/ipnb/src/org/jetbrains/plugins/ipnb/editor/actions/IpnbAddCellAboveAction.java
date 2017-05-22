@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -17,8 +16,8 @@ public class IpnbAddCellAboveAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final DataContext context = event.getDataContext();
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if (editor instanceof IpnbFileEditor) {
+    final FileEditor editor = IpnbFileEditor.DATA_KEY.getData(context);
+    if (editor != null) {
       final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbFilePanel();
       addCell(component);
     }

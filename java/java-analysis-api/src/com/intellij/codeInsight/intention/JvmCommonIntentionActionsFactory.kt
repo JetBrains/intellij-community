@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention
 
+import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
@@ -36,15 +37,28 @@ import org.jetbrains.uast.UDeclaration
 @ApiStatus.Experimental
 abstract class JvmCommonIntentionActionsFactory {
 
-  open fun createChangeModifierAction(declaration: UDeclaration, @PsiModifier.ModifierConstant @NonNls modifier: String, shouldPresent: Boolean): IntentionAction? = null
+  open fun createChangeModifierAction(declaration: UDeclaration,
+                                      @PsiModifier.ModifierConstant @NonNls modifier: String,
+                                      shouldPresent: Boolean): IntentionAction? = null
 
-  open fun createAddMethodAction(u: UClass,
+  open fun createAddMethodAction(uClass: UClass,
                                  methodName: String,
                                  @PsiModifier.ModifierConstant visibilityModifier: String,
                                  returnType: PsiType,
                                  vararg parameters: PsiType): IntentionAction? = null
 
+  open fun createAddBeanPropertyActions(uClass: UClass,
+                                        propertyName: String,
+                                        @PsiModifier.ModifierConstant visibilityModifier: String,
+                                        propertyType: PsiType,
+                                        setterRequired: Boolean,
+                                        getterRequired: Boolean): Array<IntentionAction> = emptyArray()
+
   companion object : LanguageExtension<JvmCommonIntentionActionsFactory>(
-    "com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory") {}
+    "com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory") {
+
+    @JvmStatic
+    override fun forLanguage(l: Language): JvmCommonIntentionActionsFactory? = super.forLanguage(l)
+  }
 }
 

@@ -15,48 +15,18 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public class ChangedRangesInfo {
-
-  private final List<TextRange> insertedRanges;
-  private final List<TextRange> allChangedRanges;
+  public final List<TextRange> insertedRanges;
+  public final List<TextRange> allChangedRanges;
 
   public ChangedRangesInfo(@NotNull List<TextRange> allChangedRanges, @Nullable List<TextRange> insertedRanges) {
     this.insertedRanges = insertedRanges;
     this.allChangedRanges = allChangedRanges;
   }
-
-  public List<TextRange> insertedRanges() {
-    return insertedRanges;
-  }
-
-  public List<TextRange> optimizedChangedRanges() {
-    if (allChangedRanges.isEmpty()) return allChangedRanges;
-    allChangedRanges.sort(Segment.BY_START_OFFSET_THEN_END_OFFSET);
-
-    List<TextRange> result = ContainerUtil.newSmartList();
-
-    TextRange prev = allChangedRanges.get(0);
-    for (TextRange next : allChangedRanges) {
-      if (next.getStartOffset() <= prev.getEndOffset() + 5) {
-        int newEndOffset = Math.max(prev.getEndOffset(), next.getEndOffset());
-        prev = new TextRange(prev.getStartOffset(), newEndOffset);
-      }
-      else {
-        result.add(prev);
-        prev = next;
-      }
-    }
-    result.add(prev);
-
-    return result;
-  }
-  
 }

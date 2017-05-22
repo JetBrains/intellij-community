@@ -1,10 +1,12 @@
 package org.jetbrains.plugins.ipnb.editor.panels;
 
+import com.intellij.ui.KeyStrokeAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
 
 import javax.swing.*;
+import java.awt.event.KeyEvent;
 
 public class IpnbMarkdownPanel extends IpnbEditablePanel<JComponent, IpnbMarkdownCell> {
 
@@ -14,6 +16,12 @@ public class IpnbMarkdownPanel extends IpnbEditablePanel<JComponent, IpnbMarkdow
     super(cell);
     myParent = parent;
     initPanel();
+    addKeyListener(new KeyStrokeAdapter() {
+      @Override
+      public void keyPressed(KeyEvent event) {
+        myParent.processKeyPressed(event);
+      }
+    });
   }
 
   @Override

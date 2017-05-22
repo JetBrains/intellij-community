@@ -900,6 +900,12 @@ public class DiffUtil {
     return Math.min(start + column, end);
   }
 
+  /**
+   * Document.getLineCount() returns 0 for empty text.
+   * <p>
+   * This breaks an assumption "getLineCount() == StringUtil.countNewLines(text) + 1"
+   * and adds unnecessary corner case into line ranges logic.
+   */
   public static int getLineCount(@NotNull Document document) {
     return Math.max(document.getLineCount(), 1);
   }

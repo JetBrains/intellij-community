@@ -46,8 +46,10 @@ public class IpnbRunAllCellsAction extends IpnbRunCellBaseAction {
           if (!serverStarted) {
             return;
           }
-          UIUtil.invokeLaterIfNeeded(() -> connectionManager.startConnection(null, path, finalUrl, false));
-          runCells(cells, ipnbFilePanel);
+          UIUtil.invokeLaterIfNeeded(() -> {
+            connectionManager.startConnection(null, path, finalUrl, false);
+            runCells(cells, ipnbFilePanel);
+          });
         });
       }
       else {
