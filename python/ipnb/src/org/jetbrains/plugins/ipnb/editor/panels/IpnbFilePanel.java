@@ -717,10 +717,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       mySelectedCellPanel.setEditing(false);
     }
     mySelectedCellPanel = ipnbPanel;
-    revalidateAndRepaint();
-    if (ipnbPanel.getBounds().getHeight() != 0) {
-      myListener.selectionChanged(ipnbPanel, mouse);
-    }
+    myQueue.queue(new Update("Jupyter.Repaint", HIGH_PRIORITY) {
+      @Override
+      public void run() {
+        revalidate();
+        repaint();
+        if (ipnbPanel.getBounds().getHeight() != 0) {
+          myListener.selectionChanged(ipnbPanel, mouse);
+        }
+      }
+    });
   }
 
   public void revalidateAndRepaint() {
