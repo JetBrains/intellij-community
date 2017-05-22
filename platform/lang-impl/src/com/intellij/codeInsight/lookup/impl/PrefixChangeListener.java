@@ -18,4 +18,7 @@ package com.intellij.codeInsight.lookup.impl;
 public interface PrefixChangeListener {
     default void afterAppend(char c) {}
     default void afterTruncate() {}
+
+    default void beforeTruncate() {}
+    default void beforeAppend(char c) {}
 }

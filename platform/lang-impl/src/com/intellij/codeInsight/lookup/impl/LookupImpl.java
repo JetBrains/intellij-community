@@ -311,6 +311,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void appendPrefix(char c) {
     checkValid();
+    myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
     myOffsets.appendPrefix(c);
     withLock(() -> {
       myPresentableArranger.prefixChanged(this);
@@ -358,6 +359,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!myOffsets.truncatePrefix()) {
       return false;
     }
+    myPrefixChangeListeners.forEach((listener -> listener.beforeTruncate()));
 
     if (preserveSelection) {
       markSelectionTouched();
