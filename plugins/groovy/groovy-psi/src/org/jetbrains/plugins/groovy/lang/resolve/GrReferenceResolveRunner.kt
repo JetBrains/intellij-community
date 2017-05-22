@@ -53,13 +53,9 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
       if (place.context is GrMethodCall && !ClosureMissingMethodContributor.processMethodsFromClosures(place, processor)) return false
     }
     else {
+      val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
       if (place.dotTokenType === GroovyTokenTypes.mSPREAD_DOT) {
-        val qType = qualifier.type
-        val componentType = ClosureParameterEnhancer.findTypeForIteration(qType, place)
-        if (componentType != null) {
-          val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier).put(SpreadState.SPREAD_STATE, SpreadState.create(qType, null))
-          return processQualifierType(componentType, state)
-        }
+        return processSpread(qualifier.type, state)
       }
       else {
         if (ResolveUtil.isClassReference(place)) return false
@@ -78,14 +74,12 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
 
     val classType = ResolveUtil.unwrapClassType(qualifier.getType())
     return classType?.let {
-      val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
-      processQualifierType(classType, state)
+      processQualifierType(classType, initialState)
     } ?: true
   }
 
-  private fun processQualifier(qualifier: GrExpression, initialState: ResolveState): Boolean {
+  private fun processQualifier(qualifier: GrExpression, state: ResolveState): Boolean {
     val qualifierType = qualifier.type
-    val state = initialState.put(ClassHint.RESOLVE_CONTEXT, qualifier)
     if (qualifierType == null || PsiType.VOID == qualifierType) {
       if (qualifier is GrReferenceExpression) {
         val resolved = qualifier.resolve()
@@ -148,11 +142,7 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
     }
 
     if (place.parent !is GrMethodCall && InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-      ClosureParameterEnhancer.findTypeForIteration(qualifierType, place)?.let {
-        val spreadState = state.get(SpreadState.SPREAD_STATE)
-        val resolveState = state.put(SpreadState.SPREAD_STATE, SpreadState.create(qualifierType, spreadState))
-        if (!processQualifierType(it, resolveState)) return false
-      }
+      if (!processSpread(qualifierType, state)) return false
     }
 
     if (state.processNonCodeMembers()) {
@@ -160,6 +150,12 @@ private class GrReferenceResolveRunner(val place: GrReferenceExpression, val pro
       if (!ResolveUtil.processNonCodeMembers(qualifierType, processor, place, state)) return false
     }
     return true
+  }
+
+  private fun processSpread(qualifierType: PsiType?, state: ResolveState): Boolean {
+    val componentType = ClosureParameterEnhancer.findTypeForIteration(qualifierType, place) ?: return true
+    val spreadState = SpreadState.create(qualifierType, state.get(SpreadState.SPREAD_STATE))
+    return processQualifierType(componentType, state.put(SpreadState.SPREAD_STATE, spreadState))
   }
 }
 
