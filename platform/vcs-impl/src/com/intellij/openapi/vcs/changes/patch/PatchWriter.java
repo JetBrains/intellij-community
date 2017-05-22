@@ -43,31 +43,27 @@ public class PatchWriter {
   }
 
   public static void writePatches(@NotNull final Project project,
-                                  String fileName,
+                                  @NotNull String fileName,
                                   @NotNull String basePath,
-                                  List<FilePatch> patches,
-                                  CommitContext commitContext,
+                                  @NotNull List<FilePatch> patches,
+                                  @Nullable CommitContext commitContext,
                                   @NotNull Charset charset) throws IOException {
     writePatches(project, fileName, basePath, patches, commitContext, charset, false);
   }
 
   public static void writePatches(@NotNull final Project project,
-                                  String fileName,
+                                  @NotNull String fileName,
                                   @Nullable String basePath,
-                                  List<FilePatch> patches,
-                                  CommitContext commitContext,
+                                  @NotNull List<FilePatch> patches,
+                                  @Nullable CommitContext commitContext,
                                   @NotNull Charset charset, boolean includeBinaries) throws IOException {
-    Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset);
-    try {
+    try (Writer writer = new OutputStreamWriter(new FileOutputStream(fileName), charset)) {
       final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
       UnifiedDiffWriter
         .write(project, basePath, patches, writer, lineSeparator, Extensions.getExtensions(PatchEP.EP_NAME, project), commitContext);
       if (includeBinaries) {
         BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
       }
-    }
-    finally {
-      writer.close();
     }
   }
 
