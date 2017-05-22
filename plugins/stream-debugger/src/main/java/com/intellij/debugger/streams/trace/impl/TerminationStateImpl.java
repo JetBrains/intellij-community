@@ -29,14 +29,14 @@ import java.util.Map;
  * @author Vitaliy.Bibaev
  */
 public class TerminationStateImpl extends StateBase implements PrevAwareState {
-  private final Value myResult;
+  private final TraceElement myResult;
   private final StreamCall myPrevCall;
   private final Map<TraceElement, List<TraceElement>> myToPrev;
 
-  public TerminationStateImpl(@NotNull Value result,
-                              @NotNull StreamCall prevCall,
-                              @NotNull List<TraceElement> elements,
-                              @NotNull Map<TraceElement, List<TraceElement>> toPrevMapping) {
+  TerminationStateImpl(@NotNull TraceElement result,
+                       @NotNull StreamCall prevCall,
+                       @NotNull List<TraceElement> elements,
+                       @NotNull Map<TraceElement, List<TraceElement>> toPrevMapping) {
     super(elements);
     myResult = result;
     myPrevCall = prevCall;
@@ -46,7 +46,7 @@ public class TerminationStateImpl extends StateBase implements PrevAwareState {
   @NotNull
   @Override
   public List<Value> getRawValues() {
-    return Collections.singletonList(myResult);
+    return Collections.singletonList(myResult.getValue());
   }
 
   @NotNull
