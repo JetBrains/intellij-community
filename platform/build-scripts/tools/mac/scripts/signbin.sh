@@ -12,22 +12,22 @@ FILEPATH=$(dirname $0)/$FILENAME
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
 
-attemp=1
+attempt=1
 limit=3
 set +e
-while [ $attemp -le $limit ]
+while [ $attempt -le $limit ]
 do
-  echo "signing (attemp $attemp) ${FILEPATH}"
+  echo "signing (attempt $attempt) ${FILEPATH}"
   codesign -v --deep --force -s "${CODESIGN_STRING}" ${FILEPATH}
   if [ "$?" != "0" ]; then
-    let "attemp += 1"
-    if [ $attemp -eq $limit ]; then
+    let "attempt += 1"
+    if [ $attempt -eq $limit ]; then
       set -e
     fi
     echo "wait for 30 sec and try to sign again"
     sleep 30;
   else
-    let "attemp += $limit"
+    let "attempt += $limit"
     echo "signing done"
     codesign -v ${FILEPATH} -vvvvv
     echo "check sign done"

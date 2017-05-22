@@ -70,16 +70,16 @@ shopt -u nullglob
 # Make sure *.p12 is imported into local KeyChain
 security unlock-keychain -p ${PASSWORD} /Users/${USERNAME}/Library/Keychains/login.keychain
 
-attemp=1
+attempt=1
 limit=3
 set +e
-while [ $attemp -le $limit ]
+while [ $attempt -le $limit ]
 do
-  echo "signing (attemp $attemp) ${EXPLODED}/$BUILD_NAME"
+  echo "signing (attempt $attempt) ${EXPLODED}/$BUILD_NAME"
   codesign -v --deep --force -s "${CODESIGN_STRING}" "${EXPLODED}/$BUILD_NAME"
   if [ "$?" != "0" ]; then
-    let "attemp += 1"
-    if [ $attemp -eq $limit ]; then
+    let "attempt += 1"
+    if [ $attempt -eq $limit ]; then
       set -e
     fi
     echo "wait for 30 sec and try to sign again"
@@ -88,7 +88,7 @@ do
     echo "signing done"
     codesign -v ${EXPLODED}/"$BUILD_NAME" -vvvvv
     echo "check sign done"
-    let "attemp += $limit"
+    let "attempt += $limit"
   fi
 done
 
