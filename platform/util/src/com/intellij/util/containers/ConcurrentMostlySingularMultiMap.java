@@ -75,4 +75,14 @@ public class ConcurrentMostlySingularMultiMap<K, V> extends MostlySingularMultiM
     }
     return map.replace(key, oldValue, newValueToPut);
   }
+
+  @Override
+  public void addAll(MostlySingularMultiMap<K, V> other) {
+    throw new AbstractMethodError("Not yet re-implemented for concurrency");
+  }
+
+  @Override
+  public boolean remove(@NotNull K key, @NotNull V value) {
+    throw new AbstractMethodError("Not yet re-implemented for concurrency");
+  }
 }
