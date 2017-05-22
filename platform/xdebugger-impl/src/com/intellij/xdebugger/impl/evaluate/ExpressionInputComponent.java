@@ -60,7 +60,7 @@ public class ExpressionInputComponent extends EvaluationInputComponent {
                                   @Nullable String historyId,
                                   final @Nullable XSourcePosition sourcePosition,
                                   @Nullable XExpression expression,
-                                  Disposable parentDisposable,
+                                  @NotNull Disposable parentDisposable,
                                   boolean showHelp) {
     super(XDebuggerBundle.message("xdebugger.dialog.title.evaluate.expression"));
     //myMainPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.expression")), BorderLayout.WEST);

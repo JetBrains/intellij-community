@@ -196,7 +196,7 @@ public abstract class ArrayAction extends DebuggerAction {
 
       public ExpressionDialog(@NotNull Project project, XExpression expression) {
         super(project);
-        myInputComponent = new ExpressionInputComponent(project, new JavaDebuggerEditorsProvider(), "filterExpression", null, expression, null, false);
+        myInputComponent = new ExpressionInputComponent(project, new JavaDebuggerEditorsProvider(), "filterExpression", null, expression, myDisposable, false);
         setTitle("Filter");
         init();
       }
