@@ -44,7 +44,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
