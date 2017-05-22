@@ -407,18 +407,21 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
     if (viewProvider == null) return null;
 
     Boolean shown = ToggleBreadcrumbsAction.getForcedShown(editor);
-    if (shown != null && !shown) return null;
+    return shown != null && !shown ? null : findInfoProvider(shown == null, viewProvider);
+  }
 
+  @Nullable
+  static BreadcrumbsProvider findInfoProvider(boolean checkSettings, @NotNull FileViewProvider viewProvider) {
     EditorSettingsExternalizable settings = EditorSettingsExternalizable.getInstance();
-    if (shown == null && !settings.isBreadcrumbsShown()) return null;
+    if (checkSettings && !settings.isBreadcrumbsShown()) return null;
 
     Language baseLang = viewProvider.getBaseLanguage();
-    if (shown == null && !settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
+    if (checkSettings && !settings.isBreadcrumbsShownFor(baseLang.getID())) return null;
 
     BreadcrumbsProvider provider = getInfoProvider(baseLang);
     if (provider == null) {
       for (Language language : viewProvider.getLanguages()) {
-        if (shown != null || settings.isBreadcrumbsShownFor(language.getID())) {
+        if (!checkSettings || settings.isBreadcrumbsShownFor(language.getID())) {
           provider = getInfoProvider(language);
           if (provider != null) break;
         }
