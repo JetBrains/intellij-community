@@ -67,7 +67,7 @@ public class CreatePatchToClipboardAction extends DumbAwareAction {
       }
       catch (IOException | VcsException exception) {
         LOG.error("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError("Create patch failed");
+        VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }
