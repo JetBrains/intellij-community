@@ -130,6 +130,12 @@ public class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
+  @NotNull
+  @Override
+  public TabbedContent getContent() {
+    return myContent;
+  }
+
   private boolean hasMultipleTabs() {
     return myContent != null && myContent.getTabs().size() > 1;
   }
