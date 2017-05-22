@@ -26,6 +26,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
@@ -41,6 +42,7 @@ import com.intellij.util.loadElement
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import org.jdom.JDOMException
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
@@ -58,8 +60,6 @@ open class FileBasedStorage(file: Path,
   private @Volatile var cachedVirtualFile: VirtualFile? = null
   private var lineSeparator: LineSeparator? = null
   private var blockSavingTheContent = false
-
-  var resolveVirtualFileOnlyOnWrite = false
 
   @Volatile var file = file
     private set
@@ -115,34 +115,55 @@ open class FileBasedStorage(file: Path,
       return cachedVirtualFile
     }
 
-  override fun loadLocalData(): Element? {
-    blockSavingTheContent = false
+  private inline fun runAndHandleExceptions(task: () -> Unit) {
     try {
-      // use VFS to load module file because it is refreshed and loaded into VFS in any case
-      if (fileSpec != StoragePathMacros.MODULE_FILE) {
-        return loadLocalDataUsingIo()
-      }
-
-      val file = if (resolveVirtualFileOnlyOnWrite) cachedVirtualFile else virtualFile
-      if (file == null || file.isDirectory || !file.isValid) {
-        LOG.debug { "Document was not loaded for $fileSpec, not a file" }
-      }
-      else if (file.length == 0L) {
-        processReadException(null)
-      }
-      else {
-        val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(file.contentsToByteArray()))
-        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        @Suppress("DEPRECATION")
-        return loadElement(charBuffer)
-      }
-      return null
+      task()
     }
     catch (e: JDOMException) {
       processReadException(e)
     }
     catch (e: IOException) {
       processReadException(e)
+    }
+  }
+
+  fun preloadStorageData(isEmpty: Boolean) {
+    if (isEmpty) {
+      storageDataRef.set(StateMap.EMPTY)
+    }
+    else {
+      getStorageData()
+    }
+  }
+
+  override fun loadLocalData(): Element? {
+    blockSavingTheContent = false
+    // use VFS to load module file because it is refreshed and loaded into VFS in any case
+    val isModuleFile = fileSpec == StoragePathMacros.MODULE_FILE
+    if (!isModuleFile) {
+      runAndHandleExceptions {
+        return loadLocalDataUsingIo()
+      }
+    }
+
+    var virtualFile = cachedVirtualFile
+    if (virtualFile == null) {
+      virtualFile = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
+      if (virtualFile == null || !virtualFile.exists()) {
+        throw FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", file.systemIndependentPath))
+      }
+      cachedVirtualFile = virtualFile
+    }
+
+    if (virtualFile.length == 0L) {
+      processReadException(null)
+    }
+    else {
+      runAndHandleExceptions {
+        val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile!!.contentsToByteArray()))
+        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+        return loadElement(charBuffer)
+      }
     }
     return null
   }

@@ -41,7 +41,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -108,10 +107,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
 
   protected ModuleFileIndex createModuleFileIndex(@NotNull Project project) {
     return new ModuleFileIndexImpl(this, DirectoryIndex.getInstance(project));
-  }
-
-  @Override
-  public void init(@NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation) {
   }
 
   @Override

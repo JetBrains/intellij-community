@@ -24,6 +24,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.ServiceKt;
+import com.intellij.openapi.components.impl.stores.ModuleStore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -39,7 +41,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -244,32 +245,25 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       if (progressIndicator.isCanceled()) {
         break;
       }
-      try {
-        String path = modulePath.getPath();
-        if (!paths.add(path)) continue;
-        if (!parallel) {
-          tasks.add(Pair.create(null, modulePath));
-          continue;
+      String path = modulePath.getPath();
+      if (!paths.add(path)) continue;
+      if (!parallel) {
+        tasks.add(Pair.create(null, modulePath));
+        continue;
+      }
+      tasks.add(Pair.create(service.submit(() -> {
+        progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
+        try {
+          return myProject.isDisposed() ? null : moduleModel.loadModuleInternal(path);
         }
-        ThrowableComputable<Module, IOException> computable = moduleModel.loadModuleInternal(path);
-        Future<Module> future = service.submit(() -> {
-          progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
-          try {
-            return computable.compute();
-          }
-          catch (IOException e) {
-            reportError(errors, modulePath, e);
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-          return null;
-        });
-        tasks.add(Pair.create(future, modulePath));
-      }
-      catch (IOException e) {
-        reportError(errors, modulePath, e);
-      }
+        catch (IOException e) {
+          reportError(errors, modulePath, e);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+        return null;
+      }), modulePath));
     }
 
     for (Pair<Future<Module>, ModulePath> task : tasks) {
@@ -282,7 +276,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
           module = task.first.get();
         }
         else {
-          module = moduleModel.loadModuleInternal(task.second.getPath()).compute();
+          module = moduleModel.loadModuleInternal(task.second.getPath());
           progressIndicator.setFraction(progressIndicator.getFraction() + myProgressStep);
         }
         if (module == null) continue;
@@ -576,7 +570,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   protected abstract ModuleEx createModule(@NotNull String filePath);
 
   @NotNull
-  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) throws IOException;
+  protected abstract ModuleEx createAndLoadModule(@NotNull String filePath) throws IOException;
 
   static class ModuleModelImpl implements ModifiableModuleModel {
     final Map<String, Module> myModules = Collections.synchronizedMap(new LinkedHashMap<>());
@@ -677,18 +671,23 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       filePath = FileUtil.toSystemIndependentName(resolveShortWindowsName(filePath));
 
       ModuleEx module = getModuleByFilePath(filePath);
-      if (module == null) {
-        module = myManager.createModule(filePath);
-        final ModuleEx newModule = module;
-        initModule(module, filePath, null, () -> {
-          newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
-          if (options != null) {
-            for (Map.Entry<String, String> option : options.entrySet()) {
-              newModule.setOption(option.getKey(), option.getValue());
-            }
-          }
-        });
+      if (module != null) {
+        return module;
       }
+
+      module = myManager.createModule(filePath);
+      final ModuleEx newModule = module;
+      String finalFilePath = filePath;
+      initModule(module, () -> {
+        ((ModuleStore)ServiceKt.getStateStore(newModule)).setPath(finalFilePath, true);
+
+        newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+        if (options != null) {
+          for (Map.Entry<String, String> option : options.entrySet()) {
+            newModule.setOption(option.getKey(), option.getValue());
+          }
+        }
+      });
       return module;
     }
 
@@ -716,41 +715,32 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @NotNull
     public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
       assertWritable();
+      String resolvedPath = resolveShortWindowsName(filePath);
       try {
-        Module module = getModuleByFilePath(filePath);
-        if (module != null) return module;
-        return loadModuleInternal(filePath).compute();
+        Module module = getModuleByFilePath(resolvedPath);
+        return module == null ? loadModuleInternal(resolvedPath) : module;
       }
       catch (FileNotFoundException e) {
         throw e;
       }
       catch (IOException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(filePath), e.getMessage()), e);
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(resolvedPath), e.getMessage()), e);
       }
     }
 
     @NotNull
-    private ThrowableComputable<Module, IOException> loadModuleInternal(@NotNull String filePath) throws IOException {
-      String resolvedPath = resolveShortWindowsName(filePath);
-      Ref<VirtualFile> ref = Ref.create();
-      ApplicationManager.getApplication().invokeAndWait(() -> ref.set(StandardFileSystems.local().refreshAndFindFileByPath(resolvedPath)));
-      VirtualFile moduleFile = ref.get();
-      if (moduleFile == null || !moduleFile.exists()) {
-        throw new FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", resolvedPath));
-      }
-
-      String path = moduleFile.getPath();
-      ApplicationManager.getApplication().invokeAndWait(() -> moduleFile.refresh(false, false));
-      return () -> ReadAction.compute(() -> {
-        if (myManager.myProject.isDisposed()) return null;
-        ModuleEx result = myManager.createAndLoadModule(path, moduleFile);
-        initModule(result, path, moduleFile, null);
-        return result;
+    private Module loadModuleInternal(@NotNull String filePath) throws IOException {
+      // we cannot call refreshAndFindFileByPath during module init under read action because it is forbidden
+      StandardFileSystems.local().refreshAndFindFileByPath(filePath);
+      return ReadAction.compute(() -> {
+        ModuleEx module = myManager.createAndLoadModule(filePath);
+        initModule(module, () -> ((ModuleStore)ServiceKt.getStateStore(module)).setPath(filePath, false));
+        return module;
       });
     }
 
-    private void initModule(@NotNull ModuleEx module, @NotNull String path, @Nullable VirtualFile file, @Nullable Runnable beforeComponentCreation) {
-      module.init(path, file, beforeComponentCreation);
+    private void initModule(@NotNull ModuleEx module, @Nullable Runnable beforeComponentCreation) {
+      module.init(beforeComponentCreation);
       myModulesCache = null;
       myModules.put(module.getName(), module);
     }
