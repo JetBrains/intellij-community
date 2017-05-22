@@ -26,26 +26,21 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.evaluate.EvaluationInputComponent;
-import com.intellij.xdebugger.impl.evaluate.ExpressionInputComponent;
-import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
+import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-import javax.swing.*;
 import java.util.List;
 
 public abstract class ArrayAction extends DebuggerAction {
@@ -179,9 +174,15 @@ public abstract class ArrayAction extends DebuggerAction {
     @Nullable
     @Override
     protected ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title) {
-      ExpressionDialog dialog =
-        new ExpressionDialog(project, original instanceof ArrayRenderer.Filtered ? ((ArrayRenderer.Filtered)original).getExpression()
-                                                                                 : XExpressionImpl.EMPTY_EXPRESSION);
+      XExpressionDialog dialog =
+        new XExpressionDialog(project,
+                              new JavaDebuggerEditorsProvider(),
+                              "filterExpression",
+                              "Filter",
+                              null,
+                             original instanceof ArrayRenderer.Filtered
+                               ? ((ArrayRenderer.Filtered)original).getExpression()
+                               : XExpressionImpl.EMPTY_EXPRESSION);
       if (dialog.showAndGet()) {
         XExpression expression = dialog.getExpression();
         return XDebuggerUtilImpl.isEmptyExpression(expression) ?
@@ -189,40 +190,6 @@ public abstract class ArrayAction extends DebuggerAction {
                  new ArrayRenderer.Filtered(expression);
       }
       return null;
-    }
-
-    private static class ExpressionDialog extends DialogWrapper {
-      private final EvaluationInputComponent myInputComponent;
-
-      public ExpressionDialog(@NotNull Project project, XExpression expression) {
-        super(project);
-        myInputComponent = new ExpressionInputComponent(project, new JavaDebuggerEditorsProvider(), "filterExpression", null, expression, myDisposable, false);
-        setTitle("Filter");
-        init();
-      }
-
-      @Nullable
-      @Override
-      protected JComponent createCenterPanel() {
-        return myInputComponent.getMainComponent();
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return myInputComponent.getInputEditor().getPreferredFocusedComponent();
-      }
-
-      XExpression getExpression() {
-        XDebuggerEditorBase editor = myInputComponent.getInputEditor();
-        editor.saveTextInHistory();
-        return editor.getExpression();
-      }
-
-      @Override
-      protected String getDimensionServiceKey() {
-        return "#debugger.expression.dialog";
-      }
     }
   }
 }
