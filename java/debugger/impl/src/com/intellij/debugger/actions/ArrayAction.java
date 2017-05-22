@@ -218,6 +218,11 @@ public abstract class ArrayAction extends DebuggerAction {
         editor.saveTextInHistory();
         return editor.getExpression();
       }
+
+      @Override
+      protected String getDimensionServiceKey() {
+        return "#debugger.expression.dialog";
+      }
     }
   }
 }
