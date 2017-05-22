@@ -18,7 +18,6 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -68,11 +67,6 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
 
       g2.setColor(color);
       g2.fill(border);
-
-      if (c.hasFocus()) {
-        g2.setColor(b.getForeground());
-        UIUtil.drawDottedRectangle(g2, bw+1, bw+1, width - bw*2, height - bw*2);
-      }
     } finally {
       g2.dispose();
     }
