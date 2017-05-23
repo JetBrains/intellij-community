@@ -58,6 +58,6 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
 
   @Override
   public String toString() {
-    return "chain size: " + myChainSize + ", unreachable args: " + myUnreachableParametersCount + ", parameters in context: " + myParametersInContext;
+    return "{\"chain_size\": " + myChainSize + ", \"unreachable_params\": " + myUnreachableParametersCount + ", \"parameters_in_context\": " + myParametersInContext + "}";
   }
 }
