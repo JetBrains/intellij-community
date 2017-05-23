@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     super(astNode);
   }
 
+  @Override
   @NotNull
   public PyExpression getOperand() {
     return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
@@ -57,6 +58,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     return operand;
   }
 
+  @Override
   @Nullable
   public PyExpression getIndexExpression() {
     return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
@@ -98,6 +100,11 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
       }
       members.add(res);
     }
+
+    if (type instanceof PyUnionType && ((PyUnionType)type).isWeak()) {
+      return PyUnionType.createWeakType(PyUnionType.union(members));
+    }
+
     return PyUnionType.union(members);
   }
 

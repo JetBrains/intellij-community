@@ -1897,6 +1897,13 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-24383
+  public void testSubscriptionOnWeakType() {
+    doTest("Union[int, Any]",
+           "foo = bar() if 42 != 42 else [1, 2, 3, 4]\n" +
+           "expr = foo[0]");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
