@@ -51,11 +51,12 @@ public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext debuggerContext) throws EvaluateException {
-    if (getValue() instanceof ObjectReference) {
+    final Value value = getValue();
+    if (value instanceof ObjectReference) {
       return super.getDescriptorEvaluation(debuggerContext);
     }
 
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    return elementFactory.createExpressionFromText("", ContextUtil.getContextElement(debuggerContext));
+    return elementFactory.createExpressionFromText(value.toString(), ContextUtil.getContextElement(debuggerContext));
   }
 }
