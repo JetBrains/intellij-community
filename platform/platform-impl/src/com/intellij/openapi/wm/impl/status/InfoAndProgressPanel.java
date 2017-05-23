@@ -61,12 +61,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
+
+import static com.intellij.icons.AllIcons.Process.*;
 
 public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
@@ -702,11 +702,23 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
           String toolTipText = suspender.isSuspended() ? "Resume" : "Pause";
           if (!toolTipText.equals(suspendButton.getToolTipText())) {
             updateProgressIcon();
-            suspendButton.setIcon(suspender.isSuspended() ? AllIcons.Actions.Resume : AllIcons.Actions.Pause);
+            if (suspender.isSuspended()) showResumeIcons(suspendButton);
+            else showPauseIcons(suspendButton);
             suspendButton.setToolTipText(toolTipText);
           }
         }
       });
+    }
+
+    private void showPauseIcons(InplaceButton button) {
+      setIcons(button, ProgressPauseSmall, ProgressPause, ProgressPauseSmallHover, ProgressPauseHover);
+    }
+    private void showResumeIcons(InplaceButton button) {
+      setIcons(button, ProgressResumeSmall, ProgressResume, ProgressResumeSmallHover, ProgressResumeHover);
+    }
+
+    private void setIcons(InplaceButton button, Icon compactRegular, Icon regular, Icon compactHovered, Icon hovered) {
+      button.setIcons(isCompact() ? compactRegular : regular, null, isCompact() ? compactHovered : hovered);
     }
 
     @Nullable

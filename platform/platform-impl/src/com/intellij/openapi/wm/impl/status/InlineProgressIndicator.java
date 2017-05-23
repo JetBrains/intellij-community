@@ -30,6 +30,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -114,8 +115,11 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   static JPanel createButtonPanel(Iterable<JComponent> components) {
-    JPanel iconsPanel = new NonOpaquePanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-    components.forEach(iconsPanel::add);
+    JPanel iconsPanel = new NonOpaquePanel(new GridBagLayout());
+    GridBag gb = new GridBag().setDefaultFill(GridBagConstraints.BOTH);
+    for (JComponent component : components) {
+      iconsPanel.add(component, gb.next());
+    }
     return iconsPanel;
   }
 
@@ -131,7 +135,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private ProgressButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
-      new IconButton(myInfo.getCancelTooltipText(), AllIcons.Process.Stop, AllIcons.Process.StopHovered),
+      new IconButton(myInfo.getCancelTooltipText(), 
+                     myCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop, 
+                     myCompact ? AllIcons.Process.StopSmallHovered : AllIcons.Process.StopHovered),
       new ActionListener() {
         @Override
         public void actionPerformed(final ActionEvent e) {
