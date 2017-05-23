@@ -47,19 +47,15 @@ import java.util.stream.Collectors;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author Dmitry Batkovich
- */
 public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodChainCompletionContributor.class);
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
-  public static final CompletionType COMPLETION_TYPE = UNIT_TEST_MODE ? CompletionType.BASIC : CompletionType.SMART;
 
   @SuppressWarnings("unchecked")
   public MethodChainCompletionContributor() {
-    ElementPattern<PsiElement> pattern = or(patternForMethodCallParameter(), patternForVariableAssignment());
-    extend(COMPLETION_TYPE, pattern, new CompletionProvider<CompletionParameters>() {
+    ElementPattern<PsiElement> pattern = or(patternForMethodCallArgument(), patternForVariableAssignment());
+    extend(CompletionType.SMART, pattern, new CompletionProvider<CompletionParameters>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     ProcessingContext context,
@@ -69,24 +65,22 @@ public class MethodChainCompletionContributor extends CompletionContributor {
           ChainCompletionContext completionContext = extractContext(parameters);
           if (completionContext == null) return;
           final Set<PsiMethod> alreadySuggested = new THashSet<>();
+          CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, completionResult -> {
             LookupElement lookupElement = completionResult.getLookupElement();
             PsiElement psi = lookupElement.getPsiElement();
             if (psi instanceof PsiMethod) {
               alreadySuggested.add((PsiMethod)psi);
             }
-            result.passResult(completionResult);
+            finalResult.passResult(completionResult);
           });
+          result = JavaCompletionSorting.addJavaSorting(parameters, result);
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
-          if (!UNIT_TEST_MODE) {
-            Iterator<LookupElement> it = elementsFoundByMethodsChainsSearch.iterator();
-            while (it.hasNext()) {
-              LookupElement lookupElement = it.next();
+          if (!UNIT_TEST_MODE && !alreadySuggested.isEmpty()) {
+            elementsFoundByMethodsChainsSearch = elementsFoundByMethodsChainsSearch.stream().filter(lookupElement -> {
               PsiElement psi = lookupElement.getPsiElement();
-              if (psi instanceof PsiMethod && alreadySuggested.contains(psi)) {
-                it.remove();
-              }
-            }
+              return !(psi instanceof PsiMethod) || !alreadySuggested.contains(psi);
+            }).collect(Collectors.toList());
           }
           result.addAllElements(elementsFoundByMethodsChainsSearch);
         }
@@ -111,7 +105,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
     return searchResult
       .stream()
       .filter(ch -> ch.getChainWeight() * ChainSearchMagicConstants.FILTER_RATIO >= maxWeight)
-      .map(ch -> MethodChainLookupRangingHelper.chainToWeightableLookupElement(ch, context))
+      .map(ch -> MethodChainLookupRangingHelper.toLookupElement(ch, context))
       .collect(Collectors.toList());
   }
 
@@ -170,7 +164,7 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   @NotNull
-  private static ElementPattern<PsiElement> patternForMethodCallParameter() {
+  private static ElementPattern<PsiElement> patternForMethodCallArgument() {
     return psiElement().withSuperParent(3, PsiMethodCallExpressionImpl.class);
   }
 

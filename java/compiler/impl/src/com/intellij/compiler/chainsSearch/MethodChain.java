@@ -113,11 +113,8 @@ public class MethodChain {
 
   @SuppressWarnings("ConstantConditions")
   public static CompareResult compare(@NotNull MethodChain left, @NotNull MethodChain right) {
-    if (left.length() == 0) {
-      return CompareResult.RIGHT_CONTAINS_LEFT;
-    }
-    if (right.length() == 0) {
-      return CompareResult.LEFT_CONTAINS_RIGHT;
+    if (left.length() == 0 || right.length() == 0) {
+      throw new IllegalStateException("chains can't be empty");
     }
     Iterator<PsiMethod[]> leftIterator = left.myRevertedPath.iterator();
     Iterator<PsiMethod[]> rightIterator = right.myRevertedPath.iterator();

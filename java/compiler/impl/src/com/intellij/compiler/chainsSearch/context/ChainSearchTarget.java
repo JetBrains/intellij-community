@@ -26,9 +26,6 @@ import org.jetbrains.jps.backwardRefs.SignatureData;
 
 import java.util.Set;
 
-/**
- * @author Dmitry Batkovich
- */
 public class ChainSearchTarget {
   private static final Set<String> EXCLUDED_PACKAGES = ContainerUtil.set("java.lang", "java.util.function");
 

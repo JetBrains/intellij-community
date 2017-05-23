@@ -15,36 +15,20 @@
  */
 package com.intellij.compiler.chainsSearch;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-/**
- * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
- */
 public class ChainRelevance implements Comparable<ChainRelevance> {
-  public static final ChainRelevance LOWEST = new ChainRelevance(Integer.MAX_VALUE, 0, Integer.MAX_VALUE, Integer.MAX_VALUE, false, false, 0);
-
   private final int myChainSize;
-  private final int myLastMethodOccurrences;
   private final int myUnreachableParametersCount;
-  private final int myNotMatchedStringVars;
-  private final boolean myHasQualifierInContext;
-  private final boolean myFirstMethodStatic;
   private final int myParametersInContext;
 
   public ChainRelevance(final int chainSize,
-                        final int lastMethodOccurrences,
                         final int unreachableParametersCount,
-                        final int notMatchedStringVars,
-                        final boolean hasQualifierInContext,
-                        final boolean firstMethodStatic,
                         final int parametersInContext) {
     myChainSize = chainSize;
-    myLastMethodOccurrences = lastMethodOccurrences;
     myUnreachableParametersCount = unreachableParametersCount;
-    myNotMatchedStringVars = notMatchedStringVars;
-    myHasQualifierInContext = hasQualifierInContext;
-    myFirstMethodStatic = firstMethodStatic;
     myParametersInContext = parametersInContext;
   }
 
@@ -54,52 +38,26 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   }
 
   @TestOnly
-  public int getLastMethodOccurrences() {
-    return myLastMethodOccurrences;
-  }
-
-  @TestOnly
   public int getUnreachableParametersCount() {
     return myUnreachableParametersCount;
   }
 
   @TestOnly
-  public int getNotMatchedStringVars() {
-    return myNotMatchedStringVars;
+  public int getParametersInContext() {
+    return myParametersInContext;
   }
 
   @Override
   public int compareTo(@NotNull final ChainRelevance that) {
-    if (myHasQualifierInContext && !that.myHasQualifierInContext) {
-      return 1;
-    }
-    if (that.myHasQualifierInContext && !myHasQualifierInContext) {
-      return -1;
-    }
-    if (myFirstMethodStatic && !that.myFirstMethodStatic) {
-      return -1;
-    }
-    if (that.myFirstMethodStatic && !myFirstMethodStatic) {
-      return 1;
-    }
-    if (myParametersInContext > that.myParametersInContext) {
-      return 1;
-    }
-    if (myParametersInContext < that.myParametersInContext) {
-      return -1;
-    }
-    int sub = myLastMethodOccurrences - that.myLastMethodOccurrences;
+    int sub = Comparing.compare(myChainSize, that.myChainSize);
     if (sub != 0) return sub;
-    sub = myUnreachableParametersCount - that.myUnreachableParametersCount;
-    if (sub != 0) return -sub;
-    return 0;
+    sub = Comparing.compare(myUnreachableParametersCount, that.myUnreachableParametersCount);
+    if (sub != 0) return sub;
+    return -Comparing.compare(myParametersInContext, that.myParametersInContext);
   }
 
   @Override
   public String toString() {
-    return (myFirstMethodStatic ? "1" : "0") +
-           (myHasQualifierInContext ? "1" : "0") + "_" +
-           myLastMethodOccurrences + "_" +
-           myUnreachableParametersCount;
+    return "chain size: " + myChainSize + ", unreachable args: " + myUnreachableParametersCount + ", parameters in context: " + myParametersInContext;
   }
 }
