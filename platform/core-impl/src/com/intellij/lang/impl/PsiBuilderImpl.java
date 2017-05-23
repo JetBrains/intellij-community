@@ -47,7 +47,6 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -103,7 +102,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private IElementType myCachedTokenType;
 
   private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
-  private final THashMap<StartMarker, Throwable> myDebugAllocationPositions = new THashMap<>(0, ContainerUtil.identityStrategy());
+  private final Map<StartMarker, Throwable> myDebugAllocationPositions = new IdentityHashMap<>(0);
   private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myLeftBinders = new IdentityHashMap<>(0);
   private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myRightBinders = new IdentityHashMap<>(0);
 
@@ -286,9 +285,9 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     abstract void setBinder(@NotNull WhitespacesAndCommentsBinder binder);
 
-    protected void processBinder(@NotNull WhitespacesAndCommentsBinder binder,
-                                 @NotNull Map<ProductionMarker, WhitespacesAndCommentsBinder> map, 
-                                 @NotNull WhitespacesAndCommentsBinder defaultBinder) {
+    void assignBinder(@NotNull WhitespacesAndCommentsBinder binder,
+                      @NotNull Map<ProductionMarker, WhitespacesAndCommentsBinder> map,
+                      @NotNull WhitespacesAndCommentsBinder defaultBinder) {
       if (binder != defaultBinder) {
         map.put(this, binder);
       }
@@ -376,7 +375,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      processBinder(binder, myBuilder.myLeftBinders, DEFAULT_LEFT_BINDER);
+      assignBinder(binder, myBuilder.myLeftBinders, DEFAULT_LEFT_BINDER);
     }
 
     public void addChild(@NotNull ProductionMarker node) {
@@ -662,7 +661,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      processBinder(binder, myStart.myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
+      assignBinder(binder, myStart.myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
@@ -727,7 +726,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      processBinder(binder, myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
+      assignBinder(binder, myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
@@ -1078,10 +1077,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
             Throwable debugAllocThis = myDebugAllocationPositions.get(((StartMarker)marker));
             Throwable currentTrace = new Throwable();
             if (debugAllocThis != null) {
+              //noinspection UseOfSystemOutOrSystemErr
               ExceptionUtil.makeStackTraceRelative(debugAllocThis, currentTrace).printStackTrace(System.err);
             }
             Throwable debugAllocOther = myDebugAllocationPositions.get(otherMarker);
             if (debugAllocOther != null) {
+              //noinspection UseOfSystemOutOrSystemErr
               ExceptionUtil.makeStackTraceRelative(debugAllocOther, currentTrace).printStackTrace(System.err);
             }
           }
