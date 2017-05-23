@@ -1,6 +1,6 @@
 package com.jetbrains.jsonSchema.impl;
 
-import com.jetbrains.jsonSchema.extension.JsonValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

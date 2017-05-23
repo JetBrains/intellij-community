@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.extension;
+package com.jetbrains.jsonSchema.extension.adapters;
 
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Irina.Chernushina on 2/20/2017.
  */
-public interface JsonArrayValueAdapter extends JsonValueAdapter {
-  @NotNull List<JsonValueAdapter> getElements();
+public interface JsonValueAdapter {
+  boolean isObject();
+  boolean isArray();
+  boolean isStringLiteral();
+  boolean isNumberLiteral();
+  boolean isBooleanLiteral();
+  boolean isNull();
 
-  @Override
-  default boolean isNull() {
-    return false;
-  }
+  @NotNull PsiElement getDelegate();
+
+  @Nullable JsonObjectValueAdapter getAsObject();
+  @Nullable JsonArrayValueAdapter getAsArray();
+
+  default boolean shouldCheckIntegralRequirements() {return true;}
 }

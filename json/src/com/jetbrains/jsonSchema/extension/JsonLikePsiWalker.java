@@ -17,6 +17,8 @@ package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVariantsTreeBuilder;
@@ -41,9 +43,11 @@ public interface JsonLikePsiWalker {
   boolean onlyDoubleQuotesForStringLiterals();
   boolean hasPropertiesBehindAndNoComma(@NotNull PsiElement element);
   Set<String> getPropertyNamesOfParentObject(@NotNull PsiElement element);
-  @Nullable JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);
+  @Nullable
+  JsonPropertyAdapter getParentPropertyAdapter(@NotNull PsiElement element);
   boolean isTopJsonElement(@NotNull PsiElement element);
-  @Nullable JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
+  @Nullable
+  JsonValueAdapter createValueAdapter(@NotNull PsiElement element);
 
   static JsonLikePsiWalker getWalker(@NotNull final PsiElement element, JsonSchemaObject schemaObject) {
     if (JSON_ORIGINAL_PSI_WALKER.handles(element)) return JSON_ORIGINAL_PSI_WALKER;

@@ -23,8 +23,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
-import com.jetbrains.jsonSchema.extension.JsonPropertyAdapter;
-import com.jetbrains.jsonSchema.extension.JsonValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +46,7 @@ public class JsonSchemaAnnotator implements Annotator {
 
     final JsonSchemaObject rootSchema =
       JsonSchemaService.Impl.get(element.getProject()).getSchemaObject(element.getContainingFile().getViewProvider().getVirtualFile());
-    if (rootSchema == null || rootSchema.getSchemaFile() == null) return;
+    if (rootSchema == null) return;
 
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(element, rootSchema);
     if (walker == null) return;

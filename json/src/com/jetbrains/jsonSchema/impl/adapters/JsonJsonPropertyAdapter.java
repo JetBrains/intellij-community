@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.impl.adapters;
 
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.jsonSchema.extension.JsonArrayValueAdapter;
-import com.jetbrains.jsonSchema.extension.JsonObjectValueAdapter;
-import com.jetbrains.jsonSchema.extension.JsonPropertyAdapter;
-import com.jetbrains.jsonSchema.extension.JsonValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +68,7 @@ public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
   }
 
   @NotNull
-  static JsonValueAdapter createAdapterByType(@NotNull JsonValue value) {
+  public static JsonValueAdapter createAdapterByType(@NotNull JsonValue value) {
     if (value instanceof JsonObject) return new JsonJsonObjectAdapter((JsonObject)value);
     if (value instanceof JsonArray) return new JsonJsonArrayAdapter((JsonArray)value);
     return new JsonJsonGenericValueAdapter(value);

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.jsonSchema.impl;
+package com.jetbrains.jsonSchema.impl.adapters;
 
 import com.intellij.json.psi.JsonObject;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.jsonSchema.extension.JsonArrayValueAdapter;
-import com.jetbrains.jsonSchema.extension.JsonObjectValueAdapter;
-import com.jetbrains.jsonSchema.extension.JsonPropertyAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
+import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
