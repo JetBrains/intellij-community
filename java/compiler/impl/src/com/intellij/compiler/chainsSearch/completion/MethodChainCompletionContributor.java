@@ -47,9 +47,6 @@ import java.util.stream.Collectors;
 import static com.intellij.patterns.PsiJavaPatterns.or;
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
-/**
- * @author Dmitry Batkovich
- */
 public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
   private static final Logger LOG = Logger.getInstance(MethodChainCompletionContributor.class);

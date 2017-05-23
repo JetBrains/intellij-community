@@ -28,9 +28,6 @@ import com.intellij.util.SmartList;
 
 import java.util.List;
 
-/**
- * @author Dmitry Batkovich
- */
 @SkipSlowTestLocally
 public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
   private final static String TEST_INDEX_FILE_NAME = "TestIndex.java";

@@ -21,9 +21,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Batkovich
- */
 public class MethodChainWeigher extends CompletionWeigher {
   @Override
   public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
