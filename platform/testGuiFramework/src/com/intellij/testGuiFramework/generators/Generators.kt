@@ -535,8 +535,8 @@ object Utils {
         else -> {
           val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jbList, elementAt, index) as JComponent
           if (listCellRendererComponent is JPanel) {
-            val label = withRobot { robot -> robot.finder().find(listCellRendererComponent, ComponentMatcher { it is JLabel }) }
-            if (label is JLabel) return label.text
+            val labels = withRobot { robot -> robot.finder().findAll(listCellRendererComponent, ComponentMatcher { it is JLabel }) }
+            return labels.filterIsInstance(JLabel::class.java).filter { it.text.isNotEmpty() }.firstOrNull()?.text
           }
           return elementAt.toString()
         }
