@@ -307,8 +307,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       super.beforeElementLoaded(element)
     }
 
-    override fun dataLoadedFromProvider(element: Element?) {
-      storageManager.dataLoadedFromProvider(this, element)
+    override fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
+      storageManager.providerDataStateChanged(this, element, type)
+      super.providerDataStateChanged(element, type)
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
@@ -322,10 +323,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun beforeElementSaved(element: Element) {
   }
 
-  protected open fun beforeElementLoaded(element: Element) {
+  protected open fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
   }
 
-  protected open fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {
+  protected open fun beforeElementLoaded(element: Element) {
   }
 
   override final fun rename(path: String, newName: String) {
