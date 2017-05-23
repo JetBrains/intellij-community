@@ -138,7 +138,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
     if (uiSettings.getActiveMruEditorOnClose()) {
       myActivateMRUEditorOnCloseRadio.setSelected(true);
     }
-    else if (uiSettings.getActiveRigtEditorOnClose()) {
+    else if (uiSettings.getActiveRightEditorOnClose()) {
       myActivateRightNeighbouringTabRadioButton.setSelected(true);
     }
     else {
@@ -179,7 +179,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     uiSettings.setCloseNonModifiedFilesFirst(myCloseNonModifiedFilesFirstRadio.isSelected());
     uiSettings.setActiveMruEditorOnClose(myActivateMRUEditorOnCloseRadio.isSelected());
-    uiSettings.setActiveRigtEditorOnClose(myActivateRightNeighbouringTabRadioButton.isSelected());
+    uiSettings.setActiveRightEditorOnClose(myActivateRightNeighbouringTabRadioButton.isSelected());
 
     if (isModified(myReuseNotModifiedTabsCheckBox, uiSettings.getReuseNotModifiedTabs())) uiSettingsChanged = true;
     uiSettings.setReuseNotModifiedTabs(myReuseNotModifiedTabsCheckBox.isSelected());
@@ -213,7 +213,7 @@ public class EditorTabsConfigurable implements EditorOptionsProvider {
 
     isModified |= isModified(myCloseNonModifiedFilesFirstRadio, uiSettings.getCloseNonModifiedFilesFirst());
     isModified |= isModified(myActivateMRUEditorOnCloseRadio, uiSettings.getActiveMruEditorOnClose());
-    isModified |= isModified(myActivateRightNeighbouringTabRadioButton, uiSettings.getActiveRigtEditorOnClose());
+    isModified |= isModified(myActivateRightNeighbouringTabRadioButton, uiSettings.getActiveRightEditorOnClose());
 
     return isModified;
   }
