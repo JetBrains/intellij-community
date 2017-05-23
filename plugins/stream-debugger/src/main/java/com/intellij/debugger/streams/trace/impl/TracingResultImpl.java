@@ -22,18 +22,16 @@ import com.intellij.debugger.streams.resolve.impl.ResolvedStreamChainImpl;
 import com.intellij.debugger.streams.resolve.impl.ResolvedTerminatorCallImpl;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
-import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Vitaliy.Bibaev
@@ -93,29 +91,22 @@ public class TracingResultImpl implements TracingResult {
       chainBuilder.setTerminator(buildResolvedTerminationCall(myTrace.get(1), producerState, resolvedTraces.get(1).getReverseOrder()));
     }
     else {
-      List<IntermediateCallStateBuilder> builders = Stream.generate(IntermediateCallStateBuilder::new)
-        .limit(intermediateCalls.size())
-        .collect(Collectors.toList());
-      for (int i = 0; i < builders.size() - 1; i++) {
-        final IntermediateCallStateBuilder builder = builders.get(i);
-        builder.elements = TraceUtil.sortedByTime(myTrace.get(i + 1).getValuesOrderAfter().values());
-        builder.prevCall = intermediateCalls.get(i);
-        builder.nextCall = intermediateCalls.get(i + 1);
-        final ValuesOrderResolver.Result currentResolvedTrace = resolvedTraces.get(i + 1);
-        final ValuesOrderResolver.Result nextResolvedTrace = resolvedTraces.get(i + 2);
-        builder.toPrev = currentResolvedTrace.getReverseOrder();
-        builder.toNext = nextResolvedTrace.getDirectOrder();
+      final ArrayList<IntermediateStateImpl> states = new ArrayList<>();
+
+      for (int i = 0; i < intermediateCalls.size() - 1; i++) {
+        states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(i + 1).getValuesOrderAfter().values()),
+                                             intermediateCalls.get(i + 1),
+                                             intermediateCalls.get(i),
+                                             resolvedTraces.get(i + 1).getReverseOrder(),
+                                             resolvedTraces.get(i + 2).getDirectOrder()));
       }
 
-      final IntermediateCallStateBuilder lastIntermediateBuilder = builders.get(builders.size() - 1);
-      lastIntermediateBuilder.elements = TraceUtil.sortedByTime(myTrace.get(myTrace.size() - 1).getValuesOrderBefore().values());
-      lastIntermediateBuilder.prevCall = intermediateCalls.get(intermediateCalls.size() - 1);
-      lastIntermediateBuilder.nextCall = mySourceChain.getTerminationCall();
-      lastIntermediateBuilder.toPrev = resolvedTraces.get(resolvedTraces.size() - 2).getReverseOrder();
-      lastIntermediateBuilder.toNext = resolvedTraces.get(resolvedTraces.size() - 1).getDirectOrder();
-      final List<IntermediateStateImpl> states = builders.stream()
-        .map(IntermediateCallStateBuilder::build)
-        .collect(Collectors.toList());
+      states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(myTrace.size() - 1).getValuesOrderBefore().values()),
+                                           mySourceChain.getTerminationCall(),
+                                           intermediateCalls.get(intermediateCalls.size() - 1),
+                                           resolvedTraces.get(resolvedTraces.size() - 2).getReverseOrder(),
+                                           resolvedTraces.get(resolvedTraces.size() - 1).getDirectOrder()));
+
       chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.get(0), producerState, states.get(0)));
       for (int i = 1; i < states.size(); i++) {
         chainBuilder.addIntermediate(new ResolvedIntermediateCallImpl(intermediateCalls.get(i), states.get(i - 1), states.get(i)));
@@ -168,23 +159,6 @@ public class TracingResultImpl implements TracingResult {
     @Override
     public Value getResult() {
       return myStreamResult;
-    }
-  }
-
-  private static class IntermediateCallStateBuilder {
-    List<TraceElement> elements;
-    StreamCall prevCall;
-    StreamCall nextCall;
-    Map<TraceElement, List<TraceElement>> toPrev;
-    Map<TraceElement, List<TraceElement>> toNext;
-
-    public IntermediateStateImpl build() {
-      Objects.requireNonNull(elements);
-      Objects.requireNonNull(nextCall);
-      Objects.requireNonNull(prevCall);
-      Objects.requireNonNull(toPrev);
-      Objects.requireNonNull(toNext);
-      return new IntermediateStateImpl(elements, nextCall, prevCall, toPrev, toNext);
     }
   }
 }
