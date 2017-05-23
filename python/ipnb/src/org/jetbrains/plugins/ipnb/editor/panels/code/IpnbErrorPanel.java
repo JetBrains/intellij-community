@@ -9,10 +9,7 @@ import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbErrorOutputCell;
 
 import javax.swing.*;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
+import javax.swing.text.*;
 import java.awt.*;
 import java.util.List;
 
@@ -72,6 +69,9 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
       remaining = "";
 
       if (addString.length() > 0) {
+        if (handleCarriageReturn(addString)) {
+          return;
+        }
         index = addString.indexOf("\u001B");
         if (index == -1) {
           append(currentColor, addString);
@@ -112,6 +112,26 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
           append(currentColor, substring);
         }
       }
+    }
+
+    private boolean handleCarriageReturn(String addString) {
+      int index = addString.indexOf("\r");
+      if (index >= 0 && addString.length() > index+1) {
+        appendANSI(addString.substring(0, index));
+        String substring = addString.substring(index+1);
+        final Element element = getDocument().getDefaultRootElement();
+        final int position = getDocument().getLength();
+        final int line = element.getElementIndex(position);
+        final int offset = element.getElement(line).getStartOffset();
+        try {
+          getDocument().remove(offset, getDocument().getLength()-offset);
+        }
+        catch (BadLocationException ignored) {
+        }
+        appendANSI(substring);
+        return true;
+      }
+      return false;
     }
 
     public static Color getANSIColor(String ANSIColor) {

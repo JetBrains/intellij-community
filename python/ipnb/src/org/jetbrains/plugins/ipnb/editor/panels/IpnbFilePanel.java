@@ -26,7 +26,6 @@ import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -121,7 +120,9 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       repaint();
       myParent.loaded();
     }, 100);
-    UIUtil.requestFocus(this);
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+      IdeFocusManager.getGlobalInstance().requestFocus(this, true);
+    });
     myBusConnection = ApplicationManager.getApplication().getMessageBus().connect();
     myBusConnection.subscribe(ProjectEx.ProjectSaved.TOPIC,
                               new ProjectEx.ProjectSaved() {
@@ -150,6 +151,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
         CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(() -> {
           createAndAddCell(true, IpnbCodeCell.createEmptyCodeCell());
           saveToFile(true);
+          setInitialPosition(0);
         }));
       }
     }
@@ -715,10 +717,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       mySelectedCellPanel.setEditing(false);
     }
     mySelectedCellPanel = ipnbPanel;
-    revalidateAndRepaint();
-    if (ipnbPanel.getBounds().getHeight() != 0) {
-      myListener.selectionChanged(ipnbPanel, mouse);
-    }
+    myQueue.queue(new Update("Jupyter.Repaint", HIGH_PRIORITY) {
+      @Override
+      public void run() {
+        revalidate();
+        repaint();
+        if (ipnbPanel.getBounds().getHeight() != 0) {
+          myListener.selectionChanged(ipnbPanel, mouse);
+        }
+      }
+    });
   }
 
   public void revalidateAndRepaint() {
@@ -738,7 +746,8 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
   public int getSelectedIndex() {
     final IpnbEditablePanel selectedCellPanel = getSelectedCellPanel();
-    return myIpnbPanels.indexOf(selectedCellPanel);
+    final int selectedIndex = myIpnbPanels.indexOf(selectedCellPanel);
+    return selectedIndex == -1 ? myInitialSelection : selectedIndex;
   }
 
   @Nullable

@@ -32,13 +32,23 @@ class ToggleBreadcrumbsAction extends ToggleAction implements DumbAware {
 
   static final class ShowHide extends ToggleBreadcrumbsAction {
     @Override
-    public void update(@NotNull AnActionEvent event) {
-      super.update(event);
-      event.getPresentation().setEnabled(null != findEditor(event));
+    boolean isEnabled(Editor editor) {
+      return editor != null && super.isEnabled(editor);
     }
   }
 
   private static final Key<Boolean> FORCED_BREADCRUMBS = new Key<>("FORCED_BREADCRUMBS");
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    super.update(event);
+    event.getPresentation().setEnabledAndVisible(isEnabled(findEditor(event)));
+  }
+
+  boolean isEnabled(Editor editor) {
+    FileViewProvider provider = BreadcrumbsXmlWrapper.findViewProvider(editor);
+    return provider == null || null != BreadcrumbsXmlWrapper.findInfoProvider(false, provider);
+  }
 
   @Override
   public boolean isSelected(AnActionEvent event) {

@@ -29,6 +29,7 @@ import com.intellij.util.toBufferExposingByteArray
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
+import java.io.FileNotFoundException
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
@@ -51,7 +52,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
-    LOG.runAndLogException {
+    try {
       if (!useStreamProvider || !(provider?.read(fileSpec, roamingType) {
         it?.let {
           element = loadElement(it)
@@ -59,6 +60,12 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       } ?: false)) {
         element = loadLocalData()
       }
+    }
+    catch (e: FileNotFoundException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
     }
     return element
   }

@@ -17,13 +17,13 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.messages.MessageBus
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
-private val LOG: Logger = Logger.getInstance(StateStorageBase::class.java)
+private val LOG = logger<StateStorageBase<*>>()
 
 abstract class StateStorageBase<T : Any> : StateStorage {
   private var mySavingDisabled = false

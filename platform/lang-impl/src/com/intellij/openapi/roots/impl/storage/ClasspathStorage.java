@@ -271,7 +271,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     }
   }
 
-  public static void modulePathChanged(Module module, String newPath) {
+  public static void modulePathChanged(@NotNull Module module) {
     ClasspathStorageProvider provider = getProvider(ClassPathStorageUtil.getStorageType(module));
     if (provider != null) {
       provider.modulePathChanged(module);

@@ -89,9 +89,9 @@ class ModuleStoreTest {
 
       ClasspathStorage.setStorageType(ModuleRootManager.getInstance(this), "eclipse")
       saveStore()
-      assertThat(moduleFile).hasContent("""
+      assertThat(moduleFile).isEqualTo("""
       <?xml version="1.0" encoding="UTF-8"?>
-      <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""".trimIndent())
+      <module classpath="eclipse" classpath-dir="$ESCAPED_MODULE_DIR" type="JAVA_MODULE" version="4" />""")
     }
   }
 

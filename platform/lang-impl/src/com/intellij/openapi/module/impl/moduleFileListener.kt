@@ -114,7 +114,7 @@ internal class ModuleFileListener(private val moduleManager: ModuleManagerCompon
   }
 
   private fun setModuleFilePath(module: Module, newFilePath: String) {
-    ClasspathStorage.modulePathChanged(module, newFilePath)
+    ClasspathStorage.modulePathChanged(module)
     module.stateStore.setPath(newFilePath)
   }
 }

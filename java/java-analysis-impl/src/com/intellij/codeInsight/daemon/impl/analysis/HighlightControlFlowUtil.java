@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
@@ -99,7 +100,18 @@ public class HighlightControlFlowUtil {
       final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
         String description = JavaErrorMessages.message("unreachable.statement");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(unreachableStatement).descriptionAndTooltip(description).create();
+        PsiElement keyword = null;
+        if (unreachableStatement instanceof PsiIfStatement ||
+            unreachableStatement instanceof PsiSwitchStatement ||
+            unreachableStatement instanceof PsiLoopStatement) {
+          keyword = unreachableStatement.getFirstChild();
+        }
+        final PsiElement element = keyword != null ? keyword : unreachableStatement;
+        final HighlightInfo info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
+        QuickFixAction.registerQuickFixAction(
+          info, QUICK_FIX_FACTORY.createDeleteFix(unreachableStatement, QuickFixBundle.message("delete.unreachable.statement.fix.text")));
+        return info;
       }
     }
     catch (AnalysisCanceledException | IndexNotReadyException e) {

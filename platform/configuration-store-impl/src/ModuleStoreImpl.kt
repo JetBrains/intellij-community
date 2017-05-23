@@ -16,9 +16,9 @@
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
+import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.computeIfAny
 import com.intellij.util.io.exists
 import java.nio.file.Paths
@@ -44,14 +44,10 @@ private open class ModuleStoreImpl(module: Module, private val pathMacroManager:
 private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager) : ModuleStoreImpl(module, pathMacroManager) {
   private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
-  override fun setPath(path: String) {
-    setPath(path, null)
-  }
+  override fun setPath(path: String, isNew: Boolean) {
+    super.setPath(path, isNew)
 
-  override fun setPath(path: String, file: VirtualFile?) {
-    super.setPath(path, file)
-
-    if ((file != null && file.isValid) || Paths.get(path).exists()) {
+    if (!isNew && Paths.get(path).exists()) {
       moduleComponentLoadPolicy = StateLoadPolicy.LOAD
     }
   }
@@ -61,7 +57,7 @@ private class TestModuleStore(module: Module, pathMacroManager: PathMacroManager
 }
 
 // used in upsource
-abstract class ModuleStoreBase : ComponentStoreImpl() {
+abstract class ModuleStoreBase : ComponentStoreImpl(), ModuleStore {
   override abstract val storageManager: StateStorageManagerImpl
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
@@ -74,14 +70,12 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
     }
   }
 
-  override fun setPath(path: String) {
-    if (!storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)) {
-      storageManager.getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).firstOrNull()?.setFile(null, Paths.get(path))
-    }
+  override final fun setPath(path: String) {
+    setPath(path, false)
   }
 
-  override fun setPath(path: String, file: VirtualFile?) {
-    val isAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
+  override fun setPath(path: String, isNew: Boolean) {
+    val isMacroAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
     // if file not null - update storage
     storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
       if (this !is FileBasedStorage) {
@@ -89,10 +83,17 @@ abstract class ModuleStoreBase : ComponentStoreImpl() {
         return@getOrCreateStorage
       }
 
-      setFile(file, if (isAdded) null else Paths.get(path))
+      setFile(null, if (isMacroAdded) null else Paths.get(path))
       // ModifiableModuleModel#newModule should always create a new module from scratch
       // https://youtrack.jetbrains.com/issue/IDEA-147530
-      resolveVirtualFileOnlyOnWrite = isAdded
+
+      if (isMacroAdded) {
+        // preload to ensure that we will get FileNotFound error (no module file) during init, and not later in some unexpected place (because otherwise will be loaded by demand)
+        preloadStorageData(isNew)
+      }
+      else {
+        storageManager.updatePath(StoragePathMacros.MODULE_FILE, path)
+      }
     })
   }
 }

@@ -30,7 +30,6 @@ import com.intellij.openapi.module.UnknownModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.MessageHandler;
@@ -112,13 +111,13 @@ public class ModuleManagerComponent extends ModuleManagerImpl {
   @NotNull
   @Override
   protected ModuleEx createModule(@NotNull String filePath) {
-    return new ModuleImpl(filePath, myProject);
+    return new ModuleImpl(ModulePathKt.getModuleNameByFilePath(filePath), myProject);
   }
 
   @NotNull
   @Override
-  protected ModuleEx createAndLoadModule(@NotNull String filePath, @NotNull VirtualFile file) {
-    return new ModuleImpl(filePath, myProject);
+  protected ModuleEx createAndLoadModule(@NotNull String filePath) {
+    return createModule(filePath);
   }
 
   @Override

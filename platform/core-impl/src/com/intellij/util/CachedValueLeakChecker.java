@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -60,6 +61,10 @@ class CachedValueLeakChecker {
                                                      int depth) {
     Condition<Object> shouldExamineValue = value -> {
       if (value == toIgnore) return false;
+      if (value instanceof ASTNode) {
+        value = ((ASTNode)value).getPsi();
+        if (value == toIgnore) return false;
+      }
       if (value instanceof Project || value instanceof Module || value instanceof Application) return false;
       if (value instanceof PsiElement &&
           toIgnore instanceof PsiElement &&
