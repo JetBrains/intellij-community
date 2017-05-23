@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast.evaluation
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import org.jetbrains.uast.*
 import org.jetbrains.uast.values.UUndeterminedValue
 import org.jetbrains.uast.visitor.UastVisitor
@@ -50,6 +51,7 @@ class MapBasedEvaluationContext(
         return this
     }
 
+    @Throws(ProcessCanceledException::class)
     private fun getOrCreateEvaluator(declaration: UDeclaration, state: UEvaluationState? = null): UEvaluator {
         val containingFile = declaration.getContainingUFile()
         val modificationStamp = containingFile?.psi?.modificationStamp ?: -1L

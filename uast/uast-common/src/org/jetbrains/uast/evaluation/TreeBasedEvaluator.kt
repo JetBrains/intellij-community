@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast.evaluation
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
@@ -537,6 +538,8 @@ class TreeBasedEvaluator(
         fun evaluateCondition(inputState: UEvaluationState): UEvaluationInfo =
                 condition?.accept(this, inputState)
                 ?: (if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState
+
+        ProgressManager.checkCanceled()
 
         var resultInfo = UUndeterminedValue to inputState
         do {
