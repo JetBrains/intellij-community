@@ -67,8 +67,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         }
 
         Stub element = RecursionManager.doPreventingRecursion(vFile, false, () -> StubTreeBuilder.buildStubTree(fc));
-        if (element instanceof PsiFileStub) {
-          StubTree tree = new StubTree((PsiFileStub)element);
+        ObjectStubTree tree = element instanceof PsiFileStub ? new StubTree((PsiFileStub)element) :
+                              element instanceof ObjectStubBase ? new ObjectStubTree((ObjectStubBase)element, true) :
+                              null;
+        if (tree != null) {
           tree.setDebugInfo("created from file content");
           return tree;
         }
