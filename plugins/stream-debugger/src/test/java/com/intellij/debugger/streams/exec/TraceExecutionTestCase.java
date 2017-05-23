@@ -329,20 +329,14 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
       checkNeighborTraces(before, producer.getStateAfter());
     }
 
+    for (final ResolvedStreamCall.Intermediate intermediate : resolvedChain.getIntermediateCalls()) {
+      checkNeighborTraces(intermediate.getStateBefore(), intermediate.getStateAfter());
+    }
+
     final ResolvedStreamCall.Terminator terminator = resolvedChain.getTerminator();
     final PrevAwareState after = terminator.getStateAfter();
     if (after != null) {
       checkNeighborTraces(terminator.getStateBefore(), after);
-    }
-
-    final List<ResolvedStreamCall.Intermediate> intermediates = resolvedChain.getIntermediateCalls();
-    if (intermediates.isEmpty()) {
-      checkNeighborTraces(producer.getStateAfter(), terminator.getStateBefore());
-    }
-    else {
-      for (final ResolvedStreamCall.Intermediate intermediate : intermediates) {
-        checkNeighborTraces(intermediate.getStateBefore(), intermediate.getStateAfter());
-      }
     }
   }
 
