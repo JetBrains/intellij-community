@@ -36,7 +36,6 @@ public class JBTableWithRowHeaders extends JBTable {
   private RowHeaderTable myRowHeaderTable;
 
   public JBTableWithRowHeaders() {
-    setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     setRowSelectionAllowed(false);
     setMaxItemsForSizeCalculation(50);
     setTableHeader(new CustomTableHeader(this));
@@ -49,6 +48,22 @@ public class JBTableWithRowHeaders extends JBTable {
     myScrollPane.setRowHeaderView(myRowHeaderTable);
     myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
                          myRowHeaderTable.getTableHeader());
+  }
+
+  @NotNull
+  @Override
+  public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+    Component component = super.prepareRenderer(renderer, row, column);
+    updateColumnWidth(column, component.getPreferredSize().width, this);
+    return  component;
+  }
+
+  private static int updateColumnWidth(int column, int width, @NotNull JTable table) {
+    TableColumn tableColumn = table.getColumnModel().getColumn(column);
+    int headerWidth = new ColumnHeaderRenderer().getTableCellRendererComponent(table, tableColumn.getHeaderValue(), false, false, -1, column).getPreferredSize().width + 4;
+    int newWidth = Math.max(width, headerWidth) + 2 * table.getIntercellSpacing().width;
+    tableColumn.setPreferredWidth(Math.max(newWidth, tableColumn.getPreferredWidth()));
+    return newWidth;
   }
 
   public JBScrollPane getScrollPane() {
@@ -85,15 +100,21 @@ public class JBTableWithRowHeaders extends JBTable {
       setModel(new DefaultTableModel(0, 1));
     }
 
+    @NotNull
+    @Override
+    public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
+      Component component = super.prepareRenderer(renderer, row, column);
+      getPreferredSize().width = updateColumnWidth(column, component.getPreferredSize().width, this);
+      setPreferredScrollableViewportSize(getPreferredSize());
+      return component;
+    }
 
     @Override
     public void setModel(@NotNull TableModel model) {
       setAutoCreateColumnsFromModel(true);
       super.setModel(model);
       if (getColumnModel().getColumnCount() > 0) {
-        getColumnModel().getColumn(0).setPreferredWidth(50);
         getColumnModel().getColumn(0).setCellRenderer(new RowNumberRenderer());
-        setPreferredScrollableViewportSize(getPreferredSize());
       }
     }
 
