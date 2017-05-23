@@ -37,7 +37,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
   @NotNull
   @Override
-  public List<JsonSchemaFileProvider> getProviders() {
+  public List<JsonSchemaFileProvider> getProviders(@NotNull final Project project) {
     return myProviders;
   }
 

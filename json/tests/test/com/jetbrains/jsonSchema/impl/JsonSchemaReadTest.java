@@ -59,7 +59,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
 
   public void testMainSchemaHighlighting() throws Exception {
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
-    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders();
+    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
     Assert.assertEquals(1, providers.size());
     final VirtualFile mainSchema = providers.get(0).getSchemaFile();
     assertNotNull(mainSchema);

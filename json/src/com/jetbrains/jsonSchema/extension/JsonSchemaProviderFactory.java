@@ -16,10 +16,7 @@ public interface JsonSchemaProviderFactory {
   Logger LOG = Logger.getInstance(JsonSchemaProviderFactory.class);
 
   @NotNull
-  default List<JsonSchemaFileProvider> getProviders(@NotNull Project project) {return Collections.emptyList();}
-
-  @NotNull
-  default List<JsonSchemaFileProvider> getProviders() {return Collections.emptyList();}
+  List<JsonSchemaFileProvider> getProviders(@NotNull Project project);
 
   /**
    * Finds a {@link VirtualFile} instance corresponding to a specified resource path (relative or absolute).

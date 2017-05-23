@@ -50,8 +50,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   public JsonSchemaServiceImpl(@NotNull Project project) {
     myProject = project;
-    myState = new MyState(getProvidersFromFactories(JsonSchemaProviderFactory::getProviders),
-                          () -> getProvidersFromFactories(factory -> factory.getProviders(myProject)));
+    myState = new MyState(() -> getProvidersFromFactories(factory -> factory.getProviders(myProject)));
     myModificationTracker = () -> myModificationCount.get();
     myAnySchemaChangeTracker = () -> myAnyChangeCount.get();
     project.getMessageBus().connect().subscribe(JsonSchemaVfsListener.JSON_SCHEMA_CHANGED, myAnyChangeCount::incrementAndGet);
@@ -173,12 +172,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     private Collection<JsonSchemaFileProvider> myUnmodifiableProviders = Collections.emptyList();
     private Set<VirtualFile> myUnmodifiableFiles = Collections.emptySet();
     private boolean initialized;
-    @NotNull private final Map<VirtualFile, JsonSchemaFileProvider> myApplicationProviders;
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
 
-    private MyState(@NotNull final List<JsonSchemaFileProvider> applicationProviders,
-                    @NotNull final Factory<List<JsonSchemaFileProvider>> factory) {
-      myApplicationProviders = Collections.unmodifiableMap(createFileProviderMap(applicationProviders));
+    private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory) {
       myFactory = factory;
     }
 
@@ -219,7 +215,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
       synchronized (myLock) {
         if (!initialized) {
           mySchemaProviderMap.clear();
-          mySchemaProviderMap.putAll(myApplicationProviders);
           mySchemaProviderMap.putAll(createFileProviderMap(myFactory.create()));
           myUnmodifiableFiles = Collections.unmodifiableSet(mySchemaProviderMap.keySet());
           myUnmodifiableProviders = Collections.unmodifiableCollection(mySchemaProviderMap.values());
