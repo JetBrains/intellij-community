@@ -44,12 +44,16 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   private final Map<Class, Object> myComponents = new HashMap<>();
   private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
+  private boolean myDisposed = false;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new DefaultPicoContainer(parent) {
       @Override
       @Nullable
       public Object getComponentInstance(final Object componentKey) {
+        if (myDisposed) {
+          throw new IllegalStateException("Cannot get " + componentKey + " from already disposed " + this);
+        }
         final Object o = super.getComponentInstance(componentKey);
         registerComponentInDisposer(o);
         return o;
@@ -129,12 +133,13 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   @Override
   public boolean isDisposed() {
-    return false;
+    return myDisposed;
   }
 
   @Override
   public void dispose() {
     myMessageBus.dispose();
+    myDisposed = true;
   }
 
   @NotNull
