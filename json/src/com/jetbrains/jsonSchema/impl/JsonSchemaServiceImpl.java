@@ -146,9 +146,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
     final CachedValueProvider<JsonSchemaObject> provider = () -> {
       final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
-      if (topLevelValue == null) return null;
-
-      final JsonSchemaObject object = new JsonSchemaReader().read(topLevelValue);
+      final JsonSchemaObject object = topLevelValue == null ? null : new JsonSchemaReader().read(topLevelValue);
       return CachedValueProvider.Result.create(object, psiFile, myModificationTracker);
     };
     return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
