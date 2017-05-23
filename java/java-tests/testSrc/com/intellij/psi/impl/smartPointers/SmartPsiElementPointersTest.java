@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       Document document = documentManager.getDocument(aClass.getContainingFile());
       document.insertString(0, "/******/");
 
-      SmartPointerEx pointer = (SmartPointerEx)createPointer(aClass.getNameIdentifier());
+      SmartPointerEx pointer = createPointer(aClass.getNameIdentifier());
 
       document.insertString(0, "/**/");
       documentManager.commitAllDocuments();
@@ -192,7 +192,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     createEditor(file.getVirtualFile());
     assertFalse(file.isContentsLoaded());
 
-    SmartPointerEx pointer = (SmartPointerEx)createPointer(aClass);
+    SmartPointerEx pointer = createPointer(aClass);
     assertFalse(file.isContentsLoaded());
 
     //noinspection UnusedAssignment
@@ -784,7 +784,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
                                                              "  Test<String> test = new Test<>();\n" +
                                                              "}");
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("<>"), PsiJavaCodeReferenceElement.class, false);
-    SmartPointerEx pointer = (SmartPointerEx)createPointer(ref.getParameterList().getTypeParameterElements()[0]);
+    SmartPointerEx pointer = createPointer(ref.getParameterList().getTypeParameterElements()[0]);
     ref = null;
 
     PlatformTestUtil.tryGcSoftlyReachableObjects();
@@ -798,8 +798,8 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
                                                              "  void foo() {}\n" +
                                                              "}");
     PsiMethod method = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("void"), PsiMethod.class, false);
-    SmartPointerEx pointer1 = (SmartPointerEx)createPointer(method.getModifierList());
-    SmartPointerEx pointer2 = (SmartPointerEx)createPointer(method.getTypeParameterList());
+    SmartPointerEx pointer1 = createPointer(method.getModifierList());
+    SmartPointerEx pointer2 = createPointer(method.getTypeParameterList());
     method = null;
 
     PlatformTestUtil.tryGcSoftlyReachableObjects();
@@ -813,7 +813,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
   public void testPointerToReferenceSurvivesRename() {
     PsiFile file = configureByText(JavaFileType.INSTANCE, "class Foo extends Bar {}");
     PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, file.getText().indexOf("Bar"), PsiJavaCodeReferenceElement.class, false);
-    SmartPointerEx pointer = (SmartPointerEx)createPointer(ref);
+    SmartPointerEx pointer = createPointer(ref);
     ref = null;
 
     PlatformTestUtil.tryGcSoftlyReachableObjects();
