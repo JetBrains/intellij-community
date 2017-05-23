@@ -976,6 +976,49 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.4+")
+  public void testJavaLibraryPluginConfigurations() throws Exception {
+    createSettingsFile("include 'project1'\n" +
+                       "include 'project2'\n");
+
+    importProject(
+      "project(':project1') {\n" +
+      "  apply plugin: 'java'\n" +
+      "  dependencies {\n" +
+      "    compile project(path: ':project2')\n" +
+      "  }\n" +
+      "}\n" +
+      "\n" +
+      "project(':project2') {\n" +
+      "  apply plugin: 'java-library'\n" +
+      "  dependencies {\n" +
+      "    implementation group: 'junit', name: 'junit', version: '4.11'\n" +
+      "    api group: 'org.hamcrest', name: 'hamcrest-core', version: '1.3'\n" +
+      "  }\n" +
+      "\n" +
+      "}\n"
+    );
+
+    assertModules("project", "project1", "project1_main", "project1_test", "project2", "project2_main", "project2_test");
+
+    assertModuleModuleDepScope("project1_main", "project2_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_main", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
+    assertModuleLibDepScope("project1_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    assertModuleModuleDepScope("project1_test", "project1_main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project1_test", "project2_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project1_test", "Gradle: junit:junit:4.11", DependencyScope.RUNTIME);
+    assertModuleLibDepScope("project1_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+
+    assertModuleLibDepScope("project2_main", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_main", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project2_test", "project2_main", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: junit:junit:4.11", DependencyScope.COMPILE);
+    assertModuleLibDepScope("project2_test", "Gradle: org.hamcrest:hamcrest-core:1.3", DependencyScope.COMPILE);
+  }
+
+
+  @Test
   @TargetVersions("2.12+")
   public void testNonTransitiveConfiguration() throws Exception {
     importProject(
