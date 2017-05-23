@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.quickFix
+package com.intellij.java.codeInsight.daemon.quickFix
+
+import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase
 
 /**
  * @author Pavel.Dolgov
