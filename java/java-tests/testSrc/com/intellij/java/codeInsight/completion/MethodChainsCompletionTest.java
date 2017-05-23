@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.compiler.chainsSearch.ChainRelevance;
