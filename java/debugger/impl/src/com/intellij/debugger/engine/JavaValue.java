@@ -623,7 +623,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   public void reBuild(final XValueNodeImpl node) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     myCurrentChildrenStart = 0;
-    node.getTree().getLaterInvocator().offer(() -> {
+    node.invokeNodeUpdate(() -> {
       node.clearChildren();
       computePresentation(node, XValuePlace.TREE);
     });
