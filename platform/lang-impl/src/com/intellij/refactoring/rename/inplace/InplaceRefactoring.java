@@ -391,7 +391,8 @@ public abstract class InplaceRefactoring {
     template.setToShortenLongNames(false);
     template.setToReformat(false);
     myHighlighters = new ArrayList<>();
-    topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
+    int targetOffset = rangeMarker.getStartOffset();
+    topLevelEditor.getCaretModel().moveToLogicalPosition(topLevelEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
@@ -426,7 +427,8 @@ public abstract class InplaceRefactoring {
   private void restoreOldCaretPositionAndSelection(final int offset) {
     //move to old offset
     Runnable runnable = () -> {
-      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
+      int targetOffset = restoreCaretOffset(offset);
+      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
       restoreSelection();
     };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,9 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.ide.DataManager;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,6 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.JavaNameSuggestionProvider;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -147,6 +146,22 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
       return;
     }
     fail("Conflict was not detected");
+  }
+
+  public void testNearParameterHint() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    int originalCaretPosition = myEditor.getCaretModel().getOffset();
+    EditorTestUtil.addInlay(myEditor, originalCaretPosition);
+    // make sure caret is to the right of inlay initially
+    myEditor.getCaretModel().moveToLogicalPosition(myEditor.getCaretModel().getLogicalPosition().leanForward(true));
+
+    final PsiElement element = TargetElementUtil.findTargetElement(myEditor, TargetElementUtil.getInstance().getAllAccepted());
+    assertNotNull(element);
+
+    TemplateManagerImpl.setTemplateTesting(ourProject, getTestRootDisposable());
+    new MemberInplaceRenameHandler().doRename(element, myEditor, DataManager.getInstance().getDataContext(myEditor.getComponent()));
+    assertEquals(originalCaretPosition, myEditor.getCaretModel().getOffset());
+    assertTrue(myEditor.getCaretModel().getLogicalPosition().leansForward); // check caret is still to the right
   }
 
   private void doTestInplaceRename(final String newName) throws Exception {
