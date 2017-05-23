@@ -1035,7 +1035,7 @@ public final class FormSourceCodeGenerator {
     }
     else {
       if (myGetFontMethod == null) {
-        myGetFontMethod = "getFont" + System.currentTimeMillis();
+        myGetFontMethod = AsmCodeGenerator.GET_FONT_METHOD_NAME;
       }
 
       startMethodCall("this", myGetFontMethod);
