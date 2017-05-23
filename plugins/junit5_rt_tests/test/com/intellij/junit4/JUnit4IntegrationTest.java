@@ -15,7 +15,6 @@
  */
 package com.intellij.junit4;
 
-import com.intellij.execution.BaseConfigurationTestCase;
 import com.intellij.execution.Executor;
 import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -30,6 +29,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.java.execution.BaseConfigurationTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerModuleExtension;

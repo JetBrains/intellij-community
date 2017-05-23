@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-class SliceTreeStructure extends AbstractTreeStructureBase {
+public class SliceTreeStructure extends AbstractTreeStructureBase {
   private final SliceNode myRoot;
 
   SliceTreeStructure(@NotNull Project project, @NotNull SliceNode rootNode) {

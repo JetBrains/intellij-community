@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationTestBase;
+import com.intellij.java.codeInsight.daemon.impl.SdkSetupNotificationTestBase;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;

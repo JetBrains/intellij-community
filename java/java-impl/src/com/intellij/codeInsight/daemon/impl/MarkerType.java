@@ -94,7 +94,7 @@ public class MarkerType {
     return myTooltip;
   }
 
-  static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType OVERRIDING_METHOD = new MarkerType("OVERRIDING_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = getParentMethod(element);
     if (!(parent instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)parent;
@@ -109,8 +109,8 @@ public class MarkerType {
       navigateToOverridingMethod(e, method, method != element.getParent());
     }
   });
-  static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD",
-                                                                     (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType SIBLING_OVERRIDING_METHOD = new MarkerType("SIBLING_OVERRIDING_METHOD",
+                                                                            (NullableFunction<PsiElement, String>)element -> {
                                                                        PsiElement parent = getParentMethod(element);
                                                                        if (!(parent instanceof PsiMethod)) return null;
                                                                        PsiMethod method = (PsiMethod)parent;
@@ -207,7 +207,7 @@ public class MarkerType {
   }
 
   public static final String SEARCHING_FOR_OVERRIDING_METHODS = "Searching for Overriding Methods";
-  static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType OVERRIDDEN_METHOD = new MarkerType("OVERRIDDEN_METHOD", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiMethod)) return null;
     PsiMethod method = (PsiMethod)parent;
@@ -291,7 +291,7 @@ public class MarkerType {
   }
 
   private static final String SEARCHING_FOR_OVERRIDDEN_METHODS = "Searching for Overridden Methods";
-  static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType SUBCLASSED_CLASS = new MarkerType("SUBCLASSED_CLASS", (NullableFunction<PsiElement, String>)element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) return null;
     PsiClass aClass = (PsiClass)parent;

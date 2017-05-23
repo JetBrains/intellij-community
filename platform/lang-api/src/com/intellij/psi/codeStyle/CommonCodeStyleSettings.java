@@ -1020,7 +1020,7 @@ public class CommonCodeStyleSettings {
     }
 
     @Nullable
-    static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
+    public static IndentOptions retrieveFromAssociatedDocument(@NotNull PsiFile file) {
       Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
       return document != null ? document.getUserData(INDENT_OPTIONS_KEY) : null;
     }

@@ -434,7 +434,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
 
   @NotNull
   @VisibleForTesting
-  static Lexer createDefaultLexer() {
+  public static Lexer createDefaultLexer() {
     return new MergingLexerAdapter(new FlexAdapter(new _FileTemplateTextLexer()), TokenSet.create(FileTemplateTokenType.TEXT));
   }
 

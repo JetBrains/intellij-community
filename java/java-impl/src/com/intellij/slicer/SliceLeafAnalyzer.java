@@ -43,8 +43,8 @@ import java.util.*;
 /**
  * @author cdr
  */
-class SliceLeafAnalyzer {
-  static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
+public class SliceLeafAnalyzer {
+  public static final TObjectHashingStrategy<PsiElement> LEAF_ELEMENT_EQUALITY = new TObjectHashingStrategy<PsiElement>() {
     @Override
     public int computeHashCode(final PsiElement element) {
       if (element == null) return 0;
@@ -103,9 +103,9 @@ class SliceLeafAnalyzer {
   }
 
   @NotNull
-  static SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
-                                                 @NotNull SliceRootNode oldRoot,
-                                                 @NotNull Map<SliceNode, Collection<PsiElement>> map) {
+  public static SliceRootNode createTreeGroupedByValues(@NotNull Collection<PsiElement> leaves,
+                                                        @NotNull SliceRootNode oldRoot,
+                                                        @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
@@ -225,9 +225,9 @@ class SliceLeafAnalyzer {
   }
 
   @NotNull
-  static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
-                                                    @NotNull AbstractTreeStructure treeStructure,
-                                                    @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
+  public static Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
+                                                           @NotNull AbstractTreeStructure treeStructure,
+                                                           @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override

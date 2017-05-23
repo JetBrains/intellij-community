@@ -328,7 +328,7 @@ public class Java8MapApiInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   @NotNull
-  static String getNameCandidate(String name) {
+  public static String getNameCandidate(String name) {
     // Either last uppercase letter (if it's not the last letter) or the first letter, removing leading underscores
     // token -> t
     // myAccessToken -> t

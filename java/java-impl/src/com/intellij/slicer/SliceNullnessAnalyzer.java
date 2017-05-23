@@ -36,7 +36,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-class SliceNullnessAnalyzer {
+public class SliceNullnessAnalyzer {
   private static void groupByNullness(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = createNewTree(result, oldRoot, map);
 
@@ -45,7 +45,7 @@ class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
+  public static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.myCachedChildren.size() == 1;
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
@@ -152,9 +152,9 @@ class SliceNullnessAnalyzer {
   }
 
   @NotNull
-  static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
-                                               @NotNull AbstractTreeStructure treeStructure,
-                                               @NotNull final Map<SliceNode, NullAnalysisResult> map) {
+  public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
+                                                      @NotNull AbstractTreeStructure treeStructure,
+                                                      @NotNull final Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
@@ -250,7 +250,7 @@ class SliceNullnessAnalyzer {
     return Nullness.UNKNOWN;
   }
 
-  static class NullAnalysisResult {
+  public static class NullAnalysisResult {
     static final int NULLS = 0;
     static final int NOT_NULLS = 1;
     static final int UNKNOWNS = 2;
