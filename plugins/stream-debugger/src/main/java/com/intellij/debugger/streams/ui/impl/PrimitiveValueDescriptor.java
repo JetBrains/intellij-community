@@ -26,18 +26,22 @@ import com.intellij.psi.PsiExpression;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
-  PrimitiveValueDescriptor(@NotNull Project project, @NotNull Value value) {
+  PrimitiveValueDescriptor(@NotNull Project project, @Nullable Value value) {
     super(project, value);
   }
 
   @Override
   public String calcValueName() {
     final Value value = getValue();
+    if (value == null) {
+      return "value";
+    }
     if (value instanceof ObjectReference) {
       return super.calcValueName();
     }
@@ -47,8 +51,7 @@ public class PrimitiveValueDescriptor extends InstanceValueDescriptor {
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext debuggerContext) throws EvaluateException {
-    final Value value = getValue();
-    if (value instanceof ObjectReference) {
+    if (getValue() instanceof ObjectReference) {
       return super.getDescriptorEvaluation(debuggerContext);
     }
 

@@ -16,7 +16,7 @@
 package com.intellij.debugger.streams.trace;
 
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vitaliy.Bibaev
@@ -24,6 +24,6 @@ import org.jetbrains.annotations.NotNull;
 public interface TraceElement {
   int getTime();
 
-  @NotNull
+  @Nullable
   Value getValue();
 }

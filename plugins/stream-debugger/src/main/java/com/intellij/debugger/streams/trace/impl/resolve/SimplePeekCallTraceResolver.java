@@ -25,6 +25,7 @@ import com.sun.jdi.ArrayReference;
 import com.sun.jdi.IntegerValue;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,7 +81,7 @@ public class SimplePeekCallTraceResolver implements CallTraceResolver {
   }
 
   @NotNull
-  private TraceElement resolveTraceElement(@NotNull Value key, @NotNull Value value) {
+  private TraceElement resolveTraceElement(@NotNull Value key, @Nullable Value value) {
     if (key instanceof IntegerValue) {
       return new TraceElementImpl(((IntegerValue)key).value(), value);
     }
