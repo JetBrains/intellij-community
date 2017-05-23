@@ -130,7 +130,7 @@ public class TracingResultImpl implements TracingResult {
     final TraceElementImpl resultValue = new TraceElementImpl(Integer.MAX_VALUE, myStreamResult);
     final List<TraceElement> after = TraceUtil.sortedByTime(terminatorTrace.getValuesOrderAfter().values());
     final TerminationStateImpl terminatorState =
-      new TerminationStateImpl(resultValue, previousState.getPrevCall(), after, terminationToPrevMapping);
+      new TerminationStateImpl(resultValue, previousState.getNextCall(), after, terminationToPrevMapping);
     return new ResolvedTerminatorCallImpl(mySourceChain.getTerminationCall(), previousState, terminatorState);
   }
 
