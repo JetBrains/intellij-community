@@ -5,8 +5,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +24,9 @@ import java.util.stream.Collectors;
 public class JsonSchemaObject {
   @NonNls public static final String DEFINITIONS = "definitions";
   @NonNls public static final String PROPERTIES = "properties";
-  @NotNull
-  private final SmartPsiElementPointer<JsonObject> myPeerPointer;
-  private Map<String, JsonSchemaObject> myDefinitions;
-  private SmartPsiElementPointer<JsonObject> myDefinitionsPointer;
+  @NotNull private final JsonObject myJsonObject;
+  @Nullable private JsonObject myDefinitions;
+  private Map<String, JsonSchemaObject> myDefinitionsMap;
   private Map<String, JsonSchemaObject> myProperties;
 
   private PatternProperties myPatternProperties;
@@ -84,13 +81,8 @@ public class JsonSchemaObject {
   private boolean myShouldValidateAgainstJSType;
 
   public JsonSchemaObject(@NotNull JsonObject object) {
+    myJsonObject = object;
     myProperties = new HashMap<>();
-    myPeerPointer = SmartPointerManager.getInstance(object.getProject()).createSmartPsiElementPointer(object);
-  }
-
-  public JsonSchemaObject(@NotNull SmartPsiElementPointer<JsonObject> peerPointer) {
-    myProperties = new HashMap<>();
-    myPeerPointer = peerPointer;
   }
 
   // peer pointer is not merged!
@@ -98,7 +90,7 @@ public class JsonSchemaObject {
     // we do not copy id, schema, title and description
 
     myProperties.putAll(other.myProperties);
-    myDefinitions = copyMap(myDefinitions, other.myDefinitions);
+    myDefinitionsMap = copyMap(myDefinitionsMap, other.myDefinitionsMap);
     final Map<String, JsonSchemaObject> map = copyMap(myPatternProperties == null ? null : myPatternProperties.mySchemasMap,
                                                       other.myPatternProperties == null ? null : other.myPatternProperties.mySchemasMap);
     myPatternProperties = map == null ? null : new PatternProperties(map);
@@ -164,30 +156,31 @@ public class JsonSchemaObject {
     return target;
   }
 
-  @Nullable
+  @NotNull
   public VirtualFile getSchemaFile() {
-    return myPeerPointer.getVirtualFile();
+    return myJsonObject.getContainingFile().getViewProvider().getVirtualFile();
   }
 
   @NotNull
-  public SmartPsiElementPointer<JsonObject> getPeerPointer() {
-    return myPeerPointer;
+  public JsonObject getJsonObject() {
+    return myJsonObject;
   }
 
-  public SmartPsiElementPointer<JsonObject> getDefinitionsPointer() {
-    return myDefinitionsPointer;
-  }
-
-  public void setDefinitionsPointer(SmartPsiElementPointer<JsonObject> definitionsPointer) {
-    myDefinitionsPointer = definitionsPointer;
-  }
-
-  public Map<String, JsonSchemaObject> getDefinitions() {
+  @Nullable
+  public JsonObject getDefinitions() {
     return myDefinitions;
   }
 
-  public void setDefinitions(Map<String, JsonSchemaObject> definitions) {
+  public void setDefinitions(@Nullable JsonObject definitions) {
     myDefinitions = definitions;
+  }
+
+  public Map<String, JsonSchemaObject> getDefinitionsMap() {
+    return myDefinitionsMap;
+  }
+
+  public void setDefinitionsMap(@NotNull Map<String, JsonSchemaObject> definitionsMap) {
+    myDefinitionsMap = definitionsMap;
   }
 
   public Map<String, JsonSchemaObject> getProperties() {
@@ -511,7 +504,7 @@ public class JsonSchemaObject {
     return myPattern == null ? null : myPattern.getPatternError();
   }
 
-  public Map<SmartPsiElementPointer<JsonObject>, String> getInvalidPatternProperties() {
+  public Map<JsonObject, String> getInvalidPatternProperties() {
     if (myPatternProperties != null) {
       final Map<String, String> patterns = myPatternProperties.getInvalidPatterns();
       if (patterns == null) return null;
@@ -519,8 +512,7 @@ public class JsonSchemaObject {
       return patterns.entrySet().stream().map(entry -> {
         final JsonSchemaObject object = myPatternProperties.getSchemaForPattern(entry.getKey());
         assert object != null;
-        final SmartPsiElementPointer<JsonObject> pointer = object.getPeerPointer();
-        return Pair.create(pointer, entry.getValue());
+        return Pair.create(object.getJsonObject(), entry.getValue());
       }).filter(o -> o != null).collect(Collectors.toMap(o -> o.getFirst(), o -> o.getSecond()));
     }
     return null;
@@ -543,7 +535,7 @@ public class JsonSchemaObject {
       if (DEFINITIONS.equals(part)) {
         if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
         //noinspection AssignmentToForLoopParameter
-        current = current.getDefinitions().get(parts.get(++i));
+        current = current.getDefinitionsMap().get(parts.get(++i));
         continue;
       }
       if (PROPERTIES.equals(part)) {
@@ -553,7 +545,7 @@ public class JsonSchemaObject {
         continue;
       }
 
-      current = current.getDefinitions().get(part);
+      current = current.getDefinitionsMap().get(part);
     }
     return current;
   }
@@ -565,14 +557,14 @@ public class JsonSchemaObject {
 
     JsonSchemaObject object = (JsonSchemaObject)o;
 
-    if (!myPeerPointer.equals(object.myPeerPointer)) return false;
+    if (!myJsonObject.equals(object.myJsonObject)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return myPeerPointer.hashCode();
+    return myJsonObject.hashCode();
   }
 
   @NotNull

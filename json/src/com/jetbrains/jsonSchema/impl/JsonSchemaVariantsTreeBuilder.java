@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.SmartList;
@@ -100,10 +99,9 @@ public class JsonSchemaVariantsTreeBuilder {
 
   private static void expandChildSchema(@NotNull JsonSchemaTreeNode node,
                                         @NotNull JsonSchemaObject childSchema) {
-    final JsonObject element = childSchema.getPeerPointer().getElement();
-    if (element == null) LOG.info("Psi element for schema was null");
-    if (interestingSchema(childSchema) && element != null) {
-      final Project project = childSchema.getPeerPointer().getProject();
+    final JsonObject element = childSchema.getJsonObject();
+    if (interestingSchema(childSchema)) {
+      final Project project = childSchema.getJsonObject().getProject();
       final Operation operation = CachedValuesManager
         .getCachedValue(element, () -> {
           final Operation expand = new ProcessDefinitionsOperation(childSchema);
@@ -318,12 +316,7 @@ public class JsonSchemaVariantsTreeBuilder {
     assert !StringUtil.isEmptyOrSpaces(ref);
 
     final VirtualFile schemaFile = schema.getSchemaFile();
-    if (schemaFile == null) {
-      LOG.debug("No schema file for schema");
-      return null;
-    }
-
-    final JsonSchemaService service = JsonSchemaService.Impl.get(schema.getPeerPointer().getProject());
+    final JsonSchemaService service = JsonSchemaService.Impl.get(schema.getJsonObject().getProject());
     final SchemaUrlSplitter splitter = new SchemaUrlSplitter(ref);
     if (splitter.getSchemaId() != null) {
       final VirtualFile refFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
@@ -352,8 +345,7 @@ public class JsonSchemaVariantsTreeBuilder {
     if (StringUtil.isEmptyOrSpaces(path)) return schema;
     final JsonSchemaObject definition = schema.findRelativeDefinition(path);
     if (definition == null) {
-      LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path,
-                              schema.getSchemaFile() == null ? "" : schema.getSchemaFile().getPath()));
+      LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));
     }
     return definition;
   }
@@ -361,11 +353,11 @@ public class JsonSchemaVariantsTreeBuilder {
   public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
                                        @NotNull JsonSchemaObject other,
                                        @NotNull JsonSchemaObject pointTo) {
-    final JsonSchemaObject object = new JsonSchemaObject(pointTo.getPeerPointer());
+    final JsonSchemaObject object = new JsonSchemaObject(pointTo.getJsonObject());
     object.mergeValues(other);
     object.mergeValues(base);
     object.setRef(other.getRef());
-    object.setDefinitionsPointer(base.getDefinitionsPointer());
+    object.setDefinitions(base.getDefinitions());
     return object;
   }
 
@@ -434,10 +426,11 @@ public class JsonSchemaVariantsTreeBuilder {
     private Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull JsonSchemaObject parent,
                                                             boolean acceptAdditionalPropertiesSchemas) {
       assert myName != null;
-      if (!isInMainSchema(parent) && JsonSchemaObject.DEFINITIONS.equals(myName) && parent.getDefinitions() != null) {
-        final SmartPsiElementPointer<JsonObject> pointer = parent.getDefinitionsPointer();
-        final JsonSchemaObject object = new JsonSchemaObject(pointer);
-        object.setProperties(parent.getDefinitions());
+      if (!isInMainSchema(parent) && JsonSchemaObject.DEFINITIONS.equals(myName) && parent.getDefinitionsMap() != null) {
+        final JsonObject definitions = parent.getDefinitions();
+        if (definitions == null) return Pair.create(ThreeState.NO, null);
+        final JsonSchemaObject object = new JsonSchemaObject(definitions);
+        object.setProperties(parent.getDefinitionsMap());
         return Pair.create(ThreeState.UNSURE, object);
       }
       final JsonSchemaObject child = parent.getProperties().get(myName);
@@ -460,8 +453,7 @@ public class JsonSchemaVariantsTreeBuilder {
 
     private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
       final VirtualFile schemaFile = parent.getSchemaFile();
-      if (schemaFile == null) return false;
-      final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getPeerPointer().getProject());
+      final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getJsonObject().getProject());
       if (!service.isSchemaFile(schemaFile)) return false;
 
       final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);

@@ -69,11 +69,11 @@ public class JsonSchemaResolver {
   public PsiElement findNavigationTarget() {
     final Collection<JsonSchemaObject> schemas = resolve(true);
 
-    return schemas.stream().filter(schema -> schema.getPeerPointer().getElement() != null && schema.getPeerPointer().getElement().isValid())
+    return schemas.stream().filter(schema -> schema.getJsonObject().isValid())
       .findFirst()
       .map(schema -> {
-        final JsonObject jsonObject = schema.getPeerPointer().getElement();
-        if (jsonObject != null && jsonObject.getParent() instanceof JsonProperty)
+        final JsonObject jsonObject = schema.getJsonObject();
+        if (jsonObject.getParent() instanceof JsonProperty)
           return ((JsonProperty)jsonObject.getParent()).getNameElement();
         return jsonObject;
       })

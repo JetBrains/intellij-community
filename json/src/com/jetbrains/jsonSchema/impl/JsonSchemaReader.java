@@ -25,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
@@ -105,8 +104,7 @@ public class JsonSchemaReader {
     while (!myQueue.isEmpty()) {
       final JsonSchemaObject currentSchema = myQueue.removeFirst();
 
-      final JsonObject jsonObject = currentSchema.getPeerPointer().getElement();
-      if (jsonObject == null) continue;
+      final JsonObject jsonObject = currentSchema.getJsonObject();
       final List<JsonProperty> list = jsonObject.getPropertyList();
       for (JsonProperty property : list) {
         if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
@@ -137,8 +135,8 @@ public class JsonSchemaReader {
     if (value instanceof JsonObject) {
       final JsonSchemaObject defined = new JsonSchemaObject((JsonObject)value);
       myQueue.add(defined);
-      Map<String, JsonSchemaObject> definitions = schema.getDefinitions();
-      if (definitions == null) schema.setDefinitions(definitions = new HashMap<>());
+      Map<String, JsonSchemaObject> definitions = schema.getDefinitionsMap();
+      if (definitions == null) schema.setDefinitionsMap(definitions = new HashMap<>());
       definitions.put(name, defined);
     }
   }
@@ -369,8 +367,9 @@ public class JsonSchemaReader {
   private PairConsumer<JsonElement, JsonSchemaObject> createDefinitionsConsumer() {
     return (element, object) -> {
       if (element instanceof JsonObject) {
-        object.setDefinitions(readInnerObject((JsonObject)element));
-        object.setDefinitionsPointer(SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer((JsonObject)element));
+        final JsonObject definitions = (JsonObject)element;
+        object.setDefinitionsMap(readInnerObject(definitions));
+        object.setDefinitions(definitions);
       }
     };
   }

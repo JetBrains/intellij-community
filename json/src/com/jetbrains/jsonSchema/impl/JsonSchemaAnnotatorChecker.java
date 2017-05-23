@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
@@ -210,10 +209,10 @@ class JsonSchemaAnnotatorChecker {
       schemas.addAll(result.myExcludingSchemas);
       schemas.forEach(schema -> {
         if (schemaFile.equals(schema.getSchemaFile())) {
-          final Map<SmartPsiElementPointer<JsonObject>, String> invalidPatternProperties = schema.getInvalidPatternProperties();
+          final Map<JsonObject, String> invalidPatternProperties = schema.getInvalidPatternProperties();
           if (invalidPatternProperties != null) {
-            for (Map.Entry<SmartPsiElementPointer<JsonObject>, String> entry : invalidPatternProperties.entrySet()) {
-              final JsonObject element = entry.getKey().getElement();
+            for (Map.Entry<JsonObject, String> entry : invalidPatternProperties.entrySet()) {
+              final JsonObject element = entry.getKey();
               if (element == null || !element.isValid()) continue;
               final PsiElement parent = element.getParent();
               if (parent instanceof JsonProperty) {
@@ -224,9 +223,8 @@ class JsonSchemaAnnotatorChecker {
           schema.getProperties().values().forEach(prop -> {
             final String patternError = prop.getPatternError();
             if (patternError != null && prop.getPattern() != null) {
-              final SmartPsiElementPointer<JsonObject> pointer = prop.getPeerPointer();
-              final JsonObject element = pointer.getElement();
-              if (element != null && element.isValid()) {
+              final JsonObject element = prop.getJsonObject();
+              if (element.isValid()) {
                 final JsonProperty pattern = element.findProperty("pattern");
                 if (pattern != null) {
                   error(StringUtil.convertLineSeparators(patternError), pattern.getValue());

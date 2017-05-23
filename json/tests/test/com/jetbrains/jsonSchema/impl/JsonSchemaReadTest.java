@@ -12,7 +12,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.FilenameIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
@@ -24,7 +23,6 @@ import org.junit.Assert;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -43,7 +41,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
     final JsonSchemaObject read = getSchemaObject(file);
 
     Assert.assertEquals("http://json-schema.org/draft-04/schema#", read.getId());
-    Assert.assertTrue(read.getDefinitions().containsKey("positiveInteger"));
+    Assert.assertTrue(read.getDefinitionsMap().containsKey("positiveInteger"));
     Assert.assertTrue(read.getProperties().containsKey("multipleOf"));
     Assert.assertTrue(read.getProperties().containsKey("type"));
     Assert.assertTrue(read.getProperties().containsKey("additionalProperties"));
@@ -95,7 +93,7 @@ public class JsonSchemaReadTest extends CompletionTestCase {
   public void testReadSchemaWithCustomTags() throws Exception {
     final File file = new File(PlatformTestUtil.getCommunityPath(), "json/tests/testData/jsonSchema/withNotesCustomTag.json");
     final JsonSchemaObject read = getSchemaObject(file);
-    Assert.assertTrue(read.getDefinitions().get("common").getProperties().containsKey("id"));
+    Assert.assertTrue(read.getDefinitionsMap().get("common").getProperties().containsKey("id"));
   }
 
   public void testArrayItemsSchema() throws Exception {
