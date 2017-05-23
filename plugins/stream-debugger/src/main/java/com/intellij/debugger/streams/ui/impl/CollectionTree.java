@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.ui.impl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.memory.utils.InstanceJavaValue;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.PaintingListener;
@@ -27,6 +28,7 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -109,14 +111,22 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
             final XValueNodeImpl node = (XValueNodeImpl)child;
             final XValue container = node.getValueContainer();
             if (container instanceof JavaValue) {
-              final Value value = ((JavaValue)container).getDescriptor().getValue();
-              final List<TraceElement> traceElements = map2TraceElement.get(value);
-              if (traceElements != null && !traceElements.isEmpty()) {
-                final TraceElement head = traceElements.get(0);
-                myValue2Path.put(head, node.getPath());
-                myPath2Value.put(node.getPath(), head);
-                map2TraceElement.put(value, tail(traceElements));
-              }
+              // TODO; optimize?
+              evaluationContext.getDebugProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
+                @Override
+                protected void action() throws Exception {
+                  final Value value = ((JavaValue)container).getDescriptor().getValue();
+                  ApplicationManager.getApplication().invokeLater(() -> {
+                    final List<TraceElement> traceElements = map2TraceElement.get(value);
+                    if (traceElements != null && !traceElements.isEmpty()) {
+                      final TraceElement head = traceElements.get(0);
+                      myValue2Path.put(head, node.getPath());
+                      myPath2Value.put(node.getPath(), head);
+                      map2TraceElement.put(value, tail(traceElements));
+                    }
+                  });
+                }
+              });
             }
           }
         }
