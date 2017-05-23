@@ -29,6 +29,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.IconUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -253,7 +254,7 @@ public class NewRecentProjectPanel extends RecentProjectPanel {
             } else if (value instanceof ReopenProjectAction) {
               final NonOpaquePanel p = new NonOpaquePanel(new BorderLayout());
               name.setText(((ReopenProjectAction)value).getProjectName());
-              final String realPath = ((ReopenProjectAction)value).getProjectPath();
+              final String realPath = PathUtil.toSystemDependentName(((ReopenProjectAction)value).getProjectPath());
               path.setText(getTitle2Text((ReopenProjectAction)value, path, JBUI.scale(isInsideGroup ? 80 : 60)));
               if (!realPath.equals(path.getText())) {
                 projectsWithLongPathes.add((ReopenProjectAction)value);

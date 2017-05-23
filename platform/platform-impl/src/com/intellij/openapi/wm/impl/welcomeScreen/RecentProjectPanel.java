@@ -43,6 +43,7 @@ import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -361,7 +362,7 @@ public class RecentProjectPanel extends JPanel {
       if (i != -1) {
         final Object elem = getModel().getElementAt(i);
         if (elem instanceof ReopenProjectAction && RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
-          return ((ReopenProjectAction)elem).getProjectPath();
+          return PathUtil.toSystemDependentName(((ReopenProjectAction)elem).getProjectPath());
         }
       }
       return super.getToolTipText(event);

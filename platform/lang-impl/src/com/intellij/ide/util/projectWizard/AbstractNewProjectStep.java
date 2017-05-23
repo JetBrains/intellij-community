@@ -45,6 +45,7 @@ import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.projectImport.ProjectOpenedCallback;
 import com.intellij.util.Function;
 import com.intellij.util.NullableConsumer;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -210,7 +211,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
       }
     }
 
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(location.getParent());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(location.getParent()));
 
     ProjectOpenedCallback callback = null;
     if(generator instanceof TemplateProjectDirectoryGenerator){

@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.*;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
+import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import org.jdom.JDOMException;
@@ -80,7 +81,7 @@ public class ProjectUtil {
       LOG.info(e);
       return;
     }
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(path.replace(File.separatorChar, '/'));
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(path));
   }
 
   /**
@@ -178,7 +179,7 @@ public class ProjectUtil {
       }
     }
 
-    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(path)) {
+    if (isRemotePath(path) && !RecentProjectsManager.getInstance().hasPath(PathUtil.toSystemIndependentName(path))) {
       if (!confirmLoadingFromRemotePath(path, "warning.load.project.from.share", "title.load.project.from.share")) {
         return null;
       }
