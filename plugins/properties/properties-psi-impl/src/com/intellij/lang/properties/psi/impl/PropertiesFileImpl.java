@@ -19,11 +19,9 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
+import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
-import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.lang.properties.psi.PropertiesList;
-import com.intellij.lang.properties.psi.Property;
+import com.intellij.lang.properties.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
@@ -31,6 +29,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ChangeUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -41,12 +40,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
@@ -82,13 +76,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Nullable
   @Override
   public IProperty findPropertyByKey(@NotNull String key) {
-    return propertiesByKey(key).findFirst().orElse(null);
+    return ContainerUtil.getFirstItem(propertiesByKey(key));
   }
 
   @Override
   @NotNull
   public List<IProperty> findPropertiesByKey(@NotNull String key) {
-    return propertiesByKey(key).collect(Collectors.toList());
+    return new ArrayList<>(propertiesByKey(key));
   }
 
   @Override
@@ -191,7 +185,7 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return ContainerUtil.getLastItem(properties);
   }
 
-  private Stream<IProperty> propertiesByKey(@NotNull String key) {
-    return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
+  private Collection<Property> propertiesByKey(@NotNull String key) {
+    return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this));
   }
 }
