@@ -28,5 +28,6 @@ public interface JsonLikePsiWalkerFactory {
 
   boolean handles(@NotNull PsiElement element);
 
+  @NotNull
   JsonLikePsiWalker create(@NotNull JsonSchemaObject schemaObject);
 }
