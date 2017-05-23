@@ -242,9 +242,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     final ResolvedStreamCall.Producer producer = resolvedChain.getProducer();
     final ResolvedStreamCall.Terminator terminator = resolvedChain.getTerminator();
     printBeforeAndAfterValues(producer.getStateBefore(), producer.getStateAfter());
-    printBeforeAndAfterValues(terminator.getStateBefore(), terminator.getStateAfter());
-
     resolvedChain.getIntermediateCalls().forEach(x -> printBeforeAndAfterValues(x.getStateBefore(), x.getStateAfter()));
+    printBeforeAndAfterValues(terminator.getStateBefore(), terminator.getStateAfter());
   }
 
   private void printBeforeAndAfterValues(@Nullable NextAwareState before, @Nullable PrevAwareState after) {
@@ -256,7 +255,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
       printMapping(before.getTrace(), before::getNextValues, Direction.FORWARD);
     }
     else {
-      println("    not found", ProcessOutputTypes.SYSTEM);
+      println("    no", ProcessOutputTypes.SYSTEM);
     }
 
     println("  reverse:", ProcessOutputTypes.SYSTEM);
@@ -271,10 +270,13 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   private void printMapping(@NotNull List<TraceElement> values,
                             @NotNull Function<TraceElement, List<TraceElement>> mapper,
                             @NotNull Direction direction) {
+    if (values.isEmpty()) {
+      println("    empty", ProcessOutputTypes.SYSTEM);
+    }
     for (final TraceElement element : values) {
       final List<TraceElement> mappedValues = mapper.apply(element);
       final String mapped = traceToString(mappedValues);
-      final String line = Direction.FORWARD.equals(direction) ? element.getTime() + " -> " + mapped : mapped + " -> " + element.getTime();
+      final String line = Direction.FORWARD.equals(direction) ? element.getTime() + " -> " + mapped : mapped + " <- " + element.getTime();
       println("    " + line, ProcessOutputTypes.SYSTEM);
     }
   }
