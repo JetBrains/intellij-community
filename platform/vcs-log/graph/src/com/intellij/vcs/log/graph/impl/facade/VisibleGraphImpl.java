@@ -103,6 +103,11 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     return myGraphController.getCompiledGraph();
   }
 
+  @NotNull
+  public PermanentGraphInfo<CommitId> getPermanentGraph() {
+    return myPermanentGraph;
+  }
+
   private class ActionControllerImpl implements ActionController<CommitId> {
 
     @Nullable

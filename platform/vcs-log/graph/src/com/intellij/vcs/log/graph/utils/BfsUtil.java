@@ -24,10 +24,10 @@ import java.util.List;
 import java.util.Queue;
 
 public class BfsUtil {
-  public static int getCorrespondingParentIndex(@NotNull LiteLinearGraph graph, int startNode, int endNode, @NotNull Flags visited) {
+  public static int getCorrespondingParent(@NotNull LiteLinearGraph graph, int startNode, int endNode, @NotNull Flags visited) {
     List<Integer> candidates = graph.getNodes(startNode, LiteLinearGraph.NodeFilter.DOWN);
-    if (candidates.size() == 1) return 0;
-    if (candidates.contains(endNode)) return candidates.indexOf(endNode);
+    if (candidates.size() == 1) return candidates.get(0);
+    if (candidates.contains(endNode)) return endNode;
 
     List<Queue<Integer>> queues = new ArrayList<>(candidates.size());
     for (int candidate : candidates) {
@@ -45,14 +45,14 @@ public class BfsUtil {
         else {
           boolean found = runNextBfsStep(graph, queue, visited, endNode);
           if (found) {
-            return queues.indexOf(queue);
+            return candidates.get(queues.indexOf(queue));
           }
         }
       }
     }
     while (emptyCount < queues.size());
 
-    return 0;
+    return candidates.get(0);
   }
 
   private static boolean runNextBfsStep(@NotNull LiteLinearGraph graph, @NotNull Queue<Integer> queue, @NotNull Flags visited, int target) {

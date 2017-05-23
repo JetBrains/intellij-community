@@ -30,16 +30,15 @@ import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.VisibleGraph;
-import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
-import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl;
 import com.intellij.vcs.log.graph.impl.facade.ReachableNodes;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.graph.impl.permanent.PermanentCommitsInfoImpl;
+import com.intellij.vcs.log.graph.utils.BfsUtil;
 import com.intellij.vcs.log.graph.utils.DfsUtil;
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils;
-import com.intellij.vcs.log.graph.utils.BfsUtil;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import com.intellij.vcs.log.visible.CommitCountStage;
 import com.intellij.vcs.log.visible.VcsLogFilterer;
@@ -84,9 +83,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
         int row = getCurrentRow(dataPack, visibleGraph, namesData);
         if (row >= 0) {
-          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl)visibleGraph,
-                                                              ((PermanentGraphInfo<Integer>)dataPack.getPermanentGraph()).getLinearGraph(),
-                                                              namesData);
+          FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl)visibleGraph, namesData);
           if (refiner.refine(row, myFilePath)) {
             // creating a vg is the most expensive task, so trying to avoid that when unnecessary
             visibleGraph = createVisibleGraph(dataPack, sortType, matchingHeads, refiner.getPathsForCommits().keySet());
@@ -173,7 +170,8 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
   private static class FileHistoryRefiner implements DfsUtil.NodeVisitor {
     @NotNull private final VisibleGraphImpl<Integer> myVisibleGraph;
-    @NotNull private final LiteLinearGraph myPermanentGraph;
+    @NotNull private final PermanentCommitsInfo<Integer> myPermanentCommitsInfo;
+    @NotNull private final LiteLinearGraph myPermanentLinearGraph;
     @NotNull private final LiteLinearGraph myLinearVisibleGraph;
     @NotNull private final IndexDataGetter.FileNamesData myNamesData;
 
@@ -183,14 +181,14 @@ class FileHistoryFilterer extends VcsLogFilterer {
     @NotNull private final Set<Integer> myExcluded = ContainerUtil.newHashSet();
 
     public FileHistoryRefiner(@NotNull VisibleGraphImpl<Integer> visibleGraph,
-                              @NotNull LinearGraph permanentGraph,
                               @NotNull IndexDataGetter.FileNamesData namesData) {
       myVisibleGraph = visibleGraph;
-      myPermanentGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraph);
+      myPermanentCommitsInfo = myVisibleGraph.getPermanentGraph().getPermanentCommitsInfo();
+      myPermanentLinearGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getPermanentGraph().getLinearGraph());
       myLinearVisibleGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getLinearGraph());
       myNamesData = namesData;
 
-      myVisibilityBuffer = new BitSetFlags(myPermanentGraph.nodesCount());
+      myVisibilityBuffer = new BitSetFlags(myPermanentLinearGraph.nodesCount());
     }
 
     public boolean refine(int row, @NotNull FilePath startPath) {
@@ -234,12 +232,12 @@ class FileHistoryFilterer extends VcsLogFilterer {
         // checking which node is the parent and which is the child
         if (myLinearVisibleGraph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).contains(previousNode)) {
           // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
-          int parentIndex = BfsUtil.getCorrespondingParentIndex(myPermanentGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
-          currentPath = myNamesData.getPathInChildRevision(currentCommit, parentIndex, previousPath);
+          int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
+          currentPath = myNamesData.getPathInChildRevision(currentCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
         }
         else {
-          int parentIndex = BfsUtil.getCorrespondingParentIndex(myPermanentGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
-          currentPath = myNamesData.getPathInParentRevision(previousCommit, parentIndex, previousPath);
+          int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
+          currentPath = myNamesData.getPathInParentRevision(previousCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
         }
 
         myPathsForCommits.put(currentCommit, currentPath);

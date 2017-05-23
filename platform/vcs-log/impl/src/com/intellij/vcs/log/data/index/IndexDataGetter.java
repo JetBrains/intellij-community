@@ -84,7 +84,15 @@ public class IndexDataGetter {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
       try {
-        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> result.add(commit, changes.first, changes.second));
+        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> {
+          try {
+            List<Integer> parents = myIndexStorage.parents.get(commit);
+            result.add(commit, changes.first, changes.second, parents);
+          }
+          catch (IOException e) {
+            myFatalErrorsConsumer.consume(this, e);
+          }
+        });
       }
       catch (IOException | StorageException e) {
         myFatalErrorsConsumer.consume(this, e);
@@ -95,7 +103,7 @@ public class IndexDataGetter {
   }
 
   public class FileNamesData {
-    @NotNull private final TIntObjectHashMap<Map<FilePath, List<VcsLogPathsIndex.ChangeData>>> myCommitToChanges =
+    @NotNull private final TIntObjectHashMap<Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>>> myCommitToPathAndChanges =
       new TIntObjectHashMap<>();
     private boolean myHasRenames = false;
 
@@ -103,11 +111,14 @@ public class IndexDataGetter {
       return myHasRenames;
     }
 
-    public void add(int commit, @NotNull FilePath path, @NotNull List<VcsLogPathsIndex.ChangeData> changes) {
-      Map<FilePath, List<VcsLogPathsIndex.ChangeData>> map = myCommitToChanges.get(commit);
-      if (map == null) {
-        map = ContainerUtil.newHashMap();
-        myCommitToChanges.put(commit, map);
+    public void add(int commit,
+                    @NotNull FilePath path,
+                    @NotNull List<VcsLogPathsIndex.ChangeData> changes,
+                    @NotNull List<Integer> parents) {
+      Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> pathToChanges = myCommitToPathAndChanges.get(commit);
+      if (pathToChanges == null) {
+        pathToChanges = ContainerUtil.newHashMap();
+        myCommitToPathAndChanges.put(commit, pathToChanges);
       }
 
       if (!myHasRenames) {
@@ -119,17 +130,30 @@ public class IndexDataGetter {
           }
         }
       }
-      map.put(path, changes);
+
+      Map<Integer, VcsLogPathsIndex.ChangeData> parentToChangesMap = ContainerUtil.newHashMap();
+      if (!parents.isEmpty()) {
+        LOG.assertTrue(parents.size() == changes.size());
+        for (int i = 0; i < changes.size(); i++) {
+          parentToChangesMap.put(parents.get(i), changes.get(i));
+        }
+      }
+      else {
+        // initial commit
+        LOG.assertTrue(changes.size() == 1);
+        parentToChangesMap.put(-1, changes.get(0));
+      }
+      pathToChanges.put(path, parentToChangesMap);
     }
 
     @Nullable
-    public FilePath getPathInParentRevision(int commit, int parentIndex, @NotNull FilePath childPath) {
-      Map<FilePath, List<VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToChanges.get(commit);
-      LOG.assertTrue(filesToChangesMap != null);
-      List<VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(childPath);
+    public FilePath getPathInParentRevision(int commit, int parent, @NotNull FilePath childPath) {
+      Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToPathAndChanges.get(commit);
+      LOG.assertTrue(filesToChangesMap != null, "Missing commit " + commit);
+      Map<Integer, VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(childPath);
       if (changes == null) return childPath;
 
-      VcsLogPathsIndex.ChangeData change = changes.get(parentIndex);
+      VcsLogPathsIndex.ChangeData change = changes.get(parent);
       if (change == null) {
         LOG.assertTrue(changes.size() > 1);
         return childPath;
@@ -143,9 +167,9 @@ public class IndexDataGetter {
 
     @Nullable
     public FilePath getPathInChildRevision(int commit, int parentIndex, @NotNull FilePath parentPath) {
-      Map<FilePath, List<VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToChanges.get(commit);
-      LOG.assertTrue(filesToChangesMap != null);
-      List<VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(parentPath);
+      Map<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> filesToChangesMap = myCommitToPathAndChanges.get(commit);
+      LOG.assertTrue(filesToChangesMap != null, "Missing commit " + commit);
+      Map<Integer, VcsLogPathsIndex.ChangeData> changes = filesToChangesMap.get(parentPath);
       if (changes == null) return parentPath;
 
       VcsLogPathsIndex.ChangeData change = changes.get(parentIndex);
@@ -158,13 +182,13 @@ public class IndexDataGetter {
     }
 
     public boolean affects(int id, @NotNull FilePath path) {
-      return myCommitToChanges.containsKey(id) && myCommitToChanges.get(id).containsKey(path);
+      return myCommitToPathAndChanges.containsKey(id) && myCommitToPathAndChanges.get(id).containsKey(path);
     }
 
     @NotNull
     public Set<Integer> getCommits() {
       Set<Integer> result = ContainerUtil.newHashSet();
-      myCommitToChanges.forEach(result::add);
+      myCommitToPathAndChanges.forEach(result::add);
       return result;
     }
 
@@ -172,14 +196,15 @@ public class IndexDataGetter {
     public Map<Integer, FilePath> buildPathsMap() {
       Map<Integer, FilePath> result = ContainerUtil.newHashMap();
 
-      myCommitToChanges.forEachEntry((commit, filesToChanges) -> {
+      myCommitToPathAndChanges.forEachEntry((commit, filesToChanges) -> {
         if (filesToChanges.size() == 1) {
           result.put(commit, ContainerUtil.getFirstItem(filesToChanges.keySet()));
         }
         else {
-          for (Map.Entry<FilePath, List<VcsLogPathsIndex.ChangeData>> fileToChange : filesToChanges.entrySet()) {
-            VcsLogPathsIndex.ChangeData changeData =
-              ContainerUtil.find(fileToChange.getValue(), ch -> ch != null && !ch.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM));
+          for (Map.Entry<FilePath, Map<Integer, VcsLogPathsIndex.ChangeData>> fileToChange : filesToChanges.entrySet()) {
+            VcsLogPathsIndex.ChangeData changeData = ContainerUtil.find(fileToChange.getValue().values(),
+                                                                        ch -> ch != null &&
+                                                                              !ch.kind.equals(VcsLogPathsIndex.ChangeKind.RENAMED_FROM));
             if (changeData != null) {
               result.put(commit, fileToChange.getKey());
               break;
@@ -194,13 +219,13 @@ public class IndexDataGetter {
     }
 
     public boolean isTrivialMerge(int commit, @NotNull FilePath path) {
-      if (!myCommitToChanges.containsKey(commit)) return false;
-      List<VcsLogPathsIndex.ChangeData> data = myCommitToChanges.get(commit).get(path);
+      if (!myCommitToPathAndChanges.containsKey(commit)) return false;
+      Map<Integer, VcsLogPathsIndex.ChangeData> data = myCommitToPathAndChanges.get(commit).get(path);
       // strictly speaking, the criteria for merge triviality is a little bit more tricky than this:
       // some merges have just reverted changes in one of the branches
       // they need to be displayed
       // but we skip them instead
-      return data != null && data.size() > 1 && data.contains(null);
+      return data != null && data.size() > 1 && data.containsValue(null);
     }
   }
 }
