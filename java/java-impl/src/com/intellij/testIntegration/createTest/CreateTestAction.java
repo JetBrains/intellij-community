@@ -138,7 +138,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
   }
 
   @NotNull
-  private static Module suggestModuleForTests(@NotNull Project project, @NotNull Module productionModule) {
+  public static Module suggestModuleForTests(@NotNull Project project, @NotNull Module productionModule) {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       if (productionModule.equals(TestModuleProperties.getInstance(module).getProductionModule())) {
         return module;
