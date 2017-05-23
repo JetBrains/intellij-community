@@ -38,11 +38,14 @@ public class HandlerFactory {
     }
   }
 
+  @NotNull
   public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull ProducerStreamCall call) {
     return new ProducerHandler(call.getTypeAfter());
   }
 
+  @NotNull
   public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull TerminatorStreamCall call) {
+
     return new TerminatorHandler(call.getTypeBefore());
   }
 }
