@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -24,6 +23,8 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author nik
@@ -66,7 +67,7 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
     JpsPathVariablesConfiguration configuration = JpsModelSerializationDataService.getPathVariablesConfiguration(myModel.getGlobal());
     assertNotNull(configuration);
     assertEquals("/home/nik/.m2/repository", configuration.getUserVariableValue("MAVEN_REPOSITORY"));
-    assertEquals(1, configuration.getAllUserVariables().size());
+    assertThat(configuration.getAllUserVariables()).hasSize(1);
   }
 
   public void testSavePathVariables() {
@@ -81,9 +82,8 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
 
   private void assertOptionsFilesEqual(File originalOptionsDir, File targetOptionsDir, final String fileName) {
     JpsMacroExpander expander = new JpsMacroExpander(getPathVariables());
-    Element expected = JpsLoaderBase.loadRootElement(new File(originalOptionsDir, fileName), expander);
     Element actual = JpsLoaderBase.loadRootElement(new File(targetOptionsDir, fileName), expander);
-    PlatformTestUtil.assertElementsEqual(expected, actual);
+    assertThat(actual).isEqualTo(JpsLoaderBase.loadRootElement(new File(originalOptionsDir, fileName), expander));
   }
 
   public void testLoadEncoding() {
