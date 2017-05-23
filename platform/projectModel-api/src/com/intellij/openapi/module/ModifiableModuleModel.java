@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.util.InvalidDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +65,6 @@ public interface ModifiableModuleModel {
    *
    * @param filePath the path to load the module from.
    * @return the module instance.
-   * @throws InvalidDataException if the data in the .iml file is semantically incorrect.
    * @throws IOException if an I/O error occurred when loading the module file.
    * @throws ModuleWithNameAlreadyExists if a module with such a name already exists in the project.
    */
