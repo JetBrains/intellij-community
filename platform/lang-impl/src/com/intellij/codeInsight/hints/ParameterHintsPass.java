@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.CaretVisualPositionKeeper;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,9 +45,11 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   private final TIntObjectHashMap<String> myHints = new TIntObjectHashMap<>();
   private final TIntObjectHashMap<String> myShowOnlyIfExistedBeforeHints = new TIntObjectHashMap<>();
   private final SyntaxTraverser<PsiElement> myTraverser;
+  private final PsiElement myRootElement;
 
   public ParameterHintsPass(@NotNull PsiElement element, @NotNull Editor editor) {
     super(editor, element.getContainingFile(), true);
+    myRootElement = element;
     myTraverser = SyntaxTraverser.psiTraverser(element);
   }
 
@@ -124,7 +127,7 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   public void doApplyInformationToEditor() {
     CaretVisualPositionKeeper keeper = new CaretVisualPositionKeeper(myEditor);
     ParameterHintsPresentationManager manager = ParameterHintsPresentationManager.getInstance();
-    List<Inlay> hints = getParameterHints(manager);
+    List<Inlay> hints = hintsInRootElementArea(manager);
     ParameterHintsUpdater updater = new ParameterHintsUpdater(myEditor, hints, myHints, myShowOnlyIfExistedBeforeHints);
     updater.update();
     keeper.restoreOriginalLocation(false);
@@ -132,9 +135,16 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
   }
 
   @NotNull
-  private List<Inlay> getParameterHints(ParameterHintsPresentationManager manager) {
+  private List<Inlay> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
     assert myDocument != null;
-    List<Inlay> inlays = myEditor.getInlayModel().getInlineElementsInRange(0, myDocument.getTextLength());
+
+    TextRange range = myRootElement.getTextRange();
+    int elementStart = range.getStartOffset();
+    int elementEnd = range.getEndOffset();
+
+    List<Inlay> inlays = myEditor.getInlayModel()
+      .getInlineElementsInRange(elementStart, elementEnd);
+
     return ContainerUtil.filter(inlays, (hint) -> manager.isParameterHint(hint));
   }
 }
