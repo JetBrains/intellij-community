@@ -12,8 +12,16 @@ Stream.of
 reduce
     before: 1
     after: nothing
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for reduce
-    nothing -> 1 -> nothing
+  direct:
+    1 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

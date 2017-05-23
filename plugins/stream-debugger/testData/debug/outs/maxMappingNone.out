@@ -1,7 +1,7 @@
 LineBreakpoint created at MaxMappingNone.java:8
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! MaxMappingNone
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-MaxMappingNone.java:7
+MaxMappingNone.java:8
 Stream.of(1)
 .skip(1)
 .max(Comparator.comparingInt(x -> -x))
@@ -14,10 +14,22 @@ skip
 max
     before: nothing
     after: nothing
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for skip
-    nothing -> 1 -> nothing
+  direct:
+    1 -> nothing
+  reverse:
+    empty
 mappings for max
-no
+  direct:
+    empty
+  reverse:
+    empty
+wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

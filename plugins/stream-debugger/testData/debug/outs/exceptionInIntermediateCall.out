@@ -18,8 +18,24 @@ map
     after: 2
 collect
     before: 2
-    after: nothing
-Exception caught: java.lang.AssertionError, null
+    after: 3
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+mappings for map
+  direct:
+    1 -> 2
+    3 -> nothing
+  reverse:
+    1 <- 2
+mappings for collect
+  direct:
+    2 -> 3
+  reverse:
+    2 <- 3
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

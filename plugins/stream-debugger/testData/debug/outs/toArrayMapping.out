@@ -1,7 +1,7 @@
 LineBreakpoint created at ToArrayMapping.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! ToArrayMapping
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-ToArrayMapping.java:5
+ToArrayMapping.java:6
 Stream.of(10, 11, 12)
 .toArray(Integer[]::new)
 Stream.of
@@ -9,12 +9,23 @@ Stream.of
     after: 1,2,3
 toArray
     before: 1,2,3
-    after: nothing
+    after: 4,5,6
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
 mappings for toArray
-    nothing -> 1 -> nothing
-    nothing -> 2 -> nothing
-    nothing -> 3 -> nothing
-no
+  direct:
+    1 -> 4
+    2 -> 5
+    3 -> 6
+  reverse:
+    1 <- 4
+    2 <- 5
+    3 <- 6
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

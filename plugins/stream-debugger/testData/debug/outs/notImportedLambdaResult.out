@@ -17,13 +17,27 @@ limit
     after: 3
 toArray
     before: 3
-    after: nothing
+    after: 4
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for flatMapToInt
-    nothing -> 1 -> 2
+  direct:
+    1 -> 2
+  reverse:
+    1 <- 2
 mappings for limit
-    1 -> 2 -> 3
+  direct:
+    2 -> 3
+  reverse:
+    2 <- 3
 mappings for toArray
-    2 -> 3 -> nothing
+  direct:
+    3 -> 4
+  reverse:
+    3 <- 4
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

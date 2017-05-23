@@ -16,9 +16,21 @@ peek
 reduce
     before: nothing
     after: nothing
+mappings for IntStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for peek
-    nothing -> 1 -> nothing
+  direct:
+    1 -> nothing
+  reverse:
+    empty
 mappings for reduce
+  direct:
+    empty
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

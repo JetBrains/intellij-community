@@ -14,13 +14,27 @@ distinct
 count
     before: 2,4
     after: nothing
+mappings for IntStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 5
 mappings for distinct
-    nothing -> 1 -> 2
-    nothing -> 3 -> 4
-    nothing -> 5 -> 2
+  direct:
+    1 -> 2
+    3 -> 4
+    5 -> 2
+  reverse:
+    1,5 <- 2
+    3 <- 4
 mappings for count
-    1, 5 -> 2 -> nothing
-    3 -> 4 -> nothing
+  direct:
+    2 -> nothing
+    4 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

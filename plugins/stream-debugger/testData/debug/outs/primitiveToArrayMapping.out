@@ -1,7 +1,7 @@
 LineBreakpoint created at PrimitiveToArrayMapping.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! PrimitiveToArrayMapping
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-PrimitiveToArrayMapping.java:5
+PrimitiveToArrayMapping.java:6
 IntStream.of(1, 2, 3, 4)
 .toArray()
 IntStream.of
@@ -9,13 +9,26 @@ IntStream.of
     after: 1,2,3,4
 toArray
     before: 1,2,3,4
-    after: nothing
+    after: 5,6,7,8
+mappings for IntStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
+    nothing <- 4
 mappings for toArray
-    nothing -> 1 -> nothing
-    nothing -> 2 -> nothing
-    nothing -> 3 -> nothing
-    nothing -> 4 -> nothing
-no
+  direct:
+    1 -> 5
+    2 -> 6
+    3 -> 7
+    4 -> 8
+  reverse:
+    1 <- 5
+    2 <- 6
+    3 <- 7
+    4 <- 8
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

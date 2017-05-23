@@ -1,7 +1,7 @@
 LineBreakpoint created at PrimitiveNoneMatchMapping.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! PrimitiveNoneMatchMapping
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-PrimitiveNoneMatchMapping.java:5
+PrimitiveNoneMatchMapping.java:6
 DoubleStream.of(1., 4.)
 .noneMatch(x -> x > 0)
 DoubleStream.of
@@ -10,9 +10,17 @@ DoubleStream.of
 noneMatch
     before: 1
     after: nothing
+mappings for DoubleStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
 mappings for noneMatch
-    nothing -> 1 -> nothing
-no
+  direct:
+    1 -> nothing
+  reverse:
+    empty
+wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

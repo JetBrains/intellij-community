@@ -14,12 +14,25 @@ sorted
 sum
     before: 3,4
     after: nothing
+mappings for DoubleStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
 mappings for sorted
-    nothing -> 1 -> 4
-    nothing -> 2 -> 3
+  direct:
+    1 -> 4
+    2 -> 3
+  reverse:
+    2 <- 3
+    1 <- 4
 mappings for sum
-    2 -> 3 -> nothing
-    1 -> 4 -> nothing
+  direct:
+    3 -> nothing
+    4 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

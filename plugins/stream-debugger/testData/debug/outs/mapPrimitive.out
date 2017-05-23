@@ -14,16 +14,33 @@ map
 sum
     before: 2,4,6,8
     after: nothing
+mappings for LongStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 5
+    nothing <- 7
 mappings for map
-    nothing -> 1 -> 2
-    nothing -> 3 -> 4
-    nothing -> 5 -> 6
-    nothing -> 7 -> 8
+  direct:
+    1 -> 2
+    3 -> 4
+    5 -> 6
+    7 -> 8
+  reverse:
+    1 <- 2
+    3 <- 4
+    5 <- 6
+    7 <- 8
 mappings for sum
-    1 -> 2 -> nothing
-    3 -> 4 -> nothing
-    5 -> 6 -> nothing
-    7 -> 8 -> nothing
+  direct:
+    2 -> nothing
+    4 -> nothing
+    6 -> nothing
+    8 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -1,7 +1,7 @@
 LineBreakpoint created at PrimitiveMinMapping.java:7
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! PrimitiveMinMapping
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-PrimitiveMinMapping.java:6
+PrimitiveMinMapping.java:7
 DoubleStream.of(1., 2., 10.)
 .min()
 DoubleStream.of
@@ -10,11 +10,21 @@ DoubleStream.of
 min
     before: 1,2,3
     after: nothing
+mappings for DoubleStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 3
 mappings for min
-    nothing -> 1 -> nothing
-    nothing -> 2 -> nothing
-    nothing -> 3 -> nothing
-no
+  direct:
+    1 -> nothing
+    2 -> nothing
+    3 -> nothing
+  reverse:
+    empty
+wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

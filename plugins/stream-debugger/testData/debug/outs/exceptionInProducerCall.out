@@ -16,8 +16,21 @@ map
 toArray
     before: nothing
     after: nothing
+mappings for Stream.generate
+  direct:
+    no
+  reverse:
+    empty
 mappings for map
+  direct:
+    empty
+  reverse:
+    empty
 mappings for toArray
+  direct:
+    empty
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

@@ -14,14 +14,29 @@ flatMap
 count
     before: 2,3,5,6
     after: nothing
+mappings for Stream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 4
 mappings for flatMap
-    nothing -> 1 -> 2,3
-    nothing -> 4 -> 5,6
+  direct:
+    1 -> 2,3
+    4 -> 5,6
+  reverse:
+    1 <- 2
+    1 <- 3
+    4 <- 5
+    4 <- 6
 mappings for count
-    1 -> 2 -> nothing
-    1 -> 3 -> nothing
-    4 -> 5 -> nothing
-    4 -> 6 -> nothing
+  direct:
+    2 -> nothing
+    3 -> nothing
+    5 -> nothing
+    6 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

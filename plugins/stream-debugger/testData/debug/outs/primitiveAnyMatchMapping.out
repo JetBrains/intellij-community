@@ -1,7 +1,7 @@
 LineBreakpoint created at PrimitiveAnyMatchMapping.java:6
 !JDK_HOME!\bin\java -agentlib:jdwp=transport=dt_socket,address=!HOST_NAME!:!HOST_PORT!,suspend=y,server=n -Dfile.encoding=!FILE_ENCODING! -classpath !OUTPUT_PATH!;!RT_JAR! PrimitiveAnyMatchMapping
 Connected to the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
-PrimitiveAnyMatchMapping.java:5
+PrimitiveAnyMatchMapping.java:6
 IntStream.iterate(0, x -> x + 1)
 .limit(5)
 .anyMatch(x -> x < 0)
@@ -14,19 +14,38 @@ limit
 anyMatch
     before: 2,4,6,8,10
     after: nothing
+mappings for IntStream.iterate
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 3
+    nothing <- 5
+    nothing <- 7
+    nothing <- 9
 mappings for limit
-    nothing -> 1 -> 2
-    nothing -> 3 -> 4
-    nothing -> 5 -> 6
-    nothing -> 7 -> 8
-    nothing -> 9 -> 10
+  direct:
+    1 -> 2
+    3 -> 4
+    5 -> 6
+    7 -> 8
+    9 -> 10
+  reverse:
+    1 <- 2
+    3 <- 4
+    5 <- 6
+    7 <- 8
+    9 <- 10
 mappings for anyMatch
-    1 -> 2 -> nothing
-    3 -> 4 -> nothing
-    5 -> 6 -> nothing
-    7 -> 8 -> nothing
-    9 -> 10 -> nothing
-no
+  direct:
+    2 -> nothing
+    4 -> nothing
+    6 -> nothing
+    8 -> nothing
+    10 -> nothing
+  reverse:
+    empty
+wrong
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0

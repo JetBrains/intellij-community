@@ -14,14 +14,29 @@ filter
 count
     before: 3,6
     after: nothing
+mappings for LongStream.of
+  direct:
+    no
+  reverse:
+    nothing <- 1
+    nothing <- 2
+    nothing <- 4
+    nothing <- 5
 mappings for filter
-    nothing -> 1 -> nothing
-    nothing -> 2 -> 3
-    nothing -> 4 -> nothing
-    nothing -> 5 -> 6
+  direct:
+    1 -> nothing
+    2 -> 3
+    4 -> nothing
+    5 -> 6
+  reverse:
+    2 <- 3
+    5 <- 6
 mappings for count
-    2 -> 3 -> nothing
-    5 -> 6 -> nothing
+  direct:
+    3 -> nothing
+    6 -> nothing
+  reverse:
+    empty
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
