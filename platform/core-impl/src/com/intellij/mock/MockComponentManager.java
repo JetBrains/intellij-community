@@ -44,7 +44,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
 
   private final Map<Class, Object> myComponents = new HashMap<>();
   private final Set<Object> myDisposableComponents = ContainerUtil.newConcurrentSet();
-  private boolean myDisposed = false;
+  private boolean myDisposed;
 
   public MockComponentManager(@Nullable PicoContainer parent, @NotNull Disposable parentDisposable) {
     myPicoContainer = new DefaultPicoContainer(parent) {
@@ -99,6 +99,7 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
   @Override
   public <T> T getComponent(@NotNull Class<T> interfaceClass) {
     final Object o = myPicoContainer.getComponentInstance(interfaceClass);
+    //noinspection unchecked
     return (T)(o != null ? o : myComponents.get(interfaceClass));
   }
 
@@ -112,10 +113,11 @@ public class MockComponentManager extends UserDataHolderBase implements Componen
     return false;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   @NotNull
   public <T> T[] getComponents(@NotNull Class<T> baseClass) {
-    final List<?> list = myPicoContainer.getComponentInstancesOfType(baseClass);
+    final List<T> list = myPicoContainer.getComponentInstancesOfType(baseClass);
     return list.toArray((T[])Array.newInstance(baseClass, 0));
   }
 
