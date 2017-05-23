@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -671,7 +672,13 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     }
 
     for (Future future : futures) {
-      future.get(20, TimeUnit.SECONDS);
+      try {
+        future.get(20, TimeUnit.SECONDS);
+      }
+      catch (TimeoutException e) {
+        printThreadDump();
+        throw e;
+      }
     }
   }
 
