@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
     final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
     if (rootSchema == null) return null;
 
-    if (JsonSchemaFileType.INSTANCE.equals(containingFile.getFileType())) {
+    if (JsonSchemaService.isSchemaFile(containingFile)) {
       return generateForJsonSchemaFileType(element);
     }
     return generateDoc(element, rootSchema);

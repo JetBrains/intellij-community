@@ -75,12 +75,14 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
   private static class MyUpdater {
     @NotNull private final Project myProject;
     private final ZipperUpdater myUpdater;
+    @NotNull private final JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
     private final Runnable myRunnable;
 
     protected MyUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       myProject = project;
       myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, project);
+      myService = service;
       myRunnable = () -> {
         final Set<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
@@ -93,7 +95,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
           .map(editor -> ((EditorEx)editor).getVirtualFile())
           .filter(file -> file != null && file.isValid())
           .forEach(file -> {
-            final Collection<VirtualFile> schemaFiles = service.getSchemaFilesForFile(file);
+            final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
             if (schemaFiles.stream().anyMatch(scope::contains)) {
               ReadAction.run(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart));
             }
@@ -102,7 +104,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     }
 
     protected void onFileChange(@NotNull final VirtualFile schemaFile) {
-      if (JsonSchemaFileType.INSTANCE.equals(schemaFile.getFileType())) {
+      if (myService.isSchemaFile(schemaFile)) {
         myProject.getMessageBus().syncPublisher(JSON_SCHEMA_CHANGED).run();
         myDirtySchemas.add(schemaFile);
         myUpdater.queue(myRunnable);

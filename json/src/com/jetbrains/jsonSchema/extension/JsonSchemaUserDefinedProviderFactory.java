@@ -5,9 +5,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -72,7 +72,7 @@ public class JsonSchemaUserDefinedProviderFactory implements JsonSchemaProviderF
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
       if (myPatterns.isEmpty() || file.isDirectory() || !file.isValid() || getSchemaFile() == null ||
-          JsonSchemaFileType.INSTANCE.equals(file.getFileType())) return false;
+          JsonSchemaService.Impl.get(project).isSchemaFile(file)) return false;
       return myPatterns.stream().anyMatch(processor -> processor.process(file));
     }
 

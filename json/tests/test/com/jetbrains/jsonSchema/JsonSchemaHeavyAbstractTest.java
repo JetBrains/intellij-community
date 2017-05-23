@@ -42,7 +42,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFileTypeManager = FileTypeManager.getInstance();
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+    //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.associatePattern(JsonSchemaFileType.INSTANCE, "*Schema.json"));
     mySchemas = new HashMap<>();
     myDoCompletion = true;
   }
@@ -50,7 +50,7 @@ public abstract class JsonSchemaHeavyAbstractTest extends CompletionTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
+      //WriteCommandAction.runWriteCommandAction(getProject(), () -> myFileTypeManager.removeAssociatedExtension(JsonSchemaFileType.INSTANCE, "*Schema.json"));
       final JsonSchemaMappingsProjectConfiguration instance = JsonSchemaMappingsProjectConfiguration.getInstance(getProject());
       instance.setState(Collections.emptyMap());
     } finally {

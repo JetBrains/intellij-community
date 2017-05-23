@@ -25,7 +25,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
@@ -195,8 +194,8 @@ class JsonSchemaAnnotatorChecker {
   private void validateAsJsonSchema(@NotNull PsiElement objElement) {
     final JsonObject object = ObjectUtils.tryCast(objElement, JsonObject.class);
     if (object == null) return;
-    if (JsonSchemaFileType.INSTANCE.equals(object.getContainingFile().getFileType())) {
 
+    if (JsonSchemaService.isSchemaFile(objElement.getContainingFile())) {
       final VirtualFile schemaFile = object.getContainingFile().getVirtualFile();
       if (schemaFile == null) return;
 

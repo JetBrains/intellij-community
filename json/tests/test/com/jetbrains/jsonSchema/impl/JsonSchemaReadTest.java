@@ -12,10 +12,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.concurrency.Semaphore;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.junit.Assert;
 
@@ -56,10 +58,12 @@ public class JsonSchemaReadTest extends CompletionTestCase {
   }
 
   public void testMainSchemaHighlighting() throws Exception {
-    final Set<VirtualFile> files = JsonSchemaService.Impl.get(myProject).getSchemaFiles();
-    final VirtualFile mainSchema = files.stream().filter(file -> file.getName().equals("schema.json")).findFirst().orElse(null);
+    final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders();
+    Assert.assertEquals(1, providers.size());
+    final VirtualFile mainSchema = providers.get(0).getSchemaFile();
     assertNotNull(mainSchema);
-    assertTrue(JsonSchemaFileType.INSTANCE.equals(mainSchema.getFileType()));
+    assertTrue(service.isSchemaFile(mainSchema));
 
     final Annotator annotator = new JsonSchemaAnnotator();
     LanguageAnnotators.INSTANCE.addExplicitExtension(JsonLanguage.INSTANCE, annotator);

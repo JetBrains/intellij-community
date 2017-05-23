@@ -18,6 +18,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
@@ -25,7 +26,8 @@ import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.intellij.psi.util.PsiUtilCore;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,10 +51,11 @@ public class JsonSchemaReferenceContributor extends PsiReferenceContributor {
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         if (element instanceof JsonValue) {
-          if (!JsonSchemaFileType.INSTANCE.equals(((PsiElement)element).getContainingFile().getFileType())) return false;
-          if (((JsonValue)element).getParent() instanceof JsonProperty &&
-              ((JsonProperty)((JsonValue)element).getParent()).getValue() == element) {
-            return propertyName.equals(((JsonProperty)((JsonValue)element).getParent()).getName());
+          final JsonValue value = (JsonValue) element;
+          if (!JsonSchemaService.isSchemaFile(value.getContainingFile())) return false;
+
+          if (value.getParent() instanceof JsonProperty && ((JsonProperty)value.getParent()).getValue() == element) {
+            return propertyName.equals(((JsonProperty)value.getParent()).getName());
           }
         }
         return false;

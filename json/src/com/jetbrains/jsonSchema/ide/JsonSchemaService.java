@@ -5,26 +5,29 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.Set;
 
 public interface JsonSchemaService {
-  @NotNull
-  static String normalizeId(@NotNull String id) {
-    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
-    return id.startsWith("#") ? id.substring(1) : id;
-  }
-
   class Impl {
     public static JsonSchemaService get(@NotNull Project project) {
       return ServiceManager.getService(project, JsonSchemaService.class);
     }
   }
+
+  static boolean isSchemaFile(@NotNull PsiFile psiFile) {
+    final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
+    return Impl.get(psiFile.getProject()).isSchemaFile(file);
+  }
+
+  boolean isSchemaFile(@NotNull VirtualFile file);
 
   @NotNull
   Collection<VirtualFile> getSchemaFilesForFile(@NotNull VirtualFile file);
@@ -38,13 +41,16 @@ public interface JsonSchemaService {
   @Nullable
   VirtualFile findSchemaFileByReference(@NotNull String reference, VirtualFile referent);
 
-  @NotNull
-  Set<VirtualFile> getSchemaFiles();
-
   @Nullable
   JsonSchemaFileProvider getSchemaProvider(@NotNull final VirtualFile schemaFile);
 
   void reset();
 
   ModificationTracker getAnySchemaChangeTracker();
+
+  @NotNull
+  static String normalizeId(@NotNull String id) {
+    id = id.endsWith("#") ? id.substring(0, id.length() - 1) : id;
+    return id.startsWith("#") ? id.substring(1) : id;
+  }
 }

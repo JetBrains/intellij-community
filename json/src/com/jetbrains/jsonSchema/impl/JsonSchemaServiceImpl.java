@@ -25,7 +25,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaFileTypeManager;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
@@ -87,7 +86,6 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   public void reset() {
     myModificationCount.incrementAndGet();
     myState.reset();
-    JsonSchemaFileTypeManager.getInstance().reset();
     ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged()),
                                                     ModalityState.NON_MODAL, myProject.getDisposed());
   }
@@ -133,10 +131,9 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return readCachedObject(schemaFile);
   }
 
-  @NotNull
   @Override
-  public Set<VirtualFile> getSchemaFiles() {
-    return myState.getFiles();
+  public boolean isSchemaFile(@NotNull VirtualFile file) {
+    return myState.getFiles().contains(file);
   }
 
   @Nullable

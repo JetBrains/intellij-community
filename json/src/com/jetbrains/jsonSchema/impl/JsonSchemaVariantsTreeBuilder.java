@@ -27,7 +27,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -462,10 +461,10 @@ public class JsonSchemaVariantsTreeBuilder {
     private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
       final VirtualFile schemaFile = parent.getSchemaFile();
       if (schemaFile == null) return false;
-      if (!JsonSchemaFileType.INSTANCE.equals(schemaFile.getFileType())) return false;
+      final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getPeerPointer().getProject());
+      if (!service.isSchemaFile(schemaFile)) return false;
 
-      final JsonSchemaObject rootSchema = JsonSchemaService.Impl.get(parent.getPeerPointer().getProject())
-        .getSchemaObjectForSchemaFile(schemaFile);
+      final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
       return rootSchema != null && "http://json-schema.org/draft-04/schema#".equals(rootSchema.getId());
     }
 

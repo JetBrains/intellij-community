@@ -16,7 +16,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
-    <fileTypeFactory implementation="com.jetbrains.jsonSchema.JsonSchemaFileTypeFactory"/>
+    <iconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
     <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
@@ -68,7 +68,6 @@
                          instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
-    <applicationService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaFileTypeManager"/>
     <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator"/>
     <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
                             implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor"/>
@@ -79,7 +78,6 @@
     <projectService serviceImplementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
-    <indexedRootsProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaResourcesRootsProvider"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>

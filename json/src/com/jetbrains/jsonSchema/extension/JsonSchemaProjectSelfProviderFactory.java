@@ -18,7 +18,7 @@ package com.jetbrains.jsonSchema.extension;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.jsonSchema.JsonSchemaFileType;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -47,7 +47,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
     @Override
     public boolean isAvailable(@NotNull Project project, @NotNull VirtualFile file) {
-      return JsonSchemaFileType.INSTANCE.equals(file.getFileType());
+      return JsonSchemaService.Impl.get(project).isSchemaFile(file);
     }
 
     @NotNull
