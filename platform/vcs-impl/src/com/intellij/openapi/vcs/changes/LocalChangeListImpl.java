@@ -77,8 +77,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myName;
   }
 
-  @Override
-  public void setName(@NotNull String name) {
+  public void setNameImpl(@NotNull String name) {
     myName = validateName(name);
   }
 
@@ -96,8 +95,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myComment;
   }
 
-  @Override
-  public void setComment(@Nullable String comment) {
+  public void setCommentImpl(@Nullable String comment) {
     myComment = comment != null ? comment : "";
   }
 
@@ -115,8 +113,7 @@ public class LocalChangeListImpl extends LocalChangeList {
     return myIsReadOnly;
   }
 
-  @Override
-  public void setReadOnly(final boolean isReadOnly) {
+  public void setReadOnlyImpl(final boolean isReadOnly) {
     myIsReadOnly = isReadOnly;
   }
 
@@ -165,5 +162,21 @@ public class LocalChangeListImpl extends LocalChangeList {
   @Override
   public LocalChangeListImpl copy() {
     return new LocalChangeListImpl(this);
+  }
+
+
+  @Override
+  public void setName(@NotNull String name) {
+    ChangeListManager.getInstance(myProject).editName(myName, name);
+  }
+
+  @Override
+  public void setComment(@Nullable String comment) {
+    ChangeListManager.getInstance(myProject).editComment(myName, comment);
+  }
+
+  @Override
+  public void setReadOnly(boolean isReadOnly) {
+    ChangeListManager.getInstance(myProject).setReadOnly(myName, isReadOnly);
   }
 }

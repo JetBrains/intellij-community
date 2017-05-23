@@ -903,7 +903,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       if (associatedTask != null) {
         associatedTask.removeChangelist(new ChangeListInfo(changeList));
       }
-      changeList.setComment(comment);
+      myChangeListManager.editComment(name, comment);
     }
     task.addChangelist(new ChangeListInfo(changeList));
     myChangeListManager.setDefaultChangeList(changeList);

@@ -182,7 +182,7 @@ public class ChangeListChooserPanel extends JPanel {
     }
     else {
       //update description if changed
-      localChangeList.setComment(myListPanel.getDescription());
+      manager.editComment(changeListName, myListPanel.getDescription());
     }
     rememberSettings(project, localChangeList.isDefault(), myListPanel.getMakeActiveCheckBox().isSelected());
     if (myListPanel.getMakeActiveCheckBox().isSelected()) {

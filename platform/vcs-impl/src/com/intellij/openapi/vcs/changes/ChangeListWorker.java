@@ -186,9 +186,9 @@ public class ChangeListWorker {
   }
 
   public boolean setReadOnly(String name, boolean value) {
-    final LocalChangeList list = myMap.get(name);
+    final LocalChangeListImpl list = myMap.get(name);
     if (list != null) {
-      list.setReadOnly(value);
+      list.setReadOnlyImpl(value);
     }
     return list != null;
   }
@@ -207,7 +207,7 @@ public class ChangeListWorker {
     }
 
     LocalChangeListImpl newList = LocalChangeListImpl.createEmptyChangeListImpl(myProject, name, null);
-    newList.setComment(description);
+    newList.setCommentImpl(description);
     newList.setData(data);
 
     myMap.put(name, newList);
@@ -313,7 +313,7 @@ public class ChangeListWorker {
     final LocalChangeListImpl list = myMap.get(fromName);
     if (list == null || list.isReadOnly()) return false;
 
-    list.setName(toName);
+    list.setNameImpl(toName);
     myMap.remove(fromName);
     myMap.put(toName, list);
 
@@ -327,7 +327,7 @@ public class ChangeListWorker {
 
     final String oldComment = list.getComment();
     if (!Comparing.equal(oldComment, newComment)) {
-      list.setComment(newComment);
+      list.setCommentImpl(newComment);
     }
     return oldComment;
   }

@@ -142,7 +142,7 @@ class ChangeListManagerSerialization {
     String comment = listNode.getAttributeValue(ATT_COMMENT);
 
     LocalChangeListImpl list = LocalChangeListImpl.createEmptyChangeListImpl(project, name, id);
-    list.setComment(comment);
+    list.setCommentImpl(comment);
 
     for (Element changeNode : listNode.getChildren(NODE_CHANGE)) {
       list.addChange(readChange(changeNode));
@@ -152,7 +152,7 @@ class ChangeListManagerSerialization {
       list.setDefault(true);
     }
     if (ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY))) {
-      list.setReadOnly(true);
+      list.setReadOnlyImpl(true);
     }
 
     return list;
