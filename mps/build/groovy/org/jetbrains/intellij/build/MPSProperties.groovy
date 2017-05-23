@@ -84,6 +84,8 @@ class MPSProperties extends ProductProperties {
             }
         } as Consumer<PlatformLayout>
 
+        modulesToCompileTests = ["jps-builders", "jps-model-tests", "jps-serialization-tests"]
+
         buildSourcesArchive = true
     }
 

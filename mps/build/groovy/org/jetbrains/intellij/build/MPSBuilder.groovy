@@ -1,6 +1,7 @@
 package org.jetbrains.intellij.build
 
 import org.codehaus.gant.GantBinding
+import org.jetbrains.intellij.build.impl.LayoutBuilder
 
 /**
  * @author victor
@@ -22,5 +23,16 @@ class MPSBuilder {
         buildContext.getOptions().targetOS = ""
         def buildTasks = BuildTasks.create(buildContext)
         buildTasks.buildDistributions()
+
+        AntBuilder ant = buildContext.ant
+        String jpsArtifactDir = "$buildContext.paths.distAll/lib/jps"
+        new LayoutBuilder(ant, buildContext.project, false).layout(jpsArtifactDir) {
+            jar("jps-build-test.jar") {
+                moduleTests("jps-builders")
+                moduleTests("jps-model-tests")
+                moduleTests("jps-serialization-tests")
+            }
+        }
+        buildContext.notifyArtifactBuilt(jpsArtifactDir)
     }
 }
