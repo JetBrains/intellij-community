@@ -104,8 +104,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
   private final THashMap<StartMarker, Throwable> myDebugAllocationPositions = new THashMap<>(0, ContainerUtil.identityStrategy());
-  private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myLeftMap = new IdentityHashMap<>(0);
-  private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myRightMap = new IdentityHashMap<>(0);
+  private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myLeftBinders = new IdentityHashMap<>(0);
+  private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myRightBinders = new IdentityHashMap<>(0);
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @NotNull
@@ -281,9 +281,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
+    @NotNull
     abstract WhitespacesAndCommentsBinder getBinder();
 
-    abstract void setBinder(WhitespacesAndCommentsBinder binder);
+    abstract void setBinder(@NotNull WhitespacesAndCommentsBinder binder);
+
+    protected void processBinder(@NotNull WhitespacesAndCommentsBinder binder,
+                                 @NotNull Map<ProductionMarker, WhitespacesAndCommentsBinder> map, 
+                                 @NotNull WhitespacesAndCommentsBinder defaultBinder) {
+      if (binder != defaultBinder) {
+        map.put(this, binder);
+      }
+      else {
+        map.remove(this);
+      }
+    }
   }
 
   private static class StartMarker extends ProductionMarker implements Marker {
@@ -300,7 +312,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (myBuilder.myDebugMode) {
         myBuilder.myDebugAllocationPositions.remove(this);
       }
-      myBuilder.myLeftMap.remove(this);
+      myBuilder.myLeftBinders.remove(this);
       myBuilder = null;
       myType = null;
       myDoneMarker = null;
@@ -356,16 +368,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myDoneMarker.myLexemeIndex;
     }
 
+    @NotNull
     @Override
     public WhitespacesAndCommentsBinder getBinder() {
-      return myBuilder.myLeftMap.getOrDefault(this, DEFAULT_LEFT_BINDER);
+      return myBuilder.myLeftBinders.getOrDefault(this, DEFAULT_LEFT_BINDER);
     }
 
     @Override
     public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      if (binder != DEFAULT_LEFT_BINDER) {
-        myBuilder.myLeftMap.put(this, binder);
-      }
+      processBinder(binder, myBuilder.myLeftBinders, DEFAULT_LEFT_BINDER);
     }
 
     public void addChild(@NotNull ProductionMarker node) {
@@ -638,21 +649,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void clean() {
-      myStart.myBuilder.myRightMap.remove(this);
+      myStart.myBuilder.myRightBinders.remove(this);
       super.clean();
       myStart = null;
     }
 
+    @NotNull
     @Override
     public WhitespacesAndCommentsBinder getBinder() {
-      return myStart.myBuilder.myRightMap.getOrDefault(this, DEFAULT_RIGHT_BINDER);
+      return myStart.myBuilder.myRightBinders.getOrDefault(this, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
-    public void setBinder(WhitespacesAndCommentsBinder binder) {
-      if (binder != DEFAULT_RIGHT_BINDER) {
-        myStart.myBuilder.myRightMap.put(this, binder);
-      }
+    public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
+      processBinder(binder, myStart.myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
@@ -704,21 +714,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public void clean() {
-      myBuilder.myRightMap.remove(this);
+      myBuilder.myRightBinders.remove(this);
       super.clean();
       myMessage = null;
     }
 
+    @NotNull
     @Override
     public WhitespacesAndCommentsBinder getBinder() {
-      return myBuilder.myRightMap.getOrDefault(this, DEFAULT_RIGHT_BINDER);
+      return myBuilder.myRightBinders.getOrDefault(this, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
-    public void setBinder(WhitespacesAndCommentsBinder binder) {
-      if (binder != DEFAULT_RIGHT_BINDER) {
-        myBuilder.myLeftMap.put(this, binder);
-      }
+    public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
+      processBinder(binder, myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
