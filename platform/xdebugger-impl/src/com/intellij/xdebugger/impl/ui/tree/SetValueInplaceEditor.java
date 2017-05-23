@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -57,7 +58,8 @@ public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
     if (presentation != null) {
       XValuePresentationUtil.appendSeparator(nameLabel, presentation.getSeparator());
     }
-    myNameOffset = nameLabel.getPreferredSize().width;
+    Border border = nameLabel.getMyBorder();
+    myNameOffset = nameLabel.getPreferredSize().width  - (border != null ? border.getBorderInsets(nameLabel).right : 0);
     myEditorPanel = JBUI.Panels.simplePanel(myExpressionEditor.getComponent());
   }
 
