@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   private static final Logger LOG = Logger.getInstance(PropertiesFileImpl.class);
@@ -76,13 +78,13 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   @Nullable
   @Override
   public IProperty findPropertyByKey(@NotNull String key) {
-    return ContainerUtil.getFirstItem(propertiesByKey(key));
+    return propertiesByKey(key).findFirst().orElse(null);
   }
 
   @Override
   @NotNull
   public List<IProperty> findPropertiesByKey(@NotNull String key) {
-    return new ArrayList<>(propertiesByKey(key));
+    return propertiesByKey(key).collect(Collectors.toList());
   }
 
   @Override
@@ -185,7 +187,12 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
     return ContainerUtil.getLastItem(properties);
   }
 
-  private Collection<Property> propertiesByKey(@NotNull String key) {
-    return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this));
+  private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
+    if (isPhysical()) {
+      return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
+    } else {
+      // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
+      return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));
+    }
   }
 }
