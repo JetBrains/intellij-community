@@ -45,7 +45,10 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -1565,26 +1568,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     }
 
     @Nullable
-    private AbstractVcs getVcs(final BaseRevision baseRevision) {
+    private AbstractVcs getVcs(@NotNull BaseRevision baseRevision) {
       VcsKey vcsKey = baseRevision.getVcs();
-      if (vcsKey == null) {
-        FilePath path = baseRevision.getFilePath();
-        vcsKey = findVcs(path);
-        if (vcsKey == null) return null;
+      if (vcsKey != null) {
+        return myVcsManager.findVcsByName(vcsKey.getName());
       }
-      return myVcsManager.findVcsByName(vcsKey.getName());
-    }
-
-    @Nullable
-    private VcsKey findVcs(final FilePath path) {
-      // does not matter directory or not
-      VirtualFile vf = path.getVirtualFile();
-      if (vf == null) {
-        vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(path.getIOFile());
-      }
-      if (vf == null) return null;
-      final AbstractVcs vcs = myVcsManager.getVcsFor(vf);
-      return vcs == null ? null : vcs.getKeyInstanceMethod();
+      return myVcsManager.getVcsFor(baseRevision.getFilePath());
     }
   }
 
