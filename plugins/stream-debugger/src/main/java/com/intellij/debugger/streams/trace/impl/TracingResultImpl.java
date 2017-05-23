@@ -95,15 +95,15 @@ public class TracingResultImpl implements TracingResult {
 
       for (int i = 0; i < intermediateCalls.size() - 1; i++) {
         states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(i + 1).getValuesOrderAfter().values()),
-                                             intermediateCalls.get(i + 1),
                                              intermediateCalls.get(i),
+                                             intermediateCalls.get(i + 1),
                                              resolvedTraces.get(i + 1).getReverseOrder(),
                                              resolvedTraces.get(i + 2).getDirectOrder()));
       }
 
       states.add(new IntermediateStateImpl(TraceUtil.sortedByTime(myTrace.get(myTrace.size() - 1).getValuesOrderBefore().values()),
-                                           mySourceChain.getTerminationCall(),
                                            intermediateCalls.get(intermediateCalls.size() - 1),
+                                           mySourceChain.getTerminationCall(),
                                            resolvedTraces.get(resolvedTraces.size() - 2).getReverseOrder(),
                                            resolvedTraces.get(resolvedTraces.size() - 1).getDirectOrder()));
 

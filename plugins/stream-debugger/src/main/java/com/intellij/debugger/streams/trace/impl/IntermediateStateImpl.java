@@ -34,8 +34,7 @@ public class IntermediateStateImpl extends StateBase implements BidirectionalAwa
   private final StreamCall myPrevCall;
 
   IntermediateStateImpl(@NotNull List<TraceElement> elements,
-                        @NotNull StreamCall nextCall,
-                        @NotNull StreamCall prevCall,
+                        @NotNull StreamCall prevCall, @NotNull StreamCall nextCall,
                         @NotNull Map<TraceElement, List<TraceElement>> toPrevMapping,
                         @NotNull Map<TraceElement, List<TraceElement>> toNextMapping) {
     super(elements);
