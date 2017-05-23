@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemIndependent;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +62,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
 
   @Override
   @Nullable
+  @SystemIndependent
   public String getProjectFilePath() {
     return null;
   }
@@ -77,6 +79,7 @@ public class DummyProject extends UserDataHolderBase implements Project {
   }
 
   @Nullable
+  @SystemIndependent
   @Override
   public String getBasePath() {
     return null;
