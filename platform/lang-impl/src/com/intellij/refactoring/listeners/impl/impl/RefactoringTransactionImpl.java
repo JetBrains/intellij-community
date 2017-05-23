@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
@@ -90,10 +92,16 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
     @Override
     public void elementMoved(@NotNull final PsiElement newElement) {
+      SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(newElement);
       myRunnables.add(() -> {
+        PsiElement element = pointer.getElement();
+        if (element == null) {
+          LOG.info("Unable to restore element for: " + newElement.getClass());
+          return;
+        }
         for (RefactoringElementListener refactoringElementListener : myListenerList) {
           try {
-            refactoringElementListener.elementMoved(newElement);
+            refactoringElementListener.elementMoved(element);
           }
           catch (Throwable e) {
             LOG.error(e);
@@ -104,10 +112,16 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
     @Override
     public void elementRenamed(@NotNull final PsiElement newElement) {
+      SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(newElement);
       myRunnables.add(() -> {
+        PsiElement element = pointer.getElement();
+        if (element == null) {
+          LOG.info("Unable to restore element: " + newElement.getClass());
+          return;
+        }
         for (RefactoringElementListener refactoringElementListener : myListenerList) {
           try {
-            refactoringElementListener.elementRenamed(newElement);
+            refactoringElementListener.elementRenamed(element);
           }
           catch (Throwable e) {
             LOG.error(e);
