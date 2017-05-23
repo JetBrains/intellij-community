@@ -19,8 +19,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
@@ -45,15 +45,14 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     final PsiElement position = parameters.getPosition();
-    final PsiFile containingFile = position.getContainingFile();
-    if (containingFile == null) return;
+    final VirtualFile file = PsiUtilCore.getVirtualFile(position);
+    if (file == null) return;
 
     final JsonSchemaService service = JsonSchemaService.Impl.get(position.getProject());
-    final JsonSchemaObject rootSchema = service.getSchemaObject(containingFile.getViewProvider().getVirtualFile());
-    final VirtualFile schemaFile;
-    if (rootSchema == null || (schemaFile = rootSchema.getSchemaFile()) == null) return;
+    final JsonSchemaObject rootSchema = service.getSchemaObject(file);
+    if (rootSchema == null) return;
 
-    updateStat(service.getSchemaProvider(schemaFile));
+    updateStat(service.getSchemaProvider(rootSchema.getSchemaFile()));
     doCompletion(parameters, result, rootSchema);
   }
 

@@ -57,7 +57,7 @@ public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String path = VfsUtilCore.getRelativePath(myFile.getVirtualFile(), myProject.getBaseDir());
         final UserDefinedJsonSchemaConfiguration info =
-          new UserDefinedJsonSchemaConfiguration("test", path, false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration(myProject, "test", path, false, Collections.emptyList());
         JsonSchemaFileResolveTest.this.addSchema(info);
       }
     });

@@ -65,12 +65,14 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String moduleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration base =
-          new UserDefinedJsonSchemaConfiguration("base", moduleDir + "/baseSchema.json", false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration(myProject, "base", moduleDir + "/baseSchema.json", false, Collections.emptyList());
         addSchema(base);
 
         final UserDefinedJsonSchemaConfiguration inherited
-          = new UserDefinedJsonSchemaConfiguration("inherited", moduleDir + "/inheritedSchema.json", false,
-                                                   Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false)));
+          = new UserDefinedJsonSchemaConfiguration(myProject, "inherited", moduleDir + "/inheritedSchema.json", false,
+                                                   Collections
+                                                     .singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false))
+        );
 
         addSchema(inherited);
       }
@@ -98,8 +100,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         myModuleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration base =
-          new UserDefinedJsonSchemaConfiguration("base", myModuleDir + "/basePropertiesSchema.json", false,
-                                                 Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false)));
+          new UserDefinedJsonSchemaConfiguration(myProject, "base", myModuleDir + "/basePropertiesSchema.json", false,
+                                                 Collections
+                                                   .singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false))
+          );
         addSchema(base);
       }
 
@@ -127,12 +131,14 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         myModuleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration base =
-          new UserDefinedJsonSchemaConfiguration("base", myModuleDir + "/baseSchema.json", false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration(myProject, "base", myModuleDir + "/baseSchema.json", false, Collections.emptyList());
         addSchema(base);
 
         final UserDefinedJsonSchemaConfiguration inherited
-          = new UserDefinedJsonSchemaConfiguration("inherited", myModuleDir + "/inheritedSchema.json", false,
-                                                   Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false)));
+          = new UserDefinedJsonSchemaConfiguration(myProject, "inherited", myModuleDir + "/inheritedSchema.json", false,
+                                                   Collections
+                                                     .singletonList(new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false))
+        );
 
         addSchema(inherited);
       }
@@ -209,11 +215,13 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String moduleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration base =
-          new UserDefinedJsonSchemaConfiguration("base", moduleDir + "/localRefSchema.json", false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration(myProject, "base", moduleDir + "/localRefSchema.json", false, Collections.emptyList());
         addSchema(base);
 
         final UserDefinedJsonSchemaConfiguration inherited
-          = new UserDefinedJsonSchemaConfiguration("inherited", moduleDir + "/referencingSchema.json", false, Collections.emptyList());
+          = new UserDefinedJsonSchemaConfiguration(myProject, "inherited", moduleDir + "/referencingSchema.json", false,
+                                                   Collections.emptyList()
+        );
 
         addSchema(inherited);
       }
@@ -233,7 +241,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         container.registerComponentImplementation(key, TestJsonSchemaMappingsProjectConfiguration.class);
 
         final UserDefinedJsonSchemaConfiguration inherited
-          = new UserDefinedJsonSchemaConfiguration("inherited", moduleDir + "/referencingGlobalSchema.json", false, Collections.emptyList());
+          = new UserDefinedJsonSchemaConfiguration(myProject, "inherited", moduleDir + "/referencingGlobalSchema.json", false,
+                                                   Collections.emptyList()
+        );
 
         addSchema(inherited);
       }
@@ -262,9 +272,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
         final UserDefinedJsonSchemaConfiguration inherited
-          = new UserDefinedJsonSchemaConfiguration("inherited", moduleDir + "/basePropertiesSchema.json", false,
+          = new UserDefinedJsonSchemaConfiguration(myProject, "inherited", moduleDir + "/basePropertiesSchema.json", false,
                                                    Collections.singletonList(
-                                                                 new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false)));
+                                                     new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false))
+        );
 
         addSchema(inherited);
       }
@@ -303,8 +314,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/refToDefinitionInFileSchema.json", false, Collections.emptyList()));
-        addSchema(new UserDefinedJsonSchemaConfiguration("two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/refToDefinitionInFileSchema.json", false,
+                                                         Collections.emptyList()));
+        addSchema(
+          new UserDefinedJsonSchemaConfiguration(myProject, "two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
       }
 
       @Override
@@ -331,8 +344,12 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/refToOtherFileSchema.json", false, Collections.emptyList()));
-        addSchema(new UserDefinedJsonSchemaConfiguration("two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()));
+        addSchema(
+          new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/refToOtherFileSchema.json", false, Collections.emptyList()
+          ));
+        addSchema(
+          new UserDefinedJsonSchemaConfiguration(myProject, "two", moduleDir + "/definitionsSchema.json", false, Collections.emptyList()
+          ));
       }
 
       @Override
@@ -360,7 +377,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String moduleDir = getModuleDir(getProject());
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("package.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/packageJsonSchema.json", false, patterns));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/packageJsonSchema.json", false, patterns));
       }
 
       @Override
@@ -391,7 +408,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String moduleDir = getModuleDir(getProject());
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("testNestedDefinitionsNavigation.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/nestedDefinitionsSchema.json", false, patterns));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/nestedDefinitionsSchema.json", false, patterns));
       }
 
       @Override
@@ -420,7 +437,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String moduleDir = getModuleDir(getProject());
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("testNestedAllOfOneOfDefinitions.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/nestedAllOfOneOfDefinitionsSchema.json", false, patterns));
+        addSchema(
+          new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/nestedAllOfOneOfDefinitionsSchema.json", false, patterns
+          ));
       }
 
       @Override
@@ -448,10 +467,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("testNavigation.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("two", moduleDir + "/referentSchema.json", false, patterns));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "two", moduleDir + "/referentSchema.json", false, patterns));
       }
 
       @Override
@@ -479,10 +498,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("testCompletion.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("two", moduleDir + "/referentSchema.json", false, patterns));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "two", moduleDir + "/referentSchema.json", false, patterns));
       }
 
       @Override
@@ -492,7 +511,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkCompletion("1","2");
+        checkCompletion("1", "2");
       }
     });
   }
@@ -504,10 +523,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/baseSchema.json", false, Collections.emptyList()));
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("testHighlighting.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("two", moduleDir + "/referentSchema.json", false, patterns));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "two", moduleDir + "/referentSchema.json", false, patterns));
       }
 
       @Override
@@ -528,7 +547,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/withReferenceToDefinitionSchema.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/withReferenceToDefinitionSchema.json", false,
+                                                         Collections.emptyList()
+        ));
       }
 
       @Override
@@ -561,7 +582,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/withIncorrectReferenceSchema.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/withIncorrectReferenceSchema.json", false,
+                                                         Collections.emptyList()
+        ));
       }
 
       @Override
@@ -589,9 +612,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     Assert.assertEquals("\"" + name + "\"", resolve.getText());
     final PsiElement parent = resolve.getParent();
     Assert.assertTrue(parent instanceof JsonProperty);
-    Assert.assertEquals(name, ((JsonProperty) parent).getName());
+    Assert.assertEquals(name, ((JsonProperty)parent).getName());
     Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-    Assert.assertEquals(JsonSchemaObject.DEFINITIONS, ((JsonProperty) parent.getParent().getParent()).getName());
+    Assert.assertEquals(JsonSchemaObject.DEFINITIONS, ((JsonProperty)parent.getParent().getParent()).getName());
   }
 
   @CanChangeDocumentDuringHighlighting
@@ -600,7 +623,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/insideCycledSchemaNavigationSchema.json",
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/insideCycledSchemaNavigationSchema.json",
                                                          false, Collections.emptyList()));
       }
 
@@ -624,7 +647,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String moduleDir = getModuleDir(getProject());
         final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
           new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false));
-        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/cycledSchema.json", false, patterns));
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one", moduleDir + "/cycledSchema.json", false, patterns));
       }
 
       @Override
@@ -645,9 +668,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertEquals("\"bbb\"", resolve.getText());
         final PsiElement parent = resolve.getParent();
         Assert.assertTrue(parent instanceof JsonProperty);
-        Assert.assertEquals("bbb", ((JsonProperty) parent).getName());
+        Assert.assertEquals("bbb", ((JsonProperty)parent).getName());
         Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-        Assert.assertEquals("properties", ((JsonProperty) parent.getParent().getParent()).getName());
+        Assert.assertEquals("properties", ((JsonProperty)parent.getParent().getParent()).getName());
       }
     });
   }

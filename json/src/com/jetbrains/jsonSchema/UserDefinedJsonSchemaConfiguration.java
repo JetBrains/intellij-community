@@ -24,11 +24,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -44,26 +45,23 @@ public class UserDefinedJsonSchemaConfiguration {
     return o1.getPath().compareToIgnoreCase(o2.getPath());
   };
 
-  private String myName;
-  private String myRelativePathToSchema;
-  private boolean myApplicationLevel;
-  private List<Item> myPatterns = new ArrayList<>();
+  public String myName;
+  public String myRelativePathToSchema;
+  public boolean myApplicationLevel;
+  public List<Item> myPatterns = new SmartList<>();
   @Transient
   private List<Processor<VirtualFile>> myCalculatedPatterns;
 
   public UserDefinedJsonSchemaConfiguration() {
   }
 
-  public UserDefinedJsonSchemaConfiguration(@NotNull String name, @NotNull String relativePathToSchema,
+  public UserDefinedJsonSchemaConfiguration(@NotNull Project myProject, @NotNull String name, @NotNull String relativePathToSchema,
                                             boolean applicationLevel,
-                                            List<Item> patterns) {
+                                            @Nullable List<Item> patterns) {
     myName = name;
     myRelativePathToSchema = relativePathToSchema;
     myApplicationLevel = applicationLevel;
-    myPatterns = new ArrayList<>();
-    if (patterns != null) {
-      myPatterns.addAll(patterns);
-    }
+    setPatterns(myProject, patterns);
     Collections.sort(myPatterns, ITEM_COMPARATOR);
   }
 
@@ -95,9 +93,9 @@ public class UserDefinedJsonSchemaConfiguration {
     return myPatterns;
   }
 
-  public void setPatterns(List<Item> patterns) {
-    myPatterns = patterns;
-    myCalculatedPatterns = null;
+  public void setPatterns(@NotNull Project project, @Nullable List<Item> patterns) {
+    if (patterns != null) myPatterns = patterns;
+    recalculatePatterns(project);
   }
 
   @NotNull
@@ -106,8 +104,8 @@ public class UserDefinedJsonSchemaConfiguration {
     return myCalculatedPatterns;
   }
 
-  private void recalculatePatterns(Project project) {
-    myCalculatedPatterns = new ArrayList<>();
+  private void recalculatePatterns(@NotNull Project project) {
+    myCalculatedPatterns = new SmartList<>();
     for (final Item pattern : myPatterns) {
       if (pattern.isPattern()) {
         myCalculatedPatterns.add(new Processor<VirtualFile>() {
@@ -121,7 +119,7 @@ public class UserDefinedJsonSchemaConfiguration {
         });
       }
       else {
-        if (project == null || project.getBasePath() == null) {
+        if (project.getBasePath() == null) {
           continue;
         }
 
@@ -176,9 +174,9 @@ public class UserDefinedJsonSchemaConfiguration {
   }
 
   public static class Item {
-    private String myPath;
-    private boolean myIsPattern;
-    private boolean myIsDirectory;
+    public String myPath;
+    public boolean myIsPattern;
+    public boolean myIsDirectory;
 
     public Item() {
     }

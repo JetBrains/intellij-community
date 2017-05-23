@@ -3,7 +3,6 @@ package com.jetbrains.jsonSchema;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -24,11 +23,8 @@ import java.util.TreeMap;
     @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/jsonSchemas.xml", scheme = StorageScheme.DIRECTORY_BASED)
   }
 )
-public class JsonSchemaMappingsProjectConfiguration implements PersistentStateComponent<JsonSchemaMappingsProjectConfiguration> {
-  @Tag("state") @AbstractCollection(surroundWithTag = false)
-  protected final Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();
-
-  private final Object myLock = new Object();
+public class JsonSchemaMappingsProjectConfiguration implements PersistentStateComponent<JsonSchemaMappingsProjectConfiguration.MyState> {
+  public volatile MyState myState = new MyState();
 
   public static JsonSchemaMappingsProjectConfiguration getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, JsonSchemaMappingsProjectConfiguration.class);
@@ -39,42 +35,45 @@ public class JsonSchemaMappingsProjectConfiguration implements PersistentStateCo
 
   @Nullable
   @Override
-  public JsonSchemaMappingsProjectConfiguration getState() {
-    return this;
+  public MyState getState() {
+    return myState;
   }
 
 
   public void schemaFileMoved(@NotNull final Project project,
                               @NotNull final String oldRelativePath,
                               @NotNull final String newRelativePath) {
-    synchronized (myLock) {
-      final Optional<UserDefinedJsonSchemaConfiguration> old = myState.values().stream()
+      final Optional<UserDefinedJsonSchemaConfiguration> old = myState.myState.values().stream()
         .filter(schema -> FileUtil.pathsEqual(schema.getRelativePathToSchema(), oldRelativePath))
         .findFirst();
       old.ifPresent(configuration -> {
         configuration.setRelativePathToSchema(newRelativePath);
         JsonSchemaService.Impl.get(project).reset();
       });
-    }
   }
 
   public Map<String, UserDefinedJsonSchemaConfiguration> getStateMap() {
-    synchronized (myLock) {
-      return Collections.unmodifiableMap(myState);
-    }
+    return Collections.unmodifiableMap(myState.myState);
   }
 
   @Override
-  public void loadState(JsonSchemaMappingsProjectConfiguration state) {
-    synchronized (myLock) {
-      XmlSerializerUtil.copyBean(state, this);
-    }
+  public void loadState(MyState state) {
+    myState = state;
   }
 
   public void setState(@NotNull Map<String, UserDefinedJsonSchemaConfiguration> state) {
-    synchronized (myLock) {
-      myState.clear();
-      myState.putAll(state);
+    myState = new MyState(state);
+  }
+
+  static class MyState {
+    @Tag("state") @AbstractCollection(surroundWithTag = false)
+    public Map<String, UserDefinedJsonSchemaConfiguration> myState = new TreeMap<>();
+
+    public MyState() {
+    }
+
+    public MyState(Map<String, UserDefinedJsonSchemaConfiguration> state) {
+      myState = state;
     }
   }
 }

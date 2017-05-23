@@ -76,8 +76,6 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
   public JsonSchemaMappingsConfigurable(@NotNull final Project project) {
     myProject = project;
     initTree();
-    fillTree();
-    updateWarningText();
   }
 
   @Nullable
@@ -122,7 +120,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
       }
 
       addCreatedMappings(file,
-                         new UserDefinedJsonSchemaConfiguration(file.getNameWithoutExtension(), relativePath, false, null));
+                         new UserDefinedJsonSchemaConfiguration(myProject, file.getNameWithoutExtension(), relativePath, false, null));
     }
   }
 
