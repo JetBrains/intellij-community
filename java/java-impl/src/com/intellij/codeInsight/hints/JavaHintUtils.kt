@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hints
 
+import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -45,6 +46,12 @@ object JavaInlayHintsProvider {
     if (resultSet.isEmpty()) return emptySet()
     if (resultSet.size == 1) {
       return resultSet.first()
+    }
+
+    val chosenMethod: PsiMethod? = CompletionMemory.getChosenMethod(callExpression)
+    if (chosenMethod != null) {
+      val callInfo = callInfo(callExpression, chosenMethod)
+      return hintSet(callInfo, PsiSubstitutor.EMPTY)
     }
 
     //we can show hints for same named parameters of overloaded methods, even if don't know exact method
@@ -149,9 +156,17 @@ private fun inlayInfo(info: CallArgumentInfo, showOnlyIfExistedBefore: Boolean =
 private fun inlayInfo(callArgument: PsiExpression, methodParam: PsiParameter, showOnlyIfExistedBefore: Boolean = false): InlayInfo? {
   val paramName = methodParam.name ?: return null
   val paramToShow = (if (methodParam.type is PsiEllipsisType) "..." else "") + paramName
-  return InlayInfo(paramToShow, callArgument.textRange.startOffset, showOnlyIfExistedBefore)
+  val offset = inlayOffset(callArgument)
+  return InlayInfo(paramToShow, offset, showOnlyIfExistedBefore)
 }
 
+fun inlayOffset(callArgument: PsiExpression): Int {
+  if (callArgument.textRange.isEmpty) {
+    val next = callArgument.nextSibling as? PsiWhiteSpace
+    if (next != null) return next.textRange.endOffset
+  }
+  return callArgument.textRange.startOffset
+}
 
 private fun isUnclearExpression(callArgument: PsiElement): Boolean {
   val isShowHint = when (callArgument) {
