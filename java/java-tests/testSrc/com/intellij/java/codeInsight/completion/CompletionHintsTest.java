@@ -19,6 +19,8 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
+import com.intellij.codeInsight.hints.Option;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -122,6 +124,24 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
 
     runHintsPass();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
+  }
+
+  public void testWithHintsEnabledForNonLiterals() throws Exception {
+    Option option = JavaInlayParameterHintsProvider.Companion.getInstance().isShowForParamsWithSameType();
+    boolean savedValue = option.get();
+    try {
+      option.set(true);
+
+      myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+      complete("forDigit");
+      myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+
+      runHintsPass();
+      myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+    }
+    finally {
+      option.set(savedValue);
+    }
   }
 
   public void testSwitchingOverloads() {
