@@ -15,10 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonStringLiteral;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -29,11 +26,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.jsonSchema.impl.JsonSchemaObject.PROPERTIES;
 
 /**
  * @author Irina.Chernushina on 4/15/2016.
@@ -53,8 +46,6 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
     @Nullable
     @Override
     public PsiElement resolveInner() {
-      final String reference = getReference();
-      if (reference == null) return null;
       final JsonSchemaService service = JsonSchemaService.Impl.get(myElement.getProject());
       final VirtualFile file = myElement.getContainingFile().getVirtualFile();
       if (file == null) return null;
@@ -65,29 +56,6 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
         return new JsonSchemaResolver(schemaObject, true, steps).findNavigationTarget();
       }
       return null;
-    }
-
-    private String getReference() {
-      final List<String> names = new ArrayList<>();
-      final PsiElement parent = getElement().getParent();
-      if (!(parent instanceof JsonProperty)) return null;
-      JsonProperty element = (JsonProperty)parent;
-      while (true) {
-        names.add(StringUtil.unquoteString(element.getName()));
-        if (!(element.getParent() instanceof JsonObject)) break;
-        final PsiElement grand = element.getParent().getParent();
-        //noinspection ConstantConditions
-        if (grand instanceof JsonProperty && ((JsonProperty)grand).getValue() != null && ((JsonProperty)grand).getValue().equals(element.getParent())) {
-          element = (JsonProperty)grand;
-        }
-        else break;
-      }
-      final StringBuilder path = new StringBuilder();
-      Collections.reverse(names);
-      for (String name : names) {
-        path.append(PROPERTIES).append(name);
-      }
-      return path.toString();
     }
   }
 }
