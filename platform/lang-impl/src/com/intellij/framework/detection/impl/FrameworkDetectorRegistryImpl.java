@@ -18,7 +18,7 @@ package com.intellij.framework.detection.impl;
 import com.intellij.framework.FrameworkType;
 import com.intellij.framework.detection.FrameworkDetector;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManagerExKt;
+import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.MultiMap;
@@ -143,7 +143,7 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
 
   @NotNull
   public static Path getDetectionDirPath() {
-    return PathManagerExKt.getAppSystemDir().resolve("frameworks").resolve("detection");
+    return PathManagerEx.getAppSystemDir().resolve("frameworks").resolve("detection");
   }
 
   @Override

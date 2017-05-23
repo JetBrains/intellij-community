@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +78,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     try {
       Messages.setTestDialog(TestDialog.DEFAULT);
       removeFromLocalRepository("test");
-      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     finally {
       myProjectsManager = null;

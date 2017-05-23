@@ -13,12 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:JvmName("PathManagerEx")
 package com.intellij.openapi.application
 
+import com.intellij.openapi.diagnostic.Logger
+import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 
+private val LOG = Logger.getInstance("#com.intellij.openapi.application.PathManagerEx")
+
 /**
- * Absolute path to system cache dir.
+ * Absolute canonical path to system cache dir.
  */
-val appSystemDir: Path by lazy { Paths.get(PathManager.getSystemPath()).toRealPath() }
+val appSystemDir: Path by lazy {
+  val path = Paths.get(PathManager.getSystemPath())
+  try {
+    return@lazy path.toRealPath()
+  }
+  catch (e: IOException) {
+    LOG.warn(e)
+  }
+  path
+}
