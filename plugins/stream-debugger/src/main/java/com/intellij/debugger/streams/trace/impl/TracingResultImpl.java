@@ -124,7 +124,7 @@ public class TracingResultImpl implements TracingResult {
   }
 
   private ResolvedStreamCall.Terminator buildResolvedTerminationCall(@NotNull TraceInfo terminatorTrace,
-                                                                     @NotNull PrevAwareState previousState,
+                                                                     @NotNull BidirectionalAwareState previousState,
                                                                      @NotNull Map<TraceElement, List<TraceElement>>
                                                                        terminationToPrevMapping) {
     final TraceElementImpl resultValue = new TraceElementImpl(Integer.MAX_VALUE, myStreamResult);

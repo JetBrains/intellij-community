@@ -16,7 +16,8 @@
 package com.intellij.debugger.streams.resolve.impl;
 
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
-import com.intellij.debugger.streams.trace.IntermediateState;
+import com.intellij.debugger.streams.trace.BidirectionalAwareState;
+import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ResolvedTerminatorCallImpl implements ResolvedStreamCall.Terminator {
   private final TerminatorStreamCall myCall;
-  private final IntermediateState myStateBefore;
-  private final IntermediateState myStateAfter;
+  private final BidirectionalAwareState myStateBefore;
+  private final PrevAwareState myStateAfter;
 
   public ResolvedTerminatorCallImpl(@NotNull TerminatorStreamCall call,
-                                    @NotNull IntermediateState stateBefore,
-                                    @NotNull IntermediateState stateAfter) {
+                                    @NotNull BidirectionalAwareState stateBefore,
+                                    @NotNull PrevAwareState stateAfter) {
     myCall = call;
     myStateBefore = stateBefore;
     myStateAfter = stateAfter;
@@ -45,13 +46,13 @@ public class ResolvedTerminatorCallImpl implements ResolvedStreamCall.Terminator
 
   @Nullable
   @Override
-  public IntermediateState getStateAfter() {
+  public PrevAwareState getStateAfter() {
     return myStateAfter;
   }
 
   @NotNull
   @Override
-  public IntermediateState getStateBefore() {
+  public BidirectionalAwareState getStateBefore() {
     return myStateBefore;
   }
 }
