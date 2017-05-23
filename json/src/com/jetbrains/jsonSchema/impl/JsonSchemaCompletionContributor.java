@@ -92,6 +92,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
     @NotNull private final Consumer<LookupElement> myResultConsumer;
     private final boolean myWrapInQuotes;
     private final boolean myInsideStringLiteral;
+    // we need this set to filter same-named suggestions (they can be suggested by several matching schemes)
     private final Set<LookupElement> myVariants;
     private final JsonLikePsiWalker myWalker;
 
