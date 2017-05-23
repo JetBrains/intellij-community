@@ -78,7 +78,7 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
       return JBUI.insets(4, 16).asUIResource();
     }
     if (DarculaButtonUI.isSquare(c)) {
-      return JBUI.insets(2, 0).asUIResource();
+      return JBUI.insets(0, 0).asUIResource();
     }
     return JBUI.insets(3, 17).asUIResource();
   }

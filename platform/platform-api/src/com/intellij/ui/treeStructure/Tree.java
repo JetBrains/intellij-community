@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
@@ -79,7 +78,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
 
-    if (Registry.is("ide.intellij.laf.win10.ui")) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
         @Override
         public void mouseMoved(MouseEvent e) {
@@ -729,7 +728,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     @Override public void mouseExited(MouseEvent e) {
-      if (Registry.is("ide.intellij.laf.win10.ui") && rollOverPath != null) {
+      if (UIUtil.isUnderWin10LookAndFeel() && rollOverPath != null) {
         TreeCellRenderer renderer = getCellRenderer();
         TreeNode node = (TreeNode)rollOverPath.getLastPathComponent();
         JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
@@ -745,7 +744,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     }
 
     private void setPressed(MouseEvent e, boolean pressed) {
-      if (Registry.is("ide.intellij.laf.win10.ui")) {
+      if (UIUtil.isUnderWin10LookAndFeel()) {
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);
         if (path != null) {

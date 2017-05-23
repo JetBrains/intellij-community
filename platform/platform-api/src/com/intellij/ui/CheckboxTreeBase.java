@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -170,7 +169,7 @@ public class CheckboxTreeBase extends Tree {
         myCheckbox.setBackground(null);
         setBackground(null);
 
-        if (Registry.is("ide.intellij.laf.win10.ui")) {
+        if (UIUtil.isUnderWin10LookAndFeel()) {
           Object hoverValue = getClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY);
           myCheckbox.getModel().setRollover(hoverValue == value);
 

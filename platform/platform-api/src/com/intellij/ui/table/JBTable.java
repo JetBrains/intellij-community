@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ExpirableRunnable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
@@ -97,7 +96,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     addMouseListener(new MyMouseListener());
 
-    if (Registry.is("ide.intellij.laf.win10.ui")) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
         @Override public void mouseMoved(MouseEvent e) {
           Point point = e.getPoint();
@@ -1005,7 +1004,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   }
 
   private void resetRollOverCell() {
-    if (Registry.is("ide.intellij.laf.win10.ui") && getModel() instanceof AbstractTableModel && rollOverCell != null) {
+    if (UIUtil.isUnderWin10LookAndFeel() && getModel() instanceof AbstractTableModel && rollOverCell != null) {
       TableCellRenderer cellRenderer = getCellRenderer(rollOverCell.row, rollOverCell.column);
       if (cellRenderer != null) {
         Object value = getValueAt(rollOverCell.row, rollOverCell.column);

@@ -1401,7 +1401,8 @@ public class UIUtil {
         isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
-        isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
+        isUnderIntelliJLaF() &&
+        !isUnderWin10LookAndFeel()) {
       return AllIcons.Mac.Tree_white_right_arrow;
     }
     return getTreeCollapsedIcon();
@@ -1412,7 +1413,8 @@ public class UIUtil {
         isUnderNimbusLookAndFeel() ||
         isUnderGTKLookAndFeel() ||
         isUnderDarcula() ||
-        isUnderIntelliJLaF() && !(SystemInfo.isWindows && Registry.is("ide.intellij.laf.win10.ui"))) {
+        isUnderIntelliJLaF() &&
+        !isUnderWin10LookAndFeel()) {
       return AllIcons.Mac.Tree_white_down_arrow;
     }
     return getTreeExpandedIcon();

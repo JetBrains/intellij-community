@@ -715,7 +715,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @NotNull
     public Module loadModule(@NotNull String filePath) throws IOException, ModuleWithNameAlreadyExists {
       assertWritable();
-      String resolvedPath = resolveShortWindowsName(filePath);
+      String resolvedPath = FileUtilRt.toSystemIndependentName(resolveShortWindowsName(filePath));
       try {
         Module module = getModuleByFilePath(resolvedPath);
         return module == null ? loadModuleInternal(resolvedPath) : module;
@@ -724,7 +724,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         throw e;
       }
       catch (IOException e) {
-        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtil.toSystemDependentName(resolvedPath), e.getMessage()), e);
+        throw new IOException(ProjectBundle.message("module.corrupted.file.error", FileUtilRt.toSystemDependentName(resolvedPath), e.getMessage()), e);
       }
     }
 
