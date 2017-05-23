@@ -24,10 +24,10 @@ import com.intellij.debugger.streams.psi.impl.DebuggerPositionResolverImpl;
 import com.intellij.debugger.streams.psi.impl.StreamChainTransformerImpl;
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
-import com.intellij.debugger.streams.resolve.ResolvedTrace;
 import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.TraceResultInterpreterImpl;
+import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.execution.ExecutionException;
@@ -224,11 +224,11 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
       print("    before: ", ProcessOutputTypes.SYSTEM);
       final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
-      println(valuesOrderToString(before), ProcessOutputTypes.SYSTEM);
+      println(traceToString(before.values()), ProcessOutputTypes.SYSTEM);
 
       print("    after: ", ProcessOutputTypes.SYSTEM);
       final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
-      println(valuesOrderToString(after), ProcessOutputTypes.SYSTEM);
+      println(traceToString(after.values()), ProcessOutputTypes.SYSTEM);
     }
   }
 
@@ -239,19 +239,48 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
     checkChain(resolvedChain);
     checkTracesIsCorrectInBothDirections(resolvedChain);
 
-    List<IntermediateState> states = new ArrayList<>();
-    for (final ResolvedTrace trace : traces) {
-      final String name = trace.getCall().getName();
-      final List<TraceElement> values = trace.getValues();
+    final ResolvedStreamCall.Producer producer = resolvedChain.getProducer();
+    final ResolvedStreamCall.Terminator terminator = resolvedChain.getTerminator();
+    printBeforeAndAfterValues(producer.getStateBefore(), producer.getStateAfter());
+    printBeforeAndAfterValues(terminator.getStateBefore(), terminator.getStateAfter());
 
-      println("mappings for " + name, ProcessOutputTypes.SYSTEM);
+    resolvedChain.getIntermediateCalls().forEach(x -> printBeforeAndAfterValues(x.getStateBefore(), x.getStateAfter()));
+  }
 
-      for (final TraceElement element : StreamEx.of(values).sortedBy(TraceElement::getTime)) {
-        final String beforeTimes = StreamEx.of(trace.getPreviousValues(element)).map(TraceElement::getTime).sorted().joining(",");
-        final String afterTimes = StreamEx.of(trace.getNextValues(element)).map(TraceElement::getTime).sorted().joining(",");
-        println(evalTimesRepresentation(beforeTimes, element.getTime(), afterTimes), ProcessOutputTypes.SYSTEM);
-      }
+  private void printBeforeAndAfterValues(@Nullable NextAwareState before, @Nullable PrevAwareState after) {
+    assertFalse(before == null && after == null);
+    final StreamCall call = before == null ? after.getPrevCall() : before.getNextCall();
+    println("mappings for " + call.getName(), ProcessOutputTypes.SYSTEM);
+    println("  direct:", ProcessOutputTypes.SYSTEM);
+    if (before != null) {
+      printMapping(before.getTrace(), before::getNextValues, Direction.FORWARD);
     }
+    else {
+      println("    not found", ProcessOutputTypes.SYSTEM);
+    }
+
+    println("  reverse:", ProcessOutputTypes.SYSTEM);
+    if (after != null) {
+      printMapping(after.getTrace(), after::getPrevValues, Direction.BACKWARD);
+    }
+    else {
+      println("    not found", ProcessOutputTypes.SYSTEM);
+    }
+  }
+
+  private void printMapping(@NotNull List<TraceElement> values,
+                            @NotNull Function<TraceElement, List<TraceElement>> mapper,
+                            @NotNull Direction direction) {
+    for (final TraceElement element : values) {
+      final List<TraceElement> mappedValues = mapper.apply(element);
+      final String mapped = traceToString(mappedValues);
+      final String line = Direction.FORWARD.equals(direction) ? element.getTime() + " -> " + mapped : mapped + " -> " + element.getTime();
+      println("    " + line, ProcessOutputTypes.SYSTEM);
+    }
+  }
+
+  private enum Direction {
+    FORWARD, BACKWARD
   }
 
   private static void checkChain(@NotNull ResolvedStreamChain chain) {
@@ -289,13 +318,6 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
       assertEquals(prev.getCall().getName(), prev.getStateAfter().getPrevCall().getName());
       assertEquals(next.getCall().getName(), next.getStateBefore().getNextCall().getName());
     }
-  }
-
-  @NotNull
-  private static String evalTimesRepresentation(@NotNull String before, int elementTime, @NotNull String after) {
-    before = replaceIfEmpty(before);
-    after = replaceIfEmpty(after);
-    return String.format("    %s -> %d -> %s", before, elementTime, after);
   }
 
   private static void checkTracesIsCorrectInBothDirections(@NotNull ResolvedStreamChain resolvedChain) {
@@ -344,8 +366,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   @NotNull
-  private static String valuesOrderToString(@NotNull Map<Integer, TraceElement> values) {
-    return replaceIfEmpty(StreamEx.of(values.keySet()).sorted().joining(","));
+  private static String traceToString(@NotNull Collection<TraceElement> trace) {
+    return replaceIfEmpty(StreamEx.of(trace).map(TraceElement::getTime).sorted().joining(","));
   }
 
   @NotNull
