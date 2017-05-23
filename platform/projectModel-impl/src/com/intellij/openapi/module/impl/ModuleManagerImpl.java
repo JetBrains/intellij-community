@@ -38,6 +38,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
@@ -56,7 +57,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
@@ -213,7 +213,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
         else {
           filepath = VirtualFileManager.extractPath(fileUrlValue);
         }
-        paths.add(new ModulePath(filepath.replace('/', File.separatorChar), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
+        paths.add(new ModulePath(FileUtilRt.toSystemIndependentName(filepath), moduleElement.getAttributeValue(ATTRIBUTE_GROUP)));
       }
     }
     return paths;
