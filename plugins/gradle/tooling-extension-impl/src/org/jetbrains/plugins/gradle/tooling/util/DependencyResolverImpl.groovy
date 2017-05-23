@@ -59,7 +59,9 @@ import java.util.regex.Pattern
 class DependencyResolverImpl implements DependencyResolver {
 
   private static is4OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("4.0")
-  private static isDependencySubstitutionsSupported = is4OrBetter ||
+  private static isJavaLibraryPluginSupported = is4OrBetter ||
+                                                      (GradleVersion.current() >= GradleVersion.version("3.4"))
+  private static isDependencySubstitutionsSupported = isJavaLibraryPluginSupported ||
                                                       (GradleVersion.current() > GradleVersion.version("2.5"))
   private static isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
                                                       (GradleVersion.current() >= GradleVersion.version("2.0"))
@@ -212,6 +214,7 @@ class DependencyResolverImpl implements DependencyResolver {
     def compileClasspathConfiguration = myProject.configurations.findByName(compileConfigurationName + 'Classpath')
     def originCompileConfiguration = myProject.configurations.findByName(compileConfigurationName)
     def compileConfiguration = compileClasspathConfiguration ?: originCompileConfiguration
+    def compileOnlyConfiguration = isJavaLibraryPluginSupported ? myProject.configurations.findByName(sourceSet.compileOnlyConfigurationName) : null
 
     def compileScope = 'COMPILE'
     def (compileDependencies, resolvedCompileFileDependencies) = resolveDependencies(compileConfiguration, compileScope)
@@ -233,10 +236,21 @@ class DependencyResolverImpl implements DependencyResolver {
       def resolvedObj = resolve(it)
       resolvedMap.put(resolvedObj, it)
 
-      if (checkCompileOnlyDeps &&
-          (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
-           !originCompileConfiguration.contains(resolvedObj))) {
-        ((AbstractExternalDependency)it).scope = providedScope
+      // since version 3.4 compileOnly no longer extends compile
+      // so, we can use compileOnly configuration for the check
+      if (isJavaLibraryPluginSupported) {
+        if (compileOnlyConfiguration != null &&
+            (resolvedObj instanceof Collection ? compileOnlyConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
+             compileOnlyConfiguration.contains(resolvedObj))) {
+          ((AbstractExternalDependency)it).scope = providedScope
+        }
+      }
+      else {
+        if (checkCompileOnlyDeps &&
+            (resolvedObj instanceof Collection ? !originCompileConfiguration.containsAll(((Collection)resolvedObj).toArray()) :
+             !originCompileConfiguration.contains(resolvedObj))) {
+          ((AbstractExternalDependency)it).scope = providedScope
+        }
       }
     }
 
