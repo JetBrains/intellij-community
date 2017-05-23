@@ -92,6 +92,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
     @Override
     public void elementMoved(@NotNull final PsiElement newElement) {
+      if (!newElement.isValid()) return;
       SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(newElement);
       myRunnables.add(() -> {
         PsiElement element = pointer.getElement();
@@ -112,6 +113,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
 
     @Override
     public void elementRenamed(@NotNull final PsiElement newElement) {
+      if (!newElement.isValid()) return;
       SmartPsiElementPointer<PsiElement> pointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(newElement);
       myRunnables.add(() -> {
         PsiElement element = pointer.getElement();
