@@ -79,11 +79,11 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     assertThat(element).isEqualTo("<root>\n" +
                                   "  <library name=\"junit\">\n" +
                                   "    <CLASSES>\n" +
-                                  "      <root url=\"jar:///Users/develar/Documents/idea/community/lib/jdom.jar!/\" />\n" +
+                                  "      <root url=\"" + classesUrl + "\" />\n" +
                                   "    </CLASSES>\n" +
                                   "    <JAVADOC />\n" +
                                   "    <SOURCES>\n" +
-                                  "      <root url=\"jar:///Users/develar/Documents/idea/community/lib/src/jdom.zip!/\" />\n" +
+                                  "      <root url=\"" + sourcesUrl + "\" />\n" +
                                   "    </SOURCES>\n" +
                                   "  </library>\n" +
                                   "</root>");
