@@ -97,20 +97,22 @@ public class JsonSchemaVariantsTreeBuilder {
     return true;
   }
 
-  private static void expandChildSchema(@NotNull JsonSchemaTreeNode node,
-                                        @NotNull JsonSchemaObject childSchema) {
+  private static void expandChildSchema(@NotNull JsonSchemaTreeNode node, @NotNull JsonSchemaObject childSchema) {
     final JsonObject element = childSchema.getJsonObject();
     if (interestingSchema(childSchema)) {
       final Project project = childSchema.getJsonObject().getProject();
-      final Operation operation = CachedValuesManager
-        .getCachedValue(element, () -> {
-          final Operation expand = new ProcessDefinitionsOperation(childSchema);
-          expand.doMap();
-          expand.doReduce();
-          return CachedValueProvider.Result.create(expand, element, JsonSchemaService.Impl.get(project).getAnySchemaChangeTracker());
-        });
+      final Operation operation =
+        CachedValuesManager.getManager(element.getProject())
+          .createParameterizedCachedValue((JsonSchemaObject param) -> {
+            final Operation expand = new ProcessDefinitionsOperation(param);
+            expand.doMap();
+            expand.doReduce();
+            return CachedValueProvider.Result.create(expand, element.getContainingFile(),
+                                                     JsonSchemaService.Impl.get(project).getAnySchemaChangeTracker());
+          }, false).getValue(childSchema);
       node.createChildrenFromOperation(operation);
-    } else {
+    }
+    else {
       node.setChild(childSchema);
     }
   }
