@@ -159,7 +159,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     }
   }
 
-  void calculateDupNode() {
+  public void calculateDupNode() {
     if (!dupNodeCalculated) {
       if (!(getValue() instanceof SliceTooComplexDFAUsage)) {
         duplicate = targetEqualUsages.putNodeCheckDupe(this);

@@ -87,9 +87,12 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("EDITOR_TAB_PLACEMENT") var editorTabPlacement by storedProperty(1)
   @get:OptionTag("HIDE_KNOWN_EXTENSION_IN_TABS") var hdeKnownExtensionInTabs by storedProperty(false)
   @get:OptionTag("SHOW_ICONS_IN_QUICK_NAVIGATION") var showIconInQuickNavigation by storedProperty(true)
+
   @get:OptionTag("CLOSE_NON_MODIFIED_FILES_FIRST") var closeNonModifiedFilesFirst by storedProperty(false)
   @get:OptionTag("ACTIVATE_MRU_EDITOR_ON_CLOSE") var activeMruEditorOnClose by storedProperty(false)
-  @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRigtEditorOnClose by storedProperty(false)
+  // TODO[anton] consider making all IDEs use the same settings
+  @get:OptionTag("ACTIVATE_RIGHT_EDITOR_ON_CLOSE") var activeRightEditorOnClose by storedProperty(PlatformUtils.isAppCode())
+
   @get:OptionTag("IDE_AA_TYPE") var ideAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("EDITOR_AA_TYPE") var editorAAType by storedProperty(AntialiasingType.SUBPIXEL)
   @get:OptionTag("COLOR_BLINDNESS") var colorBlindness by storedProperty<ColorBlindness?>()
@@ -99,7 +102,7 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   @get:OptionTag("ALPHA_MODE_RATIO") var alphaModeRatio by storedProperty(0.5f)
   @get:OptionTag("MAX_CLIPBOARD_CONTENTS") var maxClipboardContents by storedProperty(5)
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS") var overrideLafFonts by storedProperty(false)
-  @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus by storedProperty(true)
+  @get:OptionTag("SHOW_ICONS_IN_MENUS") var showIconsInMenus by storedProperty(!PlatformUtils.isAppCode())
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS") var disableMnemonics by storedProperty(SystemInfo.isMac)
   @get:OptionTag("DISABLE_MNEMONICS_IN_CONTROLS") var disableMnemonicsInControls by storedProperty(false)
@@ -124,8 +127,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   private val myTreeDispatcher = ComponentTreeEventDispatcher.create(UISettingsListener::class.java)
 
   init {
-    tweakPlatformDefaults()
-
     WelcomeWizardUtil.getAutoScrollToSource()?.let {
       defaultAutoScrollToSource = it
     }
@@ -134,15 +135,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   private fun withDefFont(): UISettings {
     initDefFont()
     return this
-  }
-
-  private fun tweakPlatformDefaults() {
-    // TODO[anton] consider making all IDEs use the same settings
-    if (PlatformUtils.isAppCode()) {
-      scrollTabLayoutInEditor = true
-      activeRigtEditorOnClose = true
-      showIconsInMenus = false
-    }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

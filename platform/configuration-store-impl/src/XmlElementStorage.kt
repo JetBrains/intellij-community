@@ -29,6 +29,7 @@ import com.intellij.util.toBufferExposingByteArray
 import gnu.trove.THashMap
 import org.jdom.Attribute
 import org.jdom.Element
+import java.io.FileNotFoundException
 
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
@@ -51,19 +52,26 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadElement(useStreamProvider: Boolean = true): Element? {
     var element: Element? = null
-    LOG.runAndLogException {
+    try {
       if (!useStreamProvider || !(provider?.read(fileSpec, roamingType) {
         it?.let {
           element = loadElement(it)
+          providerDataStateChanged(element, DataStateChanged.LOADED)
         }
       } ?: false)) {
         element = loadLocalData()
       }
     }
+    catch (e: FileNotFoundException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
     return element
   }
 
-  protected open fun dataLoadedFromProvider(element: Element?) {
+  protected open fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
   }
 
   private fun loadState(element: Element): StateMap {
@@ -126,9 +134,11 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         storage.beforeElementSaved(element)
       }
 
+      var isSavedLocally = false
       val provider = storage.provider
       if (element == null) {
         if (provider == null || !provider.delete(storage.fileSpec, storage.roamingType)) {
+          isSavedLocally = true
           saveLocally(null)
         }
       }
@@ -137,8 +147,14 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
         provider.write(storage.fileSpec, element.toBufferExposingByteArray(), storage.roamingType)
       }
       else {
+        isSavedLocally = true
         saveLocally(element)
       }
+
+      if (!isSavedLocally) {
+        storage.providerDataStateChanged(element, DataStateChanged.SAVED)
+      }
+
       storage.setStates(originalStates, stateMap)
     }
 
@@ -256,4 +272,8 @@ private fun StateMap.getChangedComponentNames(newStates: StateMap): Set<String> 
     compare(componentName, newStates, diffs)
   }
   return diffs
+}
+
+enum class DataStateChanged {
+  LOADED, SAVED
 }

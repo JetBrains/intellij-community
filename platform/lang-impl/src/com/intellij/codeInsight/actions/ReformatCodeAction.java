@@ -364,7 +364,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   }
 
   @TestOnly
-  protected static void setTestOptions(ReformatFilesOptions options) {
+  public static void setTestOptions(ReformatFilesOptions options) {
     myTestOptions = options;
   }
 

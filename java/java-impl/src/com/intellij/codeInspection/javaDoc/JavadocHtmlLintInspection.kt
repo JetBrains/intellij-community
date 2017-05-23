@@ -15,16 +15,15 @@
  */
 package com.intellij.codeInspection.javaDoc
 
-import com.intellij.codeInspection.CustomSuppressableInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.SuppressIntentionAction
+import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.codeInspection.ex.ExternalAnnotatorBatchInspection
 import com.intellij.psi.PsiElement
 
-class JavadocHtmlLintInspection : LocalInspectionTool(), ExternalAnnotatorBatchInspection, CustomSuppressableInspectionTool {
-   companion object {
+class JavadocHtmlLintInspection : LocalInspectionTool(), ExternalAnnotatorBatchInspection {
+  companion object {
     val SHORT_NAME = "JavadocHtmlLint"
   }
 
-  override fun getSuppressActions(element: PsiElement?): Array<SuppressIntentionAction>? = SuppressIntentionAction.EMPTY_ARRAY
+  override fun getBatchSuppressActions(element: PsiElement?): Array<out SuppressQuickFix> = SuppressQuickFix.EMPTY_ARRAY
 }

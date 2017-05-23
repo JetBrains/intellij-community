@@ -1073,6 +1073,14 @@ public class AllIcons {
       public static final Icon Step_passive = IconLoader.getIcon("/process/fs/step_passive.png"); // 16x16
 
     }
+    public static final Icon ProgressPause = IconLoader.getIcon("/process/progressPause.png"); // 14x14
+    public static final Icon ProgressPauseHover = IconLoader.getIcon("/process/progressPauseHover.png"); // 14x14
+    public static final Icon ProgressPauseSmall = IconLoader.getIcon("/process/progressPauseSmall.png"); // 12x12
+    public static final Icon ProgressPauseSmallHover = IconLoader.getIcon("/process/progressPauseSmallHover.png"); // 12x12
+    public static final Icon ProgressResume = IconLoader.getIcon("/process/progressResume.png"); // 14x14
+    public static final Icon ProgressResumeHover = IconLoader.getIcon("/process/progressResumeHover.png"); // 14x14
+    public static final Icon ProgressResumeSmall = IconLoader.getIcon("/process/progressResumeSmall.png"); // 12x12
+    public static final Icon ProgressResumeSmallHover = IconLoader.getIcon("/process/progressResumeSmallHover.png"); // 12x12
     
     public static class State {
       public static final Icon GreenOK = IconLoader.getIcon("/process/state/GreenOK.png"); // 16x16
@@ -1103,8 +1111,10 @@ public class AllIcons {
     public static final Icon Step_9 = IconLoader.getIcon("/process/step_9.png"); // 16x16
     public static final Icon Step_mask = IconLoader.getIcon("/process/step_mask.png"); // 16x16
     public static final Icon Step_passive = IconLoader.getIcon("/process/step_passive.png"); // 16x16
-    public static final Icon Stop = IconLoader.getIcon("/process/stop.png"); // 16x16
-    public static final Icon StopHovered = IconLoader.getIcon("/process/stopHovered.png"); // 16x16
+    public static final Icon Stop = IconLoader.getIcon("/process/stop.png"); // 14x14
+    public static final Icon StopHovered = IconLoader.getIcon("/process/stopHovered.png"); // 14x14
+    public static final Icon StopSmall = IconLoader.getIcon("/process/stopSmall.png"); // 12x12
+    public static final Icon StopSmallHovered = IconLoader.getIcon("/process/stopSmallHovered.png"); // 12x12
 
   }
   

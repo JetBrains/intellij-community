@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.roots.ModuleRootManagerTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.CommonProcessors;
 import org.jdom.Element;
@@ -77,10 +76,17 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     Element element = serialize(library);
     String classesUrl = getJDomJar().getUrl();
     String sourcesUrl = getJDomSources().getUrl();
-    PlatformTestUtil.assertElementEquals(
-      "<root><library name=\"junit\"><CLASSES><root url=\"" + classesUrl + "\" /></CLASSES>" +
-      "<JAVADOC /><SOURCES><root url=\"" + sourcesUrl + "\" /></SOURCES></library></root>",
-      element);
+    assertThat(element).isEqualTo("<root>\n" +
+                                  "  <library name=\"junit\">\n" +
+                                  "    <CLASSES>\n" +
+                                  "      <root url=\"" + classesUrl + "\" />\n" +
+                                  "    </CLASSES>\n" +
+                                  "    <JAVADOC />\n" +
+                                  "    <SOURCES>\n" +
+                                  "      <root url=\"" + sourcesUrl + "\" />\n" +
+                                  "    </SOURCES>\n" +
+                                  "  </library>\n" +
+                                  "</root>");
   }
 
   public void testResolveDependencyToAddedLibrary() {
@@ -166,6 +172,7 @@ public class LibraryTest extends ModuleRootManagerTestCase {
 
   private static void commit(final ModifiableRootModel model) {
     new WriteAction() {
+      @Override
       protected void run(@NotNull final Result result) {
         model.commit();
       }
@@ -186,11 +193,16 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     commit(model);
 
     Element element = serialize(library);
-    PlatformTestUtil.assertElementEquals(
-      "<root><library name=\"native\"><CLASSES /><JAVADOC />" +
-      "<NATIVE><root url=\"file://native-lib-root\" /></NATIVE>" +
-      "<SOURCES /></library></root>",
-      element);
+    assertThat(element).isEqualTo("<root>\n" +
+                                  "  <library name=\"native\">\n" +
+                                  "    <CLASSES />\n" +
+                                  "    <JAVADOC />\n" +
+                                  "    <NATIVE>\n" +
+                                  "      <root url=\"file://native-lib-root\" />\n" +
+                                  "    </NATIVE>\n" +
+                                  "    <SOURCES />\n" +
+                                  "  </library>\n" +
+                                  "</root>");
   }
 
   @NotNull
@@ -206,20 +218,19 @@ public class LibraryTest extends ModuleRootManagerTestCase {
     model.addJarDirectory("file://jar-dir-src", false, OrderRootType.SOURCES);
     commit(model);
 
-    Element element = serialize(library);
-    PlatformTestUtil.assertElementEquals("<root>\n" +
-                                         "  <library name=\"jarDirs\">\n" +
-                                         "    <CLASSES>\n" +
-                                         "      <root url=\"file://jar-dir\" />\n" +
-                                         "    </CLASSES>\n" +
-                                         "    <JAVADOC />\n" +
-                                         "    <SOURCES>\n" +
-                                         "      <root url=\"file://jar-dir-src\" />\n" +
-                                         "    </SOURCES>\n" +
-                                         "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
-                                         "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
-                                         "  </library>\n" +
-                                         "</root>" , element);
+    assertThat(serialize(library)).isEqualTo("<root>\n" +
+                                             "  <library name=\"jarDirs\">\n" +
+                                             "    <CLASSES>\n" +
+                                             "      <root url=\"file://jar-dir\" />\n" +
+                                             "    </CLASSES>\n" +
+                                             "    <JAVADOC />\n" +
+                                             "    <SOURCES>\n" +
+                                             "      <root url=\"file://jar-dir-src\" />\n" +
+                                             "    </SOURCES>\n" +
+                                             "    <jarDirectory url=\"file://jar-dir\" recursive=\"false\" />\n" +
+                                             "    <jarDirectory url=\"file://jar-dir-src\" recursive=\"false\" type=\"SOURCES\" />\n" +
+                                             "  </library>\n" +
+                                             "</root>");
   }
 
   private static Element serialize(Library library) {

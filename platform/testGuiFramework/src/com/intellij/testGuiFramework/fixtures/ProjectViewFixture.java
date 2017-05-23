@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -30,16 +31,17 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProjectViewTestUtil;
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
 import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
 import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
 import org.fest.swing.timing.Timeout;
@@ -52,6 +54,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -163,12 +166,11 @@ public class ProjectViewFixture extends ToolWindowFixture {
   }
 
   /**
-   *
    * @param pathTo could be a separate vararg of String objects like ["project_name", "src", "Test.java"] or one String with a path
    *               separated by slash sign: ["project_name/src/Test.java"]
    * @return NodeFixture object for a pathTo; may be used for expanding, scrolling and clicking node
    */
-  @Nullable
+  @NotNull
   public NodeFixture path(String... pathTo) {
     if (pathTo.length == 1) {
       if (pathTo[0].contains("/")) {
@@ -262,7 +264,7 @@ public class ProjectViewFixture extends ToolWindowFixture {
       return nodeFixture;
     }
 
-    @Nullable
+    @NotNull
     private NodeFixture getNode(@NotNull String[] path) {
       AbstractTreeStructure treeStructure = getTreeStructure();
       BasePsiNode basePsiNode = GuiActionRunner.execute(new GuiQuery<BasePsiNode>() {
@@ -270,54 +272,35 @@ public class ProjectViewFixture extends ToolWindowFixture {
         @Override
         protected BasePsiNode executeInEDT() throws Throwable {
           Object root = treeStructure.getRootElement();
-          final List<Object> treePath = new ArrayList();
+          ExtendedTreeFixture treeFixture = new ExtendedTreeFixture(myRobot, myPane.getTree());
+          Tree tree = (Tree)myPane.getTree();
+          final ArrayList<Object> treePath = new ArrayList();
           treePath.add(root);
 
           for (String pathItem : path) {
-            Object[] childElements = treeStructure.getChildElements(root);
+            Object[] childElements = treeStructure.getChildElements(root); //check root
             Object newRoot = null;
             for (Object child : childElements) {
-              if (child instanceof PsiDirectoryNode) {
-                PsiDirectory dir = ((PsiDirectoryNode)child).getValue();
-                if (dir != null && pathItem.equals(dir.getName())) {
-                  newRoot = child;
-                  treePath.add(newRoot);
-                  break;
-                }
-              }
-              if (child instanceof PsiFileNode) {
-                PsiFile file = ((PsiFileNode)child).getValue();
-                if (file != null && pathItem.equals(file.getName())) {
-                  newRoot = child;
-                  treePath.add(newRoot);
-                  break;
-                }
-              }
-              if (child instanceof ClassTreeNode) {
-                ClassTreeNode ctn = (ClassTreeNode)child;
-                if (ctn.getPsiClass().getContainingFile().getName().equals(pathItem)) {
-                  newRoot = child;
-                  treePath.add(newRoot);
-                  break;
-                }
+              treePath.add(child);
+              List<String> tryPath = treeFixture.getPath(tree.getPath((PresentableNodeDescriptor)child));
+              if (tryPath.get(tryPath.size() - 1).equals(pathItem)) {
+                newRoot = child;
+              } else {
+                treePath.remove(treePath.size() - 1);
               }
             }
             if (newRoot != null) {
               root = newRoot;
             }
             else {
-              return null;
+              throw new ComponentLookupException("Unable to find node with next path: " + Arrays.toString(path));
             }
           }
-
-          VirtualFile vf2select = root instanceof ClassTreeNode
-                                  ? ((ClassTreeNode)root).getPsiClass().getContainingFile().getVirtualFile()
-                                  : ((BasePsiNode)root).getVirtualFile();
 
           return (BasePsiNode)root;
         }
       });
-      if (basePsiNode == null) return null;
+      if (basePsiNode == null) throw new ComponentLookupException("Unable to find node with next path: " + Arrays.toString(path));
       return new NodeFixture(basePsiNode, treeStructure, myPane);
     }
   }

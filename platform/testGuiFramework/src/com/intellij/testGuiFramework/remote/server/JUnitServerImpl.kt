@@ -16,6 +16,8 @@
 package com.intellij.testGuiFramework.remote.server
 
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
+import org.apache.log4j.Logger
+import java.io.InvalidClassException
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.net.ServerSocket
@@ -32,11 +34,13 @@ import java.util.concurrent.TimeUnit
 
 class JUnitServerImpl: JUnitServer {
 
+
   private val SEND_THREAD = "JUnit Server Send Thread"
   private val RECEIVE_THREAD = "JUnit Server Receive Thread"
   private val poolOfMessages: BlockingQueue<TransportMessage> = LinkedBlockingQueue()
   private val handlers: ArrayList<ServerHandler> = ArrayList()
   private var failHandler: ((Throwable) -> Unit)? = null
+  private val LOG = Logger.getLogger("#com.intellij.testGuiFramework.remote.server.JUnitServerImpl")
 
   private val serverSocket = ServerSocket(0)
   lateinit private var serverSendThread: ServerSendThread
@@ -57,7 +61,7 @@ class JUnitServerImpl: JUnitServer {
     execOnParallelThread {
       try {
         connection = serverSocket.accept()
-        println("Server accepted client on port: ${connection.port}")
+        LOG.info("Server accepted client on port: ${connection.port}")
 
         objectOutputStream = ObjectOutputStream(connection.getOutputStream())
         serverSendThread = ServerSendThread(connection, objectOutputStream)
@@ -74,7 +78,7 @@ class JUnitServerImpl: JUnitServer {
 
   override fun send(message: TransportMessage) {
     poolOfMessages.put(message)
-    println("Add message to send pool: $message ")
+    LOG.info("Add message to send pool: $message ")
   }
 
   override fun sendAndWaitAnswer(message: TransportMessage)
@@ -143,11 +147,11 @@ class JUnitServerImpl: JUnitServer {
   inner class ServerSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
     override fun run() {
-      println("Server Send Thread started")
+      LOG.info("Server Send Thread started")
       try {
         while (connection.isConnected) {
           val message = poolOfMessages.take()
-          println("Sending message: $message ")
+          LOG.info("Sending message: $message ")
           objectOutputStream.writeObject(message)
         }
       }
@@ -164,10 +168,10 @@ class JUnitServerImpl: JUnitServer {
 
     override fun run() {
       try {
-        println("Server Receive Thread started")
+        LOG.info("Server Receive Thread started")
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
-          println("Receiving message: $obj")
+          LOG.info("Receiving message: $obj")
           assert(obj is TransportMessage)
           val message = obj as TransportMessage
           val copied: Array<ServerHandler> = handlers.toTypedArray().copyOf()
@@ -176,6 +180,7 @@ class JUnitServerImpl: JUnitServer {
             .forEach { it.handleObject(message) }
         }
       } catch (e: Exception) {
+        if (e is InvalidClassException) LOG.error("Probably serialization error:", e)
         failHandler?.invoke(e)
       }
     }

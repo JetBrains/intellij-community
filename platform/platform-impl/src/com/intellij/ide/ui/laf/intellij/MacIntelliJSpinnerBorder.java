@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Area;
@@ -24,17 +26,7 @@ import java.awt.geom.Area;
  */
 public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
   @Override boolean isFocused(Component c) {
-    if (c.hasFocus()) return true;
-
-    if (c instanceof JSpinner) {
-      JSpinner spinner = (JSpinner)c;
-      if (spinner.getEditor() != null) {
-        synchronized (spinner.getEditor().getTreeLock()) {
-          return  spinner.getEditor().getComponent(0).hasFocus();
-        }
-      }
-    }
-    return false;
+    return DarculaSpinnerBorder.isFocused(c);
   }
 
   @Override Area getButtonBounds(Component c) {

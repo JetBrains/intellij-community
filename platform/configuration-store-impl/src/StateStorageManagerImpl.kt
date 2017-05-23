@@ -32,6 +32,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -203,6 +204,17 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     Pair(getCachedFileStorages(changed, pathNormalizer), getCachedFileStorages(deleted, pathNormalizer))
   }
 
+  fun updatePath(spec: String, newPath: String) {
+    val storage = getCachedFileStorages(listOf(spec)).firstOrNull() ?: return
+    if (storage is StorageVirtualFileTracker.TrackedStorage) {
+      virtualFileTracker?.let { tracker ->
+        tracker.remove(storage.file.systemIndependentPath)
+        tracker.put(newPath, storage)
+      }
+    }
+    storage.setFile(null, Paths.get(newPath))
+  }
+
   fun getCachedFileStorages(fileSpecs: Collection<String>, pathNormalizer: ((String) -> String)? = null): Collection<FileBasedStorage> {
     if (fileSpecs.isEmpty()) {
       return emptyList()
@@ -295,8 +307,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       super.beforeElementLoaded(element)
     }
 
-    override fun dataLoadedFromProvider(element: Element?) {
-      storageManager.dataLoadedFromProvider(this, element)
+    override fun providerDataStateChanged(element: Element?, type: DataStateChanged) {
+      storageManager.providerDataStateChanged(this, element, type)
+      super.providerDataStateChanged(element, type)
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
@@ -310,10 +323,10 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   protected open fun beforeElementSaved(element: Element) {
   }
 
-  protected open fun beforeElementLoaded(element: Element) {
+  protected open fun providerDataStateChanged(storage: FileBasedStorage, element: Element?, type: DataStateChanged) {
   }
 
-  protected open fun dataLoadedFromProvider(storage: FileBasedStorage, element: Element?) {
+  protected open fun beforeElementLoaded(element: Element) {
   }
 
   override final fun rename(path: String, newName: String) {

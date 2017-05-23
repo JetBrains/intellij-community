@@ -48,7 +48,7 @@ public class EntryPointsNode extends InspectionNode {
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
+  public String getTailText() {
     return "";
   }
 

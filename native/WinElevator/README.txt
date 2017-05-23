@@ -20,6 +20,12 @@ How to build.
 You may open .sln from Visual Studio or use msbuild from VS command prompt:
  msbuild Elevator.sln /p:Configuration=release
 
+
+Building and signing on TC:
+To sign binary you need to build and sign it on TC.
+Run https://buildserver.labs.intellij.net/viewType.html?buildTypeId=ijplatform_master_Idea_NativeHelpers_WindowsFileWatcher
+Download artifact and store in VCS
+
 -------
 How to test.
 From unelevated command.com run commands and click "yes"

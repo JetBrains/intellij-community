@@ -181,15 +181,14 @@ object GuiTestLocalLauncher {
   private fun getExtendedClasspath(moduleName: String): MutableSet<File> {
     val modules = getModulesList()
     val resultSet = HashSet<File>()
-    resultSet.addAll(modules.module(moduleName)!!.getClasspath())
-    resultSet.addAll(modules.module("testGuiFramework")!!.getClasspath())
+    val module = modules.module(moduleName)
+    assert(module != null)
+    resultSet.addAll(module!!.getClasspath())
+    val testGuiFrameworkModule = modules.module("testGuiFramework")
+    assert(testGuiFrameworkModule != null)
+    resultSet.addAll(testGuiFrameworkModule!!.getClasspath())
     return resultSet
   }
-
-  private fun List<JpsModule>.findContainingModule() {
-//    this.filter { it. }
-  }
-
 
   private fun List<JpsModule>.module(moduleName: String): JpsModule? =
     this.filter { it.name == moduleName }.firstOrNull()

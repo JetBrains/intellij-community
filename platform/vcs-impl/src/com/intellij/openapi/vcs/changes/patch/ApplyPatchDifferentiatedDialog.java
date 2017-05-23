@@ -146,6 +146,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myExecutors = executors;
     myUseProjectRootAsPredefinedBase = useProjectRootAsPredefinedBase;
     setModal(false);
+    setHorizontalStretch(2);
+    setVerticalStretch(2);
     setTitle(applyPatchMode.getTitle());
 
     final FileChooserDescriptor descriptor = createSelectPatchDescriptor();

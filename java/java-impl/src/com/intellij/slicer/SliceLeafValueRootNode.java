@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author cdr
  */
-class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
+public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCellRenderer {
   final List<SliceNode> myCachedChildren;
 
   SliceLeafValueRootNode(@NotNull Project project,

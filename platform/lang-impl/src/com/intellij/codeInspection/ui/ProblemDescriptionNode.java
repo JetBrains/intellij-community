@@ -101,12 +101,12 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public int getProblemCount(boolean allowSuppressed) {
-    return myPresentation.isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
+    return getPresentation().isProblemResolved(getElement(), myDescriptor) && !(allowSuppressed && isAlreadySuppressedFromView() && isValid())? 0 : 1;
   }
 
   @Override
   public void visitProblemSeverities(TObjectIntHashMap<HighlightDisplayLevel> counter) {
-    if (!myPresentation.isProblemResolved(getElement(), myDescriptor)) {
+    if (!getPresentation().isProblemResolved(getElement(), myDescriptor)) {
       counter.put(myLevel, counter.get(myLevel) + 1);
     }
   }
@@ -139,12 +139,6 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   }
 
   @Override
-  @NotNull
-  public InspectionToolPresentation getPresentation() {
-    return myPresentation;
-  }
-
-  @Override
   public FileStatus getNodeStatus() {
     if (myElement instanceof RefElement) {
       return getPresentation().getProblemStatus(myDescriptor);
@@ -171,17 +165,17 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
 
   @Override
   public boolean isQuickFixAppliedFromView() {
-    return (myDescriptor != null && myPresentation.isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
+    return (myDescriptor != null && getPresentation().isProblemResolved(getElement(), myDescriptor)) && !isAlreadySuppressedFromView();
   }
 
   @Nullable
   @Override
-  public String getCustomizedTailText() {
+  public String getTailText() {
     if (isQuickFixAppliedFromView()) {
       return "";
     }
     else {
-      final String text = super.getCustomizedTailText();
+      final String text = super.getTailText();
       return text == null ? "" : text;
     }
   }

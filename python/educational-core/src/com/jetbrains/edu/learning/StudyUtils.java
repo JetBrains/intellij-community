@@ -476,7 +476,7 @@ public class StudyUtils {
   @Nullable
   private static String getTextByTaskFileFormat(@NotNull Task task, @NotNull VirtualFile taskDirectory, @NotNull String taskTextFileName) {
     String textFilename = constructTaskTextFilename(task, taskTextFileName);
-    VirtualFile taskTextFile = taskDirectory.findChild(taskTextFileName);
+    VirtualFile taskTextFile = taskDirectory.findChild(textFilename);
 
     if (taskTextFile != null) {
       return String.valueOf(LoadTextUtil.loadText(taskTextFile));

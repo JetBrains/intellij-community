@@ -103,7 +103,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   final LookupCellRenderer myCellRenderer;
 
   private final List<LookupListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private PrefixChangeListener myPrefixChangeListener = new PrefixChangeListener.Adapter() {};
+  private List<PrefixChangeListener> myPrefixChangeListeners = ContainerUtil.newSmartList();
   private final LookupPreview myPreview = new LookupPreview(this);
   // keeping our own copy of editor's font preferences, which can be used in non-EDT threads (to avoid race conditions)
   private final FontPreferences myFontPreferences = new FontPreferencesImpl();
@@ -311,6 +311,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   void appendPrefix(char c) {
     checkValid();
+    myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
     myOffsets.appendPrefix(c);
     withLock(() -> {
       myPresentableArranger.prefixChanged(this);
@@ -319,7 +320,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     requestResize();
     refreshUi(false, true);
     ensureSelectionVisible(true);
-    myPrefixChangeListener.afterAppend(c);
+    myPrefixChangeListeners.forEach((listener -> listener.afterAppend(c)));
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -358,6 +359,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     if (!myOffsets.truncatePrefix()) {
       return false;
     }
+    myPrefixChangeListeners.forEach((listener -> listener.beforeTruncate()));
 
     if (preserveSelection) {
       markSelectionTouched();
@@ -373,6 +375,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       ensureSelectionVisible(true);
     }
 
+    myPrefixChangeListeners.forEach((listener -> listener.afterTruncate()));
     return true;
   }
 
@@ -1179,7 +1182,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   @SuppressWarnings("unused")
   public void setPrefixChangeListener(PrefixChangeListener listener) {
-    myPrefixChangeListener = listener;
+    myPrefixChangeListeners.add(listener);
   }
 
   FontPreferences getFontPreferences() {

@@ -89,7 +89,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
@@ -136,7 +135,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       return new THashSet<>();
     }
   };
-  private final ConcurrentMap<String, Set<SuppressIntentionAction>> mySuppressActions = new ConcurrentHashMap<>();
+  private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
   private final ExecutorService myTreeUpdater = AppExecutorUtil.createBoundedApplicationPoolExecutor("inspection-view-tree-updater", 1);
@@ -659,12 +658,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     });
   }
 
-  @NotNull
-  public Set<SuppressIntentionAction> getSuppressActions(InspectionToolWrapper wrapper) {
-    return mySuppressActions.computeIfAbsent(wrapper.getShortName(), __ -> {
-      final SuppressIntentionAction[] actions = InspectionManagerEx.getSuppressActions(wrapper);
-      return actions == null ? Collections.emptySet() : ContainerUtil.newLinkedHashSet(actions);
-    });
+  public InspectionViewSuppressActionHolder getSuppressActionHolder() {
+    return mySuppressActionHolder;
   }
 
   public Set<Object> getSuppressedNodes(String toolId) {

@@ -9,6 +9,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
@@ -19,40 +20,69 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.jetbrains.python.sdk.PythonSdkType;
+import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 
 import java.util.ArrayList;
 
 public class IpnbConvertToPythonAction extends AnAction {
+  private IpnbFileEditor myFileEditor = null;
+
+  // for action registered in xml
+  public IpnbConvertToPythonAction() {
+    super(PythonIcons.Python.Python);
+  }
+
+  // for action button on editor toolbar
+  public IpnbConvertToPythonAction(@NotNull IpnbFileEditor fileEditor) {
+    super("Convert to Python Script", "Convert to Python Script", PythonIcons.Python.Python);
+    myFileEditor = fileEditor;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final IpnbFileEditor fileEditor = IpnbFileEditor.DATA_KEY.getData(context);
-    if (fileEditor == null) return;
+    Project project = event.getProject();
+    if (project == null) {
+      return;
+    }
 
-    convertToPythonScript(fileEditor);
+    if (myFileEditor != null) {
+      VirtualFile virtualFile = myFileEditor.getVirtualFile();
+      convertToPythonScript(project, virtualFile);
+    }
+    else {
+      final DataContext context = event.getDataContext();
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+      if (virtualFile == null) return;
+      convertToPythonScript(project, virtualFile);
+    }
   }
 
   @Override
   public void update(AnActionEvent e) {
-    final DataContext context = e.getDataContext();
-    final IpnbFileEditor fileEditor = IpnbFileEditor.DATA_KEY.getData(context);
-    if (fileEditor == null) {
-      e.getPresentation().setEnabled(false);
+    if (myFileEditor != null) {
+      e.getPresentation().setEnabledAndVisible(true);
+      return;
     }
-    e.getPresentation().setEnabled(true);
+
+    final DataContext context = e.getDataContext();
+    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
+    if (virtualFile != null && "ipynb".equals(virtualFile.getExtension())) {
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
-  public static void convertToPythonScript(IpnbFileEditor fileEditor) {
-    final Project project = fileEditor.getIpnbFilePanel().getProject();
-    final VirtualFile virtualFile = fileEditor.getVirtualFile();
+  public static void convertToPythonScript(@NotNull final Project project,
+                                           @NotNull final VirtualFile virtualFile) {
     Module module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile);
     if (module == null) return;
 
     final Sdk sdk = PythonSdkType.findPythonSdk(module);
-    if (sdk == null) {
+    if (sdk == null || PythonSdkType.isInvalid(sdk)) {
       return;
     }
     final String homePath = sdk.getHomePath();

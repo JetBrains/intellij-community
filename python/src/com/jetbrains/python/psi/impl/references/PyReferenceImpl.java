@@ -423,8 +423,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return realContext.getContainingFile();
   }
 
-  public static int getRate(PsiElement elt, @NotNull TypeEvalContext context) {
-    int rate;
+  public static int getRate(@Nullable PsiElement elt, @NotNull TypeEvalContext context) {
+    final int rate;
     if (elt instanceof PyTargetExpression && context.maySwitchToAST(elt)) {
       final PsiElement parent = elt.getParent();
       if (parent instanceof PyGlobalStatement || parent instanceof PyNonlocalStatement) {
@@ -440,7 +440,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     else if (elt instanceof PyFile) {
       rate = RatedResolveResult.RATE_HIGH;
     }
-    else if (!PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
+    else if (elt != null && !PyiUtil.isInsideStub(elt) && PyiUtil.isOverload(elt, context)) {
       rate = RatedResolveResult.RATE_LOW;
     }
     else {

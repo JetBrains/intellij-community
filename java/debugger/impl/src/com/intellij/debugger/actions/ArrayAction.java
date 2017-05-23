@@ -21,27 +21,24 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.ArrayRendererConfigurable;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
-import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor;
+import com.intellij.xdebugger.impl.evaluate.XExpressionDialog;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
-import javax.swing.*;
 import java.util.List;
 
 public abstract class ArrayAction extends DebuggerAction {
@@ -76,7 +73,7 @@ public abstract class ArrayAction extends DebuggerAction {
     //if (index > 0) {
     //  title = title + " " + label.substring(index);
     //}
-    ArrayRenderer newRenderer = createNewRenderer(renderer, debuggerContext.getProject(), node.getName());
+    ArrayRenderer newRenderer = createNewRenderer(renderer, debuggerContext, node.getName());
     if (newRenderer != null) {
       debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(debuggerContext.getSuspendContext()) {
         @Override
@@ -84,6 +81,7 @@ public abstract class ArrayAction extends DebuggerAction {
           final Renderer lastRenderer = descriptor.getLastRenderer();
           if (lastRenderer instanceof ArrayRenderer) {
             ((JavaValue)container).setRenderer(newRenderer, node);
+            node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
           else if (lastRenderer instanceof CompoundNodeRenderer) {
             final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;
@@ -99,7 +97,7 @@ public abstract class ArrayAction extends DebuggerAction {
   }
 
   @Nullable
-  protected abstract ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title);
+  protected abstract ArrayRenderer createNewRenderer(ArrayRenderer original, @NotNull DebuggerContextImpl debuggerContext, String title);
 
   @Override
   public void update(AnActionEvent e) {
@@ -161,10 +159,10 @@ public abstract class ArrayAction extends DebuggerAction {
 
   private static class AdjustArrayRangeAction extends ArrayAction {
     @Override
-    protected ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title) {
+    protected ArrayRenderer createNewRenderer(ArrayRenderer original, @NotNull DebuggerContextImpl debuggerContext, String title) {
       ArrayRenderer clonedRenderer = original.clone();
       clonedRenderer.setForced(true);
-      if (ShowSettingsUtil.getInstance().editConfigurable(project, new NamedArrayConfigurable(title, clonedRenderer))) {
+      if (ShowSettingsUtil.getInstance().editConfigurable(debuggerContext.getProject(), new NamedArrayConfigurable(title, clonedRenderer))) {
         return clonedRenderer;
       }
       return null;
@@ -174,43 +172,23 @@ public abstract class ArrayAction extends DebuggerAction {
   private static class FilterArrayAction extends ArrayAction {
     @Nullable
     @Override
-    protected ArrayRenderer createNewRenderer(ArrayRenderer original, Project project, String title) {
-      ExpressionDialog dialog =
-        new ExpressionDialog(project, original instanceof ArrayRenderer.Filtered ? ((ArrayRenderer.Filtered)original).getExpression()
-                                                                                 : XExpressionImpl.EMPTY_EXPRESSION);
+    protected ArrayRenderer createNewRenderer(ArrayRenderer original, @NotNull DebuggerContextImpl debuggerContext, String title) {
+      XExpressionDialog dialog =
+        new XExpressionDialog(debuggerContext.getProject(),
+                              debuggerContext.getDebugProcess().getXdebugProcess().getEditorsProvider(),
+                              "filterExpression",
+                              "Filter",
+                              null,
+                             original instanceof ArrayRenderer.Filtered
+                               ? ((ArrayRenderer.Filtered)original).getExpression()
+                               : XExpressionImpl.EMPTY_EXPRESSION);
       if (dialog.showAndGet()) {
-        return new ArrayRenderer.Filtered(dialog.getExpression());
+        XExpression expression = dialog.getExpression();
+        return XDebuggerUtilImpl.isEmptyExpression(expression) ?
+                 NodeRendererSettings.getInstance().getArrayRenderer() :
+                 new ArrayRenderer.Filtered(expression);
       }
       return null;
-    }
-
-    private static class ExpressionDialog extends DialogWrapper {
-      private final XDebuggerExpressionEditor myEditor;
-
-      public ExpressionDialog(@NotNull Project project, XExpression expression) {
-        super(project);
-        myEditor = new XDebuggerExpressionEditor(project, new JavaDebuggerEditorsProvider(), "filter", null,
-                                                 expression, false, true, false);
-
-        setTitle("Filter");
-        init();
-      }
-
-      @Nullable
-      @Override
-      protected JComponent createCenterPanel() {
-        return myEditor.getComponent();
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return myEditor.getPreferredFocusedComponent();
-      }
-
-      XExpression getExpression() {
-        return myEditor.getExpression();
-      }
     }
   }
 }

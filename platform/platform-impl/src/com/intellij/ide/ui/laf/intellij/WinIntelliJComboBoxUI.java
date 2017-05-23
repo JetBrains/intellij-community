@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.IconUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -43,9 +44,7 @@ import java.beans.PropertyChangeListener;
 public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   private static final String HOVER_PROPERTY = "JComboBox.mouseHover";
   private static final String PRESSED_PROPERTY = "JComboBox.mousePressed";
-
   private static final Border DEFAULT_EDITOR_BORDER = JBUI.Borders.empty(1, 0);
-  private static final Dimension BUTTON_SIZE = JBUI.size(20, 22);
 
   private MouseListener mouseListener;
 
@@ -202,7 +201,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     JButton button = new BasicArrowButton(SwingConstants.SOUTH) {
       @Override
       public Dimension getPreferredSize() {
-        return BUTTON_SIZE;
+        return new JBDimension(20, 22);
       }
 
       @Override
@@ -308,7 +307,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           @Override
           public Dimension getPreferredSize() {
             Dimension size = super.getPreferredSize();
-            return new Dimension(size.width, BUTTON_SIZE.height);
+            return new Dimension(size.width, JBUI.scale(22));
           }
         };
       }
@@ -486,21 +485,21 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     return getInsets();
   }
 
-  private Dimension getSizeWithIcon(Dimension d) {
+  private Dimension getSizeWithButton(Dimension d) {
     Insets i = comboBox.getInsets();
-    int iconWidth = BUTTON_SIZE.width + i.right;
-    int iconHeight = BUTTON_SIZE.height + i.top + i.bottom;
-    return new Dimension(Math.max(d.width + 7, iconWidth), iconHeight);
+    int iconWidth = JBUI.scale(20) + i.right;
+    int iconHeight = JBUI.scale(22) + i.top + i.bottom;
+    return new Dimension(Math.max(d.width + JBUI.scale(7), iconWidth), iconHeight);
   }
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    return getSizeWithIcon(super.getPreferredSize(c));
+    return getSizeWithButton(super.getPreferredSize(c));
   }
 
   @Override
   public Dimension getMinimumSize(JComponent c) {
-    return getSizeWithIcon(super.getMinimumSize(c));
+    return getSizeWithButton(super.getMinimumSize(c));
   }
 
   private class ComboBoxMouseListener extends MouseAdapter {

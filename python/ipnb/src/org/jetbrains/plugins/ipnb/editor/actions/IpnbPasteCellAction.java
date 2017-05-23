@@ -3,28 +3,24 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
 
 public class IpnbPasteCellAction extends AnAction {
-  public IpnbPasteCellAction() {
-    super(AllIcons.Actions.Menu_paste);
+  private final IpnbFileEditor myFileEditor;
+
+  public IpnbPasteCellAction(@NotNull IpnbFileEditor fileEditor) {
+    super("Paste Cell Below", "Paste Cell Below", AllIcons.Actions.Menu_paste);
+    myFileEditor = fileEditor;
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if (editor instanceof IpnbFileEditor) {
-      final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbFilePanel();
-      pasteCell(component);
-    }
+    final IpnbFilePanel component = myFileEditor.getIpnbFilePanel();
+    pasteCell(component);
   }
 
   public static void pasteCell(@NotNull final IpnbFilePanel ipnbFilePanel) {

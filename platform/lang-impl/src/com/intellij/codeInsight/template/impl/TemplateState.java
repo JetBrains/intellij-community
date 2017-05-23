@@ -587,7 +587,7 @@ public class TemplateState implements Disposable {
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
     if (end >= 0) {
-      myEditor.getCaretModel().moveToOffset(end);
+      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(end).leanForward(true)); // to the right of parameter hint, if any
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();
       myEditor.getSelectionModel().setSelection(start, end);

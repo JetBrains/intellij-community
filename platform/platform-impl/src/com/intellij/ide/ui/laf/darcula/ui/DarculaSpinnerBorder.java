@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -88,5 +87,19 @@ public class DarculaSpinnerBorder implements Border, UIResource {
   @Override
   public boolean isBorderOpaque() {
     return true;
+  }
+
+  public static boolean isFocused(Component c) {
+    if (c.hasFocus()) return true;
+
+    if (c instanceof JSpinner) {
+      JSpinner spinner = (JSpinner)c;
+      if (spinner.getEditor() != null) {
+        synchronized (spinner.getEditor().getTreeLock()) {
+          return spinner.getEditor().getComponent(0).hasFocus();
+        }
+      }
+    }
+    return false;
   }
 }

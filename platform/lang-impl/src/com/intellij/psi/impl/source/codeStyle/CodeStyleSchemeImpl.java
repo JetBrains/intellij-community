@@ -101,8 +101,8 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
   }
 
   public void setCodeStyleSettings(@NotNull CodeStyleSettings codeStyleSettings) {
+    myCodeStyleSettings = codeStyleSettings;
     synchronized (lock) {
-      myCodeStyleSettings = codeStyleSettings;
       myParentSchemeName = null;
       myDataHolder = null;
     }

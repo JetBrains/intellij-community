@@ -10,6 +10,7 @@ from teamcity.common import is_string, get_class_fullname, convert_error_to_stri
 
 _real_stdout = sys.stdout
 _real_stderr = sys.stderr
+_ERROR_HOLDERS_FQN = ("unittest.suite._ErrorHolder", "unittest2.suite._ErrorHolder")
 
 
 class TeamcityTestResult(TestResult):
@@ -33,14 +34,21 @@ class TeamcityTestResult(TestResult):
         if is_string(test):
             return test
 
+        test_class_fullname = get_class_fullname(test)
+        test_id = test.id()
+
+        if test_class_fullname in _ERROR_HOLDERS_FQN:
+            # patch setUpModule (__main__) -> __main__.setUpModule
+            return re.sub(r'^(.*) \((.*)\)$', r'\2.\1', test_id)
+
         # Force test_id for doctests
-        if get_class_fullname(test) != "doctest.DocTestCase":
+        if test_class_fullname != "doctest.DocTestCase":
             desc = test.shortDescription()
             test_method_name = getattr(test, "_testMethodName", "")
-            if desc and desc != test.id() and desc != test_method_name:
-                return "%s (%s)" % (test.id(), desc.replace('.', '_'))
+            if desc and desc != test_id and desc != test_method_name:
+                return "%s (%s)" % (test_id, desc.replace('.', '_'))
 
-        return test.id()
+        return test_id
 
     def addSuccess(self, test):
         super(TeamcityTestResult, self).addSuccess(test)
@@ -92,7 +100,14 @@ class TeamcityTestResult(TestResult):
             self.messages.blockClosed(block_id, flowId=parent_test_id)
         else:
             test_id = self.get_test_id(test)
-            self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
+
+            if test_id not in self.test_started_datetime_map:
+                # Test ignored without startTest. Handle start and finish events ourselves
+                self.messages.testStarted(test_id, flowId=test_id)
+                self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
+                self.messages.testFinished(test_id, flowId=test_id)
+            else:
+                self.messages.testIgnored(test_id, message="Skipped" + reason_str, flowId=test_id)
 
     def addUnexpectedSuccess(self, test):
         _super = super(TeamcityTestResult, self)
@@ -108,17 +123,13 @@ class TeamcityTestResult(TestResult):
         super(TeamcityTestResult, self).addError(test, err)
 
         test_class = get_class_fullname(test)
-        if test_class == "unittest.suite._ErrorHolder" or test_class == "unittest2.suite._ErrorHolder":
+        if test_class in _ERROR_HOLDERS_FQN:
             # This is a standalone error
+            test_id = self.get_test_id(test)
 
-            test_name = test.id()
-            # patch setUpModule (__main__) -> __main__.setUpModule
-            test_name = re.sub(r'^(.*) \((.*)\)$', r'\2.\1', test_name)
-
-            self.messages.testStarted(test_name, flowId=test_name)
-            # noinspection PyTypeChecker
-            self.report_fail(test_name, 'Failure', err)
-            self.messages.testFinished(test_name, flowId=test_name)
+            self.messages.testStarted(test_id, flowId=test_id)
+            self.report_fail(test, 'Failure', err)
+            self.messages.testFinished(test_id, flowId=test_id)
         elif get_class_fullname(err[0]) == "unittest2.case.SkipTest":
             message = ""
             if hasattr(err[1], "message"):

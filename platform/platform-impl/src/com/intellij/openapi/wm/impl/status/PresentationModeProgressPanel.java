@@ -23,8 +23,6 @@ import com.intellij.ui.TransparentPanel;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,8 +39,6 @@ public class PresentationModeProgressPanel {
   private JLabel myText2;
   private JPanel myRootPanel;
   private JPanel myButtonPanel;
-  private MergingUpdateQueue myUpdateQueue;
-  private Update myUpdate;
 
   public PresentationModeProgressPanel(InlineProgressIndicator progress) {
     myProgress = progress;
@@ -51,19 +47,8 @@ public class PresentationModeProgressPanel {
     myText2.setFont(font);
     myText.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
     myText2.setIcon(JBUI.scale(EmptyIcon.create(1, 16)));
-    myUpdateQueue = new MergingUpdateQueue("Presentation Mode Progress", 100, true, null);
-    myUpdate = new Update("Update UI") {
-      @Override
-      public void run() {
-        updateImpl();
-      }
-    };
     myEastButtons = myProgress.createEastButtons();
     myButtonPanel.add(InlineProgressIndicator.createButtonPanel(myEastButtons.map(b -> b.button)));
-  }
-
-  public void update() {
-    myUpdateQueue.queue(myUpdate);
   }
 
   @NotNull
@@ -71,7 +56,7 @@ public class PresentationModeProgressPanel {
     return EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground();
   }
 
-  private void updateImpl() {
+  void update() {
     Color color = getTextForeground();
     myText.setForeground(color);
     myText2.setForeground(color);

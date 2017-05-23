@@ -99,14 +99,14 @@ public class InspectionTreeHtmlWriter {
                                }
                                builder.append(" onclick=\"navigate(").append(nodeId).append(")\" ");
                                builder.append(" id=\"").append(nodeId).append("\" />");
-                               if (n instanceof RefElementAndDescriptorAware) {
-                                 RefEntity e = ((RefElementAndDescriptorAware)n).getElement();
+                               if (n instanceof SuppressableInspectionTreeNode) {
+                                 RefEntity e = ((SuppressableInspectionTreeNode)n).getElement();
                                  if (e != null) {
                                    builder
                                      .append("<div id=\"d")
                                      .append(nodeId)
                                      .append("\" style=\"display:none\">");
-                                   ((RefElementAndDescriptorAware)n).getPresentation().getComposer().compose(builder, e);
+                                   ((SuppressableInspectionTreeNode)n).getPresentation().getComposer().compose(builder, e);
                                    builder.append("</div>");
                                  }
                                }

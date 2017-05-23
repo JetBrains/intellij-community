@@ -183,7 +183,7 @@ public class ExceptionWorker {
   }
 
   @Nullable
-  static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
+  public static Trinity<TextRange, TextRange, TextRange> parseExceptionLine(final String line) {
     int startIdx = findAtPrefix(line);
 
     TextRange yourKitLink = startIdx < 0 ? getYourKitLinkRange(line) : null;

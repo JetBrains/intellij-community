@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,6 +116,16 @@ class UpdateStrategyTest {
         <build number="145.595" version="2016.1.1 EAP"/>
       </channel>""", listOf("145.596"))
     assertBuild("145.595", result.newBuild)
+  }
+
+  @Test fun `ignored same-baseline updates do not hide new major releases`() {
+    val result = check("IU-145.971", ChannelStatus.RELEASE, """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="145.1617" version="2016.1.3"/>
+        <build number="145.2070" version="2016.1.4"/>
+        <build number="171.4424" version="2017.1.3"/>
+      </channel>""", listOf("145.1617", "145.2070"))
+    assertBuild("171.4424", result.newBuild)
   }
 
   @Test fun `updates can be targeted for specific builds (different builds)`() {

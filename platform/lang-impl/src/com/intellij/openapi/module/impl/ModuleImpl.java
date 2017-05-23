@@ -60,15 +60,15 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
 
   private final ModuleScopeProvider myModuleScopeProvider;
 
-  ModuleImpl(@NotNull String filePath, @NotNull Project project) {
-    super(project, "Module " + ModulePathKt.getModuleNameByFilePath(filePath));
+  ModuleImpl(@NotNull String name, @NotNull Project project) {
+    super(project, "Module " + name);
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
 
-    myName = ModulePathKt.getModuleNameByFilePath(filePath);
+    myName = name;
   }
 
   @Override
@@ -78,12 +78,10 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void init(@NotNull final String path, @Nullable VirtualFile file, @Nullable final Runnable beforeComponentCreation) {
+  public void init(@Nullable Runnable beforeComponentCreation) {
     init(null, () -> {
       // create ServiceManagerImpl at first to force extension classes registration
       getPicoContainer().getComponentInstance(ModuleServiceManagerImpl.class);
-      ServiceKt.getStateStore(this).setPath(path, file);
-
       if (beforeComponentCreation != null) {
         beforeComponentCreation.run();
       }
@@ -100,6 +98,7 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   @Override
   public boolean isDisposed() {
     // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
+    //noinspection TestOnlyProblems
     return super.isDisposed() || ((ProjectImpl)myProject).isLight() && myProject.isDisposed();
   }
 

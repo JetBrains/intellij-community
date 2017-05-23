@@ -17,20 +17,16 @@ package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.CompletionLocation;
 import com.intellij.codeInsight.completion.CompletionWeigher;
-import com.intellij.compiler.chainsSearch.ChainRelevance;
-import com.intellij.compiler.chainsSearch.completion.lookup.WeightableChainLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.compiler.chainsSearch.completion.lookup.JavaRelevantChainLookupElement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Batkovich
- */
 public class MethodChainWeigher extends CompletionWeigher {
   @Override
   public Comparable weigh(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
-    if (element instanceof WeightableChainLookupElement) {
-      return ((WeightableChainLookupElement)element).getChainRelevance();
+    if (element instanceof JavaRelevantChainLookupElement) {
+      return ((JavaRelevantChainLookupElement)element).getChainRelevance();
     }
-    return ChainRelevance.LOWEST;
+    return null;
   }
 }

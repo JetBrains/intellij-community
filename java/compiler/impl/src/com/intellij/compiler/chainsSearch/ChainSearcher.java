@@ -21,9 +21,13 @@ import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.IntStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.SortedSet;
 
 public class ChainSearcher {
   @NotNull
@@ -56,7 +60,7 @@ public class ChainSearcher {
   @NotNull
   private static List<MethodChain> search(CompilerReferenceServiceEx referenceServiceEx,
                                           SearchInitializer initializer,
-                                          int pathMaximalLength,
+                                          int chainMaxLength,
                                           int maxResultSize,
                                           ChainCompletionContext context) {
     LinkedList<MethodChain> q = initializer.getChainQueue();
@@ -68,13 +72,7 @@ public class ChainSearcher {
       MethodChain currentChain = q.poll();
       MethodIncompleteSignature headSignature = currentChain.getHeadSignature();
 
-      // interrupt a chain if it can be terminal
-      if (headSignature.isStatic() ||
-          context.hasQualifier(context.resolveQualifierClass(headSignature)) ||
-          currentChain.length() >= pathMaximalLength) {
-        addChainIfNotPresent(currentChain, result);
-        continue;
-      }
+      if (addChainIfTerminal(currentChain, result, chainMaxLength, context)) continue;
 
       // otherwise try to find chain continuation
       boolean updated = false;
@@ -85,7 +83,7 @@ public class ChainSearcher {
         }
         MethodIncompleteSignature sign = candidate.getSignature();
         if ((sign.isStatic() || !sign.getOwner().equals(context.getTarget().getClassQName())) &&
-            referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.PROBABILITY_THRESHOLD)) {
+            referenceServiceEx.mayHappen(candidate.getSignature().getRef(), headSignature.getRef(), ChainSearchMagicConstants.METHOD_PROBABILITY_THRESHOLD)) {
           MethodChain continuation = currentChain.continuation(candidate.getSignature(), candidate.getOccurrenceCount(), context);
           if (continuation != null) {
             boolean stopChain = candidate.getSignature().isStatic() || context.hasQualifier(context.resolveQualifierClass(candidate.getSignature()));
@@ -100,9 +98,8 @@ public class ChainSearcher {
         }
       }
 
-      // continuation is not found -> add this chain as result
-      if (!updated && !context.getTarget().getClassQName().equals(headSignature.getOwner())) {
-        addChainIfNotPresent(currentChain, result);
+      if (!updated) {
+        addChainIfQualifierCanBeOccurredInContext(currentChain, result, context, referenceServiceEx);
       }
 
       if (result.size() > maxResultSize) {
@@ -110,6 +107,40 @@ public class ChainSearcher {
       }
     }
     return result;
+  }
+
+  /**
+   * To reduce false-positives we add a method to result only if its qualifier can be occurred together with context variables.
+   */
+  private static void addChainIfQualifierCanBeOccurredInContext(MethodChain currentChain,
+                                                                List<MethodChain> result,
+                                                                ChainCompletionContext context,
+                                                                CompilerReferenceServiceEx referenceServiceEx) {
+    if (!context.getTarget().getClassQName().equals(currentChain.getHeadSignature().getOwner())) {
+
+      boolean isRelevantQualifier = false;
+      for (LightRef ref: context.getContextClassReferences()) {
+        if (referenceServiceEx.mayHappen(currentChain.getHeadSignature().getOwnerRef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
+          isRelevantQualifier = true;
+          break;
+        }
+      }
+
+      if (isRelevantQualifier) {
+        addChainIfNotPresent(currentChain, result);
+      }
+    }
+  }
+
+  private static boolean addChainIfTerminal(MethodChain currentChain, List<MethodChain> result, int pathMaximalLength,
+                                            ChainCompletionContext context) {
+    if (currentChain.getHeadSignature().isStatic() ||
+        context.hasQualifier(context.resolveQualifierClass(currentChain.getHeadSignature())) ||
+        currentChain.length() >= pathMaximalLength) {
+      addChainIfNotPresent(currentChain, result);
+      return true;
+    }
+    return false;
   }
 
   private static void addChainIfNotPresent(MethodChain newChain, List<MethodChain> result) {

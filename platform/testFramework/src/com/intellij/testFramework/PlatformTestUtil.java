@@ -878,12 +878,22 @@ public class PlatformTestUtil {
     assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
+  /**
+   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static void assertElementsEqual(final Element expected, final Element actual) {
     if (!JDOMUtil.areElementsEqual(expected, actual)) {
       Assert.assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
     }
   }
 
+  /**
+   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   public static void assertElementEquals(final String expected, final Element actual) {
     try {
       assertElementsEqual(JdomKt.loadElement(expected), actual);

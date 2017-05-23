@@ -37,6 +37,7 @@ import com.intellij.platform.ProjectTemplate
 import com.intellij.testGuiFramework.fixtures.MessageDialogFixture
 import com.intellij.testGuiFramework.fixtures.MessagesFixture
 import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.Utils.clicks
 import com.intellij.testGuiFramework.generators.Utils.convertSimpleTreeItemToPath
@@ -44,6 +45,7 @@ import com.intellij.testGuiFramework.generators.Utils.getBoundedLabel
 import com.intellij.testGuiFramework.generators.Utils.getCellText
 import com.intellij.testGuiFramework.generators.Utils.getJTreePath
 import com.intellij.testGuiFramework.generators.Utils.getJTreePathItemsString
+import com.intellij.testGuiFramework.generators.Utils.withRobot
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
@@ -57,6 +59,7 @@ import org.fest.reflect.core.Reflection.field
 import org.fest.swing.core.BasicRobot
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
+import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
@@ -181,8 +184,8 @@ class JTreeGenerator : ComponentCodeGenerator<JTree> {
   private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
   override fun generate(cmp: JTree, me: MouseEvent, cp: Point): String {
     val path = getJTreePath(cmp, cmp.getPath(cp))
-    if (me.isRightButton()) return "jTree(\"$path\").rightClickPath(\"$path\")"
-    return "jTree(\"$path\").clickPath(\"$path\")"
+    if (me.isRightButton()) return "jTree($path).rightClickPath($path)"
+    return "jTree($path).clickPath($path)"
   }
 }
 
@@ -258,16 +261,16 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   }
 
   private fun JWindow.findJBPopupMenu(jbPopupHashSet: MutableSet<Int>): JBPopupMenu {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchy()
-    val resultJBPopupMenu = robot.finder().find(this, ComponentMatcher { component ->
-      (component is JBPopupMenu)
-      && component.isShowing
-      && component.isVisible
-      && !jbPopupHashSet.contains(component.hashCode())
-    }) as JBPopupMenu
-    jbPopupHashSet.add(resultJBPopupMenu.hashCode())
-    robot.cleanUpWithoutDisposingWindows()
-    return resultJBPopupMenu
+    return withRobot { robot ->
+      val resultJBPopupMenu = robot.finder().find(this, ComponentMatcher { component ->
+        (component is JBPopupMenu)
+        && component.isShowing
+        && component.isVisible
+        && !jbPopupHashSet.contains(component.hashCode())
+      }) as JBPopupMenu
+      jbPopupHashSet.add(resultJBPopupMenu.hashCode())
+      resultJBPopupMenu
+    }
   }
 
   private fun JBPopupMenu.findParentActionMenu(jbPopupHashSet: MutableSet<Int>): String {
@@ -330,9 +333,7 @@ class MacMessageGenerator : ComponentCodeGenerator<JDialog> {
 
   override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
     val panel = cmp.rootPane.contentPane as JPanel
-    val myRobot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    val title = MessagesFixture.getTitle(panel, myRobot)
-    myRobot.cleanUpWithoutDisposingWindows()
+    val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
     return "message(\"$title\") {"
   }
 }
@@ -509,14 +510,12 @@ object Generators {
 object Utils {
 
   fun getLabel(container: Container, jTextField: JTextField): JLabel? {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    return GuiTestUtil.findBoundedLabel(container, jTextField, robot)
+    return withRobot { robot -> GuiTestUtil.findBoundedLabel(container, jTextField, robot) }
   }
 
   fun getLabel(jTextField: JTextField): JLabel? {
     val parentContainer = jTextField.rootPane.parent
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    return GuiTestUtil.findBoundedLabel(parentContainer, jTextField, robot)
+    return withRobot { robot -> GuiTestUtil.findBoundedLabel(parentContainer, jTextField, robot) }
   }
 
   fun clicks(me: MouseEvent): String {
@@ -536,8 +535,7 @@ object Utils {
         else -> {
           val listCellRendererComponent = GuiTestUtil.getListCellRendererComponent(jbList, elementAt, index) as JComponent
           if (listCellRendererComponent is JPanel) {
-            val label = BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock().finder().find(listCellRendererComponent,
-                                                                                           ComponentMatcher { it is JLabel })
+            val label = withRobot { robot -> robot.finder().find(listCellRendererComponent, ComponentMatcher { it is JLabel }) }
             if (label is JLabel) return label.text
           }
           return elementAt.toString()
@@ -580,7 +578,7 @@ object Utils {
   fun convertSimpleTreeItemToPath(tree: SimpleTree, itemName: String): String {
     val searchableNodeRef = Ref.create<TreeNode>();
     val searchableNode: TreeNode?
-    TreeUtil.traverse(tree.getModel().getRoot() as TreeNode) { node ->
+    TreeUtil.traverse(tree.model.root as TreeNode) { node ->
       val valueFromNode = SettingsTreeFixture.getValueFromNode(tree, node)
       if (valueFromNode != null && valueFromNode == itemName) {
         assert(node is TreeNode)
@@ -617,26 +615,26 @@ object Utils {
   }
 
   private fun findBoundedLabel(component: Component): JLabel? {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    var resultLabel: JLabel? = null
-
-    if (component is LabeledComponent<*>) return component.label
-    try {
-      resultLabel = robot.finder().find(component.parent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-        override fun isMatching(label: JLabel): Boolean {
-          return label.labelFor != null && label.labelFor == component
+    return withRobot { robot ->
+      var resultLabel: JLabel?
+      if (component is LabeledComponent<*>) resultLabel = component.label
+      else {
+        try {
+          resultLabel = robot.finder().find(component.parent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
+            override fun isMatching(label: JLabel) = (label.labelFor != null && label.labelFor == component)
+          })
         }
-      })
+        catch(e: ComponentLookupException) {
+          resultLabel = null
+        }
+      }
+      resultLabel
     }
-    catch(e: ComponentLookupException) {
-      resultLabel = null
-    }
-    return resultLabel
   }
 
   fun getJTreePath(cmp: JTree, path: TreePath): String {
-    val stringBuilder = getJTreePathArray(cmp, path)
-    return StringUtil.join(stringBuilder, "/")
+    val pathArray = getJTreePathArray(cmp, path)
+    return pathArray.joinToString(separator = ", ", transform = { str -> "\"$str\"" })
   }
 
   fun getJTreePathItemsString(cmp: JTree, path: TreePath): String {
@@ -645,18 +643,14 @@ object Utils {
       .reduceRight({ s, s1 -> "$s, $s1" })
   }
 
-  private fun getJTreePathArray(cmp: JTree, path: TreePath): ArrayList<String> {
-    var treePath = path
-    val result = ArrayList<String>()
-    val bcr = org.fest.swing.driver.BasicJTreeCellReader()
-    while (treePath.pathCount != 1 || (cmp.isRootVisible && treePath.pathCount == 1)) {
-      val valueAt = bcr.valueAt(cmp, treePath.lastPathComponent) ?: "null"
-      result.add(0, valueAt)
-      if (treePath.pathCount == 1) break
-      else treePath = treePath.parentPath
-    }
+  private fun getJTreePathArray(tree: JTree, path: TreePath): List<String>
+    = withRobot { robot -> ExtendedTreeFixture(robot, tree).getPath(path) }
+
+  fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {
+    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
+    val result = robotFunction(robot)
+    robot.cleanUpWithoutDisposingWindows()
     return result
   }
-
 }
 

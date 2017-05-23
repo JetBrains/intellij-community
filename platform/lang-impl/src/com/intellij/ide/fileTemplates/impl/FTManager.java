@@ -35,7 +35,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 3/22/11
  */
-class FTManager {
+public class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");
   private static final String DEFAULT_TEMPLATE_EXTENSION = "ft";
   static final String TEMPLATE_EXTENSION_SUFFIX = "." + DEFAULT_TEMPLATE_EXTENSION;

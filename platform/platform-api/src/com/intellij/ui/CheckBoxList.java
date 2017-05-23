@@ -15,7 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Function;
@@ -111,7 +110,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
       }
     }.installOn(this);
 
-    if (Registry.is("ide.intellij.laf.win10.ui")) {
+    if (UIUtil.isUnderWin10LookAndFeel()) {
       addMouseMotionListener(new MouseMotionAdapter() {
         @Override public void mouseMoved(MouseEvent e) {
           Point point = e.getPoint();

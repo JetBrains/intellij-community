@@ -171,7 +171,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   @TestOnly
-  void assertConsistency(DirectoryInfo info) {
+  public void assertConsistency(DirectoryInfo info) {
     List<OrderEntry> entries = getOrderEntries(info);
     for (int i = 1; i < entries.size(); i++) {
       assert RootIndex.BY_OWNER_MODULE.compare(entries.get(i - 1), entries.get(i)) <= 0;

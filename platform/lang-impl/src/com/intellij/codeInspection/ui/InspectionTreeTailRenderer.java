@@ -56,7 +56,7 @@ public abstract class InspectionTreeTailRenderer {
 
   public void appendTailText(InspectionTreeNode node) {
     appendText("  ");
-    final String customizedTailText = node.getCustomizedTailText();
+    final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
       appendText("  ");
       appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);

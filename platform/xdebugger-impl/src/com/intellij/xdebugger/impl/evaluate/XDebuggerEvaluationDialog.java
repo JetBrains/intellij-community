@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,7 +283,8 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
     text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
-      return new ExpressionInputComponent(myProject, myEditorsProvider, mySourcePosition, text, myDisposable, mySession != null);
+      return new ExpressionInputComponent(myProject, myEditorsProvider, "evaluateExpression", mySourcePosition, text, myDisposable,
+                                          mySession != null);
     }
     else {
       return new CodeFragmentInputComponent(myProject, myEditorsProvider, mySourcePosition, text,

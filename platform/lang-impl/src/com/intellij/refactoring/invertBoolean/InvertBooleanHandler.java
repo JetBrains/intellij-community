@@ -17,6 +17,7 @@ package com.intellij.refactoring.invertBoolean;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -72,7 +73,7 @@ public class InvertBooleanHandler implements RefactoringActionHandler {
     }
     PsiElement element = delegate.adjustElement(elements[0], project, null);
     if (element != null && PsiElementRenameHandler.canRename(project, null, element)) {
-      new InvertBooleanDialog(element).show();
+      TransactionGuard.getInstance().submitTransactionAndWait(() -> new InvertBooleanDialog(element).show());
     }
   }
 }
