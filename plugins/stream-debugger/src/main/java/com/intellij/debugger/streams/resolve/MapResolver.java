@@ -30,18 +30,22 @@ public class MapResolver implements ValuesOrderResolver {
   public Result resolve(@NotNull TraceInfo info) {
     final Map<Integer, TraceElement> before = info.getValuesOrderBefore();
     final Map<Integer, TraceElement> after = info.getValuesOrderAfter();
-    assert before.size() == after.size();
+
     final Iterator<TraceElement> leftIterator = before.values().iterator();
     final Iterator<TraceElement> rightIterator = after.values().iterator();
 
     final Map<TraceElement, List<TraceElement>> forward = new LinkedHashMap<>();
     final Map<TraceElement, List<TraceElement>> backward = new LinkedHashMap<>();
-    while (leftIterator.hasNext()) {
+    while (leftIterator.hasNext() && rightIterator.hasNext()) {
       final TraceElement left = leftIterator.next();
       final TraceElement right = rightIterator.next();
 
       forward.put(left, Collections.singletonList(right));
       backward.put(right, Collections.singletonList(left));
+    }
+
+    while (leftIterator.hasNext()) {
+      forward.put(leftIterator.next(), Collections.emptyList());
     }
 
     return Result.of(forward, backward);
