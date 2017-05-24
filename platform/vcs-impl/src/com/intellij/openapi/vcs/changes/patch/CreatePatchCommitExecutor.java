@@ -52,6 +52,7 @@ import java.util.List;
 public class CreatePatchCommitExecutor extends LocalCommitExecutor implements ProjectComponent {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path";
+  private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard";
 
   private final Project myProject;
   private final ChangeListManager myChangeListManager;
@@ -122,6 +123,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         }
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(patchPath), null));
+      myPanel.setToClipboard(PropertiesComponent.getInstance(myProject).getBoolean(VCS_PATCH_TO_CLIPBOARD, false));
       File commonAncestor = ChangesUtil.findCommonAncestor(changes);
       myPanel.setCommonParentPath(commonAncestor);
       myPanel.selectBasePath(PatchWriter.calculateBaseForWritingPatch(myProject, changes));
@@ -138,28 +140,20 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     }
 
     @Override
-    public void execute(Collection<Change> changes, String commitMessage) {
+    public void execute(@NotNull Collection<Change> changes, String commitMessage) {
+      PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
+      if (myPanel.isToClipboard()) {
+        PatchWriter.writeAsPatchToClipboard(myProject, changes, myPanel.getBaseDirName(), myPanel.isReversePatch(), myCommitContext);
+      }
+      else {
+        validateAndWritePatchToFile(changes);
+      }
+    }
+
+    void validateAndWritePatchToFile(@NotNull Collection<Change> changes) {
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
-      if (file.exists()) {
-        final int[] result = new int[1];
-        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
-          () -> result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
-                                                                " already exists.\nDo you want to overwrite it?",
-                                                     CommonBundle.getWarningTitle(),
-                                                     "Overwrite", "Cancel",
-                                                     Messages.getWarningIcon()));
-        if (Messages.NO == result[0]) return;
-      }
-      if (file.getParentFile() == null) {
-        WaitForProgressToShow.runOrInvokeLaterAboveProgress(() ->
-                                                              Messages.showErrorDialog(myProject, VcsBundle
-                                                                .message("create.patch.error.title",
-                                                                         "Can not write patch to specified file: " +
-                                                                         file.getPath()), CommonBundle.getErrorTitle()),
-                                                            ModalityState.NON_MODAL, myProject);
-        return;
-      }
+      if (!isFilePatchValid(file)) return;
       try {
         //noinspection ResultOfMethodCallIgnored
         file.getParentFile().mkdirs();
@@ -197,6 +191,29 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
     public ValidationInfo validateFields() {
       return myPanel.validateFields();
     }
+  }
+
+  private boolean isFilePatchValid(@NotNull File file) {
+    if (file.exists()) {
+      final int[] result = new int[1];
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(
+        () -> result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
+                                                              " already exists.\nDo you want to overwrite it?",
+                                                   CommonBundle.getWarningTitle(),
+                                                   "Overwrite", "Cancel",
+                                                   Messages.getWarningIcon()));
+      if (Messages.NO == result[0]) return false;
+    }
+    if (file.getParentFile() == null) {
+      WaitForProgressToShow.runOrInvokeLaterAboveProgress(() ->
+                                                            Messages.showErrorDialog(myProject, VcsBundle
+                                                              .message("create.patch.error.title",
+                                                                       "Can not write patch to specified file: " +
+                                                                       file.getPath()), CommonBundle.getErrorTitle()),
+                                                          ModalityState.NON_MODAL, myProject);
+      return false;
+    }
+    return true;
   }
 
   @NotNull

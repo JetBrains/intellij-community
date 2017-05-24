@@ -64,7 +64,6 @@
         <group id="Vcs.Specific" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
         <separator/>
         <action id="ChangesView.CreatePatch" class="com.intellij.openapi.vcs.changes.actions.CreatePatchAction" icon="AllIcons.Vcs.Patch"/>
-        <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.patch.CreatePatchToClipboardAction"/>
         <action id="ChangesView.ApplyPatch" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchAction"/>
         <action id="ChangesView.ApplyPatchFromClipboard" class="com.intellij.openapi.vcs.changes.patch.ApplyPatchFromClipboardAction"/>
         <action id="ChangesView.Shelve" class="com.intellij.openapi.vcs.changes.shelf.ShelveChangesAction" icon="AllIcons.Vcs.Shelve"/>
@@ -126,7 +125,7 @@
       <reference ref="ChangesView.SetDefault"/>
       <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
       <reference ref="ChangesView.CreatePatch"/>
-      <reference ref="ChangesView.CreatePatchToClipboard"/>
+      <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.patch.CreatePatchToClipboardAction"/>
       <reference ref="ChangesView.Shelve"/>
       <separator/>
       <reference ref="ChangesView.Refresh"/>

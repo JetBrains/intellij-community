@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,7 +74,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
     createPatch(project, commitMessage, changeCollection);
   }
 
-  public static void createPatch(Project project, String commitMessage, List<Change> changeCollection) {
+  public static void createPatch(Project project, String commitMessage, @NotNull List<Change> changeCollection) {
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final CreatePatchCommitExecutor executor = CreatePatchCommitExecutor.getInstance(project);
     CommitSession commitSession = executor.createCommitSession();
