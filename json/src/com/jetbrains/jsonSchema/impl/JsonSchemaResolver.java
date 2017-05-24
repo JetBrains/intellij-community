@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 4/24/2017.
@@ -61,7 +62,7 @@ public class JsonSchemaResolver {
   private Collection<JsonSchemaObject> resolve(boolean skipLastExpand) {
     final MatchResult result = detailedResolve(skipLastExpand);
     final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
-    set.addAll(result.myExcludingSchemas);
+    set.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
     return set;
   }
 

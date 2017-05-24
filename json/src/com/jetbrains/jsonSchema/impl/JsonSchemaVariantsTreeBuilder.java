@@ -126,7 +126,7 @@ public class JsonSchemaVariantsTreeBuilder {
 
   static abstract class Operation {
     @NotNull final List<JsonSchemaObject> myAnyOfGroup = new SmartList<>();
-    @NotNull final List<JsonSchemaObject> myOneOfGroup = new SmartList<>();
+    @NotNull final List<List<JsonSchemaObject>> myOneOfGroup = new SmartList<>();
     @NotNull protected final List<Operation> myChildOperations;
     @NotNull protected final JsonSchemaObject mySourceNode;
     protected SchemaResolveState myState = SchemaResolveState.normal;
@@ -154,7 +154,7 @@ public class JsonSchemaVariantsTreeBuilder {
 
       // lets do that to make the returned object smaller
       myAnyOfGroup.forEach(Operation::clearVariants);
-      myOneOfGroup.forEach(Operation::clearVariants);
+      myOneOfGroup.forEach(list -> list.forEach(Operation::clearVariants));
 
       myChildOperations.forEach(Operation::doReduce);
       reduce();
@@ -178,6 +178,10 @@ public class JsonSchemaVariantsTreeBuilder {
       if (schema.getOneOf() != null) return new OneOfOperation(schema);
       if (schema.getAllOf() != null) return new AllOfOperation(schema);
       return null;
+    }
+
+    protected static List<JsonSchemaObject> mergeOneOf(Operation op) {
+      return op.myOneOfGroup.stream().flatMap(List::stream).collect(Collectors.toList());
     }
   }
 
@@ -242,9 +246,10 @@ public class JsonSchemaVariantsTreeBuilder {
 
         final List<JsonSchemaObject> mergedAny = andGroups(op.myAnyOfGroup, myAnyOfGroup);
 
-        final List<JsonSchemaObject> mergedExclusive = andGroups(op.myAnyOfGroup, myOneOfGroup);
-        mergedExclusive.addAll(andGroups(op.myOneOfGroup, myAnyOfGroup));
-        mergedExclusive.addAll(andGroups(op.myOneOfGroup, myOneOfGroup));
+        final List<List<JsonSchemaObject>> mergedExclusive = new SmartList<>();
+        myOneOfGroup.forEach(group -> mergedExclusive.add(andGroups(op.myAnyOfGroup, group)));
+        op.myOneOfGroup.forEach(group -> mergedExclusive.add(andGroups(group, myAnyOfGroup)));
+        op.myOneOfGroup.forEach(group -> myOneOfGroup.forEach(otherGroup -> mergedExclusive.add(andGroups(group, otherGroup))));
 
         myAnyOfGroup.clear();
         myOneOfGroup.clear();
@@ -279,12 +284,14 @@ public class JsonSchemaVariantsTreeBuilder {
     @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
+      final List<JsonSchemaObject> oneOf = new SmartList<>();
       myChildOperations.forEach(op -> {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
-        // here it is not a mistake - all children of this node come to oneOf group
-        myOneOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
-        myOneOfGroup.addAll(andGroup(mySourceNode, op.myOneOfGroup));
+        oneOf.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
+        oneOf.addAll(andGroup(mySourceNode, mergeOneOf(op)));
       });
+      // here it is not a mistake - all children of this node come to oneOf group
+      myOneOfGroup.add(oneOf);
     }
   }
 
@@ -307,7 +314,7 @@ public class JsonSchemaVariantsTreeBuilder {
         if (!op.myState.equals(SchemaResolveState.normal)) return;
 
         myAnyOfGroup.addAll(andGroup(mySourceNode, op.myAnyOfGroup));
-        myOneOfGroup.addAll(andGroup(mySourceNode, op.myOneOfGroup));
+        op.myOneOfGroup.forEach(group -> myOneOfGroup.add(andGroup(mySourceNode, group)));
       });
     }
   }

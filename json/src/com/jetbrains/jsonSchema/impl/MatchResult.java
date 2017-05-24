@@ -15,39 +15,45 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 4/22/2017.
  */
 public class MatchResult {
   public final Set<JsonSchemaObject> mySchemas;
-  public final Set<JsonSchemaObject> myExcludingSchemas;
+  public final List<Set<JsonSchemaObject>> myExcludingSchemas;
 
   private MatchResult() {
     mySchemas = new HashSet<>();
-    myExcludingSchemas = new HashSet<>();
+    myExcludingSchemas = new SmartList<>();
   }
 
   public static MatchResult zipTree(@NotNull JsonSchemaTreeNode root) {
     final MatchResult result = new MatchResult();
+    final Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
                           node -> {
                             if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
                                 SchemaResolveState.normal.equals(node.getResolveState())) {
-                              if (node.isInExcludingGroup()) {
-                                result.myExcludingSchemas.add(node.getSchema());
-                              } else {
+                              final int groupNumber = node.getExcludingGroupNumber();
+                              if (groupNumber < 0) {
                                 result.mySchemas.add(node.getSchema());
+                              }
+                              else {
+                                Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
+                                if (set == null) oneOfGroups.put(groupNumber, (set = new HashSet<>()));
+                                set.add(node.getSchema());
                               }
                             }
                             return true;
                           });
+    result.myExcludingSchemas.addAll(oneOfGroups.values());
     return result;
   }
 }

@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class JsonSchemaTreeNode {
   private boolean myAny;
   private boolean myNothing;
-  private boolean myIsInExcludingGroup;
+  private int myExcludingGroupNumber = -1;
   @NotNull private SchemaResolveState myResolveState = SchemaResolveState.normal;
 
   @Nullable private final JsonSchemaObject mySchema;
@@ -69,9 +69,13 @@ public class JsonSchemaTreeNode {
       myChildren.addAll(convertToNodes(operation.myAnyOfGroup));
     }
     if (!operation.myOneOfGroup.isEmpty()) {
-      final List<JsonSchemaTreeNode> children = convertToNodes(operation.myOneOfGroup);
-      children.forEach(c -> c.myIsInExcludingGroup = true);
-      myChildren.addAll(children);
+      for (int i = 0; i < operation.myOneOfGroup.size(); i++) {
+        final List<JsonSchemaObject> group = operation.myOneOfGroup.get(i);
+        final List<JsonSchemaTreeNode> children = convertToNodes(group);
+        final int number = i;
+        children.forEach(c -> c.myExcludingGroupNumber = number);
+        myChildren.addAll(children);
+      }
     }
   }
 
@@ -112,8 +116,8 @@ public class JsonSchemaTreeNode {
     return myChildren;
   }
 
-  public boolean isInExcludingGroup() {
-    return myIsInExcludingGroup;
+  public int getExcludingGroupNumber() {
+    return myExcludingGroupNumber;
   }
 
   public void setSteps(@NotNull List<JsonSchemaVariantsTreeBuilder.Step> steps) {
@@ -152,13 +156,13 @@ public class JsonSchemaTreeNode {
     final StringBuilder sb = new StringBuilder("NODE#" + hashCode() + "\n");
     sb.append(mySteps.stream().map(Object::toString).collect(Collectors.joining("->", "steps: <", ">")));
     sb.append("\n");
-    if (myIsInExcludingGroup) sb.append("in excluding group\n");
+    if (myExcludingGroupNumber >= 0) sb.append("in excluding group\n");
     if (myAny) sb.append("any");
     else if (myNothing) sb.append("nothing");
     else if (!SchemaResolveState.normal.equals(myResolveState)) sb.append(myResolveState.name());
     else {
       assert mySchema != null;
-      final String name = mySchema.getSchemaFile() == null ? "null" : mySchema.getSchemaFile().getName();
+      final String name = mySchema.getSchemaFile().getName();
       sb.append("schema from file: ").append(name).append("\n");
       if (mySchema.getRef() != null) sb.append("$ref: ").append(mySchema.getRef()).append("\n");
       else if (!mySchema.getProperties().isEmpty()) {

@@ -83,7 +83,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public void reset() {
-    myModificationCount.incrementAndGet();
+    myAnyChangeCount.incrementAndGet();
     myState.reset();
     ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> FileTypeManagerEx.getInstanceEx().fireFileTypesChanged()),
                                                     ModalityState.NON_MODAL, myProject.getDisposed());
