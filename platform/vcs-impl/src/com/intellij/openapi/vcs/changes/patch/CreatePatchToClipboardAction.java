@@ -17,21 +17,29 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.util.ArrayUtil;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
 
 public class CreatePatchToClipboardAction extends DumbAwareAction {
+
+  private static final Logger LOG = Logger.getInstance(CreatePatchToClipboardAction.class);
 
   public CreatePatchToClipboardAction() {
     super(VcsBundle.message("create.patch.to.clipboard.title"), VcsBundle.message("create.patch.to.clipboard.description"), null);
@@ -48,8 +56,16 @@ public class CreatePatchToClipboardAction extends DumbAwareAction {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final List<Change> changes = Arrays.asList(e.getRequiredData(VcsDataKeys.CHANGES));
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      writeAsPatchToClipboard(project, changes, PatchWriter.calculateBaseForWritingPatch(project, changes).getPath(), false,
-                              new CommitContext());
+      try {
+        String base = PatchWriter.calculateBaseForWritingPatch(project, changes).getPath();
+        List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, base, false);
+        writeAsPatchToClipboard(project, patches, base, new CommitContext());
+        VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
+      }
+      catch (IOException | VcsException exception) {
+        LOG.error("Can't create patch", exception);
+        VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
+      }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }
 }
