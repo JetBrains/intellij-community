@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class JDMethodComment extends JDParamListOwnerComment {
   private String myReturnTag;
-  private List<NameDesc> myThrowsList;
+  private List<TagDescription> myThrowsList;
 
   public JDMethodComment(@NotNull CommentFormatter formatter) {
     super(formatter);
@@ -43,7 +43,8 @@ public class JDMethodComment extends JDParamListOwnerComment {
         JDTag tag = JDTag.RETURN;
         sb.append(myFormatter.getParser().formatJDTagDescription(myReturnTag,
                                                                  prefix + tag.getWithEndWhitespace(),
-                                                                 getContinuationPrefix(prefix)));
+                                                                 prefix + javadocContinuationIndent()));
+
         if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_RETURN) {
           sb.append(prefix);
           sb.append('\n');
@@ -69,6 +70,6 @@ public class JDMethodComment extends JDParamListOwnerComment {
     if (myThrowsList == null) {
       myThrowsList = ContainerUtilRt.newArrayList();
     }
-    myThrowsList.add(new NameDesc(className, description));
+    myThrowsList.add(new TagDescription(className, description));
   }
 }

@@ -37,7 +37,7 @@ public class JDClassComment extends JDParamListOwnerComment {
   @Override
   protected void generateSpecial(@NotNull String prefix, @NotNull StringBuilder sb) {
     super.generateSpecial(prefix, sb);
-    String continuationPrefix = getContinuationPrefix(prefix);
+    String continuationPrefix = prefix + javadocContinuationIndent();
     if (!isNull(myAuthorsList)) {
       JDTag tag = JDTag.AUTHOR;
       for (String author : myAuthorsList) {

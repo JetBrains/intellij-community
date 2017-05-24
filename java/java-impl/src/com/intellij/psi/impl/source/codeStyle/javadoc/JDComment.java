@@ -56,18 +56,17 @@ public class JDComment {
     myMultiLineComment = value;
   }
 
-  protected String getContinuationIndent() {
+  @NotNull
+  protected String javadocContinuationIndent() {
+    if (!myFormatter.getSettings().JD_INDENT_ON_CONTINUATION) return "";
+    return continuationIndent();
+  }
+
+  @NotNull
+  protected String continuationIndent() {
     CodeStyleSettings settings = myFormatter.getSettings();
     CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
     return new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
-  }
-
-  protected String getContinuationPrefix(String prefix) {
-    if (myFormatter.getSettings().JD_INDENT_ON_CONTINUATION) {
-      return prefix + getContinuationIndent();
-    } else {
-      return prefix;
-    }
   }
 
   @Nullable
@@ -94,7 +93,7 @@ public class JDComment {
 
     generateSpecial(prefix, sb);
 
-    final String continuationPrefix = getContinuationPrefix(prefix);
+    final String continuationPrefix = prefix + javadocContinuationIndent();
 
     if (!isNull(myUnknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
       for (String aUnknownList : myUnknownList) {
