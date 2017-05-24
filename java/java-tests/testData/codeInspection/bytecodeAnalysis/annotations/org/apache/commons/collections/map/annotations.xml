@@ -305,6 +305,11 @@
     <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry entryBefore(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry getEntry(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap void addEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

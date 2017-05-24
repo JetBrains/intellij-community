@@ -558,6 +558,7 @@ final class HardCodedPurity {
     new Method("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
     // Declared in final class StringBuilder
     new Method("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
+    new Method("java/lang/StringBuffer", "toString", "()Ljava/lang/String;"),
     // Native
     new Method("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
     new Method("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),

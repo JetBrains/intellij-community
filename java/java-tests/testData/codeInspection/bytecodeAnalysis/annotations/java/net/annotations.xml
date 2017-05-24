@@ -25,8 +25,18 @@
     <item name='java.net.DatagramPacket DatagramPacket(byte[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.DatagramPacket DatagramPacket(byte[], int, int, java.net.InetAddress, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.net.DatagramPacket DatagramPacket(byte[], int, int, java.net.InetAddress, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.DatagramPacket DatagramPacket(byte[], int, java.net.InetAddress, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.net.DatagramPacket DatagramPacket(byte[], int, java.net.InetAddress, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

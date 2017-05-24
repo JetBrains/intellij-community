@@ -48,6 +48,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.log.Log java.lang.String formatFileString(java.lang.String, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.log.Log java.lang.String formatFileString(java.lang.String, int, int) 0'>

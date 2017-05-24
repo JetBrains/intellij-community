@@ -30,6 +30,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.convert.WebMacro java.lang.String makeSubstRE(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.convert.WebMacro void convert(java.lang.String) 0'>
