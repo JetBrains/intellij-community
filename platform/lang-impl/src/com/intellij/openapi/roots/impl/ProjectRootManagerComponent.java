@@ -32,6 +32,7 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.WatchedRootsProvider;
@@ -221,6 +222,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       flat.add(projectFilePath);
       // may be not existing yet
       ContainerUtil.addIfNotNull(flat, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
+    }
+
+    for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+      recursive.addAll(ContainerUtil.map(extension.getRootsToWatch(), VirtualFile::getPath));
     }
 
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,23 @@ public abstract class AdditionalLibraryRootsProvider {
       return Collections.emptyList();
     }
     return Collections.singletonList(SyntheticLibrary.newImmutableLibrary(roots));
+  }
+
+  /**
+   * The method returns roots that IDE should use to track external changes.
+   * If the provider retrieves libraries that have mutable source roots, it makes sense return them as Watched Roots as well.
+   *
+   * Essentially, the method is a shortcut for {@link com.intellij.openapi.roots.WatchedRootsProvider}.
+   *
+   * CAUTION!
+   * Each root provided by this method makes VFS update slower.
+   * Please, avoid returning a lot of watched roots, especially if they have complicated internal structure.
+   *
+   * @see com.intellij.openapi.roots.WatchedRootsProvider
+   */
+  @NotNull
+  public Collection<VirtualFile> getRootsToWatch() {
+    return Collections.emptyList();
   }
 
   /**
