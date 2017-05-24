@@ -131,7 +131,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
           }
         }
 
-        if (myPath2Value.size() == values.size()) {
+        if (myPath2Value.size() == traceElements.size()) {
           getTreeModel().removeTreeModelListener(this);
         }
       }
