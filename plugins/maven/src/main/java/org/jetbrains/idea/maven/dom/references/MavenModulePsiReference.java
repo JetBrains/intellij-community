@@ -49,8 +49,14 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
-    String relPath = FileUtil.toSystemIndependentName(myText + "/" + MavenConstants.POM_XML);
-    VirtualFile file = baseDir.findFileByRelativePath(relPath);
+
+    String path = FileUtil.toSystemIndependentName(myText);
+    VirtualFile file =  baseDir.findFileByRelativePath(path);
+
+    if (file == null || file.isDirectory()) {
+      String relPath = FileUtil.toSystemIndependentName(path + "/" + MavenConstants.POM_XML);
+      file = baseDir.findFileByRelativePath(relPath);
+    }
 
     if (file == null) return null;
 
@@ -78,14 +84,9 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public static String calcRelativeModulePath(VirtualFile parentPom, VirtualFile modulePom) {
     String result = MavenDomUtil.calcRelativePath(parentPom.getParent(), modulePom);
+    if (!result.endsWith("/" + MavenConstants.POM_XML)) return result;
+
     int to = result.length() - ("/" + MavenConstants.POM_XML).length();
-    if (to < 0) {
-      // todo IDEADEV-35440
-      throw new RuntimeException("Filed to calculate relative path for:" +
-                                 "\nparentPom: " + parentPom + "(valid: " + parentPom.isValid() + ")" +
-                                 "\nmodulePom: " + modulePom + "(valid: " + modulePom.isValid() + ")" +
-                                 "\nequals:" + parentPom.equals(modulePom));
-    }
     return result.substring(0, to);
   }
 

@@ -231,7 +231,7 @@ public class MavenProject {
   }
 
   private Map<String, String> collectModulesRelativePathsAndNames(MavenModel mavenModel) {
-    String pomFileName = MavenConstants.POM_EXTENSION + '.' + StringUtil.notNullize(myFile.getExtension());
+    String extension = StringUtil.notNullize(myFile.getExtension());
     LinkedHashMap<String, String> result = new LinkedHashMap<>();
     for (String name : mavenModel.getModules()) {
       name = name.trim();
@@ -242,8 +242,10 @@ public class MavenProject {
       // module name can be relative and contain either / of \\ separators
 
       name = FileUtil.toSystemIndependentName(name);
-      if (!name.endsWith("/")) name += "/";
-      name += pomFileName;
+      if (!name.endsWith('.' + extension)) {
+        if (!name.endsWith("/")) name += "/";
+        name += MavenConstants.POM_EXTENSION + '.' + extension;
+      }
 
       result.put(name, originalName);
     }

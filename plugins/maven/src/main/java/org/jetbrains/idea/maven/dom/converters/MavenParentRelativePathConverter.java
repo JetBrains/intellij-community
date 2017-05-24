@@ -38,6 +38,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,6 +120,9 @@ public class MavenParentRelativePathConverter extends ResolvingConverter<PsiFile
 
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
-    return new MavenPathReferenceConverter(item -> item.isDirectory() || item.getName().equals("pom.xml")).createReferences(genericDomValue, element, context);
+    Project project = element.getProject();
+    Condition<PsiFileSystemItem> condition = item ->
+      item.isDirectory() || MavenUtil.isPomFile(project, item.getVirtualFile());
+    return new MavenPathReferenceConverter(condition).createReferences(genericDomValue, element, context);
   }
 }
