@@ -247,6 +247,7 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     if (fontPreferences instanceof ModifiableFontPreferences) {
       ModifiableFontPreferences modifiableFontPreferences = (ModifiableFontPreferences)fontPreferences;
       modifiableFontPreferences.clearFonts();
+      modifiableFontPreferences.setUseLigatures(myEnableLigaturesCheckbox.isSelected());
       String primaryFontFamily = myPrimaryCombo.getFontName();
       String secondaryFontFamily = mySecondaryCombo.isEnabled() ? mySecondaryCombo.getFontName() : null;
       int fontSize = getFontSizeFromField();
