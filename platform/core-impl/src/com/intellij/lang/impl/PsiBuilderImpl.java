@@ -254,18 +254,27 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return null;
   }
 
-  private abstract static class Node implements LighterASTNode {
-    public abstract int hc();
+  private interface Node extends LighterASTNode {
+    int hc();
   }
 
-  public abstract static class ProductionMarker extends Node {
+  public abstract static class ProductionMarker {
     protected int myLexemeIndex;
-    protected ProductionMarker myParent;
-    protected ProductionMarker myNext;
 
     public void clean() {
       myLexemeIndex = 0;
-      myParent = myNext = null;
+    }
+
+    public IElementType getTokenType() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
+
+    public int getStartOffset() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
+
+    public int getEndOffset() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
     public void remapTokenType(@NotNull IElementType type) {
@@ -297,12 +306,23 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private static class StartMarker extends ProductionMarker implements Marker {
+  private abstract static class NodeMarker extends ProductionMarker implements Node {
+    protected NodeMarker myParent;
+    protected NodeMarker myNext;
+
+    @Override
+    public void clean() {
+      super.clean();
+      myParent = myNext = null;
+    }
+  }
+  
+  private static class StartMarker extends NodeMarker implements Marker {
     private PsiBuilderImpl myBuilder;
     private IElementType myType;
     private DoneMarker myDoneMarker;
-    private ProductionMarker myFirstChild;
-    private ProductionMarker myLastChild;
+    private NodeMarker myFirstChild;
+    private NodeMarker myLastChild;
     private int myHC = -1;
 
     @Override
@@ -326,7 +346,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         int hc = 0;
         final CharSequence buf = builder.myText;
         final char[] bufArray = builder.myTextArray;
-        ProductionMarker child = myFirstChild;
+        NodeMarker child = myFirstChild;
         int lexIdx = myLexemeIndex;
 
         while (child != null) {
@@ -378,7 +398,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       assignBinder(binder, myBuilder.myLeftBinders, DEFAULT_LEFT_BINDER);
     }
 
-    public void addChild(@NotNull ProductionMarker node) {
+    public void addChild(@NotNull NodeMarker node) {
       if (myFirstChild == null) {
         myFirstChild = node;
         myLastChild = node;
@@ -488,7 +508,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  private abstract static class Token extends Node {
+  private abstract static class Token implements Node {
     protected PsiBuilderImpl myBuilder;
     private IElementType myTokenType;
     private int myTokenStart;
@@ -663,27 +683,6 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
       assignBinder(binder, myStart.myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
     }
-
-    @Override
-    public int hc() {
-      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
-    }
-
-    @NotNull
-    @Override
-    public IElementType getTokenType() {
-      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
-    }
-
-    @Override
-    public int getEndOffset() {
-      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
-    }
-
-    @Override
-    public int getStartOffset() {
-      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
-    }
   }
 
   private static class DoneWithErrorMarker extends DoneMarker {
@@ -701,7 +700,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private static class ErrorItem extends ProductionMarker {
+  private static class ErrorItem extends NodeMarker {
     private final PsiBuilderImpl myBuilder;
     private String myMessage;
 
@@ -1218,11 +1217,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     for (int i = 1; i < myProduction.size(); i++) {
       final ProductionMarker item = myProduction.get(i);
 
-      if (curNode == null) LOG.error("Unexpected end of the production");
+      if (curNode == null) throw new AssertionError("Unexpected end of the production");
 
-      item.myParent = curNode;
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
+        marker.myParent = curNode;
         marker.myFirstChild = marker.myLastChild = marker.myNext = null;
         curNode.addChild(marker);
         nodes.push(curNode);
@@ -1236,10 +1235,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         curDepth--;
       }
       else if (item instanceof ErrorItem) {
+        ((ErrorItem)item).myParent = curNode;
         int curToken = item.myLexemeIndex;
         if (curToken == lastErrorIndex) continue;
         lastErrorIndex = curToken;
-        curNode.addChild(item);
+        curNode.addChild((NodeMarker)item);
       }
     }
 
@@ -1389,18 +1389,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         else {
           lexIndex = collapseLeaves(curNode, marker);
         }
+        item = marker.myNext;
       }
       else if (item instanceof ErrorItem) {
         final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
         curNode.rawAddChildrenWithoutNotifications(errorElement);
+        item = ((ErrorItem)item).myNext;
       }
       else if (item instanceof DoneMarker) {
         curMarker = (StartMarker)((DoneMarker)item).myStart.myParent;
         curNode = curNode.getTreeParent();
-        item = ((DoneMarker)item).myStart;
+        item = ((DoneMarker)item).myStart.myNext;
       }
 
-      item = item.myNext != null ? item.myNext : curMarker.myDoneMarker;
+      if (item == null ) item = curMarker.myDoneMarker;
     }
   }
 
@@ -1635,8 +1637,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public LighterASTNode getParent(@NotNull final LighterASTNode node) {
-      if (node instanceof ProductionMarker) {
-        return ((ProductionMarker)node).myParent;
+      if (node instanceof NodeMarker) {
+        return ((NodeMarker)node).myParent;
       }
       if (node instanceof Token) {
         return ((Token)node).myParentNode;
@@ -1658,8 +1660,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof LazyParseableToken) {
         final FlyweightCapableTreeStructure<LighterASTNode> tree = ((LazyParseableToken)item).parseContents();
         final LighterASTNode root = tree.getRoot();
-        if (root instanceof ProductionMarker) {
-          ((ProductionMarker)root).myParent = ((Token)item).myParentNode;
+        if (root instanceof NodeMarker) {
+          ((NodeMarker)root).myParent = ((Token)item).myParentNode;
         }
         return tree.getChildren(tree.prepareForGetChildren(root), into);  // todo: set offset shift for kids?
       }
@@ -1668,7 +1670,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       StartMarker marker = (StartMarker)item;
 
       count = 0;
-      ProductionMarker child = marker.myFirstChild;
+      NodeMarker child = marker.myFirstChild;
       int lexIndex = marker.myLexemeIndex;
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder, marker);
