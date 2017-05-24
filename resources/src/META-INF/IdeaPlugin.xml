@@ -1036,6 +1036,11 @@
       <descriptionDirectoryName>MakeExternalAnnotationExplicit</descriptionDirectoryName>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.MakeAnnotationExternal</className>
+      <category>Java/Annotations</category>
+      <descriptionDirectoryName>MakeAnnotationExternal</descriptionDirectoryName>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.ToggleSourceInferredAnnotations</className>
       <category>Java/Annotations</category>
       <descriptionDirectoryName>ToggleSourceInferredAnnotations</descriptionDirectoryName>

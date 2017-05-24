@@ -96,9 +96,9 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
     
   }
 
-  private static List<PsiFile> getFilesToWrite(PsiFile file,
-                                               PsiModifierListOwner owner,
-                                               ExternalAnnotationsManager externalAnnotationsManager) {
+  public static List<PsiFile> getFilesToWrite(PsiFile file,
+                                              PsiModifierListOwner owner,
+                                              ExternalAnnotationsManager externalAnnotationsManager) {
     List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(owner);
     if (files != null) {
       List<PsiFile> elements = new ArrayList<>();
