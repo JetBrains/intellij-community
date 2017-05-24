@@ -40,6 +40,12 @@ public class ResolverFactory {
       case "toArray":
       case "collect":
         return new CollectIdentityResolver();
+      case "anyMatch":
+        return new AnyMatchResolver();
+      case "allMatch":
+        return new AllMatchResolver();
+      case "noneMatch":
+        return new NoneMatchResolver();
       default:
         return new SimplePeekCallTraceResolver();
     }
