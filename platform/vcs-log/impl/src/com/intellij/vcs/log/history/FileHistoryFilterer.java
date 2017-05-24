@@ -173,7 +173,6 @@ class FileHistoryFilterer extends VcsLogFilterer {
     @NotNull private final VisibleGraphImpl<Integer> myVisibleGraph;
     @NotNull private final PermanentCommitsInfo<Integer> myPermanentCommitsInfo;
     @NotNull private final LiteLinearGraph myPermanentLinearGraph;
-    @NotNull private final LiteLinearGraph myLinearVisibleGraph;
     @NotNull private final IndexDataGetter.FileNamesData myNamesData;
 
     @NotNull private final Stack<FilePath> myPaths = new Stack<>();
@@ -186,7 +185,6 @@ class FileHistoryFilterer extends VcsLogFilterer {
       myVisibleGraph = visibleGraph;
       myPermanentCommitsInfo = myVisibleGraph.getPermanentGraph().getPermanentCommitsInfo();
       myPermanentLinearGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getPermanentGraph().getLinearGraph());
-      myLinearVisibleGraph = LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getLinearGraph());
       myNamesData = namesData;
 
       myVisibilityBuffer = new BitSetFlags(myPermanentLinearGraph.nodesCount());
@@ -194,7 +192,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
     public boolean refine(int row, @NotNull FilePath startPath) {
       myPaths.push(startPath);
-      DfsUtil.walk(myLinearVisibleGraph, row, this);
+      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getLinearGraph()), row, this);
 
       for (int commit : myPathsForCommits.keySet()) {
         FilePath path = myPathsForCommits.get(commit);
@@ -214,7 +212,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     @Override
-    public void enterNode(int currentNode, int previousNode) {
+    public void enterNode(int currentNode, int previousNode, boolean down) {
       int currentNodeId = myVisibleGraph.getNodeId(currentNode);
       int currentCommit = myPermanentCommitsInfo.getCommitId(currentNodeId);
 
@@ -225,15 +223,14 @@ class FileHistoryFilterer extends VcsLogFilterer {
         int previousNodeId = myVisibleGraph.getNodeId(previousNode);
         int previousCommit = myPermanentCommitsInfo.getCommitId(previousNodeId);
 
-        // checking which node is the parent and which is the child
-        if (myLinearVisibleGraph.getNodes(currentNode, LiteLinearGraph.NodeFilter.DOWN).contains(previousNode)) {
+        if (down) {
+          int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
+          currentPath = myNamesData.getPathInParentRevision(previousCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
+        }
+        else {
           // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
           int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
           currentPath = myNamesData.getPathInChildRevision(currentCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
-        }
-        else {
-          int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
-          currentPath = myNamesData.getPathInParentRevision(previousCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
         }
       }
 

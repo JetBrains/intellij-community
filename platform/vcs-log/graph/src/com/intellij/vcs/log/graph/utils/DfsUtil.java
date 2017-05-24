@@ -32,7 +32,7 @@ public class DfsUtil {
   }
 
   public interface NodeVisitor {
-    void enterNode(int node, int previousNode);
+    void enterNode(int node, int previousNode, boolean travelDirection);
 
     void exitNode(int node);
   }
@@ -58,7 +58,7 @@ public class DfsUtil {
       boolean down = stack.peek().second;
       if (!visited.get(currentNode)) {
         visited.set(currentNode, true);
-        visitor.enterNode(currentNode, getPreviousNode(stack));
+        visitor.enterNode(currentNode, getPreviousNode(stack), down);
       }
 
       for (int nextNode : graph.getNodes(currentNode, down ? LiteLinearGraph.NodeFilter.DOWN : LiteLinearGraph.NodeFilter.UP)) {
