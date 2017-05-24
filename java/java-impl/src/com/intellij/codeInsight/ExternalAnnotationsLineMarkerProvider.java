@@ -212,6 +212,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
              action instanceof EditContractIntention ||
              action instanceof ToggleSourceInferredAnnotations ||
              action instanceof MakeInferredAnnotationExplicit ||
+             action instanceof MakeExternalAnnotationExplicit ||
              action instanceof IntentionActionDelegate && shouldShowInGutterPopup(((IntentionActionDelegate)action).getDelegate());
     }
   }
