@@ -239,7 +239,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
                                                  int parametersInContext,
                                                  int unreachableParametersCount) {
     assertEquals(chainSize, chainRelevance.getChainSize());
-    assertEquals(unreachableParametersCount, chainRelevance.getUnreachableParametersCount());
+    assertEquals(unreachableParametersCount, chainRelevance.getUnreachableParameterCount());
     assertEquals(parametersInContext, chainRelevance.getParametersInContext());
   }
 
