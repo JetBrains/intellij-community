@@ -48,6 +48,13 @@ public class _LastInSuiteTest extends TestCase {
     Disposer.setDebugMode(true);
   }
 
+  @Override
+  public String getName() {
+    String name = super.getName();
+    String buildConf = System.getProperty("teamcity.buildConfName");
+    return buildConf == null ? name : name + "[" + buildConf + "]";
+  }
+
   public void testProjectLeak() throws Exception {
     boolean guiTestMode = Boolean.getBoolean("idea.test.guimode");
     if (guiTestMode) {

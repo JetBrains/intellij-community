@@ -93,6 +93,7 @@ class TestingTasksImpl extends TestingTasks {
       "intellij.build.test.groups"             : options.testGroups,
       "idea.performance.tests"                 : System.getProperty("idea.performance.tests"),
       "idea.coverage.enabled.build"            : System.getProperty("idea.coverage.enabled.build"),
+      "teamcity.buildConfName"                 : System.getProperty("teamcity.buildConfName"),
       "bootstrap.testcases"                    : "com.intellij.AllTests",
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
