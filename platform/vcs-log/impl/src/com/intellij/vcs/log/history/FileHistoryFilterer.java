@@ -213,24 +213,22 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     @Override
-    public void enterNode(int node, int previousNode) {
+    public void enterNode(int currentNode, int previousNode) {
       FilePath previousPath = myPaths.peek();
-      RowInfo<Integer> currentRowInfo = myVisibleGraph.getRowInfo(node);
-      int currentCommit = currentRowInfo.getCommit();
-      int currentNodeId = ((VisibleGraphImpl.RowInfoImpl)currentRowInfo).getNodeId();
+      int currentNodeId = myVisibleGraph.getNodeId(currentNode);
+      int currentCommit = myPermanentCommitsInfo.getCommitId(currentNodeId);
 
       if (previousNode == DfsUtil.NextNode.NODE_NOT_FOUND) {
         myPathsForCommits.put(currentCommit, previousPath);
         myPaths.push(previousPath);
       }
       else {
-        FilePath currentPath;
-        RowInfo<Integer> previousRowInfo = myVisibleGraph.getRowInfo(previousNode);
-        int previousCommit = previousRowInfo.getCommit();
-        int previousNodeId = ((VisibleGraphImpl.RowInfoImpl)previousRowInfo).getNodeId();
+        int previousNodeId = myVisibleGraph.getNodeId(previousNode);
+        int previousCommit = myPermanentCommitsInfo.getCommitId(previousNodeId);
 
+        FilePath currentPath;
         // checking which node is the parent and which is the child
-        if (myLinearVisibleGraph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).contains(previousNode)) {
+        if (myLinearVisibleGraph.getNodes(currentNode, LiteLinearGraph.NodeFilter.DOWN).contains(previousNode)) {
           // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
           int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
           currentPath = myNamesData.getPathInChildRevision(currentCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
