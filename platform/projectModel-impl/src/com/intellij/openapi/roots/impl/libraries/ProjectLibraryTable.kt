@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair
 import org.jdom.Element
 
 @State(name = "libraryTable", storages = arrayOf(Storage(value = "libraries", stateSplitter = ProjectLibraryTable.LibraryStateSplitter::class)))
-class ProjectLibraryTable : LibraryTableBase() {
+open class ProjectLibraryTable : LibraryTableBase() {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): LibraryTable = project.service<ProjectLibraryTable>()
