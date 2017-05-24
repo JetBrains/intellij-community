@@ -23,16 +23,16 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialTask;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,59 +110,62 @@ public class SuppressActionSequentialTask implements SequentialTask {
     }
 
     final Project project = element.getProject();
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-      try {
+    try {
 
-        PsiElement container = null;
-        if (action instanceof SuppressIntentionActionFromFix) {
-          container = ((SuppressIntentionActionFromFix)action).getContainer(element);
-        }
-        if (container == null) {
-          container = element;
-        }
+      PsiElement container = null;
+      if (action instanceof SuppressIntentionActionFromFix) {
+        container = ((SuppressIntentionActionFromFix)action).getContainer(element);
+      }
+      if (container == null) {
+        container = element;
+      }
 
-        if (action.isAvailable(project, null, element)) {
-          action.invoke(project, null, element);
+      if (action.isAvailable(project, null, element)) {
+        ThrowableRunnable<RuntimeException> runnable = () -> action.invoke(project, null, element);
+        if (action.startInWriteAction()) {
+          WriteAction.run(runnable);
         }
-        final Set<GlobalInspectionContextImpl> globalInspectionContexts =
-          ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
-        for (GlobalInspectionContextImpl context : globalInspectionContexts) {
-          context.ignoreElement(wrapper.getTool(), container);
-          if (descriptor != null) {
-            context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
-          }
-        }
-
-        final RefElement containerRef = refEntity.getRefManager().getReference(container);
-        final Set<Object> suppressedNodes = myContext.getView().getSuppressedNodes(wrapper.getShortName());
-        if (containerRef != null) {
-          Queue<RefEntity> toIgnoreInView = new Queue<>(1);
-          toIgnoreInView.addLast(containerRef);
-          while (!toIgnoreInView.isEmpty()) {
-            final RefEntity entity = toIgnoreInView.pullFirst();
-            if (node instanceof ProblemDescriptionNode) {
-              final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
-              if (descriptors != null) {
-                Collections.addAll(suppressedNodes, descriptors);
-              }
-            } else {
-              suppressedNodes.add(entity);
-            }
-            final List<RefEntity> children = entity.getChildren();
-            for (RefEntity child : children) {
-              toIgnoreInView.addLast(child);
-            }
-          }
-        }
-        if (node instanceof ProblemDescriptionNode) {
-          suppressedNodes.add(descriptor);
+        else {
+          runnable.run();
         }
       }
-      catch (IncorrectOperationException e1) {
-        LOG.error(e1);
+      final Set<GlobalInspectionContextImpl> globalInspectionContexts =
+        ((InspectionManagerEx)InspectionManager.getInstance(element.getProject())).getRunningContexts();
+      for (GlobalInspectionContextImpl context : globalInspectionContexts) {
+        context.ignoreElement(wrapper.getTool(), container);
+        if (descriptor != null) {
+          context.getPresentation(wrapper).ignoreCurrentElementProblem(refEntity, descriptor);
+        }
       }
-    });
+
+      final RefElement containerRef = refEntity.getRefManager().getReference(container);
+      final Set<Object> suppressedNodes = myContext.getView().getSuppressedNodes(wrapper.getShortName());
+      if (containerRef != null) {
+        Queue<RefEntity> toIgnoreInView = new Queue<>(1);
+        toIgnoreInView.addLast(containerRef);
+        while (!toIgnoreInView.isEmpty()) {
+          final RefEntity entity = toIgnoreInView.pullFirst();
+          if (node instanceof ProblemDescriptionNode) {
+            final CommonProblemDescriptor[] descriptors = myContext.getPresentation(wrapper).getIgnoredElements().get(entity);
+            if (descriptors != null) {
+              Collections.addAll(suppressedNodes, descriptors);
+            }
+          } else {
+            suppressedNodes.add(entity);
+          }
+          final List<RefEntity> children = entity.getChildren();
+          for (RefEntity child : children) {
+            toIgnoreInView.addLast(child);
+          }
+        }
+      }
+      if (node instanceof ProblemDescriptionNode) {
+        suppressedNodes.add(descriptor);
+      }
+    }
+    catch (IncorrectOperationException e1) {
+      LOG.error(e1);
+    }
 
     node.removeSuppressActionFromAvailable(mySuppressAction);
   }
