@@ -113,19 +113,15 @@ public class JDParamListOwnerComment extends JDComment {
       if (isNull(nd.desc) && !generate_empty_tags) continue;
       if (wrapDescription && !isNull(nd.desc)) {
         sb.append(prefix).append(tag).append(nd.name).append("\n");
-        sb.append(wrapParametersPrefix);
         sb.append(myFormatter.getParser().formatJDTagDescription(nd.desc, wrapParametersPrefix));
       }
       else if (align_comments) {
-        sb.append(prefix);
-        sb.append(tag);
-        sb.append(nd.name);
         int spacesNumber = max + 1 - nd.name.length();
-        StringUtil.repeatSymbol(sb, ' ', Math.max(0, spacesNumber));
-        sb.append(myFormatter.getParser().formatJDTagDescription(nd.desc, fill));
+        String spaces = StringUtil.repeatSymbol(' ', Math.max(0, spacesNumber));
+        String firstLinePrefix = prefix + tag + nd.name + spaces;
+        sb.append(myFormatter.getParser().formatJDTagDescription(nd.desc, firstLinePrefix, fill));
       }
       else {
-        sb.append(prefix);
         String description = (nd.desc == null) ? "" : nd.desc;
         sb.append(myFormatter.getParser().formatJDTagDescription(tag + nd.name + " " + description, prefix));
       }

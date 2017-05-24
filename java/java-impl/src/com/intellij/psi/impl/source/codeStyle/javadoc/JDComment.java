@@ -66,8 +66,7 @@ public class JDComment {
     int start = sb.length();
 
     if (!isNull(myDescription)) {
-      sb.append(prefix);
-      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix, false));
+      sb.append(myFormatter.getParser().formatJDTagDescription(myDescription, prefix));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
         sb.append(prefix);
@@ -79,7 +78,6 @@ public class JDComment {
 
     if (!isNull(myUnknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
       for (String aUnknownList : myUnknownList) {
-        sb.append(prefix);
         sb.append(myFormatter.getParser().formatJDTagDescription(aUnknownList, prefix));
       }
     }
@@ -87,29 +85,23 @@ public class JDComment {
     if (!isNull(mySeeAlsoList)) {
       JDTag tag = JDTag.SEE;
       for (String aSeeAlsoList : mySeeAlsoList) {
-        sb.append(prefix);
-        sb.append(tag.getWithEndWhitespace());
         StringBuilder tagDescription = myFormatter.getParser()
-          .formatJDTagDescription(aSeeAlsoList, prefix, true, tag.getDescriptionPrefix(prefix).length());
+          .formatJDTagDescription(aSeeAlsoList, prefix + tag.getWithEndWhitespace(), prefix);
         sb.append(tagDescription);
       }
     }
 
     if (!isNull(mySince)) {
       JDTag tag = JDTag.SINCE;
-      sb.append(prefix);
-      sb.append(tag.getWithEndWhitespace());
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(mySince, prefix, true, tag.getDescriptionPrefix(prefix).length());
+        .formatJDTagDescription(mySince, prefix + tag.getWithEndWhitespace(), prefix);
       sb.append(tagDescription);
     }
 
     if (myDeprecated != null) {
       JDTag tag = JDTag.DEPRECATED;
-      sb.append(prefix);
-      sb.append(tag.getWithEndWhitespace());
       StringBuilder tagDescription = myFormatter.getParser()
-        .formatJDTagDescription(myDeprecated, prefix, true, tag.getDescriptionPrefix(prefix).length());
+        .formatJDTagDescription(myDeprecated, prefix + tag.getWithEndWhitespace(), prefix);
       sb.append(tagDescription);
     }
 

@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +34,6 @@ public enum JDTag {
 
   JDTag(@NotNull String tag) {
     this.myTag = tag;
-  }
-
-  @NotNull
-  public String getDescriptionPrefix(@NotNull String prefix) {
-    return prefix + StringUtil.repeatSymbol(' ', getWithEndWhitespace().length());
   }
 
   @NotNull
