@@ -147,7 +147,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
       @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<TraceElement> selectedItems =
         Arrays.stream(paths)
-          .map(CollectionTree::getTopPath)
+          .map(this::getTopPath)
           .map(myPath2Value::get)
           .filter(Objects::nonNull)
           .collect(Collectors.toList());
@@ -251,7 +251,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   }
 
   @NotNull
-  private Rectangle optimizeRowsCountInVisibleRect(int[] rows) {
+  private Rectangle optimizeRowsCountInVisibleRect(@NotNull int[] rows) {
     // a simple scan-line algorithm to find an optimal subset of visible rows (maximum)
     final Rectangle visibleRect = getVisibleRect();
     final int height = visibleRect.height;
@@ -364,11 +364,13 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
   }
 
-  private static TreePath getTopPath(@NotNull TreePath path) {
-    while (path.getPathCount() > 2) {
-      path = path.getParentPath();
+  @NotNull
+  private TreePath getTopPath(@NotNull TreePath path) {
+    TreePath current = path;
+    while (current != null && !myPath2Value.containsKey(current)) {
+      current = current.getParentPath();
     }
 
-    return path;
+    return current != null ? current : path;
   }
 }
