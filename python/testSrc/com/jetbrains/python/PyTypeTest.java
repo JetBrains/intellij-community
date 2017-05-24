@@ -1904,6 +1904,17 @@ public class PyTypeTest extends PyTestCase {
            "expr = foo[0]");
   }
 
+  // PY-24364
+  public void testReassignedParameter() {
+    doTest("(entries: Any) -> Generator[Any, Any, None]",
+           "def resort(entries):\n" +
+           "    entries = list(entries)\n" +
+           "    entries.sort(reverse=True)\n" +
+           "    for entry in entries:\n" +
+           "        yield entry\n" +
+           "expr = resort");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

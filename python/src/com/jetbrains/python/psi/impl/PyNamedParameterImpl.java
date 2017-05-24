@@ -328,10 +328,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     final Set<String> result = new LinkedHashSet<>();
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
+    final Ref<Boolean> parameterWasReassigned = Ref.create(false);
+
     if (owner != null && name != null) {
       owner.accept(new PyRecursiveElementVisitor() {
         @Override
         public void visitPyElement(PyElement node) {
+          if (parameterWasReassigned.get()) return;
+
           if (node instanceof ScopeOwner && node != owner) {
             return;
           }
@@ -367,6 +371,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyIfStatement(PyIfStatement node) {
+          if (parameterWasReassigned.get()) return;
+
           final PyExpression ifCondition = node.getIfPart().getCondition();
           if (ifCondition != null) {
             ifCondition.accept(this);
@@ -381,6 +387,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyCallExpression(PyCallExpression node) {
+          if (parameterWasReassigned.get()) return;
+
           Optional
             .ofNullable(node.getCallee())
             .filter(callee -> "len".equals(callee.getName()))
@@ -401,6 +409,8 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
         @Override
         public void visitPyForStatement(PyForStatement node) {
+          if (parameterWasReassigned.get()) return;
+
           Optional
             .of(node.getForPart())
             .map(PyForPart::getSource)
@@ -409,6 +419,18 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             .ifPresent(reference -> result.add(PyNames.ITER));
 
           super.visitPyForStatement(node);
+        }
+
+        @Override
+        public void visitPyTargetExpression(PyTargetExpression node) {
+          if (parameterWasReassigned.get()) return;
+
+          if (node.getReference().isReferenceTo(PyNamedParameterImpl.this)) {
+            parameterWasReassigned.set(true);
+          }
+          else {
+            super.visitPyTargetExpression(node);
+          }
         }
       });
     }
