@@ -35,4 +35,4 @@ interface UEvaluationState {
     fun merge(otherState: UEvaluationState): UEvaluationState
 }
 
-fun UElement.createEmptyState(): UEvaluationState = EmptyEvaluationState(this)
+fun UElement.createEmptyState(): UEvaluationState = MapBasedEvaluationState(this)

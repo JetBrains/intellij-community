@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.uast.evaluation
+package org.jetbrains.uast.test.java
 
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UVariable
-import org.jetbrains.uast.values.UUndeterminedValue
+import org.junit.Test
 
-class EmptyEvaluationState(boundElement: UElement) : AbstractEvaluationState(boundElement) {
-    override val variables: Set<UVariable>
-        get() = emptySet()
+class JavaExpressionValueTest : AbstractJavaExpressionValueTest() {
 
-    override fun get(variable: UVariable) = UUndeterminedValue
+  @Test fun testColor() = doTest("Expression/Color.java")
+
 }
