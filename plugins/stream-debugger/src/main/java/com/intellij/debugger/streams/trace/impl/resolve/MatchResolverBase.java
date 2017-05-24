@@ -80,14 +80,17 @@ public abstract class MatchResolverBase implements CallTraceResolver {
     CONNECT_FILTERED, CONNECT_DIFFERENCE
   }
 
+  @NotNull
   private Map<Integer, TraceElement> onlyFiltered(@NotNull Collection<TraceElement> afterFilter) {
     return makeIndexByTime(afterFilter.stream());
   }
 
+  @NotNull
   private Map<Integer, TraceElement> difference(@NotNull Collection<TraceElement> before, @NotNull Set<Integer> timesAfter) {
     return makeIndexByTime(before.stream().filter(x -> timesAfter.contains(x.getTime())));
   }
 
+  @NotNull
   private static Map<Integer, TraceElement> makeIndexByTime(@NotNull Stream<TraceElement> elementStream) {
     return elementStream.collect(Collectors.toMap(TraceElement::getTime, Function.identity()));
   }
