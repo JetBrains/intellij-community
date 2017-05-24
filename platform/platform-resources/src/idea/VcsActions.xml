@@ -224,9 +224,9 @@
             icon="AllIcons.Actions.ShowAsTree" use-shortcut-of="GotoChangedFile"/>
 
     <group id="EditorGutterVcsPopupMenu">
-      <separator/>
       <reference ref="Annotate"/>
-      <add-to-group group-id="EditorGutterPopupMenu" anchor="last"/>
+      <add-to-group group-id="EditorGutterPopupMenu" anchor="first"/>
+      <separator/>
     </group>
 
     <group id="Vcs.CheckinProjectPopup">
