@@ -16,11 +16,7 @@
 
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
-import com.intellij.formatting.IndentInfo;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,10 +83,6 @@ public class JDParamListOwnerComment extends JDComment {
                               boolean generate_empty_tags,
                               boolean wrapDescription)
   {
-    CodeStyleSettings settings = myFormatter.getSettings();
-    CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(JavaFileType.INSTANCE);
-    String continuationIndent = new IndentInfo(0, indentOptions.CONTINUATION_INDENT_SIZE, 0).generateNewWhiteSpace(indentOptions);
-
     int max = 0;
 
     if (align_comments && !wrapDescription) {
@@ -108,7 +100,7 @@ public class JDParamListOwnerComment extends JDComment {
     fill.append(prefix);
     StringUtil.repeatSymbol(fill, ' ', max + 1 + tag.length());
 
-    String wrapParametersPrefix = prefix + continuationIndent;
+    String wrapParametersPrefix = prefix + getContinuationIndent();
     for (NameDesc nd : list) {
       if (isNull(nd.desc) && !generate_empty_tags) continue;
       if (wrapDescription && !isNull(nd.desc)) {
@@ -123,7 +115,9 @@ public class JDParamListOwnerComment extends JDComment {
       }
       else {
         String description = (nd.desc == null) ? "" : nd.desc;
-        sb.append(myFormatter.getParser().formatJDTagDescription(tag + nd.name + " " + description, prefix));
+        sb.append(myFormatter.getParser().formatJDTagDescription(tag + nd.name + " " + description,
+                                                                 prefix,
+                                                                 getContinuationPrefix(prefix)));
       }
     }
   }
