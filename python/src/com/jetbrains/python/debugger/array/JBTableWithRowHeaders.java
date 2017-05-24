@@ -36,6 +36,7 @@ public class JBTableWithRowHeaders extends JBTable {
   private RowHeaderTable myRowHeaderTable;
 
   public JBTableWithRowHeaders() {
+    setAutoResizeMode(AUTO_RESIZE_OFF);
     setRowSelectionAllowed(false);
     setMaxItemsForSizeCalculation(50);
     setTableHeader(new CustomTableHeader(this));
