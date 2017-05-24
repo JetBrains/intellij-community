@@ -59,7 +59,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.*;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 1;
+  private static final int VERSION = 2;
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
