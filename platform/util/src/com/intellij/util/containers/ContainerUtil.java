@@ -896,6 +896,13 @@ public class ContainerUtil extends ContainerUtilRt {
     return null;
   }
 
+  @Nullable
+  public static <T, V extends T> V findLast(@NotNull List<V> list, @NotNull Condition<T> condition) {
+    int index = lastIndexOf(list, condition);
+    if (index < 0) return null;
+    return list.get(index);
+  }
+
   @NotNull
   @Contract(pure=true)
   public static <T, K, V> Map<K, V> map2Map(@NotNull T[] collection, @NotNull Function<T, Pair<K, V>> mapper) {

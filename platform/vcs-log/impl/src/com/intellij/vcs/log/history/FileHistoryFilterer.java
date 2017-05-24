@@ -28,7 +28,6 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
@@ -48,6 +47,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 class FileHistoryFilterer extends VcsLogFilterer {
   private static final Logger LOG = Logger.getInstance(FileHistoryFilterer.class);
@@ -115,7 +116,7 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
       LOG.assertTrue(detailsFilters.size() == 1);
 
-      VcsLogDetailsFilter filter = ObjectUtils.notNull(ContainerUtil.getFirstItem(detailsFilters));
+      VcsLogDetailsFilter filter = notNull(ContainerUtil.getFirstItem(detailsFilters));
       LOG.assertTrue(filter instanceof VcsLogStructureFilter);
       LOG.assertTrue(((VcsLogStructureFilter)filter).getFiles().equals(Collections.singleton(myFilePath)));
 
@@ -214,19 +215,16 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
     @Override
     public void enterNode(int currentNode, int previousNode) {
-      FilePath previousPath = myPaths.peek();
       int currentNodeId = myVisibleGraph.getNodeId(currentNode);
       int currentCommit = myPermanentCommitsInfo.getCommitId(currentNodeId);
 
-      if (previousNode == DfsUtil.NextNode.NODE_NOT_FOUND) {
-        myPathsForCommits.put(currentCommit, previousPath);
-        myPaths.push(previousPath);
-      }
-      else {
+      FilePath previousPath = notNull(ContainerUtil.findLast(myPaths, path -> path != null));
+      FilePath currentPath = previousPath;
+
+      if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
         int previousNodeId = myVisibleGraph.getNodeId(previousNode);
         int previousCommit = myPermanentCommitsInfo.getCommitId(previousNodeId);
 
-        FilePath currentPath;
         // checking which node is the parent and which is the child
         if (myLinearVisibleGraph.getNodes(currentNode, LiteLinearGraph.NodeFilter.DOWN).contains(previousNode)) {
           // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
@@ -237,18 +235,15 @@ class FileHistoryFilterer extends VcsLogFilterer {
           int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
           currentPath = myNamesData.getPathInParentRevision(previousCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
         }
-
-        myPathsForCommits.put(currentCommit, currentPath);
-        if (currentPath != null) myPaths.push(currentPath);
       }
+
+      myPathsForCommits.put(currentCommit, currentPath);
+      myPaths.push(currentPath);
     }
 
     @Override
     public void exitNode(int node) {
-      Integer commit = myVisibleGraph.getRowInfo(node).getCommit();
-      if (myPathsForCommits.containsKey(commit) && myPathsForCommits.get(commit) != null) {
-        myPaths.pop();
-      }
+      myPaths.pop();
     }
   }
 
