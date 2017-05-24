@@ -18,6 +18,7 @@ package com.intellij.codeInsight.intention;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -31,6 +32,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.annotation.RetentionPolicy;
 
 public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
   protected final String myAnnotation;
@@ -130,7 +133,14 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(project);
     final PsiModifierList modifierList = myModifierListOwner.getModifierList();
     if (modifierList == null || modifierList.findAnnotation(myAnnotation) != null) return;
-    final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(myModifierListOwner);
+    PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, myModifierListOwner.getResolveScope());
+    final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace;
+    if (aClass != null && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
+      annotationAnnotationPlace = ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
+    }
+    else {
+      annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(myModifierListOwner);
+    }
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) return;
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.EXTERNAL) {
       for (String fqn : myAnnotationsToRemove) {
