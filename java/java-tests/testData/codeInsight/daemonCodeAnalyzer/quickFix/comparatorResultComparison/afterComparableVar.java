@@ -1,4 +1,4 @@
-// "Fix all 'Comparison of compare method result with specific constant' problems in file" "true"
+// "Fix all 'Suspicious usage of compare method' problems in file" "true"
 import java.util.*;
 
 class Test {
