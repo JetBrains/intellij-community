@@ -38,6 +38,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ArtifactModel;
@@ -71,6 +73,8 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
   private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
+
+  @NotNull private final MyUserDataHolderBase myUserData = new MyUserDataHolderBase();
 
   public AbstractIdeModifiableModelsProvider(@NotNull Project project) {
     super(project);
@@ -297,6 +301,12 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }));
   }
 
+  private static class MyUserDataHolderBase extends UserDataHolderBase {
+    void clear() {
+      clearUserData();
+    }
+  }
+
   private class MyPackagingElementResolvingContext implements PackagingElementResolvingContext {
     private final ModulesProvider myModulesProvider = new MyModulesProvider();
     private final MyFacetsProvider myFacetsProvider = new MyFacetsProvider();
@@ -407,6 +417,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         myModifiableArtifactModel.commit();
       }
     });
+    myUserData.clear();
   }
 
   @Override
@@ -432,6 +443,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     myModifiableRootModels.clear();
     myModifiableFacetModels.clear();
     myModifiableLibraryModels.clear();
+    myUserData.clear();
   }
 
   @Override
@@ -443,5 +455,16 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public String getProductionModuleName(Module module) {
     return myProductionModulesForTestModules.get(module);
+  }
+
+  @Nullable
+  @Override
+  public <T> T getUserData(@NotNull Key<T> key) {
+    return myUserData.getUserData(key);
+  }
+
+  @Override
+  public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
+    myUserData.putUserData(key, value);
   }
 }
