@@ -73,7 +73,16 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     });
 
     addPythonConsoleListener(project);
-    ((ToolWindowEx)toolWindow).setAdditionalGearActions(new DefaultActionGroup(new ColoredByDefaultAction()));
+    PyDataViewToggleAction autoResizeAction = new PyDataViewToggleAction("Auto-resize", PyDataView.AUTO_RESIZE) {
+      @Override
+      public void setSelected(AnActionEvent e, boolean state) {
+        super.setSelected(e, state);
+        PyDataView.getInstance(project).changeAutoResize(state);
+      }
+    };
+    DefaultActionGroup group = new DefaultActionGroup(new PyDataViewToggleAction("Colored by Default", PyDataView.COLORED_BY_DEFAULT),
+                                                      autoResizeAction);
+    ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
   }
 
   private static void addPythonConsoleListener(@NotNull Project project) {
@@ -89,19 +98,22 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     });
   }
 
-  private static class ColoredByDefaultAction extends ToggleAction {
-    public ColoredByDefaultAction() {
-      super("Colored by Default");
+  private static class PyDataViewToggleAction extends ToggleAction {
+    private final String myPropertyKey;
+
+    public PyDataViewToggleAction(String text, String propertyKey) {
+      super(text);
+      myPropertyKey = propertyKey;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return PropertiesComponent.getInstance(e.getProject()).getBoolean(PyDataView.COLORED_BY_DEFAULT, true);
+      return PropertiesComponent.getInstance(e.getProject()).getBoolean(myPropertyKey, true);
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(e.getProject()).setValue(PyDataView.COLORED_BY_DEFAULT, state, true);
+      PropertiesComponent.getInstance(e.getProject()).setValue(myPropertyKey, state, true);
     }
   }
 

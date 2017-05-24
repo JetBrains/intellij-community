@@ -35,11 +35,13 @@ import java.util.Set;
  */
 public class JBTableWithRowHeaders extends JBTable {
   private final JBScrollPane myScrollPane;
+  private boolean myAutoResize;
   private RowHeaderTable myRowHeaderTable;
   private Set<Integer> myNotAdjustableColumns = ContainerUtil.newHashSet();
 
-  public JBTableWithRowHeaders() {
-    setAutoResizeMode(AUTO_RESIZE_OFF);
+  public JBTableWithRowHeaders(boolean autoResize) {
+    myAutoResize = autoResize;
+    setAutoResizeMode(myAutoResize ? AUTO_RESIZE_OFF : AUTO_RESIZE_SUBSEQUENT_COLUMNS);
     setRowSelectionAllowed(false);
     setMaxItemsForSizeCalculation(50);
     setTableHeader(new CustomTableHeader(this));
@@ -60,10 +62,15 @@ public class JBTableWithRowHeaders extends JBTable {
     Component component = super.prepareRenderer(renderer, row, column);
     JTableHeader header = getTableHeader();
     TableColumn resizingColumn = header.getResizingColumn();
-    if (resizingColumn == null && !myNotAdjustableColumns.contains(column)) {
+    if (myAutoResize && resizingColumn == null && !myNotAdjustableColumns.contains(column)) {
       updateColumnWidth(column, component.getPreferredSize().width, this);
     }
     return component;
+  }
+
+  public void setAutoResize(boolean autoResize) {
+    myAutoResize = autoResize;
+    setAutoResizeMode(myAutoResize ? AUTO_RESIZE_OFF : AUTO_RESIZE_SUBSEQUENT_COLUMNS);
   }
 
   private static int updateColumnWidth(int column, int width, @NotNull JTable table) {
@@ -92,7 +99,7 @@ public class JBTableWithRowHeaders extends JBTable {
     }
   }
 
-  public static class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
+  public class RowHeaderTable extends JBTable implements PropertyChangeListener, TableModelListener {
     private JTable myMainTable;
 
     public RowHeaderTable(JTable table) {
@@ -112,7 +119,12 @@ public class JBTableWithRowHeaders extends JBTable {
     @Override
     public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
       Component component = super.prepareRenderer(renderer, row, column);
-      getPreferredSize().width = updateColumnWidth(column, component.getPreferredSize().width, this);
+      if (myAutoResize) {
+        getPreferredSize().width = updateColumnWidth(column, component.getPreferredSize().width, this);
+      }
+      else {
+        getColumnModel().getColumn(0).setPreferredWidth(50);
+      }
       setPreferredScrollableViewportSize(getPreferredSize());
       return component;
     }
@@ -157,7 +169,7 @@ public class JBTableWithRowHeaders extends JBTable {
     }
 
 
-    private static class RowNumberRenderer extends DefaultTableCellRenderer {
+    private class RowNumberRenderer extends DefaultTableCellRenderer {
       public RowNumberRenderer() {
         setHorizontalAlignment(SwingConstants.CENTER);
       }

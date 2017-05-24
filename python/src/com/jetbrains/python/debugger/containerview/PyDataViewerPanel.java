@@ -125,7 +125,7 @@ public class PyDataViewerPanel extends JPanel {
     mySliceTextField = createEditorField();
     addCompletion();
 
-    myTable = new JBTableWithRowHeaders();
+    myTable = new JBTableWithRowHeaders(PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.AUTO_RESIZE, true));
     myScrollPane = myTable.getScrollPane();
   }
 
@@ -176,6 +176,11 @@ public class PyDataViewerPanel extends JPanel {
     catch (PyDebuggerException e) {
       LOG.error(e);
     }
+  }
+
+  public void resize(boolean autoResize) {
+    myTable.setAutoResize(autoResize);
+    apply(getSliceTextField().getText());
   }
 
   private void updateUI(@NotNull ArrayChunk chunk, @NotNull PyDebugValue debugValue, @NotNull DataViewStrategy strategy) {
