@@ -47,29 +47,31 @@ public class JsonSchemaResolver {
   }
 
   public MatchResult detailedResolve() {
-    return detailedResolve(false, false);
+    return detailedResolve(false, false, false);
   }
 
-  private MatchResult detailedResolve(boolean skipLastExpand, boolean literalResolve) {
+  private MatchResult detailedResolve(boolean skipLastExpand, boolean literalResolve, boolean acceptAdditionalPropertiesSchema) {
     final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition);
+    // if false, use !isName (default)
+    if (acceptAdditionalPropertiesSchema) builder.setAcceptAdditionalPropertiesSchema(true);
     final JsonSchemaTreeNode node = builder.buildTree(skipLastExpand, literalResolve);
     return MatchResult.zipTree(node);
   }
 
   public Collection<JsonSchemaObject> resolve() {
-    return resolve(false, false);
+    return resolve(false, false, false);
   }
 
-  private Collection<JsonSchemaObject> resolve(boolean skipLastExpand, boolean literalResolve) {
-    final MatchResult result = detailedResolve(skipLastExpand, literalResolve);
+  private Collection<JsonSchemaObject> resolve(boolean skipLastExpand, boolean literalResolve, boolean acceptAdditionalPropertiesSchema) {
+    final MatchResult result = detailedResolve(skipLastExpand, literalResolve, acceptAdditionalPropertiesSchema);
     final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
     set.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
     return set;
   }
 
   @Nullable
-  public PsiElement findNavigationTarget(boolean literalResolve) {
-    final Collection<JsonSchemaObject> schemas = resolve(true, literalResolve);
+  public PsiElement findNavigationTarget(boolean literalResolve, boolean acceptAdditionalPropertiesSchema) {
+    final Collection<JsonSchemaObject> schemas = resolve(true, literalResolve, acceptAdditionalPropertiesSchema);
 
     return schemas.stream().filter(schema -> schema.getJsonObject().isValid())
       .findFirst()

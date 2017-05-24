@@ -41,13 +41,19 @@ public class JsonSchemaVariantsTreeBuilder {
   @NotNull private final JsonSchemaObject mySchema;
   private final boolean myIsName;
   @NotNull private final List<Step> myPosition;
+  private boolean myAcceptAdditionalPropertiesSchema;
 
   public JsonSchemaVariantsTreeBuilder(@NotNull final JsonSchemaObject schema,
                                        final boolean isName,
                                        @Nullable final List<Step> position) {
     mySchema = schema;
     myIsName = isName;
+    myAcceptAdditionalPropertiesSchema = !myIsName;
     myPosition = ContainerUtil.notNullize(position);
+  }
+
+  public void setAcceptAdditionalPropertiesSchema(boolean acceptAdditionalPropertiesSchema) {
+    myAcceptAdditionalPropertiesSchema = acceptAdditionalPropertiesSchema;
   }
 
   public JsonSchemaTreeNode buildTree(boolean skipLastExpand, boolean literalResolve) {
@@ -68,7 +74,7 @@ public class JsonSchemaVariantsTreeBuilder {
         continue;
       }
       if (literalResolve) step.myLiteralResolve = true;
-      final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), !myIsName);
+      final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), myAcceptAdditionalPropertiesSchema);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {

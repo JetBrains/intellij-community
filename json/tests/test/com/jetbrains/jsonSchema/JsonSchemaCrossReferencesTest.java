@@ -15,6 +15,7 @@
  */
 package com.jetbrains.jsonSchema;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,8 +37,11 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.junit.Assert;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Irina.Chernushina on 3/28/2016.
@@ -575,6 +579,62 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final JsonProperty anEnum = ((JsonObject)value).findProperty("enum");
         Assert.assertNotNull(anEnum);
         Assert.assertEquals("[1,4,8]", anEnum.getValue().getText());
+      }
+    });
+  }
+
+  public void testCompletionInsideSchemaDefinition() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one",
+                                                         moduleDir + "/completionInsideSchemaDefinition.json", false,
+                                                         Collections.emptyList()));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "completionInsideSchemaDefinition.json");
+      }
+
+      @Override
+      public void doCheck() {
+        final Set<String> strings = Arrays.stream(myItems).map(LookupElement::getLookupString).collect(Collectors.toSet());
+        Assert.assertTrue(strings.contains("\"enum\""));
+        Assert.assertTrue(strings.contains("\"exclusiveMinimum\""));
+        Assert.assertTrue(strings.contains("\"description\""));
+      }
+    });
+  }
+
+  @CanChangeDocumentDuringHighlighting
+  public void testNavigateFromSchemaDefinitionToMainSchema() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        addSchema(new UserDefinedJsonSchemaConfiguration(myProject, "one",
+                                                         moduleDir + "/navigateFromSchemaDefinitionToMainSchema.json", false,
+                                                         Collections.emptyList()));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "navigateFromSchemaDefinitionToMainSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("\"properties\"", resolve.getText());
+        final PsiElement parent = resolve.getParent();
+        Assert.assertTrue(parent instanceof JsonProperty);
+        Assert.assertEquals("schema.json", resolve.getContainingFile().getName());
       }
     });
   }

@@ -53,7 +53,8 @@ public class JsonPropertyName2SchemaDefinitionReferenceProvider extends PsiRefer
       if (steps == null) return null;
       final JsonSchemaObject schemaObject = service.getSchemaObject(file);
       if (schemaObject != null) {
-        return new JsonSchemaResolver(schemaObject, true, steps).findNavigationTarget(false);
+        return new JsonSchemaResolver(schemaObject, true, steps)
+          .findNavigationTarget(false, JsonSchemaService.isSchemaFile(myElement.getContainingFile()));
       }
       return null;
     }
