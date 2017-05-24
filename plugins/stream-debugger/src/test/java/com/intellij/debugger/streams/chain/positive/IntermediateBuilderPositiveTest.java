@@ -95,7 +95,6 @@ public class IntermediateBuilderPositiveTest extends StreamChainBuilderPositiveT
     final StreamCall call = chain.getIntermediateCalls().get(0);
     assertEquals(StreamCallType.INTERMEDIATE, call.getType());
     assertEquals(callName, call.getName());
-    assertFalse(call.getArguments().isEmpty());
   }
 
   @NotNull

@@ -186,7 +186,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected void handleError(@NotNull StreamChain chain, @NotNull String error, @NotNull FailureReason reason) {
-    fail();
+    fail(error);
   }
 
   protected void handleSuccess(@Nullable StreamChain chain,
