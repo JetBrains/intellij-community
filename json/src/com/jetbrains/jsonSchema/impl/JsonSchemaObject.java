@@ -524,7 +524,7 @@ public class JsonSchemaObject {
       return this;
     }
     if (!ref.startsWith("#/")) {
-      throw new RuntimeException("Non-relative or erroneous reference: " + ref);
+      return null;
     }
     ref = ref.substring(2);
     final List<String> parts = StringUtil.split(ref, "/");
@@ -533,13 +533,13 @@ public class JsonSchemaObject {
       if (current == null) return null;
       final String part = parts.get(i);
       if (DEFINITIONS.equals(part)) {
-        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect definition reference: " + ref);
+        if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         current = current.getDefinitionsMap().get(parts.get(++i));
         continue;
       }
       if (PROPERTIES.equals(part)) {
-        if (i == (parts.size() - 1)) throw new RuntimeException("Incorrect properties reference: " + ref);
+        if (i == (parts.size() - 1)) return null;
         //noinspection AssignmentToForLoopParameter
         current = current.getProperties().get(parts.get(++i));
         continue;
