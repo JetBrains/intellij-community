@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
 import gnu.trove.THashSet;
@@ -49,11 +50,13 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 /**
@@ -222,16 +225,14 @@ public class JpsProjectLoader extends JpsLoaderBase {
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
 
+
     final Set<File> foundFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
     final List<File> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final File file = new File(path);
-      if (foundFiles.add(file) && file.exists()) {
+      if (foundFiles.add(file)) {
         moduleFiles.add(file);
-      }
-      else {
-        LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
       }
     }
 
@@ -247,11 +248,38 @@ public class JpsProjectLoader extends JpsLoaderBase {
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<>();
+    String externalProjectConfigDir = System.getProperty("external.project.config");
+    Path externalModuleDir = StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, "modules");
+    if (externalModuleDir != null) {
+      LOG.info("External project config dir is used: " + externalProjectConfigDir);
+    }
+
     for (final File file : moduleFiles) {
       futureModuleFilesContents.add(ourThreadPool.submit(() -> {
         final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
-        final Element moduleRoot = loadRootElement(file, expander);
-        return Pair.create(file, moduleRoot);
+
+        Element data = null;
+        if (file.exists()) {
+          data = loadRootElement(file, expander);
+        }
+
+        Path externalPath = externalModuleDir == null ? null : externalModuleDir.resolve(FileUtilRt.getNameWithoutExtension(file.getName()) + ".xml");
+        if (externalPath != null && Files.exists(externalPath)) {
+          Element externalData = loadRootElement(externalPath.toFile(), expander);
+          if (data == null) {
+            data = externalData;
+          }
+          else {
+            JDOMUtil.merge(data, externalData);
+          }
+        }
+
+        if (data == null) {
+          LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+        }
+
+        //new File(file.getName())
+        return Pair.create(file, data);
       }));
     }
 
