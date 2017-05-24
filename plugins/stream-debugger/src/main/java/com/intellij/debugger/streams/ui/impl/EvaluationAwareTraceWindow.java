@@ -138,7 +138,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       myTabsPane.setSelectedIndex(0);
     }
 
-    final FlatView flatView = new FlatView(controllers.subList(1, controllers.size()), context);
+    final FlatView flatView = new FlatView(controllers, context);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
     myCenterPane.revalidate();
     myCenterPane.repaint();
