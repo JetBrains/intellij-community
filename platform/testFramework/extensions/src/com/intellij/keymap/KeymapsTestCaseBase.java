@@ -62,13 +62,17 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
         result.put(keymapName, mapping = new LinkedHashMap<>());
       }
 
-      for (String[] shortcuts : eachKeymap.getValue()) {
+      for (String[] values : eachKeymap.getValue()) {
         TestCase.assertTrue("known duplicates list entry for '" + keymapName + "' must not contain empty array",
-                            shortcuts.length > 0);
-        TestCase.assertTrue("known duplicates list entry for '" + keymapName + "', shortcut '" + shortcuts[0] +
+                            values.length > 0);
+        TestCase.assertTrue("known duplicates list entry for '" + keymapName + "', shortcut '" + values[0] +
                             "' must contain at least two conflicting action ids",
-                            shortcuts.length > 2);
-        mapping.put(shortcuts[0], ContainerUtil.newArrayList(shortcuts, 1, shortcuts.length));
+                            values.length > 2);
+        TestCase.assertFalse("known duplicates list entry for '" + keymapName + "', shortcut '" + values[0] +
+                             "' must not contain duplicated shortcuts",
+                             mapping.containsKey(values[0]));
+
+        mapping.put(values[0], ContainerUtil.newArrayList(values, 1, values.length));
       }
     }
     return result;
