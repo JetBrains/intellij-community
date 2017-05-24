@@ -81,19 +81,17 @@ public abstract class Direction {
   @NotNull
   private static Direction explicitDirection(String name) {
     return new Direction() {
-      private String myName = name;
-
       @Override
       int asInt() {
         for (int i = 0; i < ourConcreteDirections.size(); i++) {
           if(ourConcreteDirections.get(i) == this) return i;
         }
-        throw new InternalError("Explicit direction absent in ourConcreteDirections: "+myName);
+        throw new InternalError("Explicit direction absent in ourConcreteDirections: " + name);
       }
 
       @Override
       public String toString() {
-        return myName;
+        return name;
       }
     };
   }
