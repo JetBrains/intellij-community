@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.uast.evaluation
+public class Color {
 
-import org.jetbrains.uast.UVariable
+  public final int r, g, b;
 
-class MergingEvaluationState(
-        private val first: UEvaluationState,
-        private val second: UEvaluationState
-) : AbstractEvaluationState() {
+  public Color(int r, int g, int b) {
+    this.r = r;
+    this.g = g;
+    this.b = b;
+  }
 
-    override val variables = first.variables + second.variables
+  public static void main(String[] arg) {
+    final int r = 128;
 
-    override fun get(variable: UVariable) = first[variable].merge(second[variable])
+    Color color = new Color(r /* constant = 128 */,192,64);
+  }
 }

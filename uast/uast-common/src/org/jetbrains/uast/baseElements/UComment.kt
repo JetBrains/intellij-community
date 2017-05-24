@@ -15,10 +15,10 @@
  */
 package org.jetbrains.uast
 
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiComment
 import org.jetbrains.uast.internal.log
 
-class UComment(override val psi: PsiElement, override val uastParent: UElement) : UElement {
+class UComment(override val psi: PsiComment, override val uastParent: UElement) : UElement {
     val text: String
         get() = asSourceString()
 
