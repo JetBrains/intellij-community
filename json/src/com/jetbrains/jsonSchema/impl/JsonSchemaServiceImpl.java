@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,7 +25,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
@@ -167,60 +167,37 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private static class MyState {
-    private final Object myLock = new Object();
-    private final Map<VirtualFile, JsonSchemaFileProvider> mySchemaProviderMap = ContainerUtil.newHashMap();
-    private Collection<JsonSchemaFileProvider> myUnmodifiableProviders = Collections.emptyList();
-    private Set<VirtualFile> myUnmodifiableFiles = Collections.emptySet();
-    private boolean initialized;
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
+    @NotNull private final AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>> myData;
 
     private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory) {
       myFactory = factory;
+      myData = new AtomicClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>>() {
+        @NotNull
+        @Override
+        public Map<VirtualFile, JsonSchemaFileProvider> compute() {
+          return Collections.unmodifiableMap(createFileProviderMap(myFactory.create()));
+        }
+      };
     }
 
     public void reset() {
-      synchronized (myLock) {
-        initialized = false;
-        mySchemaProviderMap.clear();
-        myUnmodifiableProviders = Collections.emptyList();
-        myUnmodifiableFiles = Collections.emptySet();
-      }
+      myData.drop();
     }
 
     @NotNull
     public Collection<JsonSchemaFileProvider> getProviders() {
-      synchronized (myLock) {
-        ensure();
-        return myUnmodifiableProviders;
-      }
+      return myData.getValue().values();
     }
 
     @NotNull
     public Set<VirtualFile> getFiles() {
-      synchronized (myLock) {
-        ensure();
-        return myUnmodifiableFiles;
-      }
+      return myData.getValue().keySet();
     }
 
     @Nullable
     public JsonSchemaFileProvider getProvider(@NotNull final VirtualFile file) {
-      synchronized (myLock) {
-        ensure();
-        return mySchemaProviderMap.get(file);
-      }
-    }
-
-    private void ensure() {
-      synchronized (myLock) {
-        if (!initialized) {
-          mySchemaProviderMap.clear();
-          mySchemaProviderMap.putAll(createFileProviderMap(myFactory.create()));
-          myUnmodifiableFiles = Collections.unmodifiableSet(mySchemaProviderMap.keySet());
-          myUnmodifiableProviders = Collections.unmodifiableCollection(mySchemaProviderMap.values());
-          initialized = true;
-        }
-      }
+      return myData.getValue().get(file);
     }
 
     private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list) {
