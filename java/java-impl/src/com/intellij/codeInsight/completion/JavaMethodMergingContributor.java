@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import one.util.streamex.StreamEx;
@@ -39,7 +39,7 @@ public class JavaMethodMergingContributor extends CompletionContributor {
       return null;
     }
 
-    if (Registry.is("java.completion.argument.live.template")) {
+    if (ParameterInfoController.areParameterTemplatesEnabledOnCompletion()) {
       return null;
     }
 

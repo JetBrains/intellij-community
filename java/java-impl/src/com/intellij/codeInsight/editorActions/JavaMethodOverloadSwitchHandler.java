@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,7 +46,7 @@ public class JavaMethodOverloadSwitchHandler extends EditorWriteActionHandler {
 
   @Override
   protected boolean isEnabledForCaret(@NotNull Editor editor, @NotNull Caret caret, DataContext dataContext) {
-    if (!Registry.is("java.completion.argument.hints") || !ParameterInfoController.existsForEditor(editor)) return false;
+    if (!ParameterInfoController.areParametersHintsEnabledOnCompletion() || !ParameterInfoController.existsForEditor(editor)) return false;
 
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
