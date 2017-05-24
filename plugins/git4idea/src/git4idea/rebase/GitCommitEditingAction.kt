@@ -35,7 +35,6 @@ import git4idea.repo.GitRepository
 abstract class GitCommitEditingAction : DumbAwareAction() {
 
   private val COMMIT_NOT_IN_HEAD = "The commit is not in the current branch"
-  private val COMMIT_PUSHED_TO_PROTECTED = "The commit is already pushed to protected branch "
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -82,7 +81,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       val protectedBranch = findProtectedRemoteBranch(repository, branches)
       if (protectedBranch != null) {
         e.presentation.isEnabled = false
-        e.presentation.description = COMMIT_PUSHED_TO_PROTECTED + protectedBranch
+        e.presentation.description = commitPushedToProtectedBranchError(protectedBranch)
         return
       }
     }
@@ -108,7 +107,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     // and not if pushed to a protected branch
     val protectedBranch = findProtectedRemoteBranch(repository, branches)
     if (protectedBranch != null) {
-      Messages.showErrorDialog(project, COMMIT_PUSHED_TO_PROTECTED + protectedBranch, getFailureTitle())
+      Messages.showErrorDialog(project, commitPushedToProtectedBranchError(protectedBranch), getFailureTitle())
       return
     }
   }
@@ -139,4 +138,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
         map { it.nameForLocalOperations }.
         filter { branches.contains(it) }.firstOrNull()
   }
+
+  private fun commitPushedToProtectedBranchError(protectedBranch: String)
+    = "The commit is already pushed to protected branch '$protectedBranch'"
 }
