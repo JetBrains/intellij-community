@@ -15,7 +15,6 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
@@ -29,13 +28,13 @@ public class MatchResult {
   public final Set<JsonSchemaObject> mySchemas;
   public final List<Set<JsonSchemaObject>> myExcludingSchemas;
 
-  private MatchResult() {
-    mySchemas = new HashSet<>();
-    myExcludingSchemas = new SmartList<>();
+  private MatchResult(@NotNull final Set<JsonSchemaObject> schemas, @NotNull final List<Set<JsonSchemaObject>> excludingSchemas) {
+    mySchemas = Collections.unmodifiableSet(schemas);
+    myExcludingSchemas = Collections.unmodifiableList(excludingSchemas);
   }
 
   public static MatchResult zipTree(@NotNull JsonSchemaTreeNode root) {
-    final MatchResult result = new MatchResult();
+    final Set<JsonSchemaObject> schemas = new HashSet<>();
     final Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
                           node -> {
@@ -43,7 +42,7 @@ public class MatchResult {
                                 SchemaResolveState.normal.equals(node.getResolveState())) {
                               final int groupNumber = node.getExcludingGroupNumber();
                               if (groupNumber < 0) {
-                                result.mySchemas.add(node.getSchema());
+                                schemas.add(node.getSchema());
                               }
                               else {
                                 Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
@@ -53,7 +52,6 @@ public class MatchResult {
                             }
                             return true;
                           });
-    result.myExcludingSchemas.addAll(oneOfGroups.values());
-    return result;
+    return new MatchResult(schemas, new ArrayList<>(oneOfGroups.values()));
   }
 }
