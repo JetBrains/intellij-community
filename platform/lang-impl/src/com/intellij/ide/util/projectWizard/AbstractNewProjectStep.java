@@ -55,17 +55,17 @@ import java.util.List;
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
-public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAware {
+public class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
 
-  protected AbstractNewProjectStep(@NotNull Customization customization) {
+  protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
     super("Select Project Type", true);
 
-    AbstractCallback callback = customization.createCallback();
+    AbstractCallback<T> callback = customization.createCallback();
     ProjectSpecificAction projectSpecificAction = customization.createProjectSpecificAction(callback);
     addProjectSpecificAction(projectSpecificAction);
 
-    DirectoryProjectGenerator[] generators = customization.getProjectGenerators();
+    DirectoryProjectGenerator<T>[] generators = customization.getProjectGenerators();
     customization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(customization.getActions(generators, callback));
@@ -105,7 +105,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
 
 
     @NotNull
-    protected DirectoryProjectGenerator[] getProjectGenerators() {
+    protected DirectoryProjectGenerator<T>[] getProjectGenerators() {
       return Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     }
 
@@ -122,13 +122,13 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     }
 
     @NotNull
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback callback) {
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback<T> callback) {
       if (shouldIgnore(generator)) {
         return AnAction.EMPTY_ARRAY;
       }
 
       ProjectSettingsStepBase<T> step = generator instanceof CustomStepProjectGenerator ?
-                                     ((ProjectSettingsStepBase<T>)((CustomStepProjectGenerator)generator).createStep(generator, callback)) :
+                                     ((ProjectSettingsStepBase<T>)((CustomStepProjectGenerator<T>)generator).createStep(generator, callback)) :
                                      createProjectSpecificSettingsStep(generator, callback);
 
       ProjectSpecificAction projectSpecificAction = new ProjectSpecificAction(generator, step);

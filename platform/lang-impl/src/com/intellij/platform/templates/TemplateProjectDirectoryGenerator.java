@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class TemplateProjectDirectoryGenerator extends DirectoryProjectGenerator<Object> {
+public class TemplateProjectDirectoryGenerator<T> extends DirectoryProjectGenerator<T> {
   private final LocalArchivedTemplate myTemplate;
   private final ModuleBuilder myModuleBuilder;
 
@@ -55,7 +55,7 @@ public class TemplateProjectDirectoryGenerator extends DirectoryProjectGenerator
   @Override
   public void generateProject(@NotNull Project newProject,
                               @NotNull VirtualFile baseDir,
-                              @Nullable Object settings,
+                              @Nullable T settings,
                               @NotNull Module module) {
     throw new IllegalStateException("Usn't supposed to be invoked, use generateProject(String, String) instead.");
   }
