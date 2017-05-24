@@ -89,6 +89,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
     myEditorPanel.add(myScrollPane, BorderLayout.CENTER);
     registerHeadingActions();
+    registerActions();
 
     new IpnbDeleteCellAction(this);
   }
@@ -99,6 +100,19 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   public Document getDocument() {
     return myDocument;
+  }
+
+  private void registerActions() {
+    new IpnbAddCellAboveAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift EQUALS")),
+                                                               myIpnbFilePanel);
+    new IpnbMoveCellDownAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift DOWN")),
+                                                               myIpnbFilePanel);
+    new IpnbMoveCellUpAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift UP")),
+                                                               myIpnbFilePanel);
+    new IpnbMarkdownCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift M")),
+                                                             myIpnbFilePanel);
+    new IpnbCodeCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift Y")),
+                                                               myIpnbFilePanel);
   }
 
   private void registerHeadingActions() {
@@ -117,7 +131,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(new IpnbSaveAction(this));
     toolbarGroup.add(new IpnbConvertToPythonAction(this));
-    toolbarGroup.add( new Separator());
+    toolbarGroup.add(new Separator());
     toolbarGroup.add(new IpnbAddCellBelowAction(this));
     toolbarGroup.add(new Separator());
     toolbarGroup.addAll(new IpnbCutCellAction(this), new IpnbCopyCellAction(this), new IpnbPasteCellAction(this));

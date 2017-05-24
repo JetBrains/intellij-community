@@ -2,9 +2,6 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbEditablePanel;
@@ -16,14 +13,16 @@ import org.jetbrains.plugins.ipnb.format.cells.IpnbMarkdownCell;
 import java.util.List;
 
 public class IpnbMarkdownCellAction extends AnAction {
+  private final IpnbFileEditor myEditor;
+
+  public IpnbMarkdownCellAction(IpnbFileEditor editor) {
+    super("Markdown Cell");
+    myEditor = editor;
+  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if (editor instanceof IpnbFileEditor) {
-      changeTypeToMarkdown((IpnbFileEditor)editor);
-    }
+    changeTypeToMarkdown(myEditor);
   }
 
   public void changeTypeToMarkdown(@NotNull final IpnbFileEditor editor) {
@@ -39,17 +38,5 @@ public class IpnbMarkdownCellAction extends AnAction {
       cells.set(index, markdownCell);
     }
     filePanel.replaceComponent(selectedCellPanel, markdownCell);
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final DataContext context = e.getDataContext();
-    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
-    if (editor instanceof IpnbFileEditor) {
-      e.getPresentation().setEnabledAndVisible(true);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
   }
 }

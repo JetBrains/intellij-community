@@ -2,10 +2,8 @@ package org.jetbrains.plugins.ipnb.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileEditor.FileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
 import org.jetbrains.plugins.ipnb.editor.panels.IpnbFilePanel;
@@ -13,14 +11,17 @@ import org.jetbrains.plugins.ipnb.format.cells.IpnbCodeCell;
 
 public class IpnbAddCellAboveAction extends AnAction {
 
+  private final IpnbFileEditor myFileEditor;
+
+  public IpnbAddCellAboveAction(IpnbFileEditor fileEditor) {
+    super("Insert Cell Above");
+    myFileEditor = fileEditor;
+  }
+
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final DataContext context = event.getDataContext();
-    final FileEditor editor = IpnbFileEditor.DATA_KEY.getData(context);
-    if (editor != null) {
-      final IpnbFilePanel component = ((IpnbFileEditor)editor).getIpnbFilePanel();
-      addCell(component);
-    }
+    final IpnbFilePanel component = myFileEditor.getIpnbFilePanel();
+    addCell(component);
   }
 
   public void addCell(@NotNull final IpnbFilePanel ipnbFilePanel) {
@@ -30,17 +31,5 @@ public class IpnbAddCellAboveAction extends AnAction {
         ipnbFilePanel.saveToFile(false);
       }), "Ipnb.createAndAddCell", new Object());
 
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final DataContext context = e.getDataContext();
-    final FileEditor editor = IpnbFileEditor.DATA_KEY.getData(context);
-    if (editor != null) {
-      e.getPresentation().setEnabledAndVisible(true);
-    }
-    else {
-      e.getPresentation().setEnabledAndVisible(false);
-    }
   }
 }
