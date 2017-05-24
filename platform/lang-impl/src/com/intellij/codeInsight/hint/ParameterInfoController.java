@@ -547,7 +547,9 @@ public class ParameterInfoController implements Disposable {
   }
 
   private static boolean areParametersHintsEnabledInternallyOnCompletion() {
-    return Registry.is("java.completion.argument.hints.internal") && ApplicationManager.getApplication().isInternal();
+    return Registry.is("java.completion.argument.hints.internal") && 
+           ApplicationManager.getApplication().isInternal() && 
+           !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {
