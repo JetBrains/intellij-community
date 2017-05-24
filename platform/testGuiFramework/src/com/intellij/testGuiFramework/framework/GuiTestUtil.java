@@ -49,6 +49,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.JdkBundle;
+import com.intellij.util.PathUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -194,7 +195,7 @@ GuiTestUtil {
   }
 
   public static void setUpDefaultProjectCreationLocationPath() {
-    RecentProjectsManager.getInstance().setLastProjectCreationLocation(getProjectCreationDirPath().getPath());
+    RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(getProjectCreationDirPath().getPath()));
   }
 
   // Called by IdeTestApplication via reflection.

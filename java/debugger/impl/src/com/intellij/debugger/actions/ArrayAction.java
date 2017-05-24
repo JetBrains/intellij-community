@@ -81,6 +81,7 @@ public abstract class ArrayAction extends DebuggerAction {
           final Renderer lastRenderer = descriptor.getLastRenderer();
           if (lastRenderer instanceof ArrayRenderer) {
             ((JavaValue)container).setRenderer(newRenderer, node);
+            node.invokeNodeUpdate(() -> node.getTree().expandPath(node.getPath()));
           }
           else if (lastRenderer instanceof CompoundNodeRenderer) {
             final CompoundNodeRenderer compoundRenderer = (CompoundNodeRenderer)lastRenderer;

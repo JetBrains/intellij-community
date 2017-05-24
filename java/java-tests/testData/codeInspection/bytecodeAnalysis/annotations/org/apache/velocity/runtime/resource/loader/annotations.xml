@@ -6,7 +6,7 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -116,7 +116,7 @@
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.JarResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val name="value" val="&quot;_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

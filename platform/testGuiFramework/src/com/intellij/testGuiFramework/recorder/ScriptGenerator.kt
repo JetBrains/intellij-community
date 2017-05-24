@@ -23,7 +23,6 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.testGuiFramework.fixtures.SettingsTreeFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.generators.ComponentCodeGenerator
 import com.intellij.testGuiFramework.generators.Generators
 import com.intellij.testGuiFramework.recorder.ScriptGenerator.scriptBuffer
@@ -32,13 +31,15 @@ import com.intellij.testGuiFramework.recorder.ui.KeyUtil
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.util.ui.tree.TreeUtil
-import org.fest.swing.core.BasicRobot
-import org.fest.swing.core.GenericTypeMatcher
-import org.fest.swing.exception.ComponentLookupException
-import java.awt.*
+import java.awt.Component
+import java.awt.Menu
+import java.awt.MenuItem
+import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JList
+import javax.swing.JTree
 import javax.swing.KeyStroke.getKeyStrokeForEvent
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
@@ -176,10 +177,6 @@ object ScriptGenerator {
   private fun isPopupList(cmp: Component) = cmp.javaClass.name.toLowerCase().contains("listpopup")
   private fun isFrameworksTree(cmp: Component) = cmp.javaClass.name.toLowerCase().contains("AddSupportForFrameworksPanel".toLowerCase())
 
-  private fun getLabel(container: Container, jTextField: JTextField): JLabel? {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-    return GuiTestUtil.findBoundedLabel(container, jTextField, robot)
-  }
 
   private fun Component.inToolWindow(): Boolean {
     var pivotComponent = this
@@ -188,36 +185,6 @@ object ScriptGenerator {
       else pivotComponent = pivotComponent.parent
     }
     return false
-  }
-
-  //We are looking for a closest bounded label in a 2 levels of hierarchy for JComboBox component
-  private fun getBoundedLabelForComboBox(cb: JComboBox<*>): JLabel {
-    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
-
-    val findBoundedLabel: (Component) -> JLabel? = { component ->
-      try {
-        robot.finder().find(component.parent as Container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-          override fun isMatching(label: JLabel): Boolean {
-            return label.labelFor != null && label.labelFor == component
-          }
-        })
-      }
-      catch(e: ComponentLookupException) {
-        null
-      }
-    }
-
-    val bounded1 = findBoundedLabel(cb)
-    if (bounded1 !== null) return bounded1
-
-    val bounded2 = findBoundedLabel(cb.parent)
-    if (bounded2 !== null) return bounded2
-
-    val bounded3 = findBoundedLabel(cb.parent!!.parent)
-    if (bounded3 !== null) return bounded3
-
-    throw ComponentLookupException("Unable to find bounded label in 2 levels from JComboBox")
-
   }
 
   fun addToScript(code: String, withIndent: Boolean = true, indent: Int = 2) {

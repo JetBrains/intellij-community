@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -75,11 +76,24 @@ public final class HKey {
     return dirKey == 0 ? this : new HKey(key, 0, stable, false);
   }
 
-  HKey updateDirection(int newDirKey) {
-    return new HKey(key, newDirKey, stable, false);
+  HKey withDirection(Direction dir) {
+    return new HKey(key, dir.asInt(), stable, false);
   }
 
   HKey negate() {
     return new HKey(key, dirKey, stable, true);
+  }
+
+  public Direction getDirection() {
+    return Direction.fromInt(dirKey);
+  }
+
+  @Override
+  public String toString() {
+    return "HKey [" + bytesToString(key) + "|" + (stable ? "S" : "-") + (negated ? "N" : "-") + "|" + getDirection() + "]";
+  }
+
+  static String bytesToString(byte[] key) {
+    return IntStreamEx.of(key).mapToObj(b -> String.format("%02x", b & 0xFF)).joining(".");
   }
 }

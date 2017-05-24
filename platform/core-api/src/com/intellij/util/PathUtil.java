@@ -125,6 +125,20 @@ public class PathUtil {
     return path == null ? null : FileUtilRt.toSystemDependentName(path);
   }
 
+  /**
+   * Makes sure that the given path is system-independent (with <code>/</code> separators).
+   *
+   * @param path Path
+   * @throws IllegalArgumentException
+   * @see SystemDependent
+   * @see SystemIndependent
+   */
+  public static void assertSystemIndependentName(@Nullable String path) {
+    if (path != null && path.contains("\\")) {
+      throw new IllegalArgumentException("System-dependent path: " + path);
+    }
+  }
+
   @NotNull
   public static String driveLetterToLowerCase(@NotNull String path) {
     if (SystemInfo.isWindows && path.length() >= 2 && Character.isUpperCase(path.charAt(0)) && path.charAt(1) == ':') {

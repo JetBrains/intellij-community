@@ -44,8 +44,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.Alarm;
@@ -76,6 +74,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @State(name = "MavenProjectsManager")
 public class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -217,13 +216,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    File baseDir = VfsUtilCore.virtualToIoFile(project.getBaseDir());
-    File pomXml = new File(baseDir, "pom.xml");
+    List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(project, project.getBaseDir()).collect(Collectors.toList());
 
-    if (pomXml.exists()) {
-      final VirtualFile file = VfsUtil.findFileByIoFile(pomXml, true);
-      if (file == null) return;
-
+    for (VirtualFile file : pomFiles) {
       showBalloon(
         ProjectBundle.message("maven.orphan.notification.title"),
         ProjectBundle.message("maven.orphan.notification.msg", file.getPresentableUrl()),
@@ -231,7 +226,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
             if ("#add".equals(e.getDescription())) {
-              addManagedFilesOrUnignore(ContainerUtil.list(file));
+              addManagedFilesOrUnignore(Collections.singletonList(file));
               notification.expire();
             }
             else if ("#disable".equals(e.getDescription())) {
@@ -740,10 +735,27 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Nullable
-  private static VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
+  private VirtualFile findPomFile(@NotNull Module module, @NotNull MavenModelsProvider modelsProvider) {
     for (VirtualFile root : modelsProvider.getContentRoots(module)) {
-      for (VirtualFile child : root.getChildren()) {
-        if (MavenUtil.isPomFileName(child.getName())) return child;
+      List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(module.getProject(), root).collect(Collectors.toList());
+      if (pomFiles.isEmpty()) {
+        continue;
+      }
+
+      if (pomFiles.size() == 1) {
+        return pomFiles.get(0);
+      }
+
+      for (VirtualFile file : pomFiles) {
+        if (module.getName().equals(file.getNameWithoutExtension())) {
+          return file;
+        }
+        MavenProject mavenProject = findProject(file);
+        if (mavenProject != null) {
+          if (module.getName().equals(mavenProject.getMavenId().getArtifactId())) {
+            return file;
+          }
+        }
       }
     }
     return null;
@@ -1214,7 +1226,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return projectImporter.getCreatedModules();
   }
 
-  private static Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
+  private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
     Map<VirtualFile, Module> result = new THashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
@@ -1225,11 +1237,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private List<VirtualFile> collectAllAvailablePomFiles() {
     List<VirtualFile> result = new ArrayList<>(getFileToModuleMapping(new MavenDefaultModelsProvider(myProject)).keySet());
-    for (VirtualFile child : myProject.getBaseDir().getChildren()) {
-      if (MavenUtil.isPomFileName(child.getName())) {
-        result.add(child);
-      }
-    }
+    MavenUtil.streamPomFiles(myProject, myProject.getBaseDir()).forEach(result::add);
     return result;
   }
 

@@ -19,8 +19,8 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.fixtures.*
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture
 import com.intellij.testGuiFramework.framework.GuiTestBase
 import com.intellij.testGuiFramework.framework.GuiTestUtil
@@ -31,7 +31,6 @@ import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.SmartWaitRobot
 import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.*
 import org.fest.swing.image.ScreenshotTaker
@@ -177,11 +176,11 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find JTextComponent (JTextField) component by label \"${textLabel}\" with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.jTree(path: String? = null, /*timeout in seconds*/
-                                                      timeout: Long = defaultTimeout): JTreeFixture = if (target() is Container) jTree(
-    target() as Container, path, timeout)
+  fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, /*timeout in seconds*/
+                                                      timeout: Long = defaultTimeout): ExtendedTreeFixture = if (target() is Container) jTreePath(
+    target() as Container, timeout, *pathStrings)
   else throw UnsupportedOperationException(
-    "Sorry, unable to find JTree component \"${if (path != null) "by path ${path}" else ""}\" with ${target().toString()} as a Container")
+    "Sorry, unable to find JTree component \"${if (pathStrings != null) "by path ${pathStrings}" else ""}\" with ${target().toString()} as a Container")
 
   fun <S, C : Component> ComponentFixture<S, C>.popupClick(itemName: String, /*timeout in seconds*/
                                                            timeout: Long = defaultTimeout) = if (target() is Container) popupClick(
@@ -200,7 +199,9 @@ open class GuiTestCase : GuiTestBase() {
   else throw UnsupportedOperationException(
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
-  fun <S, C : Component> ComponentFixture<S, C>.message(title: String, /*timeout in seconds*/ timeout: Long = defaultTimeout) = if (target() is Container) message(target() as Container, title, timeout)
+  fun <S, C : Component> ComponentFixture<S, C>.message(title: String, /*timeout in seconds*/
+                                                        timeout: Long = defaultTimeout) = if (target() is Container) message(
+    target() as Container, title, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find PluginTable component with ${target().toString()} as a Container")
 
@@ -252,7 +253,9 @@ open class GuiTestCase : GuiTestBase() {
     }
   }
 
-  private fun message(container: Container, title: String, timeout: Long): MessagesFixture  = MessagesFixture.findByTitle(myRobot, container, title, timeout.toFestTimeout())
+  private fun message(container: Container, title: String, timeout: Long): MessagesFixture = MessagesFixture.findByTitle(myRobot, container,
+                                                                                                                         title,
+                                                                                                                         timeout.toFestTimeout())
 
   private fun jList(container: Container, containingItem: String? = null, timeout: Long): JListFixture {
 
@@ -345,32 +348,21 @@ open class GuiTestCase : GuiTestBase() {
     GuiTestUtil.clickPopupMenuItem(itemName, false, container, myRobot, timeout.toFestTimeout())
   }
 
-  private fun jTree(container: Container, path: String? = null, timeout: Long): JTreeFixture {
+  private fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
     val myTree: JTree?
-    if (path == null) {
+    val pathList = pathStrings.toList()
+    if (pathList.isEmpty()) {
       myTree = waitUntilFound(myRobot, container, object : GenericTypeMatcher<JTree>(JTree::class.java) {
-        override fun isMatching(p0: JTree) = true
+        override fun isMatching(tree: JTree) = true
       }, timeout.toFestTimeout())
     }
     else {
       myTree = waitUntilFound(myRobot, container, object : GenericTypeMatcher<JTree>(JTree::class.java) {
-        override fun isMatching(p0: JTree): Boolean {
-          try {
-            JTreeFixture(myRobot, p0).node(path)
-            return true
-          }
-          catch(locationUnavailableException: LocationUnavailableException) {
-            return false
-          }
-        }
+        override fun isMatching(tree: JTree): Boolean = ExtendedTreeFixture(myRobot, tree).hasPath(pathList)
       }, timeout.toFestTimeout())
     }
-    if (myTree.javaClass.name == "com.intellij.openapi.options.newEditor.SettingsTreeView\$MyTree") {
-      //replace cellreader
-      return JTreeFixture(myRobot, myTree).replaceCellReader(SettingsTreeCellReader())
-    }
-    else
-      return JTreeFixture(myRobot, myTree)
+    val treeFixture: ExtendedTreeFixture = ExtendedTreeFixture(myRobot, myTree)
+    return treeFixture
   }
 
   fun ComponentFixture<*, *>.exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
@@ -391,6 +383,7 @@ open class GuiTestCase : GuiTestBase() {
     }
     return true
   }
+
 
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 

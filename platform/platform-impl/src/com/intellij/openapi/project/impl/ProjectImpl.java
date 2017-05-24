@@ -52,6 +52,9 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.util.PathUtil;
+import com.intellij.util.SystemDependent;
+import com.intellij.util.SystemIndependent;
 import com.intellij.util.TimedReference;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -211,6 +214,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   @Nullable
+  @SystemIndependent
   public String getProjectFilePath() {
     return isDefault() ? null : getStateStore().getProjectFilePath();
   }
@@ -227,6 +231,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Nullable
   @Override
+  @SystemIndependent
   public String getBasePath() {
     return isDefault() ? null : getStateStore().getProjectBasePath();
   }
@@ -240,6 +245,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return myName;
   }
 
+  @SystemDependent
   @Override
   public String getPresentableUrl() {
     if (isDefault()) {
@@ -247,7 +253,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     }
 
     IProjectStore store = getStateStore();
-    return FileUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
+    return PathUtil.toSystemDependentName(store.getStorageScheme() == StorageScheme.DIRECTORY_BASED ? store.getProjectBasePath() : store.getProjectFilePath());
   }
 
   @NotNull

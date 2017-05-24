@@ -243,6 +243,11 @@ final class CoreHKey {
     result = 31 * result + dirKey;
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "CoreHKey [" + HKey.bytesToString(key) + "|" + Direction.fromInt(dirKey) + "]";
+  }
 }
 
 final class Solver {

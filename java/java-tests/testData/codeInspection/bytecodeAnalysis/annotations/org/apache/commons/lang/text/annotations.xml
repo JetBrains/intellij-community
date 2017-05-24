@@ -76,9 +76,7 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder char[] getChars(char[])'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder char[] getChars(char[]) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -602,6 +600,7 @@
     </item>
     <item name='org.apache.commons.lang.text.StrMatcher.NoMatcher int isMatch(char[], int, int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_,_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -942,6 +941,7 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer void add(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -955,6 +955,7 @@
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer void set(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

@@ -772,6 +772,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="BoxForComparison" displayName="Unnecessary boxing to compare primitives"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.BoxForComparisonInspection" />
+    <localInspection groupPath="Java" language="JAVA" shortName="ComparatorResultComparison"
+                     bundle="messages.InspectionsBundle" key="inspection.comparator.result.comparison.display.name"
+                     groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.ComparatorResultComparisonInspection" />
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
@@ -966,7 +970,7 @@
                      implementationClass="com.intellij.codeInspection.reflectiveAccess.JavaReflectionMemberAccessInspection"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
-                     displayName="Move field assignment to initializer"
+                     displayName="Field assignment can be moved to initializer"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"/>
 
     <intentionAction>

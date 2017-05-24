@@ -318,6 +318,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.io.FileNotFoundException FileNotFoundException(java.lang.String, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.io.FileNotFoundException FileNotFoundException(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>

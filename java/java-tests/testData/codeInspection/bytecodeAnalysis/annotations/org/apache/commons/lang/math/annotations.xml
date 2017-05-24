@@ -280,7 +280,7 @@
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;!null&quot;"/>
+            <val val="&quot;!null,_-&gt;!null;_,false-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean) 0'>
@@ -472,11 +472,13 @@
     </item>
     <item name='org.apache.commons.lang.math.JVMRandom double nextGaussian()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.math.JVMRandom void nextBytes(byte[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

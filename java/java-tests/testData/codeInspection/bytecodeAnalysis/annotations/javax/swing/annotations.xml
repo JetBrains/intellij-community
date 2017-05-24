@@ -235,9 +235,7 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='javax.swing.JComponent java.awt.Dimension getSize(java.awt.Dimension)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
-        </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JComponent java.awt.Dimension getSize(java.awt.Dimension) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -592,6 +590,7 @@
     </item>
     <item name='javax.swing.SwingUtilities SwingUtilities()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

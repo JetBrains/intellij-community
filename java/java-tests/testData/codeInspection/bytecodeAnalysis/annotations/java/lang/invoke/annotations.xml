@@ -7,7 +7,7 @@
     </item>
     <item name='java.lang.invoke.AdapterMethodHandle boolean canBoxArgument(java.lang.Class&lt;?&gt;, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -132,8 +132,7 @@
     </item>
     <item name='java.lang.invoke.AdapterMethodHandle java.lang.invoke.MethodHandle makeBoxArgument(java.lang.invoke.MethodType, java.lang.invoke.MethodHandle, int, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value"
-                 val="&quot;!null,_,_,_-&gt;null;_,!null,_,_-&gt;null;_,_,_,!null-&gt;null;_,_,_,null-&gt;null;_,null,_,_-&gt;null;null,_,_,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;_,_,_,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -409,6 +408,7 @@
     </item>
     <item name='java.lang.invoke.ConstantCallSite void setTarget(java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -440,6 +440,7 @@
     </item>
     <item name='java.lang.invoke.FilterGeneric java.lang.invoke.FilterGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType, java.lang.invoke.FilterGeneric.Kind, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -807,6 +808,7 @@
     </item>
     <item name='java.lang.invoke.FromGeneric java.lang.invoke.FromGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -986,6 +988,11 @@
     <item name='java.lang.invoke.FromGeneric.Adapter java.lang.Class&lt;? extends java.lang.invoke.FromGeneric.Adapter&gt; findSubClass(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.lang.invoke.InvokeDynamic InvokeDynamic()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;fail&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.InvokeGeneric boolean returnConversionNeeded(java.lang.invoke.MethodType, java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;false&quot;"/>
@@ -1002,6 +1009,7 @@
     </item>
     <item name='java.lang.invoke.InvokeGeneric java.lang.invoke.MethodHandle addReturnConversion(java.lang.invoke.MethodHandle, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1586,6 +1594,11 @@
     <item name='java.lang.invoke.MethodHandleNatives void notifyGenericMethodType(java.lang.invoke.MethodType) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleNatives void raiseException(int, java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;fail&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleNatives void raiseException(int, java.lang.Object, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1990,7 +2003,7 @@
     </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.invoke.MethodHandle makeAccessor(java.lang.Class&lt;?&gt;, java.lang.invoke.MemberName, boolean, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,null,_,_-&gt;!null&quot;"/>
+            <val val="&quot;_,_,true,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.invoke.MethodHandle makeAccessor(java.lang.Class&lt;?&gt;, java.lang.invoke.MemberName, boolean, boolean) 1'>
@@ -2332,6 +2345,7 @@
     </item>
     <item name='java.lang.invoke.SpreadGeneric java.lang.invoke.SpreadGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType, int, java.lang.invoke.MethodHandle[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2510,6 +2524,7 @@
     </item>
     <item name='java.lang.invoke.ToGeneric java.lang.invoke.ToGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

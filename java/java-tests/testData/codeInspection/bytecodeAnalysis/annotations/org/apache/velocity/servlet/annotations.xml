@@ -1,6 +1,7 @@
 <root>
     <item name='org.apache.velocity.servlet.VelocityServlet org.apache.velocity.Template handleRequest(org.apache.velocity.context.Context)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

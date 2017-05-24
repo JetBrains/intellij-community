@@ -36,6 +36,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -286,22 +287,30 @@ public class ProjectBytecodeAnalysis {
     throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
 
-    final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
     final PuritySolver puritySolver = new PuritySolver();
-    collectEquations(allKeys, outSolver);
-    collectPurityEquations(key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(Pure)), puritySolver);
+    collectPurityEquations(key.withDirection(Pure), puritySolver);
 
-    Map<HKey, Value> solutions = outSolver.solve();
     Map<HKey, Set<HEffectQuantum>> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParameters().length;
-    BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
+    HKey failureKey = key.withDirection(Throw);
+    final Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
+    collectEquations(Collections.singletonList(failureKey), failureSolver);
+    if (failureSolver.solve().get(failureKey) == Value.Fail) {
+      // Always failing method
+      result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
+    } else {
+      final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
+      collectEquations(allKeys, outSolver);
+      Map<HKey, Value> solutions = outSolver.solve();
+      BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
+    }
 
     if (nullableMethod) {
       final Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
-      HKey nullableKey = key.updateDirection(BytecodeAnalysisConverter.mkDirectionKey(NullableOut));
+      HKey nullableKey = key.withDirection(NullableOut);
       if (nullableMethodTransitivity) {
         collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
       }

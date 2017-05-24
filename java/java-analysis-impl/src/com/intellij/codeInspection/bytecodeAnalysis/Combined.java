@@ -20,6 +20,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.util.SingletonSet;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Handle;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -28,9 +29,11 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.CombinedData.*;
@@ -99,14 +102,20 @@ interface CombinedData {
     public int getOriginInsnIndex() {
       return originInsnIndex;
     }
-  }
 
-  final class NthParamValue extends BasicValue {
-    final int n;
-
-    public NthParamValue(Type type, int n) {
-      super(type);
-      this.n = n;
+    @NotNull
+    Set<Key> getKeysForParameter(int idx, ParamValueBasedDirection direction) {
+      Set<Key> keys = new HashSet<>();
+      for (int argI = 0; argI < this.args.size(); argI++) {
+        BasicValue arg = this.args.get(argI);
+        if (arg instanceof NthParamValue) {
+          NthParamValue npv = (NthParamValue)arg;
+          if (npv.n == idx) {
+            keys.add(new Key(this.method, direction.withIndex(argI), this.stableCall));
+          }
+        }
+      }
+      return keys;
     }
   }
 
@@ -237,8 +246,10 @@ final class CombinedAnalysis {
     return new Equation(key, result);
   }
 
+  @Nullable
   final Equation contractEquation(int i, Value inValue, boolean stable) {
-    final Key key = new Key(method, new InOut(i, inValue), stable);
+    final InOut direction = new InOut(i, inValue);
+    final Key key = new Key(method, direction, stable);
     final Result result;
     if (exception || (inValue == Value.Null && interpreter.dereferencedParams[i])) {
       result = new Final(Value.Bot);
@@ -260,31 +271,63 @@ final class CombinedAnalysis {
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
-      HashSet<Key> keys = new HashSet<>();
-      for (int argI = 0; argI < call.args.size(); argI++) {
-        BasicValue arg = call.args.get(argI);
-        if (arg instanceof NthParamValue) {
-          NthParamValue npv = (NthParamValue)arg;
-          if (npv.n == i) {
-            keys.add(new Key(call.method, new InOut(argI, inValue), call.stableCall));
-          }
-        }
-      }
+      Set<Key> keys = call.getKeysForParameter(i, direction);
       if (ASMUtils.isReferenceType(call.getType())) {
         keys.add(new Key(call.method, Out, call.stableCall));
       }
       if (keys.isEmpty()) {
-        result = new Final(Value.Top);
+        return null;
       } else {
         result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
       }
     }
     else {
-      result = new Final(Value.Top);
+      return null;
     }
     return new Equation(key, result);
   }
 
+  @Nullable
+  final Equation failEquation(boolean stable) {
+    final Key key = new Key(method, Throw, stable);
+    final Result result;
+    if (exception) {
+      result = new Final(Value.Fail);
+    }
+    else if (!interpreter.calls.isEmpty()) {
+      Set<Key> keys =
+        interpreter.calls.stream().map(call -> new Key(call.method, Throw, call.stableCall)).collect(Collectors.toSet());
+      result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+    }
+    else {
+      return null;
+    }
+    return new Equation(key, result);
+  }
+
+  @Nullable
+  final Equation failEquation(int i, Value inValue, boolean stable) {
+    final InThrow direction = new InThrow(i, inValue);
+    final Key key = new Key(method, direction, stable);
+    final Result result;
+    if (exception) {
+      result = new Final(Value.Fail);
+    }
+    else if (!interpreter.calls.isEmpty()) {
+      Set<Key> keys = new HashSet<>();
+      for (TrackableCallValue call : interpreter.calls) {
+        keys.addAll(call.getKeysForParameter(i, direction));
+        keys.add(new Key(call.method, Throw, call.stableCall));
+      }
+      result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+    }
+    else {
+      return null;
+    }
+    return new Equation(key, result);
+  }
+
+  @Nullable
   final Equation outContractEquation(boolean stable) {
     final Key key = new Key(method, Out, stable);
     final Result result;
@@ -310,7 +353,7 @@ final class CombinedAnalysis {
       result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
     }
     else {
-      result = new Final(Value.Top);
+      return null;
     }
     return new Equation(key, result);
   }
@@ -376,6 +419,9 @@ final class CombinedInterpreter extends BasicInterpreter {
   // Trackable values that were dereferenced during execution of a method
   // Values are are identified by `origin` index
   final boolean[] dereferencedValues;
+
+  final List<TrackableCallValue> calls = new ArrayList<>();
+
   private final InsnList insns;
 
   CombinedInterpreter(InsnList insns, int arity) {
@@ -536,7 +582,9 @@ final class CombinedInterpreter extends BasicInterpreter {
       case INVOKEINTERFACE: {
         MethodInsnNode mNode = (MethodInsnNode)insn;
         Method method = new Method(mNode.owner, mNode.name, mNode.desc);
-        return methodCall(opCode, origin, method, values);
+        TrackableCallValue value = methodCall(opCode, origin, method, values);
+        calls.add(value);
+        return value;
       }
       case INVOKEDYNAMIC: {
         LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
@@ -554,7 +602,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 
   @NotNull
-  private BasicValue methodCall(int opCode, int origin, Method method, List<? extends BasicValue> values) {
+  private TrackableCallValue methodCall(int opCode, int origin, Method method, List<? extends BasicValue> values) {
     Type retType = Type.getReturnType(method.methodDesc);
     boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
     boolean thisCall = false;

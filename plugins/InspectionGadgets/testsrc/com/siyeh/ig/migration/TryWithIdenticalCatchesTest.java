@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,24 @@ public class TryWithIdenticalCatchesTest extends LightCodeInsightFixtureTestCase
     doTest();
   }
 
+  public void testMethodQualifier() {
+    highlightTest();
+  }
+
   public void doTest() {
+    highlightTest();
     String name = getTestName(false);
-    myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
-    myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".java");
-    myFixture.checkHighlighting(true, false, false);
     IntentionAction intention = myFixture.findSingleIntention("Collapse 'catch' blocks");
     assertNotNull(intention);
     myFixture.launchAction(intention);
     myFixture.checkResultByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".after.java");
+  }
+
+  private void highlightTest() {
+    String name = getTestName(false);
+    myFixture.enableInspections(TryWithIdenticalCatchesInspection.class);
+    myFixture.configureByFile("com/siyeh/igtest/errorhandling/try_identical_catches/" + name + ".java");
+    myFixture.checkHighlighting(true, false, false);
   }
 
   @Override

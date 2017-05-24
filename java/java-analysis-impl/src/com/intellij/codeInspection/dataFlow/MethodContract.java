@@ -65,7 +65,7 @@ public abstract class MethodContract {
   /**
    * @return true if this contract result does not depend on arguments
    */
-  boolean isTrivial() {
+  public boolean isTrivial() {
     return getConditions().isEmpty();
   }
 

@@ -156,6 +156,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.ArrayIndexOutOfBoundsException ArrayIndexOutOfBoundsException(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.ArrayIndexOutOfBoundsException ArrayIndexOutOfBoundsException(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -647,6 +652,7 @@
     </item>
     <item name='java.lang.ClassLoader java.lang.Class findClass(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -661,7 +667,7 @@
     </item>
     <item name='java.lang.ClassLoader java.lang.String findLibrary(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -674,7 +680,7 @@
     </item>
     <item name='java.lang.ClassLoader java.net.URL findResource(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -842,6 +848,7 @@
     </item>
     <item name='java.lang.Enum java.lang.Object clone()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1499,6 +1506,9 @@
         </annotation>
     </item>
     <item name='java.lang.NumberFormatException java.lang.NumberFormatException forInputString(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.NumberFormatException java.lang.NumberFormatException forInputString(java.lang.String) 0'>
@@ -1711,6 +1721,11 @@
     </item>
     <item name='java.lang.String String(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.String String(java.lang.StringBuffer)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.String String(java.lang.StringBuffer) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2033,6 +2048,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.StringBuffer java.lang.StringBuffer append(boolean)'>
@@ -2363,6 +2381,7 @@
     </item>
     <item name='java.lang.System void checkKey(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2410,6 +2429,7 @@
     </item>
     <item name='java.lang.ThreadLocal T childValue(T)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

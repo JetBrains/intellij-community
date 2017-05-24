@@ -37,7 +37,6 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomProperties;
 import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
@@ -195,18 +194,8 @@ public class IntroducePropertyDialog extends DialogWrapper {
 
     List<MavenDomProjectModel> projects = getProjects();
 
-    ComboBoxUtil
-      .setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), projects, model -> {
-        String projectName = model.getName().getStringValue();
-        MavenProject mavenProject = MavenDomUtil.findProject(model);
-        if (mavenProject != null) {
-          projectName = mavenProject.getDisplayName();
-        }
-        if (StringUtil.isEmptyOrSpaces(projectName)) {
-          projectName = "pom.xml";
-        }
-        return Pair.create(projectName, model);
-      });
+    ComboBoxUtil.setModel(myMavenProjectsComboBox, new DefaultComboBoxModel(), projects,
+                          model -> Pair.create(MavenDomUtil.getProjectName(model), model));
 
     myMavenProjectsComboBox.setSelectedItem(myMavenDomProjectModel);
 

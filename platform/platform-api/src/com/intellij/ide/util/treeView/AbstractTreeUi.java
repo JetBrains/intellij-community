@@ -491,7 +491,12 @@ public class AbstractTreeUi {
       @Override
       public void perform() {
         addSubtreeToUpdate(node);
-        getUpdater().performUpdate();
+        // at this point some tree updates may already have been run as a result of 
+        // in tests these updates may lead to the instance disposal, so getUpdater() at the next line may return null
+        final AbstractTreeUpdater updater = getUpdater();
+        if (updater != null) {
+          updater.performUpdate();
+        }
       }
     });
     //if (structure.hasSomethingToCommit()) structure.commit();
@@ -987,40 +992,33 @@ public class AbstractTreeUi {
   }
 
   @NotNull
-  public ActionCallback queueUpdate(Object element, boolean updateStructure) {
+  public ActionCallback queueUpdate(final Object fromElement, boolean updateStructure) {
     assertIsDispatchThread();
 
     try {
-      AbstractTreeUpdater updater = getUpdater();
-      if (updater == null) {
+      if (getUpdater() == null) {
         return ActionCallback.REJECTED;
       }
 
       final ActionCallback result = new ActionCallback();
-      Object eachParent = element;
-      boolean updateStructureOfElement = updateStructure;
-      while(eachParent != null) {
-        DefaultMutableTreeNode node = getNodeForElement(eachParent, false);
+      DefaultMutableTreeNode nodeToUpdate = null;
+      boolean updateElementStructure = updateStructure;
+      for (Object element = fromElement; element != null; element = getTreeStructure().getParentElement(element)) {
+        final DefaultMutableTreeNode node = getNodeForElement(element, false);
         if (node != null) {
-          addSubtreeToUpdate(node, updateStructureOfElement);
+          nodeToUpdate = node;
           break;
         }
-
-        eachParent = getTreeStructure().getParentElement(eachParent);
-        updateStructureOfElement = true; // always update children if element does not exist
+        updateElementStructure = true; // always update children if element does not exist
       }
 
-      if (eachParent == null) {
-        // update root node as requested if corresponding node is not found
-        addSubtreeToUpdate(getRootNode(), updateStructure);
-      }
-
-      updater.runAfterUpdate(new TreeRunnable("AbstractTreeUi.queueUpdate") {
+      addSubtreeToUpdate(nodeToUpdate != null? nodeToUpdate : getRootNode(), new TreeRunnable("AbstractTreeUi.queueUpdate") {
         @Override
         public void perform() {
           result.setDone();
         }
-      });
+      }, updateElementStructure);
+
       return result;
     }
     catch (ProcessCanceledException e) {
@@ -1037,8 +1035,9 @@ public class AbstractTreeUi {
   }
 
   public final void updateSubtree(@NotNull TreeUpdatePass pass, boolean canSmartExpand) {
-    if (getUpdater() != null) {
-      getUpdater().addSubtreeToUpdate(pass);
+    final AbstractTreeUpdater updater = getUpdater();
+    if (updater != null) {
+      updater.addSubtreeToUpdate(pass);
     }
     else {
       updateSubtreeNow(pass, canSmartExpand);
@@ -3682,31 +3681,22 @@ public class AbstractTreeUi {
   }
 
   public boolean addSubtreeToUpdate(@NotNull final DefaultMutableTreeNode root, @Nullable final Runnable runAfterUpdate, final boolean updateStructure) {
-    Object element = getElementFor(root);
-    if (element != null && getTreeStructure().isAlwaysLeaf(element)) {
+    final Object element = getElementFor(root);
+    final boolean alwaysLeaf = element != null && getTreeStructure().isAlwaysLeaf(element);
+    final TreeUpdatePass updatePass;
+    if (alwaysLeaf) {
       removeFromUnbuilt(root);
       removeLoading(root, true);
-
-      execute(new TreeRunnable("AbstractTreeUi.addSubtreeToUpdate: one") {
-        @Override
-        public void perform() {
-          getUpdater().runAfterUpdate(runAfterUpdate);
-          getUpdater().addSubtreeToUpdate(new TreeUpdatePass(root).setUpdateChildren(false));
-        }
-      });
-      return false;
+      updatePass = new TreeUpdatePass(root).setUpdateChildren(false);
     }
     else {
-      execute(new TreeRunnable("AbstractTreeUi.addSubtreeToUpdate: two") {
-        @Override
-        public void perform() {
-          getUpdater().runAfterUpdate(runAfterUpdate);
-          getUpdater().addSubtreeToUpdate(new TreeUpdatePass(root).setUpdateStructure(updateStructure).setUpdateStamp(-1));
-        }
-      });
-
-      return true;
-    }  }
+      updatePass = new TreeUpdatePass(root).setUpdateStructure(updateStructure).setUpdateStamp(-1);
+    }
+    final AbstractTreeUpdater updater = getUpdater();
+    updater.runAfterUpdate(runAfterUpdate);
+    updater.addSubtreeToUpdate(updatePass);
+    return !alwaysLeaf;
+  }
 
   public boolean wasRootNodeInitialized() {
     return myRootNodeWasQueuedToInitialize && myRootNodeInitialized;

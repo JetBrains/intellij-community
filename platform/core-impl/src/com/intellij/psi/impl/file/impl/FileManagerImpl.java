@@ -274,6 +274,7 @@ public class FileManagerImpl implements FileManager {
   void processFileTypesChanged() {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
+    DebugUtil.startPsiModification("file type change");
     try {
       ApplicationManager.getApplication().runWriteAction(() -> {
         PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(myManager);
@@ -290,6 +291,7 @@ public class FileManagerImpl implements FileManager {
       });
     }
     finally {
+      DebugUtil.finishPsiModification();
       myProcessingFileTypesChange = false;
     }
   }
