@@ -134,8 +134,7 @@ public class PathUtil {
    * @see SystemIndependent
    */
   public static void assertSystemIndependentName(@Nullable String path) {
-    // A simplified check that test only for a drive letter (to improve the performance and avoid possible false-negatives).
-    if (path != null && path.length() > 3 && path.substring(1).startsWith(":\\")) {
+    if (path != null && path.contains("\\")) {
       throw new IllegalArgumentException("System-dependent path: " + path);
     }
   }
