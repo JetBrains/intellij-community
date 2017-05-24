@@ -16,8 +16,10 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
+import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl;
 import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
@@ -30,15 +32,18 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public class MatchHandler extends CallTraceHandlerBase {
+  private static final String PREDICATE_VARIABLE_NAME = "predicate42";
   private final PeekTracerHandler myBeforeFilterPeekInserter;
   private final PeekTracerHandler myAfterFilterPeekInserter;
   private final GenericType myTypeBefore;
+  private final TerminatorStreamCall myCall;
 
   MatchHandler(@NotNull TerminatorStreamCall call) {
     final GenericType typeBefore = call.getTypeBefore();
     myBeforeFilterPeekInserter = new PeekTracerHandler(0, "match", typeBefore, typeBefore);
     myAfterFilterPeekInserter = new PeekTracerHandler(1, "match", typeBefore, typeBefore);
     myTypeBefore = typeBefore;
+    myCall = call;
   }
 
   @NotNull
@@ -46,6 +51,9 @@ public class MatchHandler extends CallTraceHandlerBase {
   protected List<Variable> getVariables() {
     final List<Variable> variables = new ArrayList<>(myBeforeFilterPeekInserter.getVariables());
     variables.addAll(myAfterFilterPeekInserter.getVariables());
+    final CallArgument predicate = myCall.getArguments().get(0);
+    variables.add(new VariableImpl(predicate.getType(), PREDICATE_VARIABLE_NAME, predicate.getText()));
+
     return variables;
   }
 
@@ -69,7 +77,11 @@ public class MatchHandler extends CallTraceHandlerBase {
   @Override
   public List<IntermediateStreamCall> additionalCallsBefore() {
     final ArrayList<IntermediateStreamCall> calls = new ArrayList<>(myBeforeFilterPeekInserter.additionalCallsBefore());
-    calls.add(new IntermediateStreamCallImpl("filter", "", myTypeBefore, myTypeBefore, TextRange.EMPTY_RANGE));
+
+    final CallArgument predicate = myCall.getArguments().get(0);
+    final CallArgumentImpl argument = new CallArgumentImpl(predicate.getType(), predicate.getText() + ".negate()");
+    calls.add(new IntermediateStreamCallImpl("filter", Collections.singletonList(argument), myTypeBefore,
+                                             myTypeBefore, TextRange.EMPTY_RANGE));
     calls.addAll(myAfterFilterPeekInserter.additionalCallsBefore());
 
     return calls;
