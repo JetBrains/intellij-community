@@ -16,9 +16,9 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
-import com.intellij.formatting.FormatProcessor;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IndentAdjuster {
@@ -132,37 +132,28 @@ public class IndentAdjuster {
   private static AlignWhiteSpace getAlignOffsetBefore(@Nullable final Alignment alignment) {
     if (alignment == null) return null;
     final LeafBlockWrapper alignRespBlock = ((AlignmentImpl)alignment).getOffsetRespBlockBefore(null);
-    if (alignRespBlock != null) {
-      return getStartColumn(alignRespBlock);
-    }
-    else {
-      return null;
-    }
+    return alignRespBlock != null ? getStartColumn(alignRespBlock) : null;
   }
 
-  private static AlignWhiteSpace getStartColumn(@Nullable LeafBlockWrapper block) {
-    if (block != null) {
-      AlignWhiteSpace alignWhitespace = new AlignWhiteSpace();
-      while (true) {
-        final WhiteSpace whiteSpace = block.getWhiteSpace();
-        alignWhitespace.alignSpaces += whiteSpace.getSpaces();
+  private static AlignWhiteSpace getStartColumn(@NotNull LeafBlockWrapper block) {
+    AlignWhiteSpace alignWhitespace = new AlignWhiteSpace();
+    while (true) {
+      final WhiteSpace whiteSpace = block.getWhiteSpace();
+      alignWhitespace.alignSpaces += whiteSpace.getSpaces();
 
-        if (whiteSpace.containsLineFeeds()) {
-          alignWhitespace.indentSpaces += whiteSpace.getIndentSpaces();
-          return alignWhitespace;
-        }
-        else {
-          alignWhitespace.alignSpaces += whiteSpace.getIndentSpaces();
-        }
-
-        block = block.getPreviousBlock();
-        if (alignWhitespace.alignSpaces > CodeStyleSettings.MAX_RIGHT_MARGIN || block == null) return alignWhitespace;
-        alignWhitespace.alignSpaces += block.getSymbolsAtTheLastLine();
-        if (block.containsLineFeeds()) return alignWhitespace;
+      if (whiteSpace.containsLineFeeds()) {
+        alignWhitespace.indentSpaces += whiteSpace.getIndentSpaces();
+        return alignWhitespace;
       }
-    }
-    else {
-      return null;
+      else {
+        alignWhitespace.alignSpaces += whiteSpace.getIndentSpaces();
+      }
+
+      block = block.getPreviousBlock();
+      if (alignWhitespace.alignSpaces > CodeStyleSettings.MAX_RIGHT_MARGIN || block == null) return alignWhitespace;
+      alignWhitespace.alignSpaces += block.getSymbolsAtTheLastLine();
+      if (block.containsLineFeeds()) return alignWhitespace;
     }
   }
+
 }
