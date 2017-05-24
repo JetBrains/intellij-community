@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger.array;
 
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,6 +28,7 @@ import java.awt.*;
 import java.awt.event.MouseListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Set;
 
 /**
  * @author amarch
@@ -34,6 +36,7 @@ import java.beans.PropertyChangeListener;
 public class JBTableWithRowHeaders extends JBTable {
   private final JBScrollPane myScrollPane;
   private RowHeaderTable myRowHeaderTable;
+  private Set<Integer> myNotAdjustableColumns = ContainerUtil.newHashSet();
 
   public JBTableWithRowHeaders() {
     setAutoResizeMode(AUTO_RESIZE_OFF);
@@ -55,8 +58,12 @@ public class JBTableWithRowHeaders extends JBTable {
   @Override
   public Component prepareRenderer(@NotNull TableCellRenderer renderer, int row, int column) {
     Component component = super.prepareRenderer(renderer, row, column);
-    updateColumnWidth(column, component.getPreferredSize().width, this);
-    return  component;
+    JTableHeader header = getTableHeader();
+    TableColumn resizingColumn = header.getResizingColumn();
+    if (resizingColumn == null && !myNotAdjustableColumns.contains(column)) {
+      updateColumnWidth(column, component.getPreferredSize().width, this);
+    }
+    return component;
   }
 
   private static int updateColumnWidth(int column, int width, @NotNull JTable table) {
@@ -179,7 +186,7 @@ public class JBTableWithRowHeaders extends JBTable {
     }
   }
 
-  public static class CustomTableHeader extends JTableHeader {
+  public class CustomTableHeader extends JBTableHeader {
 
     public CustomTableHeader(JTable table) {
       super();
@@ -190,6 +197,14 @@ public class JBTableWithRowHeaders extends JBTable {
     @Override
     public void columnSelectionChanged(ListSelectionEvent e) {
       repaint();
+    }
+
+    @Override
+    public void setResizingColumn(TableColumn column) {
+      super.setResizingColumn(column);
+      if (column != null) {
+        JBTableWithRowHeaders.this.myNotAdjustableColumns.add(column.getModelIndex());
+      }
     }
   }
 
