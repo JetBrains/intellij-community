@@ -550,6 +550,7 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
 
   public void testDoNotMergeCommentLines() {
     getSettings().getRootSettings().ENABLE_JAVADOC_FORMATTING = true;
+    getSettings().getRootSettings().JD_PRESERVE_LINE_FEEDS = true;
     getSettings().getRootSettings().WRAP_COMMENTS = true;
 
     doClassTest(
