@@ -70,6 +70,7 @@
     </item>
     <item name='org.apache.velocity.io.VelocityWriter void bufferOverflow()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

@@ -400,7 +400,7 @@
     </item>
     <item name='org.apache.commons.collections.map.LRUMap boolean removeLRU(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val name="value" val="&quot;_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

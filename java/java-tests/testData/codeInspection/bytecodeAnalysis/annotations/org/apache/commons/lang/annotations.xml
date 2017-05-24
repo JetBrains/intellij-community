@@ -3147,9 +3147,9 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String defaultString(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;!null;null-&gt;!null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String defaultString(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -4070,16 +4070,19 @@
     </item>
     <item name='org.apache.commons.lang.Validate void isTrue(boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;false-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;false,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, double)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;false,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4088,6 +4091,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;false,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4099,6 +4103,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void isTrue(boolean, java.lang.String, long)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;false,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4129,6 +4134,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.Object[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4137,6 +4143,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.Object[], java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4145,6 +4152,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4153,6 +4161,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void notEmpty(java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4173,6 +4182,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void notNull(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4181,6 +4191,7 @@
     </item>
     <item name='org.apache.commons.lang.Validate void notNull(java.lang.Object, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;null,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

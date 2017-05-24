@@ -15,10 +15,107 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-public interface Direction {
-  final class In implements Direction {
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.List;
+
+public abstract class Direction {
+  public static final Direction Out = explicitDirection("Out");
+  public static final Direction NullableOut = explicitDirection("NullableOut");
+  public static final Direction Pure = explicitDirection("Pure");
+  public static final Direction Throw = explicitDirection("Throw");
+
+  private static final List<Direction> ourConcreteDirections = Arrays.asList(Out, NullableOut, Pure, Throw);
+  private static final int CONCRETE_DIRECTIONS_OFFSET = ourConcreteDirections.size();
+  private static final int IN_OUT_OFFSET = 2; // nullity mask is 0/1
+  private static final int IN_THROW_OFFSET = 2 + Value.values().length;
+  private static final int DIRECTIONS_PER_PARAM_ID = IN_THROW_OFFSET + Value.values().length;
+
+  /**
+   * Converts int to Direction object.
+   *
+   * @param directionKey int representation of direction
+   * @return Direction object
+   * @see #asInt()
+   */
+  @NotNull
+  static Direction fromInt(int directionKey) {
+    if(directionKey < CONCRETE_DIRECTIONS_OFFSET) {
+      return ourConcreteDirections.get(directionKey);
+    }
+    int paramKey = directionKey - CONCRETE_DIRECTIONS_OFFSET;
+    int paramId = paramKey / DIRECTIONS_PER_PARAM_ID;
+    int subDirectionId = paramKey % DIRECTIONS_PER_PARAM_ID;
+    // 0 - 1 - @NotNull, @Nullable, parameter
+    if (subDirectionId < IN_OUT_OFFSET) {
+      return new In(paramId, subDirectionId);
+    }
+    if (subDirectionId < IN_THROW_OFFSET) {
+      int valueId = subDirectionId - IN_OUT_OFFSET;
+      return new InOut(paramId, Value.values()[valueId]);
+    }
+    int valueId = subDirectionId - IN_THROW_OFFSET;
+    return new InThrow(paramId, Value.values()[valueId]);
+  }
+
+  /**
+   * Encodes Direction object as int.
+   *
+   * @return unique int for direction
+   */
+  abstract int asInt();
+
+  @Override
+  public int hashCode() {
+    return asInt();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if(obj == this) return true;
+    if(obj == null || obj.getClass() != this.getClass()) return false;
+    return asInt() == ((Direction)obj).asInt();
+  }
+
+  @NotNull
+  private static Direction explicitDirection(String name) {
+    return new Direction() {
+      private String myName = name;
+
+      @Override
+      int asInt() {
+        for (int i = 0; i < ourConcreteDirections.size(); i++) {
+          if(ourConcreteDirections.get(i) == this) return i;
+        }
+        throw new InternalError("Explicit direction absent in ourConcreteDirections: "+myName);
+      }
+
+      @Override
+      public String toString() {
+        return myName;
+      }
+    };
+  }
+
+  abstract static class ParamIdBasedDirection extends Direction {
     final int paramIndex;
 
+    protected ParamIdBasedDirection(int index) {
+      paramIndex = index;
+    }
+
+    public int paramId() {
+      return paramIndex;
+    }
+
+    @Override
+    int asInt() {
+      return CONCRETE_DIRECTIONS_OFFSET + DIRECTIONS_PER_PARAM_ID * this.paramId();
+    }
+  }
+
+  static final class In extends ParamIdBasedDirection {
     static final int NOT_NULL_MASK = 0;
     static final int NULLABLE_MASK = 1;
     /**
@@ -28,111 +125,72 @@ public interface Direction {
     final int nullityMask;
 
     In(int paramIndex, int nullityMask) {
-      this.paramIndex = paramIndex;
+      super(paramIndex);
       this.nullityMask = nullityMask;
+    }
+
+    @Override
+    int asInt() {
+      return super.asInt() + nullityMask;
     }
 
     @Override
     public String toString() {
       return "In " + paramIndex;
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      In in = (In)o;
-      if (paramIndex != in.paramIndex) return false;
-      if (nullityMask != in.nullityMask) return false;
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 31 * paramIndex + nullityMask;
-    }
-
-    public int paramId() {
-      return paramIndex;
-    }
   }
 
-  final class InOut implements Direction {
-    final int paramIndex;
+  static abstract class ParamValueBasedDirection extends ParamIdBasedDirection {
     final Value inValue;
 
-    InOut(int paramIndex, Value inValue) {
-      this.paramIndex = paramIndex;
+    ParamValueBasedDirection(int paramIndex, Value inValue) {
+      super(paramIndex);
       this.inValue = inValue;
     }
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+    abstract ParamValueBasedDirection withIndex(int paramIndex);
+  }
 
-      InOut inOut = (InOut)o;
-
-      if (paramIndex != inOut.paramIndex) return false;
-      if (inValue != inOut.inValue) return false;
-
-      return true;
+  static final class InOut extends ParamValueBasedDirection {
+    InOut(int paramIndex, Value inValue) {
+      super(paramIndex, inValue);
     }
 
     @Override
-    public int hashCode() {
-      int result = paramIndex;
-      result = 31 * result + inValue.ordinal();
-      return result;
+    InOut withIndex(int paramIndex) {
+      return new InOut(paramIndex, inValue);
+    }
+
+    @Override
+    int asInt() {
+      return super.asInt() + IN_OUT_OFFSET + inValue.ordinal();
     }
 
     @Override
     public String toString() {
       return "InOut " + paramIndex + " " + inValue.toString();
     }
-
-    public int paramId() {
-      return paramIndex;
-    }
-
-    public int valueId() {
-      return inValue.ordinal();
-    }
   }
 
-  Direction Out = new Direction() {
-    @Override
-    public String toString() {
-      return "Out";
+  static final class InThrow extends ParamValueBasedDirection {
+    InThrow(int paramIndex, Value inValue) {
+      super(paramIndex, inValue);
     }
 
     @Override
-    public int hashCode() {
-      return -1;
-    }
-  };
-
-  Direction NullableOut = new Direction() {
-    @Override
-    public String toString() {
-      return "NullableOut";
+    InThrow withIndex(int paramIndex) {
+      return new InThrow(paramIndex, inValue);
     }
 
     @Override
-    public int hashCode() {
-      return -2;
-    }
-  };
-
-  Direction Pure = new Direction() {
-    @Override
-    public int hashCode() {
-      return -3;
+    int asInt() {
+      return super.asInt() + IN_THROW_OFFSET + inValue.ordinal();
     }
 
     @Override
     public String toString() {
-      return "Pure";
+      return "InThrow " + paramIndex + " " + inValue.toString();
     }
-  };
+  }
 }
+

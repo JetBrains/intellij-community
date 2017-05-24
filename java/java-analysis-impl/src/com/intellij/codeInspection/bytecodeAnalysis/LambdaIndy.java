@@ -27,10 +27,6 @@ import java.util.function.Function;
 
 import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
-enum Value {
-  Bot, NotNull, Null, True, False, Pure, Top
-}
-
 final class LambdaIndy {
   private static final String LAMBDA_METAFACTORY_CLASS = "java/lang/invoke/LambdaMetafactory";
   private static final String LAMBDA_METAFACTORY_METHOD = "metafactory";

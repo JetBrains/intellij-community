@@ -15,13 +15,15 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +116,7 @@ public class BytecodeAnalysisConverter {
       }
       hResult = new HEffects(hEffects);
     }
-    return new DirectionResultPair(mkDirectionKey(equation.id.direction), hResult);
+    return new DirectionResultPair(equation.id.direction.asInt(), hResult);
   }
 
   /**
@@ -129,7 +131,7 @@ public class BytecodeAnalysisConverter {
     byte[] digest = new byte[HASH_SIZE];
     System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
     System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HKey(digest, mkDirectionKey(key.direction), key.stable, key.negated);
+    return new HKey(digest, key.direction.asInt(), key.stable, key.negated);
   }
 
   /**
@@ -153,7 +155,7 @@ public class BytecodeAnalysisConverter {
     byte[] digest = new byte[HASH_SIZE];
     System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
     System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HKey(digest, mkDirectionKey(direction), true, false);
+    return new HKey(digest, direction.asInt(), true, false);
   }
 
   @Nullable
@@ -272,7 +274,7 @@ public class BytecodeAnalysisConverter {
         return descriptor(psiClass, dimensions, true);
       }
       else {
-        LOG.debug("resolve was null for " + ((PsiClassType)psiType).getClassName());
+        LOG.debug("resolve was null for " + psiType.getCanonicalText());
         return null;
       }
     }
@@ -315,79 +317,6 @@ public class BytecodeAnalysisConverter {
 
 
   /**
-   * Converts Direction object to int.
-   *
-   * 0 - Out
-   * 1 - NullableOut
-   * 2 - Pure
-   *
-   * 3 - 0-th NOT_NULL
-   * 4 - 0-th NULLABLE
-   * ...
-   *
-   * 11 - 1-st NOT_NULL
-   * 12 - 1-st NULLABLE
-   *
-   * @param dir direction of analysis
-   * @return unique int for direction
-   */
-  static int mkDirectionKey(Direction dir) {
-    if (dir == Out) {
-      return 0;
-    }
-    else if (dir == NullableOut) {
-      return 1;
-    }
-    else if (dir == Pure) {
-      return 2;
-    }
-    else if (dir instanceof In) {
-      In in = (In)dir;
-      // nullity mask is 0/1
-      return 3 + 8 * in.paramId() + in.nullityMask;
-    }
-    else {
-      // valueId is [1-5]
-      InOut inOut = (InOut)dir;
-      return 3 + 8 * inOut.paramId() + 2 + inOut.valueId();
-    }
-  }
-
-  /**
-   * Converts int to Direction object.
-   *
-   * @param  directionKey int representation of direction
-   * @return Direction object
-   * @see    #mkDirectionKey(Direction)
-   */
-  @NotNull
-  static Direction extractDirection(int directionKey) {
-    if (directionKey == 0) {
-      return Out;
-    }
-    else if (directionKey == 1) {
-      return NullableOut;
-    }
-    else if (directionKey == 2) {
-      return Pure;
-    }
-    else {
-      int paramKey = directionKey - 3;
-      int paramId = paramKey / 8;
-      // shifting first 3 values - now we have key [0 - 7]
-      int subDirectionId = paramKey % 8;
-      // 0 - 1 - @NotNull, @Nullable, parameter
-      if (subDirectionId <= 1) {
-        return new In(paramId, subDirectionId);
-      }
-      else {
-        int valueId = subDirectionId - 2;
-        return new InOut(paramId, Value.values()[valueId]);
-      }
-    }
-  }
-
-  /**
    * Given a PSI method and its primary HKey enumerate all contract keys for it.
    *
    * @param psiMethod psi method
@@ -401,8 +330,15 @@ public class BytecodeAnalysisConverter {
     keys.add(primaryKey);
     for (int i = 0; i < parameters.length; i++) {
       if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
-        keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.NotNull))));
-        keys.add(primaryKey.updateDirection(mkDirectionKey(new InOut(i, Value.Null))));
+        keys.add(primaryKey.withDirection(new InOut(i, Value.NotNull)));
+        keys.add(primaryKey.withDirection(new InOut(i, Value.Null)));
+        keys.add(primaryKey.withDirection(new InThrow(i, Value.NotNull)));
+        keys.add(primaryKey.withDirection(new InThrow(i, Value.Null)));
+      } else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
+        keys.add(primaryKey.withDirection(new InOut(i, Value.True)));
+        keys.add(primaryKey.withDirection(new InOut(i, Value.False)));
+        keys.add(primaryKey.withDirection(new InThrow(i, Value.True)));
+        keys.add(primaryKey.withDirection(new InThrow(i, Value.False)));
       }
     }
     return keys;
@@ -417,7 +353,7 @@ public class BytecodeAnalysisConverter {
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
   public static void addMethodAnnotations(@NotNull Map<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
-    List<String> contractClauses = new ArrayList<>(arity * 2);
+    List<StandardMethodContract> contractClauses = new ArrayList<>();
     Set<HKey> notNulls = methodAnnotations.notNulls;
     Set<HKey> pures = methodAnnotations.pures;
     Map<HKey, String> contracts = methodAnnotations.contractsValues;
@@ -425,11 +361,11 @@ public class BytecodeAnalysisConverter {
     for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot) {
+      if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
         continue;
       }
       HKey key = entry.getKey().mkStable();
-      Direction direction = extractDirection(key.dirKey);
+      Direction direction = key.getDirection();
       HKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
@@ -440,20 +376,68 @@ public class BytecodeAnalysisConverter {
       else if (value == Value.Pure && direction == Pure) {
         pures.add(methodKey);
       }
-      else if (direction instanceof InOut) {
-        contractClauses.add(contractElement(arity, (InOut)direction, value));
+      else if (direction instanceof ParamValueBasedDirection) {
+        contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, value));
       }
     }
 
+    // no contract clauses for @NotNull methods
     if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
-      // no contract clauses for @NotNull methods
-      Collections.sort(contractClauses);
-      StringBuilder sb = new StringBuilder("\"");
-      StringUtil.join(contractClauses, ";", sb);
-      sb.append('"');
-      contracts.put(methodKey, sb.toString().intern());
+      Map<Boolean, List<StandardMethodContract>> partition =
+        StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue() == ValueConstraint.THROW_EXCEPTION);
+      List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));
+      List<StandardMethodContract> nonFailingContracts = squashContracts(partition.get(false));
+      // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
+      // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
+      if(nonFailingContracts.size() == 1) {
+        StandardMethodContract contract = nonFailingContracts.get(0);
+        if(contract.getReturnValue() == ValueConstraint.NOT_NULL_VALUE && contract.isTrivial()) {
+          nonFailingContracts = Collections.emptyList();
+          notNulls.add(methodKey);
+        }
+      }
+      // Failing contracts go first
+      String result = StreamEx.of(failingContracts, nonFailingContracts)
+        .flatMap(list -> list.stream()
+          .map(Object::toString)
+          .map(str -> str.replace(" ", "")) // for compatibility with existing tests
+          .sorted())
+        .joining(";");
+      if(!result.isEmpty()) {
+        contracts.put(methodKey, '"'+result+'"');
+      }
     }
 
+  }
+
+  @NotNull
+  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
+    // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
+    // then trivial contract should be used like "_,_->true"
+    StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
+      if (c1.getReturnValue() != c2.getReturnValue()) return null;
+      int idx = -1;
+      for (int i = 0; i < c1.arguments.length; i++) {
+        ValueConstraint left = c1.arguments[i];
+        ValueConstraint right = c2.arguments[i];
+        if(left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
+        if(idx >= 0) return null;
+        if(left == ValueConstraint.NOT_NULL_VALUE && right == ValueConstraint.NULL_VALUE ||
+           left == ValueConstraint.NULL_VALUE && right == ValueConstraint.NOT_NULL_VALUE ||
+           left == ValueConstraint.TRUE_VALUE && right == ValueConstraint.FALSE_VALUE ||
+           left == ValueConstraint.FALSE_VALUE && right == ValueConstraint.TRUE_VALUE) {
+          idx = i;
+        } else {
+          return null;
+        }
+      }
+      return c1;
+    }).nonNull().findFirst().orElse(null);
+    if(soleContract != null) {
+      Arrays.fill(soleContract.arguments, ValueConstraint.ANY_VALUE);
+      contractClauses = Collections.singletonList(soleContract);
+    }
+    return contractClauses;
   }
 
   public static void addEffectAnnotations(Map<HKey, Set<HEffectQuantum>> puritySolutions,
@@ -474,31 +458,11 @@ public class BytecodeAnalysisConverter {
     }
   }
 
-  private static String contractValueString(@NotNull Value v) {
-    switch (v) {
-      case False: return "false";
-      case True: return "true";
-      case NotNull: return "!null";
-      case Null: return "null";
-      default: return "_";
-    }
-  }
-
-  private static String contractElement(int arity, InOut inOut, Value value) {
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < arity; i++) {
-      Value currentValue = Value.Top;
-      if (i == inOut.paramIndex) {
-        currentValue = inOut.inValue;
-      }
-      if (i > 0) {
-        sb.append(',');
-      }
-      sb.append(contractValueString(currentValue));
-    }
-    sb.append("->");
-    sb.append(contractValueString(value));
-    return sb.toString();
+  private static StandardMethodContract contractElement(int arity, ParamValueBasedDirection inOut, Value value) {
+    final ValueConstraint[] constraints = new ValueConstraint[arity];
+    Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
+    constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
+    return new StandardMethodContract(constraints, value.toValueConstraint());
   }
 
 }

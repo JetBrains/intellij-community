@@ -30,9 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.In;
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
-
 class AbstractValues {
   static final class ParamValue extends BasicValue {
     ParamValue(Type tp) {
@@ -76,6 +73,15 @@ class AbstractValues {
     CallResultValue(Type tp, Set<Key> inters) {
       super(tp);
       this.inters = inters;
+    }
+  }
+
+  static final class NthParamValue extends BasicValue {
+    final int n;
+
+    public NthParamValue(Type type, int n) {
+      super(type);
+      this.n = n;
     }
   }
 
@@ -272,12 +278,11 @@ abstract class Analysis<Res> {
     }
     for (int i = 0; i < args.length; i++) {
       BasicValue value;
-      if (direction instanceof InOut && ((InOut)direction).paramIndex == i ||
-          direction instanceof In && ((In)direction).paramIndex == i) {
+      if (direction instanceof Direction.ParamIdBasedDirection && ((Direction.ParamIdBasedDirection)direction).paramIndex == i) {
         value = new AbstractValues.ParamValue(args[i]);
       }
       else {
-        value = new BasicValue(args[i]);
+        value = new AbstractValues.NthParamValue(args[i], i);
       }
       frame.setLocal(local++, value);
       if (args[i].getSize() == 2) {
