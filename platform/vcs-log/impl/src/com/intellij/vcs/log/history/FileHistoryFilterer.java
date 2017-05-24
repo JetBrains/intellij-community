@@ -79,9 +79,8 @@ class FileHistoryFilterer extends VcsLogFilterer {
 
     IndexDataGetter.FileNamesData namesData = ((FilteredByFileResult)filterResult).fileNamesData;
     Map<Integer, FilePath> pathsMap = null;
-    if (namesData.hasRenames() && visibleGraph.getVisibleCommitCount() > 0) {
+    if (visibleGraph.getVisibleCommitCount() > 0) {
       if (visibleGraph instanceof VisibleGraphImpl) {
-
         int row = getCurrentRow(dataPack, visibleGraph, namesData);
         if (row >= 0) {
           FileHistoryRefiner refiner = new FileHistoryRefiner((VisibleGraphImpl)visibleGraph, namesData);
@@ -191,8 +190,13 @@ class FileHistoryFilterer extends VcsLogFilterer {
     }
 
     public boolean refine(int row, @NotNull FilePath startPath) {
-      myPaths.push(startPath);
-      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getLinearGraph()), row, this);
+      if (myNamesData.hasRenames()) {
+        myPaths.push(startPath);
+        DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(myVisibleGraph.getLinearGraph()), row, this);
+      }
+      else {
+        myPathsForCommits.putAll(myNamesData.buildPathsMap());
+      }
 
       for (int commit : myPathsForCommits.keySet()) {
         FilePath path = myPathsForCommits.get(commit);
