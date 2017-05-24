@@ -324,6 +324,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
     myMetaInfo.clear();
     Ref<Float> fontScale = Ref.create();
+    boolean clearEditorFonts = true;
+    boolean clearConsoleFonts = true;
     for (Element childNode : node.getChildren()) {
       String childName = childNode.getName();
       switch (childName) {
@@ -331,10 +333,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           readSettings(childNode, isDefault, fontScale);
           break;
         case EDITOR_FONT:
-          myFontPreferences = readFontSettings(childNode, isDefault, fontScale.get(), myFontPreferences.getLineSpacing());
+          readFontSettings(ensureEditableFontPreferences(), childNode, isDefault, fontScale.get(), clearEditorFonts);
+          clearEditorFonts = false;
           break;
         case CONSOLE_FONT:
-          myConsoleFontPreferences = readFontSettings(childNode, isDefault, fontScale.get(), myConsoleFontPreferences.getLineSpacing());
+          readFontSettings(ensureEditableConsoleFontPreferences(), childNode, isDefault, fontScale.get(), clearConsoleFonts);
+          clearConsoleFonts = false;
           break;
         case COLORS_ELEMENT:
           readColors(childNode);
@@ -510,12 +514,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return UISettings.restoreFontSize(intSize, fontScale);
   }
 
-  private FontPreferencesImpl readFontSettings(@NotNull Element element,
-                                               boolean isDefaultScheme,
-                                               @Nullable Float fontScale,
-                                               float lineSpacing) {
-    FontPreferencesImpl preferences = new FontPreferencesImpl();
-    preferences.setChangeListener(() -> initFonts());
+  private void readFontSettings(@NotNull ModifiableFontPreferences preferences,
+                                @NotNull Element element,
+                                boolean isDefaultScheme,
+                                @Nullable Float fontScale,
+                                boolean clearFonts) {
+    if (clearFonts) preferences.clearFonts();
     List children = element.getChildren(OPTION_ELEMENT);
     String fontFamily = null;
     int size = -1;
@@ -534,8 +538,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     else if (fontFamily != null) {
       preferences.addFontFamily(fontFamily);
     }
-    preferences.setLineSpacing(lineSpacing);
-    return preferences;
   }
 
   public void writeExternal(Element parentNode) {
