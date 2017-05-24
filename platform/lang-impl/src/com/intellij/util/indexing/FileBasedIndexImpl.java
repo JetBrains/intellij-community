@@ -1364,8 +1364,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private void cleanupMemoryStorage() {
     myLastIndexedDocStamps.clear();
-    waitUntilIndicesAreInitialized();
-    IndexConfiguration state = getState();
+    IndexConfiguration state = myState;
+    if (state == null) {
+      // avoid waiting for end of indices initialization (IDEA-173382)
+      // in memory content will appear on indexing (in read action) and here is event dispatch (write context)
+      return;
+    }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
