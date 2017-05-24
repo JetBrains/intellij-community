@@ -275,7 +275,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
-    if (myDoLogCachesUpdate) LOG.debug(new Throwable("sync roots"));
+    if (myDoLogCachesUpdate || LOG.isDebugEnabled()) LOG.debug(new Throwable("sync roots"));
     else if (!ApplicationManager.getApplication().isUnitTestMode()) LOG.info("project roots have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
