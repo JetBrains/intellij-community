@@ -62,7 +62,7 @@ public class JUnitForkedSplitter extends ForkedSplitter {
                                      Object rootDescription) throws IOException {
     File tempFile = File.createTempFile("idea_junit", ".tmp");
     tempFile.deleteOnExit();
-    JUnitStarter.printClassesList(classNames, packageName + ", working directory: \'" + workingDir + "\'", "", "", tempFile);
+    JUnitStarter.printClassesList(classNames, packageName, "", "", tempFile);
     final List childArgs = new ArrayList();
     childArgs.add("@" + tempFile.getAbsolutePath());
     childArgs.addAll(myNewArgs);
