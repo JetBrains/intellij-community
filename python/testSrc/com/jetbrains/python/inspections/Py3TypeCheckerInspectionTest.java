@@ -250,4 +250,9 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   public void testInitializingTypingNamedTuple() {
     doTest();
   }
+
+  // PY-24287
+  public void testPromotingBytearrayToBytes() {
+    doTest();
+  }
 }
