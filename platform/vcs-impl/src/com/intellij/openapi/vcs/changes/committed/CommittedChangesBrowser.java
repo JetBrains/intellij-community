@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
@@ -86,7 +87,7 @@ public class CommittedChangesBrowser extends JPanel {
     myCommitMessageArea = new JEditorPane(UIUtil.HTML_MIME, "");
     myCommitMessageArea.setBackground(UIUtil.getComboBoxDisabledBackground());
     myCommitMessageArea.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
-    myCommitMessageArea.setPreferredSize(new Dimension(150, 100));
+    myCommitMessageArea.setPreferredSize(new JBDimension(150, 100));
     myCommitMessageArea.setEditable(false);
 
     JPanel commitPanel = new JPanel(new BorderLayout());

@@ -49,6 +49,7 @@ import com.intellij.ui.SplitterWithSecondHideable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -1011,7 +1012,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     @Override
     public Dimension getPreferredSize() {
       // we don't want to be squeezed to one line
-      return new Dimension(400, 120);
+      return new JBDimension(400, 120);
     }
   }
 
