@@ -23,6 +23,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.stream.Stream;
+
 /**
  * @author Maxim.Mossienko on 11/10/2016.
  */
@@ -77,8 +79,12 @@ public class VfsEventsMerger {
     return !myChangeInfos.isEmpty();
   }
 
-  public int getApproximateChangesCount() {
+  int getApproximateChangesCount() {
     return myChangeInfos.size();
+  }
+
+  Stream<String> dumpChangedFilePaths() {
+    return myChangeInfos.values().stream().map(ci -> ci.getFile().getPath());
   }
 
   private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();

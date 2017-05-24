@@ -678,4 +678,17 @@ public class JDOMUtil {
   public static boolean isEmpty(@Nullable Element element, int attributeCount) {
     return element == null || (element.getAttributes().size() == attributeCount && element.getContent().isEmpty());
   }
+
+  public static void merge(@NotNull Element to, @NotNull Element from) {
+    for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
+      Element configuration = iterator.next();
+      iterator.remove();
+      to.addContent(configuration);
+    }
+    for (Iterator<Attribute> iterator = from.getAttributes().iterator(); iterator.hasNext(); ) {
+      Attribute attribute = iterator.next();
+      iterator.remove();
+      to.setAttribute(attribute);
+    }
+  }
 }

@@ -19,6 +19,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -127,10 +128,24 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
     return new DumbModeTask(project.getComponent(FileBasedIndexProjectHandler.class)) {
       @Override
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
-        final Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        long start = System.currentTimeMillis();
+        Collection<VirtualFile> files = index.getFilesToUpdate(project);
+        long calcDuration = System.currentTimeMillis() - start;
+
         indicator.setIndeterminate(false);
         indicator.setText(IdeBundle.message("progress.indexing.updating"));
-        reindexRefreshedFiles(indicator, files, project, index);
+        
+        LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + calcDuration + "ms");
+        if (!files.isEmpty()) {
+          PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+          reindexRefreshedFiles(indicator, files, project, index);
+          snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
+        }
+      }
+
+      @Override
+      public String toString() {
+        return getClass().getName() + "[" + index.dumpSomeChangedFiles() + "]";
       }
     };
   }

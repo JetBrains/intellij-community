@@ -43,7 +43,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
@@ -810,7 +810,10 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       final Object o = unwrapValue(getValue());
       long currentStamp = -1;
       if (o instanceof PsiElement) {
-        currentStamp = ((PsiElement)o).getContainingFile().getModificationStamp();
+        PsiFile file = ((PsiElement)o).getContainingFile();
+        if (file != null) {
+          currentStamp = file.getModificationStamp();
+        }
       } else if (o instanceof ModificationTracker) {
         currentStamp = ((ModificationTracker)o).getModificationCount();
       }

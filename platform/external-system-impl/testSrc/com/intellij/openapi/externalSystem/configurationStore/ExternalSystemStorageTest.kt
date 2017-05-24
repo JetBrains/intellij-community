@@ -16,10 +16,10 @@
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.ESCAPED_MODULE_DIR
-import com.intellij.configurationStore.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.configurationStore.createModule
 import com.intellij.configurationStore.useAndDispose
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
+import com.intellij.openapi.project.IS_EXTERNAL_STORAGE_ENABLED
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.testFramework.*

@@ -63,18 +63,15 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void clear() {
-    myEffectiveFontFamilies.clear();
-    myRealFontFamilies.clear();
     myFontSizes.clear();
-    if (myChangeListener != null) {
-      myChangeListener.run();
-    }
+    clearFonts();
   }
 
   @Override
   public void clearFonts() {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
+    myUseLigatures = false;
     if (myChangeListener != null) {
       myChangeListener.run();
     }

@@ -32,6 +32,7 @@ import com.intellij.openapi.module.impl.ModuleEx;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.WatchedRootsProvider;
@@ -223,6 +224,10 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       ContainerUtil.addIfNotNull(flat, ProjectKt.getStateStore(myProject).getWorkspaceFilePath());
     }
 
+    for (AdditionalLibraryRootsProvider extension : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME, myProject)) {
+      recursive.addAll(ContainerUtil.map(extension.getRootsToWatch(), VirtualFile::getPath));
+    }
+
     for (WatchedRootsProvider extension : Extensions.getExtensions(WatchedRootsProvider.EP_NAME, myProject)) {
       recursive.addAll(extension.getRootsToWatch());
     }
@@ -270,7 +275,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   protected void doSynchronizeRoots() {
     if (!myStartupActivityPerformed) return;
 
-    if (myDoLogCachesUpdate) LOG.debug(new Throwable("sync roots"));
+    if (myDoLogCachesUpdate || LOG.isDebugEnabled()) LOG.debug(new Throwable("sync roots"));
     else if (!ApplicationManager.getApplication().isUnitTestMode()) LOG.info("project roots have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
