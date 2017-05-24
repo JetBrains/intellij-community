@@ -93,7 +93,7 @@ public final class SemVer implements Comparable<SemVer> {
   }
 
   @Nullable
-  public static SemVer parseFromText(String text) {
+  public static SemVer parseFromText(@Nullable String text) {
     if (text != null) {
       int majorEndIdx = text.indexOf('.');
       if (majorEndIdx >= 0) {
