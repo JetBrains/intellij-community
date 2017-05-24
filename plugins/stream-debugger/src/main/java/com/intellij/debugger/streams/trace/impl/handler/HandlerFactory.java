@@ -45,7 +45,12 @@ public class HandlerFactory {
 
   @NotNull
   public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull TerminatorStreamCall call) {
-
+    switch (call.getName()) {
+      case "allMatch":
+      case "anyMatch":
+      case "noneMatch":
+        return new MatchHandler(call);
+    }
     return new TerminatorHandler(call.getTypeBefore());
   }
 }
