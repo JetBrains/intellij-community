@@ -41,4 +41,16 @@ public class IpnbCodeCellAction extends AnAction {
     }
     filePanel.replaceComponent(selectedCellPanel, codeCell);
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(context);
+    if (editor instanceof IpnbFileEditor) {
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
 }

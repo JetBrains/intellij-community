@@ -31,4 +31,16 @@ public class IpnbAddCellAboveAction extends AnAction {
       }), "Ipnb.createAndAddCell", new Object());
 
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+    final FileEditor editor = IpnbFileEditor.DATA_KEY.getData(context);
+    if (editor != null) {
+      e.getPresentation().setEnabledAndVisible(true);
+    }
+    else {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
 }
