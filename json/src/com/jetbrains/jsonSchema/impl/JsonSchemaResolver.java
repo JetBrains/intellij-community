@@ -47,28 +47,29 @@ public class JsonSchemaResolver {
   }
 
   public MatchResult detailedResolve() {
-    return detailedResolve(false);
+    return detailedResolve(false, false);
   }
 
-  private MatchResult detailedResolve(boolean skipLastExpand) {
-    final JsonSchemaTreeNode node = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition).buildTree(skipLastExpand);
+  private MatchResult detailedResolve(boolean skipLastExpand, boolean literalResolve) {
+    final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition);
+    final JsonSchemaTreeNode node = builder.buildTree(skipLastExpand, literalResolve);
     return MatchResult.zipTree(node);
   }
 
   public Collection<JsonSchemaObject> resolve() {
-    return resolve(false);
+    return resolve(false, false);
   }
 
-  private Collection<JsonSchemaObject> resolve(boolean skipLastExpand) {
-    final MatchResult result = detailedResolve(skipLastExpand);
+  private Collection<JsonSchemaObject> resolve(boolean skipLastExpand, boolean literalResolve) {
+    final MatchResult result = detailedResolve(skipLastExpand, literalResolve);
     final Set<JsonSchemaObject> set = new HashSet<>(result.mySchemas);
     set.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
     return set;
   }
 
   @Nullable
-  public PsiElement findNavigationTarget() {
-    final Collection<JsonSchemaObject> schemas = resolve(true);
+  public PsiElement findNavigationTarget(boolean literalResolve) {
+    final Collection<JsonSchemaObject> schemas = resolve(true, literalResolve);
 
     return schemas.stream().filter(schema -> schema.getJsonObject().isValid())
       .findFirst()

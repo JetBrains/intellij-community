@@ -50,7 +50,7 @@ public class JsonSchemaVariantsTreeBuilder {
     myPosition = ContainerUtil.notNullize(position);
   }
 
-  public JsonSchemaTreeNode buildTree(boolean skipLastExpand) {
+  public JsonSchemaTreeNode buildTree(boolean skipLastExpand, boolean literalResolve) {
     final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
     expandChildSchema(root, mySchema);
     // set root's position since this children are just variants of root
@@ -67,6 +67,7 @@ public class JsonSchemaVariantsTreeBuilder {
         node.nothingChild();
         continue;
       }
+      if (literalResolve) step.myLiteralResolve = true;
       final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), !myIsName);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
@@ -385,6 +386,7 @@ public class JsonSchemaVariantsTreeBuilder {
   public static class Step {
     @Nullable private final String myName;
     private final int myIdx;
+    private boolean myLiteralResolve;
 
     private Step(@Nullable String name, int idx) {
       myName = name;
@@ -435,7 +437,8 @@ public class JsonSchemaVariantsTreeBuilder {
     private Pair<ThreeState, JsonSchemaObject> propertyStep(@NotNull JsonSchemaObject parent,
                                                             boolean acceptAdditionalPropertiesSchemas) {
       assert myName != null;
-      if (!isInMainSchema(parent) && JsonSchemaObject.DEFINITIONS.equals(myName) && parent.getDefinitionsMap() != null) {
+      if (JsonSchemaObject.DEFINITIONS.equals(myName) &&
+          parent.getDefinitionsMap() != null && (!isInMainSchema(parent) || myLiteralResolve)) {
         final JsonObject definitions = parent.getDefinitions();
         if (definitions == null) return Pair.create(ThreeState.NO, null);
         final JsonSchemaObject object = new JsonSchemaObject(definitions);

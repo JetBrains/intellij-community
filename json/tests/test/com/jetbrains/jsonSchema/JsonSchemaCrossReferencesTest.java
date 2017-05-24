@@ -16,9 +16,7 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.AreaPicoContainer;
@@ -26,7 +24,12 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
+import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor;
@@ -574,6 +577,41 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertEquals("[1,4,8]", anEnum.getValue().getText());
       }
     });
+  }
+
+  @CanChangeDocumentDuringHighlighting
+  public void testNavigateToRefInsideMainSchema() throws Exception {
+    final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+    final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
+    Assert.assertEquals(1, providers.size());
+    final VirtualFile mainSchema = providers.get(0).getSchemaFile();
+    assertNotNull(mainSchema);
+    assertTrue(service.isSchemaFile(mainSchema));
+
+    final PsiFile psi = PsiManager.getInstance(myProject).findFile(mainSchema);
+    Assert.assertNotNull(psi);
+    Assert.assertTrue(psi instanceof JsonFile);
+    final JsonValue top = ((JsonFile)psi).getTopLevelValue();
+    final JsonObject obj = ObjectUtils.tryCast(top, JsonObject.class);
+    Assert.assertNotNull(obj);
+    final JsonProperty properties = obj.findProperty("properties");
+    final JsonObject propObj = ObjectUtils.tryCast(properties.getValue(), JsonObject.class);
+    final JsonProperty maxLength = propObj.findProperty("maxLength");
+    final JsonObject value = ObjectUtils.tryCast(maxLength.getValue(), JsonObject.class);
+    Assert.assertNotNull(value);
+    final JsonProperty ref = value.findProperty("$ref");
+    Assert.assertNotNull(ref);
+    final JsonStringLiteral literal = ObjectUtils.tryCast(ref.getValue(), JsonStringLiteral.class);
+    Assert.assertNotNull(literal);
+
+    final PsiReference reference = psi.findReferenceAt(literal.getTextRange().getStartOffset() + 1);
+    Assert.assertNotNull(reference);
+    Assert.assertEquals("#/definitions/positiveInteger", reference.getCanonicalText());
+    final PsiElement resolve = reference.resolve();
+    Assert.assertNotNull(resolve);
+    Assert.assertEquals("\"positiveInteger\"", resolve.getText());
+    Assert.assertTrue(resolve.getParent() instanceof JsonProperty);
+    Assert.assertEquals("positiveInteger", ((JsonProperty) resolve.getParent()).getName());
   }
 
   @CanChangeDocumentDuringHighlighting
