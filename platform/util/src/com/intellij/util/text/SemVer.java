@@ -70,6 +70,12 @@ public final class SemVer implements Comparable<SemVer> {
     return myPatch - other.myPatch;
   }
 
+  public boolean isGreaterOrEqualThan(int major, int minor, int patch) {
+    if (myMajor != major) return myMajor > major;
+    if (myMinor != minor) return myMinor > minor;
+    return myPatch >= patch;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
