@@ -872,6 +872,7 @@ public class ExpressionUtils {
 
   @Contract("null, _ -> false; _, null -> false")
   public static boolean isReferenceTo(PsiExpression expression, PsiVariable variable) {
+    if (variable == null) return false;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     return expression instanceof PsiReferenceExpression && ((PsiReferenceExpression)expression).isReferenceTo(variable);
   }
