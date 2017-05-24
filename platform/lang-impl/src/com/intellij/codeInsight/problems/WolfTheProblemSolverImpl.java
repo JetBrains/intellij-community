@@ -62,6 +62,7 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private final List<ProblemListener> myProblemListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Condition<VirtualFile>> myFilters = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFiltersLoaded = false;
+  private boolean myEnableHightlightingPass = true;
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     @Override
     public void problemsAppeared(@NotNull VirtualFile file) {
@@ -84,6 +85,14 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
       }
     }
   };
+
+  public void setEnableHightlightingPass(boolean enableHightlightingPass) {
+    myEnableHightlightingPass = enableHightlightingPass;
+  }
+
+  public boolean getEnableHightlightingPass() {
+    return myEnableHightlightingPass;
+  }
 
   private void doRemove(@NotNull VirtualFile problemFile) {
     ProblemFileInfo old;
@@ -242,8 +251,8 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   // returns true if car has been cleaned
-  private boolean orderVincentToCleanTheCar(@NotNull final VirtualFile file,
-                                            @NotNull final ProgressIndicator progressIndicator) throws ProcessCanceledException {
+  private boolean orderVincentToCleanTheCar(@NotNull final VirtualFile file, @NotNull final ProgressIndicator progressIndicator)
+    throws ProcessCanceledException {
     if (!isToBeHighlighted(file)) {
       clearProblems(file);
       return true; // file is going to be red waved no more
@@ -262,8 +271,9 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
     final AtomicReference<HighlightInfo> error = new AtomicReference<>();
     final AtomicBoolean hasErrorElement = new AtomicBoolean();
     try {
-      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(),
-                                                                 false, new ProperTextRange(0, document.getTextLength()), null, HighlightInfoProcessor.getEmpty()) {
+      GeneralHighlightingPass pass = new GeneralHighlightingPass(myProject, psiFile, document, 0, document.getTextLength(), false,
+                                                                 new ProperTextRange(0, document.getTextLength()), null,
+                                                                 HighlightInfoProcessor.getEmpty()) {
         @Override
         protected HighlightInfoHolder createInfoHolder(@NotNull final PsiFile file) {
           return new HighlightInfoHolder(file) {
