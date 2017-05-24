@@ -59,6 +59,7 @@ public abstract class ExternalAnnotationsManager {
                                           @Nullable PsiNameValuePair[] value) throws CanceledConfigurationException;
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) { }
 
   // Method used in Kotlin plugin when it is necessary to leave external annotation, but modify its arguments
   public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
