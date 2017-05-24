@@ -52,7 +52,6 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(MethodChainCompletionContributor.class);
   private static final boolean UNIT_TEST_MODE = ApplicationManager.getApplication().isUnitTestMode();
 
-  @SuppressWarnings("unchecked")
   public MethodChainCompletionContributor() {
     ElementPattern<PsiElement> pattern = or(patternForMethodCallArgument(), patternForVariableAssignment());
     extend(CompletionType.SMART, pattern, new CompletionProvider<CompletionParameters>() {
