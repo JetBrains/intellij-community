@@ -980,10 +980,11 @@ public class MavenUtil {
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
     if (mavenProjectsManager.findProject(file) != null) return true;
 
-    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
-    if (psiFile == null) return false;
-
-    return MavenDomUtil.isProjectFile(psiFile);
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile == null) return false;
+      return MavenDomUtil.isProjectFile(psiFile);
+    });
   }
 
   public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @NotNull VirtualFile root) {
