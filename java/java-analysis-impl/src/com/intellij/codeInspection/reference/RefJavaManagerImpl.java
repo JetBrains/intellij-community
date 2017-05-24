@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.reference;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -416,6 +417,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   private class MyJavaElementVisitor extends JavaElementVisitor {
     private final RefJavaUtil myRefUtil = RefJavaUtil.getInstance();
+    private final ExternalAnnotationsManager myExternalAnnotationsManager = ExternalAnnotationsManager.getInstance(myRefManager.getProject());
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -501,18 +503,21 @@ public class RefJavaManagerImpl extends RefJavaManager {
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (Comparing.strEqual(annotation.getQualifiedName(), BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME)) {
-        final PsiModifierListOwner listOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
-        if (listOwner != null) {
-          final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
-          if (element != null) {
-            StringBuilder buf = new StringBuilder();
-            final PsiNameValuePair[] nameValuePairs = annotation.getParameterList().getAttributes();
-            for (PsiNameValuePair nameValuePair : nameValuePairs) {
-              buf.append(",").append(nameValuePair.getText().replaceAll("[{}\"\"]", ""));
-            }
-            if (buf.length() > 0) {
-              element.addSuppression(buf.substring(1));
-            }
+        retrieveSuppressions(annotation, PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class));
+      }
+    }
+
+    private void retrieveSuppressions(PsiAnnotation annotation, PsiModifierListOwner listOwner) {
+      if (listOwner != null) {
+        final RefElementImpl element = (RefElementImpl)myRefManager.getReference(listOwner);
+        if (element != null) {
+          StringBuilder buf = new StringBuilder();
+          final PsiNameValuePair[] nameValuePairs = annotation.getParameterList().getAttributes();
+          for (PsiNameValuePair nameValuePair : nameValuePairs) {
+            buf.append(",").append(nameValuePair.getText().replaceAll("[{}\"\"]", ""));
+          }
+          if (buf.length() > 0) {
+            element.addSuppression(buf.substring(1));
           }
         }
       }
@@ -570,6 +575,20 @@ public class RefJavaManagerImpl extends RefJavaManager {
       RefElement refElement = myRefManager.getReference(file);
       if (refElement != null) {
         ((RefJavaFileImpl)refElement).buildReferences();
+      }
+    }
+
+    @Override
+    public void visitModifierList(PsiModifierList list) {
+      super.visitModifierList(list);
+      PsiElement parent = list.getParent();
+      if (parent instanceof PsiModifierListOwner) {
+        PsiModifierListOwner listOwner = (PsiModifierListOwner)parent;
+        PsiAnnotation externalAnnotation = myExternalAnnotationsManager.findExternalAnnotation(listOwner, 
+                                                                                               BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME);
+        if (externalAnnotation != null) {
+          retrieveSuppressions(externalAnnotation, listOwner);
+        }
       }
     }
   }
