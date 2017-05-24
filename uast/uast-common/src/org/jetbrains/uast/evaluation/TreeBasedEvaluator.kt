@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast.evaluation
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
@@ -52,6 +53,10 @@ class TreeBasedEvaluator(
 
     override fun analyze(field: UField, state: UEvaluationState) {
         field.uastInitializer?.accept(this, state)
+    }
+
+    internal fun getCached(expression: UExpression): UValue? {
+        return resultCache[expression]?.value
     }
 
     override fun evaluate(expression: UExpression, state: UEvaluationState?): UValue {
@@ -533,6 +538,8 @@ class TreeBasedEvaluator(
         fun evaluateCondition(inputState: UEvaluationState): UEvaluationInfo =
                 condition?.accept(this, inputState)
                 ?: (if (infinite) UBooleanConstant.True else UUndeterminedValue) to inputState
+
+        ProgressManager.checkCanceled()
 
         var resultInfo = UUndeterminedValue to inputState
         do {

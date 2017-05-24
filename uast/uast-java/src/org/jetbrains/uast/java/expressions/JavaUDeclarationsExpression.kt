@@ -36,4 +36,8 @@ class JavaUDeclarationsExpression(
 
     override val psi: PsiElement?
         get() = null
+
+    override fun equals(other: Any?) = other is JavaUDeclarationsExpression && declarations == other.declarations
+
+    override fun hashCode() = declarations.hashCode()
 }
