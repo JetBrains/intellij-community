@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class TemplateProjectDirectoryGenerator implements DirectoryProjectGenerator<Object> {
+public class TemplateProjectDirectoryGenerator extends DirectoryProjectGenerator<Object> {
   private final LocalArchivedTemplate myTemplate;
   private final ModuleBuilder myModuleBuilder;
 

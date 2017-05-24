@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.platform;
+package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel;
-import com.intellij.util.NullableConsumer;
+import com.intellij.platform.DirectoryProjectGenerator;
 
-public interface CustomStepProjectGenerator {
-  AbstractActionWithPanel createStep(DirectoryProjectGenerator projectGenerator,
-                                     NullableConsumer<? extends AbstractActionWithPanel> callback);
+public interface CustomStepProjectGenerator<T> {
+  AbstractActionWithPanel createStep(DirectoryProjectGenerator<T> projectGenerator,
+                                     AbstractNewProjectStep.AbstractCallback<T> callback);
 }

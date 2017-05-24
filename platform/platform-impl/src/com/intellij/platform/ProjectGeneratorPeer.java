@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,36 +15,27 @@
  */
 package com.intellij.platform;
 
-import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
+import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Dmitry Avdeev
- *         Date: 9/28/12
- */
-public interface ProjectTemplate {
+public interface ProjectGeneratorPeer<T> {
+  @NotNull
+  JComponent getComponent();
 
-  ProjectTemplate[] EMPTY_ARRAY = new ProjectTemplate[0];
+  void buildUI(@NotNull SettingsStep settingsStep);
 
   @NotNull
-  String getName();
+  T getSettings();
 
+  // null if ok
   @Nullable
-  String getDescription();
+  ValidationInfo validate();
 
-  Icon getIcon();
+  boolean isBackgroundJobRunning();
 
-  @NotNull
-  AbstractModuleBuilder createModuleBuilder();
-
-  /**
-   * @return null if ok, error message otherwise
-   */
-  @Deprecated
-  @Nullable
-  ValidationInfo validateSettings();
+  void addSettingsStateListener(@NotNull WebProjectGenerator.SettingsStateListener listener);
 }
