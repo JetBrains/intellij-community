@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -25,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.pyi.PyiFile;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -609,6 +611,7 @@ public class PyTypeChecker {
         subClass.isSubclass(superClass, context) ||
         PyABCUtil.isSubclass(subClass, superClass, context) ||
         isStrUnicodeMatch(subClass, superClass) ||
+        isBytearrayBytesStringMatch(subClass, superClass) ||
         PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
@@ -621,6 +624,19 @@ public class PyTypeChecker {
   private static boolean isStrUnicodeMatch(@NotNull PyClass subClass, @NotNull PyClass superClass) {
     // TODO: Check for subclasses as well
     return PyNames.TYPE_STR.equals(subClass.getName()) && PyNames.TYPE_UNICODE.equals(superClass.getName());
+  }
+
+  private static boolean isBytearrayBytesStringMatch(@NotNull PyClass subClass, @NotNull PyClass superClass) {
+    if (!PyNames.TYPE_BYTEARRAY.equals(subClass.getName())) return false;
+
+    final PsiFile subClassFile = subClass.getContainingFile();
+
+    final boolean isPy2 = subClassFile instanceof PyiFile
+                          ? PyBuiltinCache.getInstance(subClass).getObjectType(PyNames.TYPE_UNICODE) != null
+                          : LanguageLevel.forElement(subClass).isOlderThan(LanguageLevel.PYTHON30);
+
+    final String superClassName = superClass.getName();
+    return isPy2 && PyNames.TYPE_STR.equals(superClassName) || !isPy2 && PyNames.TYPE_BYTES.equals(superClassName);
   }
 
   @Nullable

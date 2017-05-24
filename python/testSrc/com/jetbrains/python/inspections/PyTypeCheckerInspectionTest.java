@@ -412,4 +412,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testMatchingModuleAgainstStructuralType() {
     doMultiFileTest();
   }
+
+  // PY-24287
+  public void testPromotingBytearrayToStrAndUnicode() {
+    doTest();
+  }
 }
