@@ -73,7 +73,7 @@ public class PyDataViewToolWindowFactory implements ToolWindowFactory {
     });
 
     addPythonConsoleListener(project);
-    PyDataViewToggleAction autoResizeAction = new PyDataViewToggleAction("Auto-resize", PyDataView.AUTO_RESIZE) {
+    PyDataViewToggleAction autoResizeAction = new PyDataViewToggleAction("Resize Automatically", PyDataView.AUTO_RESIZE) {
       @Override
       public void setSelected(AnActionEvent e, boolean state) {
         super.setSelected(e, state);

@@ -113,6 +113,7 @@ public class JBTableWithRowHeaders extends JBTable {
         removeMouseListener(l);
       }
       setModel(new DefaultTableModel(0, 1));
+      setPreferredScrollableViewportSize(getPreferredSize());
     }
 
     @NotNull
