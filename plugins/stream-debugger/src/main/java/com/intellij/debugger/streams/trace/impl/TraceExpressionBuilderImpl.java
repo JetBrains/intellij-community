@@ -40,6 +40,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -126,7 +127,8 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
 
     newIntermediateCalls.addAll(terminatorHandler.additionalCallsBefore());
     final GenericType typeBefore = chain.getTerminationCall().getTypeBefore();
-    newIntermediateCalls.add(new IntermediateStreamCallImpl("sequential", "()", typeBefore, typeBefore, TextRange.EMPTY_RANGE));
+    newIntermediateCalls.add(new IntermediateStreamCallImpl("sequential", Collections.emptyList(),
+                                                            typeBefore, typeBefore, TextRange.EMPTY_RANGE));
 
     return new StreamChainImpl(producerCall, newIntermediateCalls, chain.getTerminationCall(), chain.getContext());
   }

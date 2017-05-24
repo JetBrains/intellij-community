@@ -15,21 +15,24 @@
  */
 package com.intellij.debugger.streams.wrapper.impl;
 
+import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public abstract class StreamCallImpl implements StreamCall {
   private final String myName;
-  private final String myArgs;
+  private final List<CallArgument> myArgs;
   private final StreamCallType myType;
   private final TextRange myTextRange;
 
-  StreamCallImpl(@NotNull String name, @NotNull String args, @NotNull StreamCallType type, @NotNull TextRange range) {
+  StreamCallImpl(@NotNull String name, @NotNull List<CallArgument> args, @NotNull StreamCallType type, @NotNull TextRange range) {
     myName = name;
     myArgs = args;
     myType = type;
@@ -50,7 +53,7 @@ public abstract class StreamCallImpl implements StreamCall {
 
   @NotNull
   @Override
-  public String getArguments() {
+  public List<CallArgument> getArguments() {
     return myArgs;
   }
 

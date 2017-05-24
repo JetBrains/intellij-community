@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface CallArgument {
   @NotNull
-  PsiType getType();
+  String getType();
 
   @NotNull
   String getText();

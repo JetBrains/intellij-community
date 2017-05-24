@@ -16,24 +16,23 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.wrapper.CallArgument;
-import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class CallArgumentImpl implements CallArgument {
-  @NotNull private final PsiType myType;
+  @NotNull private final String myType;
   @NotNull private final String myText;
 
-  public CallArgumentImpl(@NotNull PsiType type, @NotNull String text) {
+  public CallArgumentImpl(@NotNull String type, @NotNull String text) {
     myType = type;
     myText = text;
   }
 
   @NotNull
   @Override
-  public PsiType getType() {
+  public String getType() {
     return myType;
   }
 

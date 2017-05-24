@@ -16,10 +16,13 @@
 package com.intellij.debugger.streams.wrapper.impl;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
@@ -30,7 +33,7 @@ public class IntermediateStreamCallImpl extends StreamCallImpl implements Interm
   private final GenericType myTypeAfter;
 
   public IntermediateStreamCallImpl(@NotNull String name,
-                                    @NotNull String args,
+                                    @NotNull List<CallArgument> args,
                                     @NotNull GenericType typeBefore,
                                     @NotNull GenericType typeAfter,
                                     @NotNull TextRange range) {

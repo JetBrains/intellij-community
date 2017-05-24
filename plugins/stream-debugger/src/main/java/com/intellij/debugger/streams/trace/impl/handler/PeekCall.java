@@ -16,20 +16,26 @@
 package com.intellij.debugger.streams.trace.impl.handler;
 
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
+import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamCallType;
+import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.CommonClassNames;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
 public class PeekCall implements IntermediateStreamCall {
-  private final String myLambda;
+  private final List<CallArgument> myLambda;
   private final GenericType myElementType;
 
   public PeekCall(@NotNull String lambda, @NotNull GenericType elementType) {
-    myLambda = lambda;
+    myLambda = Collections.singletonList(new CallArgumentImpl(CommonClassNames.JAVA_LANG_OBJECT, lambda));
     myElementType = elementType;
   }
 
@@ -41,8 +47,8 @@ public class PeekCall implements IntermediateStreamCall {
 
   @NotNull
   @Override
-  public String getArguments() {
-    return String.format("(%s)", myLambda);
+  public List<CallArgument> getArguments() {
+    return myLambda;
   }
 
   @NotNull

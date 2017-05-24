@@ -80,7 +80,8 @@ public class StreamChainImpl implements StreamChain {
 
     while (iterator.hasNext()) {
       final MethodCall call = iterator.next();
-      builder.append(call.getName()).append(call.getArguments());
+      final String args = args2Text(call.getArguments());
+      builder.append(call.getName()).append(args);
       if (iterator.hasNext()) {
         builder.append(TraceExpressionBuilderImpl.LINE_SEPARATOR).append(".");
       }
@@ -122,5 +123,10 @@ public class StreamChainImpl implements StreamChain {
     }
 
     return myTerminator;
+  }
+
+  @NotNull
+  private static String args2Text(@NotNull List<CallArgument> args) {
+    return StreamEx.of(args).map(CallArgument::getText).joining(", ", "(", ")");
   }
 }
