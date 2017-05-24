@@ -18,10 +18,12 @@ package com.intellij.testGuiFramework.cellReader
 import com.intellij.ui.SimpleColoredComponent
 import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.core.BasicRobot
+import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.driver.BasicJTreeCellReader
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
+import java.util.*
 import javax.swing.JLabel
 import javax.swing.JTree
 
@@ -37,24 +39,42 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
     when (cellRendererComponent) {
       is JLabel -> return cellRendererComponent.text
       is SimpleColoredComponent -> return cellRendererComponent.getText()
-      else -> return cellRendererComponent.findLabel()?.text
+      else -> return cellRendererComponent.findText()
     }
   }
 
   private fun SimpleColoredComponent.getText(): String?
     = this.iterator().asSequence().joinToString()
 
-  private fun Component.findLabel(): JLabel? {
+  private fun Component.findText(): String? {
     try {
       assert(this is Container)
-      val label = BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock().finder().find(
-        this as Container) { component -> component is JLabel }
-      assert(label is JLabel)
-      return label as JLabel
+      val container = this as Container
+      val resultList = ArrayList<String>()
+      resultList.addAll(
+        findAllWithRobot(container, JLabel::class.java)
+          .filter { !it.text.isNullOrEmpty() }
+          .map { it.text }
+      )
+      resultList.addAll(
+        findAllWithRobot(container, SimpleColoredComponent::class.java)
+          .filter { !it.getText().isNullOrEmpty() }
+          .map { it.getText()!! }
+      )
+      return resultList.filter { !it.isNullOrEmpty() }.firstOrNull()
     }
     catch (ignored: ComponentLookupException) {
       return null
     }
+  }
+
+  fun <ComponentType : Component> findAllWithRobot(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
+    val robot = BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock()
+    val result = robot.finder().findAll(container, object : GenericTypeMatcher<ComponentType>(clazz) {
+      override fun isMatching(component: ComponentType) = true
+    })
+    robot.cleanUpWithoutDisposingWindows()
+    return result.toList()
   }
 
 }

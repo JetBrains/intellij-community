@@ -94,7 +94,15 @@ class JButtonGenerator : ComponentCodeGenerator<JButton> {
 
 class ActionButtonGenerator : ComponentCodeGenerator<ActionButton> {
   override fun accept(cmp: Component) = cmp is ActionButton
-  override fun generate(cmp: ActionButton, me: MouseEvent, cp: Point) = "actionButton(\"${cmp.action.templatePresentation.text}\").click()"
+  override fun generate(cmp: ActionButton, me: MouseEvent, cp: Point) : String {
+    val text = cmp.action.templatePresentation.text
+    val simpleClassName = cmp.action.javaClass.simpleName
+    val result: String =  if (text.isNullOrEmpty())
+      "actionButtonByClass(\"$simpleClassName\").click()"
+    else
+      "actionButton(\"$text\").click()"
+    return result
+  }
 }
 
 class ActionLinkGenerator : ComponentCodeGenerator<ActionLink> {
@@ -313,43 +321,6 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
   override fun generate(cmp: JFrame, me: MouseEvent, cp: Point) = "ideFrame {"
 }
 
-class MacMessageGenerator : ComponentCodeGenerator<JDialog> {
-
-  override fun priority() = 1
-
-  override fun accept(cmp: Component): Boolean {
-    if (!(Messages.canShowMacSheetPanel() && (cmp as JComponent).rootPane.parent is JDialog)) return false
-    val panel = cmp.rootPane.contentPane as JPanel
-
-    if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing()) {
-      val controller = MessagesFixture.findSheetController(panel)
-      val sheetPanel = field("mySheetPanel").ofType(JPanel::class.java).`in`(controller).get()
-      if (sheetPanel === panel) {
-        return true
-      }
-    }
-    return false
-  }
-
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
-    val panel = cmp.rootPane.contentPane as JPanel
-    val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
-    return "message(\"$title\") {"
-  }
-}
-
-class MessageGenerator : ComponentCodeGenerator<JDialog> {
-
-  override fun priority() = 1
-
-  override fun accept(cmp: Component): Boolean =
-    cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
-
-  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
-    return "message(\"${cmp.title}\") {"
-  }
-}
-
 //**********LOCAL CONTEXT GENERATORS**********
 
 class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
@@ -445,6 +416,47 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
     else "content {"
   }
 
+}
+
+class MacMessageGenerator : LocalContextCodeGenerator<JDialog>() {
+
+  override fun priority() = 2
+
+  private fun acceptMacSheetPanel(cmp: Component): Boolean {
+    if (cmp !is JComponent) return false
+    if (!(Messages.canShowMacSheetPanel() && (cmp as JComponent).rootPane.parent is JDialog)) return false
+    val panel = cmp.rootPane.contentPane as JPanel
+
+    if (panel.javaClass.name.startsWith(SheetController::class.java.name) && panel.isShowing()) {
+      val controller = MessagesFixture.findSheetController(panel)
+      val sheetPanel = field("mySheetPanel").ofType(JPanel::class.java).`in`(controller).get()
+      if (sheetPanel === panel) {
+        return true
+      }
+    }
+    return false
+  }
+
+  override fun acceptor(): (Component) -> Boolean = { component -> acceptMacSheetPanel(component) }
+
+  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
+    val panel = cmp.rootPane.contentPane as JPanel
+    val title = withRobot { robot -> MessagesFixture.getTitle(panel, robot) }
+    return "message(\"$title\") {"
+  }
+}
+
+class MessageGenerator : LocalContextCodeGenerator<JDialog>() {
+
+  override fun priority() = 2
+
+  override fun acceptor(): (Component) -> Boolean = { cmp ->
+    cmp is JDialog && MessageDialogFixture.isMessageDialog(cmp, Ref<DialogWrapper>())
+  }
+
+  override fun generate(cmp: JDialog, me: MouseEvent, cp: Point): String {
+    return "message(\"${cmp.title}\") {"
+  }
 }
 
 class EditorGenerator : LocalContextCodeGenerator<EditorComponentImpl>() {
