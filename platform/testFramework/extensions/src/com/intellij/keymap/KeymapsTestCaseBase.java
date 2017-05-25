@@ -23,6 +23,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.keymap.impl.KeymapImpl;
 import com.intellij.openapi.keymap.impl.MacOSDefaultKeymap;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.KeyStrokeAdapter;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
@@ -285,6 +287,13 @@ public abstract class KeymapsTestCaseBase extends PlatformTestCase {
           }
         }
       }
+    }
+
+    if (SystemInfo.isXWindow) {
+      // hack: add hardcoded shortcut from DefaultKeymapImpl to make keymaps identical under all OS
+      Map<Shortcut, List<String>> defaultKeymap = result.get(KeymapManager.DEFAULT_IDEA_KEYMAP);
+      List<String> actionList = defaultKeymap.computeIfAbsent(new MouseShortcut(MouseEvent.BUTTON2, 0, 1), key -> new ArrayList<>());
+      actionList.add(IdeActions.ACTION_GOTO_DECLARATION);
     }
 
     // remove shortcuts, reused from parent keymap

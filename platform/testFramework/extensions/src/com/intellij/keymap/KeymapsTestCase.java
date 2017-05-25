@@ -97,6 +97,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
     { "control alt I",            "DatabaseView.GenerateScriptIntoConsole", "AutoIndentLines"},
     { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup"},
+    { "button2",                  "EditorPasteFromX11", "GotoDeclaration"}, // False positive: see DefaultKeymapImpl, PasteFromX11Action.update()
     });
     put("Mac OS X 10.5+", new String[][] {
     { "BACK_SPACE",               "$Delete", "EditorBackSpace", "Images.Thumbnails.UpFolder"},
@@ -182,7 +183,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control I",          "ImplementMethods", "QuickImplementations"},
     { "alt F9",                   "ViewBreakpoints", "EditBreakpoint"},
     { "alt MULTIPLY",             "ShowExecutionPoint", "Images.Thumbnails.ToggleRecursive"},
-    { "button2",                  "EditorPasteFromX11", "GotoDeclaration" },
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
