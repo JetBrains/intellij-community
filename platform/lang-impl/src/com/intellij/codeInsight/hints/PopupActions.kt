@@ -71,8 +71,8 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
 
-    val language = file.language.baseLanguage ?: file.language
-    InlayParameterHintsExtension.forLanguage(language) ?: return
+    val fileLanguage = file.language.baseLanguage ?: file.language
+    InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
     
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor) ?: return
@@ -81,8 +81,9 @@ class ShowSettingsWithAddedPattern : AnAction() {
       is HintInfo.OptionInfo -> null
       is HintInfo.MethodInfo -> info.toPattern()
     }
-    
-    val dialog = ParameterNameHintsConfigurable(language, newPreselectedPattern)
+
+    val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
+    val dialog = ParameterNameHintsConfigurable(selectedLanguage, newPreselectedPattern)
     dialog.show()
   }
 }
@@ -114,16 +115,16 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
     val offset = editor.caretModel.offset
 
     val info = getHintInfoFromProvider(offset, file, editor) as? MethodInfo ?: return
-    ParameterNameHintsSettings.getInstance().addIgnorePattern(file.language, info.toPattern())
+    val language = info.language ?: file.language
+
+    ParameterNameHintsSettings.getInstance().addIgnorePattern(language, info.toPattern())
     refreshAllOpenEditors()
-    
-    showHint(project, file, info)
+    showHint(project, language, info)
   }
   
-  private fun showHint(project: Project, file: PsiFile, info: MethodInfo) {
+  private fun showHint(project: Project, language: Language, info: MethodInfo) {
     val methodName = info.getMethodName()
-    
-    val language = file.language
+
     val listener = NotificationListener { notification, event ->
       when (event.description) {
         "settings" -> showSettings(language)
