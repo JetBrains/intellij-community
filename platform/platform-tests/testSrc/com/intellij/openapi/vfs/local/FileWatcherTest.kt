@@ -567,8 +567,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcherEvents.down()
     alarm.cancelAllRequests()
     resetHappened.set(false)
+
+    TimeoutUtil.sleep(50)
     action()
     LOG.debug("** action performed")
+
     watcherEvents.waitFor(timeout)
     watcherEvents.up()
     assumeFalse("reset happened", resetHappened.get())
