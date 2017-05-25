@@ -17,7 +17,7 @@ package com.intellij.openapi.projectRoots;
 
 import org.jetbrains.annotations.NotNull;
 
-@SuppressWarnings("unused")
+@Deprecated
 public class JdkVersionUtil {
   /** @deprecated use {@link JavaSdkVersion#fromVersionString(String)} (to be removed in IDEA 2018) */
   public static JavaSdkVersion getVersion(@NotNull String versionString) {

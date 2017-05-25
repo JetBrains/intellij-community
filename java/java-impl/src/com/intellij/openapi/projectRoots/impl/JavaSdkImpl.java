@@ -87,10 +87,11 @@ public class JavaSdkImpl extends JavaSdk {
         final VirtualFile file = event.getFile();
         if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
           final String filePath = file.getPath();
-          synchronized (myCachedVersionStrings) {
-            for (String sdkHome : myCachedVersionStrings.keySet()) {
+          synchronized (myCachedSdkHomeToVersionString) {
+            for (String sdkHome : myCachedSdkHomeToVersionString.keySet()) {
               if (FileUtil.isAncestor(sdkHome, filePath, false)) {
-                myCachedVersionStrings.remove(sdkHome);
+                myCachedSdkHomeToVersionString.remove(sdkHome);
+                myCachedVersionStringToJavaVersion.clear();
                 break;
               }
             }
@@ -324,15 +325,16 @@ public class JavaSdkImpl extends JavaSdk {
     modificator.addRoot(root, annoType);
   }
 
-  private final Map<String, String> myCachedVersionStrings = Collections.synchronizedMap(new HashMap<String, String>());
+  private final Map<String, String> myCachedSdkHomeToVersionString = Collections.synchronizedMap(new HashMap<>());
+  private final Map<String, JavaSdkVersion> myCachedVersionStringToJavaVersion = Collections.synchronizedMap(new HashMap<>());
 
   @Override
   public final String getVersionString(String sdkHome) {
-    String versionString = myCachedVersionStrings.get(sdkHome);
+    String versionString = myCachedSdkHomeToVersionString.get(sdkHome);
     if (versionString == null) {
       versionString = SdkVersionUtil.detectJdkVersion(sdkHome);
       if (!StringUtil.isEmpty(versionString)) {
-        myCachedVersionStrings.put(sdkHome, versionString);
+        myCachedSdkHomeToVersionString.put(sdkHome, versionString);
       }
     }
     return versionString;
@@ -340,9 +342,9 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    String version = sdk.getVersionString();
-    if (version == null) return null;
-    return JavaSdkVersion.fromVersionString(version);
+    String versionString = sdk.getVersionString();
+    return versionString == null ? null :
+           myCachedVersionStringToJavaVersion.computeIfAbsent(versionString, JavaSdkVersion::fromVersionString);
   }
 
   @Override

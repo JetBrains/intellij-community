@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class JavaSdkVersionUtil {
   public static boolean isAtLeast(@NotNull PsiElement element, @NotNull JavaSdkVersion minVersion) {
@@ -29,13 +30,15 @@ public class JavaSdkVersionUtil {
 
   public static JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    JavaSdkVersion version = null;
     if (module != null) {
       final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdk) {
-        String version = sdk.getVersionString();
-        return version == null ? null : JavaSdkVersion.fromVersionString(version);
-      }
+      version = getJavaSdkVersion(sdk);
     }
-    return null;
+    return version;
+  }
+
+  public static JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
+    return sdk != null && sdk.getSdkType() instanceof JavaSdk ? ((JavaSdk)sdk.getSdkType()).getVersion(sdk) : null;
   }
 }
