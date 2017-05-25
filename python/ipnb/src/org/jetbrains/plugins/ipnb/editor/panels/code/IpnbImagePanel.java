@@ -49,7 +49,13 @@ public class IpnbImagePanel extends IpnbCodeOutputPanel<IpnbImageOutputCell> {
     public void paintComponent(Graphics g) {
       final Icon icon = getIcon();
       if (icon instanceof ImageIcon) {
-        g.drawImage(((ImageIcon)icon).getImage(), 0, 0, getWidth(), getHeight(), this);
+        final Image image = ((ImageIcon)icon).getImage();
+        if (getWidth() < image.getWidth(null)) {
+          g.drawImage(image, 0, 0, getWidth(), getHeight(), this);
+        }
+        else {
+          super.paintComponent(g);
+        }
       }
       else {
         super.paintComponent(g);
