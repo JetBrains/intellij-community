@@ -17,12 +17,15 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.DebuggerManagerEx;
+import com.intellij.debugger.actions.ArrayAction;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.impl.watch.ArrayElementDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
@@ -37,10 +40,15 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiExpression;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Type;
@@ -48,6 +56,9 @@ import com.sun.jdi.Value;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 
 public class ArrayRenderer extends NodeRendererImpl{
@@ -259,7 +270,7 @@ public class ArrayRenderer extends NodeRendererImpl{
         builder.setMessage(DebuggerBundle.message("message.node.filtered", myExpression.getExpression()),
                            AllIcons.General.Filter,
                            SimpleTextAttributes.REGULAR_ATTRIBUTES,
-                           null);
+                           FILTER_HYPERLINK);
 
         // setMessage removes the loading message
         //builder.addChildren(Collections.emptyList(), true);
@@ -269,5 +280,23 @@ public class ArrayRenderer extends NodeRendererImpl{
         //}
       }
     }
+
+    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink("  clear") {
+      @Override
+      public void onClick(MouseEvent e) {
+        XDebuggerTree tree = (XDebuggerTree)e.getSource();
+        TreePath path = tree.getPathForLocation(e.getX(), e.getY());
+        if (path != null) {
+          TreeNode parent = ((TreeNode)path.getLastPathComponent()).getParent();
+          if (parent instanceof XValueNodeImpl) {
+            XValueNodeImpl valueNode = (XValueNodeImpl)parent;
+            ArrayAction.setArrayRenderer(NodeRendererSettings.getInstance().getArrayRenderer(),
+                                         valueNode,
+                                         DebuggerManagerEx.getInstanceEx(tree.getProject()).getContext());
+          }
+        }
+        e.consume();
+      }
+    };
   }
 }

@@ -98,7 +98,7 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
   }
 
   @Nullable
-  protected XDebuggerTreeNodeHyperlink getLink() {
+  public XDebuggerTreeNodeHyperlink getLink() {
     return null;
   }
 
