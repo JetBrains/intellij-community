@@ -23,12 +23,16 @@ import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.icons.AllIcons
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.ui.tree.TreeModelAdapter
+import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import java.awt.Rectangle
+import javax.swing.event.TreeModelEvent
+import javax.swing.tree.TreeNode
 
 /**
  * @author egor
@@ -40,6 +44,19 @@ class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean) : 
   }
 
   override fun doOKAction() {
+    myTree.model.addTreeModelListener(object : TreeModelAdapter() {
+      override fun process(event: TreeModelEvent?, type: EventType?) {
+        if (event?.treePath?.lastPathComponent != myNode.parent) {
+          myTree.model.removeTreeModelListener(this)
+        }
+        if (type == EventType.NodesInserted) {
+          event?.children?.filter { ArrayFilterAction.isArrayFilter(it as TreeNode) }?.forEach {
+            myTree.selectionPath = TreeUtil.getPathFromRoot(it as TreeNode)
+            myTree.model.removeTreeModelListener(this)
+          }
+        }
+      }
+    })
     ArrayAction.setArrayRenderer(if (XDebuggerUtilImpl.isEmptyExpression(expression))
                                    NodeRendererSettings.getInstance().arrayRenderer
                                  else
