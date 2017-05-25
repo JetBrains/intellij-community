@@ -254,13 +254,35 @@ public class ParameterNameHintsConfigurable extends DialogWrapper {
     BoxLayout layout = new BoxLayout(blacklistPanel, BoxLayout.Y_AXIS);
     blacklistPanel.setLayout(layout);
     blacklistPanel.setBorder(IdeBorderFactory.createTitledBorder("Blacklist"));
-    
-    blacklistPanel.add(new JBLabel(getBlacklistExplanationHTML(language)));
 
-    blacklistPanel.add(createResetPanel(language));
+    JBLabel explanation = new JBLabel(getBlacklistExplanationHTML(language));
+    explanation.setAlignmentX(Component.LEFT_ALIGNMENT);
+    blacklistPanel.add(explanation);
+
+    JComponent resetPanel = createResetPanel(language);
+    resetPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    blacklistPanel.add(resetPanel);
+
+    editorTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
     blacklistPanel.add(editorTextField);
 
+    JBLabel label = blacklistDependencyInfoLabel(language);
+    if (label != null) {
+      label.setAlignmentX(Component.LEFT_ALIGNMENT);
+      blacklistPanel.add(label);
+    }
+
     return blacklistPanel;
+  }
+
+  @Nullable
+  private static JBLabel blacklistDependencyInfoLabel(@NotNull Language language) {
+    InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
+    Language dependencyLanguage = provider.getBlackListDependencyLanguage();
+    if (dependencyLanguage == null) {
+      return null;
+    }
+    return new JBLabel("<html>Additionally <b>" + dependencyLanguage.getDisplayName() + "</b> language blacklist will be applied.</html>");
   }
 
   @NotNull
