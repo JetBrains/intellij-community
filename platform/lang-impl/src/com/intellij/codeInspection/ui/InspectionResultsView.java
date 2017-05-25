@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.CommonBundle;
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -680,8 +681,10 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
     return myInspectionProfile;
   }
 
+  @ReviseWhenPortedToJDK("9")
   void addProblemDescriptors(InspectionToolWrapper wrapper, RefEntity refElement, CommonProblemDescriptor[] descriptors) {
-    myTreeUpdater.submit(() -> ReadAction.run(() -> {
+    // redundant cast to fix compilation under jdk9
+    myTreeUpdater.submit((Runnable)() -> ReadAction.run(() -> {
       if (!isDisposed()) {
         ApplicationManager.getApplication().assertReadAccessAllowed();
         synchronized (myTreeStructureUpdateLock) {
