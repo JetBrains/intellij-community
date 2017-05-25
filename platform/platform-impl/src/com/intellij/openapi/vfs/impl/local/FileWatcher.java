@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@ public class FileWatcher {
     @Override
     public void notifyManualWatchRoots(@NotNull Collection<String> roots) {
       myManualWatchRoots.add(roots.isEmpty() ? Collections.emptySet() : ContainerUtil.newHashSet(roots));
-      notifyOnAnyEvent();
+      notifyOnEvent(OTHER);
     }
 
     @Override
@@ -191,7 +191,7 @@ public class FileWatcher {
       if (!mapping.isEmpty()) {
         myPathMap.addMapping(mapping);
       }
-      notifyOnAnyEvent();
+      notifyOnEvent(OTHER);
     }
 
     @Override
@@ -204,7 +204,7 @@ public class FileWatcher {
           }
         }
       }
-      notifyOnAnyEvent();
+      notifyOnEvent(path);
     }
 
     @Override
@@ -221,7 +221,7 @@ public class FileWatcher {
           }
         }
       }
-      notifyOnAnyEvent();
+      notifyOnEvent(path);
     }
 
     @Override
@@ -232,7 +232,7 @@ public class FileWatcher {
           myDirtyPaths.dirtyDirectories.addAll(paths);
         }
       }
-      notifyOnAnyEvent();
+      notifyOnEvent(path);
     }
 
     @Override
@@ -245,7 +245,7 @@ public class FileWatcher {
           }
         }
       }
-      notifyOnAnyEvent();
+      notifyOnEvent(path);
     }
 
     @Override
@@ -263,7 +263,7 @@ public class FileWatcher {
           }
         }
       }
-      notifyOnReset();
+      notifyOnEvent(RESET);
     }
 
     @Override
@@ -272,22 +272,19 @@ public class FileWatcher {
     }
   }
 
-  /* test data and methods */
+  //<editor-fold desc="Test stuff.">
+  public static final String RESET = "(reset)";
+  public static final String OTHER = "(other)";
 
-  private volatile Consumer<Boolean> myTestNotifier = null;
+  private volatile Consumer<String> myTestNotifier = null;
 
-  private void notifyOnAnyEvent() {
-    Consumer<Boolean> notifier = myTestNotifier;
-    if (notifier != null) notifier.accept(Boolean.FALSE);
-  }
-
-  private void notifyOnReset() {
-    Consumer<Boolean> notifier = myTestNotifier;
-    if (notifier != null) notifier.accept(Boolean.TRUE);
+  private void notifyOnEvent(String path) {
+    Consumer<String> notifier = myTestNotifier;
+    if (notifier != null) notifier.accept(path);
   }
 
   @TestOnly
-  public void startup(@Nullable Consumer<Boolean> notifier) throws IOException {
+  public void startup(@Nullable Consumer<String> notifier) throws IOException {
     myTestNotifier = notifier;
     for (PluggableFileWatcher watcher : myWatchers) {
       watcher.startup();
@@ -301,4 +298,5 @@ public class FileWatcher {
     }
     myTestNotifier = null;
   }
+  //</editor-fold>
 }
