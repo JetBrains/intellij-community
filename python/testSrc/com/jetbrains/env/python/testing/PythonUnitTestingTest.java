@@ -28,6 +28,7 @@ import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
@@ -40,6 +41,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.jetbrains.env.ut.PyScriptTestProcessRunner.TEST_TARGET_PREFIX;
@@ -544,9 +546,47 @@ public final class PythonUnitTestingTest extends PyEnvTestCase {
     );
   }
 
+  // PY-24407
+  @Test
+  public void testWorkingDirectoryDependsOnRelativeImport() throws Exception {
+    runPythonTest(new CreateConfigurationTestTask<PyUnitTestConfiguration>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class){
+      @NotNull
+      @Override
+      protected List<PsiElement> getPsiElementsToRightClickOn() {
+        myFixture.configureByFile("testRelativeImport/src/tests/test_no_relative.py");
+        final PyFunction noRelativeImportFun = myFixture.findElementByText("test_no_relative", PyFunction.class);
+        assert noRelativeImportFun != null;
+
+        myFixture.configureByFile("testRelativeImport/src/tests/test_relative.py");
+        final PyFunction relativeImportFun = myFixture.findElementByText("test_relative", PyFunction.class);
+        assert relativeImportFun != null;
+
+
+        return Arrays.asList(relativeImportFun, noRelativeImportFun);
+      }
+
+      @Override
+      protected void checkConfiguration(@NotNull PyUnitTestConfiguration configuration, @NotNull PsiElement elementToRightClickOn) {
+        super.checkConfiguration(configuration, elementToRightClickOn);
+        configuration.getWorkingDirectorySafe();
+
+        final PyFunction function = (PyFunction)elementToRightClickOn;
+        if (function.getName().equals("test_relative")) {
+          Assert.assertThat("Wrong dir  for relative import", configuration.getWorkingDirectory(), endsWith("testRelativeImport"));
+          assertEquals("Bad target", "src.tests.test_relative.ModuleTest.test_relative", configuration.getTarget().getTarget());
+        } else if (function.getName().equals("test_no_relative")) {
+          Assert.assertThat("Wrong dir for non relative import", configuration.getWorkingDirectory(), endsWith("testRelativeImport/src/tests"));
+          assertEquals("Bad target", "test_no_relative.ModuleTest.test_no_relative", configuration.getTarget().getTarget());
+        } else {
+          throw new AssertionError("Unexpected function " + function.getName());
+        }
+      }
+    });
+  }
+
   @Test
   public void testConfigurationProducer() throws Exception {
-    new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class);
+    runPythonTest(new CreateConfigurationByFileTask<>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME, PyUnitTestConfiguration.class));
   }
 
   /**

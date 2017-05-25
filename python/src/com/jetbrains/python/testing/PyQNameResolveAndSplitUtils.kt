@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.testing
 
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.QNameResolveContext
@@ -32,9 +33,23 @@ internal data class QualifiedNameParts(val fileName: QualifiedName, val elementN
   override fun toString() = elementName.toString()
 
   /**
-   * @return element qname + last part of file qname.
+   * @param folderToGetFileRelativePathTo parts of file are relative to this folder (or filename itself if folder is null)
+   * @return element qname + several parts of file qname.
    */
-  fun getElementNamePrependingFile() = QualifiedName.fromComponents(listOf(fileName.lastComponent!!) + elementName.components)!!
+  fun getElementNamePrependingFile(folderToGetFileRelativePathTo: PsiDirectory? = null): QualifiedName {
+
+    var relativeFileName: QualifiedName? = null
+    if (folderToGetFileRelativePathTo != null) {
+      val folderQName = folderToGetFileRelativePathTo.getQName()
+      relativeFileName = if (folderQName != null) fileName.getRelativeNameTo(folderQName) else fileName // TODO: DOC
+    }
+
+    if (relativeFileName == null) {
+      relativeFileName = QualifiedName.fromComponents(fileName.lastComponent)
+    }
+
+    return relativeFileName.append(elementName)
+  }
 }
 
 /**
