@@ -44,13 +44,23 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
   @Override
   public String getSummaryForNode(AbstractTreeNode node) {
     if (!myCoverageViewManager.isReady()) return "Loading...";
+    if (myCoverageDataManager.isSubCoverageActive()) {
+      return showSubCoverageNotification();
+    }
     final String coverageInformationString = myAnnotator
       .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
     return getNotCoveredMessage(coverageInformationString) + " in package \'" + node.toString() + "\'";
   }
 
+  private static String showSubCoverageNotification() {
+    return "Active per test coverage: no cumulative data is available";
+  }
+
   @Override
   public String getSummaryForRootNode(AbstractTreeNode childNode) {
+    if (myCoverageDataManager.isSubCoverageActive()) {
+      return showSubCoverageNotification();
+    }
     final Object value = childNode.getValue();
     String coverageInformationString = myAnnotator.getPackageCoverageInformationString((PsiPackage)value, null,
                                                                                        myCoverageDataManager);
