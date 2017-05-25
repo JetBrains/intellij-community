@@ -86,13 +86,12 @@ public class MatchHandler extends CallTraceHandlerBase {
   public List<IntermediateStreamCall> additionalCallsBefore() {
     final ArrayList<IntermediateStreamCall> calls = new ArrayList<>(myBeforeFilterPeekInserter.additionalCallsBefore());
 
-    final CallArgument predicate = myCall.getArguments().get(0);
-    String filterPredicate = predicate.getText();
+    String filterPredicate = PREDICATE_VARIABLE_NAME;
     if (myCall.getName().equals("allMatch")) {
       filterPredicate += ".negate()";
     }
 
-    final CallArgumentImpl argument = new CallArgumentImpl(predicate.getType(), filterPredicate);
+    final CallArgumentImpl argument = new CallArgumentImpl(myCall.getArguments().get(0).getType(), filterPredicate);
     calls.add(new IntermediateStreamCallImpl("filter", Collections.singletonList(argument), myTypeBefore,
                                              myTypeBefore, TextRange.EMPTY_RANGE));
     calls.addAll(myAfterFilterPeekInserter.additionalCallsBefore());
