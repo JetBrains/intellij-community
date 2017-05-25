@@ -21,10 +21,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsCompositeElement;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -54,6 +51,8 @@ public class JpsModuleRootModelSerializer {
   public static final String PACKAGE_PREFIX_ATTRIBUTE = "packagePrefix";
   public static final String IS_TEST_SOURCE_ATTRIBUTE = "isTestSource";
   public static final String EXCLUDE_FOLDER_TAG = "excludeFolder";
+  public static final String EXCLUDE_PATTERN_TAG = "excludePattern";
+  public static final String EXCLUDE_PATTERN_ATTRIBUTE = "pattern";
   public static final String ORDER_ENTRY_TAG = "orderEntry";
   public static final String TYPE_ATTRIBUTE = "type";
   public static final String SOURCE_FOLDER_TYPE = "sourceFolder";
@@ -84,6 +83,9 @@ public class JpsModuleRootModelSerializer {
       }
       for (Element excludeElement : getChildren(contentElement, EXCLUDE_FOLDER_TAG)) {
         module.getExcludeRootsList().addUrl(excludeElement.getAttributeValue(URL_ATTRIBUTE));
+      }
+      for (Element excludePatternElement : getChildren(contentElement, EXCLUDE_PATTERN_TAG)) {
+        module.addExcludePattern(url, excludePatternElement.getAttributeValue(EXCLUDE_PATTERN_ATTRIBUTE));
       }
     }
 
@@ -200,6 +202,11 @@ public class JpsModuleRootModelSerializer {
         if (FileUtil.startsWith(excludedUrl, url)) {
           Element element = new Element(EXCLUDE_FOLDER_TAG).setAttribute(URL_ATTRIBUTE, excludedUrl);
           contentElement.addContent(element);
+        }
+      }
+      for (JpsExcludePattern pattern : module.getExcludePatterns()) {
+        if (pattern.getBaseDirUrl().equals(url)) {
+          contentElement.addContent(new Element(EXCLUDE_PATTERN_TAG).setAttribute(EXCLUDE_PATTERN_ATTRIBUTE, pattern.getPattern()));
         }
       }
     }

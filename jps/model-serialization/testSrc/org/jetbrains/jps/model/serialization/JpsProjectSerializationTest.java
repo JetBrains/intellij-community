@@ -21,6 +21,7 @@ import org.jdom.Element;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
+import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -115,6 +116,16 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertNotNull(testModuleProperties);
     assertEquals("productionModule", testModuleProperties.getProductionModuleReference().getModuleName());
     assertSame(productionModule, testModuleProperties.getProductionModule());
+  }
+
+  public void testExcludePatterns() {
+    String projectPath = "/jps/model-serialization/testData/excludePatterns";
+    loadProject(projectPath + "/excludePatterns.ipr");
+    JpsModule module = assertOneElement(myProject.getModules());
+    JpsExcludePattern pattern = assertOneElement(module.getExcludePatterns());
+    assertEquals("*.class", pattern.getPattern());
+    assertEquals(assertOneElement(module.getContentRootsList().getUrls()), pattern.getBaseDirUrl());
+    doTestSaveModule(module, projectPath + "/excludePatterns.iml");
   }
 
   public void testProjectSdkWithoutType() {
