@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,8 +60,6 @@ public class MethodChainCompletionContributor extends CompletionContributor {
                                     @NotNull CompletionResultSet result) {
         try {
           if (!Registry.is(REGISTRY_KEY)) return;
-          ChainCompletionContext completionContext = extractContext(parameters);
-          if (completionContext == null) return;
           final Set<PsiMethod> alreadySuggested = new THashSet<>();
           CompletionResultSet finalResult = result;
           result.runRemainingContributors(parameters, completionResult -> {
@@ -73,6 +70,8 @@ public class MethodChainCompletionContributor extends CompletionContributor {
             }
             finalResult.passResult(completionResult);
           });
+          ChainCompletionContext completionContext = extractContext(parameters);
+          if (completionContext == null) return;
           result = JavaCompletionSorting.addJavaSorting(parameters, result);
           List<LookupElement> elementsFoundByMethodsChainsSearch = searchForLookups(completionContext);
           if (!UNIT_TEST_MODE && !alreadySuggested.isEmpty()) {
