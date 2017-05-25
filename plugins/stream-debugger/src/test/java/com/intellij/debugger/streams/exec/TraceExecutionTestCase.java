@@ -197,8 +197,8 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
     println(chain.getText(), ProcessOutputTypes.SYSTEM);
 
-    final Value resultValue = result.getResult();
-    handleResultValue(resultValue, resultMustBeNull);
+    final TraceElement resultValue = result.getResult();
+    handleResultValue(resultValue.getValue(), resultMustBeNull);
 
     final List<TraceInfo> trace = result.getTrace();
     handleTrace(trace);

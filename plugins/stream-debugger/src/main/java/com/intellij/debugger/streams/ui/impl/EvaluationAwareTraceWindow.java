@@ -21,7 +21,7 @@ import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.trace.IntermediateState;
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.ResolvedTracingResult;
-import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
+import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
@@ -34,7 +34,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import com.sun.jdi.Value;
 import icons.StreamDebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,19 +121,18 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       tab.setContent(view, BorderLayout.CENTER);
     }
 
-    final Value result = resolvedTrace.getResult();
+    final TraceElement result = resolvedTrace.getResult();
     final MyPlaceholder resultTab = myTabContents.get(myTabContents.size() - 1);
 
-    if (result == null || resolvedTrace.exceptionThrown()) {
+    if (result.getValue() == null) {
       final String text =
         resolvedTrace.exceptionThrown() ? "There is no result: exception was thrown" : "There is no result of such stream chain";
       resultTab.setContent(new JBLabel(text, SwingConstants.CENTER), BorderLayout.CENTER);
     }
 
-    if (result != null && resolvedTrace.exceptionThrown()) {
+    if (result.getValue() != null && resolvedTrace.exceptionThrown()) {
       setTitle(DIALOG_TITLE + " - Exception was thrown. Trace can be incomplete");
-      final TraceElementImpl exception = new TraceElementImpl(Integer.MAX_VALUE, result);
-      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, exception), "", 0);
+      myTabsPane.insertTab("Exception", AllIcons.Nodes.ErrorIntroduction, new ExceptionView(context, result), "", 0);
       myTabsPane.setSelectedIndex(0);
     }
 

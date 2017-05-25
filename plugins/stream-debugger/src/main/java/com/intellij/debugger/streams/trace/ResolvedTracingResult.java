@@ -33,6 +33,6 @@ public interface ResolvedTracingResult {
 
   boolean exceptionThrown();
 
-  @Nullable
-  Value getResult();
+  @NotNull
+  TraceElement getResult();
 }

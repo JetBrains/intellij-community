@@ -24,9 +24,7 @@ import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,21 +35,24 @@ import java.util.stream.Collectors;
  * @author Vitaliy.Bibaev
  */
 public class TracingResultImpl implements TracingResult {
-  private final Value myStreamResult;
+  private final TraceElement myStreamResult;
   private final List<TraceInfo> myTrace;
   private final boolean myIsResultException;
   private final StreamChain mySourceChain;
 
-  TracingResultImpl(@NotNull StreamChain chain, @Nullable Value streamResult, @NotNull List<TraceInfo> trace, boolean isResultException) {
+  TracingResultImpl(@NotNull StreamChain chain,
+                    @NotNull TraceElement streamResult,
+                    @NotNull List<TraceInfo> trace,
+                    boolean isResultException) {
     myStreamResult = streamResult;
     myTrace = trace;
     mySourceChain = chain;
     myIsResultException = isResultException;
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public Value getResult() {
+  public TraceElement getResult() {
     return myStreamResult;
   }
 
@@ -123,10 +124,9 @@ public class TracingResultImpl implements TracingResult {
                                                                      @NotNull BidirectionalAwareState previousState,
                                                                      @NotNull Map<TraceElement, List<TraceElement>>
                                                                        terminationToPrevMapping) {
-    final TraceElementImpl resultValue = new TraceElementImpl(Integer.MAX_VALUE, myStreamResult);
     final List<TraceElement> after = TraceUtil.sortedByTime(terminatorTrace.getValuesOrderAfter().values());
     final TerminationStateImpl terminatorState =
-      new TerminationStateImpl(resultValue, previousState.getNextCall(), after, terminationToPrevMapping);
+      new TerminationStateImpl(myStreamResult, previousState.getNextCall(), after, terminationToPrevMapping);
     return new ResolvedTerminatorCallImpl(mySourceChain.getTerminationCall(), previousState, terminatorState);
   }
 
@@ -155,9 +155,9 @@ public class TracingResultImpl implements TracingResult {
       return myIsResultException;
     }
 
-    @Nullable
+    @NotNull
     @Override
-    public Value getResult() {
+    public TraceElement getResult() {
       return myStreamResult;
     }
   }
