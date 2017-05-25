@@ -268,13 +268,11 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       name = name.substring(0, m.start());
     }
 
-    // For the module name, then any trailing digits and dots are removed ...
-    name = Patterns.TAIL_VERSION.matcher(name).replaceFirst("");
-    // ... all non-alphanumeric characters ([^A-Za-z0-9]) are replaced with a dot (".") ...
+    // All non-alphanumeric characters ([^A-Za-z0-9]) are replaced with a dot (".") ...
     name = Patterns.NON_NAME.matcher(name).replaceAll(".");
     // ... all repeating dots are replaced with one dot ...
     name = Patterns.DOT_SEQUENCE.matcher(name).replaceAll(".");
-    // ... and all leading and trailing dots are removed
+    // ... and all leading and trailing dots are removed.
     name = StringUtil.trimLeading(StringUtil.trimTrailing(name, '.'), '.');
 
     return name;
@@ -282,7 +280,6 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
 
   private static class Patterns {
     private static final Pattern VERSION = Pattern.compile("-(\\d+(\\.|$))");
-    private static final Pattern TAIL_VERSION = Pattern.compile("[0-9.]+$");
     private static final Pattern NON_NAME = Pattern.compile("[^A-Za-z0-9]");
     private static final Pattern DOT_SEQUENCE = Pattern.compile("\\.{2,}");
   }
