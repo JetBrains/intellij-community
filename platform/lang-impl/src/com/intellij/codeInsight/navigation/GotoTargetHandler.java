@@ -140,28 +140,6 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       }
     });
 
-    final Runnable runnable = () -> {
-      int[] ids = list.getSelectedIndices();
-      if (ids == null || ids.length == 0) return;
-      Object[] selectedElements = list.getSelectedValues();
-      for (Object element : selectedElements) {
-        if (element instanceof AdditionalAction) {
-          ((AdditionalAction)element).execute();
-        }
-        else {
-          Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
-          try {
-            if (nav != null && nav.canNavigate()) {
-              navigateToElement(nav);
-            }
-          }
-          catch (IndexNotReadyException e) {
-            DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
-          }
-        }
-      }
-    };
-
     final IPopupChooserBuilder<Object> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(list);
     builder.setFilteringEnabled(o -> {
       if (o instanceof AdditionalAction) {
@@ -173,7 +151,24 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     final Ref<UsageView> usageView = new Ref<>();
     final JBPopup popup = builder.
       setTitle(title).
-      setItemChoosenCallback(runnable).
+      setItemsChoosenCallback(selectedElements -> {
+        for (Object element : selectedElements) {
+          if (element instanceof AdditionalAction) {
+            ((AdditionalAction)element).execute();
+          }
+          else {
+            Navigatable nav = element instanceof Navigatable ? (Navigatable)element : EditSourceUtil.getDescriptor((PsiElement)element);
+            try {
+              if (nav != null && nav.canNavigate()) {
+                navigateToElement(nav);
+              }
+            }
+            catch (IndexNotReadyException e) {
+              DumbService.getInstance(project).showDumbModeNotification("Navigation is not available while indexing");
+            }
+          }
+        }
+      }).
       setMovable(true).
       setCancelCallback(() -> {
         HintUpdateSupply.hideHint(list);
@@ -200,7 +195,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
       alarm.addRequest(() -> popup.showInBestPositionFor(editor), 300);
-      gotoData.listUpdaterTask.init((AbstractPopup)popup, list, usageView);
+      gotoData.listUpdaterTask.init(popup, list, usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
     else {
