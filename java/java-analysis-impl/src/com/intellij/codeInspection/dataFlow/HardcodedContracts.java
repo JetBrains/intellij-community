@@ -18,7 +18,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -302,18 +301,25 @@ public class HardcodedContracts {
   }
 
   public static boolean isHardcodedPure(PsiMethod method) {
-    String qName = PsiUtil.getMemberQualifiedName(method);
-    if ("java.lang.System.exit".equals(qName)) {
-      return false;
-    }
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return false;
+    String className = aClass.getQualifiedName();
+    if (className == null) return false;
+    String name = method.getName();
 
-    if ("java.util.Objects.requireNonNull".equals(qName)) {
+    if ("java.util.Objects".equals(className) && "requireNonNull".equals(name)) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 2 && parameters[1].getType().getCanonicalText().contains("Supplier")) {
         return false;
       }
     }
 
+    if ("java.lang.System".equals(className)) {
+      return false;
+    }
+    if (CommonClassNames.JAVA_UTIL_ARRAYS.equals(className)) {
+      return name.equals("binarySearch") || name.equals("spliterator") || name.equals("stream");
+    }
     return true;
   }
 

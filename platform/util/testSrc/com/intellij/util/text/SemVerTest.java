@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +53,16 @@ public class SemVerTest {
 
     assertThat(parse("11.123.0")).isEqualTo(parse("11.123.0"));
     assertThat(parse("11.123.0")).isEqualByComparingTo(parse("11.123.0"));
+
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 5));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 12, 4));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 0));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(4, 11, 9));
+    Assert.assertTrue(parse("4.12.5").isGreaterOrEqualThan(3, 100, 100));
+
+    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 12, 6));
+    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(4, 13, 0));
+    Assert.assertFalse(parse("4.12.5").isGreaterOrEqualThan(5, 1, 0));
   }
 
   private static void assertParsed(String version, int expectedMajor, int expectedMinor, int expectedPatch) {

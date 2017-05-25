@@ -790,6 +790,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.Double double longBitsToDouble(long)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.Double float floatValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -811,6 +816,11 @@
     </item>
     <item name='java.lang.Double java.lang.Double valueOf(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.Double long doubleToRawLongBits(double)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.Double long longValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -955,8 +965,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.Float float intBitsToFloat(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.Float int compareTo(java.lang.Float) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.Float int floatToRawIntBits(float)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.Float int intValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>

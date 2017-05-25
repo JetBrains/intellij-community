@@ -63,29 +63,7 @@ class TimedIconCache {
 
         val startTime = System.currentTimeMillis()
 
-        var icon: Icon
-        if (DumbService.isDumb(project) && !Registry.`is`("dumb.aware.run.configurations")) {
-          icon = IconLoader.getDisabledIcon(ProgramRunnerUtil.getRawIcon(settings))!!
-          if (settings.isTemporary) {
-            icon = ProgramRunnerUtil.getTemporaryIcon(icon)
-          }
-        }
-        else {
-          try {
-            DumbService.getInstance(project).isAlternativeResolveEnabled = true
-            settings.checkSettings()
-            icon = ProgramRunnerUtil.getConfigurationIcon(settings, false)
-          }
-          catch (e: IndexNotReadyException) {
-            icon = ProgramRunnerUtil.getConfigurationIcon(settings, !Registry.`is`("dumb.aware.run.configurations"))
-          }
-          catch (ignored: RuntimeConfigurationException) {
-            icon = ProgramRunnerUtil.getConfigurationIcon(settings, true)
-          }
-          finally {
-            DumbService.getInstance(project).isAlternativeResolveEnabled = false
-          }
-        }
+        val icon = calcIcon(settings, project)
 
         lock.write {
           iconCalcTime.put(id, System.currentTimeMillis() - startTime)
@@ -96,6 +74,19 @@ class TimedIconCache {
 
       set(id, icon)
       icon
+    }
+  }
+
+  private fun calcIcon(settings: RunnerAndConfigurationSettings, project: Project): Icon {
+    try {
+      settings.checkSettings()
+      return ProgramRunnerUtil.getConfigurationIcon(settings, false)
+    }
+    catch (e: IndexNotReadyException) {
+      return ProgramRunnerUtil.getConfigurationIcon(settings, false)
+    }
+    catch (ignored: RuntimeConfigurationException) {
+      return ProgramRunnerUtil.getConfigurationIcon(settings, !DumbService.isDumb(project))
     }
   }
 

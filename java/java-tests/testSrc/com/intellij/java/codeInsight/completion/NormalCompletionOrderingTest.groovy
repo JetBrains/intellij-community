@@ -789,7 +789,14 @@ class ContainerUtil extends ContainerUtilRt {
     incUseCount(lookup, unrelatedItem)
     //nothing should change
     assertPreferredItems 0, 'MyEnum.bar', 'MyEnum', 'MyEnum.foo'
-    
+  }
+
+  void testPreferExpectedTypeFieldOverUnexpectedLocalVariables() {
+    checkPreferredItems 0, 'field', 'local'
+  }
+
+  void testPreferConflictingFieldAfterThis() {
+    checkPreferredItems 0, 'text'
   }
 
 }

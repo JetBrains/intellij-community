@@ -28,7 +28,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManagerExKt;
+import com.intellij.openapi.application.PathManagerEx;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -227,7 +227,7 @@ public class MavenUtil {
 
   @NotNull
   public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
-    return PathManagerExKt.getAppSystemDir().resolve("Maven").resolve(folder);
+    return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {
@@ -980,10 +980,11 @@ public class MavenUtil {
     MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
     if (mavenProjectsManager.findProject(file) != null) return true;
 
-    PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(project).findFile(file));
-    if (psiFile == null) return false;
-
-    return MavenDomUtil.isProjectFile(psiFile);
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile == null) return false;
+      return MavenDomUtil.isProjectFile(psiFile);
+    });
   }
 
   public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @NotNull VirtualFile root) {

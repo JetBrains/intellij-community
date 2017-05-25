@@ -21,14 +21,14 @@ import org.jetbrains.annotations.TestOnly;
 
 public class ChainRelevance implements Comparable<ChainRelevance> {
   private final int myChainSize;
-  private final int myUnreachableParametersCount;
+  private final int myUnreachableParameterCount;
   private final int myParametersInContext;
 
   public ChainRelevance(final int chainSize,
-                        final int unreachableParametersCount,
+                        final int unreachableParameterCount,
                         final int parametersInContext) {
     myChainSize = chainSize;
-    myUnreachableParametersCount = unreachableParametersCount;
+    myUnreachableParameterCount = unreachableParameterCount;
     myParametersInContext = parametersInContext;
   }
 
@@ -38,8 +38,8 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   }
 
   @TestOnly
-  public int getUnreachableParametersCount() {
-    return myUnreachableParametersCount;
+  public int getUnreachableParameterCount() {
+    return myUnreachableParameterCount;
   }
 
   @TestOnly
@@ -51,13 +51,15 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   public int compareTo(@NotNull final ChainRelevance that) {
     int sub = Comparing.compare(myChainSize, that.myChainSize);
     if (sub != 0) return sub;
-    sub = Comparing.compare(myUnreachableParametersCount, that.myUnreachableParametersCount);
+    sub = Comparing.compare(myUnreachableParameterCount, that.myUnreachableParameterCount);
     if (sub != 0) return sub;
     return -Comparing.compare(myParametersInContext, that.myParametersInContext);
   }
 
   @Override
   public String toString() {
-    return "{\"chain_size\": " + myChainSize + ", \"unreachable_params\": " + myUnreachableParametersCount + ", \"parameters_in_context\": " + myParametersInContext + "}";
+    return "{\"chain_size\": " + myChainSize +
+           ", \"unreachable_params\": " + myUnreachableParameterCount +
+           ", \"parameters_in_context\": " + myParametersInContext + "}";
   }
 }

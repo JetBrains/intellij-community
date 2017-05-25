@@ -563,7 +563,11 @@ final class HardCodedPurity {
     new Method("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
     new Method("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
     new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;I)Ljava/lang/Object;"),
-    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;")
+    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;"),
+    new Method("java/lang/Float", "floatToRawIntBits", "(F)I"),
+    new Method("java/lang/Float", "intBitsToFloat", "(I)F"),
+    new Method("java/lang/Double", "doubleToRawLongBits", "(D)J"),
+    new Method("java/lang/Double", "longBitsToDouble", "(J)D")
     );
   private static Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
   private static Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);

@@ -159,6 +159,19 @@ public abstract class MethodContract {
       return ContractValue.condition(left, RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
     }
 
+    /**
+     * @return negated constraint or this if the constraint cannot be negated
+     */
+    public ValueConstraint negate() {
+      switch (this) {
+        case NULL_VALUE: return NOT_NULL_VALUE;
+        case NOT_NULL_VALUE: return NULL_VALUE;
+        case TRUE_VALUE: return FALSE_VALUE;
+        case FALSE_VALUE: return TRUE_VALUE;
+        default: return this;
+      }
+    }
+
     @Override
     public String toString() {
       return myPresentableName;

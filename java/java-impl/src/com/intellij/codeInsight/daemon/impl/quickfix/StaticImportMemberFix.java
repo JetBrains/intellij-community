@@ -75,10 +75,6 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
       ;
   }
 
-  public final List<T> getMembersToImport() {
-    return getMembersToImport(false);
-  }
-
   @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly);
 
   public static boolean isExcluded(PsiMember method) {

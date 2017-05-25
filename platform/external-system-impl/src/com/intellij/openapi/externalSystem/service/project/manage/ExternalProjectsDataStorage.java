@@ -418,7 +418,7 @@ public class ExternalProjectsDataStorage implements SettingsSavingComponent, Per
 
   @NotNull
   public static Path getProjectConfigurationDir(@NotNull Project project) {
-    return ProjectUtil.getProjectCachePath(project, "external_build_system");
+    return ProjectUtil.getExternalConfigurationDir(project);
   }
 
   @Nullable

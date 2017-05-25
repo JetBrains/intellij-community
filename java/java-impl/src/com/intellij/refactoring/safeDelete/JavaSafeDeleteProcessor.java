@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.safeDelete;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -320,6 +321,17 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
     final ArrayList<SafeDeleteMethodCalleeUsageInfo> calleesSafeToDelete = new ArrayList<>();
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) {
+        if (usage instanceof SafeDeleteUsageInfo) {
+          PsiElement element = ((SafeDeleteUsageInfo)usage).getReferencedElement();
+          if (element instanceof PsiModifierListOwner) {
+            ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(element.getProject());
+            List<PsiFile> annotationsFiles = annotationsManager.findExternalAnnotationsFiles((PsiModifierListOwner)element);
+            if (annotationsFiles != null && annotationsFiles.contains(usage.getFile())) {
+              result.add(new SafeDeleteExternalAnnotationsUsageInfo(element, usage.getElement()));
+              continue;
+            }
+          }
+        }
         result.add(usage);
       }
       else if (usage instanceof SafeDeleteMethodCalleeUsageInfo) {
@@ -856,7 +868,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       privateModifierList = newMethod.getModifierList();
       privateModifierList.setModifierProperty(PsiModifier.PRIVATE, true);
     } catch (IncorrectOperationException e) {
-      LOG.assertTrue(false);
+      LOG.error(e);
       return false;
     }
     for (PsiReference reference : references) {
@@ -995,5 +1007,27 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
     @Override
     public void deleteElement() throws IncorrectOperationException {}
+  }
+
+  private static class SafeDeleteExternalAnnotationsUsageInfo extends SafeDeleteReferenceUsageInfo {
+
+    public SafeDeleteExternalAnnotationsUsageInfo(PsiElement referenceElement, PsiElement element) {
+      super(element, referenceElement, true);
+    }
+
+    @Override
+    public void deleteElement() throws IncorrectOperationException {
+      PsiElement referencedElement = getReferencedElement();
+      if (!referencedElement.isValid()) return;
+      ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(referencedElement.getProject());
+      PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations((PsiModifierListOwner)referencedElement);
+      if (externalAnnotations != null) {
+        for (PsiAnnotation annotation : externalAnnotations) {
+          String qualifiedName = annotation.getQualifiedName();
+          if (qualifiedName == null) continue;
+          annotationsManager.deannotate((PsiModifierListOwner)referencedElement, qualifiedName);
+        }
+      }
+    }
   }
 }

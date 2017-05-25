@@ -133,11 +133,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     annoMethod,
     probableKeyword,
     castVariable,
-    localOrParameter,
+    variable,
     qualifiedWithField,
     qualifiedWithGetter,
     superMethodParameters,
-    field,
     expectedTypeConstant,
     expectedTypeArgument,
     getter,
@@ -167,8 +166,10 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       return MyResult.castVariable;
     }
 
-    if (object instanceof PsiLocalVariable || object instanceof PsiParameter || object instanceof PsiThisExpression) {
-      return MyResult.localOrParameter;
+    if (object instanceof PsiLocalVariable || object instanceof PsiParameter ||
+        object instanceof PsiThisExpression ||
+        object instanceof PsiField && !((PsiField)object).hasModifierProperty(PsiModifier.STATIC)) {
+      return MyResult.variable;
     }
 
     if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
@@ -197,7 +198,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     if (chain != null) {
       Object qualifier = chain.getQualifier().getObject();
       if (qualifier instanceof PsiLocalVariable || qualifier instanceof PsiParameter) {
-        return MyResult.localOrParameter;
+        return MyResult.variable;
       }
       if (qualifier instanceof PsiField) {
         return MyResult.qualifiedWithField;
@@ -212,7 +213,6 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
 
     if (myCompletionType == CompletionType.SMART) {
-      if (object instanceof PsiField) return MyResult.field;
       if (isGetter(object)) return MyResult.getter;
 
       return MyResult.normal;

@@ -78,7 +78,7 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
         if (jodaCondition) {
           relationType = relationType.getFlipped();
         }
-        holder.registerProblem(sign, InspectionsBundle.message("inspection.comparator.result.comparison.display.name"),
+        holder.registerProblem(sign, InspectionsBundle.message("inspection.comparator.result.comparison.problem.display.name"),
                                new ComparatorComparisonFix(jodaCondition, relationType));
       }
     };

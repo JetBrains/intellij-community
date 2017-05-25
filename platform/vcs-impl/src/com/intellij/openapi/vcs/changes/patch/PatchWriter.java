@@ -16,14 +16,13 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.codeStyle.CodeStyleFacade;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.patch.*;
+import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
+import com.intellij.openapi.diff.impl.patch.FilePatch;
+import com.intellij.openapi.diff.impl.patch.PatchEP;
+import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -42,7 +41,6 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class PatchWriter {
-  private static final Logger LOG = Logger.getInstance(PatchWriter.class);
 
   public static void writePatches(@NotNull final Project project,
                                   @NotNull String fileName,
@@ -78,22 +76,12 @@ public class PatchWriter {
   }
 
   public static void writeAsPatchToClipboard(@NotNull Project project,
-                                             @NotNull Collection<Change> changes,
-                                             @NotNull String base,
-                                             boolean isReverse,
-                                             @Nullable CommitContext commitContext) {
-    try {
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, base, isReverse);
-      ProgressManager.checkCanceled();
-      StringWriter writer = new StringWriter();
-      write(project, writer, base, patches, commitContext, true);
-      CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
-      VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
-    }
-    catch (IOException | VcsException exception) {
-      LOG.error("Can't create patch", exception);
-      VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
-    }
+                                             @NotNull List<FilePatch> patches,
+                                             @NotNull String basePath,
+                                             @Nullable CommitContext commitContext) throws IOException {
+    StringWriter writer = new StringWriter();
+    write(project, writer, basePath, patches, commitContext, true);
+    CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
   @NotNull

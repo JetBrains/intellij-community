@@ -18,7 +18,6 @@ package com.intellij.openapi.externalSystem.configurationStore
 import com.intellij.ProjectTopics
 import com.intellij.configurationStore.FileStorageAnnotation
 import com.intellij.configurationStore.StreamProviderFactory
-import com.intellij.configurationStore.isExternalStorageEnabled
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
@@ -27,6 +26,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.util.Function
 import org.jdom.Element
@@ -72,7 +72,7 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    if (componentManager !is Module || component !is ProjectModelElement || !isExternalStorageEnabled()) {
+    if (componentManager !is Module || component !is ProjectModelElement || !isExternalStorageEnabled) {
       return null
     }
 

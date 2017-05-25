@@ -70,6 +70,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private lateinit var watcher: FileWatcher
   private lateinit var alarm: Alarm
 
+  private val watchedPaths = mutableListOf<String>()
   private val watcherEvents = Semaphore()
   private val resetHappened = AtomicBoolean()
 
@@ -85,10 +86,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
-    watcher.startup { reset ->
-      alarm.cancelAllRequests()
-      alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
-      if (reset) resetHappened.set(true)
+    watchedPaths += tempDir.root.path
+    watcher.startup { path ->
+      if (path == FileWatcher.RESET || path == FileWatcher.OTHER || watchedPaths.any { path.startsWith(it) }) {
+        alarm.cancelAllRequests()
+        alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
+        if (path == FileWatcher.RESET) resetHappened.set(true)
+      }
     }
     wait { !watcher.isOperational }
 
@@ -322,6 +326,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val substRoot = IoTestUtil.createSubst(target.path)
     VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
     val vfsRoot = fs.findFileByIoFile(substRoot)!!
+    watchedPaths += substRoot.path
 
     val substFile = File(substRoot, "sub/test.txt")
     refresh(target)

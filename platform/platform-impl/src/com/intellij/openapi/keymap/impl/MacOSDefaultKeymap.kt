@@ -30,7 +30,10 @@ class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>, defaultKeymap
       if (shortcut is MouseShortcut) {
         return _convertMouseShortcut(shortcut)
       }
-      return KeyboardShortcut(_convertKeyStroke((shortcut as KeyboardShortcut).firstKeyStroke), shortcut.secondKeyStroke?.let(::_convertKeyStroke))
+      if (shortcut is KeyboardShortcut) {
+        return KeyboardShortcut(_convertKeyStroke(shortcut.firstKeyStroke), shortcut.secondKeyStroke?.let(::_convertKeyStroke))
+      }
+      return shortcut
     }
   }
 

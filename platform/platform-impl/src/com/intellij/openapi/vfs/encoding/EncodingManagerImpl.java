@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -55,9 +56,12 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.nio.charset.Charset;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"))
 public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
+  private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
   private static final Equality<Reference<Document>> REFERENCE_EQUALITY = new Equality<Reference<Document>>() {
     @Override
     public boolean equals(Reference<Document> o1, Reference<Document> o2) {
@@ -89,9 +93,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final BoundedTaskExecutor changedDocumentExecutor =
-    new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
+  private final BoundedTaskExecutor changedDocumentExecutor = new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
+  private final AtomicBoolean myDisposed = new AtomicBoolean();
   public EncodingManagerImpl(@NotNull EditorFactory editorFactory) {
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
@@ -166,23 +170,27 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Override
   public void dispose() {
+    myDisposed.set(true);
     clearDocumentQueue();
   }
 
   private void queueUpdateEncodingFromContent(@NotNull Document document) {
     document.putUserData(DETECTING_ENCODING_KEY, "");
-    changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document));
+    changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
   }
 
   private static class DocumentEncodingDetectRequest implements Runnable {
     private final Reference<Document> ref;
+    @NotNull private final AtomicBoolean myDisposed;
 
-    private DocumentEncodingDetectRequest(@NotNull Document document) {
+    private DocumentEncodingDetectRequest(@NotNull Document document, @NotNull AtomicBoolean disposed) {
       ref = new WeakReference<>(document);
+      myDisposed = disposed;
     }
 
     @Override
     public void run() {
+      if (myDisposed.get()) return;
       Document document = ref.get();
       if (document == null) return; // document gced, don't bother
       ((EncodingManagerImpl)getInstance()).handleDocument(document);
@@ -229,6 +237,13 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   public void clearDocumentQueue() {
     changedDocumentExecutor.clearAndCancelAll();
+    // after clear and canceling all queued tasks, make sure they all are finished
+    try {
+      changedDocumentExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable

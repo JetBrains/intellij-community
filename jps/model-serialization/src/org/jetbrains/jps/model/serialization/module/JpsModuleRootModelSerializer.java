@@ -125,16 +125,18 @@ public class JpsModuleRootModelSerializer {
       }
       else if (MODULE_LIBRARY_TYPE.equals(type)) {
         final Element moduleLibraryElement = orderEntry.getChild(LIBRARY_TAG);
-        String name = moduleLibraryElement.getAttributeValue(NAME_ATTRIBUTE);
-        if (name == null) {
-          name = GENERATED_LIBRARY_NAME_PREFIX;
-        }
-        String uniqueName = nameGenerator.generateUniqueName(name);
-        final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName);
-        module.addModuleLibrary(library);
+        if (moduleLibraryElement != null) {
+          String name = moduleLibraryElement.getAttributeValue(NAME_ATTRIBUTE);
+          if (name == null) {
+            name = GENERATED_LIBRARY_NAME_PREFIX;
+          }
+          String uniqueName = nameGenerator.generateUniqueName(name);
+          final JpsLibrary library = JpsLibraryTableSerializer.loadLibrary(moduleLibraryElement, uniqueName);
+          module.addModuleLibrary(library);
 
-        final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(library);
-        loadModuleDependencyProperties(dependency, orderEntry);
+          final JpsLibraryDependency dependency = dependenciesList.addLibraryDependency(library);
+          loadModuleDependencyProperties(dependency, orderEntry);
+        }
       }
       else if (MODULE_TYPE.equals(type)) {
         String name = orderEntry.getAttributeValue(MODULE_NAME_ATTRIBUTE);

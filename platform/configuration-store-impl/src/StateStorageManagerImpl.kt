@@ -21,10 +21,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorage.SaveSession
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.PathUtilRt
@@ -46,12 +46,6 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 private val MACRO_PATTERN = Pattern.compile("(\\$[^$]*\\$)")
-
-// test only
-var IS_EXTERNAL_STORAGE_ENABLED = false
-
-fun isExternalStorageEnabled() = Registry.`is`("store.imported.project.elements.separately", false) || IS_EXTERNAL_STORAGE_ENABLED
-
 
 /**
  * If componentManager not specified, storage will not add file tracker
@@ -313,7 +307,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
-      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement && isExternalStorageEnabled() && component.externalSource != null) {
+      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement && isExternalStorageEnabled && component.externalSource != null) {
         return Resolution.CLEAR
       }
       return Resolution.DO

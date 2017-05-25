@@ -29,6 +29,10 @@
     <priority value="TRACE"/>
     <appender-ref ref="CONSOLE-ALL"/>
   </category>
+  <category name="#com.intellij.idea.SocketLock">
+    <priority value="TRACE"/>
+    <appender-ref ref="CONSOLE-ALL"/>
+  </category>
 
   <root>
     <priority value="INFO"/>

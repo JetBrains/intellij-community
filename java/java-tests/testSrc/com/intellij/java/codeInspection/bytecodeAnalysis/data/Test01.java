@@ -200,4 +200,11 @@ public class Test01 {
   static boolean invertBool(boolean x) {
     return !x;
   }
+
+  @ExpectContract(value = "_,true->true;null,_->true", pure=true)
+  boolean checkTrueFail(Object a, boolean b) {
+    if (a == null) return true;
+    if (b) throw new RuntimeException();
+    return b;
+  }
 }
