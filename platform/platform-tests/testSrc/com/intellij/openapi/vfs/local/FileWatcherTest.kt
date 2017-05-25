@@ -100,7 +100,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @After fun tearDown() {
-    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+    LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
     watcher.shutdown()
     wait { watcher.isOperational }
@@ -110,7 +110,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       (fs as LocalFileSystemImpl).cleanupForNextTest()
     }
 
-    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+    LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
 
   //</editor-fold>
