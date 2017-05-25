@@ -16,6 +16,9 @@
 package com.intellij.debugger.ui.tree.render
 
 import com.intellij.debugger.DebuggerBundle
+import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.debugger.actions.ArrayAction
+import com.intellij.debugger.actions.ArrayFilterAction
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.icons.AllIcons
 import com.intellij.ui.SimpleColoredComponent
@@ -23,28 +26,26 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
 import java.awt.Rectangle
 
 /**
  * @author egor
  */
-class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean, val res: AsyncPromise<ArrayRenderer>) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
+class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
   override fun cancelEditing() {
     super.cancelEditing()
     if (myTemp) (myNode.parent as XValueNodeImpl).removeTemporaryEditorNode(myNode)
-    res.setError("Cancelled")
   }
 
   override fun doOKAction() {
-    res.setResult(if (XDebuggerUtilImpl.isEmptyExpression(expression))
-                    NodeRendererSettings.getInstance().arrayRenderer
-                  else
-                    ArrayRenderer.Filtered(expression))
+    ArrayAction.setArrayRenderer(if (XDebuggerUtilImpl.isEmptyExpression(expression))
+                                   NodeRendererSettings.getInstance().arrayRenderer
+                                 else
+                                   ArrayRenderer.Filtered(expression),
+                                 myNode.parent as XValueNodeImpl,
+                                 DebuggerManagerEx.getInstanceEx(project).context)
     super.doOKAction()
   }
 
@@ -65,20 +66,14 @@ class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean, va
 
   companion object {
     @JvmStatic
-    fun edit(parentNode: XValueNodeImpl,
-             original: ArrayRenderer): Promise<ArrayRenderer> {
-      val res = AsyncPromise<ArrayRenderer>()
+    fun edit(parentNode: XValueNodeImpl) {
       var temp = false
-      val node: XDebuggerTreeNode
-      if (original is ArrayRenderer.Filtered) {
-        node = parentNode.children.find { it is MessageTreeNode && it.link === ArrayRenderer.Filtered.FILTER_HYPERLINK } as XDebuggerTreeNode
-      }
-      else {
+      var node = parentNode.children.find { ArrayFilterAction.isArrayFilter(it) }
+      if (node == null) {
         node = parentNode.addTemporaryEditorNode(AllIcons.General.Filter, DebuggerBundle.message("message.node.filtered"))
         temp = true
       }
-      DebuggerUIUtil.invokeLater({ArrayFilterInplaceEditor(node, temp, res).show()})
-      return res
+      DebuggerUIUtil.invokeLater({ArrayFilterInplaceEditor(node as XDebuggerTreeNode, temp).show()})
     }
   }
 }

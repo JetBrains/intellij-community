@@ -196,7 +196,8 @@ public abstract class ArrayAction extends DebuggerAction {
                                                        ArrayRenderer original,
                                                        @NotNull DebuggerContextImpl debuggerContext,
                                                        String title) {
-      return ArrayFilterInplaceEditor.edit(node, original);
+      ArrayFilterInplaceEditor.edit(node);
+      return Promises.rejectedPromise();
     }
   }
 }

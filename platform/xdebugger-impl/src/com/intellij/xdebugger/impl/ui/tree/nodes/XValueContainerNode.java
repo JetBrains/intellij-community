@@ -210,6 +210,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     fireNodesInserted(messages);
   }
 
+  @NotNull
   public XDebuggerTreeNode addTemporaryEditorNode(@Nullable Icon icon, @Nullable String text) {
     if (isLeaf()) {
       setLeaf(false);
