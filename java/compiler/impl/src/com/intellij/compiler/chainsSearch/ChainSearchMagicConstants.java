@@ -27,7 +27,7 @@ public interface ChainSearchMagicConstants {
   /**
    * Used to know do 2 variables frequently occurred in one file simultaneously
    */
-  int VAR_PROBABILITY_THRESHOLD = 2;
+  int VAR_PROBABILITY_THRESHOLD = 1;
 
   /**
    * Maximum count of completion contributor response chains
