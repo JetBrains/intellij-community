@@ -16,6 +16,7 @@
 package com.intellij.java.psi.formatter.java;
 
 
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -938,4 +939,53 @@ public class JavadocFormatterTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void test_ContinuationDescriptionFormatting() {
+    getCurrentCodeStyleSettings().setRightMargin(JavaLanguage.INSTANCE, 40);
+
+    getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE).CONTINUATION_INDENT_SIZE = 2;
+
+    getCurrentCodeStyleSettings().JD_INDENT_ON_CONTINUATION = true;
+    getCurrentCodeStyleSettings().JD_ALIGN_PARAM_COMMENTS = false;
+    getCurrentCodeStyleSettings().JD_ALIGN_EXCEPTION_COMMENTS = false;
+    getCurrentCodeStyleSettings().WRAP_COMMENTS = true;
+
+    doClassTest(
+      "/**\n" +
+      " * Just some random text\n" +
+      " * @param aParameter randomness in life does not mean it's easy to generate random text\n" +
+      " * @param bParameter another random parameter with qualified epoch\n" +
+      " * @author rumor oculus rivierra underground sound\n" +
+      " * @myrandomtag just write what you want and cranberries with bicycle\n" +
+      " * @return super string with everything involved, be aware\n" +
+      " */\n" +
+      "String test(int aParameter, int bParameter) {\n" +
+      "  return \"\";\n" +
+      "}  \n",
+
+      "/**\n" +
+      " * Just some random text\n" +
+      " *\n" +
+      " * @param aParameter randomness in\n" +
+      " *   life does not mean it's easy to\n" +
+      " *   generate random text\n" +
+      " * @param bParameter another\n" +
+      " *   random parameter with qualified\n" +
+      " *   epoch\n" +
+      " * @return super string with\n" +
+      " *   everything involved, be aware\n" +
+      " * @author rumor oculus rivierra\n" +
+      " *   underground sound\n" +
+      " * @myrandomtag just write what\n" +
+      " *   you want and cranberries with\n" +
+      " *   bicycle\n" +
+      " */\n" +
+      "String test(int aParameter, int bParameter) {\n" +
+      "    return \"\";\n" +
+      "}\n"
+    );
+  }
+
+
+
 }
