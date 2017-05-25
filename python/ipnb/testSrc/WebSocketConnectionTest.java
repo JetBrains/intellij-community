@@ -2,10 +2,12 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.util.Ref;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.ipnb.configuration.IpnbConnectionManager;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutOutputCell;
 import org.jetbrains.plugins.ipnb.format.cells.output.IpnbOutputCell;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnection;
 import org.jetbrains.plugins.ipnb.protocol.IpnbConnectionListenerBase;
+import org.junit.Assume;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -24,6 +26,7 @@ public class WebSocketConnectionTest extends TestCase {
   @Override
   protected void setUp() throws Exception {
     //WebSocketImpl.DEBUG = true;
+    Assume.assumeTrue(IpnbConnectionManager.pingHost(getTestServerURI()));
   }
 
   public void testStartAndShutdownKernel() throws URISyntaxException, IOException, InterruptedException {
