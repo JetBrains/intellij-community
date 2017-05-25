@@ -17,8 +17,8 @@ package com.intellij.java.codeInspection
 
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection
-import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor
 import org.intellij.lang.annotations.Language
 
 /**

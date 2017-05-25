@@ -18,8 +18,8 @@ package com.intellij.java.codeInsight.daemon
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.openapi.util.TextRange
-import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import org.assertj.core.api.Assertions.assertThat
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
