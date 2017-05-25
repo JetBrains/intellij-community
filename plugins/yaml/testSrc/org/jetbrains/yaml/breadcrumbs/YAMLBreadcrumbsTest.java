@@ -22,10 +22,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.breadcrumbs.BreadcrumbsItem;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLFileType;
 
 import java.util.ArrayList;
@@ -82,7 +81,7 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
       .map((offset) -> {
         caretModel.moveToOffset(offset);
         return getBreadcrumbs(myFixture).stream()
-          .map(BreadcrumbsItem::toString)
+          .map(crumb -> "[" + crumb.getText() + ";" + crumb.getTooltip() + "]")
           .reduce((left, right) -> right + left).orElse("[]");
       })
       .reduce((left, right) -> left + "\n------\n" + right).orElse("");
@@ -92,7 +91,7 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
 
   // TODO move this method and class to platform when breadcrumbs are moved there, too
   @NotNull
-  private static List<BreadcrumbsItem> getBreadcrumbs(@NotNull CodeInsightTestFixture fixture) {
+  private static List<Crumb> getBreadcrumbs(@NotNull CodeInsightTestFixture fixture) {
     PsiElement element = fixture.getFile().findElementAt(fixture.getCaretOffset());
     if (element == null) {
       return Collections.emptyList();
@@ -105,42 +104,14 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
       return Collections.emptyList();
     }
 
-    List<BreadcrumbsItem> result = new ArrayList<>();
+    List<Crumb> result = new ArrayList<>();
     while (element != null) {
       if (provider.acceptElement(element)) {
-        result.add(new MockBreadcrumbsItem(provider.getElementInfo(element), provider.getElementTooltip(element)));
+        result.add(new Crumb.Impl(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element)));
       }
       element = provider.getParent(element);
     }
     return result;
   }
 
-  private static class MockBreadcrumbsItem extends BreadcrumbsItem {
-    @Nullable
-    private final String myDisplayText;
-    @Nullable
-    private final String myTooltip;
-
-    private MockBreadcrumbsItem(@Nullable String displayText, @Nullable String tooltip) {
-      myDisplayText = displayText;
-      myTooltip = tooltip;
-    }
-
-    @Nullable
-    @Override
-    public String getDisplayText() {
-      return myDisplayText;
-    }
-
-    @Nullable
-    @Override
-    public String getTooltip() {
-      return myTooltip;
-    }
-
-    @Override
-    public String toString() {
-      return "[" + getDisplayText() + ";" + getTooltip() + "]";
-    }
-  }
 }
