@@ -20,7 +20,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -210,6 +209,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
         try {
           int bw = JBUI.scale(1);
 
+          // paint background
           Rectangle2D innerRect = new Rectangle2D.Double(bw, bw, getWidth() - bw*2, getHeight() - bw*2);
           if (comboBox.isEditable() && comboBox.isEnabled()) {
             if (isPressed()) {
@@ -229,6 +229,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
           g2.fill(innerRect);
 
+          Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
+          icon.paintIcon(this, g2, JBUI.scale(6), JBUI.scale(9));
+
           // paint border around button when combobox is editable
           if (comboBox.isEditable() && comboBox.isEnabled()) {
             Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
@@ -244,7 +247,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
             }
           }
 
-          IconUtil.paintInCenterOf(this, g2, MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled()));
         } finally {
           g2.dispose();
         }
@@ -337,6 +339,14 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override protected void configureEditor() {
+    super.configureEditor();
+
+    if (Registry.is("ide.ui.composite.editor.for.combobox")) { // Copy from DarculaComboBoxUI
+      if (editor instanceof JPanel) {
+        editor.setFocusable(false);
+      }
+    }
+
     if (editor != null) {
       editorFocusListener = new FocusAdapter() {
         @Override public void focusGained(FocusEvent e) {
