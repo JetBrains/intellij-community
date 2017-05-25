@@ -420,16 +420,9 @@ public class BytecodeAnalysisConverter {
       for (int i = 0; i < c1.arguments.length; i++) {
         ValueConstraint left = c1.arguments[i];
         ValueConstraint right = c2.arguments[i];
-        if(left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
-        if(idx >= 0) return null;
-        if(left == ValueConstraint.NOT_NULL_VALUE && right == ValueConstraint.NULL_VALUE ||
-           left == ValueConstraint.NULL_VALUE && right == ValueConstraint.NOT_NULL_VALUE ||
-           left == ValueConstraint.TRUE_VALUE && right == ValueConstraint.FALSE_VALUE ||
-           left == ValueConstraint.FALSE_VALUE && right == ValueConstraint.TRUE_VALUE) {
-          idx = i;
-        } else {
-          return null;
-        }
+        if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
+        if (idx >= 0 || left == right || left != right.negate()) return null;
+        idx = i;
       }
       return c1;
     }).nonNull().findFirst().orElse(null);

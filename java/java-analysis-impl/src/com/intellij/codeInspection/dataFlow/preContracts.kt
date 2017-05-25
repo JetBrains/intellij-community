@@ -16,7 +16,6 @@
 package com.intellij.codeInspection.dataFlow
 
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInspection.dataFlow.ContractInferenceInterpreter.negateConstraint
 import com.intellij.codeInspection.dataFlow.ContractInferenceInterpreter.withConstraint
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.*
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction
@@ -84,7 +83,8 @@ internal data class DelegationContract(internal val expression: ExpressionRange,
         }
       }
     }
-    val returnValue = if (negated) negateConstraint(targetContract.returnValue) else targetContract.returnValue
+    val returnValue = if (negated) targetContract.returnValue.negate()
+    else targetContract.returnValue
     return answer?.let { StandardMethodContract(it, returnValue) }
   }
 
@@ -123,7 +123,7 @@ internal data class NegatingContract(internal val negated: PreContract) : PreCon
 
 private fun negateContract(c: StandardMethodContract): StandardMethodContract? {
   val ret = c.returnValue
-  return if (ret == TRUE_VALUE || ret == FALSE_VALUE) StandardMethodContract(c.arguments, negateConstraint(ret)) else null
+  return if (ret == TRUE_VALUE || ret == FALSE_VALUE) StandardMethodContract(c.arguments, ret.negate()) else null
 }
 
 @Suppress("EqualsOrHashCode")

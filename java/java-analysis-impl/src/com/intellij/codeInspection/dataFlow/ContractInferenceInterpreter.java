@@ -237,7 +237,7 @@ class ContractInferenceInterpreter {
           }
         } else {
           ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint, equality ? TRUE_VALUE : FALSE_VALUE));
-          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, negateConstraint(constraint),
+          ContainerUtil.addIfNotNull(result, contractWithConstraint(state, parameter, constraint.negate(),
                                                                     equality ? FALSE_VALUE : TRUE_VALUE));
         }
       }
@@ -263,9 +263,9 @@ class ContractInferenceInterpreter {
     for (LighterASTNode operand : operands) {
       List<PreContract> opResults = visitExpression(states, operand);
       finalStates.addAll(ContainerUtil.filter(knownContracts(opResults), contract -> contract.returnValue == breakValue));
-      states = antecedentsReturning(opResults, negateConstraint(breakValue));
+      states = antecedentsReturning(opResults, breakValue.negate());
     }
-    finalStates.addAll(toContracts(states, negateConstraint(breakValue)));
+    finalStates.addAll(toContracts(states, breakValue.negate()));
     return finalStates;
   }
 
@@ -368,17 +368,6 @@ class ContractInferenceInterpreter {
     return NOT_NULL_VALUE;
   }
 
-  static ValueConstraint negateConstraint(@NotNull ValueConstraint constraint) {
-    //noinspection EnumSwitchStatementWhichMissesCases
-    switch (constraint) {
-      case NULL_VALUE: return NOT_NULL_VALUE;
-      case NOT_NULL_VALUE: return NULL_VALUE;
-      case TRUE_VALUE: return FALSE_VALUE;
-      case FALSE_VALUE: return TRUE_VALUE;
-    }
-    return constraint;
-  }
-
   private int resolveParameter(@Nullable LighterASTNode expr) {
     if (expr != null && expr.getTokenType() == REFERENCE_EXPRESSION && findExpressionChild(myTree, expr) == null) {
       String name = JavaLightTreeUtil.getNameIdentifierText(myTree, expr);
@@ -398,7 +387,7 @@ class ContractInferenceInterpreter {
   static ValueConstraint[] withConstraint(ValueConstraint[] constraints, int index, ValueConstraint constraint) {
     if (constraints[index] == constraint) return constraints;
 
-    ValueConstraint negated = negateConstraint(constraint);
+    ValueConstraint negated = constraint.negate();
     if (negated != constraint && constraints[index] == negated) {
       return null;
     }
