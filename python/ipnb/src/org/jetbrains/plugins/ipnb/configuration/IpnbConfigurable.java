@@ -346,7 +346,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
       final String arguments = ipnbSettings.getArguments();
       final String text = StringUtil.trim(StringUtil.notNullize(myAdditionalOptions.getText()));
       
-      return !text.equals(arguments);
+      return !text.equals(DEFAULT_PARAMETERS_TEXT) && !text.equals(arguments);
     }
   }
    
