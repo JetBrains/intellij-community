@@ -246,7 +246,7 @@ public class JUnitUtil {
         if (MetaAnnotationUtil.isMetaAnnotated(method, TEST5_ANNOTATIONS)) return true;
       }
 
-      for (PsiClass aClass : psiClass.getInnerClasses()) {
+      for (PsiClass aClass : psiClass.getAllInnerClasses()) {
         if (MetaAnnotationUtil.isMetaAnnotated(aClass, Collections.singleton(JUNIT5_NESTED))) return true;
       }
     }
