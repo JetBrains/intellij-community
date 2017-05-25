@@ -2,16 +2,21 @@ package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.google.common.collect.Lists;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -41,6 +46,7 @@ import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
 import org.jetbrains.plugins.ipnb.format.cells.*;
+import org.jetbrains.plugins.ipnb.psi.IpnbPyLanguageDialect;
 
 import javax.swing.*;
 import java.awt.*;
@@ -794,7 +800,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   public Object getData(String dataId) {
     final IpnbEditablePanel selectedCellPanel = getSelectedCellPanel();
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      if (selectedCellPanel instanceof IpnbCodePanel) {
+      if (selectedCellPanel instanceof IpnbCodePanel) {  // Go to declaration
         return ((IpnbCodePanel)selectedCellPanel).getEditor();
       }
     }
@@ -803,6 +809,16 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return ourHelpID;
+    }
+    if (LangDataKeys.CONTEXT_LANGUAGES.is(dataId)) { // Introduce variable
+      return new Language[]{IpnbPyLanguageDialect.getInstance()};
+    }
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId) || CommonDataKeys.PSI_FILE.is(dataId)) {  // Rename and Introduce variable
+      if (selectedCellPanel instanceof IpnbCodePanel) {
+        final Editor e = ((IpnbCodePanel)selectedCellPanel).getEditor();
+        final Object o = FileEditorManager.getInstance(myProject).getData(dataId, e, e.getCaretModel().getCurrentCaret());
+        if (o != null) return o;
+      }
     }
     return null;
   }
