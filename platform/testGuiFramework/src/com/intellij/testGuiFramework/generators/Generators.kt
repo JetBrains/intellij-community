@@ -325,7 +325,7 @@ class IdeFrameGenerator : GlobalContextCodeGenerator<JFrame>() {
 
 class ProjectViewGenerator : LocalContextCodeGenerator<JPanel>() {
 
-  override fun priority() = 1
+  override fun priority() = 2
   override fun acceptor(): (Component) -> Boolean = { component -> component.javaClass.name.endsWith("ProjectViewImpl\$MyPanel") }
   override fun generate(cmp: JPanel, me: MouseEvent, cp: Point) = "projectView {"
 
