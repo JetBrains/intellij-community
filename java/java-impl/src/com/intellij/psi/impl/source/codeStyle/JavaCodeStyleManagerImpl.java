@@ -783,7 +783,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     }
-    else if (expr.getParent() instanceof PsiAssignmentExpression && variableKind == VariableKind.PARAMETER) {
+    else if (expr.getParent() instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expr.getParent();
       if (expr == assignmentExpression.getRExpression()) {
         final PsiExpression leftExpression = assignmentExpression.getLExpression();
@@ -798,6 +798,14 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             return new NamesByExprInfo(name, names);
           }
         }
+      }
+    }
+    else if (expr.getParent() instanceof PsiLocalVariable) {
+      PsiVariable variable = (PsiVariable)expr.getParent();
+      String variableName = variable.getName();
+      if (variableName != null) {
+        String propertyName = variableNameToPropertyName(variableName, getVariableKind(variable));
+        return new NamesByExprInfo(propertyName, getSuggestionsByName(propertyName, variableKind, false, correctKeywords));
       }
     }
 

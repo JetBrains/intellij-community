@@ -46,4 +46,14 @@ public class NameSuggestionsByExpressionTest extends LightCodeInsightFixtureTest
                              new String[] {"getParentOfType", "parentOfType", "ofType", "type", "parent", "s"}, 
                              nameInfo.names);
   }
+
+  public void testNameByAssignmentContext() throws Exception {
+    PsiFile file = myFixture.configureByText("A.java", "class A {{String bar = \"<caret>\";}}");
+    PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
+    SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(getProject())
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, null);
+    Assert.assertArrayEquals("Suggested: " + Arrays.toString(nameInfo.names), 
+                             new String[] {"bar", "s"}, 
+                             nameInfo.names);
+  }
 }
