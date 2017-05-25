@@ -64,6 +64,10 @@ public class ResolverFactoryImpl implements ResolverFactory {
       case "toArray":
       case "collect":
         return new IdentityResolver();
+      case "allMatch":
+      case "anyMatch":
+      case "noneMatch":
+        return new AllToResultResolver();
       case "distinct":
         return new DistinctResolver();
       default:
