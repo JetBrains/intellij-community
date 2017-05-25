@@ -134,7 +134,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
       val directoryIndex = DirectoryIndex.getInstance(project)
       val info = directoryIndex.getInfoForFile(file)
       // we serve excluded files
-      if (!info.isExcluded && !info.isInProject) {
+      if (!info.isExcluded(file) && !info.isInProject(file)) {
         // javadoc jars is "not under project", but actually is, so, let's check library or SDK
         if (file.fileSystem == JarFileSystem.getInstance()) getInfoForDocJar(file, project) else null
       }

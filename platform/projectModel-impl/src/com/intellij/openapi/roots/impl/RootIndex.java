@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -38,6 +39,7 @@ import com.intellij.util.containers.SLRUMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -81,7 +83,7 @@ public class RootIndex {
     myPackageDirectoryCache = new PackageDirectoryCache(rootsByPackagePrefix) {
       @Override
       protected boolean isPackageDirectory(@NotNull VirtualFile dir, @NotNull String packageName) {
-        return getInfoForFile(dir).isInProject() && packageName.equals(getPackageName(dir));
+        return getInfoForFile(dir).isInProject(dir) && packageName.equals(getPackageName(dir));
       }
     };
   }
@@ -108,6 +110,14 @@ public class RootIndex {
             if (!ensureValid(excludeRoot, contentEntry)) continue;
 
             info.excludedFromModule.put(excludeRoot, module);
+          }
+          List<String> patterns = contentEntry.getExcludePatterns();
+          if (!patterns.isEmpty()) {
+            FileTypeAssocTable<Boolean> table = new FileTypeAssocTable<>();
+            for (String pattern : patterns) {
+              table.addAssociation(FileNameMatcherFactory.getInstance().createMatcher(pattern), Boolean.TRUE);
+            }
+            info.excludeFromContentRootTables.put(contentEntry.getFile(), table);
           }
         }
 
@@ -469,7 +479,7 @@ public class RootIndex {
     if (!includeLibrarySources) {
       result = ContainerUtil.filter(result, file -> {
         DirectoryInfo info = getInfoForFile(file);
-        return info.isInProject() && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
+        return info.isInProject(file) && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
       });
     }
     return new CollectionQuery<>(result);
@@ -547,6 +557,7 @@ public class RootIndex {
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
     @NotNull final Set<VirtualFile> excludedFromProject = ContainerUtil.newHashSet();
     @NotNull final Map<VirtualFile, Module> excludedFromModule = ContainerUtil.newHashMap();
+    @NotNull final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, String> packagePrefix = ContainerUtil.newHashMap();
 
     @NotNull
@@ -571,6 +582,12 @@ public class RootIndex {
       for (VirtualFile root : hierarchy) {
         Module module = contentRootOf.get(root);
         Module excludedFrom = excludedFromModule.get(root);
+        if (module != null) {
+          FileTypeAssocTable<Boolean> table = excludeFromContentRootTables.get(root);
+          if (table != null && isExcludedByPattern(root, hierarchy, table)) {
+            excludedFrom = module;
+          }
+        }
         if (module != null && (excludedFrom != module || underExcludedSourceRoot && sourceRootOwners.contains(module))) {
           return root;
         }
@@ -596,6 +613,18 @@ public class RootIndex {
         }
       }
       return null;
+    }
+
+    private static boolean isExcludedByPattern(VirtualFile contentRoot, List<VirtualFile> hierarchy, FileTypeAssocTable<Boolean> table) {
+      for (VirtualFile file : hierarchy) {
+        if (table.findAssociatedFileType(file.getNameSequence()) != null) {
+          return true;
+        }
+        if (file.equals(contentRoot)) {
+          break;
+        }
+      }
+      return false;
     }
 
     @Nullable
@@ -727,8 +756,12 @@ public class RootIndex {
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
     Module module = info.contentRootOf.get(nearestContentRoot);
-    DirectoryInfo directoryInfo =
-      new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources, inLibrarySource, !inProject, typeId);
+    FileTypeAssocTable<Boolean> excludePatterns = moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
+    DirectoryInfo directoryInfo = excludePatterns != null
+                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, libraryClassRoot,
+                                                                         inModuleSources, inLibrarySource, !inProject, typeId, excludePatterns)
+                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources,
+                                                          inLibrarySource, !inProject, typeId);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 

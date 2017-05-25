@@ -25,14 +25,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DirectoryInfoImpl extends DirectoryInfo {
   public static final int MAX_ROOT_TYPE_ID = Byte.MAX_VALUE;
-  private final VirtualFile myRoot;//original project root for which this information is calculated
+  protected final VirtualFile myRoot;//original project root for which this information is calculated
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
   private final boolean myInModuleSource;
   private final boolean myInLibrarySource;
-  private final boolean myExcluded;
+  protected final boolean myExcluded;
   private final byte mySourceRootTypeId;
 
   DirectoryInfoImpl(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot, VirtualFile libraryClassRoot,
@@ -72,7 +72,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
            ", isInModuleSource=" + isInModuleSource() +
            ", rootTypeId=" + getSourceRootTypeId() +
            ", isInLibrarySource=" + isInLibrarySource() +
-           ", isExcludedFromModule=" + isExcluded() +
+           ", isExcludedFromModule=" + myExcluded +
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
@@ -80,7 +80,12 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   }
 
   public boolean isInProject() {
-    return !isExcluded();
+    return !myExcluded;
+  }
+
+  @Override
+  public boolean isInProject(@NotNull VirtualFile file) {
+    return !isExcluded(file);
   }
 
   public boolean isIgnored() {
@@ -110,6 +115,11 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   }
 
   public boolean isExcluded() {
+    return myExcluded;
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull VirtualFile file) {
     return myExcluded;
   }
 

@@ -226,7 +226,7 @@ public class ProjectViewDirectoryHelper {
       DirectoryInfo info = myIndex.getInfoForFile(parent);
       if (!module.equals(info.getModule())) return true;
       //show inner content root separately only if it won't be shown under outer content root
-      return info.isExcluded() && !shouldShowExcludedFiles(settings);
+      return info.isExcluded(parent) && !shouldShowExcludedFiles(settings);
     });
   }
 
@@ -279,7 +279,7 @@ public class ProjectViewDirectoryHelper {
 
   private boolean shouldBeShown(VirtualFile dir, ViewSettings settings) {
     DirectoryInfo directoryInfo = myIndex.getInfoForFile(dir);
-    return directoryInfo.isInProject() || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded();
+    return directoryInfo.isInProject(dir) || shouldShowExcludedFiles(settings) && directoryInfo.isExcluded(dir);
   }
 
   private static boolean shouldShowExcludedFiles(ViewSettings settings) {
