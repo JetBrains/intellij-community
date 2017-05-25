@@ -17,6 +17,7 @@ package com.siyeh.ig.bugs
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.LightProjectDescriptor
 import com.siyeh.ig.LightInspectionTestCase
 
 @SuppressWarnings(["ResultOfMethodCallIgnored", "UnusedReturnValue"])
@@ -25,6 +26,11 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
   @Override
   protected LocalInspectionTool getInspection() {
     return new IgnoreResultOfCallInspection()
+  }
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8
   }
 
   @Override
@@ -223,5 +229,23 @@ class C {
   }
 }
 """
+  }
+
+  void testStream() {
+    doTest """
+import java.util.stream.*;
+import java.util.*;
+
+class Test {
+  void test() {
+    Stream.of("a", "b", "c")./*Result of 'Stream.collect()' is ignored*/collect/**/(Collectors.toSet());
+    Stream.of("a", "b", "c")./*Result of 'Stream.collect()' is ignored*/collect/**/(Collectors.toCollection(() -> new ArrayList<>()));
+    Set<String> result = new TreeSet<>();
+    result.add("-");
+    // violates stream principles, but quite widely used (IDEA-164501);
+    // this inspection should not warn here; probably some other inspection should suggest better option 
+    Stream.of("a", "b", "c").collect(Collectors.toCollection(() -> result));
+  }
+}"""
   }
 }

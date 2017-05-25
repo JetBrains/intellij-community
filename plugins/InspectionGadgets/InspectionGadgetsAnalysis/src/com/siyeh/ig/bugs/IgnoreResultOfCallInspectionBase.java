@@ -25,11 +25,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import org.intellij.lang.annotations.Pattern;
@@ -42,6 +44,10 @@ import java.util.Objects;
 import java.util.Set;
 
 public class IgnoreResultOfCallInspectionBase extends BaseInspection {
+  private static final CallMatcher STREAM_COLLECT =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
+  private static final CallMatcher COLLECTOR_TO_COLLECTION =
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
 
   /**
    * @noinspection PublicField
@@ -187,7 +193,33 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
+      if (isHardcodedException(call)) {
+        return;
+      }
+
       registerMethodCallOrRefError(call, aClass);
+    }
+
+    private boolean isHardcodedException(PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression)) return false;
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (STREAM_COLLECT.test(call)) {
+        PsiMethodCallExpression collector =
+          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(call.getArgumentList().getExpressions()[0]), PsiMethodCallExpression.class);
+        if (COLLECTOR_TO_COLLECTION.test(collector)) {
+          PsiLambdaExpression lambda = ObjectUtils
+            .tryCast(PsiUtil.skipParenthesizedExprDown(collector.getArgumentList().getExpressions()[0]), PsiLambdaExpression.class);
+          if (lambda != null) {
+            PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+            if (body instanceof PsiReferenceExpression && ((PsiReferenceExpression)body).resolve() instanceof PsiVariable) {
+              // .collect(toCollection(() -> var)) : the result is written into given collection
+              return true;
+            }
+          }
+        }
+      }
+
+      return false;
     }
 
     private boolean isPureMethod(PsiMethod method) {
