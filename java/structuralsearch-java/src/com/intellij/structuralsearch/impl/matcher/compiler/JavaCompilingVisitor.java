@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.JavaCompiledPattern;
@@ -171,6 +172,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitReferenceExpression(PsiReferenceExpression reference) {
     visitElement(reference);
+    handleReference(reference);
 
     boolean typedVarProcessed = false;
     final PsiElement referenceParent = reference.getParent();
@@ -185,17 +187,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       typedVarProcessed = true;
     }
 
-    if (!(referenceParent instanceof PsiMethodCallExpression)) {
-      handleReference(reference);
-    }
-
     MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
 
     // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();
 
-    if (!typedVarProcessed &&
-        !(handler instanceof SubstitutionHandler)) {
+    if (!typedVarProcessed && !(handler instanceof SubstitutionHandler)) {
       final PsiElement resolve = reference.resolve();
 
       PsiElement referenceQualifier = reference.getQualifier();
@@ -241,12 +238,6 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         //}
       }
     }
-  }
-
-  @Override
-  public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-    handleReference(expression.getMethodExpression());
-    super.visitMethodCallExpression(expression);
   }
 
   @Override
@@ -332,8 +323,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
 
-    if (reference.getParent() != null &&
-        reference.getParent().getParent() instanceof PsiClass) {
+    final PsiElement parent = reference.getParent();
+    if (parent != null && parent.getParent() instanceof PsiClass) {
       GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference), TypeFilter.getInstance());
     }
 
@@ -355,14 +346,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());
   }
 
-  private SubstitutionHandler createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText,
-                                                                           boolean classQualifier) {
+  private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
       new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, false);
     final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
-    substitutionHandler.setPredicate(new RegExpPredicate(referenceText.replaceAll("\\.", "\\\\."), caseSensitive, null, false, false));
+    substitutionHandler.setPredicate(new RegExpPredicate(StructuralSearchUtil.shieldRegExpMetaChars(referenceText),
+                                                         caseSensitive, null, false, false));
     myCompilingVisitor.getContext().getPattern().setHandler(expr, substitutionHandler);
-    return substitutionHandler;
   }
 
   @Override
@@ -449,7 +439,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     if (compileContext.getPattern().isTypedVar(refname)) {
       SubstitutionHandler handler = (SubstitutionHandler)compileContext.getPattern().getHandler(refname);
-      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
+      RegExpPredicate predicate = RegExpPredicate.findRegExpPredicate(handler);
       if (!GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         return;
       }
@@ -561,9 +551,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   private static boolean needsSupers(final PsiElement element, final MatchingHandler handler) {
-    if (element.getParent() instanceof PsiClass &&
-        handler instanceof SubstitutionHandler
-      ) {
+    if (element.getParent() instanceof PsiClass && handler instanceof SubstitutionHandler) {
       final SubstitutionHandler handler2 = (SubstitutionHandler)handler;
 
       return (handler2.isStrictSubtype() || handler2.isSubtype());

@@ -2416,5 +2416,13 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals(3, findMatchesCount(source2, "String.valueOf(1)", true));
     assertEquals(3, findMatchesCount(source2, "'_a?:[regex( String )].valueOf(1)", true));
     assertEquals(4, findMatchesCount(source2, "valueOf(1)", true));
+
+    String source3 = "class Three {" +
+                     "  Three t$;" +
+                     "  void f() {" +
+                     "    Three a = t$.t$.t$;" +
+                     "  }" +
+                     "}";
+    assertEquals(2, findMatchesCount(source3, "t$.'_t"));
   }
 }
