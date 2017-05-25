@@ -95,7 +95,8 @@ public class StreamChainTransformerImpl implements StreamChainTransformer {
     final PsiExpressionList list = methodCall.getArgumentList();
     return StreamEx.of(list.getExpressions())
       .zipWith(StreamEx.of(list.getExpressionTypes()),
-               (expression, type) -> new CallArgumentImpl(type.getCanonicalText(), expression.getText()))
+               (expression, type) -> new CallArgumentImpl(GenericsUtil.getVariableTypeByExpressionType(type).getCanonicalText(),
+                                                          expression.getText()))
       .collect(Collectors.toList());
   }
 
