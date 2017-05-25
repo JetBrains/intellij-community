@@ -101,6 +101,11 @@ class GitLogRecord {
   }
 
   @NotNull
+  String getTreeHash() {
+    return lookup(TREE);
+  }
+
+  @NotNull
   String getAuthorName() {
     return lookup(AUTHOR_NAME);
   }
@@ -182,6 +187,15 @@ class GitLogRecord {
   public Collection<String> getRefs() {
     final String decorate = myOptions.get(REF_NAMES);
     return parseRefNames(decorate);
+  }
+
+  @NotNull
+  public Map<GitLogParser.GitLogOption, String> getOptions() {
+    return myOptions;
+  }
+
+  public boolean isSupportsRawBody() {
+    return mySupportsRawBody;
   }
 
   /**

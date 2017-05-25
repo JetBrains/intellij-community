@@ -826,12 +826,14 @@ public class GitHistoryUtils {
       return;
     }
 
-    loadRecords(project, root, false, true, new RecordCollector() {
+    RecordCollector recordCollector = new RecordCollector(project, root) {
       @Override
       public void consume(@NotNull List<GitLogRecord> records) {
         commitConsumer.consume(createCommit(project, root, records, factory));
       }
-    }, parameters);
+    };
+    loadRecords(project, root, false, true, recordCollector, parameters);
+    recordCollector.finish();
   }
 
   public static void loadRecords(@NotNull Project project,
@@ -851,7 +853,8 @@ public class GitHistoryUtils {
     MyGitLineHandlerListener handlerListener = new MyGitLineHandlerListener(handler, output -> {
       try {
         GitLogRecord record = parser.parseOneRecord(output);
-        if (record != null) { converter.consume(record);
+        if (record != null) {
+          converter.consume(record);
         }
       }
       catch (ProcessCanceledException pce) {
@@ -942,8 +945,19 @@ public class GitHistoryUtils {
     }
   }
 
+  /*
+   * This class collects records for one commit and sends them together for processing.
+   * It also deals with problems with `-m` flag, when `git log` does not provide empty records when a commit is not different from one of the parents.
+   */
   private static abstract class RecordCollector implements Consumer<GitLogRecord> {
-    private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
+    @NotNull private final Project myProject;
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final MultiMap<String, GitLogRecord> myHashToRecord = MultiMap.createLinked();
+
+    protected RecordCollector(@NotNull Project project, @NotNull VirtualFile root) {
+      myProject = project;
+      myRoot = root;
+    }
 
     @Override
     public void consume(@NotNull GitLogRecord record) {
@@ -953,14 +967,84 @@ public class GitHistoryUtils {
       }
       else {
         myHashToRecord.putValue(record.getHash(), record);
-        LOG.assertTrue(myHashToRecord.keySet().size() == 1, "myHashToRecord map has records for several commits: " + myHashToRecord);
         if (parents.length == myHashToRecord.get(record.getHash()).size()) {
-          consume(ContainerUtil.newArrayList(notNull(myHashToRecord.remove(record.getHash()))));
+          processCollectedRecords();
         }
       }
     }
 
+    private void processCollectedRecords() {
+      // there is a surprising (or not really surprising, depending how to look at it) problem with `-m` option
+      // despite what is written in git-log documentation, it does not always output a record for each parent of a merge commit
+      // if a merge commit has no changes with one of the parents, nothing is output for that parent
+      // there is no way of knowing which parent it is just from git-log output
+      // if we did not use custom pretty format, line `from <hash>` would appear in the record header
+      // but we use, so there is no hash in the record header
+      // and there is no format option to display it
+      // so the solution is to run another git log command and get tree hashes for all participating commits
+      // tree hashes allow to determine, which parent of the commit in question is the same as the commit itself and create an empty record for it
+      for (String hash : myHashToRecord.keySet()) {
+        ArrayList<GitLogRecord> records = ContainerUtil.newArrayList(notNull(myHashToRecord.get(hash)));
+        GitLogRecord firstRecord = records.get(0);
+        if (firstRecord.getParentsHashes().length != 0 && records.size() != firstRecord.getParentsHashes().length) {
+          if (!fillWithEmptyRecords(records)) continue; // skipping commit altogether on error
+        }
+        consume(records);
+      }
+      myHashToRecord.clear();
+    }
+
+    public void finish() {
+      processCollectedRecords();
+    }
+
     public abstract void consume(@NotNull List<GitLogRecord> records);
+
+    /*
+       * This method calculates tree hashes for a commit and its parents and places an empty record for parents that have same tree hash.
+       */
+    private boolean fillWithEmptyRecords(@NotNull List<GitLogRecord> records) {
+      GitLogRecord firstRecord = records.get(0);
+      String commit = firstRecord.getHash();
+      String[] parents = firstRecord.getParentsHashes();
+
+      List<String> hashes = ContainerUtil.newArrayList(parents);
+      hashes.add(commit);
+
+      GitSimpleHandler handler = new GitSimpleHandler(myProject, myRoot, GitCommand.LOG);
+      GitLogParser parser = new GitLogParser(myProject, GitLogParser.NameStatus.NONE, HASH, TREE);
+      handler.setStdoutSuppressed(true);
+      handler.addParameters(parser.getPretty());
+      handler.addParameters(formHashParameters(notNull(GitVcs.getInstance(myProject)), hashes));
+      handler.endOptions();
+
+      try {
+        String output = handler.run();
+
+        List<GitLogRecord> hashAndTreeRecords = parser.parse(output);
+        Map<String, String> hashToTreeMap = ContainerUtil.map2Map(hashAndTreeRecords,
+                                                                  record -> Pair.create(record.getHash(), record.getTreeHash()));
+        String commitTreeHash = hashToTreeMap.get(commit);
+        LOG.assertTrue(commitTreeHash != null, "Could not get tree hash for commit " + commit);
+
+        for (int parentIndex = 0; parentIndex < parents.length; parentIndex++) {
+          String parent = parents[parentIndex];
+          // sometimes a merge commit is identical to all its parents
+          // in this case, we get one empty record
+          String parentTreeHash = hashToTreeMap.get(parent);
+          LOG.assertTrue(parentTreeHash != null, "Could not get tree hash for commit " + parent);
+          if (parentTreeHash.equals(commitTreeHash) && records.size() < parents.length) {
+            records.add(parentIndex, new GitLogRecord(firstRecord.getOptions(), ContainerUtil.emptyList(), ContainerUtil.emptyList(),
+                                                      firstRecord.isSupportsRawBody()));
+          }
+        }
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+        return false;
+      }
+      return true;
+    }
   }
 
   private static class MyGitLineHandlerListener implements GitLineHandlerListener {
