@@ -16,7 +16,9 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
+import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -41,6 +43,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.xmlb.annotations.Attribute;
 import gnu.trove.Equality;
 import gnu.trove.THashSet;
@@ -96,7 +99,16 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private final BoundedTaskExecutor changedDocumentExecutor = new BoundedTaskExecutor("EncodingManagerImpl document pool", PooledThreadExecutor.INSTANCE, JobSchedulerImpl.CORES_COUNT, this);
 
   private final AtomicBoolean myDisposed = new AtomicBoolean();
-  public EncodingManagerImpl(@NotNull EditorFactory editorFactory) {
+  public EncodingManagerImpl(@NotNull EditorFactory editorFactory, MessageBus messageBus) {
+    messageBus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appClosing() {
+        // should call before dispose in write action
+        // prevent any further re-detection and wait for the queue to clear
+        myDisposed.set(true);
+        clearDocumentQueue();
+      }
+    });
     editorFactory.getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
@@ -171,10 +183,10 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   @Override
   public void dispose() {
     myDisposed.set(true);
-    clearDocumentQueue();
   }
 
   private void queueUpdateEncodingFromContent(@NotNull Document document) {
+    if (myDisposed.get()) return; // ignore re-detect requests on app close
     document.putUserData(DETECTING_ENCODING_KEY, "");
     changedDocumentExecutor.execute(new DocumentEncodingDetectRequest(document, myDisposed));
   }
@@ -236,6 +248,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   public void clearDocumentQueue() {
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
+    }
     changedDocumentExecutor.clearAndCancelAll();
     // after clear and canceling all queued tasks, make sure they all are finished
     try {
