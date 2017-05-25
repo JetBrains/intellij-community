@@ -235,7 +235,8 @@ public class ExecUtil {
       return Arrays.asList(getOpenCommandPath(), "-a", "Terminal", command);
     }
     else if (hasKdeTerminal.getValue()) {
-      return Arrays.asList("konsole", "-e", command);
+      return title != null ? Arrays.asList("konsole", "-p", "tabtitle=\"" + title.replace('"', '\'') + "\"", "-e", command)
+                           : Arrays.asList("konsole", "-e", command);
     }
     else if (hasGnomeTerminal.getValue()) {
       return title != null ? Arrays.asList("gnome-terminal", "-t", title, "-x", command)
