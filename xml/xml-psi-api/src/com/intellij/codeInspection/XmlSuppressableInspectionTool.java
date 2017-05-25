@@ -19,7 +19,6 @@ package com.intellij.codeInspection;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NonNls;
@@ -138,10 +137,7 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
-      PsiElement container = getContainer(element);
-      if (container instanceof XmlFile) {
-        myProvider.suppressForFile(element, myId);
-      }
+      myProvider.suppressForFile(element, myId);
     }
     
     @Nullable
