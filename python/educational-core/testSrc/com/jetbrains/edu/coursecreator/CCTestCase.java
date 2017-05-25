@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.ComparisonFailure;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,12 +75,13 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/community/python/educational-core/testData";
+    return new File("testData").getAbsolutePath().replace(File.separatorChar, '/');
   }
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myFixture.setTestDataPath(getBasePath());
     Course course = new Course();
     course.setName("test course");
     StudyTaskManager.getInstance(getProject()).setCourse(course);
@@ -186,7 +188,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
   }
 
   public Pair<Document, List<AnswerPlaceholder>> getPlaceholders(String name, boolean useLength, boolean removeMarkers) {
-    VirtualFile resultFile = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + "/" + name);
+    VirtualFile resultFile = LocalFileSystem.getInstance().findFileByPath(getBasePath() + "/" + name);
     Document document = FileDocumentManager.getInstance().getDocument(resultFile);
     Document tempDocument = EditorFactory.getInstance().createDocument(document.getCharsSequence());
     if (removeMarkers) {
