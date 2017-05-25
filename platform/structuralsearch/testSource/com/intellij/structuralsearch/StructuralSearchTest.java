@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.*;
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -2393,5 +2392,16 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "}";
     assertEquals("find method with super call and matching parameter", 1,
                  findMatchesCount(source2, "'_rt '_m('_t '_p*) { return super.'_m('_p); }"));
+  }
+
+  public void testFindWithQualifiers() {
+    String source1 = "class Two {" +
+                     "  Two x;" +
+                     "  void f() {" +
+                     "    Two a = x.x.x;" +
+                     "    Two b = x.x.x.x;" +
+                     "  }" +
+                     "}";
+    assertEquals(1, findMatchesCount(source1, "x.x.x.'_x", true));
   }
 }

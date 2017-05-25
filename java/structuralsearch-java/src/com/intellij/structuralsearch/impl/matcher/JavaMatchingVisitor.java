@@ -287,20 +287,18 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitAnnotation(PsiAnnotation annotation) {
-    final PsiAnnotation psiAnnotation = (PsiAnnotation)myMatchingVisitor.getElement();
-
-    myMatchingVisitor.setResult(myMatchingVisitor.match(annotation.getNameReferenceElement(), psiAnnotation.getNameReferenceElement()) &&
-                                myMatchingVisitor
-                                  .matchInAnyOrder(annotation.getParameterList().getAttributes(),
-                                                   psiAnnotation.getParameterList().getAttributes()));
+    final PsiAnnotation other = (PsiAnnotation)myMatchingVisitor.getElement();
+    myMatchingVisitor.setResult(myMatchingVisitor.match(annotation.getNameReferenceElement(), other.getNameReferenceElement()) &&
+                                myMatchingVisitor.matchInAnyOrder(annotation.getParameterList().getAttributes(),
+                                                                  other.getParameterList().getAttributes()));
   }
 
   @Override
   public void visitNameValuePair(PsiNameValuePair pair) {
     final PsiNameValuePair elementNameValuePair = (PsiNameValuePair)myMatchingVisitor.getElement();
 
-    final PsiAnnotationMemberValue annotationInitializer = pair.getValue();
-    myMatchingVisitor.setResult(myMatchingVisitor.match(annotationInitializer, elementNameValuePair.getValue()));
+    final PsiAnnotationMemberValue value = pair.getValue();
+    myMatchingVisitor.setResult(myMatchingVisitor.match(value, elementNameValuePair.getValue()));
     if (myMatchingVisitor.getResult()) {
       final PsiIdentifier nameIdentifier = pair.getNameIdentifier();
       final PsiIdentifier otherIdentifier = elementNameValuePair.getNameIdentifier();
@@ -592,20 +590,21 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   @Override
   public void visitReferenceExpression(final PsiReferenceExpression reference) {
-    final PsiExpression qualifier = reference.getQualifierExpression();
-
-    final PsiElement nameElement = reference.getReferenceNameElement();
     final MatchContext context = myMatchingVisitor.getMatchContext();
-    MatchingHandler _handler = nameElement != null ? context.getPattern().getHandlerSimple(nameElement) : null;
-    if (!(_handler instanceof SubstitutionHandler)) _handler = context.getPattern().getHandlerSimple(reference);
+    final CompiledPattern pattern = context.getPattern();
+    MatchingHandler _handler = pattern.getHandlerSimple(reference.getReferenceNameElement());
+    boolean special = false;
+    if (_handler == null) {
+      _handler = pattern.getHandlerSimple(reference);
+      special = true;
+    }
 
     final PsiElement element = myMatchingVisitor.getElement();
     PsiElement other = element instanceof PsiExpression && context.getOptions().isLooseMatching() ?
                        PsiUtil.skipParenthesizedExprDown((PsiExpression)element) :
                        element;
-    if (_handler instanceof SubstitutionHandler &&
-        !(context.getPattern().getHandlerSimple(qualifier) instanceof SubstitutionHandler) &&
-        !(qualifier instanceof PsiThisExpression)) {
+    final PsiExpression qualifier = reference.getQualifierExpression();
+    if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
         myMatchingVisitor.setResult(checkMatchWithinHierarchy(other, handler, reference));
@@ -644,7 +643,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiElement referenceElement = reference.getReferenceNameElement();
       final PsiElement referenceElement2 = reference2.getReferenceNameElement();
 
-      if (context.getPattern().isTypedVar(referenceElement)) {
+      if (pattern.isTypedVar(referenceElement)) {
         myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(referenceElement, referenceElement2));
       }
       else {
@@ -666,7 +665,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
             return;
           }
         }
-        final MatchingHandler handler = context.getPattern().getHandler(qualifier);
+        final MatchingHandler handler = pattern.getHandler(qualifier);
         matchImplicitQualifier(handler, referencedElement, context);
       }
 
