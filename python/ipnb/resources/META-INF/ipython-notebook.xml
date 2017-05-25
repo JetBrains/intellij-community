@@ -9,7 +9,7 @@
     <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
 
     <projectConfigurable groupId="language"  instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
-                         id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="Jupyter Notebook"
+                         id="IpnbConfigurable" displayName="Jupyter Notebook"
                          nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
                     serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
