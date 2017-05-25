@@ -15,22 +15,11 @@
  */
 package org.jetbrains.yaml.breadcrumbs;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.ui.components.breadcrumbs.Crumb;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLFileType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Collectors;
 
 public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase {
@@ -80,38 +69,13 @@ public class YAMLBreadcrumbsTest extends LightPlatformCodeInsightFixtureTestCase
       .collect(Collectors.toList()).stream()
       .map((offset) -> {
         caretModel.moveToOffset(offset);
-        return getBreadcrumbs(myFixture).stream()
+        return myFixture.getBreadcrumbsAtCaret().stream()
           .map(crumb -> "[" + crumb.getText() + ";" + crumb.getTooltip() + "]")
-          .reduce((left, right) -> right + left).orElse("[]");
+          .reduce((left, right) -> left + right).orElse("[]");
       })
       .reduce((left, right) -> left + "\n------\n" + right).orElse("");
 
     assertSameLines(OUTPUT, result);
-  }
-
-  // TODO move this method and class to platform when breadcrumbs are moved there, too
-  @NotNull
-  private static List<Crumb> getBreadcrumbs(@NotNull CodeInsightTestFixture fixture) {
-    PsiElement element = fixture.getFile().findElementAt(fixture.getCaretOffset());
-    if (element == null) {
-      return Collections.emptyList();
-    }
-    final Language language = element.getContainingFile().getLanguage();
-
-    final BreadcrumbsProvider provider = ContainerUtil.find(BreadcrumbsProvider.EP_NAME.getExtensions(),
-                                                            (p) -> Arrays.asList(p.getLanguages()).contains(language));
-    if (provider == null) {
-      return Collections.emptyList();
-    }
-
-    List<Crumb> result = new ArrayList<>();
-    while (element != null) {
-      if (provider.acceptElement(element)) {
-        result.add(new Crumb.Impl(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element)));
-      }
-      element = provider.getParent(element);
-    }
-    return result;
   }
 
 }

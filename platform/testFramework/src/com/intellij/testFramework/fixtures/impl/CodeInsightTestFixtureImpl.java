@@ -56,6 +56,7 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.mock.MockProgressIndicator;
@@ -115,6 +116,8 @@ import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
+import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
+import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -1777,6 +1780,31 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                    new MockProgressIndicator(),
                                                    new CommonProcessors.CollectProcessor<>(results));
     return results;
+  }
+
+  @NotNull
+  @Override
+  public List<Crumb> getBreadcrumbsAtCaret() {
+    PsiElement element = getFile().findElementAt(getCaretOffset());
+    if (element == null) {
+      return Collections.emptyList();
+    }
+    final Language language = element.getContainingFile().getLanguage();
+
+    final BreadcrumbsProvider provider = ContainerUtil.find(BreadcrumbsProvider.EP_NAME.getExtensions(),
+                                                            p -> Arrays.asList(p.getLanguages()).contains(language));
+    if (provider == null) {
+      return Collections.emptyList();
+    }
+
+    List<Crumb> result = new ArrayList<>();
+    while (element != null) {
+      if (provider.acceptElement(element)) {
+        result.add(new Crumb.Impl(provider.getElementIcon(element), provider.getElementInfo(element), provider.getElementTooltip(element)));
+      }
+      element = provider.getParent(element);
+    }
+    return ContainerUtil.reverse(result);
   }
 
   @NotNull
