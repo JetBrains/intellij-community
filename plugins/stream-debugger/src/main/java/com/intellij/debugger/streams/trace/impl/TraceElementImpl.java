@@ -32,6 +32,10 @@ public class TraceElementImpl implements TraceElement, Comparable<TraceElement> 
     myValue = value;
   }
 
+  public static TraceElement ofResultValue(@Nullable Value streamResult) {
+    return new TraceElementImpl(Integer.MAX_VALUE, streamResult);
+  }
+
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof TraceElement) {

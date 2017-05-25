@@ -46,7 +46,7 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     final Value time = resultArray.getValue(2);
     logTime(time);
     final List<TraceInfo> trace = getTrace(chain, info);
-    return new TracingResultImpl(chain, new TraceElementImpl(Integer.MAX_VALUE, streamResult), trace, isException(result));
+    return new TracingResultImpl(chain, TraceElementImpl.ofResultValue(streamResult), trace, isException(result));
   }
 
   @NotNull
