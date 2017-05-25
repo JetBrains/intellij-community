@@ -647,12 +647,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
           if (aClass == null) {
             return "";
           }
-          return "L" + ClassUtil.getJVMClassName(aClass) + ";";
+          return ClassUtil.getJVMClassName(aClass);
         }
 
         @Override
         public String visitArrayType(PsiArrayType arrayType) {
-          return "[" + arrayType.getComponentType().accept(this);
+          PsiType componentType = arrayType.getComponentType();
+          String typePresentation = componentType.accept(this);
+          if (componentType instanceof PsiClassType) {
+            typePresentation = "L" + typePresentation + ";";
+          }
+          return "[" + typePresentation;
         }
       };
     }
