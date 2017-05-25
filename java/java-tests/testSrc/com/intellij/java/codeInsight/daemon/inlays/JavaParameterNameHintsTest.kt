@@ -320,13 +320,13 @@ class QList<E> {
 }
 
 class QCmp<E> {
-  void compare(E o1, E o2) {}
+  void cmpre(E o1, E o2) {}
 }
 
 
 public class Test {
   public void main(QCmp<Integer> c, QList<String> l) {
-    c.compare(<hint text="o1:"/>0, /** ddd */<hint text="o2:"/>3);
+    c.cmpre(<hint text="o1:"/>0, /** ddd */<hint text="o2:"/>3);
     l.add(<hint text="query:"/>1, <hint text="obj:"/>"uuu");
   }
 }
