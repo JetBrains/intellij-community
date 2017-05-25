@@ -267,7 +267,7 @@ public class ArrayRenderer extends NodeRendererImpl{
           }
         }
 
-        builder.setMessage(DebuggerBundle.message("message.node.filtered", myExpression.getExpression()),
+        builder.setMessage(DebuggerBundle.message("message.node.filtered") + " " + myExpression.getExpression(),
                            AllIcons.General.Filter,
                            SimpleTextAttributes.REGULAR_ATTRIBUTES,
                            FILTER_HYPERLINK);
@@ -281,7 +281,7 @@ public class ArrayRenderer extends NodeRendererImpl{
       }
     }
 
-    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink("  clear") {
+    public static final XDebuggerTreeNodeHyperlink FILTER_HYPERLINK = new XDebuggerTreeNodeHyperlink(" clear") {
       @Override
       public void onClick(MouseEvent e) {
         XDebuggerTree tree = (XDebuggerTree)e.getSource();

@@ -15,7 +15,11 @@
  */
 package com.intellij.debugger.ui.tree.render
 
+import com.intellij.debugger.DebuggerBundle
 import com.intellij.debugger.settings.NodeRendererSettings
+import com.intellij.icons.AllIcons
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
@@ -24,14 +28,15 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import java.awt.Rectangle
 
 /**
  * @author egor
  */
-class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val res: AsyncPromise<ArrayRenderer>) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
+class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean, val res: AsyncPromise<ArrayRenderer>) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
   override fun cancelEditing() {
     super.cancelEditing()
-    (myNode.parent as XValueNodeImpl).removeTemporaryEditorNode(myNode)
+    if (myTemp) (myNode.parent as XValueNodeImpl).removeTemporaryEditorNode(myNode)
     res.setError("Cancelled")
   }
 
@@ -43,18 +48,36 @@ class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val res: AsyncPromise<Ar
     super.doOKAction()
   }
 
+  override fun getEditorBounds(): Rectangle? {
+    val bounds = super.getEditorBounds() ?: return null
+
+    val nameLabel = SimpleColoredComponent()
+    nameLabel.ipad.right = 0
+    nameLabel.ipad.left = 0
+    nameLabel.icon = myNode.icon
+    nameLabel.append(DebuggerBundle.message("message.node.filtered"), SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    val offset = nameLabel.preferredSize.width
+
+    bounds.x += offset
+    bounds.width -= offset
+    return bounds
+  }
+
   companion object {
     @JvmStatic
     fun edit(parentNode: XValueNodeImpl,
              original: ArrayRenderer): Promise<ArrayRenderer> {
       val res = AsyncPromise<ArrayRenderer>()
-      val node = if (original is ArrayRenderer.Filtered) {
-        parentNode.children.find { it is MessageTreeNode && it.link === ArrayRenderer.Filtered.FILTER_HYPERLINK } as XDebuggerTreeNode
+      var temp = false
+      val node: XDebuggerTreeNode
+      if (original is ArrayRenderer.Filtered) {
+        node = parentNode.children.find { it is MessageTreeNode && it.link === ArrayRenderer.Filtered.FILTER_HYPERLINK } as XDebuggerTreeNode
       }
       else {
-        parentNode.addTemporaryEditorNode()
+        node = parentNode.addTemporaryEditorNode(AllIcons.General.Filter, DebuggerBundle.message("message.node.filtered"))
+        temp = true
       }
-      DebuggerUIUtil.invokeLater({ArrayFilterInplaceEditor(node, res).show()})
+      DebuggerUIUtil.invokeLater({ArrayFilterInplaceEditor(node, temp, res).show()})
       return res
     }
   }
