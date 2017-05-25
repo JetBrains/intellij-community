@@ -88,7 +88,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertFalse(watcher.isOperational)
     watchedPaths += tempDir.root.path
     watcher.startup { path ->
-      if (path == FileWatcher.RESET || path == FileWatcher.OTHER || watchedPaths.any { path.startsWith(it) }) {
+      if (path == FileWatcher.RESET || path != FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
         alarm.cancelAllRequests()
         alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
         if (path == FileWatcher.RESET) resetHappened.set(true)
@@ -568,6 +568,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     alarm.cancelAllRequests()
     resetHappened.set(false)
     action()
+    LOG.debug("** action performed")
     watcherEvents.waitFor(timeout)
     watcherEvents.up()
     assumeFalse("reset happened", resetHappened.get())
