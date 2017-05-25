@@ -32,7 +32,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
 
   private void doTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject("typing", "");
       myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
       myFixture.enableInspections(PyTypeCheckerInspection.class);
       myFixture.checkHighlighting(true, false, true);
@@ -42,7 +41,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   private void doMultiFileTest() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
       myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-      myFixture.copyDirectoryToProject("typing", "");
       myFixture.configureFromTempProjectFile("a.py");
       myFixture.enableInspections(PyTypeCheckerInspection.class);
       myFixture.checkHighlighting(true, false, true);
@@ -235,6 +233,11 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   }
 
   public void testTypingNamedTupleAsParameter() {
+    doTest();
+  }
+
+  // PY-23057
+  public void testEllipsisInFunctionWithSpecifiedReturnType() {
     doTest();
   }
 }
