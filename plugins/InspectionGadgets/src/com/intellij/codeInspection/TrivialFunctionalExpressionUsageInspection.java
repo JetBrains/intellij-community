@@ -68,8 +68,17 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
             return false;
           }
 
-          if (!returnExpressions.isEmpty() && callParent instanceof PsiLocalVariable) {
-            return true;
+          if (!returnExpressions.isEmpty()) {
+            if (callParent instanceof PsiLocalVariable) {
+              return true;
+            }
+          }
+          else {
+            PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
+            if (returnStatements.length > 0) {
+              //accept redundant return which would be deleted
+              return returnStatements.length == 1 && returnStatements[0] == statements[statements.length - 1];
+            }
           }
 
           return (callParent instanceof PsiStatement && !(callParent instanceof PsiLoopStatement)) ||
