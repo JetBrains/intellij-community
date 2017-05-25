@@ -359,6 +359,11 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
   }
 
+  public static boolean hasCompletionHints(@NotNull PsiCallExpression expression) {
+    PsiExpressionList argumentList = expression.getArgumentList();
+    return argumentList != null && !ContainerUtil.isEmpty(argumentList.getUserData(COMPLETION_HINTS));
+  }
+
   private static void setupNonFilledArgumentRemoving(final Editor editor, final TemplateState templateState) {
     AtomicInteger maxEditedVariable = new AtomicInteger(-1);
     editor.getDocument().addDocumentListener(new DocumentListener() {
