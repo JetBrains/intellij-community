@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -105,7 +106,8 @@ public class ExecUtil {
     try {
       return readFirstLine(commandLine.createProcess().getInputStream(), commandLine.getCharset());
     }
-    catch (ExecutionException ignored) {
+    catch (ExecutionException e) {
+      Logger.getInstance(ExecUtil.class).debug(e);
       return null;
     }
   }
@@ -115,7 +117,8 @@ public class ExecUtil {
     try (BufferedReader reader = new BufferedReader(cs == null ? new InputStreamReader(stream) : new InputStreamReader(stream, cs))) {
       return reader.readLine();
     }
-    catch (IOException ignored) {
+    catch (IOException e) {
+      Logger.getInstance(ExecUtil.class).debug(e);
       return null;
     }
   }

@@ -105,7 +105,7 @@ public class ShowFilePathAction extends AnAction {
           .map(dir -> new File(dir, "applications/" + appName))
           .filter(File::exists)
           .findFirst()
-          .map(file -> readDesktopEntryKey(file, key + '='));
+          .map(file -> readDesktopEntryKey(file, key));
       }
     }
 
@@ -119,8 +119,10 @@ public class ShowFilePathAction extends AnAction {
   }
 
   private static String readDesktopEntryKey(File file, String key) {
+    LOG.debug("looking for '" + key + "' in " + file);
+    String prefix = key + '=';
     try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-      return reader.lines().filter(l -> l.startsWith(key)).map(l -> l.substring(key.length())).findFirst().orElse(null);
+      return reader.lines().filter(l -> l.startsWith(prefix)).map(l -> l.substring(prefix.length())).findFirst().orElse(null);
     }
     catch (IOException | UncheckedIOException e) {
       LOG.info("Cannot read: " + file, e);
@@ -128,7 +130,7 @@ public class ShowFilePathAction extends AnAction {
     }
   }
 
-@Override
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean visible = !SystemInfo.isMac && isSupported();
     e.getPresentation().setVisible(visible);
