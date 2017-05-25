@@ -244,8 +244,8 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   }
 
   @NotNull
-  public static LightJavaModule getModule(@NotNull final PsiManager manager, @NotNull final VirtualFile jarRoot) {
-    final PsiDirectory directory = manager.findDirectory(jarRoot);
+  public static LightJavaModule getModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
+    PsiDirectory directory = manager.findDirectory(jarRoot);
     assert directory != null : jarRoot;
     return CachedValuesManager.getCachedValue(directory, () -> {
       LightJavaModule module = new LightJavaModule(manager, jarRoot);
