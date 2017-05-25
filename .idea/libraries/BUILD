@@ -803,24 +803,8 @@ java_library(
     name = "baksmali",
     tags = ["managed"],
     visibility = ["//visibility:public"],
-    exports = ["//tools/adt/idea/android/lib:baksmali-2.2b4-dev"],
-    runtime_deps = ["//tools/adt/idea/android/lib:baksmali-2.2b4-dev"],
-)
-
-java_library(
-    name = "dexlib2-2.2b4",
-    tags = ["managed"],
-    visibility = ["//visibility:public"],
-    # do not sort: must match IML order
-    exports = [
-        "//tools/adt/idea/android/lib:dexlib2-2.2b4-dev",
-        "//tools/adt/idea/android/lib:dexlib2-util-2.2b4-dev",
-    ],
-    # do not sort: must match IML order
-    runtime_deps = [
-        "//tools/adt/idea/android/lib:dexlib2-2.2b4-dev",
-        "//tools/adt/idea/android/lib:dexlib2-util-2.2b4-dev",
-    ],
+    exports = ["//tools/adt/idea/android/lib:baksmali-2.2.0"],
+    runtime_deps = ["//tools/adt/idea/android/lib:baksmali-2.2.0"],
 )
 
 java_library(
@@ -829,13 +813,13 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/org/smali/util/2.1.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.1.3:jar",
+        "//tools/adt/idea/android/lib:dexlib2-2.2.0",
+        "//tools/adt/idea/android/lib:dexlib2-util-2.2.0",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/org/smali/util/2.1.3:jar",
-        "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.1.3:jar",
+        "//tools/adt/idea/android/lib:dexlib2-2.2.0",
+        "//tools/adt/idea/android/lib:dexlib2-util-2.2.0",
     ],
 )
 
