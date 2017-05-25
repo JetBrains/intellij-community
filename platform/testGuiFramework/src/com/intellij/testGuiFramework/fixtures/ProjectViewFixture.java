@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.nodes.*;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -65,6 +66,9 @@ import static org.fest.swing.timing.Pause.pause;
 import static org.junit.Assert.assertNotNull;
 
 public class ProjectViewFixture extends ToolWindowFixture {
+
+  private static Logger LOG = Logger.getInstance("#com.intellij.testGuiFramework.fixtures.ProjectViewFixture");
+
   ProjectViewFixture(@NotNull Project project, @NotNull Robot robot) {
     super("Project", project, robot);
   }
@@ -282,9 +286,14 @@ public class ProjectViewFixture extends ToolWindowFixture {
             Object newRoot = null;
             for (Object child : childElements) {
               treePath.add(child);
-              List<String> tryPath = treeFixture.getPath(tree.getPath((PresentableNodeDescriptor)child));
-              if (tryPath.get(tryPath.size() - 1).equals(pathItem)) {
+              String nodeText = getNodeText(child);
+              if (nodeText == null) {
+                LOG.error("Unable to get text of project view node for pathItem: " + pathItem);
+                throw new AssertionError("Unable to get text of project view node for pathItem: " + pathItem);
+              }
+              if (nodeText.equals(pathItem)) {
                 newRoot = child;
+                break;
               } else {
                 treePath.remove(treePath.size() - 1);
               }
@@ -303,6 +312,14 @@ public class ProjectViewFixture extends ToolWindowFixture {
       if (basePsiNode == null) throw new ComponentLookupException("Unable to find node with next path: " + Arrays.toString(path));
       return new NodeFixture(basePsiNode, treeStructure, myPane);
     }
+  }
+
+  @Nullable
+  private static String getNodeText(Object node) {
+    assert (node instanceof PresentableNodeDescriptor);
+    PresentableNodeDescriptor descriptor = (PresentableNodeDescriptor)node;
+    descriptor.update();
+    return descriptor.getPresentation().getPresentableText();
   }
 
   public class NodeFixture {
