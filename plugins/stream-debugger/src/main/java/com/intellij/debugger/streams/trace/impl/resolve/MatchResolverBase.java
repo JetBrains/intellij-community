@@ -51,7 +51,7 @@ public abstract class MatchResolverBase implements CallTraceResolver {
       final Value beforeFilter = array.getValue(0);
       final Value afterFilter = array.getValue(1);
       final Value streamResult = array.getValue(2);
-      final TraceElement streamResultElement = TraceElementImpl.ofResultValue(streamResult);
+      final TraceElement streamResultElement = TraceElementImpl.ofResultValue(((ArrayReference)streamResult).getValue(0));
 
       final TraceInfo beforeFilterInfo = myPeekResolver.resolve(call, beforeFilter);
       final TraceInfo afterFilterInfo = myPeekResolver.resolve(call, afterFilter);
