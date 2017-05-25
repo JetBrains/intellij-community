@@ -18,6 +18,7 @@ package com.intellij.psi.impl.light;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProviders;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,8 +35,12 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +54,7 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
   private LightJavaModule(@NotNull PsiManager manager, @NotNull VirtualFile jarRoot) {
     super(manager, JavaLanguage.INSTANCE);
     myJarRoot = jarRoot;
-    myRefElement = new LightJavaModuleReferenceElement(manager, moduleName(jarRoot.getNameWithoutExtension()));
+    myRefElement = new LightJavaModuleReferenceElement(manager, moduleName(jarRoot));
   }
 
   @NotNull
@@ -251,6 +256,22 @@ public class LightJavaModule extends LightElement implements PsiJavaModule {
       LightJavaModule module = new LightJavaModule(manager, jarRoot);
       return CachedValueProvider.Result.create(module, directory);
     });
+  }
+
+  @NotNull
+  public static String moduleName(@NotNull VirtualFile jarRoot) {
+    VirtualFile manifest = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
+    if (manifest != null) {
+      try (InputStream stream = manifest.getInputStream()) {
+        String claimed = new Manifest(stream).getMainAttributes().getValue("Automatic-Module-Name");
+        if (claimed != null) return claimed;
+      }
+      catch (IOException e) {
+        Logger.getInstance(LightJavaModule.class).warn(e);
+      }
+    }
+
+    return moduleName(jarRoot.getNameWithoutExtension());
   }
 
   /**
