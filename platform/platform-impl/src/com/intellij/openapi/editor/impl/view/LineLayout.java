@@ -154,14 +154,14 @@ abstract class LineLayout {
       int relLastOffset = 0;
       IElementType lastToken = null;
       HighlighterIterator iterator = view.getEditor().getHighlighter().createIterator(startOffsetInEditor);
-      while (!iterator.atEnd() && (iterator.getStart() - startOffsetInEditor) < textLength) {
+      while (!iterator.atEnd() && iterator.getStart() - startOffsetInEditor < textLength) {
         int iteratorRelStart = alignToCodePointBoundary(text, iterator.getStart() - startOffsetInEditor);
         int iteratorRelEnd = alignToCodePointBoundary(text, iterator.getEnd() - startOffsetInEditor);
         IElementType currentToken = iterator.getTokenType();
         int relStartOffset = Math.max(0, iteratorRelStart);
         String lcPrefix = getLineCommentPrefix(currentToken);
         // for line comments we process prefix and following text separately
-        if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= (iteratorRelEnd - iteratorRelStart) &&
+        if (!StringUtil.isEmpty(lcPrefix) && lcPrefix.length() <= iteratorRelEnd - iteratorRelStart &&
             CharArrayUtil.regionMatches(text, relStartOffset, relStartOffset + lcPrefix.length(), lcPrefix) &&
             !isInsideSurrogatePair(text, relStartOffset + lcPrefix.length())) {
           addRuns(runs, text, relLastOffset, relStartOffset, flags);
@@ -207,7 +207,7 @@ abstract class LineLayout {
   private static String getLineCommentPrefix(IElementType token) {
     if (token == null) return null;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
-    return (commenter instanceof CodeDocumentationAwareCommenter) &&
+    return commenter instanceof CodeDocumentationAwareCommenter &&
            token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType()) ?
            commenter.getLineCommentPrefix() : null;
   }
@@ -301,16 +301,11 @@ abstract class LineLayout {
   }
   
   Iterable<VisualFragment> getFragmentsInVisualOrder(final float startX) {
-    return new Iterable<VisualFragment>() {
-      @Override
-      public Iterator<VisualFragment> iterator() {
-        return new VisualOrderIterator(null, 0, startX, 0, 0, getRunsInVisualOrder());
-      }
-    };
+    return () -> new VisualOrderIterator(null, 0, startX, 0, 0, getRunsInVisualOrder());
   }
 
   /**
-   * If <code>quickEvaluationListener</code> is provided, quick approximate iteration becomes enabled, listener will be invoked
+   * If {@code quickEvaluationListener} is provided, quick approximate iteration becomes enabled, listener will be invoked
    * if approximation will in fact be used during width calculation.
    */
   Iterator<VisualFragment> getFragmentsInVisualOrder(@NotNull final EditorView view,
@@ -564,7 +559,7 @@ abstract class LineLayout {
         chunks = new Chunk[chunkCount];
         for (int i = 0; i < chunkCount; i++) {
           int from = startOffset + i * CHUNK_CHARACTERS;
-          int to = (i == chunkCount - 1) ? endOffset : from + CHUNK_CHARACTERS;
+          int to = i == chunkCount - 1 ? endOffset : from + CHUNK_CHARACTERS;
           Chunk chunk = new Chunk(alignToCodePointBoundary(text, from + startOffsetInText) - startOffsetInText,
                                   alignToCodePointBoundary(text, to + startOffsetInText) - startOffsetInText);
           chunks[i] = chunk;
@@ -600,8 +595,8 @@ abstract class LineLayout {
   
   static class Chunk {
     List<LineFragment> fragments; // in logical order
-    private int startOffset;
-    private int endOffset;
+    private final int startOffset;
+    private final int endOffset;
 
     private Chunk(int startOffset, int endOffset) {
       this.startOffset = startOffset;
@@ -666,7 +661,7 @@ abstract class LineLayout {
                                                                               view.getMaxCharWidth()));
         return chunk;
       }
-      if (start == startOffset && end == this.endOffset) {
+      if (start == startOffset && end == endOffset) {
         return this;
       }
       ensureLayout(view, run, line);
@@ -710,11 +705,11 @@ abstract class LineLayout {
     private final int myLine;
     private final int myLineStartOffset;
     private final BidiRun[] myRuns;
-    private int myRunIndex = 0;
-    private int myChunkIndex = 0;
-    private int myFragmentIndex = 0;
-    private int myOffsetInsideRun = 0;
-    private VisualFragment myFragment = new VisualFragment();
+    private int myRunIndex;
+    private int myChunkIndex;
+    private int myFragmentIndex;
+    private int myOffsetInsideRun;
+    private final VisualFragment myFragment = new VisualFragment();
 
     private VisualOrderIterator(EditorView view, int line, 
                                 float startX, int startVisualColumn, int startOffset, BidiRun[] runsInVisualOrder) {
@@ -752,12 +747,9 @@ abstract class LineLayout {
         myFragment.startLogicalColumn = run.visualStartLogicalColumn;
       }
       else {
-        if (myChunkIndex == 0 && myFragmentIndex == 0) {
-          myFragment.startLogicalColumn = run.visualStartLogicalColumn;
-        }
-        else {
-          myFragment.startLogicalColumn = myFragment.getEndLogicalColumn();
-        }
+        myFragment.startLogicalColumn = myChunkIndex == 0 && myFragmentIndex == 0 ?
+                                        run.visualStartLogicalColumn :
+                                        myFragment.getEndLogicalColumn();
         myFragment.startVisualColumn = myFragment.getEndVisualColumn();
         myFragment.startX = myFragment.getEndX();
       }

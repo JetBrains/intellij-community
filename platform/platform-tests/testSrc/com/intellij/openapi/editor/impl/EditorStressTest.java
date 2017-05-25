@@ -53,7 +53,7 @@ public class EditorStressTest extends AbstractEditorTest {
 
   private final Random myRandom = new Random() {{
     //noinspection ConstantConditions
-    setSeed(mySeed = (SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE));
+    setSeed(mySeed = SEED_OVERRIDE == null ? nextLong() : SEED_OVERRIDE);
   }};
   private long mySeed;
 
@@ -81,6 +81,7 @@ public class EditorStressTest extends AbstractEditorTest {
     ourActions.get(myRandom.nextInt(ourActions.size())).perform(editor, myRandom);
   }
 
+  @FunctionalInterface
   interface Action {
     void perform(EditorEx editor, Random random);
   }
