@@ -53,13 +53,7 @@ public abstract class ArrayAction extends DebuggerAction {
       return;
     }
 
-    final XValue container = node.getValueContainer();
-    if (!(container instanceof JavaValue)) {
-      return;
-    }
-
-    final ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
-    ArrayRenderer renderer = getArrayRenderer(descriptor);
+    ArrayRenderer renderer = getArrayRenderer(node.getValueContainer());
     if (renderer == null) {
       return;
     }
@@ -85,21 +79,25 @@ public abstract class ArrayAction extends DebuggerAction {
     boolean enable = false;
     List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() == 1) {
-      enable = getArrayRenderer(values.get(0).getDescriptor()) != null;
+      enable = getArrayRenderer(values.get(0)) != null;
     }
     e.getPresentation().setEnabledAndVisible(enable);
   }
 
   @Nullable
-  private static ArrayRenderer getArrayRenderer(ValueDescriptorImpl descriptor) {
-    final Renderer lastRenderer = descriptor.getLastRenderer();
-    if (lastRenderer instanceof ArrayRenderer) {
-      return (ArrayRenderer)lastRenderer;
-    }
-    if (lastRenderer instanceof CompoundNodeRenderer && ((CompoundNodeRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer) {
-      final NodeRenderer lastChildrenRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
-      if (lastChildrenRenderer instanceof ArrayRenderer) {
-        return (ArrayRenderer)lastChildrenRenderer;
+  public static ArrayRenderer getArrayRenderer(XValue value) {
+    if (value instanceof JavaValue) {
+      ValueDescriptorImpl descriptor = ((JavaValue)value).getDescriptor();
+      final Renderer lastRenderer = descriptor.getLastRenderer();
+      if (lastRenderer instanceof ArrayRenderer) {
+        return (ArrayRenderer)lastRenderer;
+      }
+      if (lastRenderer instanceof CompoundNodeRenderer &&
+          ((CompoundNodeRenderer)lastRenderer).getChildrenRenderer() instanceof ExpressionChildrenRenderer) {
+        final NodeRenderer lastChildrenRenderer = ExpressionChildrenRenderer.getLastChildrenRenderer(descriptor);
+        if (lastChildrenRenderer instanceof ArrayRenderer) {
+          return (ArrayRenderer)lastChildrenRenderer;
+        }
       }
     }
     return null;
@@ -107,15 +105,13 @@ public abstract class ArrayAction extends DebuggerAction {
 
   public static void setArrayRenderer(ArrayRenderer newRenderer, @NotNull XValueNodeImpl node, @NotNull DebuggerContextImpl debuggerContext) {
     XValue container = node.getValueContainer();
-    if (!(container instanceof JavaValue)) {
+
+    ArrayRenderer renderer = getArrayRenderer(container);
+    if (renderer == null) {
       return;
     }
 
     ValueDescriptorImpl descriptor = ((JavaValue)container).getDescriptor();
-    ArrayRenderer renderer = getArrayRenderer(descriptor);
-    if (renderer == null) {
-      return;
-    }
 
     DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
     if (debugProcess != null) {

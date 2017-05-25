@@ -38,6 +38,11 @@ import javax.swing.tree.TreeNode
  * @author egor
  */
 class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
+  init {
+    val arrayRenderer = ArrayAction.getArrayRenderer((myNode.parent as XValueNodeImpl).valueContainer)
+    myExpressionEditor.expression = if (arrayRenderer is ArrayRenderer.Filtered) arrayRenderer.expression else null
+  }
+
   override fun cancelEditing() {
     super.cancelEditing()
     if (myTemp) (myNode.parent as XValueNodeImpl).removeTemporaryEditorNode(myNode)
