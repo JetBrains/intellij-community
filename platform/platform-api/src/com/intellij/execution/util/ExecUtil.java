@@ -228,7 +228,7 @@ public class ExecUtil {
   @NotNull
   public static List<String> getTerminalCommand(@Nullable String title, @NotNull String command) {
     if (SystemInfo.isWindows) {
-      title = title != null ? title.replace("\"", "'") : "";
+      title = title != null ? title.replace('"', '\'') : "";
       return Arrays.asList(getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(title), command);
     }
     else if (SystemInfo.isMac) {
