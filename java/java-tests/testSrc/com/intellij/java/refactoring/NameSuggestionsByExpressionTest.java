@@ -33,7 +33,17 @@ public class NameSuggestionsByExpressionTest extends LightCodeInsightFixtureTest
     SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(getProject())
       .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, null);
     Assert.assertArrayEquals("Suggested: " + Arrays.toString(nameInfo.names), 
-                             new String[] {"string_with_spaces", "stringWithSpaces", "with_spaces", "withSpaces", "spaces", "s"}, 
+                             new String[] {"string_with_spaces", "stringWithSpaces", "with_spaces", "withSpaces", "spaces", "string", "s"}, 
+                             nameInfo.names);
+  }
+
+  public void testWordByPreposition() throws Exception {
+    PsiFile file = myFixture.configureByText("A.java", "class A {{getParent<caret>OfType()} String getParentOfType() {return null;}}");
+    PsiExpression expression = PsiTreeUtil.getParentOfType(file.findElementAt(getEditor().getCaretModel().getOffset()), PsiExpression.class);
+    SuggestedNameInfo nameInfo = JavaCodeStyleManager.getInstance(getProject())
+      .suggestVariableName(VariableKind.LOCAL_VARIABLE, null, expression, null);
+    Assert.assertArrayEquals("Suggested: " + Arrays.toString(nameInfo.names), 
+                             new String[] {"getParentOfType", "parentOfType", "ofType", "type", "parent", "s"}, 
                              nameInfo.names);
   }
 }

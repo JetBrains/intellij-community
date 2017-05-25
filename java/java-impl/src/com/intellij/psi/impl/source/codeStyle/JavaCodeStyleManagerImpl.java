@@ -55,6 +55,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
   @NonNls private static final String SET_PREFIX = "set";
+  
+  @NonNls private static final String[] ourPrepositions = {
+    "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
+    "per", "to", "up", "upon", "via", "with"};
+
 
   private final Project myProject;
 
@@ -884,7 +889,33 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       answer.add(correctKeywords ? changeIfNotIdentifier(suggestion) : suggestion);
     }
 
+    ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle, isArray));
     return ArrayUtil.toStringArray(answer);
+  }
+
+  private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle, boolean isArray) {
+    String[] words = NameUtil.splitNameIntoWords(name);
+    for (int i = 1; i < words.length; i++) {
+      for (String preposition : ourPrepositions) {
+        if (preposition.equalsIgnoreCase(words[i])) {
+          String mainWord = words[i - 1];
+          if (upperCaseStyle) {
+            mainWord = StringUtil.toUpperCase(mainWord);
+          }
+          else {
+            if (prefix.isEmpty() || StringUtil.endsWithChar(prefix, '_')) {
+              mainWord = StringUtil.toLowerCase(mainWord);
+            }
+            else {
+              mainWord = StringUtil.capitalize(mainWord);
+            }
+          }
+          String result = prefix + mainWord + suffix;
+          return isArray ? StringUtil.pluralize(result) : result;
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull
