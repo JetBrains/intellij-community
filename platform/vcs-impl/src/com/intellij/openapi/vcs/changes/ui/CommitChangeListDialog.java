@@ -271,7 +271,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     myAllOfDefaultChangeListChangesIncluded = newHashSet(changes).containsAll(newHashSet(defaultChangeList.getChanges()));
 
-    myCommitMessageArea = new CommitMessage(project);
+    myCommitMessageArea = new CommitMessage(project, true, myShowVcsCommit);
 
     myIsAlien = isAlien;
     if (isAlien) {

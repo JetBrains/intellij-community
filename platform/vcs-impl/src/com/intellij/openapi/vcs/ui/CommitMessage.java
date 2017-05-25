@@ -29,6 +29,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -69,13 +70,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @NotNull private List<ChangeList> myChangeLists = emptyList(); // guarded with WriteLock
 
   public CommitMessage(@NotNull Project project) {
-    this(project, true);
+    this(project, true, true);
   }
 
-  public CommitMessage(@NotNull Project project, boolean withSeparator) {
+  public CommitMessage(@NotNull Project project, boolean withSeparator, boolean runInspections) {
     super(new BorderLayout());
 
-    myEditorField = createCommitTextEditor(project);
+    myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
 
     add(myEditorField, BorderLayout.CENTER);
@@ -122,15 +123,19 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   /**
    * Creates a text editor appropriate for creating commit messages.
    * @return a commit message editor
-   * @deprecated Use {@link CommitMessage#createCommitTextEditor(Project)}.
+   * @deprecated Use {@link CommitMessage#createCommitMessageEditor(Project, boolean)}.
    */
   @Deprecated
   public static EditorTextField createCommitTextEditor(@NotNull Project project, @SuppressWarnings("unused") boolean forceSpellCheckOn) {
-    return createCommitTextEditor(project);
+    return createCommitMessageEditor(project, false);
   }
 
   @NotNull
-  public static EditorTextField createCommitTextEditor(@NotNull Project project) {
+  public static EditorTextField createCommitMessageEditor(@NotNull Project project) {
+    return createCommitMessageEditor(project, true);
+  }
+
+  public static EditorTextField createCommitMessageEditor(@NotNull Project project, boolean runInspections) {
     Set<EditorCustomization> features = newHashSet();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
@@ -144,8 +149,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
     features.add(MonospaceEditorCustomization.getInstance());
-    features.add(ErrorStripeEditorCustomization.ENABLED);
-    features.add(new InspectionCustomization(project));
+    if (runInspections) {
+      features.add(ErrorStripeEditorCustomization.ENABLED);
+      features.add(new InspectionCustomization(project));
+    }
+    else {
+      features.add(SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
+    }
 
     EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
     return service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);

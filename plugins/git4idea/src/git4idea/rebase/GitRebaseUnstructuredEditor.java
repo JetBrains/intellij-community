@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ class GitRebaseUnstructuredEditor extends DialogWrapper {
 
     myRootLabel = new JBLabel("Git Root: " + root.getPresentableUrl());
 
-    myTextEditor = CommitMessage.createCommitTextEditor(project);
+    myTextEditor = CommitMessage.createCommitMessageEditor(project);
     myTextEditor.setText(initialText);
     myTextEditor.setCaretPosition(0);
     init();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -142,7 +142,7 @@ class GitRewordAction : GitCommitEditingAction() {
     fun getMessage() = commitEditor.text!!
 
     private fun createCommitEditor(): EditorTextField {
-      val editor = CommitMessage.createCommitTextEditor(project)
+      val editor = CommitMessage.createCommitMessageEditor(project)
       editor.text = commit.fullMessage
       editor.setCaretPosition(0)
       editor.addSettingsProvider { editor ->
