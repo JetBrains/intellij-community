@@ -109,6 +109,7 @@
     <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
             description="Create new tag pointing to this commit"/>
     <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." />
+    <action id="Git.Rebase.In.Log" class="git4idea.rebase.GitRebaseCurrentBranchAction" text="Rebase Current Branch to Here..." />
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
 
@@ -121,6 +122,7 @@
       <reference id="Git.BranchOperationGroup"/>
       <separator/>
       <reference id="Git.Reset.In.Log" />
+      <reference id="Git.Rebase.In.Log" />
       <reference id="Git.Uncommit" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
