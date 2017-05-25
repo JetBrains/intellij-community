@@ -530,7 +530,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
       @Override
       public boolean isAccepted(PsiElement element) {
-        if (isStringPsiLiteral(element) && StringUtil.isJavaIdentifier(StringUtil.unquoteString(element.getText()))) {
+        if (isStringPsiLiteral(element) && isNameSupplier(element)) {
           final PsiElement exprList = element.getParent();
           if (exprList instanceof PsiExpressionList) {
             final PsiElement call = exprList.getParent();
@@ -544,11 +544,18 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         return false;
       }
+
+      private boolean isNameSupplier(PsiElement element) {
+        String stringPresentation = StringUtil.unquoteString(element.getText());
+        String[] words = stringPresentation.split(" ");
+        if (words.length > 5) return false;
+        return Arrays.stream(words).allMatch(StringUtil::isJavaIdentifier);
+      }
     });
 
     if (literals.length == 1) {
       final String text = StringUtil.unquoteString(literals[0].getText());
-      return getSuggestionsByName(text, variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
+      return getSuggestionsByName(text.replaceAll(" ", "_"), variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
     }
     return null;
   }
