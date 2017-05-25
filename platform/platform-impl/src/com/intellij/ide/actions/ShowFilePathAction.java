@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
 public class ShowFilePathAction extends AnAction {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
+  private static final Logger LOG = Logger.getInstance(ShowFilePathAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
     @Override
@@ -282,11 +282,13 @@ public class ShowFilePathAction extends AnAction {
 
     if (SystemInfo.isWindows) {
       String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
+      LOG.debug(cmd);
       Process process = Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
       new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
     }
     else if (SystemInfo.isMac) {
       GeneralCommandLine cmd = toSelect != null ? new GeneralCommandLine("open", "-R", toSelect) : new GeneralCommandLine("open", dir);
+      LOG.debug(cmd.toString());
       ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
     }
     else if (fileManagerApp.getValue() != null) {
@@ -296,6 +298,7 @@ public class ShowFilePathAction extends AnAction {
       schedule(new GeneralCommandLine("xdg-open", dir));
     }
     else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+      LOG.debug("opening " + dir + " via desktop API");
       Desktop.getDesktop().open(new File(dir));
     }
     else {
@@ -306,6 +309,7 @@ public class ShowFilePathAction extends AnAction {
   private static void schedule(GeneralCommandLine cmd) {
     PooledThreadExecutor.INSTANCE.submit(() -> {
       try {
+        LOG.debug(cmd.toString());
         ExecUtil.execAndGetOutput(cmd).checkSuccess(LOG);
       }
       catch (Exception e) {
