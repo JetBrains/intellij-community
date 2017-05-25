@@ -245,10 +245,6 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   private static final String s85 = "{ int a; a=1; a=1; return a; }";
   private static final String s86 = "'T; 'T;";
 
-  private static final String s87 = " getSomething(\"1\"); a.call(); ";
-  private static final String s88 = " '_Instance.'Call('_*); ";
-  private static final String s88_2 = " 'Call('_*); ";
-  private static final String s88_3 = " '_Instance?.'Call('_*); ";
   private static final String s89 = "{ a = 1; b = 2; c=3; }";
 
   private static final String s91 = "class a {\n" +
@@ -513,9 +509,12 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("several operators 5", 2, findMatchesCount(s1000, s1001));
     assertEquals("two the same statements search", 1, findMatchesCount(s85,s86));
-    assertEquals("search for simple call", 1, findMatchesCount(s87,s88));
-    assertEquals("search for simple call 2", 1, findMatchesCount(s87,s88_2));
-    assertEquals("search for simple call 3", 2, findMatchesCount(s87,s88_3));
+
+    final String s87 = " getSomething(\"2\"); getSomething(\"1\"); a.call(); ";
+    assertEquals("search for simple call", 1, findMatchesCount(s87, " '_Instance.'Call('_*); "));
+    assertEquals("search for simple call 2", 3, findMatchesCount(s87, " 'Call('_*); "));
+    assertEquals("search for simple call 3", 3, findMatchesCount(s87, " '_Instance?.'Call('_*); "));
+    assertEquals("search for simple call 4", 2, findMatchesCount(s87, " '_Instance{0,0}.'Call('_*); "));
 
     String s10015 = "DocumentListener[] listeners = getCachedListeners();";
     assertEquals("search for definition with init", 1, findMatchesCount(s10015, "'_Type 'Var = '_Call();"));
@@ -2403,5 +2402,19 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  }" +
                      "}";
     assertEquals(1, findMatchesCount(source1, "x.x.x.'_x", true));
+
+    String source2 = "import static java.lang.String.*;" +
+                     "class One {" +
+                     "  void f() {" +
+                     "    valueOf(1);" +
+                     "    String.valueOf(1);" +
+                     "    java.lang.String.valueOf(1);" +
+                     "    Integer.valueOf(1);" +
+                     "  }" +
+                     "}";
+    assertEquals(3, findMatchesCount(source2, "java.lang.String.valueOf(1)", true));
+    assertEquals(3, findMatchesCount(source2, "String.valueOf(1)", true));
+    assertEquals(3, findMatchesCount(source2, "'_a?:[regex( String )].valueOf(1)", true));
+    assertEquals(4, findMatchesCount(source2, "valueOf(1)", true));
   }
 }

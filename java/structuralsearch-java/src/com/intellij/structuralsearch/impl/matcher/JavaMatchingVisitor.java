@@ -1104,10 +1104,6 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         }
       }
     }
-    else if (matchedQualifier != null) {
-      myMatchingVisitor.setResult(false);
-      return;
-    }
 
     myMatchingVisitor.setResult(myMatchingVisitor.matchSons(mcall.getArgumentList(), mcall2.getArgumentList()));
 
