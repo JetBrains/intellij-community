@@ -62,7 +62,7 @@ public class MatchHandler extends CallTraceHandlerBase {
   @Override
   public String prepareResult() {
     final String separator = TraceExpressionBuilderImpl.LINE_SEPARATOR;
-    return "Object[] result = new Object[2];" + separator +
+    return "Object[] result = new Object[3];" + separator +
            "{" + separator +
            myBeforeFilterPeekInserter.prepareResult() +
            "result[0] = " + myBeforeFilterPeekInserter.getResultExpression() + ";" + separator +
@@ -70,7 +70,9 @@ public class MatchHandler extends CallTraceHandlerBase {
            "{" + separator +
            myAfterFilterPeekInserter.prepareResult() + separator +
            "result[1] = " + myAfterFilterPeekInserter.getResultExpression() + ";" + separator +
-           "}" + separator;
+           "}" + separator +
+           "result[2] = streamResult;"
+      ;
   }
 
   @NotNull

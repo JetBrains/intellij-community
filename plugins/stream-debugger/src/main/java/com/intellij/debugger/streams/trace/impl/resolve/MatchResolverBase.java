@@ -18,6 +18,7 @@ package com.intellij.debugger.streams.trace.impl.resolve;
 import com.intellij.debugger.streams.trace.CallTraceResolver;
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
+import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedArrayLengthException;
 import com.intellij.debugger.streams.trace.impl.resolve.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -26,7 +27,6 @@ import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -44,12 +44,14 @@ public abstract class MatchResolverBase implements CallTraceResolver {
   public TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (value instanceof ArrayReference) {
       final ArrayReference array = (ArrayReference)value;
-      if (array.length() != 2) {
+      if (array.length() != 3) {
         throw new UnexpectedArrayLengthException("trace array for *match call should contain two items. Actual = " + array.length());
       }
 
       final Value beforeFilter = array.getValue(0);
       final Value afterFilter = array.getValue(1);
+      final Value streamResult = array.getValue(2);
+      final TraceElement streamResultElement = TraceElementImpl.ofResultValue(streamResult);
 
       final TraceInfo beforeFilterInfo = myPeekResolver.resolve(call, beforeFilter);
       final TraceInfo afterFilterInfo = myPeekResolver.resolve(call, afterFilter);
@@ -64,7 +66,7 @@ public abstract class MatchResolverBase implements CallTraceResolver {
       final Map<Integer, TraceElement> beforeTrace =
         Action.CONNECT_FILTERED.equals(action) ? onlyFiltered(traceBeforeFilter) : difference(traceBeforeFilter, traceBefore.keySet());
 
-      return new ValuesOrderInfo(call, beforeTrace, Collections.emptyMap());
+      return new ValuesOrderInfo(call, beforeTrace, makeIndexByTime(Stream.of(streamResultElement)));
     }
 
     throw new UnexpectedValueTypeException("value should be array reference, but given " + value.type().toString());
