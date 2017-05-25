@@ -22,11 +22,11 @@ import org.jetbrains.annotations.Nullable;
 *
 * @author Dmitry Skavish
 */
-public class NameDesc {
+public class TagDescription {
   @NotNull public final String name;
   @Nullable public final String desc;
 
-  public NameDesc(@NotNull String name, @Nullable String desc) {
+  public TagDescription(@NotNull String name, @Nullable String desc) {
     this.name = name;
     this.desc = desc;
   }
