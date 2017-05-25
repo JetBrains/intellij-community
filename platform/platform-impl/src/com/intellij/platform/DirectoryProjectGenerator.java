@@ -68,7 +68,7 @@ public abstract class DirectoryProjectGenerator<T> {
   public abstract String getName();
 
   @NotNull
-  public NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+  public final NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
       @NotNull
       @Override

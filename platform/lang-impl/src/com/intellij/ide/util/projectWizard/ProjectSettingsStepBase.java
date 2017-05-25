@@ -211,8 +211,12 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     if (myProjectGenerator != null) {
       final String baseDirPath = myLocationField.getTextField().getText();
       ValidationResult validationResult = myProjectGenerator.validate(baseDirPath);
+      final ValidationInfo peerValidationResult = getPeer().validate();
       if (!validationResult.isOk()) {
         setErrorText(validationResult.getErrorMessage());
+        return false;
+      } else if (peerValidationResult != null) {
+        setErrorText(peerValidationResult.message);
         return false;
       }
       if (myProjectGenerator instanceof WebProjectTemplate) {
@@ -279,12 +283,9 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
 
   @Nullable
   protected JPanel createAdvancedSettings() {
-    if (myProjectGenerator instanceof WebProjectTemplate) {
-      final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-      jPanel.add(getPeer().getComponent());
-      return jPanel;
-    }
-    return null;
+    final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
+    jPanel.add(getPeer().getComponent(myLocationField, () -> checkValid()));
+    return jPanel;
   }
 
   public DirectoryProjectGenerator<T> getProjectGenerator() {
