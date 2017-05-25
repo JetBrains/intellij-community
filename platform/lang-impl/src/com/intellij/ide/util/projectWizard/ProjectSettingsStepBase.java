@@ -77,6 +77,11 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   }
 
   @Override
+  public void onPanelSelected() {
+    checkWebProjectValid();
+  }
+
+  @Override
   public JPanel createPanel() {
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -181,6 +186,10 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     };
     myLocationField.getTextField().getDocument().addDocumentListener(documentAdapter);
     Disposer.register(this, () -> myLocationField.getTextField().getDocument().removeDocumentListener(documentAdapter));
+    checkWebProjectValid();
+  }
+
+  private void checkWebProjectValid() {
     if (myProjectGenerator instanceof WebProjectTemplate && !((WebProjectTemplate)myProjectGenerator).postponeValidation()) {
       checkValid();
     }
