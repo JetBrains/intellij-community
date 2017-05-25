@@ -86,6 +86,8 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
       "*.endsWith(*)",
       "*.equals(*)",
       "*.equal(*)",
+      "*.compareTo(*)",
+      "*.compare(*,*)",
 
       "java.lang.Math.*",
       "org.slf4j.Logger.*",
