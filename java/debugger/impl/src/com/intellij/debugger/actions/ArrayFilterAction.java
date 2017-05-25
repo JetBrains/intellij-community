@@ -22,6 +22,7 @@ import com.intellij.debugger.ui.tree.render.ArrayRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -73,6 +74,7 @@ public abstract class ArrayFilterAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
       MessageTreeNode node = getFilterNode(e);
       if (node != null) {
+        TreeUtil.selectNode(node.getTree(), node.getParent());
         ArrayAction.setArrayRenderer(NodeRendererSettings.getInstance().getArrayRenderer(),
                                      (XValueNodeImpl)node.getParent(),
                                      DebuggerManagerEx.getInstanceEx(e.getProject()).getContext());
