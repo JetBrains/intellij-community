@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
+import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.CallArgument;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
@@ -60,17 +61,22 @@ public class MatchHandler extends CallTraceHandlerBase {
   @NotNull
   @Override
   public String prepareResult() {
-    return myBeforeFilterPeekInserter.prepareResult() + myAfterFilterPeekInserter.prepareResult();
+    final String separator = TraceExpressionBuilderImpl.LINE_SEPARATOR;
+    return "Object[] result = new Object[2];" + separator +
+           "{" + separator +
+           myBeforeFilterPeekInserter.prepareResult() +
+           "result[0] = " + myBeforeFilterPeekInserter.getResultExpression() + ";" + separator +
+           "}" + separator +
+           "{" + separator +
+           myAfterFilterPeekInserter.prepareResult() + separator +
+           "result[1] = " + myAfterFilterPeekInserter.getResultExpression() + ";" + separator +
+           "}" + separator;
   }
 
   @NotNull
   @Override
   public String getResultExpression() {
-    return "new Object[] { " +
-           myBeforeFilterPeekInserter.getResultExpression() +
-           ", " +
-           myAfterFilterPeekInserter.getResultExpression() +
-           "}";
+    return "result";
   }
 
   @NotNull
