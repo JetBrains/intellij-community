@@ -64,7 +64,7 @@ public abstract class ArrayFilterAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
       MessageTreeNode node = getFilterNode(e);
       if (node != null) {
-        ArrayFilterInplaceEditor.edit((XValueNodeImpl)node.getParent());
+        new ArrayFilterInplaceEditor(node, false).show();
       }
     }
   }
