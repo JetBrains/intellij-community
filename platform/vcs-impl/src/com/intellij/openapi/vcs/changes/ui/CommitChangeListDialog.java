@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1006,7 +1006,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private static class DiffCommitMessageEditor extends CommitMessage implements Disposable {
     public DiffCommitMessageEditor(@NotNull Project project, @NotNull CommitMessage commitMessage) {
-      super(project, commitMessage);
+      super(project);
+      getEditorField().setDocument(commitMessage.getEditorField().getDocument());
     }
 
     @Override

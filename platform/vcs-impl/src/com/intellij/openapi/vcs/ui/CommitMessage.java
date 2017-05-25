@@ -21,7 +21,10 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
@@ -31,7 +34,6 @@ import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CommitMessageI;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -47,31 +49,30 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.text.StringUtil.convertLineSeparators;
+import static com.intellij.openapi.util.text.StringUtil.trimTrailing;
 import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static com.intellij.vcs.commit.CommitMessageInspectionProfile.getBodyRightMargin;
+import static java.util.Collections.emptyList;
+import static javax.swing.BorderFactory.createEmptyBorder;
 
 public class CommitMessage extends JPanel implements Disposable, DataProvider, CommitMessageI {
   public static final Key<CommitMessage> DATA_KEY = Key.create("Vcs.CommitMessage.Panel");
-  private final EditorTextField myEditorField;
-  private final TitledSeparator mySeparator;
+  @NotNull private final EditorTextField myEditorField;
+  @Nullable private final TitledSeparator mySeparator;
 
-  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with WriteLock
+  @NotNull private List<ChangeList> myChangeLists = emptyList(); // guarded with WriteLock
 
   public CommitMessage(@NotNull Project project) {
     this(project, true);
   }
 
-  public CommitMessage(@NotNull Project project, @NotNull CommitMessage commitMessage) {
-    this(project);
-    myEditorField.setDocument(commitMessage.getEditorField().getDocument());
-  }
-
-  public CommitMessage(@NotNull Project project, final boolean withSeparator) {
+  public CommitMessage(@NotNull Project project, boolean withSeparator) {
     super(new BorderLayout());
 
     myEditorField = createCommitTextEditor(project);
@@ -82,18 +83,12 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), withSeparator);
     toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.getComponent().setBorder(BorderFactory.createEmptyBorder());
+    toolbar.getComponent().setBorder(createEmptyBorder());
 
     if (withSeparator) {
       mySeparator = SeparatorFactory.createSeparator(VcsBundle.message("label.commit.comment"), myEditorField.getComponent());
-      JPanel separatorPanel = new JPanel(new BorderLayout());
-      separatorPanel.add(mySeparator, BorderLayout.SOUTH);
-      separatorPanel.add(Box.createVerticalGlue(), BorderLayout.NORTH);
-
-      JPanel labelPanel = new JPanel(new BorderLayout());
-      labelPanel.setBorder(BorderFactory.createEmptyBorder());
-      labelPanel.add(separatorPanel, BorderLayout.CENTER);
-      labelPanel.add(toolbar.getComponent(), BorderLayout.EAST);
+      JPanel separatorPanel = simplePanel().addToBottom(mySeparator).addToTop(Box.createVerticalGlue());
+      JPanel labelPanel = simplePanel(separatorPanel).addToRight(toolbar.getComponent()).withBorder(createEmptyBorder());
       add(labelPanel, BorderLayout.NORTH);
     }
     else {
@@ -101,7 +96,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       add(toolbar.getComponent(), BorderLayout.EAST);
     }
 
-    setBorder(BorderFactory.createEmptyBorder());
+    setBorder(createEmptyBorder());
   }
 
   @Nullable
@@ -120,7 +115,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @Override
-  public void setCommitMessage(String currentDescription) {
+  public void setCommitMessage(@Nullable String currentDescription) {
     setText(currentDescription);
   }
 
@@ -136,7 +131,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @NotNull
   public static EditorTextField createCommitTextEditor(@NotNull Project project) {
-    Set<EditorCustomization> features = new HashSet<>();
+    Set<EditorCustomization> features = newHashSet();
 
     VcsConfiguration configuration = VcsConfiguration.getInstance(project);
     if (configuration != null) {
@@ -178,20 +173,17 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   public void setText(@Nullable String initialMessage) {
-    final String text = initialMessage == null ? "" : StringUtil.convertLineSeparators(initialMessage);
-    myEditorField.setText(text);
+    myEditorField.setText(initialMessage == null ? "" : convertLineSeparators(initialMessage));
   }
 
   @NotNull
   public String getComment() {
-    final String s = myEditorField.getDocument().getCharsSequence().toString();
-    return StringUtil.trimTrailing(s);
+    return trimTrailing(myEditorField.getDocument().getCharsSequence().toString());
   }
 
   public void requestFocusInMessage() {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myEditorField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(
+      () -> IdeFocusManager.getGlobalInstance().requestFocus(myEditorField, true));
     myEditorField.selectAll();
   }
 
@@ -201,9 +193,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   @CalledInAwt
   public void setChangeLists(@NotNull List<ChangeList> value) {
-    WriteAction.run(() -> {
-      myChangeLists = value;
-    });
+    WriteAction.run(() -> myChangeLists = value);
   }
 
   @NotNull
