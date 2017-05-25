@@ -172,6 +172,14 @@
         <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
         <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
       </action>
+      <action id="Debugger.EditArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Edit" use-shortcut-of="XDebugger.SetValue">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.EditWatch"/>
+      </action>
+      <action id="Debugger.RemoveArrayFilter" class="com.intellij.debugger.actions.ArrayFilterAction$Delete" use-shortcut-of="XDebugger.RemoveWatch">
+        <add-to-group group-id="XDebugger.Variables.Tree.Popup" anchor="first"/>
+        <add-to-group group-id="XDebugger.Watches.Tree.Popup" anchor="after" relative-to-action="XDebugger.RemoveWatch"/>
+      </action>
       <action id="Debugger.ViewText" class="com.intellij.debugger.actions.ViewTextAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
@@ -185,9 +193,9 @@
       <action id="Debugger.ViewAsGroup" class="com.intellij.debugger.actions.ViewAsGroup">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
-      <!--<action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">-->
-        <!--<add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>-->
-      <!--</action>-->
+      <action id="Debugger.FilterArray" class="com.intellij.debugger.actions.ArrayAction$FilterArrayAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
       <action id="Debugger.AdjustArrayRange" class="com.intellij.debugger.actions.ArrayAction$AdjustArrayRangeAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
