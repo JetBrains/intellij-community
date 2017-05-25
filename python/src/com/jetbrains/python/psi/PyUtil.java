@@ -1790,24 +1790,30 @@ public class PyUtil {
       return true;
     }
     else if (statements.length == 1) {
-      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturnOrEllipsis(statements[0])) {
         return true;
       }
     }
     else if (statements.length == 2) {
-      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturnOrEllipsis(statements[1]))) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+  private static boolean isPassOrRaiseOrEmptyReturnOrEllipsis(PyStatement stmt) {
     if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
       return true;
     }
     if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
       return true;
+    }
+    if (stmt instanceof PyExpressionStatement) {
+      final PyExpression expression = ((PyExpressionStatement)stmt).getExpression();
+      if (expression instanceof PyNoneLiteralExpression && ((PyNoneLiteralExpression)expression).isEllipsis()) {
+        return true;
+      }
     }
     return false;
   }
