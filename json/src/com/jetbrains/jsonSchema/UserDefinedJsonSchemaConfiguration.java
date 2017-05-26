@@ -16,14 +16,15 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -50,19 +51,24 @@ public class UserDefinedJsonSchemaConfiguration {
   public boolean myApplicationLevel;
   public List<Item> myPatterns = new SmartList<>();
   @Transient
-  private List<Processor<VirtualFile>> myCalculatedPatterns;
+  private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
+    new AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>>() {
+      @NotNull
+      @Override
+      protected List<PairProcessor<Project, VirtualFile>> compute() {
+        return recalculatePatterns();
+      }
+    };
 
   public UserDefinedJsonSchemaConfiguration() {
   }
 
-  public UserDefinedJsonSchemaConfiguration(@NotNull Project myProject, @NotNull String name, @NotNull String relativePathToSchema,
-                                            boolean applicationLevel,
-                                            @Nullable List<Item> patterns) {
+  public UserDefinedJsonSchemaConfiguration(@NotNull String name, @NotNull String relativePathToSchema,
+                                            boolean applicationLevel, @Nullable List<Item> patterns) {
     myName = name;
     myRelativePathToSchema = relativePathToSchema;
     myApplicationLevel = applicationLevel;
-    setPatterns(myProject, patterns);
-    Collections.sort(myPatterns, ITEM_COMPARATOR);
+    setPatterns(patterns);
   }
 
   public String getName() {
@@ -93,57 +99,60 @@ public class UserDefinedJsonSchemaConfiguration {
     return myPatterns;
   }
 
-  public void setPatterns(@NotNull Project project, @Nullable List<Item> patterns) {
-    if (patterns != null) myPatterns = patterns;
-    recalculatePatterns(project);
+  public void setPatterns(@Nullable List<Item> patterns) {
+    myPatterns.clear();
+    if (patterns != null) myPatterns.addAll(patterns);
+    Collections.sort(myPatterns, ITEM_COMPARATOR);
+    myCalculatedPatterns.drop();
   }
 
   @NotNull
-  public List<Processor<VirtualFile>> getCalculatedPatterns(@NotNull final Project project) {
-    if (myCalculatedPatterns == null) recalculatePatterns(project);
-    return myCalculatedPatterns;
+  public List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
+    return myCalculatedPatterns.getValue();
   }
 
-  private void recalculatePatterns(@NotNull Project project) {
-    myCalculatedPatterns = new SmartList<>();
+  private List<PairProcessor<Project, VirtualFile>> recalculatePatterns() {
+    final List<PairProcessor<Project, VirtualFile>> result = new SmartList<>();
     for (final Item pattern : myPatterns) {
       if (pattern.isPattern()) {
-        myCalculatedPatterns.add(new Processor<VirtualFile>() {
+        result.add(new PairProcessor<Project, VirtualFile>() {
           private final Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
 
           @Override
-          public boolean process(VirtualFile file) {
+          public boolean process(Project project, VirtualFile file) {
             matcher.reset(file.getName());
             return matcher.matches();
           }
         });
       }
+      else if (pattern.isDirectory()) {
+        result.add((project, vfile) -> {
+          final VirtualFile relativeFile = getRelativeFile(project, pattern);
+          return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true);
+        });
+      }
       else {
-        if (project.getBasePath() == null) {
-          continue;
-        }
-
-        final String path = FileUtilRt.toSystemIndependentName(pattern.getPath());
-        final List<String> parts = ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
-        final VirtualFile relativeFile;
-        if (parts.isEmpty()) {
-          relativeFile = project.getBaseDir();
-        }
-        else {
-          relativeFile = VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
-          if (relativeFile == null) continue;
-        }
-
-        if (pattern.isDirectory()) {
-          myCalculatedPatterns.add(file12 -> VfsUtilCore.isAncestor(relativeFile, file12, true));
-        }
-        else {
-          myCalculatedPatterns.add(relativeFile::equals);
-        }
+        result.add((project, vfile) -> vfile.equals(getRelativeFile(project, pattern)));
       }
     }
+    return result;
   }
 
+  @Nullable
+  private static VirtualFile getRelativeFile(@NotNull final Project project, @NotNull final Item pattern) {
+    if (project.getBasePath() == null) {
+      return null;
+    }
+
+    final String path = FileUtilRt.toSystemIndependentName(pattern.getPath());
+    final List<String> parts = ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
+    if (parts.isEmpty()) {
+      return project.getBaseDir();
+    }
+    else {
+      return VfsUtil.findRelativeFile(project.getBaseDir(), ArrayUtil.toStringArray(parts));
+    }
+  }
 
   @Override
   public boolean equals(Object o) {

@@ -119,8 +119,7 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
         return;
       }
 
-      addCreatedMappings(file,
-                         new UserDefinedJsonSchemaConfiguration(myProject, file.getNameWithoutExtension(), relativePath, false, null));
+      addCreatedMappings(file, new UserDefinedJsonSchemaConfiguration(file.getNameWithoutExtension(), relativePath, false, null));
     }
   }
 

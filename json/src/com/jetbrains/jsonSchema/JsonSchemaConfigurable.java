@@ -95,7 +95,7 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     if (myView == null) return;
     doValidation();
     mySchema.setName(myDisplayName);
-    mySchema.setPatterns(myProject, myView.getData());
+    mySchema.setPatterns(myView.getData());
     mySchema.setRelativePathToSchema(myView.getSchemaSubPath());
   }
 
@@ -133,11 +133,11 @@ public class JsonSchemaConfigurable extends NamedConfigurable<UserDefinedJsonSch
     info.setApplicationLevel(mySchema.isApplicationLevel());
     if (myView != null && myView.isInitialized()) {
       info.setName(getDisplayName());
-      info.setPatterns(myProject, myView.getData());
+      info.setPatterns(myView.getData());
       info.setRelativePathToSchema(myView.getSchemaSubPath());
     } else {
       info.setName(mySchema.getName());
-      info.setPatterns(myProject, mySchema.getPatterns());
+      info.setPatterns(mySchema.getPatterns());
       info.setRelativePathToSchema(mySchema.getRelativePathToSchema());
     }
     return info;

@@ -38,7 +38,7 @@ public class JsonSchemaSelfHighligthingTest extends JsonSchemaHeavyAbstractTest 
         final String moduleDir = getModuleDir(getProject());
 
         final UserDefinedJsonSchemaConfiguration pattern =
-          new UserDefinedJsonSchemaConfiguration(myProject, "pattern", moduleDir + "/patternSchema.json", false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration("pattern", moduleDir + "/patternSchema.json", false, Collections.emptyList());
         addSchema(pattern);
         myDoCompletion = false;
       }

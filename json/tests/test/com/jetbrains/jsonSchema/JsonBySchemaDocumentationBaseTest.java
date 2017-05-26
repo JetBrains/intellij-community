@@ -41,7 +41,7 @@ public abstract class JsonBySchemaDocumentationBaseTest extends JsonSchemaHeavyA
           final ArrayList<UserDefinedJsonSchemaConfiguration.Item> patterns = new ArrayList<>();
           patterns.add(new UserDefinedJsonSchemaConfiguration.Item(getTestName(true) + "*", true, false));
           addSchema(
-            new UserDefinedJsonSchemaConfiguration(myProject, "testDoc", moduleDir + "/" + getTestName(true) + "Schema.json", false,
+            new UserDefinedJsonSchemaConfiguration("testDoc", moduleDir + "/" + getTestName(true) + "Schema.json", false,
                                                    patterns));
         }
 
