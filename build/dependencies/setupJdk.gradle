@@ -25,8 +25,7 @@ project.ext.jdk18OutputDir = "${System.getProperty("intellij.jdk18.output.dir", 
 project.ext.targetOs = "${System.getProperty("intellij.build.target.os", "all")}"
 
 task downloadJdk18 {
-  def os = org.gradle.internal.os.OperatingSystem.current()
-  def arch = !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
+  def arch = jdk18Arch()
   def platform = currentPlatformName()
 
   def artifactName = "jbsdk8${jdkBuild}_${platform}_${arch}.tar.gz"
@@ -77,6 +76,14 @@ def unpackJdk(jdkArchive, outputDir) {
       }
     }
   }
+}
+
+static def jdk18Arch() {
+  def arch = System.getProperty("intellij.jdk18.arch", "")
+  if (arch == '32') return 'x86'
+  if (arch == '64') return 'x64'
+  def os = org.gradle.internal.os.OperatingSystem.current()
+  return !os.isWindows() || System.getenv("ProgramFiles(x86)") != null ? 'x64' : 'x86'
 }
 
 static def currentPlatformName() {
