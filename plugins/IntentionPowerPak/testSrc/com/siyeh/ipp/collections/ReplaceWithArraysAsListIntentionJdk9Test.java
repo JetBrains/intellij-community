@@ -15,28 +15,26 @@
  */
 package com.siyeh.ipp.collections;
 
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ipp.IPPTestCase;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
+public class ReplaceWithArraysAsListIntentionJdk9Test extends IPPTestCase {
 
   public void testBrokenCode() {
     doTest(
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Collections.emptyList(\"text\"/*_Replace with 'java.util.Arrays.asList()'*/);" +
+      "    return Collections.emptyList(\"text\"/*_Replace with 'java.util.List.of()'*/);" +
       "  }" +
       "}",
 
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Arrays.asList(\"text\");" +
+      "    return List.of(\"text\");" +
       "  }" +
       "}"
     );
@@ -47,22 +45,52 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Collections.singletonList(\"text\"/*_Replace with 'java.util.Arrays.asList()'*/);" +
+      "    return Collections.singletonList(\"text\"/*_Replace with 'java.util.List.of()'*/);" +
       "  }" +
       "}",
 
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Arrays.asList(\"text\");" +
+      "    return List.of(\"text\");" +
       "  }" +
       "}"
     );
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+  public void testReplaceSingleton() {
+    doTest(
+      "import java.util.*;" +
+      "class X {" +
+      "  Set<String> f() {" +
+      "    return Collections.singleton(\"text\"/*_Replace with 'java.util.Set.of()'*/);" +
+      "  }" +
+      "}",
+
+      "import java.util.*;" +
+      "class X {" +
+      "  Set<String> f() {" +
+      "    return Set.of(\"text\");" +
+      "  }" +
+      "}"
+    );
+  }
+
+  public void testReplaceEmptyMap() {
+    doTest(
+      "import java.util.*;" +
+      "class X {" +
+      "  Map<String, String> f() {" +
+      "    return Collections.emptyMap(\"key\", \"text\"/*_Replace with 'java.util.Map.of()'*/);" +
+      "  }" +
+      "}",
+
+      "import java.util.*;" +
+      "class X {" +
+      "  Map<String, String> f() {" +
+      "    return Map.of(\"key\", \"text\");" +
+      "  }" +
+      "}"
+    );
   }
 }
