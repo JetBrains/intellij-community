@@ -54,15 +54,10 @@ public abstract class StateSplitterEx implements StateSplitter {
     boolean isExternalStorageEnabled = filterOutExternalElements && StreamProviderKt.isExternalStorageEnabled();
     for (Element subState : state.getChildren()) {
       if (!isExternalStorageEnabled || subState.getAttribute(EXTERNAL_SYSTEM_ID_ATTRIBUTE) == null) {
-        result.add(createItem(generator, subState, attributeName));
+        result.add(createItem(subState.getAttributeValue(attributeName), generator, subState));
       }
     }
     return result;
-  }
-
-  @NotNull
-  protected static Pair<Element, String> createItem(@NotNull UniqueNameGenerator generator, @NotNull Element element, @NotNull String attributeName) {
-    return createItem(element.getAttributeValue(attributeName), generator, element);
   }
 
   @NotNull
