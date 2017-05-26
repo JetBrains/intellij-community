@@ -82,7 +82,7 @@ public class MatchHandler extends HandlerBase.Terminator {
     final List<CallArgument> arguments = call.getArguments();
     assert arguments.size() == 1;
     final CallArgument predicate = arguments.get(0);
-    final String newPredicate = "allMatch".equals(call.getName()) ? "() -> false" : "() -> true";
+    final String newPredicate = "allMatch".equals(call.getName()) ? "x -> false" : "x -> true";
     return new TerminatorStreamCallImpl(call.getName(), Collections.singletonList(new CallArgumentImpl(predicate.getType(), newPredicate)),
                                         call.getTypeBefore(), call.getResultType(), call.getTextRange());
   }
