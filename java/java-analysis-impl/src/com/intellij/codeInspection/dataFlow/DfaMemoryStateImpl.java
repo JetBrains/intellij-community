@@ -953,10 +953,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
-      //if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue &&
-      //    equalsByQualifier((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight)) {
-      //  return false;
-      //}
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
       makeClassesDistinct(c1Index, c2Index);
       myCachedDistinctClassPairs = null;
@@ -964,18 +960,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     return true;
-  }
-
-  private boolean equalsByQualifier(@NotNull DfaVariableValue dfaLeft, @NotNull DfaVariableValue dfaRight) {
-    if (dfaLeft.getPsiVariable() != dfaRight.getPsiVariable()) return false;
-    DfaVariableValue leftQualifier = dfaLeft.getQualifier();
-    DfaVariableValue rightQualifier = dfaRight.getQualifier();
-    if (leftQualifier == null || rightQualifier == null) return false;
-    Integer c1QualifierIndex = getOrCreateEqClassIndex(leftQualifier);
-    Integer c2QualifierIndex = getOrCreateEqClassIndex(rightQualifier);
-    // Equal qualifiers == equal values
-    if (c1QualifierIndex != null && c1QualifierIndex.equals(c2QualifierIndex)) return true;
-    return equalsByQualifier(leftQualifier, rightQualifier);
   }
 
   private static boolean isPrimitive(DfaValue value) {
