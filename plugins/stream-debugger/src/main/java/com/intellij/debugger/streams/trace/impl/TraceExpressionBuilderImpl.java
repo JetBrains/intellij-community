@@ -216,11 +216,6 @@ public class TraceExpressionBuilderImpl implements TraceExpressionBuilder {
     return result;
   }
 
-  public interface StreamChainTraceHandler extends TraceHandler {
-    @NotNull
-    String getTraceExpression(@NotNull StreamChain chain);
-  }
-
   public interface StreamCallTraceHandler extends TraceHandler {
     @NotNull
     List<IntermediateStreamCall> additionalCallsBefore();
