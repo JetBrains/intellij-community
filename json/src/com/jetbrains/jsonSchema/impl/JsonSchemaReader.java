@@ -143,35 +143,68 @@ public class JsonSchemaReader {
   }
 
   private static void fillMap() {
-    READERS_MAP
-      .put("id", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));});
-    READERS_MAP.put("$schema", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setSchema(StringUtil.unquoteString(element.getText()));});
-    READERS_MAP.put("description", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));});
-    READERS_MAP
-      .put("title", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setTitle(StringUtil.unquoteString(element.getText()));});
-    READERS_MAP
-      .put("$ref", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setRef(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("id", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));
+    });
+    READERS_MAP.put("$schema", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setSchema(StringUtil.unquoteString(element.getText()));
+    });
+    READERS_MAP.put("description", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));
+    });
+    READERS_MAP.put("title", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setTitle(StringUtil.unquoteString(element.getText()));
+    });
+    READERS_MAP.put("$ref", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setRef(StringUtil.unquoteString(element.getText()));
+    });
     READERS_MAP.put("default", createDefault());
-    READERS_MAP.put("format", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setFormat(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("format", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setFormat(StringUtil.unquoteString(element.getText()));
+    });
     READERS_MAP.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
     READERS_MAP.put(JsonSchemaObject.PROPERTIES, createPropertiesConsumer());
-    READERS_MAP.put("multipleOf", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMultipleOf(((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("maximum", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaximum(((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("minimum", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinimum(((JsonNumberLiteral)element).getValue());});
-    READERS_MAP
-      .put("exclusiveMaximum", (element, object, queue) -> {if (element instanceof JsonBooleanLiteral) object.setExclusiveMaximum(((JsonBooleanLiteral)element).getValue());});
-    READERS_MAP
-      .put("exclusiveMinimum", (element, object, queue) -> {if (element instanceof JsonBooleanLiteral) object.setExclusiveMinimum(((JsonBooleanLiteral)element).getValue());});
-    READERS_MAP.put("maxLength", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaxLength((int)((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("minLength", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinLength((int)((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("pattern", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setPattern(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("multipleOf", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMultipleOf(((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("maximum", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMaximum(((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("minimum", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMinimum(((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("exclusiveMaximum", (element, object, queue) -> {
+      if (element instanceof JsonBooleanLiteral) object.setExclusiveMaximum(((JsonBooleanLiteral)element).getValue());
+    });
+    READERS_MAP.put("exclusiveMinimum", (element, object, queue) -> {
+      if (element instanceof JsonBooleanLiteral) object.setExclusiveMinimum(((JsonBooleanLiteral)element).getValue());
+    });
+    READERS_MAP.put("maxLength", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMaxLength((int)((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("minLength", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMinLength((int)((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("pattern", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setPattern(StringUtil.unquoteString(element.getText()));
+    });
     READERS_MAP.put("additionalItems", createAdditionalItems());
     READERS_MAP.put("items", createItems());
-    READERS_MAP.put("maxItems", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaxItems((int)((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("minItems", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinItems((int)((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("uniqueItems", (element, object, queue) -> {if (element instanceof JsonBooleanLiteral) object.setUniqueItems(((JsonBooleanLiteral)element).getValue());});
-    READERS_MAP.put("maxProperties", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaxProperties((int)((JsonNumberLiteral)element).getValue());});
-    READERS_MAP.put("minProperties", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinProperties((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("maxItems", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMaxItems((int)((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("minItems", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMinItems((int)((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("uniqueItems", (element, object, queue) -> {
+      if (element instanceof JsonBooleanLiteral) object.setUniqueItems(((JsonBooleanLiteral)element).getValue());
+    });
+    READERS_MAP.put("maxProperties", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMaxProperties((int)((JsonNumberLiteral)element).getValue());
+    });
+    READERS_MAP.put("minProperties", (element, object, queue) -> {
+      if (element instanceof JsonNumberLiteral) object.setMinProperties((int)((JsonNumberLiteral)element).getValue());
+    });
     READERS_MAP.put("required", createRequired());
     READERS_MAP.put("additionalProperties", createAdditionalProperties());
     READERS_MAP.put("patternProperties", createPatternProperties());
@@ -409,7 +442,7 @@ public class JsonSchemaReader {
       }
     };
   }
-  
+
   private interface MyReader {
     void read(@NotNull JsonElement source, @NotNull JsonSchemaObject target, @NotNull Collection<JsonSchemaObject> processingQueue);
   }
