@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 /**
  * @author Sergey.Malenkov
@@ -260,15 +261,18 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                       boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
       GraphicsDevice screen = getScreen(object);
-      putImpl(getKey(screen, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      Supplier<KeyPair> oldKeyPair = () -> getOldKey(screen, key);
+
+      putImpl(getKey(screen, key), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       if (screen != null) {
-        putImpl(getKey(null, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+        putImpl(getKey(null, key), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       }
-      putImpl(new KeyPair(key, 1f), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      putImpl(new KeyPair(key, 1f), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
     }
   }
 
   private void putImpl(@NotNull KeyPair keyPair,
+                       Supplier<KeyPair> oldKeyPair,
                        Point location, boolean locationSet,
                        Dimension size, boolean sizeSet,
                        boolean maximized, boolean maximizedSet,
@@ -279,6 +283,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         state.scaleUp(keyPair.second);
       } else {
         myStateMap.remove(keyPair.first);
+        myStateMap.remove(oldKeyPair.get().first);
       }
     }
     else {
