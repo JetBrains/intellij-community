@@ -56,15 +56,15 @@ public abstract class MatchResolverBase implements CallTraceResolver {
       final TraceInfo beforeFilterInfo = myPeekResolver.resolve(call, beforeFilter);
       final TraceInfo afterFilterInfo = myPeekResolver.resolve(call, afterFilter);
 
-      final Map<Integer, TraceElement> traceBefore = beforeFilterInfo.getValuesOrderBefore();
-      final Collection<TraceElement> traceBeforeFilter = traceBefore.values();
-      final Collection<TraceElement> traceAfterFilter = afterFilterInfo.getValuesOrderBefore().values();
+      final Collection<TraceElement> traceBeforeFilter = beforeFilterInfo.getValuesOrderBefore().values();
+      final Map<Integer, TraceElement> traceAfter = afterFilterInfo.getValuesOrderBefore();
+      final Collection<TraceElement> traceAfterFilter = traceAfter.values();
 
       final boolean result = getResult(traceBeforeFilter, traceAfterFilter);
       final Action action = getAction(result);
 
       final Map<Integer, TraceElement> beforeTrace =
-        Action.CONNECT_FILTERED.equals(action) ? onlyFiltered(traceBeforeFilter) : difference(traceBeforeFilter, traceBefore.keySet());
+        Action.CONNECT_FILTERED.equals(action) ? onlyFiltered(traceAfterFilter) : difference(traceBeforeFilter, traceAfter.keySet());
 
       return new ValuesOrderInfo(call, beforeTrace, makeIndexByTime(Stream.of(streamResultElement)));
     }
@@ -89,7 +89,7 @@ public abstract class MatchResolverBase implements CallTraceResolver {
 
   @NotNull
   private Map<Integer, TraceElement> difference(@NotNull Collection<TraceElement> before, @NotNull Set<Integer> timesAfter) {
-    return makeIndexByTime(before.stream().filter(x -> timesAfter.contains(x.getTime())));
+    return makeIndexByTime(before.stream().filter(x -> !timesAfter.contains(x.getTime())));
   }
 
   @NotNull
