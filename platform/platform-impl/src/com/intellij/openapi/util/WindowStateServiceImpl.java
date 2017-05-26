@@ -278,7 +278,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
         state.scaleUp(keyPair.second);
       } else {
-        myStateMap.remove(keyPair);
+        myStateMap.remove(keyPair.first);
       }
     }
     else {
