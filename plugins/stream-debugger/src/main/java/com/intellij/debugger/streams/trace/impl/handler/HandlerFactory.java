@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class HandlerFactory {
 
   @NotNull
-  public static TraceExpressionBuilderImpl.StreamCallTraceHandler createIntermediate(int number,
+  public static TraceExpressionBuilderImpl.IntermediateCallTraceHandler createIntermediate(int number,
                                                                                      @NotNull IntermediateStreamCall call) {
     final String callName = call.getName();
     switch (callName) {
@@ -39,12 +39,12 @@ public class HandlerFactory {
   }
 
   @NotNull
-  public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull ProducerStreamCall call) {
+  public static TraceExpressionBuilderImpl.ProducerCallTraceHandler create(@NotNull ProducerStreamCall call) {
     return new ProducerHandler(call.getTypeAfter());
   }
 
   @NotNull
-  public static TraceExpressionBuilderImpl.StreamCallTraceHandler create(@NotNull TerminatorStreamCall call) {
+  public static TraceExpressionBuilderImpl.TerminatorCallTraceHandler create(@NotNull TerminatorStreamCall call) {
     switch (call.getName()) {
       case "allMatch":
       case "anyMatch":

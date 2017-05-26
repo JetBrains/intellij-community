@@ -22,6 +22,7 @@ import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.debugger.streams.wrapper.impl.CallArgumentImpl;
 import com.intellij.debugger.streams.wrapper.impl.IntermediateStreamCallImpl;
+import com.intellij.debugger.streams.wrapper.impl.TerminatorStreamCallImpl;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class MatchHandler extends CallTraceHandlerBase {
+public class MatchHandler extends HandlerBase.Terminator {
   private static final String PREDICATE_VARIABLE_NAME = "predicate42";
   private final PeekTracerHandler myBeforeFilterPeekInserter;
   private final PeekTracerHandler myAfterFilterPeekInserter;
@@ -77,6 +78,17 @@ public class MatchHandler extends CallTraceHandlerBase {
 
   @NotNull
   @Override
+  public TerminatorStreamCall transformCall(@NotNull TerminatorStreamCall call) {
+    final List<CallArgument> arguments = call.getArguments();
+    assert arguments.size() == 1;
+    final CallArgument predicate = arguments.get(0);
+    final String newPredicate = "allMatch".equals(call.getName()) ? "() -> false" : "() -> true";
+    return new TerminatorStreamCallImpl(call.getName(), Collections.singletonList(new CallArgumentImpl(predicate.getType(), newPredicate)),
+                                        call.getTypeBefore(), call.getResultType(), call.getTextRange());
+  }
+
+  @NotNull
+  @Override
   public String getResultExpression() {
     return "result";
   }
@@ -97,11 +109,5 @@ public class MatchHandler extends CallTraceHandlerBase {
     calls.addAll(myAfterFilterPeekInserter.additionalCallsBefore());
 
     return calls;
-  }
-
-  @NotNull
-  @Override
-  public List<IntermediateStreamCall> additionalCallsAfter() {
-    return Collections.emptyList();
   }
 }

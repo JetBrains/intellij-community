@@ -25,6 +25,9 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public abstract class HandlerBase implements TraceHandler {
+  private HandlerBase() {
+  }
+
   private static final String DECLARATION_FORMAT = "final %s %s = %s;" + TraceExpressionBuilderImpl.LINE_SEPARATOR;
 
   @NotNull
@@ -41,4 +44,13 @@ public abstract class HandlerBase implements TraceHandler {
 
   @NotNull
   protected abstract List<Variable> getVariables();
+
+  static abstract class Producer extends HandlerBase implements TraceExpressionBuilderImpl.ProducerCallTraceHandler {
+  }
+
+  static abstract class Intermediate extends HandlerBase implements TraceExpressionBuilderImpl.IntermediateCallTraceHandler {
+  }
+
+  static abstract class Terminator extends HandlerBase implements TraceExpressionBuilderImpl.TerminatorCallTraceHandler {
+  }
 }

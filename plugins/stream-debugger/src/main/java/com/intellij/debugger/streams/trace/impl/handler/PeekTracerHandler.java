@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author Vitaliy.Bibaev
  */
-public class PeekTracerHandler extends CallTraceHandlerBase {
+public class PeekTracerHandler extends HandlerBase.Intermediate {
   private static final String BEFORE_ARRAY_NAME = "beforeArray";
   private static final String AFTER_ARRAY_NAME = "afterArray";
 

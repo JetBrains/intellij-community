@@ -15,18 +15,16 @@
  */
 package com.intellij.debugger.streams.trace.impl.handler;
 
-import com.intellij.debugger.streams.trace.impl.TraceExpressionBuilderImpl;
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Vitaliy.Bibaev
  */
-public class ProducerHandler extends HandlerBase implements TraceExpressionBuilderImpl.StreamCallTraceHandler {
+public class ProducerHandler extends HandlerBase.Producer {
   private final PeekTracerHandler myPeekTracerHandler;
 
   ProducerHandler(@NotNull GenericType afterType) {
@@ -37,12 +35,6 @@ public class ProducerHandler extends HandlerBase implements TraceExpressionBuild
   @Override
   protected List<Variable> getVariables() {
     return myPeekTracerHandler.getVariables();
-  }
-
-  @NotNull
-  @Override
-  public List<IntermediateStreamCall> additionalCallsBefore() {
-    return Collections.emptyList();
   }
 
   @NotNull
