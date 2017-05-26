@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,7 +36,7 @@ public class CCCreateAnswerPlaceholderPanel {
   private List<String> myHints = new ArrayList<>();
   private int myShownHintNumber = 0;
 
-  public CCCreateAnswerPlaceholderPanel(@NotNull String placeholderText, @NotNull List<String> hints) {
+  public CCCreateAnswerPlaceholderPanel(@Nullable String placeholderText, @NotNull List<String> hints) {
     if (hints.isEmpty()) {
       myHints.add(HINT_PLACEHOLDER);
     }
