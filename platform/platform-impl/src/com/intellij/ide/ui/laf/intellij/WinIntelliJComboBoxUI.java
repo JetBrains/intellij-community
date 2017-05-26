@@ -181,15 +181,17 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   private Color getComboBackground() {
-    if (comboBox.isEnabled() && comboBox.isEditable()) {
-      return UIManager.getColor("TextField.background");
-    } else if (!comboBox.isEnabled()) {
-      return UIManager.getColor("Button.background");
-    } else if (!comboBox.isEditable()) {
-      if (isPressed()) {
-        return UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
-      } else if (isHover()) {
-        return UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
+    if (comboBox != null) {
+      if (comboBox.isEnabled() && comboBox.isEditable()) {
+        return UIManager.getColor("TextField.background");
+      } else if (!comboBox.isEnabled()) {
+        return UIManager.getColor("Button.background");
+      } else if (!comboBox.isEditable()) {
+        if (isPressed()) {
+          return UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
+        } else if (isHover()) {
+          return UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
+        }
       }
     }
     return UIManager.getColor("Button.background");
