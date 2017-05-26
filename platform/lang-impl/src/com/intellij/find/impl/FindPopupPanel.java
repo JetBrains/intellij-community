@@ -305,7 +305,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
     myFileMaskField =
       new TextFieldWithAutoCompletion<String>(myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(myFileMasks, null),
-                                              false, null) {
+                                              true, null) {
         @Override
         public void setEnabled(boolean enabled) {
           super.setEnabled(enabled);
