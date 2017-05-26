@@ -16,8 +16,11 @@
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.Robot;
 import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.timing.Condition;
+import org.fest.swing.timing.Pause;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -26,6 +29,18 @@ import java.awt.*;
 public class WelcomeFrameFixture extends ComponentFixture<WelcomeFrameFixture, FlatWelcomeFrame> {
   @NotNull
   public static WelcomeFrameFixture find(@NotNull Robot robot) {
+    Pause.pause(new Condition("Welcome Frame to show up") {
+      @Override
+      public boolean test() {
+        for (Frame frame : Frame.getFrames()) {
+          if (frame instanceof FlatWelcomeFrame && frame.isShowing()) {
+            return true;
+          }
+        }
+        return false;
+      }
+    }, GuiTestUtil.LONG_TIMEOUT);
+
     for (Frame frame : Frame.getFrames()) {
       if (frame instanceof FlatWelcomeFrame && frame.isShowing()) {
         return new WelcomeFrameFixture(robot, (FlatWelcomeFrame)frame);

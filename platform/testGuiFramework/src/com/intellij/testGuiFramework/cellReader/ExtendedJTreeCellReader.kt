@@ -69,7 +69,7 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
   }
 
   fun <ComponentType : Component> findAllWithRobot(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
-    val robot = BasicRobot.robotWithNewAwtHierarchyWithoutScreenLock()
+    val robot = BasicRobot.robotWithCurrentAwtHierarchyWithoutScreenLock()
     val result = robot.finder().findAll(container, object : GenericTypeMatcher<ComponentType>(clazz) {
       override fun isMatching(component: ComponentType) = true
     })

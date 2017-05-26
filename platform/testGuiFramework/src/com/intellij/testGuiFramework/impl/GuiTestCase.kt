@@ -100,8 +100,8 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   //*********CONTEXT FUNCTIONS ON LAMBDA RECEIVERS
-  fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func.invoke(welcomeFrame())
+  open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
+    func.invoke(findWelcomeFrame())
   }
 
   fun ideFrame(func: IdeFrameFixture.() -> Unit) {
@@ -238,9 +238,6 @@ open class GuiTestCase : GuiTestBase() {
     println(message = "Screenshot for a component \"${component.toString()}\" taken and stored at ${screenshotFilePath.path}")
 
   }
-
-  fun ideFrame() = findIdeFrame()!!
-  fun welcomeFrame() = findWelcomeFrame()
 
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 

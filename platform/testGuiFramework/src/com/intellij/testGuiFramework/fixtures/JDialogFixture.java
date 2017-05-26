@@ -60,5 +60,25 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
     return new JDialogFixture(robot, dialog);
   }
 
+  @NotNull
+  public static JDialogFixture findByPartOfTitle(@NotNull Robot robot, String partTitle, Timeout timeout) {
+    GenericTypeMatcher<JDialog> matcher = new GenericTypeMatcher<JDialog>(JDialog.class) {
+      @Override
+      protected boolean isMatching(@NotNull JDialog dialog) {
+        return dialog.getTitle().contains(partTitle) && dialog.isShowing();
+      }
+    };
+
+    Pause.pause(new Condition("Finding for JDialogFixture with part of title \"" + partTitle + "\"") {
+      @Override
+      public boolean test() {
+        Collection<JDialog> dialogs = robot.finder().findAll(matcher);
+        return !dialogs.isEmpty();
+      }
+    }, timeout);
+
+    JDialog dialog = robot.finder().find(matcher);
+    return new JDialogFixture(robot, dialog);
+  }
 
 }
