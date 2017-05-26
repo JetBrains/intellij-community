@@ -378,6 +378,10 @@ open class GuiTestCase : GuiTestBase() {
 
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 
+  fun JListFixture.doubleClickItem(itemName: String) {
+    this.item(itemName).doubleClick()
+  }
+
   //necessary only for Windows
   fun getScaleSuffix(): String? {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(

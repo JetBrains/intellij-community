@@ -126,6 +126,7 @@ class JBListGenerator : ComponentCodeGenerator<JBList<*>> {
     val cellText = getCellText(cmp, cp).orEmpty()
     if (cmp.isPopupList()) return "popupClick(\"$cellText\")"
     if (me.button == MouseEvent.BUTTON2) return "jList(\"$cellText\").item(\"$cellText\").rightClick()"
+    if (me.clickCount == 2) return "jList(\"$cellText\").doubleClickItem(\"$cellText\")"
     return "jList(\"$cellText\").clickItem(\"$cellText\")"
   }
 }
