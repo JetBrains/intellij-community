@@ -303,15 +303,18 @@ public class InjectedLanguageUtil {
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     MultiHostRegistrarImpl registrar = null;
     PsiElement current = element;
+    boolean computed = false;
     nextParent:
     while (current != null && current != hostPsiFile && !(current instanceof PsiDirectory)) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
       if (data == null) {
+        computed = true;
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
       }
       else {
+        computed = false;
         registrar = data.getValue(current);
       }
 
@@ -342,7 +345,7 @@ public class InjectedLanguageUtil {
         if (registrar == null) {
           e.putUserData(INJECTED_PSI, null);
         }
-        else {
+        else if (computed) {
           ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
             CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
 
