@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.List;
 
 public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
@@ -62,22 +61,22 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
                    || statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
           }
 
-          final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
-          if (returnExpressions.size() > 1 ||
-              (returnExpressions.size() == 1 && !(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement))) {
+          final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
+          if (returnStatements.length > 1) {
             return false;
           }
 
-          if (!returnExpressions.isEmpty()) {
-            if (callParent instanceof PsiLocalVariable) {
-              return true;
+          if (returnStatements.length == 1) {
+            if (!(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement)) {
+              return false;
             }
-          }
-          else {
-            PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
-            if (returnStatements.length > 0) {
-              //accept redundant return which would be deleted
-              return returnStatements.length == 1 && returnStatements[0] == statements[statements.length - 1];
+            if (returnStatements[0].getReturnValue() != null) {
+              if (callParent instanceof PsiLocalVariable) {
+                return true;
+              }
+            }
+            else {
+              return true;
             }
           }
 
