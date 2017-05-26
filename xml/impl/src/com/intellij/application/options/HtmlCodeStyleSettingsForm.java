@@ -15,40 +15,30 @@
  */
 package com.intellij.application.options;
 
-import com.intellij.application.options.codeStyle.RightMarginForm;
-import com.intellij.ide.highlighter.XmlHighlighterFactory;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.ui.EnumComboBoxModel;
 import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.ListItemsDialogWrapper;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
+import static com.intellij.application.options.CodeStyleAbstractPanel.fillWrappingCombo;
 
+public class HtmlCodeStyleSettingsForm {
   private JTextField myKeepBlankLines;
   private JComboBox myWrapAttributes;
   private JCheckBox myAlignAttributes;
   private JCheckBox myKeepWhiteSpaces;
 
   private JPanel myPanel;
-  private JPanel myPreviewPanel;
 
   private JCheckBox mySpacesAroundEquality;
   private JCheckBox mySpacesAroundTagName;
@@ -64,18 +54,12 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
   private JCheckBox myWrapText;
   private JCheckBox myShouldKeepLineBreaksInText;
   private TextFieldWithBrowseButton myDontBreakIfInlineContent;
-  private JBScrollPane myJBScrollPane;
-  private JPanel myRightMarginPanel;
   private JComboBox myQuotesCombo;
   private JBCheckBox myEnforceQuotesBox;
   private ComboBox myBeforeFirstAttributeCombo;
   private ComboBox myAfterLastAttributeCombo;
-  private RightMarginForm myRightMarginForm;
 
-  public CodeStyleHtmlPanel(CodeStyleSettings settings) {
-    super(settings);
-    installPreviewPanel(myPreviewPanel);
-
+  public HtmlCodeStyleSettingsForm() {
     fillWrappingCombo(myWrapAttributes);
     fillEnumCombobox(myQuotesCombo, CodeStyleSettings.QuoteStyle.class);
     fillEnumCombobox(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
@@ -103,40 +87,15 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
         if (!quotesRequired) myEnforceQuotesBox.setSelected(false);
       }
     });
-    addPanelToWatch(myPanel);
   }
 
-  @Override
-  protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    return XmlHighlighterFactory.createXMLHighlighter(scheme);
+  public JPanel getTopPanel() {
+    return myPanel;
   }
 
-  private void createUIComponents() {
-    myRightMarginForm = new RightMarginForm(StdFileTypes.HTML.getLanguage(), getSettings());
-    myRightMarginPanel = myRightMarginForm.getTopPanel();
-    myJBScrollPane = new JBScrollPane() {
-      @Override
-      public Dimension getPreferredSize() {
-        Dimension prefSize = super.getPreferredSize();
-        return new Dimension(prefSize.width + 15, prefSize.height);
-      }
-    };
-  }
-
-  private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
-    ListItemsDialogWrapper.installListItemsDialogForTextField(uiField, () -> new TagListDialog(title));
-  }
-
-  @Override
-  protected int getRightMargin() {
-    return 60;
-  }
-
-  @Override
-  public void apply(CodeStyleSettings rootSettings) {
-    HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
+  public void apply(HtmlCodeStyleSettings settings) {
     settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
-    settings.HTML_ATTRIBUTE_WRAP = ourWrappings[myWrapAttributes.getSelectedIndex()];
+    settings.HTML_ATTRIBUTE_WRAP = CodeStyleAbstractPanel.ourWrappings[myWrapAttributes.getSelectedIndex()];
     settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = mySpaceInEmptyTag.isSelected();
     settings.HTML_ALIGN_ATTRIBUTES = myAlignAttributes.isSelected();
@@ -158,7 +117,6 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
     settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myBeforeFirstAttributeCombo.getSelectedItem();
     settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myAfterLastAttributeCombo.getSelectedItem();
-    myRightMarginForm.apply(rootSettings);
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -170,11 +128,9 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     }
   }
 
-  @Override
-  protected void resetImpl(final CodeStyleSettings rootSettings) {
-    HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
+  public void reset(final HtmlCodeStyleSettings settings) {
     myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
-    myWrapAttributes.setSelectedIndex(getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
+    myWrapAttributes.setSelectedIndex(CodeStyleAbstractPanel.getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
     myWrapText.setSelected(settings.HTML_TEXT_WRAP != CommonCodeStyleSettings.DO_NOT_WRAP);
     mySpaceInEmptyTag.setSelected(settings.HTML_SPACE_INSIDE_EMPTY_TAG);
     myAlignAttributes.setSelected(settings.HTML_ALIGN_ATTRIBUTES);
@@ -192,20 +148,17 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
     myInlineElementsTagNames.setText(settings.HTML_INLINE_ELEMENTS);
     myDontBreakIfInlineContent.setText(settings.HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT);
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
-    myRightMarginForm.reset(rootSettings);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
     myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
     myBeforeFirstAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
     myAfterLastAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
   }
 
-  @Override
-  public boolean isModified(CodeStyleSettings rootSettings) {
-    HtmlCodeStyleSettings settings = rootSettings.getCustomSettings(HtmlCodeStyleSettings.class);
+  public boolean isModified(HtmlCodeStyleSettings settings) {
     if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
       return true;
     }
-    if (settings.HTML_ATTRIBUTE_WRAP != ourWrappings[myWrapAttributes.getSelectedIndex()]) {
+    if (settings.HTML_ATTRIBUTE_WRAP != CodeStyleAbstractPanel.ourWrappings[myWrapAttributes.getSelectedIndex()]) {
       return true;
     }
 
@@ -278,34 +231,15 @@ public class CodeStyleHtmlPanel extends CodeStyleAbstractPanel {
       return true;
     }
 
-    return myRightMarginForm.isModified(rootSettings) ||
-           myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
-  }
-
-  @Override
-  public JComponent getPanel() {
-    return myPanel;
-  }
-
-  @Override
-  protected String getPreviewText() {
-    return readFromFile(this.getClass(), "preview.html.template");
-
-  }
-
-  @Override
-  @NotNull
-  protected FileType getFileType() {
-    return StdFileTypes.HTML;
-  }
-
-  @Override
-  protected void prepareForReformat(final PsiFile psiFile) {
-    //psiFile.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
+    return myEnforceQuotesBox.isSelected() != settings.HTML_ENFORCE_QUOTES;
   }
 
   private static <T extends Enum<T>> void fillEnumCombobox(JComboBox combo, Class<T> enumClass) {
     //noinspection unchecked
     combo.setModel(new EnumComboBoxModel<>(enumClass));
+  }
+
+  private static void customizeField(final String title, final TextFieldWithBrowseButton uiField) {
+    ListItemsDialogWrapper.installListItemsDialogForTextField(uiField, () -> new TagListDialog(title));
   }
 }

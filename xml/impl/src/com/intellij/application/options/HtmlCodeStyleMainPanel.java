@@ -29,6 +29,6 @@ public class HtmlCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
   @Override
   protected void initTabs(CodeStyleSettings settings) {
     addIndentOptionsTab(settings);
-    addTab(new CodeStyleHtmlPanel(settings));
+    addTab(new HtmlCodeStylePanel(settings));
   }
 }

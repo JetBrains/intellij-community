@@ -15,13 +15,18 @@
  */
 package com.intellij.psi.formatter.xml;
 
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.WRAP_AS_NEEDED;
 
-public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
+public class HtmlCodeStyleSettings extends CustomCodeStyleSettings implements JDOMExternalizable{
   public boolean LEGACY_SETTINGS_IMPORTED = false;
   public boolean HTML_KEEP_WHITESPACES;
   public int HTML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
@@ -97,6 +102,15 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
     HTML_QUOTE_STYLE = settings.HTML_QUOTE_STYLE;
     HTML_ENFORCE_QUOTES = getValueOrDefault(settings.HTML_ENFORCE_QUOTES, HTML_ENFORCE_QUOTES);
     LEGACY_SETTINGS_IMPORTED = true;
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    final Element childElement = new Element(getTagName());
+    DefaultJDOMExternalizer.writeExternal(this, childElement, new DifferenceFilter<>(this, new HtmlCodeStyleSettings()));
+    if (!childElement.getContent().isEmpty()) {
+      element.addContent(childElement);
+    }
   }
 
   private static String getValueOrDefault(String legacy, String defaultValue) {
