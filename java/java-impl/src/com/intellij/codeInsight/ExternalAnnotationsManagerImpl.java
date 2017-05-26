@@ -729,6 +729,19 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Override
+  public boolean hasAnnotationRootsForFile(@NotNull VirtualFile file) {
+    if (hasAnyAnnotationsRoots()) {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
+      for (OrderEntry entry : fileIndex.getOrderEntriesForFile(file)) {
+        if (!(entry instanceof ModuleOrderEntry) && AnnotationOrderRootType.getUrls(entry).length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Override
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
     String message = text + "; for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl();
     LogMessageEx.error(LOG, message, file.getText());

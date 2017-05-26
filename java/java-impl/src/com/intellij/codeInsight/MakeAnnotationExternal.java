@@ -19,12 +19,14 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -43,11 +45,16 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
     PsiAnnotation annotation = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiAnnotation.class);
 
     if (annotation != null && annotation.getQualifiedName() != null &&
-        annotation.getManager().isInProject(annotation) &&
-        CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS &&
-        PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class) != null) {
-      setText("Annotate externally");
-      return true;
+        annotation.getManager().isInProject(annotation)) {
+      PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
+      if (modifierListOwner != null) {
+        VirtualFile virtualFile = PsiUtilCore.getVirtualFile(modifierListOwner);
+        if (CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS ||
+            virtualFile != null && ExternalAnnotationsManager.getInstance(project).hasAnnotationRootsForFile(virtualFile)) {
+          setText("Annotate externally");
+          return true;
+        }
+      }
     }
     return false;
   }

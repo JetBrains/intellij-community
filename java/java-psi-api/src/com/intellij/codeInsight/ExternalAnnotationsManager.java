@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,8 @@ public abstract class ExternalAnnotationsManager {
   public static ExternalAnnotationsManager getInstance(@NotNull Project project) {
     return INSTANCE_KEY.getValue(project);
   }
+
+  public abstract boolean hasAnnotationRootsForFile(@NotNull VirtualFile file);
 
   public abstract boolean isExternalAnnotation(@NotNull PsiAnnotation annotation);
 
