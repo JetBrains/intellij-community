@@ -192,8 +192,6 @@ public class JsonSchemaObject {
   }
 
   public void setPatternProperties(Map<String, JsonSchemaObject> patternProperties) {
-    //todo correct
-    patternProperties.keySet().forEach(key -> patternProperties.put(StringUtil.unescapeBackSlashes(key), patternProperties.get(key)));
     myPatternProperties = new PatternProperties(patternProperties);
   }
 
@@ -266,7 +264,7 @@ public class JsonSchemaObject {
   }
 
   public void setPattern(String pattern) {
-    myPattern = pattern == null ? null : new PropertyNamePattern(StringUtil.unescapeBackSlashes(pattern));
+    myPattern = pattern == null ? null : new PropertyNamePattern(pattern);
   }
 
   public Boolean getAdditionalPropertiesAllowed() {
@@ -600,7 +598,7 @@ public class JsonSchemaObject {
     @NotNull private final Map<String, Boolean> myValuePatternCache;
 
     public PropertyNamePattern(@NotNull String pattern) {
-      myPattern = pattern;
+      myPattern = StringUtil.unescapeBackSlashes(pattern);
       final Pair<Pattern, String> pair = compilePattern(pattern);
       myPatternError = pair.getSecond();
       myCompiledPattern = pair.getFirst();
