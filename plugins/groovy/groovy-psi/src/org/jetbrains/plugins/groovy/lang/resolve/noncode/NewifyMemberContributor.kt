@@ -39,13 +39,13 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     for (annotation in listNewifyAnnotations(place)) {
       val newifiedClasses = GrAnnotationUtil.getClassArrayValue(annotation, "value", true)
       qualifier ?: newifiedClasses.flatMap { it.constructors.asList() }.forEach {
-        ResolveUtil.processElement(processor, NewifiedConstructor(it, "by @Newify", it.name, true), state)
+        ResolveUtil.processElement(processor, NewifiedConstructor(it, "by @Newify", it.name, true, arrayOf(PsiModifier.STATIC)), state)
       }
       val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, "auto")
       val type = (qualifier as? GrReferenceExpression)?.resolve() as? PsiClass
       if (type != null && createNewMethods) {
         type.constructors.forEach {
-          ResolveUtil.processElement(processor, NewifiedConstructor(it, "by @Newify", "new", false), state)
+          ResolveUtil.processElement(processor, NewifiedConstructor(it, "by @Newify", "new", false, arrayOf(PsiModifier.STATIC)), state)
         }
       }
     }
@@ -67,16 +67,13 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     return (elem as? GrReferenceExpression)?.qualifierExpression
   }
 
-  class NewifiedConstructor(val myPrototype: PsiMethod,
-                            val myOriginInfo: String,
-                            val newName: String,
-                            val asConstructor: Boolean)
+  class NewifiedConstructor(val myPrototype: PsiMethod, val myOriginInfo: String, val newName: String, val asConstructor: Boolean, val modifiers:Array<String>)
     : LightMethod(myPrototype.manager, myPrototype, myPrototype.containingClass!!), OriginInfoAwareElement, PsiMirrorElement {
     override fun getPrototype(): PsiElement {
       return myPrototype
     }
 
-    val myModifierList: LightModifierList = LightModifierList(myPrototype.manager, JavaLanguage.INSTANCE, PsiModifier.STATIC)
+    val myModifierList: LightModifierList = LightModifierList(myPrototype.manager, JavaLanguage.INSTANCE, *modifiers)
 
 
     override fun getName(): String {
