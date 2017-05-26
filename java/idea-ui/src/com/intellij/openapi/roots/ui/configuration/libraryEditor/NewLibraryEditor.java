@@ -232,26 +232,26 @@ public class NewLibraryEditor extends LibraryEditorBase {
     final BiConsumer<String, OrderRootType> addRoot,
     final TriConsumer<String, Boolean, OrderRootType> addJarDir) {
 
+    // first, clean the target container optionally preserving invalid paths
+    for (OrderRootType type : OrderRootType.getAllTypes()) {
+      for (String url : getUrls.apply(type)) {
+        if (!myKeepInvalidUrls || isValid.apply(url, type)) {
+          removeRoot.accept(url, type);
+        }
+      }
+    }
+
+    // apply editor's state to the target container
     for (OrderRootType type : myRoots.keySet()) {
-      clearRoots(type, getUrls, isValid, removeRoot);
       for (LightFilePointer pointer : myRoots.get(type)) {
         if (!myJarDirectories.contains(type, pointer.getUrl())) {
           addRoot.accept(pointer.getUrl(), type);
         }
       }
     }
-    for (OrderRootType rootType : myJarDirectories.getRootTypes()) {
-      clearRoots(rootType, getUrls, isValid, removeRoot);
-      for (String url : myJarDirectories.getDirectories(rootType)) {
-        addJarDir.accept(url, myJarDirectories.isRecursive(rootType, url), rootType);
-      }
-    }
-  }
-
-  private void clearRoots(OrderRootType rootType, Function<OrderRootType, String[]> getUrls, BiFunction<String, OrderRootType, Boolean> isValid, BiConsumer<String, OrderRootType> removeRoot) {
-    for (String url : getUrls.apply(rootType)) {
-      if (!myKeepInvalidUrls || isValid.apply(url, rootType)) {
-        removeRoot.accept(url, rootType);
+    for (OrderRootType type : myJarDirectories.getRootTypes()) {
+      for (String url : myJarDirectories.getDirectories(type)) {
+        addJarDir.accept(url, myJarDirectories.isRecursive(type, url), type);
       }
     }
   }
