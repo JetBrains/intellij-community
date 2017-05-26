@@ -49,6 +49,8 @@ public abstract class ProjectView {
    *
    * @param viewId id of view to be selected
    * @param subId  id of subview to be selected
+   * @return callback which will be set to {@link ActionCallback#setDone done} if new content was selected
+   * or to {@link ActionCallback#setRejected rejected} if content didn't change.
    */
   @NotNull
   public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
