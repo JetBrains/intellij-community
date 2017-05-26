@@ -234,37 +234,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    ArrayList<PsiReference> refs = convertUsagesToRefs(usagesIn);
-    myInliners = GenericInlineHandler.initializeInliners(myMethod, new InlineHandler.Settings() {
+    myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
       @Override
       public boolean isOnlyOneReferenceToInline() {
         return myInlineThisOnly;
       }
-    }, refs);
-
-    //hack to prevent conflicts 'Cannot inline reference from Java'
-    myInliners.put(JavaLanguage.INSTANCE, new InlineHandler.Inliner() {
-      @Nullable
-      @Override
-      public MultiMap<PsiElement, String> getConflicts(PsiReference reference, PsiElement referenced) {
-        return MultiMap.emptyInstance();
-      }
-
-      @Override
-      public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) {
-        if (usage instanceof NonCodeUsageInfo) return;
-
-        throw new UnsupportedOperationException(
-          "usage: " + usage.getClass().getName() + 
-          ", usage element: " + usage.getElement() + 
-          ", referenced: " + referenced.getClass().getName() + 
-          ", text: " + referenced.getText());
-      }
-    });
-
-    for (PsiReference ref : refs) {
-      GenericInlineHandler.collectConflicts(ref, myMethod, myInliners, conflicts);
-    }
+    }, conflicts, JavaLanguage.INSTANCE);
 
     final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(myMethod);
     for (PsiReturnStatement statement : returnStatements) {
@@ -290,16 +265,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return showConflicts(conflicts, usagesIn);
   }
 
-  private static ArrayList<PsiReference> convertUsagesToRefs(UsageInfo[] usagesIn) {
-    ArrayList<PsiReference> refs = new ArrayList<>();
-    for (UsageInfo info : usagesIn) {
-      final PsiReference ref = info.getReference();
-      if (ref != null) { //ref can be null if it is conflict usage info
-        refs.add(ref);
-      }
-    }
-    return refs;
-  }
 
   private boolean checkReadOnly() {
     return myMethod.isWritable() || myMethod instanceof PsiCompiledElement;
