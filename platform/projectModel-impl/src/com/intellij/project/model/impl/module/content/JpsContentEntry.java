@@ -313,6 +313,17 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   }
 
   @Override
+  public void setExcludePatterns(@NotNull List<String> patterns) {
+    for (String pattern : myExcludePatterns) {
+      myModule.removeExcludePattern(getUrl(), pattern);
+    }
+    myExcludePatterns.clear();
+    for (String pattern : patterns) {
+      addExcludePattern(pattern);
+    }
+  }
+
+  @Override
   public boolean isSynthetic() {
     return false;
   }

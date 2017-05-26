@@ -319,7 +319,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NotNull
   @Override
   public List<String> getExcludePatterns() {
-    return myExcludePatterns != null ? myExcludePatterns : Collections.emptyList();
+    return myExcludePatterns != null ? Collections.unmodifiableList(myExcludePatterns) : Collections.emptyList();
   }
 
   @Override
@@ -337,6 +337,22 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
       if (myExcludePatterns.isEmpty()) {
         myExcludePatterns = null;
       }
+    }
+  }
+
+  @Override
+  public void setExcludePatterns(@NotNull List<String> patterns) {
+    if (patterns.isEmpty()) {
+      myExcludePatterns = null;
+    }
+    else {
+      if (myExcludePatterns == null) {
+        myExcludePatterns = new SmartList<>();
+      }
+      else {
+        myExcludePatterns.clear();
+      }
+      myExcludePatterns.addAll(patterns);
     }
   }
 
