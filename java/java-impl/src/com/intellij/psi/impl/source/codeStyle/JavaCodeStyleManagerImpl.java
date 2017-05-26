@@ -787,8 +787,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expr.getParent();
       if (expr == assignmentExpression.getRExpression()) {
         final PsiExpression leftExpression = assignmentExpression.getLExpression();
-        if (leftExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression) leftExpression).getQualifier() == null) {
-          String name = leftExpression.getText();
+        if (leftExpression instanceof PsiReferenceExpression) {
+          String name = ((PsiReferenceExpression)leftExpression).getReferenceName();
           if (name != null) {
             final PsiElement resolve = ((PsiReferenceExpression)leftExpression).resolve();
             if (resolve instanceof PsiVariable) {
@@ -800,7 +800,8 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     }
-    else if (expr.getParent() instanceof PsiLocalVariable) {
+     //skip places where name for this local variable is calculated, otherwise grab the name 
+    else if (expr.getParent() instanceof PsiLocalVariable && variableKind != VariableKind.LOCAL_VARIABLE) {
       PsiVariable variable = (PsiVariable)expr.getParent();
       String variableName = variable.getName();
       if (variableName != null) {
