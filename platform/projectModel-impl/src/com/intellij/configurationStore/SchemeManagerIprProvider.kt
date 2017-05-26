@@ -53,8 +53,8 @@ class SchemeManagerIprProvider(private val subStateTagName: String) : StreamProv
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    val name = PathUtilRt.getFileName(fileSpec)
-    nameToData.put(name, ArrayUtil.realloc(content, size))
+    LOG.assertTrue(content.isNotEmpty())
+    nameToData.put(PathUtilRt.getFileName(fileSpec), ArrayUtil.realloc(content, size))
   }
 
   fun load(state: Element?, nameGetter: ((Element) -> String)? = null) {
