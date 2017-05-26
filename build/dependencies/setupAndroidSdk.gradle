@@ -44,7 +44,7 @@ task downloadOfflineRepo(type: Download) {
 }
 
 task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
-  from zipTree(downloadGradleDistribution.outputs.files.singleFile)
+  from zipTree(downloadOfflineRepo.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/tools/common/m2/repository"
 }
 
