@@ -650,11 +650,8 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private void registerActionShortcuts(@NotNull InspectionToolPresentation presentation) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      final QuickFixAction[] fixes = presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null);
-      if (fixes != null) {
-        for (QuickFixAction fix : fixes) {
-          fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
-        }
+      for (QuickFixAction fix : presentation.getQuickFixes(RefEntity.EMPTY_ELEMENTS_ARRAY, null)) {
+        fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
       }
     });
   }

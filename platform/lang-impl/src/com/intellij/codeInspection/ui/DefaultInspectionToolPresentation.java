@@ -574,13 +574,13 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
   }
 
   @Override
-  @Nullable
+  @NotNull
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, InspectionTree tree) {
     return extractActiveFixes(refElements, getProblemElements(), tree != null ? tree.getSelectedDescriptors() : null);
   }
 
   @Override
-  @Nullable
+  @NotNull
   public QuickFixAction[] extractActiveFixes(@NotNull RefEntity[] refElements,
                                              @NotNull Map<RefEntity, CommonProblemDescriptor[]> descriptorMap,
                                              @Nullable CommonProblemDescriptor[] allowedDescriptors) {
@@ -636,7 +636,7 @@ public class DefaultInspectionToolPresentation implements ProblemDescriptionsPro
         }
       }
     }
-    return result.values().isEmpty() ? null : result.values().toArray(new QuickFixAction[result.size()]);
+    return result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(new QuickFixAction[result.size()]);
   }
 
   private static Class getFixClass(QuickFix fix) {
