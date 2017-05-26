@@ -69,6 +69,7 @@ public class JBTableWithRowHeaders extends JBTable {
   }
 
   public void setAutoResize(boolean autoResize) {
+    myNotAdjustableColumns.clear();
     myAutoResize = autoResize;
     setAutoResizeMode(myAutoResize ? AUTO_RESIZE_OFF : AUTO_RESIZE_SUBSEQUENT_COLUMNS);
   }
