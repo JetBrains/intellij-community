@@ -42,6 +42,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   private final EventDispatcher<CodeStyleSettingsListener> myDispatcher = EventDispatcher.create(CodeStyleSettingsListener.class);
   private final Project myProject;
+  private boolean myUiEventsEnabled = true;
 
   public CodeStyleSchemesModel(Project project) {
     myProject = project;
@@ -74,6 +75,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     }
   }
 
+  @NotNull
   public CodeStyleSettings getCloneSettings(final CodeStyleScheme scheme) {
     if (!mySettingsToClone.containsKey(scheme)) {
       mySettingsToClone.put(scheme, scheme.getCodeStyleSettings().clone());
@@ -94,16 +96,30 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   public void reset() {
-    mySettingsToClone.clear();
     mySchemes.clear();
     ContainerUtil.addAll(mySchemes, CodeStyleSchemesImpl.getSchemeManager().getAllSchemes());
     mySchemes.add(myProjectScheme);
+    updateClonedSettings();
 
     mySelectedScheme = getProjectSettings().USE_PER_PROJECT_SETTINGS ? myProjectScheme : CodeStyleSchemes.getInstance().findPreferredScheme(getProjectSettings().PREFERRED_PROJECT_CODE_STYLE);
 
     myDispatcher.getMulticaster().schemeListChanged();
     myDispatcher.getMulticaster().currentSchemeChanged(this);
 
+  }
+
+  private void updateClonedSettings() {
+    for (Iterator<CodeStyleScheme> schemeIterator = mySettingsToClone.keySet().iterator(); schemeIterator.hasNext();) {
+      CodeStyleScheme scheme = schemeIterator.next();
+      if (!mySchemes.contains(scheme)) {
+        schemeIterator.remove();
+      }
+    }
+    for (CodeStyleScheme scheme : mySchemes) {
+      CodeStyleSettings current = scheme.getCodeStyleSettings();
+      CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+      clonedSettings.copyFrom(current);
+    }
   }
 
   public boolean isUsePerProjectSettings() {
@@ -148,7 +164,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   public void fireBeforeCurrentSettingsChanged() {
-    myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
+    if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
   public void fireSchemeChanged(CodeStyleScheme scheme) {
@@ -172,7 +188,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
 
   public CodeStyleScheme exportProjectScheme(@NotNull String name) {
     CodeStyleScheme newScheme = createNewScheme(name, myProjectScheme);
-    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getCloneSettings(myProjectScheme));
+    ((CodeStyleSchemeImpl)newScheme).setCodeStyleSettings(getCloneSettings(myProjectScheme).clone());
     addScheme(newScheme, false);
 
     return newScheme;
@@ -256,6 +272,20 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
       super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
       CodeStyleSettings perProjectSettings = getProjectSettings().PER_PROJECT_SETTINGS;
       if (perProjectSettings != null) setCodeStyleSettings(perProjectSettings);
+    }
+  }
+
+  public void restoreDefaults(@NotNull CodeStyleScheme scheme) {
+    if (canResetScheme(scheme)) {
+      CodeStyleSettings currSettings = getCloneSettings(scheme);
+      currSettings.copyFrom(CodeStyleSettings.getDefaults());
+      myUiEventsEnabled = false;
+      try {
+        myDispatcher.getMulticaster().settingsChanged(currSettings);
+      }
+      finally {
+        myUiEventsEnabled = true;
+      }
     }
   }
 }

@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle;
+package com.intellij.psi.codeStyle;
 
-import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EventListener;
-
-public interface CodeStyleSettingsListener extends EventListener {
-  default void currentSchemeChanged(Object source) {
-  }
-
-  default void schemeListChanged() {
-  }
-
-  default void beforeCurrentSettingsChanged() {
-  }
-  
-  default void afterCurrentSettingsChanged() {
-  }
-
-  default void schemeChanged(CodeStyleScheme scheme) {
-  }
-
-  default void settingsChanged(@NotNull CodeStyleSettings settings) {}
+public interface CodeStyleConfigurable extends Configurable {
+  void reset(@NotNull CodeStyleSettings settings);
+  void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException;
 }

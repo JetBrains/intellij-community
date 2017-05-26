@@ -23,6 +23,7 @@ import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,8 +74,8 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
   }
 
   public void reset(CodeStyleSettings settings) {
-    if (myTab instanceof CodeStyleAbstractConfigurable) {
-      ((CodeStyleAbstractConfigurable)myTab).reset(settings);
+    if (myTab instanceof CodeStyleConfigurable) {
+      ((CodeStyleConfigurable)myTab).reset(settings);
     }
     else {
       myTab.reset();

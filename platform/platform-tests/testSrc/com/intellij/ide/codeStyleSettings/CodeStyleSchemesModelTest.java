@@ -44,7 +44,7 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
           myModel.removeScheme(scheme);
         }
         else if (myModel.canResetScheme(scheme)) {
-          scheme.resetToDefaults();
+          myModel.restoreDefaults(scheme);
         }
       }
       CodeStyleScheme projectScheme = myModel.getProjectScheme();
@@ -69,10 +69,10 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
     CodeStyleScheme projectScheme = myModel.getProjectScheme();
     myModel.selectScheme(projectScheme, null);
     assertEquals(CodeStyleScheme.PROJECT_SCHEME_NAME, myModel.getSelectedScheme().getName());
-    CodeStyleSettings settings = projectScheme.getCodeStyleSettings();
-    settings.setRightMargin(null, 66);
+    CodeStyleSettings settings = myModel.getCloneSettings(projectScheme);
+    settings.setDefaultRightMargin(66);
     CodeStyleScheme newScheme = myModel.exportProjectScheme("New Scheme");
-    assertEquals(66, newScheme.getCodeStyleSettings().getRightMargin(null));
+    assertEquals(66, newScheme.getCodeStyleSettings().getDefaultRightMargin());
     assertNotSame(projectScheme.getCodeStyleSettings(), newScheme.getCodeStyleSettings());
   }
 
@@ -121,5 +121,20 @@ public class CodeStyleSchemesModelTest extends LightPlatformTestCase {
 
       sb.toString()
     );
+  }
+
+  public void testReset() {
+    CodeStyleScheme newScheme = myModel.createNewScheme("New Scheme", myModel.getSelectedScheme());
+    myModel.addScheme(newScheme, false);
+    CodeStyleSettings newSettings = myModel.getCloneSettings(newScheme);
+    assertNotNull(newSettings);
+    CodeStyleSettings before = myModel.getCloneSettings(myDefaultScheme);
+    before.setDefaultRightMargin(66);
+    assertEquals(3, myModel.getSchemes().size());
+    myModel.reset();
+    CodeStyleSettings after = myModel.getCloneSettings(myDefaultScheme);
+    assertSame(CodeStyleSettings.getDefaults().getDefaultRightMargin(), after.getDefaultRightMargin());
+    assertSame(before, after);
+    assertEquals(2, myModel.getSchemes().size());
   }
 }

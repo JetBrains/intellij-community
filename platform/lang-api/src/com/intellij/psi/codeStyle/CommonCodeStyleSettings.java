@@ -23,6 +23,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -1050,11 +1052,24 @@ public class CommonCodeStyleSettings {
     if (obj instanceof CommonCodeStyleSettings) {
       if (
         ReflectionUtil.comparePublicNonFinalFields(this, obj) &&
-        myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions())
+        myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions()) &&
+        arrangementSettingsEqual((CommonCodeStyleSettings)obj)
         ) {
         return true;
       }
     }
     return false;
+  }
+
+  protected boolean arrangementSettingsEqual(CommonCodeStyleSettings obj) {
+    ArrangementSettings theseSettings = myArrangementSettings;
+    ArrangementSettings otherSettings = obj.getArrangementSettings();
+    if (theseSettings == null && otherSettings != null) {
+      Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(myLanguage);
+      if (rearranger instanceof ArrangementStandardSettingsAware) {
+        theseSettings = ((ArrangementStandardSettingsAware)rearranger).getDefaultSettings();
+      }
+    }
+    return Comparing.equal(theseSettings, obj.getArrangementSettings());
   }
 }
