@@ -777,8 +777,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return true;
   }
 
+  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Convertor<S, VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
     final List<MyPair<S>> infos = new ArrayList<>(in.size());

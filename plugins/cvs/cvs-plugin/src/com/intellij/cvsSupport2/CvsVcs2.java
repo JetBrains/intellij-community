@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -379,8 +379,9 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return true;
   }
 
+  @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(List<S> in, Convertor<S, VirtualFile> convertor) {
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Convertor<S, VirtualFile> convertor) {
     return in;
   }
 }
