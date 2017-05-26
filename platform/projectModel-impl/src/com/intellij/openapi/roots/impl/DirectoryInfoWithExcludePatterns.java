@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
+  private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
   private final FileTypeAssocTable<Boolean> myExcludePatterns;
 
   public DirectoryInfoWithExcludePatterns(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot,
@@ -37,11 +39,14 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   public boolean isExcluded(@NotNull VirtualFile file) {
     if (myExcluded) return true;
     VirtualFile current = file;
-    while (!myRoot.equals(current)) {
+    while (current != null && !myRoot.equals(current)) {
       if (myExcludePatterns.findAssociatedFileType(current.getNameSequence()) != null) {
         return true;
       }
       current = current.getParent();
+    }
+    if (current == null) {
+      LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
     }
     return false;
   }

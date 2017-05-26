@@ -72,6 +72,19 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertIteratedContent(myModule, Arrays.asList(underDir), Arrays.asList(underExc, underDirUnderExc, underExcUnderDir));
   }
 
+  public void testIllegalArgumentInIsExcludedMethod() {
+    addExcludePattern("xxx_excluded_directory");
+    DirectoryInfo info = myIndex.getInfoForFile(myContentRoot);
+    boolean successeded = false;
+    try {
+      info.isExcluded(myContentRoot.getParent());
+      successeded = true;
+    }
+    catch (AssertionError ignored) {
+    }
+    assertFalse("DirectoryInfo#isExcluded must fail it its argument is not under DirectoryInfo's root", successeded);
+  }
+
   private void addExcludePattern(@NotNull String pattern) {
     ModuleRootModificationUtil.updateModel(myModule,
                                            model -> MarkRootActionBase.findContentEntry(model, myContentRoot).addExcludePattern(pattern));
