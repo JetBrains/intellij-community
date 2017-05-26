@@ -13,7 +13,7 @@ limit
     after: 2,4,6,8,10
 anyMatch
     before: 2,4,6,8,10
-    after: nothing
+    after: 2147483647
 mappings for IntStream.iterate
   direct:
     no
@@ -38,14 +38,13 @@ mappings for limit
     9 <- 10
 mappings for anyMatch
   direct:
-    2 -> nothing
-    4 -> nothing
-    6 -> nothing
-    8 -> nothing
-    10 -> nothing
+    2 -> 2147483647
+    4 -> 2147483647
+    6 -> 2147483647
+    8 -> 2147483647
+    10 -> 2147483647
   reverse:
-    empty
-wrong
+    2,4,6,8,10 <- 2147483647
 Disconnected from the target VM, address: '!HOST_NAME!:PORT_NAME!', transport: 'socket'
 
 Process finished with exit code 0
