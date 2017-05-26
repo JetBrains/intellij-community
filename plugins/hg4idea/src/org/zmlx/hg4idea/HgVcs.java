@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -72,6 +71,7 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static java.util.Comparator.comparing;
 
 public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
@@ -223,7 +223,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   @Override
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, new ComparatorDelegate<>(convertor, FilePathComparator.getInstance()));
+    Collections.sort(in, comparing(convertor::convert, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);
