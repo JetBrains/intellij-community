@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.actions.ArrayAction;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.ui.SimpleTextAttributes;
@@ -239,6 +241,11 @@ public class ArrayRenderer extends NodeRendererImpl{
           @Override
           protected String getClassName() {
             return ((ArrayType)array.type()).componentTypeName();
+          }
+
+          @Override
+          protected PsiElement overrideContext(PsiElement context) {
+            return ContextUtil.getContextElement(evaluationContext);
           }
         };
         cachedEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(myExpression));

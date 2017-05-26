@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ public abstract class CachedEvaluator {
         throw EvaluateExceptionUtil.CANNOT_FIND_SOURCE_CLASS;
       }
       cache.myPsiChildrenExpression = null;
-      JavaCodeFragment codeFragment = myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, psiClassAndType.first, project);
+      JavaCodeFragment codeFragment =
+        myDefaultFragmentFactory.createCodeFragment(myReferenceExpression, overrideContext(psiClassAndType.first), project);
       codeFragment.setThisType(psiClassAndType.second);
       DebuggerUtils.checkSyntax(codeFragment);
       cache.myPsiChildrenExpression = codeFragment instanceof PsiExpressionCodeFragment ? ((PsiExpressionCodeFragment)codeFragment).getExpression() : null;
@@ -76,6 +77,10 @@ public abstract class CachedEvaluator {
 
     myCache = new SoftReference<>(cache);
     return cache;
+  }
+
+  protected PsiElement overrideContext(PsiElement context) {
+    return context;
   }
 
   protected ExpressionEvaluator getEvaluator(final Project project) throws EvaluateException {
