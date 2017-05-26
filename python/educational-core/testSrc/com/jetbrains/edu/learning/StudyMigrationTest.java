@@ -1,5 +1,6 @@
 package com.jetbrains.edu.learning;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.JdomKt;
 import org.jdom.Element;
@@ -13,7 +14,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class StudyMigrationTest {
   @Rule public TestName name = new TestName();
@@ -60,11 +61,11 @@ public class StudyMigrationTest {
         converted = StudySerializationUtils.Xml.convertToFifthVersion(element);
         break;
     }
-    assertThat(converted).isEqualTo(after);
+    assertTrue(JDOMUtil.areElementsEqual(converted, JdomKt.loadElement(after)));
   }
 
   @NotNull
   protected Path getTestDataPath() {
-    return Paths.get(PlatformTestUtil.getCommunityPath(), "python/educational-core/testData/migration");
+    return Paths.get("testData/migration");
   }
 }

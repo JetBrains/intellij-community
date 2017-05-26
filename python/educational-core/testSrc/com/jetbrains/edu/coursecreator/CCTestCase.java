@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class CCTestCase extends CodeInsightFixtureTestCase {
+public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(CCTestCase.class);
 
   @Nullable
@@ -81,7 +81,6 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.setTestDataPath(getBasePath());
     Course course = new Course();
     course.setName("test course");
     StudyTaskManager.getInstance(getProject()).setCourse(course);
@@ -196,6 +195,11 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     }
     List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, useLength);
     return Pair.create(tempDocument, placeholders);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return getBasePath();
   }
 }
 
