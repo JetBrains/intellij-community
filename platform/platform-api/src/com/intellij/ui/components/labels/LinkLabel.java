@@ -272,7 +272,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private void enableUnderline() {
-    setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    UIUtil.setCursor(this, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     myUnderline = true;
     if (myHoveringIcon != null) {
       super.setIcon(myHoveringIcon);
@@ -286,7 +286,7 @@ public class LinkLabel<T> extends JLabel {
   }
 
   private void disableUnderline() {
-    setCursor(Cursor.getDefaultCursor());
+    UIUtil.setCursor(this, Cursor.getDefaultCursor());
     myUnderline = false;
     super.setIcon(myInactiveIcon);
     setStatusBarText(null);

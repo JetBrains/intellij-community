@@ -2161,12 +2161,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (getSelectionModel().hasSelection() && (e.getModifiersEx() & (InputEvent.BUTTON1_DOWN_MASK | InputEvent.BUTTON2_DOWN_MASK)) == 0) {
         int offset = logicalPositionToOffset(xyToLogicalPosition(e.getPoint()));
         if (getSelectionModel().getSelectionStart() <= offset && offset < getSelectionModel().getSelectionEnd()) {
-          myEditorComponent.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+          UIUtil.setCursor(myEditorComponent, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
           return;
         }
       }
       if (!IdeGlassPaneImpl.hasPreProcessedCursor(myEditorComponent)) {
-        myEditorComponent.setCursor(UIUtil.getTextCursor(getBackgroundColor()));
+        UIUtil.setCursor(myEditorComponent, UIUtil.getTextCursor(getBackgroundColor()));
       }
     }
   }
