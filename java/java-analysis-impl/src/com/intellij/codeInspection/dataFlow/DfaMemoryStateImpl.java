@@ -300,27 +300,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private Integer getOrCreateEqClassIndex(@NotNull DfaValue dfaValue) {
     int i = getEqClassIndex(dfaValue);
     if (i != -1) return i;
-    if (dfaValue instanceof DfaVariableValue) {
-      DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
-      DfaVariableValue qualifier = variableValue.getQualifier();
-      PsiModifierListOwner variable = variableValue.getPsiVariable();
-      if (qualifier != null) {
-        Integer index = getOrCreateEqClassIndex(qualifier);
-        if (index != null) {
-          for (DfaValue eqQualifier : myEqClasses.get(index).getMemberValues()) {
-            if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
-              DfaVariableValue eqValue = getFactory().getVarFactory()
-                .createVariableValue(variable, variableValue.getVariableType(), variableValue.isNegated(), (DfaVariableValue)eqQualifier);
-              i = getEqClassIndex(eqValue);
-              if (i != -1) {
-                myEqClasses.get(i).add(dfaValue.getID());
-                return i;
-              }
-            }
-          }
-        }
-      }
-    }
     if (!canBeInRelation(dfaValue) ||
         !canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
       return null;
@@ -337,6 +316,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myEqClasses.add(aClass);
     }
     addToMap(dfaValue.getID(), resultIndex);
+
+    if (dfaValue instanceof DfaVariableValue) {
+      DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
+      DfaVariableValue qualifier = variableValue.getQualifier();
+      PsiModifierListOwner variable = variableValue.getPsiVariable();
+      if (qualifier != null) {
+        Integer index = getOrCreateEqClassIndex(qualifier);
+        if (index != null) {
+          for (DfaValue eqQualifier : myEqClasses.get(index).getMemberValues()) {
+            if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
+              DfaVariableValue eqValue = getFactory().getVarFactory()
+                .createVariableValue(variable, variableValue.getVariableType(), variableValue.isNegated(), (DfaVariableValue)eqQualifier);
+              i = getEqClassIndex(eqValue);
+              if (i != -1) {
+                uniteClasses(i, resultIndex);
+                return i;
+              }
+            }
+          }
+        }
+      }
+    }
 
     return resultIndex;
   }
