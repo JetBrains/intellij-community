@@ -51,7 +51,7 @@ public class JsonSchemaResolver {
   private MatchResult detailedResolve(boolean skipLastExpand, boolean literalResolve, boolean acceptAdditionalPropertiesSchema) {
     final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
       .buildTree(mySchema, myPosition, skipLastExpand, literalResolve, acceptAdditionalPropertiesSchema || !myIsName);
-    return MatchResult.zipTree(node);
+    return MatchResult.create(node);
   }
 
   public Collection<JsonSchemaObject> resolve() {

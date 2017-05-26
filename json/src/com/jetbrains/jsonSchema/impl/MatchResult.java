@@ -33,7 +33,7 @@ public class MatchResult {
     myExcludingSchemas = Collections.unmodifiableList(excludingSchemas);
   }
 
-  public static MatchResult zipTree(@NotNull JsonSchemaTreeNode root) {
+  public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
     final Set<JsonSchemaObject> schemas = new HashSet<>();
     final Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
     ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
