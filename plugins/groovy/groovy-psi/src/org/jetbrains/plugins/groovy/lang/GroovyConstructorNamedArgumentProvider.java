@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -41,18 +42,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
  */
-public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentProvider {
+public class GroovyConstructorNamedArgumentProvider extends GroovyNamedArgumentProvider {
 
   private static final String METACLASS = "metaClass";
-
-  @NotNull
-  abstract List<PsiClass> getCorrespondingClasses(@NotNull GrCall call, @NotNull GroovyResolveResult resolveResult);
 
   @Override
   public void getNamedArguments(@NotNull GrCall call,
@@ -60,23 +57,38 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
                                 @Nullable String argumentName,
                                 boolean forCompletion,
                                 @NotNull Map<String, NamedArgumentDescriptor> result) {
-    GrArgumentList argumentList = call.getArgumentList();
+    if (!(call instanceof GrNewExpression)) return;
+    PsiElement resolve = resolveResult.getElement();
+
+    if (resolve != null) {
+      if (!(resolve instanceof PsiMethod)) return;
+      PsiMethod method = (PsiMethod)resolve;
+      if (!method.isConstructor()) return;
+    }
+
+    GrNewExpression newCall = (GrNewExpression)call;
+
+    GrArgumentList argumentList = newCall.getArgumentList();
     if (argumentList == null) return;
+
     GrExpression[] expressionArguments = argumentList.getExpressionArguments();
     if (expressionArguments.length > 1 || (expressionArguments.length == 1 && !(expressionArguments[0] instanceof GrReferenceExpression))) {
       return;
     }
 
-    for (PsiClass psiClass : getCorrespondingClasses(call, resolveResult)) {
-      if (!isClassHasConstructorWithMap(psiClass)) continue;
+    for (GroovyResolveResult newResult : newCall.multiResolveClass()) {
+      PsiElement element = newResult.getElement();
+      if (!(element instanceof PsiClass)) continue;
 
-      PsiClassType classType = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+      PsiClass aClass = (PsiClass)element;
+
+      if (!isClassHasConstructorWithMap(aClass)) continue;
+
+      PsiClassType classType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
 
       processClass(call, classType, argumentName, result);
     }
-
   }
-
 
   public static void processClass(@NotNull GrCall call,
                                   PsiClassType type,
@@ -135,7 +147,7 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
     }
   }
 
-  public static boolean isClassHasConstructorWithMap(PsiClass aClass) {
+  private static boolean isClassHasConstructorWithMap(PsiClass aClass) {
     PsiMethod[] constructors = aClass.getConstructors();
 
     if (constructors.length == 0) return true;
@@ -185,7 +197,7 @@ public abstract class GroovyConstructorNamedArgumentProvider extends GroovyNamed
           propertyName = ((PsiField)element).getName();
         }
 
-        if (METACLASS.equals(propertyName)) return true;
+        if (propertyName.equals(METACLASS)) return true;
 
         if (((PsiModifierListOwner)element).hasModifierProperty(PsiModifier.STATIC)) return true;
 

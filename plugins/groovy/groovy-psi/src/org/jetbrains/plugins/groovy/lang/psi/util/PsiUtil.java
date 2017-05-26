@@ -182,7 +182,7 @@ public class PsiUtil {
     GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes);
 
     //check for default constructor
-    if (method.isConstructor() || handleMirrorMethod(method).isConstructor()) {
+    if (method.isConstructor()) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == 0 && argumentTypes.length == 1) {
         return InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP)
@@ -210,17 +210,6 @@ public class PsiUtil {
       }
     }
     return GrClosureSignatureUtil.ApplicabilityResult.inapplicable;
-  }
-
-  @NotNull
-  public static PsiMethod handleMirrorMethod(@NotNull PsiMethod method) {
-    if (method instanceof PsiMirrorElement) {
-      PsiElement prototype = ((PsiMirrorElement)method).getPrototype();
-      if (prototype instanceof PsiMethod) {
-       return  (PsiMethod)prototype;
-      }
-    }
-    return method;
   }
 
   public static boolean isApplicable(@Nullable PsiType[] argumentTypes,
