@@ -41,7 +41,6 @@ import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.CalledInAwt;
@@ -68,6 +67,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -222,19 +222,19 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   @Override
-  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Convertor<S, VirtualFile> convertor) {
-    Collections.sort(in, comparing(convertor::convert, FilePathComparator.getInstance()));
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    Collections.sort(in, comparing(convertor, FilePathComparator.getInstance()));
 
     for (int i = 1; i < in.size(); i++) {
       final S sChild = in.get(i);
-      final VirtualFile child = convertor.convert(sChild);
+      final VirtualFile child = convertor.apply(sChild);
       final VirtualFile childRoot = HgUtil.getHgRootOrNull(myProject, child);
       if (childRoot == null) {
         continue;
       }
       for (int j = i - 1; j >= 0; --j) {
         final S sParent = in.get(j);
-        final VirtualFile parent = convertor.convert(sParent);
+        final VirtualFile parent = convertor.apply(sParent);
         // if the parent is an ancestor of the child and that they share common root, the child is removed
         if (VfsUtilCore.isAncestor(parent, child, false) && VfsUtilCore.isAncestor(childRoot, parent, false)) {
           in.remove(i);

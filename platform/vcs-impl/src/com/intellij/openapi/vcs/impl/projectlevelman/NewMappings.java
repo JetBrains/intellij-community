@@ -35,15 +35,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static java.util.function.Function.identity;
 
 public class NewMappings {
 
@@ -378,8 +379,7 @@ public class NewMappings {
 
       final List<Pair<VirtualFile, VcsDirectoryMapping>> filteredFiles;
       // todo static
-      final Convertor<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor =
-        o -> o.getFirst();
+      Function<Pair<VirtualFile, VcsDirectoryMapping>, VirtualFile> fileConvertor = pair -> pair.getFirst();
       if (StringUtil.isEmptyOrSpaces(vcsName)) {
         filteredFiles = AbstractVcs.filterUniqueRootsDefault(objects, fileConvertor);
       }
@@ -526,14 +526,14 @@ public class NewMappings {
       final List<VirtualFile> list = new ArrayList<>();
       list.addAll(myDefaultVcsRootPolicy.getDefaultVcsRoots(this, defaultVcs));
       if (StringUtil.isEmptyOrSpaces(defaultVcs)) {
-        return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
+        return AbstractVcs.filterUniqueRootsDefault(list, identity());
       }
       else {
         final AbstractVcs<?> vcs = AllVcses.getInstance(myProject).getByName(defaultVcs);
         if (vcs == null) {
-          return AbstractVcs.filterUniqueRootsDefault(list, Convertor.SELF);
+          return AbstractVcs.filterUniqueRootsDefault(list, identity());
         }
-        return vcs.filterUniqueRoots(list, Convertor.SELF);
+        return vcs.filterUniqueRoots(list, identity());
       }
     }
   }

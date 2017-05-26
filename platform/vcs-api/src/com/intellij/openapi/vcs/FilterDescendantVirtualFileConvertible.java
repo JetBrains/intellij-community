@@ -18,22 +18,22 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 import static java.util.Collections.sort;
 import static java.util.Comparator.comparing;
 
 public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChildren<T> {
   @NotNull private final Comparator<T> myComparator;
-  @NotNull private final Convertor<T, VirtualFile> myConvertor;
+  @NotNull private final Function<T, VirtualFile> myConvertor;
 
-  public FilterDescendantVirtualFileConvertible(@NotNull Convertor<T, VirtualFile> convertor, @NotNull Comparator<VirtualFile> comparator) {
+  public FilterDescendantVirtualFileConvertible(@NotNull Function<T, VirtualFile> convertor, @NotNull Comparator<VirtualFile> comparator) {
     myConvertor = convertor;
-    myComparator = comparing(myConvertor::convert, comparator);
+    myComparator = comparing(myConvertor, comparator);
   }
 
   @Override
@@ -43,6 +43,6 @@ public class FilterDescendantVirtualFileConvertible<T> extends AbstractFilterChi
 
   @Override
   protected boolean isAncestor(final T parent, final T child) {
-    return VfsUtil.isAncestor(myConvertor.convert(parent), myConvertor.convert(child), false);
+    return VfsUtil.isAncestor(myConvertor.apply(parent), myConvertor.apply(child), false);
   }
 }
