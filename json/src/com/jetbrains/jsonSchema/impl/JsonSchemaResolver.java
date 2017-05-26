@@ -32,9 +32,7 @@ public class JsonSchemaResolver {
   private final boolean myIsName;
   @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> myPosition;
 
-  public JsonSchemaResolver(@NotNull JsonSchemaObject schema,
-                            boolean isName,
-                            @NotNull List<JsonSchemaVariantsTreeBuilder.Step> position) {
+  public JsonSchemaResolver(@NotNull JsonSchemaObject schema, boolean isName, @NotNull List<JsonSchemaVariantsTreeBuilder.Step> position) {
     mySchema = schema;
     myIsName = isName;
     myPosition = position;
@@ -51,10 +49,8 @@ public class JsonSchemaResolver {
   }
 
   private MatchResult detailedResolve(boolean skipLastExpand, boolean literalResolve, boolean acceptAdditionalPropertiesSchema) {
-    final JsonSchemaVariantsTreeBuilder builder = new JsonSchemaVariantsTreeBuilder(mySchema, myIsName, myPosition);
-    // if false, use !isName (default)
-    if (acceptAdditionalPropertiesSchema) builder.setAcceptAdditionalPropertiesSchema(true);
-    final JsonSchemaTreeNode node = builder.buildTree(skipLastExpand, literalResolve);
+    final JsonSchemaTreeNode node = JsonSchemaVariantsTreeBuilder
+      .buildTree(mySchema, myPosition, skipLastExpand, literalResolve, acceptAdditionalPropertiesSchema || !myIsName);
     return MatchResult.zipTree(node);
   }
 

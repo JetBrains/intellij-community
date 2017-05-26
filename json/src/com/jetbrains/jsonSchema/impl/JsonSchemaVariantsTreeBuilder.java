@@ -38,29 +38,16 @@ import java.util.stream.Collectors;
  */
 public class JsonSchemaVariantsTreeBuilder {
   private static final Logger LOG = Logger.getInstance(JsonSchemaVariantsTreeBuilder.class);
-  @NotNull private final JsonSchemaObject mySchema;
-  private final boolean myIsName;
-  @NotNull private final List<Step> myPosition;
-  private boolean myAcceptAdditionalPropertiesSchema;
 
-  public JsonSchemaVariantsTreeBuilder(@NotNull final JsonSchemaObject schema,
-                                       final boolean isName,
-                                       @Nullable final List<Step> position) {
-    mySchema = schema;
-    myIsName = isName;
-    myAcceptAdditionalPropertiesSchema = !myIsName;
-    myPosition = ContainerUtil.notNullize(position);
-  }
-
-  public void setAcceptAdditionalPropertiesSchema(boolean acceptAdditionalPropertiesSchema) {
-    myAcceptAdditionalPropertiesSchema = acceptAdditionalPropertiesSchema;
-  }
-
-  public JsonSchemaTreeNode buildTree(boolean skipLastExpand, boolean literalResolve) {
-    final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, mySchema);
-    expandChildSchema(root, mySchema);
+  public static JsonSchemaTreeNode buildTree(@NotNull final JsonSchemaObject schema,
+                                      @Nullable final List<Step> position,
+                                      final boolean skipLastExpand,
+                                      final boolean literalResolve,
+                                      final boolean acceptAdditional) {
+    final JsonSchemaTreeNode root = new JsonSchemaTreeNode(null, schema);
+    expandChildSchema(root, schema);
     // set root's position since this children are just variants of root
-    root.getChildren().forEach(node -> node.setSteps(myPosition));
+    root.getChildren().forEach(node -> node.setSteps(ContainerUtil.notNullize(position)));
 
     final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>();
     queue.addAll(root.getChildren());
@@ -74,7 +61,7 @@ public class JsonSchemaVariantsTreeBuilder {
         continue;
       }
       if (literalResolve) step.myLiteralResolve = true;
-      final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), myAcceptAdditionalPropertiesSchema);
+      final Pair<ThreeState, JsonSchemaObject> pair = step.step(node.getSchema(), acceptAdditional);
       if (ThreeState.NO.equals(pair.getFirst())) node.nothingChild();
       else if (ThreeState.YES.equals(pair.getFirst())) node.anyChild();
       else {
