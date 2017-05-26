@@ -293,13 +293,13 @@ public class DefaultJDOMExternalizer {
         LOG.debug("No field '" + fieldName + "' in " + data.getClass(), ex);
       }
       catch (SecurityException ex) {
-        throw new InvalidDataException();
+        throw new InvalidDataException(ex);
       }
       catch (IllegalAccessException ex) {
         throw new InvalidDataException(ex);
       }
       catch (InstantiationException ex) {
-        throw new InvalidDataException();
+        throw new InvalidDataException(ex);
       }
     }
   }
