@@ -115,7 +115,7 @@ public class ContentEntryTreeEditor {
       }
     });
     excludePatternsPanel.add(myExcludePatternsField);
-    JBLabel excludePatternsLegendLabel = new JBLabel(XmlStringUtil.wrapInHtml("Semicolon-separated patterns of file names to be excluded; <b>?</b> (exactly one symbol) and <b>*</b> (zero or more symbols) wildcards are suppored."));
+    JBLabel excludePatternsLegendLabel = new JBLabel(XmlStringUtil.wrapInHtml("Semicolon-separated patterns of file names to be excluded; <b>?</b> (exactly one symbol) and <b>*</b> (zero or more symbols) wildcards are supported."));
     excludePatternsLegendLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     excludePatternsPanel.add(excludePatternsLegendLabel);
     myTreePanel = new MyPanel(new BorderLayout());
