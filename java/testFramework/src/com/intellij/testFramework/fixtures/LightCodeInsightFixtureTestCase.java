@@ -108,13 +108,23 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
+    myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, getTempDirFixture());
 
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
 
     myModule = myFixture.getModule();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
+  }
+  
+  /**
+   *  Override to control temp file creation strategy. by default temp project files are created in-memory. 
+   *  
+   * @return TempDirTestFixture to be used for this test fixure 
+   */
+  @NotNull
+  protected TempDirTestFixture getTempDirFixture() {
+      return new LightTempDirTestFixtureImpl(true);
   }
 
   /**
