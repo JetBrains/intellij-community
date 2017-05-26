@@ -16,14 +16,15 @@
 package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.psi.codeStyle.CodeStyleConfigurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,7 +32,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-public class GroovyCodeStyleGenerationConfigurable implements Configurable {
+public class GroovyCodeStyleGenerationConfigurable implements CodeStyleConfigurable {
   private final CodeStyleSettings mySettings;
   private final MembersOrderList myMembersOrderList;
 
@@ -59,18 +60,28 @@ public class GroovyCodeStyleGenerationConfigurable implements Configurable {
 
   @Override
   public void apply() throws ConfigurationException {
-    myMembersOrderList.apply(mySettings);
+    apply(mySettings);
   }
 
   @Override
   public void reset() {
-    myMembersOrderList.reset(mySettings);
+    reset(mySettings);
   }
 
   @Nls
   @Override
   public String getDisplayName() {
     return ApplicationBundle.message("title.code.generation");
+  }
+
+  @Override
+  public void reset(@NotNull CodeStyleSettings settings) {
+    myMembersOrderList.reset(settings);
+  }
+
+  @Override
+  public void apply(@NotNull CodeStyleSettings settings) throws ConfigurationException {
+    myMembersOrderList.apply(settings);
   }
 
   public static class MembersOrderList extends JBList {
