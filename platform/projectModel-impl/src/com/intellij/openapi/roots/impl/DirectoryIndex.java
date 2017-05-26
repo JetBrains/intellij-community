@@ -27,6 +27,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
 
+/**
+ * This class is internal low-level API. Consider using {@link com.intellij.openapi.roots.ProjectFileIndex} instead of using this class directly.
+ */
 public abstract class DirectoryIndex {
   public static DirectoryIndex getInstance(Project project) {
     assert !project.isDefault() : "Must not call DirectoryIndex for default project";

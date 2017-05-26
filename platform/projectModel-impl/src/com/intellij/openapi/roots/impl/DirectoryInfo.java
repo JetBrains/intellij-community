@@ -46,7 +46,8 @@ public abstract class DirectoryInfo {
   public abstract boolean isExcluded();
 
   /**
-   * @return {@code true} if {@code file} located under this directory is excluded from the project.
+   * Returns {@code true} if {@code file} located under this directory is excluded from the project. If {@code file} is a directory it means
+   * that all of its content is recursively excluded from the project.
    */
   public abstract boolean isExcluded(@NotNull VirtualFile file);
 
