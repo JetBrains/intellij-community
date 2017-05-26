@@ -201,7 +201,7 @@ public class RepositoryHelper {
   }
 
   private static List<IdeaPluginDescriptor> loadPluginList(@NotNull File file) throws IOException {
-    return parsePluginList(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8_CHARSET));
+    return parsePluginList(new InputStreamReader(new BufferedInputStream(new FileInputStream(file)), CharsetToolkit.UTF8_CHARSET));
   }
 
   private static List<IdeaPluginDescriptor> parsePluginList(@NotNull Reader reader) throws IOException {
