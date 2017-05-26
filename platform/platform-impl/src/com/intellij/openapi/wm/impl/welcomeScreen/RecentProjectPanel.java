@@ -263,7 +263,7 @@ public class RecentProjectPanel extends JPanel {
 
           final Rectangle cellBounds = myList.getCellBounds(index, index);
           if (cellBounds != null && cellBounds.contains(point)) {
-            myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             if (rectInListCoordinatesContains(cellBounds, point)) {
               currentIcon = AllIcons.Welcome.Project.Remove_hover;
             } else {
@@ -273,7 +273,7 @@ public class RecentProjectPanel extends JPanel {
             myList.repaint(cellBounds);
           }
           else {
-            myList.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+            UIUtil.setCursor(myList, Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
             myHoverIndex = -1;
             myList.repaint();
           }
