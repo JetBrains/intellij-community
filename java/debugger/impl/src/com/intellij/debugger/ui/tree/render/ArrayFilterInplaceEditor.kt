@@ -23,6 +23,8 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.icons.AllIcons
+import com.intellij.psi.JavaCodeFragment
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.tree.TreeModelAdapter
@@ -44,20 +46,21 @@ import javax.swing.tree.TreeNode
 class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
   init {
     val javaValue = (myNode.parent as XValueNodeImpl).valueContainer
+    myExpressionEditor.setDocumentProcessor({ d ->
+                                              if (javaValue is JavaValue) {
+                                                var type: String? = null
+                                                val value = javaValue.descriptor.value
+                                                if (value is ArrayReference) {
+                                                  type = (value.type() as ArrayType).componentTypeName()
+                                                }
+                                                val pair = DebuggerUtilsImpl.getPsiClassAndType(type, project)
+                                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
+                                                if (psiFile is JavaCodeFragment) psiFile.thisType = pair.second
+                                              }
+                                              d
+                                            })
     val arrayRenderer = ArrayAction.getArrayRenderer(javaValue)
     myExpressionEditor.expression = if (arrayRenderer is ArrayRenderer.Filtered) arrayRenderer.expression else null
-    if (javaValue is JavaValue) {
-      var type: String? = null
-      val value = javaValue.descriptor.value
-      if (value is ArrayReference) {
-        type = (value.type() as ArrayType).componentTypeName()
-      }
-      val pair = DebuggerUtilsImpl.getPsiClassAndType(type, project)
-      if (pair.first != null) {
-        myExpressionEditor.setContext(pair.first)
-      }
-    }
-
   }
 
   override fun cancelEditing() {
