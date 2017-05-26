@@ -167,9 +167,11 @@ object GuiTestLocalLauncher {
     var urls = getUrlsMethod.invoke(classLoader) as List<URL>
     if (isWin()) {
       val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
-      val jarStream = JarInputStream(File(classPathUrl!!.path).inputStream())
-      val mf = jarStream.manifest
-      urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
+      if (classPathUrl != null) {
+        val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
+        val mf = jarStream.manifest
+        urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
+      }
     }
     return urls.map { Paths.get(it.toURI()).toFile() }
   }
