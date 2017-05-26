@@ -142,6 +142,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   public void apply() {
+    commitClonedSettings();
     commitProjectSettings();
     CodeStyleSchemesImpl.getSchemeManager().setSchemes(getIdeSchemes(), mySelectedScheme instanceof ProjectScheme ? null : mySelectedScheme, null);
   }
@@ -151,6 +152,14 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     projectSettingsManager.USE_PER_PROJECT_SETTINGS = isProjectScheme(mySelectedScheme);
     projectSettingsManager.PREFERRED_PROJECT_CODE_STYLE = mySelectedScheme instanceof ProjectScheme ? null : mySelectedScheme.getName();
     projectSettingsManager.PER_PROJECT_SETTINGS = myProjectScheme.getCodeStyleSettings();
+  }
+
+  private void commitClonedSettings() {
+    for (CodeStyleScheme scheme : mySettingsToClone.keySet()) {
+      if (!(scheme instanceof ProjectScheme)) {
+        scheme.getCodeStyleSettings().copyFrom(mySettingsToClone.get(scheme));
+      }
+    }
   }
 
   private @NotNull List<CodeStyleScheme> getIdeSchemes() {
@@ -287,5 +296,24 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
         myUiEventsEnabled = true;
       }
     }
+  }
+
+  public boolean containsModifiedCodeStyleSettings() {
+    for (CodeStyleScheme scheme : mySchemes) {
+      CodeStyleSettings originalSettings = scheme.getCodeStyleSettings();
+      CodeStyleSettings currentSettings = mySettingsToClone.get(scheme);
+      if (currentSettings != null && !originalSettings.equals(currentSettings)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void setUiEventsEnabled(boolean enabled) {
+    myUiEventsEnabled = enabled;
+  }
+
+  public boolean isUiEventsEnabled() {
+    return myUiEventsEnabled;
   }
 }

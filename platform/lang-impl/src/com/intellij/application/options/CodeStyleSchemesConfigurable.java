@@ -158,12 +158,12 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
     if (!myApplyCompleted) {
       try {
         super.apply();
+        myModel.apply();
 
         for (CodeStyleConfigurableWrapper panel : myPanels) {
           panel.applyPanel();
         }
 
-        myModel.apply();
         EditorFactory.getInstance().refreshAllEditors();
       }
       finally {
@@ -251,8 +251,9 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public boolean isModified() {
     if (myModel != null) {
-      if (myPanels != null && myPanels.size() > 0 && myPanels.get(0).isModified()) {
-        return true;
+      if (myModel.containsModifiedCodeStyleSettings()) return true;
+      for (Configurable panel : myPanels) {
+        if (panel.isModified()) return true;
       }
       boolean schemeListModified = myModel.isSchemeListModified();
       if (schemeListModified) {
