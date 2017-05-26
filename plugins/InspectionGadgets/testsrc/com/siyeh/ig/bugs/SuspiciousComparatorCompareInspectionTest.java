@@ -17,21 +17,24 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.siyeh.ig.LightInspectionTestCase;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ComparatorMethodParameterNotUsedInspectionTest extends LightInspectionTestCase {
+public class SuspiciousComparatorCompareInspectionTest extends LightInspectionTestCase {
 
   public void testComparatorMethodParameterNotUsed() {
+    doTest();
+  }
+
+  public void testComparatorIsNotReflexive() {
     doTest();
   }
 
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ComparatorMethodParameterNotUsedInspection();
+    return new SuspiciousComparatorCompareInspection();
   }
 }
