@@ -20,6 +20,7 @@ import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -144,6 +145,13 @@ class GitRewordAction : GitCommitEditingAction() {
       val editor = CommitMessage.createCommitTextEditor(project)
       editor.text = commit.fullMessage
       editor.setCaretPosition(0)
+      editor.addSettingsProvider { editor ->
+        // display at least several rows for one-line messages
+        val MIN_ROWS = 3
+        if ((editor as EditorImpl).visibleLineCount < MIN_ROWS) {
+          verticalStretch = 1.5F
+        }
+      }
       return editor
     }
   }
