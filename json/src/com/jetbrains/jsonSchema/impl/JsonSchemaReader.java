@@ -46,13 +46,14 @@ public class JsonSchemaReader {
   public static final NotificationGroup ERRORS_NOTIFICATION = NotificationGroup.logOnlyGroup("JSON Schema");
 
   private final Map<String, JsonSchemaObject> myIds = new HashMap<>();
-  // can not be static: some of the consumers put inner schemas into the analyze queue
-  private final Map<String, PairConsumer<JsonElement, JsonSchemaObject>> myMap;
   private final ArrayDeque<JsonSchemaObject> myQueue;
 
-  public JsonSchemaReader() {
-    myMap = new HashMap<>();
+  private static final Map<String, MyReader> READERS_MAP = new HashMap<>();
+  static {
     fillMap();
+  }
+
+  public JsonSchemaReader() {
     myQueue = new ArrayDeque<>();
   }
 
@@ -108,8 +109,8 @@ public class JsonSchemaReader {
       final List<JsonProperty> list = jsonObject.getPropertyList();
       for (JsonProperty property : list) {
         if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
-        final PairConsumer<JsonElement, JsonSchemaObject> consumer = myMap.get(property.getName());
-        if (consumer != null) consumer.consume(property.getValue(), currentSchema);
+        final MyReader reader = READERS_MAP.get(property.getName());
+        if (reader != null) reader.read(property.getValue(), currentSchema, myQueue);
         else readSingleDefinition(property.getName(), property.getValue(), currentSchema);
       }
 
@@ -141,63 +142,68 @@ public class JsonSchemaReader {
     }
   }
 
-  private void fillMap() {
-    myMap.put("id", (element, object) -> {if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));});
-    myMap.put("$schema", (element, object) -> {if (element instanceof JsonStringLiteral) object.setSchema(StringUtil.unquoteString(element.getText()));});
-    myMap.put("description", (element, object) -> {if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));});
-    myMap.put("title", (element, object) -> {if (element instanceof JsonStringLiteral) object.setTitle(StringUtil.unquoteString(element.getText()));});
-    myMap.put("$ref", (element, object) -> {if (element instanceof JsonStringLiteral) object.setRef(StringUtil.unquoteString(element.getText()));});
-    myMap.put("default", createDefault());
-    myMap.put("format", (element, object) -> {if (element instanceof JsonStringLiteral) object.setFormat(StringUtil.unquoteString(element.getText()));});
-    myMap.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
-    myMap.put(JsonSchemaObject.PROPERTIES, createPropertiesConsumer());
-    myMap.put("multipleOf", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMultipleOf(((JsonNumberLiteral)element).getValue());});
-    myMap.put("maximum", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMaximum(((JsonNumberLiteral)element).getValue());});
-    myMap.put("minimum", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMinimum(((JsonNumberLiteral)element).getValue());});
-    myMap.put("exclusiveMaximum", (element, object) -> {if (element instanceof JsonBooleanLiteral) object.setExclusiveMaximum(((JsonBooleanLiteral)element).getValue());});
-    myMap.put("exclusiveMinimum", (element, object) -> {if (element instanceof JsonBooleanLiteral) object.setExclusiveMinimum(((JsonBooleanLiteral)element).getValue());});
-    myMap.put("maxLength", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMaxLength((int)((JsonNumberLiteral)element).getValue());});
-    myMap.put("minLength", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMinLength((int)((JsonNumberLiteral)element).getValue());});
-    myMap.put("pattern", (element, object) -> {if (element instanceof JsonStringLiteral) object.setPattern(StringUtil.unquoteString(element.getText()));});
-    myMap.put("additionalItems", createAdditionalItems());
-    myMap.put("items", createItems());
-    myMap.put("maxItems", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMaxItems((int)((JsonNumberLiteral)element).getValue());});
-    myMap.put("minItems", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMinItems((int)((JsonNumberLiteral)element).getValue());});
-    myMap.put("uniqueItems", (element, object) -> {if (element instanceof JsonBooleanLiteral) object.setUniqueItems(((JsonBooleanLiteral)element).getValue());});
-    myMap.put("maxProperties", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMaxProperties((int)((JsonNumberLiteral)element).getValue());});
-    myMap.put("minProperties", (element, object) -> {if (element instanceof JsonNumberLiteral) object.setMinProperties((int)((JsonNumberLiteral)element).getValue());});
-    myMap.put("required", createRequired());
-    myMap.put("additionalProperties", createAdditionalProperties());
-    myMap.put("patternProperties", createPatternProperties());
-    myMap.put("dependencies", createDependencies());
-    myMap.put("enum", createEnum());
-    myMap.put("type", createType());
-    myMap.put("allOf", createContainer((object, members) -> object.setAllOf(members)));
-    myMap.put("anyOf", createContainer((object, members) -> object.setAnyOf(members)));
-    myMap.put("oneOf", createContainer((object, members) -> object.setOneOf(members)));
-    myMap.put("not", createNot());
-    myMap.put("instanceof", ((element, object) -> object.shouldValidateAgainstJSType()));
-    myMap.put("typeof", ((element, object) -> object.shouldValidateAgainstJSType()));
+  private static void fillMap() {
+    READERS_MAP
+      .put("id", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("$schema", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setSchema(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("description", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP
+      .put("title", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setTitle(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP
+      .put("$ref", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setRef(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("default", createDefault());
+    READERS_MAP.put("format", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setFormat(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put(JsonSchemaObject.DEFINITIONS, createDefinitionsConsumer());
+    READERS_MAP.put(JsonSchemaObject.PROPERTIES, createPropertiesConsumer());
+    READERS_MAP.put("multipleOf", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMultipleOf(((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("maximum", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaximum(((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("minimum", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinimum(((JsonNumberLiteral)element).getValue());});
+    READERS_MAP
+      .put("exclusiveMaximum", (element, object, queue) -> {if (element instanceof JsonBooleanLiteral) object.setExclusiveMaximum(((JsonBooleanLiteral)element).getValue());});
+    READERS_MAP
+      .put("exclusiveMinimum", (element, object, queue) -> {if (element instanceof JsonBooleanLiteral) object.setExclusiveMinimum(((JsonBooleanLiteral)element).getValue());});
+    READERS_MAP.put("maxLength", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaxLength((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("minLength", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinLength((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("pattern", (element, object, queue) -> {if (element instanceof JsonStringLiteral) object.setPattern(StringUtil.unquoteString(element.getText()));});
+    READERS_MAP.put("additionalItems", createAdditionalItems());
+    READERS_MAP.put("items", createItems());
+    READERS_MAP.put("maxItems", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaxItems((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("minItems", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinItems((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("uniqueItems", (element, object, queue) -> {if (element instanceof JsonBooleanLiteral) object.setUniqueItems(((JsonBooleanLiteral)element).getValue());});
+    READERS_MAP.put("maxProperties", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMaxProperties((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("minProperties", (element, object, queue) -> {if (element instanceof JsonNumberLiteral) object.setMinProperties((int)((JsonNumberLiteral)element).getValue());});
+    READERS_MAP.put("required", createRequired());
+    READERS_MAP.put("additionalProperties", createAdditionalProperties());
+    READERS_MAP.put("patternProperties", createPatternProperties());
+    READERS_MAP.put("dependencies", createDependencies());
+    READERS_MAP.put("enum", createEnum());
+    READERS_MAP.put("type", createType());
+    READERS_MAP.put("allOf", createContainer((object, members) -> object.setAllOf(members)));
+    READERS_MAP.put("anyOf", createContainer((object, members) -> object.setAnyOf(members)));
+    READERS_MAP.put("oneOf", createContainer((object, members) -> object.setOneOf(members)));
+    READERS_MAP.put("not", createNot());
+    READERS_MAP.put("instanceof", ((element, object, queue) -> object.shouldValidateAgainstJSType()));
+    READERS_MAP.put("typeof", ((element, object, queue) -> object.shouldValidateAgainstJSType()));
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createNot() {
-    return (element, object) -> {
+  private static MyReader createNot() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
         final JsonSchemaObject not = new JsonSchemaObject((JsonObject)element);
-        myQueue.add(not);
+        queue.add(not);
         object.setNot(not);
       }
     };
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createContainer(@NotNull final PairConsumer<JsonSchemaObject, List<JsonSchemaObject>> delegate) {
-    return (element, object) -> {
+  private static MyReader createContainer(@NotNull final PairConsumer<JsonSchemaObject, List<JsonSchemaObject>> delegate) {
+    return (element, object, queue) -> {
       if (element instanceof JsonArray) {
         final List<JsonValue> list = ((JsonArray)element).getValueList();
         final List<JsonSchemaObject> members = list.stream().filter(el -> el instanceof JsonObject)
           .map(el -> {
             final JsonSchemaObject child = new JsonSchemaObject((JsonObject)el);
-            myQueue.add(child);
+            queue.add(child);
             return child;
           }).collect(Collectors.toList());
         delegate.consume(object, members);
@@ -205,8 +211,8 @@ public class JsonSchemaReader {
     };
   }
 
-  private static PairConsumer<JsonElement, JsonSchemaObject> createType() {
-    return (element, object) -> {
+  private static MyReader createType() {
+    return (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) {
         final JsonSchemaType type = parseType(StringUtil.unquoteString(element.getText()));
         if (type != null) object.setType(type);
@@ -229,8 +235,8 @@ public class JsonSchemaReader {
   }
 
 
-  private static PairConsumer<JsonElement, JsonSchemaObject> createEnum() {
-    return (element, object) -> {
+  private static MyReader createEnum() {
+    return (element, object, queue) -> {
       if (element instanceof JsonArray) {
         final List<Object> objects = new ArrayList<>();
         final List<JsonValue> list = ((JsonArray)element).getValueList();
@@ -261,8 +267,8 @@ public class JsonSchemaReader {
     return numberValue;
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createDependencies() {
-    return (element, object) -> {
+  private static MyReader createDependencies() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
         final HashMap<String, List<String>> propertyDependencies = new HashMap<>();
         final HashMap<String, JsonSchemaObject> schemaDependencies = new HashMap<>();
@@ -277,7 +283,7 @@ public class JsonSchemaReader {
             if (!dependencies.isEmpty()) propertyDependencies.put(property.getName(), dependencies);
           } else if (property.getValue() instanceof JsonObject) {
             final JsonSchemaObject child = new JsonSchemaObject((JsonObject)property.getValue());
-            myQueue.add(child);
+            queue.add(child);
             schemaDependencies.put(property.getName(), child);
           }
         }
@@ -293,28 +299,28 @@ public class JsonSchemaReader {
     return el -> el instanceof JsonStringLiteral && !StringUtil.isEmptyOrSpaces(el.getText());
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createPatternProperties() {
-    return (element, object) -> {
+  private static MyReader createPatternProperties() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
-        object.setPatternProperties(readInnerObject((JsonObject)element));
+        object.setPatternProperties(readInnerObject((JsonObject)element, queue));
       }
     };
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createAdditionalProperties() {
-    return (element, object) -> {
+  private static MyReader createAdditionalProperties() {
+    return (element, object, queue) -> {
       if (element instanceof JsonBooleanLiteral) {
         object.setAdditionalPropertiesAllowed(((JsonBooleanLiteral)element).getValue());
       } else if (element instanceof JsonObject) {
         final JsonSchemaObject schema = new JsonSchemaObject((JsonObject)element);
-        myQueue.add(schema);
+        queue.add(schema);
         object.setAdditionalPropertiesSchema(schema);
       }
     };
   }
 
-  private static PairConsumer<JsonElement, JsonSchemaObject> createRequired() {
-    return (element, object) -> {
+  private static MyReader createRequired() {
+    return (element, object, queue) -> {
       if (element instanceof JsonArray) {
         object.setRequired(((JsonArray)element).getValueList().stream()
                              .filter(notEmptyString())
@@ -323,11 +329,11 @@ public class JsonSchemaReader {
     };
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createItems() {
-    return (element, object) -> {
+  private static MyReader createItems() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
         final JsonSchemaObject schema = new JsonSchemaObject((JsonObject)element);
-        myQueue.add(schema);
+        queue.add(schema);
         object.setItemsSchema(schema);
       } else if (element instanceof JsonArray) {
         final List<JsonSchemaObject> list = new ArrayList<>();
@@ -335,7 +341,7 @@ public class JsonSchemaReader {
         for (JsonValue value : values) {
           if (value instanceof JsonObject) {
             final JsonSchemaObject child = new JsonSchemaObject((JsonObject)value);
-            myQueue.add(child);
+            queue.add(child);
             list.add(child);
           }
         }
@@ -344,54 +350,55 @@ public class JsonSchemaReader {
     };
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createAdditionalItems() {
-    return (element, object) -> {
+  private static MyReader createAdditionalItems() {
+    return (element, object, queue) -> {
       if (element instanceof JsonBooleanLiteral) {
         object.setAdditionalItemsAllowed(((JsonBooleanLiteral)element).getValue());
       } else if (element instanceof JsonObject) {
         final JsonSchemaObject additionalItemsSchema = new JsonSchemaObject((JsonObject)element);
-        myQueue.add(additionalItemsSchema);
+        queue.add(additionalItemsSchema);
         object.setAdditionalItemsSchema(additionalItemsSchema);
       }
     };
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createPropertiesConsumer() {
-    return (element, object) -> {
+  private static MyReader createPropertiesConsumer() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
-        object.setProperties(readInnerObject((JsonObject)element));
+        object.setProperties(readInnerObject((JsonObject)element, queue));
       }
     };
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createDefinitionsConsumer() {
-    return (element, object) -> {
+  private static MyReader createDefinitionsConsumer() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
         final JsonObject definitions = (JsonObject)element;
-        object.setDefinitionsMap(readInnerObject(definitions));
+        object.setDefinitionsMap(readInnerObject(definitions, queue));
         object.setDefinitions(definitions);
       }
     };
   }
 
   @NotNull
-  private Map<String, JsonSchemaObject> readInnerObject(JsonObject element) {
+  private static Map<String, JsonSchemaObject> readInnerObject(@NotNull JsonObject element,
+                                                               @NotNull Collection<JsonSchemaObject> queue) {
     final List<JsonProperty> properties = element.getPropertyList();
     final Map<String, JsonSchemaObject> map = new HashMap<>();
     for (JsonProperty property : properties) {
       if (StringUtil.isEmptyOrSpaces(property.getName()) || !(property.getValue() instanceof JsonObject)) continue;
       final JsonSchemaObject child = new JsonSchemaObject((JsonObject)property.getValue());
-      myQueue.add(child);
+      queue.add(child);
       map.put(property.getName(), child);
     }
     return map;
   }
 
-  private PairConsumer<JsonElement, JsonSchemaObject> createDefault() {
-    return (element, object) -> {
+  private static MyReader createDefault() {
+    return (element, object, queue) -> {
       if (element instanceof JsonObject) {
         final JsonSchemaObject schemaObject = new JsonSchemaObject((JsonObject)element);
-        myQueue.add(schemaObject);
+        queue.add(schemaObject);
         object.setDefault(schemaObject);
       } else if (element instanceof JsonStringLiteral) {
         object.setDefault(StringUtil.unquoteString(((JsonStringLiteral)element).getValue()));
@@ -401,5 +408,9 @@ public class JsonSchemaReader {
         object.setDefault(((JsonBooleanLiteral)element).getValue());
       }
     };
+  }
+  
+  private interface MyReader {
+    void read(@NotNull JsonElement source, @NotNull JsonSchemaObject target, @NotNull Collection<JsonSchemaObject> processingQueue);
   }
 }
