@@ -60,8 +60,8 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     Element child = parentElement.getChild(myTagName);
     if (child != null) {
       DefaultJDOMExternalizer.readExternal(this, child);
-      importLegacySettings();
     }
+    importLegacySettings();
   }
 
   public void writeExternal(Element parentElement, @NotNull final CustomCodeStyleSettings parentSettings) throws WriteExternalException {

@@ -417,65 +417,6 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 // endregion
 
-// region Legacy(!) XML formatting options
-
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_WHITESPACES;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_ATTRIBUTE_WRAP = WRAP_AS_NEEDED;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_TEXT_WRAP = WRAP_AS_NEEDED;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_LINE_BREAKS = true;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_LINE_BREAKS_IN_TEXT = true;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_KEEP_BLANK_LINES = 2;
-
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_ALIGN_ATTRIBUTES = true;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_ALIGN_TEXT;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_SPACE_AROUND_EQUALITY_IN_ATTRIBUTE;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_SPACE_AFTER_TAG_NAME;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_SPACE_INSIDE_EMPTY_TAG;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public boolean XML_KEEP_WHITE_SPACES_INSIDE_CDATA;
-  /**
-   * @deprecated Use XmlCodeStyleSettings.
-   */
-  public int XML_WHITE_SPACE_AROUND_CDATA;
-
-// endregion
-
-
 // region HTML formatting options (legacy)
 
   /**
