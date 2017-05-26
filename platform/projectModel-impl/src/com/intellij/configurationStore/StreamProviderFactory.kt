@@ -35,9 +35,7 @@ interface StreamProviderFactory {
   fun createProvider(componentManager: ComponentManager, storageManager: StateStorageManager): StreamProvider? = null
 
   /**
-   * For now called only for Module.
    * `storages` are preprocessed by component store - not raw from state spec.
-   *
    * @return null if not applicable
    */
   fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? = null

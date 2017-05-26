@@ -61,18 +61,18 @@ private fun getSaxBuilder(): SAXBuilder {
 
 @JvmOverloads
 @Throws(IOException::class)
-fun Parent.write(file: Path, lineSeparator: String = "\n") {
-  write(file.outputStream(), lineSeparator)
+fun Parent.write(file: Path, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
+  write(file.outputStream(), lineSeparator, filter)
 }
 
 @JvmOverloads
-fun Parent.write(output: OutputStream, lineSeparator: String = "\n") {
+fun Parent.write(output: OutputStream, lineSeparator: String = "\n", filter: JDOMUtil.ElementOutputFilter? = null) {
   output.bufferedWriter().use { writer ->
     if (this is Document) {
       JDOMUtil.writeDocument(this, writer, lineSeparator)
     }
     else {
-      JDOMUtil.writeElement(this as Element, writer, lineSeparator)
+      JDOMUtil.writeElement(this as Element, writer, JDOMUtil.createOutputter(lineSeparator, filter))
     }
   }
 }

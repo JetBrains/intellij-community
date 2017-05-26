@@ -15,17 +15,23 @@
  */
 package com.intellij.configurationStore
 
-import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.StateStorageOperation
-import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
+import com.intellij.openapi.components.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ModuleEx
 import com.intellij.openapi.module.impl.ModuleManagerImpl
 import com.intellij.openapi.module.impl.getModuleNameByFilePath
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.LineSeparator
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.loadElement
 import org.jdom.Element
+import java.io.FileNotFoundException
+import java.nio.ByteBuffer
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import java.nio.file.Paths
 
 internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor, module: Module) : StateStorageManagerImpl("module", macroSubstitutor, module) {
   override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation) = StoragePathMacros.MODULE_FILE
@@ -72,5 +78,43 @@ internal class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubs
 
     // need be last for compat reasons
     element.setAttribute(ProjectStateStorageManager.VERSION_OPTION, "4")
+  }
+
+  override fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
+    = ModuleFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
+
+  private class ModuleFileStorage(storageManager: StateStorageManagerImpl,
+                                  file: Path,
+                                  fileSpec: String,
+                                  rootElementName: String?,
+                                  roamingType: RoamingType,
+                                  pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                                  provider: StreamProvider? = null) : MyFileStorage(storageManager, file, fileSpec, rootElementName, roamingType, pathMacroManager, provider) {
+    // use VFS to load module file because it is refreshed and loaded into VFS in any case
+    override fun loadLocalData(): Element? {
+      blockSavingTheContent = false
+      val virtualFile = virtualFile
+      if (virtualFile == null || !virtualFile.exists()) {
+        // only on first load
+        if (storageDataRef.get() == null) {
+          throw FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", file.systemIndependentPath))
+        }
+        else {
+          return null
+        }
+      }
+
+      if (virtualFile.length == 0L) {
+        processReadException(null)
+      }
+      else {
+        runAndHandleExceptions {
+          val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile.contentsToByteArray()))
+          lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+          return loadElement(charBuffer)
+        }
+      }
+      return null
+    }
   }
 }

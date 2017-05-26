@@ -24,6 +24,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.server.impl.BuildProcessClasspathManager;
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.configurationStore.StreamProviderKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
@@ -1139,7 +1140,7 @@ public class BuildManager implements Disposable {
       cmdLine.addParameter("-Dpreload.config.path=" + FileUtil.toCanonicalPath(PathManager.getOptionsPath()));
     }
 
-    if (ProjectUtil.isExternalStorageEnabled()) {
+    if (StreamProviderKt.isExternalStorageEnabled()) {
       cmdLine.addParameter("-Dexternal.project.config=" + ProjectUtil.getExternalConfigurationDir(project));
     }
 

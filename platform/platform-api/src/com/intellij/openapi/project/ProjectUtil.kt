@@ -31,13 +31,11 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.exists
 import com.intellij.util.text.trimMiddle
-import org.jetbrains.annotations.TestOnly
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -168,12 +166,6 @@ fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false
 fun Project.getExternalConfigurationDir(): Path {
   return getProjectCachePath("external_build_system")
 }
-
-@set:TestOnly
-var IS_EXTERNAL_STORAGE_ENABLED = false
-
-val isExternalStorageEnabled: Boolean
-  get() = Registry.`is`("store.imported.project.elements.separately", false) || IS_EXTERNAL_STORAGE_ENABLED
 
 /**
  * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
