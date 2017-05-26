@@ -141,6 +141,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEqualsImpliesNotNull() throws Throwable { doTestReportConstantReferences(); }
   public void testEffectivelyUnqualified() throws Throwable { doTest(); }
 
+  public void testQualifierEquality() throws Throwable { doTest(); }
+
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;

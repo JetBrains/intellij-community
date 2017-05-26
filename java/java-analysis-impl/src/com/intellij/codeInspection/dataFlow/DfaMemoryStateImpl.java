@@ -23,10 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -303,6 +300,27 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private Integer getOrCreateEqClassIndex(@NotNull DfaValue dfaValue) {
     int i = getEqClassIndex(dfaValue);
     if (i != -1) return i;
+    if (dfaValue instanceof DfaVariableValue) {
+      DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
+      DfaVariableValue qualifier = variableValue.getQualifier();
+      PsiModifierListOwner variable = variableValue.getPsiVariable();
+      if (qualifier != null) {
+        Integer index = getOrCreateEqClassIndex(qualifier);
+        if (index != null) {
+          for (DfaValue eqQualifier : myEqClasses.get(index).getMemberValues()) {
+            if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
+              DfaVariableValue eqValue = getFactory().getVarFactory()
+                .createVariableValue(variable, variableValue.getVariableType(), variableValue.isNegated(), (DfaVariableValue)eqQualifier);
+              i = getEqClassIndex(eqValue);
+              if (i != -1) {
+                myEqClasses.get(i).add(dfaValue.getID());
+                return i;
+              }
+            }
+          }
+        }
+      }
+    }
     if (!canBeInRelation(dfaValue) ||
         !canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
       return null;
@@ -935,6 +953,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else { // Not Equals
       if (c1Index.equals(c2Index) || areCompatibleConstants(c1Index, c2Index)) return false;
+      //if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue &&
+      //    equalsByQualifier((DfaVariableValue)dfaLeft, (DfaVariableValue)dfaRight)) {
+      //  return false;
+      //}
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
       makeClassesDistinct(c1Index, c2Index);
       myCachedDistinctClassPairs = null;
@@ -942,6 +964,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     return true;
+  }
+
+  private boolean equalsByQualifier(@NotNull DfaVariableValue dfaLeft, @NotNull DfaVariableValue dfaRight) {
+    if (dfaLeft.getPsiVariable() != dfaRight.getPsiVariable()) return false;
+    DfaVariableValue leftQualifier = dfaLeft.getQualifier();
+    DfaVariableValue rightQualifier = dfaRight.getQualifier();
+    if (leftQualifier == null || rightQualifier == null) return false;
+    Integer c1QualifierIndex = getOrCreateEqClassIndex(leftQualifier);
+    Integer c2QualifierIndex = getOrCreateEqClassIndex(rightQualifier);
+    // Equal qualifiers == equal values
+    if (c1QualifierIndex != null && c1QualifierIndex.equals(c2QualifierIndex)) return true;
+    return equalsByQualifier(leftQualifier, rightQualifier);
   }
 
   private static boolean isPrimitive(DfaValue value) {
