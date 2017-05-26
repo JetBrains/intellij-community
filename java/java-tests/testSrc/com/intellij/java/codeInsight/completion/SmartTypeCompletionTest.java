@@ -1268,4 +1268,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.type('\t');
     checkResultByTestName();
   }
+
+  public void testFreeGenericsAfterClassLiteral() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
+  }
+
 }

@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -329,6 +330,8 @@ public class JavaCompletionSorting {
         }
       }
 
+      if (returnsUnboundType(item)) return MyResult.normal;
+
       PsiType itemType = JavaCompletionUtil.getLookupElementType(item);
       if (isExactlyExpected(item, itemType)) {
         return AbstractExpectedTypeSkipper.skips(item, myLocation) ? MyResult.expectedNoSelect : MyResult.exactlyExpected;
@@ -361,16 +364,25 @@ public class JavaCompletionSorting {
       if (JavaCompletionUtil.SUPER_METHOD_PARAMETERS.get(item) != null) {
         return true;
       }
-      if (itemType == null || itemType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || hasUnboundTypeArguments(item)) {
+      if (itemType == null || itemType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
         return false;
       }
 
       return ContainerUtil.exists(myExpectedTypes, info -> box(info.getType().getDeepComponentType()).equals(box(itemType)));
     }
 
-    private static boolean hasUnboundTypeArguments(@NotNull LookupElement item) {
+    private boolean returnsUnboundType(@NotNull LookupElement item) {
       JavaMethodCallElement call = item.as(JavaMethodCallElement.CLASS_CONDITION_KEY);
-      return call != null && !call.getInferenceSubstitutor().equals(PsiSubstitutor.EMPTY);
+      if (call != null && !call.getInferenceSubstitutor().equals(PsiSubstitutor.EMPTY)) {
+        PsiType callType = TypeConversionUtil.erasure(call.getSubstitutor().substitute(call.getObject().getReturnType()));
+        return callType == null || Arrays.stream(myExpectedTypes).noneMatch(i -> canBeExpected(callType, i));
+      }
+      return false;
+    }
+
+    private static boolean canBeExpected(PsiType callType, ExpectedTypeInfo info) {
+      PsiType expectedType = TypeConversionUtil.erasure(info.getType());
+      return expectedType != null && TypeConversionUtil.isAssignable(expectedType, callType);
     }
 
     private PsiType box(PsiType expectedType) {

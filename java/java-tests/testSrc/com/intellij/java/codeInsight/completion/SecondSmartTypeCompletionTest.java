@@ -211,7 +211,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testGlobalFactoryMethods() {
     configure();
-    assertStringItems("Constants.SUBSTRING", "createExpected", "createSubGeneric", "createSubRaw", "createSubString");
+    assertStringItems("createExpected", "Constants.SUBSTRING", "createSubGeneric", "createSubRaw", "createSubString");
   }
 
   public void testEmptyMapPresentation() {
