@@ -237,8 +237,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private void applySettingsToModel() {
     try {
-      apply(mySettings);
-      if (myModel != null) {
+      if (myModel != null && myModel.isUiEventsEnabled()) {
+        apply(mySettings);
         myModel.fireAfterCurrentSettingsChanged();
       }
     }
