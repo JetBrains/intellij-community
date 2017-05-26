@@ -72,6 +72,7 @@ class GitRewordOperation(private val repository: GitRepository,
       val notification = STANDARD_NOTIFICATION.createNotification("Reworded Successfully", "", NotificationType.INFORMATION, null)
       notification.addAction(object : NotificationAction("Undo") {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          notification.expire()
           val specForUndo = spec.cloneWithNewStatuses(mapOf(repository to GitRebaseStatus(SUCCESS, emptyList())))
           undo(project, specForUndo)
         }
