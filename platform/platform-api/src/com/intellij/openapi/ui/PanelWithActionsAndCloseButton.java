@@ -110,7 +110,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
         Content content = myContentManager.getContent(PanelWithActionsAndCloseButton.this);
         if (content != null) {
           ContentsUtil.closeContentTab(myContentManager, content);
-          if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
+          if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
             final TabbedContent tabbedContent = (TabbedContent)content;
             final JComponent component = content.getComponent();
             tabbedContent.removeContent(component);

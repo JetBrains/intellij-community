@@ -354,7 +354,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     group.add(myPreviousTabAction);
     group.add(myShowContent);
 
-    if (content instanceof TabbedContent && ((TabbedContent)content).getTabs().size() > 1) {
+    if (content instanceof TabbedContent && ((TabbedContent)content).hasMultipleTabs()) {
       group.addAction(createSplitTabsAction((TabbedContent)content));
     }
 

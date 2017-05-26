@@ -49,6 +49,10 @@ public interface TabbedContent extends Content {
 
   List<Pair<String, JComponent>> getTabs();
 
+  default boolean hasMultipleTabs() {
+    return getTabs().size() > 1;
+  }
+
   String getTitlePrefix();
 
   void setTitlePrefix(String titlePrefix);

@@ -58,7 +58,7 @@ public class ContentsUtil {
   public static void closeContentTab(@NotNull ContentManager contentManager, @NotNull Content content) {
     if (content instanceof TabbedContent) {
       TabbedContent tabbedContent = (TabbedContent)content;
-      if (tabbedContent.getTabs().size() > 1) {
+      if (tabbedContent.hasMultipleTabs()) {
         JComponent component = tabbedContent.getComponent();
         tabbedContent.removeContent(component);
         contentManager.setSelectedContent(tabbedContent, true, true);
