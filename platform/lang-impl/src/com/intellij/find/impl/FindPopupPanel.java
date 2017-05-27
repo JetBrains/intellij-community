@@ -16,6 +16,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.icons.AllIcons;
@@ -29,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -310,6 +312,13 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         public void setEnabled(boolean enabled) {
           super.setEnabled(enabled);
           setBackground(enabled ? JBColor.background() : UIUtil.getComboBoxDisabledBackground());
+        }
+
+        @Override
+        protected EditorEx createEditor() {
+          EditorEx editor = super.createEditor();
+          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP_NO_ADS, Boolean.TRUE);
+          return editor;
         }
       };
     myFileMaskField.setPreferredWidth(JBUI.scale(100));

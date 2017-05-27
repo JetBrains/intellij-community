@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -682,6 +683,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
 
     myAdComponent.showRandomText();
+    if (Boolean.TRUE.equals(myEditor.getUserData(AutoPopupController.ALWAYS_AUTO_POPUP_NO_ADS))) {
+      myAdComponent.clearAdvertisements();
+    }
 
     myUi = new LookupUi(this, myAdComponent, myList, myProject);
     myUi.setCalculating(myCalculating);
