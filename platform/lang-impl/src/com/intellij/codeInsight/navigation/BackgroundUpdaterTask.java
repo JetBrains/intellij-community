@@ -143,6 +143,7 @@ public abstract class BackgroundUpdaterTask<T> extends Task.Backgroundable {
 
   @Override
   public void onSuccess() {
+    myFinished = true;
     refreshModelImmediately();
     paintBusy(false);
   }
