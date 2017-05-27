@@ -169,14 +169,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
         commandLineOptions.add("-D" + each.getKey() + "=" + each.getValue());
       }
 
-      if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DEBUG) {
-        commandLineOptions.add("-X");
-        commandLineOptions.add("-e");
-      }
-      else if (settings.getLoggingLevel() == MavenServerConsole.LEVEL_DISABLED) {
-        commandLineOptions.add("-q");
-      }
-
       String mavenEmbedderCliOptions = System.getProperty(MavenServerEmbedder.MAVEN_EMBEDDER_CLI_ADDITIONAL_ARGS);
       if (mavenEmbedderCliOptions != null) {
         commandLineOptions.addAll(StringUtil.splitHonorQuotes(mavenEmbedderCliOptions, ' '));

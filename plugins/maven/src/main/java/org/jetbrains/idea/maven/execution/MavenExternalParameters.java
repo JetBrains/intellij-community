@@ -527,6 +527,11 @@ public class MavenExternalParameters {
     if (coreSettings.getOutputLevel() == MavenExecutionOptions.LoggingLevel.DEBUG) {
       cmdList.add("--debug");
     }
+    if (coreSettings.getOutputLevel() == MavenExecutionOptions.LoggingLevel.WARN) {
+      cmdList.add("--quiet");
+    }
+
+
     if (coreSettings.isNonRecursive()) {
       cmdList.add("--non-recursive");
     }
