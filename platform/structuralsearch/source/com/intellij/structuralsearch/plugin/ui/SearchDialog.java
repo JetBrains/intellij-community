@@ -231,10 +231,9 @@ public class SearchDialog extends DialogWrapper {
         return ((FileType)element).getName();
       }
     };
-    contexts = new ComboBox<>();
-    contexts.setPreferredSize(new Dimension(60, -1));
+    contexts = new ComboBox<>(60);
 
-    dialects = new ComboBox<>();
+    dialects = new ComboBox<>(120);
     dialects.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
@@ -253,7 +252,6 @@ public class SearchDialog extends DialogWrapper {
       }
     });
     new ComboboxSpeedSearch(dialects);
-    dialects.setPreferredSize(new Dimension(120, -1));
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
