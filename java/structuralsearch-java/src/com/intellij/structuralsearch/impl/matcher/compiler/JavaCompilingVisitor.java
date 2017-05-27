@@ -439,7 +439,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
     if (compileContext.getPattern().isTypedVar(refname)) {
       SubstitutionHandler handler = (SubstitutionHandler)compileContext.getPattern().getHandler(refname);
-      RegExpPredicate predicate = RegExpPredicate.findRegExpPredicate(handler);
+      RegExpPredicate predicate = MatchingHandler.getSimpleRegExpPredicate(handler);
       if (!GlobalCompilingVisitor.isSuitablePredicate(predicate, handler)) {
         return;
       }
