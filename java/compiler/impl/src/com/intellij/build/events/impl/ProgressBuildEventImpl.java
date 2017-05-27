@@ -28,13 +28,14 @@ public class ProgressBuildEventImpl extends AbstractBuildEvent implements Progre
   private final int myProgress;
   private final String myUnit;
 
-  public ProgressBuildEventImpl(@Nullable Object parentId,
+  public ProgressBuildEventImpl(@NotNull Object eventId,
+                                @Nullable Object parentId,
                                 int eventTime,
                                 @NotNull String message,
                                 int total,
                                 int progress,
                                 @NotNull String unit) {
-    super(parentId, eventTime, message);
+    super(eventId, parentId, eventTime, message);
     myTotal = total;
     myProgress = progress;
     myUnit = unit;

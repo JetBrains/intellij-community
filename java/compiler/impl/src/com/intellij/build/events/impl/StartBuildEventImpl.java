@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StartBuildEventImpl extends AbstractBuildEvent implements StartBuildEvent {
 
-  public StartBuildEventImpl(@Nullable Object parentId, int eventTime, @NotNull String message) {
-    super(parentId, eventTime, message);
+  public StartBuildEventImpl(@NotNull Object eventId, @Nullable Object parentId, int eventTime, @NotNull String message) {
+    super(eventId, parentId, eventTime, message);
   }
 }

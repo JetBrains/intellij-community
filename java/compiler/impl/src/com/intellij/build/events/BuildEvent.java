@@ -25,6 +25,13 @@ import org.jetbrains.annotations.Nullable;
 @ApiStatus.Experimental
 public interface BuildEvent {
   /**
+   * Returns an id that uniquely identifies the event.
+   *
+   * @return The event id.
+   */
+  Object getId();
+
+  /**
    * Returns the parent event id, if any.
    *
    * @return The parent event id.

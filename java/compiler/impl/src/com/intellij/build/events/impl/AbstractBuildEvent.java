@@ -24,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractBuildEvent implements BuildEvent {
 
+  @NotNull
+  private final Object myEventId;
   @Nullable
   private final Object myParentId;
   private final int myEventTime;
@@ -32,10 +34,16 @@ public abstract class AbstractBuildEvent implements BuildEvent {
   @Nullable
   private String myDescription;
 
-  public AbstractBuildEvent(@Nullable Object parentId, int eventTime, @NotNull String message) {
+  public AbstractBuildEvent(@NotNull Object eventId, @Nullable Object parentId, int eventTime, @NotNull String message) {
+    myEventId = eventId;
     myParentId = parentId;
     myEventTime = eventTime;
     myMessage = message;
+  }
+
+  @Override
+  public Object getId() {
+    return myEventId;
   }
 
   @Nullable
