@@ -217,6 +217,8 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     checkInfo(myLibAdditionalOutsideSrcDir, null, false, true, null, null);
     assertExcludedFromProject(myLibAdditionalOutsideExcludedDir);
+    assertIndexableContent(Collections.singletonList(myLibAdditionalOutsideSrcDir),
+                           Collections.singletonList(myLibAdditionalOutsideExcludedDir));
 
     checkInfo(myModule1Dir, myModule, false, false, null, null);
     checkInfo(mySrcDir1, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
@@ -638,6 +640,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     checkInfo(myLibAdditionalSrcDir, myModule, true, true, null, null, myModule);
     checkInfo(myLibAdditionalExcludedDir, myModule, true, false, "lib.additional-lib.excluded", null, myModule);
+    assertIndexableContent(Arrays.asList(myLibAdditionalSrcDir, myLibAdditionalExcludedDir), null);
 
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
@@ -925,7 +928,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     PsiTestUtil.addSourceRoot(myModule2, src);
     PsiTestUtil.addExcludedRoot(myModule2, src);
     assertExcluded(src, myModule2);
-    assertIteratedContent(myModule2, null, Arrays.asList(sourceFile));
+    assertIteratedContent(myModule2, null, Collections.singletonList(sourceFile));
   }
 
   public void testSourceRootFromUnsupportedFileSystem() {

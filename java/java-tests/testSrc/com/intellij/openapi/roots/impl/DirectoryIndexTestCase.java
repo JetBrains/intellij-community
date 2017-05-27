@@ -16,12 +16,14 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
+import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,6 +81,18 @@ public abstract class DirectoryIndexTestCase extends IdeaTestCase {
   protected void assertIteratedContent(Module module, @Nullable List<VirtualFile> contains, @Nullable List<VirtualFile> doesntContain) {
     assertIteratedContent(ModuleRootManager.getInstance(module).getFileIndex(), contains, doesntContain);
     assertIteratedContent(myFileIndex, contains, doesntContain);
+  }
+
+  protected void assertIndexableContent(@Nullable List<VirtualFile> contains, @Nullable List<VirtualFile> doesntContain) {
+    final Set<VirtualFile> collected = new THashSet<>();
+    FileBasedIndex.getInstance().iterateIndexableFiles(fileOrDir -> {
+      if (!collected.add(fileOrDir)) {
+        fail(fileOrDir + " visited twice");
+      }
+      return true;
+    }, getProject(), new EmptyProgressIndicator());
+    if (contains != null) assertContainsElements(collected, contains);
+    if (doesntContain != null) assertDoesntContain(collected, doesntContain);
   }
 
   protected static void assertIteratedContent(FileIndex fileIndex,
