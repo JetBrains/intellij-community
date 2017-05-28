@@ -29,11 +29,17 @@ public interface ProjectGeneratorPeer<T> {
     return getComponent();
   }
 
+  /**
+   * Returns new project settings component
+   */
   @NotNull
   JComponent getComponent();
 
   void buildUI(@NotNull SettingsStep settingsStep);
 
+  /**
+   * Returns new project settings
+   */
   @NotNull
   T getSettings();
 

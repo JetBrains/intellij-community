@@ -31,7 +31,7 @@ import javax.swing.*;
  */
 
 @Deprecated
-//[kradima] to be removed in 2017.2
+//[kradima] to be removed in 2017.3
 public abstract class WebProjectGenerator<T> extends DirectoryProjectGenerator<T> {
   @Nullable
   public Integer getPreferredDescriptionWidth() {

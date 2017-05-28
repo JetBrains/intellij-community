@@ -58,6 +58,7 @@ public abstract class DirectoryProjectGenerator<T> {
     return null;
   }
 
+  // to be removed in 2017.3
   @Deprecated
   public boolean isPrimaryGenerator() {
     return true;
@@ -78,6 +79,9 @@ public abstract class DirectoryProjectGenerator<T> {
     };
   }
 
+  /**
+   * Creates new peer - new project settings and UI for them
+   */
   @NotNull
   protected ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
