@@ -51,7 +51,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
                    long authorTime, @NotNull List<List<GitLogStatusInfo>> reportedChanges) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
-    myChanges.set(new UnparsedChanges(project, root, reportedChanges, hash, commitTime, parents));
+    myChanges.set(new UnparsedChanges(project, reportedChanges));
   }
 
   @NotNull
@@ -168,29 +168,17 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
 
   private class UnparsedChanges implements Changes {
     @NotNull private final Project myProject;
-    @NotNull private final VirtualFile myRoot;
     @NotNull private final List<List<GitLogStatusInfo>> myChangesOutput;
-    @NotNull private final Hash myHash;
-    private final long myTime;
-    @NotNull private final List<Hash> myParents;
 
     private UnparsedChanges(@NotNull Project project,
-                            @NotNull VirtualFile root,
-                            @NotNull List<List<GitLogStatusInfo>> changesOutput,
-                            @NotNull Hash hash,
-                            long time,
-                            @NotNull List<Hash> parents) {
+                            @NotNull List<List<GitLogStatusInfo>> changesOutput) {
       myProject = project;
-      myRoot = root;
       myChangesOutput = changesOutput;
-      myHash = hash;
-      myTime = time;
-      myParents = parents;
     }
 
     @NotNull
     private ParsedChanges parseChanges() throws VcsException {
-      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), ContainerUtil.map(myParents, Hash::asString));
+      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), ContainerUtil.map(getParents(), Hash::asString));
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
       myChanges.compareAndSet(this, parsedChanges);
@@ -243,7 +231,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
         List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
         for (int i = 0; i < myChangesOutput.size(); i++) {
           List<GitLogStatusInfo> statusInfos = myChangesOutput.get(i);
-          changes.add(parseStatusInfo(statusInfos, Collections.singletonList(myParents.get(i).asString())));
+          changes.add(parseStatusInfo(statusInfos, Collections.singletonList(getParents().get(i).asString())));
         }
         return changes;
       }
@@ -252,8 +240,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
     @NotNull
     private List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes,
                                          @NotNull List<String> parentHashes) throws VcsException {
-      return GitChangesParser.parse(myProject, myRoot, changes, myHash.asString(),
-                                    new Date(myTime), parentHashes);
+      return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHashes);
     }
 
     /*
