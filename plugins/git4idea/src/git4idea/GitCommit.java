@@ -51,7 +51,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
                    long authorTime, @NotNull List<List<GitLogStatusInfo>> reportedChanges) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
-    myChanges.set(new UnparsedChanges(new Data(project, root, reportedChanges, hash, commitTime, parents)));
+    myChanges.set(new UnparsedChanges(project, root, reportedChanges, hash, commitTime, parents));
   }
 
   @NotNull
@@ -167,15 +167,30 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
   }
 
   private class UnparsedChanges implements Changes {
-    private final @NotNull Data myData;
+    @NotNull private final Project myProject;
+    @NotNull private final VirtualFile myRoot;
+    @NotNull private final List<List<GitLogStatusInfo>> myChangesOutput;
+    @NotNull private final Hash myHash;
+    private final long myTime;
+    @NotNull private final List<Hash> myParents;
 
-    private UnparsedChanges(@NotNull Data data) {
-      myData = data;
+    private UnparsedChanges(@NotNull Project project,
+                            @NotNull VirtualFile root,
+                            @NotNull List<List<GitLogStatusInfo>> changesOutput,
+                            @NotNull Hash hash,
+                            long time,
+                            @NotNull List<Hash> parents) {
+      myProject = project;
+      myRoot = root;
+      myChangesOutput = changesOutput;
+      myHash = hash;
+      myTime = time;
+      myParents = parents;
     }
 
     @NotNull
     private ParsedChanges parseChanges() throws VcsException {
-      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), ContainerUtil.map(myData.parents, Hash::asString));
+      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), ContainerUtil.map(myParents, Hash::asString));
       List<Collection<Change>> changes = computeChanges(mergedChanges);
       ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
       myChanges.compareAndSet(this, parsedChanges);
@@ -198,7 +213,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
     @Override
     public Collection<String> getModifiedPaths(int parent) {
       Set<String> changes = ContainerUtil.newHashSet();
-      for (GitLogStatusInfo status : myData.changesOutput.get(parent)) {
+      for (GitLogStatusInfo status : myChangesOutput.get(parent)) {
         if (status.getSecondPath() == null) {
           changes.add(absolutePath(status.getFirstPath()));
         }
@@ -210,7 +225,7 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
     @Override
     public Collection<Couple<String>> getRenamedPaths(int parent) {
       Set<Couple<String>> renames = ContainerUtil.newHashSet();
-      for (GitLogStatusInfo status : myData.changesOutput.get(parent)) {
+      for (GitLogStatusInfo status : myChangesOutput.get(parent)) {
         if (status.getSecondPath() != null) {
           renames.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
         }
@@ -221,14 +236,14 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
     @NotNull
     private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges)
       throws VcsException {
-      if (myData.changesOutput.size() == 1) {
+      if (myChangesOutput.size() == 1) {
         return Collections.singletonList(mergedChanges);
       }
       else {
-        List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myData.changesOutput.size());
-        for (int i = 0; i < myData.changesOutput.size(); i++) {
-          List<GitLogStatusInfo> statusInfos = myData.changesOutput.get(i);
-          changes.add(parseStatusInfo(statusInfos, Collections.singletonList(myData.parents.get(i).asString())));
+        List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myChangesOutput.size());
+        for (int i = 0; i < myChangesOutput.size(); i++) {
+          List<GitLogStatusInfo> statusInfos = myChangesOutput.get(i);
+          changes.add(parseStatusInfo(statusInfos, Collections.singletonList(myParents.get(i).asString())));
         }
         return changes;
       }
@@ -237,8 +252,8 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
     @NotNull
     private List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes,
                                          @NotNull List<String> parentHashes) throws VcsException {
-      return GitChangesParser.parse(myData.project, myData.root, changes, myData.hash.asString(),
-                                    new Date(myData.time), parentHashes);
+      return GitChangesParser.parse(myProject, myRoot, changes, myHash.asString(),
+                                    new Date(myTime), parentHashes);
     }
 
     /*
@@ -248,11 +263,11 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
      */
     @NotNull
     private List<GitLogStatusInfo> getMergedStatusInfo() {
-      List<GitLogStatusInfo> firstParent = myData.changesOutput.get(0);
-      if (myData.changesOutput.size() == 1) return firstParent;
+      List<GitLogStatusInfo> firstParent = myChangesOutput.get(0);
+      if (myChangesOutput.size() == 1) return firstParent;
 
       List<Map<String, GitLogStatusInfo>> affectedMap =
-        ContainerUtil.map(myData.changesOutput, infos -> {
+        ContainerUtil.map(myChangesOutput, infos -> {
           LinkedHashMap<String, GitLogStatusInfo> map = ContainerUtil.newLinkedHashMap();
 
           for (GitLogStatusInfo info : infos) {
@@ -320,29 +335,6 @@ public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCom
           LOG.error("Unsupported status info " + info);
       }
       return null;
-    }
-  }
-
-  private static class Data {
-    @NotNull private final Project project;
-    @NotNull private final VirtualFile root;
-    @NotNull private final List<List<GitLogStatusInfo>> changesOutput;
-    @NotNull private final Hash hash;
-    private final long time;
-    @NotNull private final List<Hash> parents;
-
-    public Data(@NotNull Project project,
-                @NotNull VirtualFile root,
-                @NotNull List<List<GitLogStatusInfo>> changesOutput,
-                @NotNull Hash hash,
-                long time,
-                @NotNull List<Hash> parents) {
-      this.project = project;
-      this.root = root;
-      this.changesOutput = changesOutput;
-      this.hash = hash;
-      this.time = time;
-      this.parents = parents;
     }
   }
 }
