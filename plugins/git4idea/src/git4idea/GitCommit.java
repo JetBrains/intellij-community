@@ -18,14 +18,14 @@ package git4idea;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import git4idea.history.GitChangeType;
 import git4idea.history.GitChangesParser;
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -42,72 +43,34 @@ import static com.intellij.util.ObjectUtils.notNull;
  *
  * @author Kirill Likhodedov
  */
-public final class GitCommit extends VcsChangesLazilyParsedDetails implements VcsIndexableDetails {
+public final class GitCommit extends VcsCommitMetadataImpl implements VcsFullCommitDetails, VcsIndexableDetails {
   private static final Logger LOG = Logger.getInstance(GitCommit.class);
+  @NotNull private final AtomicReference<Changes> myChanges = new AtomicReference<>();
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
                    long authorTime, @NotNull List<List<GitLogStatusInfo>> reportedChanges) {
-    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
-          new MyChangesComputable(new Data(project, root, reportedChanges, hash, commitTime, parents)));
+    super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
+    myChanges.set(new UnparsedChanges(new Data(project, root, reportedChanges, hash, commitTime, parents)));
   }
 
   @NotNull
   @Override
   public Collection<String> getModifiedPaths(int parent) {
-    Set<String> changes = ContainerUtil.newHashSet();
-
-    Data data = getChangesGetter().getData();
-    if (data != null) {
-      for (GitLogStatusInfo status : getChangesGetter().getData().changesOutput.get(parent)) {
-        if (status.getSecondPath() == null) {
-          changes.add(absolutePath(status.getFirstPath()));
-        }
-      }
-    }
-    else {
-      for (Change change : getChanges(parent)) {
-        if (!change.getType().equals(Change.Type.MOVED)) {
-          if (change.getAfterRevision() != null) changes.add(change.getAfterRevision().getFile().getPath());
-          if (change.getBeforeRevision() != null) changes.add(change.getBeforeRevision().getFile().getPath());
-        }
-      }
-    }
-
-    return changes;
+    return myChanges.get().getModifiedPaths(parent);
   }
 
   @NotNull
   @Override
   public Collection<Couple<String>> getRenamedPaths(int parent) {
-    Set<Couple<String>> renames = ContainerUtil.newHashSet();
-
-    Data data = getChangesGetter().getData();
-    if (data != null) {
-      for (GitLogStatusInfo status : getChangesGetter().getData().changesOutput.get(parent)) {
-        if (status.getSecondPath() != null) {
-          renames.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
-        }
-      }
-    }
-    else {
-      for (Change change : getChanges(parent)) {
-        if (change.getType().equals(Change.Type.MOVED)) {
-          if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
-            renames.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
-          }
-        }
-      }
-    }
-
-    return renames;
+    return myChanges.get().getRenamedPaths(parent);
   }
 
   @NotNull
   @Override
-  public Collection<Change> getChanges(int parent) {
+  public Collection<Change> getChanges() {
     try {
-      return getChangesGetter().getChanges(parent);
+      return myChanges.get().getMergedChanges();
     }
     catch (VcsException e) {
       LOG.error("Error happened when parsing changes", e);
@@ -116,8 +79,15 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails implements Vc
   }
 
   @NotNull
-  private MyChangesComputable getChangesGetter() {
-    return (MyChangesComputable)myChangesGetter;
+  @Override
+  public Collection<Change> getChanges(int parent) {
+    try {
+      return myChanges.get().getChanges(parent);
+    }
+    catch (VcsException e) {
+      LOG.error("Error happened when parsing changes", e);
+      return Collections.emptyList();
+    }
   }
 
   @NotNull
@@ -130,46 +100,145 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails implements Vc
     }
   }
 
-  private static class MyChangesComputable implements ThrowableComputable<Collection<Change>, VcsException> {
-    private Data myData;
-    private Collection<Change> myMergedChanges;
-    private List<Collection<Change>> myChanges;
+  private interface Changes {
+    @NotNull
+    Collection<Change> getMergedChanges() throws VcsException;
 
-    public MyChangesComputable(Data data) {
-      myData = data;
+    @NotNull
+    Collection<Change> getChanges(int parent) throws VcsException;
+
+    @NotNull
+    Collection<String> getModifiedPaths(int parent);
+
+    @NotNull
+    Collection<Couple<String>> getRenamedPaths(int parent);
+  }
+
+  private static class ParsedChanges implements Changes {
+    @NotNull private final Collection<Change> myMergedChanges;
+    @NotNull private final List<Collection<Change>> myChanges;
+
+    private ParsedChanges(@NotNull Collection<Change> mergedChanges,
+                          @NotNull List<Collection<Change>> changes) {
+      myMergedChanges = mergedChanges;
+      myChanges = changes;
     }
 
+    @NotNull
     @Override
-    public Collection<Change> compute() throws VcsException {
-      if (myMergedChanges == null) {
-        computeChanges();
-      }
+    public Collection<Change> getMergedChanges() {
       return myMergedChanges;
     }
 
-    public Collection<Change> getChanges(int parent) throws VcsException {
-      if (myChanges == null) {
-        computeChanges();
-      }
+    @NotNull
+    @Override
+    public Collection<Change> getChanges(int parent) {
       return myChanges.get(parent);
     }
 
-    private void computeChanges() throws VcsException {
-      assert myData != null;
-      myMergedChanges = GitChangesParser.parse(myData.project, myData.root, getMergedChanges(), myData.hash.asString(),
-                                               new Date(myData.time), ContainerUtil.map(myData.parents, Hash::asString));
-      if (myData.changesOutput.size() == 1) {
-        myChanges = Collections.singletonList(myMergedChanges);
-      }
-      else {
-        myChanges = ContainerUtil.newArrayListWithCapacity(myData.changesOutput.size());
-        for (int i = 0; i < myData.changesOutput.size(); i++) {
-          List<GitLogStatusInfo> statusInfos = myData.changesOutput.get(i);
-          myChanges.add(GitChangesParser.parse(myData.project, myData.root, statusInfos, myData.hash.asString(),
-                                               new Date(myData.time), Collections.singletonList(myData.parents.get(i).asString())));
+    @NotNull
+    @Override
+    public Collection<String> getModifiedPaths(int parent) {
+      Set<String> changes = ContainerUtil.newHashSet();
+
+      for (Change change : getChanges(parent)) {
+        if (!change.getType().equals(Change.Type.MOVED)) {
+          if (change.getAfterRevision() != null) changes.add(change.getAfterRevision().getFile().getPath());
+          if (change.getBeforeRevision() != null) changes.add(change.getBeforeRevision().getFile().getPath());
         }
       }
-      myData = null; // don't hold the not-yet-parsed string
+
+      return changes;
+    }
+
+    @NotNull
+    @Override
+    public Collection<Couple<String>> getRenamedPaths(int parent) {
+      Set<Couple<String>> renames = ContainerUtil.newHashSet();
+      for (Change change : getChanges(parent)) {
+        if (change.getType().equals(Change.Type.MOVED)) {
+          if (change.getAfterRevision() != null && change.getBeforeRevision() != null) {
+            renames.add(Couple.of(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
+          }
+        }
+      }
+      return renames;
+    }
+  }
+
+  private class UnparsedChanges implements Changes {
+    private final @NotNull Data myData;
+
+    private UnparsedChanges(@NotNull Data data) {
+      myData = data;
+    }
+
+    @NotNull
+    private ParsedChanges parseChanges() throws VcsException {
+      List<Change> mergedChanges = parseStatusInfo(getMergedStatusInfo(), ContainerUtil.map(myData.parents, Hash::asString));
+      List<Collection<Change>> changes = computeChanges(mergedChanges);
+      ParsedChanges parsedChanges = new ParsedChanges(mergedChanges, changes);
+      myChanges.compareAndSet(this, parsedChanges);
+      return parsedChanges;
+    }
+
+    @NotNull
+    @Override
+    public Collection<Change> getMergedChanges() throws VcsException {
+      return parseChanges().getMergedChanges();
+    }
+
+    @NotNull
+    @Override
+    public Collection<Change> getChanges(int parent) throws VcsException {
+      return parseChanges().getChanges(parent);
+    }
+
+    @NotNull
+    @Override
+    public Collection<String> getModifiedPaths(int parent) {
+      Set<String> changes = ContainerUtil.newHashSet();
+      for (GitLogStatusInfo status : myData.changesOutput.get(parent)) {
+        if (status.getSecondPath() == null) {
+          changes.add(absolutePath(status.getFirstPath()));
+        }
+      }
+      return changes;
+    }
+
+    @NotNull
+    @Override
+    public Collection<Couple<String>> getRenamedPaths(int parent) {
+      Set<Couple<String>> renames = ContainerUtil.newHashSet();
+      for (GitLogStatusInfo status : myData.changesOutput.get(parent)) {
+        if (status.getSecondPath() != null) {
+          renames.add(Couple.of(absolutePath(status.getFirstPath()), absolutePath(status.getSecondPath())));
+        }
+      }
+      return renames;
+    }
+
+    @NotNull
+    private List<Collection<Change>> computeChanges(@NotNull Collection<Change> mergedChanges)
+      throws VcsException {
+      if (myData.changesOutput.size() == 1) {
+        return Collections.singletonList(mergedChanges);
+      }
+      else {
+        List<Collection<Change>> changes = ContainerUtil.newArrayListWithCapacity(myData.changesOutput.size());
+        for (int i = 0; i < myData.changesOutput.size(); i++) {
+          List<GitLogStatusInfo> statusInfos = myData.changesOutput.get(i);
+          changes.add(parseStatusInfo(statusInfos, Collections.singletonList(myData.parents.get(i).asString())));
+        }
+        return changes;
+      }
+    }
+
+    @NotNull
+    private List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes,
+                                         @NotNull List<String> parentHashes) throws VcsException {
+      return GitChangesParser.parse(myData.project, myData.root, changes, myData.hash.asString(),
+                                    new Date(myData.time), parentHashes);
     }
 
     /*
@@ -178,9 +247,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails implements Vc
      * If a commit is not a merge, all statuses are returned.
      */
     @NotNull
-    private List<GitLogStatusInfo> getMergedChanges() {
-      assert myData != null;
-
+    private List<GitLogStatusInfo> getMergedStatusInfo() {
       List<GitLogStatusInfo> firstParent = myData.changesOutput.get(0);
       if (myData.changesOutput.size() == 1) return firstParent;
 
@@ -215,7 +282,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails implements Vc
     }
 
     @NotNull
-    private static GitLogStatusInfo getMergedStatusInfo(@NotNull String path, @NotNull List<GitLogStatusInfo> statuses) {
+    private GitLogStatusInfo getMergedStatusInfo(@NotNull String path, @NotNull List<GitLogStatusInfo> statuses) {
       Set<GitChangeType> types = ContainerUtil.map2Set(statuses, GitLogStatusInfo::getType);
 
       if (types.size() == 1) {
@@ -239,7 +306,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails implements Vc
     }
 
     @Nullable
-    private static String getPath(@NotNull GitLogStatusInfo info) {
+    private String getPath(@NotNull GitLogStatusInfo info) {
       switch (info.getType()) {
         case MODIFIED:
         case ADDED:
@@ -253,10 +320,6 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails implements Vc
           LOG.error("Unsupported status info " + info);
       }
       return null;
-    }
-
-    public Data getData() {
-      return myData;
     }
   }
 
