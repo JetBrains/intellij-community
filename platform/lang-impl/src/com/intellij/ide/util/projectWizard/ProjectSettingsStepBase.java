@@ -59,7 +59,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
   protected File myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
-  private NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
+  protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
                                  AbstractNewProjectStep.AbstractCallback callback) {
