@@ -285,7 +285,6 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       else {
         (if (settings.isShared) workspaceSchemeManager else projectSchemeManager)?.removeScheme(settings as RunnerAndConfigurationSettingsImpl)
       }
-      checkIfDependenciesAreStable(settings.configuration)
     }
 
     if (existingId == null) {
@@ -489,6 +488,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getState(): Element {
+    for (settings in idToSettings.values) {
+      if (settings.type is UnknownConfigurationType) {
+        continue
+      }
+      checkIfDependenciesAreStable(settings.configuration)
+    }
+
     val element = Element("state")
 
     workspaceSchemeManager.save()
@@ -1054,11 +1060,11 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
 
     configuration.beforeRunTasks = result
-    checkIfDependenciesAreStable(configuration)
     fireBeforeRunTasksUpdated()
   }
 
   fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
+    if (isFirstLoadState.get()) return
     for (runTask in configuration.beforeRunTasks) {
       if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
         makeStable(runTask.settings)
