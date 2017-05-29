@@ -793,6 +793,29 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
 
     assertEquals("Current variable should be available under own name", 1,
                  findMatchesCount(source2, "'_a + '_b:[script(\"__log__.info(b)\n__log__.info(__context__)\ntrue\")]"));
+
+    final String in = "class C {" +
+                      "  {" +
+                      "    int i = 0;" +
+                      "    i += 1;" +
+                      "    (i) = 3;" +
+                      "    int j = i;" +
+                      "    i();" +
+                      "  }" +
+                      "  void i() {}" +
+                      "}";
+    // existing pattern "fields/variables read"
+    assertEquals("Find reads of symbol (including operator assignment)", 2,
+                 findMatchesCount(in, "'_Symbol:[script(\"import com.intellij.psi.*\n" +
+                                      "import static com.intellij.psi.util.PsiUtil.*\n" +
+                                      "Symbol instanceof PsiReferenceExpression && isAccessedForReading(Symbol)\")]"));
+
+    // existing pattern "fields/variables with given name pattern updated"
+    assertEquals("Find writes of symbol", 3,
+                 findMatchesCount(in, "'_Symbol:[regex( i ) && script(\"import com.intellij.psi.*\n" +
+                                      "import static com.intellij.psi.util.PsiUtil.*\n" +
+                                      "Symbol instanceof PsiExpression && isAccessedForWriting(Symbol) ||\n" +
+                                      "  Symbol instanceof PsiVariable && Symbol.getInitializer() != null\")]"));
   }
 
   public void testCheckScriptValidation() {
