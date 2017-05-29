@@ -15,6 +15,8 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -60,47 +62,57 @@ public class StatementExtractor {
     return result.toString();
   }
 
+  @NotNull
   private static Node createNode(@NotNull PsiExpression expression, @NotNull PsiExpression root) {
     Node result = new Expr(expression);
     PsiExpression parent;
-    for (; expression != root; expression = parent) {
+    while (expression != root) {
       PsiElement parentElement = expression.getParent();
       if(parentElement instanceof PsiExpressionList) {
         parentElement = parentElement.getParent();
       }
       parent = ObjectUtils.tryCast(parentElement, PsiExpression.class);
       if (parent == null) {
-        throw new IllegalStateException(expression.getText() + ": expected to have expression parent; root = " + root.getText());
+        throw new RuntimeExceptionWithAttachments("Expected to have expression parent",
+                                                  new Attachment("expression.txt", expression.getText()),
+                                                  new Attachment("root.txt", root.getText()));
       }
-      if (parent instanceof PsiPolyadicExpression) {
-        PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
-        IElementType type = polyadic.getOperationTokenType();
-        boolean and;
-        if (type == JavaTokenType.ANDAND) {
-          and = true;
-        }
-        else if (type == JavaTokenType.OROR) {
-          and = false;
-        }
-        else {
-          continue;
-        }
-        PsiExpression[] operands = polyadic.getOperands();
-        int index = ArrayUtil.indexOf(operands, expression);
-        if (index == 0) continue;
-        result = new Cond(parent, parent, index, and ? result : EMPTY, and ? EMPTY : result);
-      }
-      if (parent instanceof PsiConditionalExpression) {
-        PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
-        if (expression == ternary.getThenExpression()) {
-          result = new Cond(ternary, ternary.getCondition(), -1, result, EMPTY);
-        }
-        else if (expression == ternary.getElseExpression()) {
-          result = new Cond(ternary, ternary.getCondition(), -1, EMPTY, result);
-        }
-      }
+      result = foldNode(result, expression, parent);
+      expression = parent;
     }
     return result;
+  }
+
+  @NotNull
+  private static Node foldNode(@NotNull Node node, @NotNull PsiExpression expression, @NotNull PsiExpression parent) {
+    if (parent instanceof PsiPolyadicExpression) {
+      PsiPolyadicExpression polyadic = (PsiPolyadicExpression)parent;
+      IElementType type = polyadic.getOperationTokenType();
+      boolean and;
+      if (type == JavaTokenType.ANDAND) {
+        and = true;
+      }
+      else if (type == JavaTokenType.OROR) {
+        and = false;
+      }
+      else {
+        return node;
+      }
+      PsiExpression[] operands = polyadic.getOperands();
+      int index = ArrayUtil.indexOf(operands, expression);
+      if (index == 0) return node;
+      return new Cond(parent, parent, index, and ? node : EMPTY, and ? EMPTY : node);
+    }
+    if (parent instanceof PsiConditionalExpression) {
+      PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
+      if (expression == ternary.getThenExpression()) {
+        return new Cond(ternary, ternary.getCondition(), -1, node, EMPTY);
+      }
+      if (expression == ternary.getElseExpression()) {
+        return new Cond(ternary, ternary.getCondition(), -1, EMPTY, node);
+      }
+    }
+    return node;
   }
 
   private static abstract class Node {
