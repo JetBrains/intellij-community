@@ -1,8 +1,8 @@
 ; Installation Options page
 LangString installation_options ${LANG_ENGLISH} "Installation Options"
 LangString installation_options_prompt ${LANG_ENGLISH} "Configure your ${MUI_PRODUCT} installation"
-LangString create_desktop_shortcut ${LANG_ENGLISH} "Create Desktop shortcut"
-LangString create_quick_launch_shortcut ${LANG_ENGLISH} "Create Quick Launch shortcut"
+LangString create_desktop_shortcut ${LANG_ENGLISH} "Create Desktop Shortcut"
+LangString create_quick_launch_shortcut ${LANG_ENGLISH} "Create Quick Launch Shortcut"
 LangString install_for_current_user_only ${LANG_ENGLISH} "Install for current user only"
 
 ; Uninstall options page
