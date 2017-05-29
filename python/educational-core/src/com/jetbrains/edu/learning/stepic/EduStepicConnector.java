@@ -479,4 +479,46 @@ public class EduStepicConnector {
       externalRedirectUrlHandler.run();
     }
   }
+
+  public static StepicWrappers.Unit getUnit(int unitId) {
+    try {
+      List<StepicWrappers.Unit> units =
+        getFromStepik(EduStepicNames.UNITS + "/" + String.valueOf(unitId), StepicWrappers.UnitContainer.class).units;
+      if (!units.isEmpty()) {
+        return units.get(0);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Failed getting unit: " + unitId);
+    }
+    return new StepicWrappers.Unit();
+  }
+
+  public static StepicWrappers.Section getSection(int sectionId) {
+    try {
+      List<StepicWrappers.Section> sections =
+        getFromStepik(EduStepicNames.SECTIONS + "/" + String.valueOf(sectionId), StepicWrappers.SectionContainer.class).getSections();
+      if (!sections.isEmpty()) {
+        return sections.get(0);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Failed getting section: " + sectionId);
+    }
+    return new StepicWrappers.Section();
+  }
+
+  public static Lesson getLesson(int lessonId) {
+    try {
+      List<Lesson> lessons =
+        getFromStepik(EduStepicNames.LESSONS + "/" + String.valueOf(lessonId), StepicWrappers.LessonContainer.class).lessons;
+      if (!lessons.isEmpty()) {
+        return lessons.get(0);
+      }
+    }
+    catch (IOException e) {
+      LOG.warn("Failed getting section: " + lessonId);
+    }
+    return new Lesson();
+  }
 }

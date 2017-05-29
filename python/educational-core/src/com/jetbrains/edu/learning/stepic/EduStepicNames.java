@@ -22,6 +22,7 @@ public class EduStepicNames {
   public static final String PYCHARM_PREFIX = "pycharm";
   public static final String EDU_STEPIK_SERVICE_NAME = "edu/stepik";
   public static final String STEP_ID = "step_id";
+  public static final String LINK = "link";
   public static final String CLIENT_ID = "Xqr8Ez716cUJHezxCDnK8bKfMAMqpBYxWQmUxZ8D";
   public static final String OAUTH_SERVICE_NAME = "edu/stepik/oauth";
   public static final String EXTERNAL_REDIRECT_URL = "https://example.com";

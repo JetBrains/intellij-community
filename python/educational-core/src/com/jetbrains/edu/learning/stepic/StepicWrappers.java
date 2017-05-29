@@ -247,6 +247,10 @@ public class StepicWrappers {
 
     int position;
     int id;
+
+    public int getCourse() {
+      return course;
+    }
   }
 
   public static class SectionWrapper {
@@ -285,6 +289,14 @@ public class StepicWrappers {
 
     public void setLesson(int lesson) {
       this.lesson = lesson;
+    }
+
+    public int getSection() {
+      return section;
+    }
+
+    public int getId() {
+      return id;
     }
   }
 
