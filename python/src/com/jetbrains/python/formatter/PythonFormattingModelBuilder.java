@@ -116,7 +116,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
       .afterInside(LPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS)
-      .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA, 
+      .betweenInside(COMMA, RPAR, FROM_IMPORT_STATEMENT).spaceIf(commonSettings.SPACE_AFTER_COMMA,
                                                                  pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
       .beforeInside(RPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
@@ -157,7 +157,8 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
 
   // should be all keywords?
   private static final TokenSet SINGLE_SPACE_KEYWORDS = TokenSet.create(IN_KEYWORD, AND_KEYWORD, OR_KEYWORD, IS_KEYWORD,
-                                                                        IF_KEYWORD, ELIF_KEYWORD, FOR_KEYWORD, RETURN_KEYWORD, RAISE_KEYWORD,
+                                                                        IF_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
+                                                                        FOR_KEYWORD, RETURN_KEYWORD, RAISE_KEYWORD,
                                                                         ASSERT_KEYWORD, CLASS_KEYWORD, DEF_KEYWORD, DEL_KEYWORD,
                                                                         EXEC_KEYWORD, GLOBAL_KEYWORD, IMPORT_KEYWORD, LAMBDA_KEYWORD,
                                                                         NOT_KEYWORD, WHILE_KEYWORD, YIELD_KEYWORD);
