@@ -125,7 +125,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, true);
     setGlassPane(glassPane);
     myGlassPaneInitialized = true;
-   glassPane.setVisible(false);
+    putClientProperty("jetbrains.awt.windowDarkAppearance" , UIUtil.isUnderDarcula());
+    glassPane.setVisible(false);
   }
 
   @Override
@@ -343,6 +344,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
+    putClientProperty("jetbrains.awt.windowDarkAppearance" , UIUtil.isUnderDarcula());
     setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
