@@ -738,6 +738,7 @@ public class PyBlock implements ASTBlock {
       //noinspection ConstantConditions
       child2 = getSubBlockByNode(node2);
       final CommonCodeStyleSettings settings = myContext.getSettings();
+      final PyCodeStyleSettings pySettings = myContext.getPySettings();
 
       if ((childType1 == PyTokenTypes.EQ || childType2 == PyTokenTypes.EQ)) {
         final PyNamedParameter namedParameter = as(myNode.getPsi(), PyNamedParameter.class);
@@ -749,13 +750,6 @@ public class PyBlock implements ASTBlock {
       if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
         if (needLineBreakInStatement()) {
           return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
-        }
-      }
-
-      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
-          STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
-        if (PyUtil.isTopLevel(psi1)) {
-          return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
         }
       }
 
@@ -780,15 +774,27 @@ public class PyBlock implements ASTBlock {
         }
         if (psi2 instanceof PyStatement && !(psi2 instanceof PyImportStatementBase)) {
           if (PyUtil.isTopLevel(psi1)) {
+            // If there is any function or class after a top-level import, it should be top-level as well
+            if (PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
+              return getBlankLinesForOption(Math.max(settings.BLANK_LINES_AFTER_IMPORTS,
+                                                     pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS));
+            }
             return getBlankLinesForOption(settings.BLANK_LINES_AFTER_IMPORTS);
           }
           else {
-            return getBlankLinesForOption(myContext.getPySettings().BLANK_LINES_AFTER_LOCAL_IMPORTS);
+            return getBlankLinesForOption(pySettings.BLANK_LINES_AFTER_LOCAL_IMPORTS);
           }
         }
       }
 
-      if (psi2 instanceof PsiComment && !hasLineBreaksBeforeInSameParent(psi2.getNode(), 1) && myContext.getPySettings().SPACE_BEFORE_NUMBER_SIGN) {
+      if ((PyElementTypes.CLASS_OR_FUNCTION.contains(childType1) && STATEMENT_OR_DECLARATION.contains(childType2)) ||
+          STATEMENT_OR_DECLARATION.contains(childType1) && PyElementTypes.CLASS_OR_FUNCTION.contains(childType2)) {
+        if (PyUtil.isTopLevel(psi1)) {
+          return getBlankLinesForOption(pySettings.BLANK_LINES_AROUND_TOP_LEVEL_CLASSES_FUNCTIONS);
+        }
+      }
+
+      if (psi2 instanceof PsiComment && !hasLineBreaksBeforeInSameParent(psi2.getNode(), 1) && pySettings.SPACE_BEFORE_NUMBER_SIGN) {
         return Spacing.createSpacing(2, 0, 0, false, 0);
       }
     }

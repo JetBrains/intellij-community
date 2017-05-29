@@ -818,6 +818,18 @@ public class PyFormatterTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
   }
 
+  // PY-24220
+  public void testBlankLinesAfterTopLevelImportsBeforeClass() {
+    getCommonCodeStyleSettings().BLANK_LINES_AFTER_IMPORTS = 5;
+    doTest();
+  }
+
+  // PY-24220
+  public void testBlankLinesAfterTopLevelImportsBeforeClassWithPrecedingComments() {
+    getCommonCodeStyleSettings().BLANK_LINES_AFTER_IMPORTS = 5;
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
