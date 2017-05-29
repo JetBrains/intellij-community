@@ -556,6 +556,9 @@ final class HardCodedPurity {
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
     new Method("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
+    // Declared in final class StringBuilder
+    new Method("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
+    new Method("java/lang/StringBuffer", "toString", "()Ljava/lang/String;"),
     // Native
     new Method("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
     new Method("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
@@ -593,8 +596,7 @@ final class HardCodedPurity {
   }
 
   static boolean isPureMethod(Key key) {
-    return key.method.methodName.equals("toString") && key.method.methodDesc.equals("()Ljava/lang/String;") ||
-           pureMethods.contains(key.method);
+    return pureMethods.contains(key.method);
   }
 
   static boolean isOwnedField(FieldInsnNode fieldInsn) {

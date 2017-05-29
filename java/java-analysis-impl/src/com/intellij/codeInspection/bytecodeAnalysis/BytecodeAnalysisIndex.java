@@ -53,7 +53,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
   private static final ID<Bytes, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
   private static final VirtualFileGist<Map<Bytes, HEquations>> ourGist = GistManager.getInstance().newVirtualFileGist(
-    "BytecodeAnalysisIndex", 5, new HEquationsExternalizer(), new ClassDataIndexer());
+    "BytecodeAnalysisIndex", 4, new HEquationsExternalizer(), new ClassDataIndexer());
 
   @NotNull
   @Override
