@@ -17,6 +17,7 @@ package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
@@ -803,7 +804,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
         new LinkLabel<>(presentation.getText(), presentation.getIcon(), new LinkListener<AnAction>() {
           @Override
           public void linkSelected(LinkLabel aSource, AnAction action) {
-            Notification.fire(notification, action);
+            Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));
     }

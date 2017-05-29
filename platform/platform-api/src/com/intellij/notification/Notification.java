@@ -229,11 +229,18 @@ public class Notification {
   }
 
   public static void fire(@NotNull final Notification notification, @NotNull AnAction action) {
+    fire(notification, action, null);
+  }
+
+  public static void fire(@NotNull final Notification notification, @NotNull AnAction action, @Nullable DataContext context) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.UNKNOWN, new DataContext() {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
-        return KEY.getName().equals(dataId) ? notification : null;
+        if (KEY.is(dataId)) {
+          return notification;
+        }
+        return context == null ? null : context.getData(dataId);
       }
     });
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
