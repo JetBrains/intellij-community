@@ -261,7 +261,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                       boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
       GraphicsDevice screen = getScreen(object);
-      Supplier<KeyPair> oldKeyPair = () -> getOldKey(screen, key);
+      KeyPair oldKeyPair = getOldKey(screen, key);
 
       putImpl(getKey(screen, key), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       if (screen != null) {
@@ -272,26 +272,25 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
   }
 
   private void putImpl(@NotNull KeyPair keyPair,
-                       Supplier<KeyPair> oldKeyPair,
+                       @NotNull KeyPair oldKeyPair,
                        Point location, boolean locationSet,
                        Dimension size, boolean sizeSet,
                        boolean maximized, boolean maximizedSet,
                        boolean fullScreen, boolean fullScreenSet) {
     WindowState state = myStateMap.get(keyPair.first);
+    if (state == null) {
+      // may be convert the old key state to the new key
+      state = myStateMap.remove(oldKeyPair.first);
+      if (state != null) {
+        state.scaleDown(oldKeyPair.second);
+        myStateMap.put(keyPair.first, state);
+      }
+    }
     if (state != null) {
       if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
         state.scaleUp(keyPair.second);
       } else {
         myStateMap.remove(keyPair.first);
-
-        // check if we need to remove the old key state
-        keyPair = oldKeyPair.get();
-        if ((state = myStateMap.get(keyPair.first)) != null) {
-          state = state.copy(); // we don't want to update it
-          if (!state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
-            myStateMap.remove(keyPair.first);
-          }
-        }
       }
     }
     else {
@@ -313,6 +312,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       return new KeyPair(key + ".headless", 1f);
     }
     StringBuilder sb = new StringBuilder(key);
+    float scale = 1f;
     for (GraphicsDevice device : environment.getScreenDevices()) {
       Rectangle bounds = device.getDefaultConfiguration().getBounds();
       sb.append('/').append(bounds.x);
@@ -326,8 +326,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       sb.append('.').append(bounds.y);
       sb.append('.').append(bounds.width);
       sb.append('.').append(bounds.height);
+      if (UIUtil.isJreHiDPIEnabled()) {
+        scale = JBUI.sysScale(screen.getDefaultConfiguration());
+      }
     }
-    return new KeyPair(sb.toString(), 1f);
+    return new KeyPair(sb.toString(), scale);
   }
 
   @NotNull
