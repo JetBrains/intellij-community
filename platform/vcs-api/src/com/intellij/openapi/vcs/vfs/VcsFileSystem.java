@@ -17,12 +17,13 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
+import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
 
-public class VcsFileSystem extends DeprecatedVirtualFileSystem {
+public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
   public static final String COULD_NOT_IMPLEMENT_MESSAGE = VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
   private static final String PROTOCOL = "vcs";
 
