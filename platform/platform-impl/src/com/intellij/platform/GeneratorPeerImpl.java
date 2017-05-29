@@ -35,7 +35,6 @@ public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
     this(null, null);
   }
 
-  @NotNull
   @Override
   public JComponent getComponent() {
     return myComponent;
@@ -44,7 +43,6 @@ public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
   @Override
   public void buildUI(@NotNull SettingsStep settingsStep) {}
 
-  @NotNull
   @Override
   public T getSettings() {
     return mySettings;
