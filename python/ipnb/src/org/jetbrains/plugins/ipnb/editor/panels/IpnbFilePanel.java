@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -38,7 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ipnb.IpnbUtils;
 import org.jetbrains.plugins.ipnb.editor.IpnbEditorUtil;
 import org.jetbrains.plugins.ipnb.editor.IpnbFileEditor;
-import org.jetbrains.plugins.ipnb.editor.actions.*;
+import org.jetbrains.plugins.ipnb.editor.actions.IpnbToggleLineNumbersAction;
 import org.jetbrains.plugins.ipnb.editor.panels.code.IpnbCodePanel;
 import org.jetbrains.plugins.ipnb.format.IpnbFile;
 import org.jetbrains.plugins.ipnb.format.IpnbParser;
@@ -125,11 +126,14 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
                               new ProjectEx.ProjectSaved() {
                                 @Override
                                 public void saved(@NotNull Project project) {
-                                  CommandProcessor.getInstance().runUndoTransparentAction(
-                                    () -> ApplicationManager.getApplication()
-                                      .runWriteAction(() -> saveToFile(false)));
+                                  executeSaveFileCommand();
                                 }
                               });
+  }
+
+  public void executeSaveFileCommand() {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+      () -> saveToFile(false)), "Save File", new Object(), UndoConfirmationPolicy.DEFAULT, false);
   }
 
   @Override
@@ -258,6 +262,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     if (below) {
       index += 1;
     }
+
     final IpnbEditableCell cell = panel.getCell();
     myIpnbFile.addCell(cell, index);
     myIpnbPanels.add(index, panel);
@@ -421,7 +426,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
   }
 
-  private void deleteCell(@NotNull final IpnbEditablePanel cell) {
+  public void deleteCell(@NotNull final IpnbEditablePanel cell) {
     final int index = myIpnbPanels.indexOf(cell);
     if (index < 0) return;
     myIpnbPanels.remove(index);
@@ -667,7 +672,7 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   private void updateCellSelection(MouseEvent e) {
-    if (e.getClickCount() > 0) {
+    if (e.getClickCount() == 1 || e.getClickCount() == 2) {
       IpnbEditablePanel ipnbPanel = getIpnbPanelByClick(e.getPoint());
       if (ipnbPanel != null) {
         ipnbPanel.setEditing(false);
@@ -803,11 +808,12 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
-      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+      executeSaveFileCommand();
+      executeUndoableCommand(
         () -> {
           deleteSelectedCell();
           saveToFile(false);
-        }), "Ipnb.deleteCell", new Object());
+        }, "Delete Cell");
     }
 
     @Override
@@ -817,11 +823,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void performPaste(@NotNull DataContext dataContext) {
-      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
-        () -> {
-          pasteCell();
-          saveToFile(false);
-        }), "Ipnb.pasteCell", new Object());
+      executeSaveFileCommand();
+      executeUndoableCommand(() -> {
+        pasteCell();
+        saveToFile(false);
+      }, "Paste Cell");
     }
 
     @Override
@@ -836,11 +842,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
 
     @Override
     public void performCut(@NotNull DataContext dataContext) {
-      CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
-        () -> {
-          cutCell();
-          saveToFile(false);
-        }), "Ipnb.cutCell", new Object());
+      executeSaveFileCommand();
+      executeUndoableCommand(() -> {
+        cutCell();
+        saveToFile(false);
+      }, "Cut Cell");
     }
 
     @Override
@@ -853,6 +859,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
       return mySelectedCellPanel != null;
     }
 
+  }
+
+  public void executeUndoableCommand(@NotNull Runnable action, @NotNull String name) {
+    CommandProcessor.getInstance().executeCommand(myProject, () -> ApplicationManager.getApplication().runWriteAction(
+      action), name, new Object());
   }
 
   public Project getProject() {
