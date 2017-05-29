@@ -90,18 +90,18 @@ public class PyBlock implements ASTBlock {
   private List<PyBlock> mySubBlocks = null;
   private Map<ASTNode, PyBlock> mySubBlockByNode = null;
   private final boolean myEmptySequence;
-  
+
   // Shared among multiple children sub-blocks
   private Alignment myChildAlignment = null;
   private Alignment myDictAlignment = null;
   private Wrap myDictWrapping = null;
   private Wrap myFromImportWrapping = null;
 
-  public PyBlock(@Nullable PyBlock parent, 
-                 @NotNull ASTNode node, 
-                 @Nullable Alignment alignment, 
-                 @NotNull Indent indent, 
-                 @Nullable Wrap wrap, 
+  public PyBlock(@Nullable PyBlock parent,
+                 @NotNull ASTNode node,
+                 @Nullable Alignment alignment,
+                 @NotNull Indent indent,
+                 @Nullable Wrap wrap,
                  @NotNull PyBlockContext context) {
     myParent = parent;
     myAlignment = alignment;
@@ -189,7 +189,7 @@ public class PyBlock implements ASTBlock {
     Wrap childWrap = null;
     Indent childIndent = Indent.getNoneIndent();
     Alignment childAlignment = null;
-    
+
     final PyCodeStyleSettings settings = myContext.getPySettings();
 
     if (parentType == PyElementTypes.BINARY_EXPRESSION && !isInControlStatement()) {
@@ -260,7 +260,7 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    
+
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION || parentType == PyElementTypes.LIST_COMP_EXPRESSION) {
       if ((childType == PyTokenTypes.RBRACKET && !settings.HANG_CLOSING_BRACKETS) || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
@@ -617,7 +617,7 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return !hasHangingIndent(myNode.getPsi()) && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION && 
+      return !hasHangingIndent(myNode.getPsi()) && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION &&
                                                      myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE);
     }
     if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST) {
@@ -726,6 +726,13 @@ public class PyBlock implements ASTBlock {
       final PsiElement psi1 = node1.getPsi();
 
       PsiElement psi2 = node2.getPsi();
+
+      // pycodestyle.py enforces at most 2 blank lines only between comments directly
+      // at the top-level of a file, not inside if, try/except, etc.
+      if (psi1 instanceof PsiComment && myNode.getPsi() instanceof PsiFile) {
+        return Spacing.createSpacing(0, 0, 1, true, 2);
+      }
+
       // skip not inline comments to handles blank lines between various declarations
       if (psi2 instanceof PsiComment && hasLineBreaksBeforeInSameParent(node2, 1)) {
         final PsiElement nonCommentAfter = PyPsiUtils.getNextNonCommentSibling(psi2, true);
@@ -746,7 +753,7 @@ public class PyBlock implements ASTBlock {
           return Spacing.createSpacing(1, 1, 0, settings.KEEP_LINE_BREAKS, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
-      
+
       if (childType1 == PyTokenTypes.COLON && psi2 instanceof PyStatementList) {
         if (needLineBreakInStatement()) {
           return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
@@ -794,9 +801,6 @@ public class PyBlock implements ASTBlock {
         }
       }
 
-      if (psi2 instanceof PsiComment && !hasLineBreaksBeforeInSameParent(psi2.getNode(), 1) && pySettings.SPACE_BEFORE_NUMBER_SIGN) {
-        return Spacing.createSpacing(2, 0, 0, false, 0);
-      }
     }
     return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
@@ -877,7 +881,7 @@ public class PyBlock implements ASTBlock {
     // delegation sometimes causes NPEs in formatter core, so we calculate the
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
-      @SuppressWarnings("ConstantConditions") 
+      @SuppressWarnings("ConstantConditions")
       final int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
