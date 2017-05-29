@@ -131,6 +131,9 @@
         </annotation>
     </item>
     <item name='java.io.ByteArrayOutputStream java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.io.ByteArrayOutputStream java.lang.String toString(int)'>
@@ -284,6 +287,11 @@
     </item>
     <item name='java.io.File java.lang.String slashify(java.lang.String, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.io.File java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.io.File java.lang.String[] list(java.io.FilenameFilter) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>

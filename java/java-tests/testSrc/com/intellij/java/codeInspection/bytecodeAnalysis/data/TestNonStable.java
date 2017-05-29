@@ -21,16 +21,15 @@ import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectNotNull;
 /**
  * @author lambdamix
  */
-public class Test03 {
+public class TestNonStable {
 
-  public String toString1() {
-    return toString();
+  public String asString1() {
+    return asString();
   }
 
   @ExpectContract(pure = true)
-  @Override
   @ExpectNotNull
-  public String toString() {
+  public String asString() {
     return "";
   }
 }

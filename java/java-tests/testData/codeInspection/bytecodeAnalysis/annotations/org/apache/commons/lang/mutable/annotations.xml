@@ -121,6 +121,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableByte java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableByte long longValue()'>
@@ -195,6 +198,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.mutable.MutableDouble java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.mutable.MutableDouble long longValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -266,6 +274,11 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableFloat java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableFloat long longValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -340,6 +353,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableInt java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableInt long longValue()'>
@@ -415,6 +431,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableLong java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableLong long longValue()'>
@@ -450,6 +469,11 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableObject java.lang.Object getValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.mutable.MutableObject java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -513,6 +537,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.mutable.MutableShort long longValue()'>

@@ -131,6 +131,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.ASTDirective java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDivNode ASTDivNode(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1224,7 +1229,15 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString(java.lang.String) 0'>

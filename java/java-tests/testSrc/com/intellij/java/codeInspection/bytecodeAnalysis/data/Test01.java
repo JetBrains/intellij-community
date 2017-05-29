@@ -40,7 +40,12 @@ public class Test01 {
   }
 
   static void t(@ExpectNotNull Object o) {
-    o.toString();
+    use(o);
+  }
+
+  private static String use(@ExpectNotNull Object o) {
+    System.out.println(o);
+    return o.toString();
   }
 
   @ExpectContract(pure = true)
@@ -50,12 +55,12 @@ public class Test01 {
 
   @ExpectContract("null->null")
   static String toString1(Object o) {
-    return o == null ? null : o.toString();
+    return o == null ? null : use(o);
   }
 
   @ExpectContract("null->!null")
   static String toString2(Object o) {
-    return o == null ? "null" : o.toString();
+    return o == null ? "null" : use(o);
   }
 
   @ExpectContract(pure = true)

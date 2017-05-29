@@ -80,6 +80,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.math.DoubleRange java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.math.DoubleRange long getMaximumLong()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -171,6 +176,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.math.FloatRange java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.math.FloatRange long getMaximumLong()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -255,6 +265,11 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.math.Fraction int subAndCheck(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.math.Fraction java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -460,6 +475,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.math.IntRange java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.math.IntRange long getMaximumLong()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -576,6 +596,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.math.LongRange java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.math.LongRange long getMaximumLong()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -622,6 +647,11 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.math.NumberRange java.lang.Number getMinimumNumber()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.math.NumberRange java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -940,6 +970,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.math.Range java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
 </root>

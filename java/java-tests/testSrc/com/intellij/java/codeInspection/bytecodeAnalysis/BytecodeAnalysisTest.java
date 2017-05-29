@@ -72,7 +72,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
   public void testInference() throws IOException {
     checkAnnotations(Test01.class);
     checkAnnotations(Test02.class);
-    checkAnnotations(Test03.class);
+    checkAnnotations(TestNonStable.class);
   }
 
   public void testConverter() throws IOException {

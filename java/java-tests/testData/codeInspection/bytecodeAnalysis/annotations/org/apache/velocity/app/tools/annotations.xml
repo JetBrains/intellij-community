@@ -72,4 +72,9 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.app.tools.VelocityFormatter.VelocityAutoAlternator java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
 </root>

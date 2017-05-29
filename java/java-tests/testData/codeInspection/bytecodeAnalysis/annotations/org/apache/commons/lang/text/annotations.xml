@@ -163,6 +163,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder java.lang.StringBuffer toStringBuffer()'>
@@ -450,6 +453,11 @@
         </annotation>
     </item>
     <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderTokenizer StrBuilderTokenizer()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.text.StrBuilder.StrBuilderTokenizer java.lang.String getContent()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -869,6 +877,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.text.StrTokenizer java.util.List tokenize(char[], int, int) 0'>

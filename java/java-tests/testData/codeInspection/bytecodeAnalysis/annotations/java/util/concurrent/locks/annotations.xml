@@ -97,6 +97,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.Thread fullGetFirstQueuedThread()'>
@@ -208,6 +211,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantLock java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantLock java.lang.Thread getOwner()'>
@@ -246,6 +252,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock java.lang.Thread getOwner()'>
@@ -281,6 +290,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock java.util.concurrent.locks.Condition newCondition()'>
@@ -325,6 +337,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock java.util.concurrent.locks.Condition newCondition()'>

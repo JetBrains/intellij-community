@@ -1,4 +1,9 @@
 <root>
+    <item name='java.lang.annotation.Annotation java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.annotation.AnnotationFormatError AnnotationFormatError(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

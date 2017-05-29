@@ -141,6 +141,11 @@
     <item name='java.lang.AbstractStringBuilder java.lang.String substring(int, int)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.AbstractStringBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.ArithmeticException ArithmeticException()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -370,6 +375,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Byte java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Byte java.lang.String toString(byte)'>
@@ -381,6 +389,11 @@
         </annotation>
     </item>
     <item name='java.lang.Byte short shortValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.CharSequence java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -613,6 +626,9 @@
         </annotation>
     </item>
     <item name='java.lang.Class java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Class java.net.URL getResource(java.lang.String)'>
@@ -817,6 +833,11 @@
     <item name='java.lang.Double java.lang.Double valueOf(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.Double java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.Double long doubleToRawLongBits(double)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -991,6 +1012,11 @@
     </item>
     <item name='java.lang.Float java.lang.Float valueOf(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.Float java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.Float long longValue()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1212,6 +1238,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Integer java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Integer java.lang.String toString(int)'>
@@ -1362,6 +1391,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Long java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Long java.lang.String toString(long)'>
@@ -1558,6 +1590,9 @@
         </annotation>
     </item>
     <item name='java.lang.Object java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Object void finalize()'>
@@ -1660,6 +1695,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Short java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Short java.lang.String toString(short)'>
@@ -1757,6 +1795,11 @@
     </item>
     <item name='java.lang.String String(java.lang.StringBuilder) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.String boolean contains(java.lang.CharSequence)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.String boolean contains(java.lang.CharSequence) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1992,7 +2035,8 @@
     </item>
     <item name='java.lang.String java.lang.String valueOf(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null-&gt;!null&quot;"/>
+            <val name="value" val="&quot;null-&gt;!null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.lang.String java.lang.String valueOf(java.lang.Object) 0'>
@@ -2437,6 +2481,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Thread java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.Thread long getId()'>

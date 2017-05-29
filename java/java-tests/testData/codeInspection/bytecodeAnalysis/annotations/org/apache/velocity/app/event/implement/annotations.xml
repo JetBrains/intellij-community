@@ -102,6 +102,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.app.event.implement.InvalidReferenceInfo java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.app.event.implement.PrintExceptions PrintExceptions()'>

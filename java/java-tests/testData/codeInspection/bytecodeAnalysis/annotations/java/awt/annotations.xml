@@ -209,6 +209,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Component java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Component void checkGD(java.lang.String) 0'>
@@ -408,6 +411,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Dimension java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Dimension void setSize(java.awt.Dimension) 0'>
