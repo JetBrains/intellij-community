@@ -160,3 +160,11 @@ def test_staticmethod():
 
     # test __dict__.keys()
     assert set(staticmethod.__dict__.keys()) == {'__init__', '__new__', '__func__', '__get__', '__getattribute__', '__doc__'}
+
+
+def test_dict_update():
+    d = {}
+    d.update({"k1": 1, "v1": 1})
+    d.update([("k2", 2), ("v2", 2)])
+    d.update(k3=3, v3=3)
+    assert d == {"k1": 1, "v1": 1, "k2": 2, "v2": 2, "k3": 3, "v3": 3}
