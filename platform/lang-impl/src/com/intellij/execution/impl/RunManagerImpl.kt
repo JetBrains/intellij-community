@@ -1067,8 +1067,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     }
     if (configuration is CompoundRunConfiguration) {
       configuration.setToRun.mapNotNull { getSettings(it) }.forEach {
-        makeStable(it)
-        checkIfDependenciesAreStable(it.configuration)
+        if (it.isTemporary) {
+          makeStable(it)
+          checkIfDependenciesAreStable(it.configuration)
+        }
       }
     }
   }
