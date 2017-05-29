@@ -42,6 +42,8 @@
 
     <!--<postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>-->
 
+    <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
+
   </extensions>
 
   <application-components>
