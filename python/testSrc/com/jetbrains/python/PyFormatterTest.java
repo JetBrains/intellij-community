@@ -809,6 +809,15 @@ public class PyFormatterTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
   }
 
+  // PY-21515
+  public void testSpacesBeforeFromImportSource() {
+    doTest();
+  }
+
+  public void testSpacesAfterFromInYieldFrom() {
+    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
