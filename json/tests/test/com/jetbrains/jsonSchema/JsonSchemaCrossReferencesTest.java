@@ -28,6 +28,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
@@ -37,10 +38,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.junit.Assert;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -769,6 +767,80 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         Assert.assertEquals("bbb", ((JsonProperty)parent).getName());
         Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
         Assert.assertEquals("properties", ((JsonProperty)parent.getParent().getParent()).getName());
+      }
+    });
+  }
+
+  public void testNavigationWithCompositeDefinitionsObject() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
+          new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false));
+        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/navigationWithCompositeDefinitionsObjectSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "navigationWithCompositeDefinitionsObjectSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        final Collection<JsonStringLiteral> strings = PsiTreeUtil.findChildrenOfType(myFile, JsonStringLiteral.class);
+        final List<JsonStringLiteral> list = strings.stream()
+          .filter(expression -> expression.getText().contains("#/definitions")).collect(Collectors.toList());
+        Assert.assertEquals(3, list.size());
+        list.forEach(literal -> {
+          final PsiReference ref = myFile.findReferenceAt(literal.getTextRange().getStartOffset() + 1);
+          Assert.assertNotNull(ref);
+          final PsiElement resolve = ref.resolve();
+          Assert.assertNotNull(literal.getText(), resolve);
+          Assert.assertTrue(resolve.isValid());
+          Assert.assertEquals("\"cycle.schema\"", resolve.getText());
+          final PsiElement parent = resolve.getParent();
+          Assert.assertTrue(parent instanceof JsonProperty);
+          Assert.assertEquals("cycle.schema", ((JsonProperty)parent).getName());
+          Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
+          Assert.assertEquals("definitions", ((JsonProperty)parent.getParent().getParent()).getName());
+        });
+      }
+    });
+  }
+
+  public void testNavigationIntoWithCompositeDefinitionsObject() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getModuleDir(getProject());
+        final List<UserDefinedJsonSchemaConfiguration.Item> patterns = Collections.singletonList(
+          new UserDefinedJsonSchemaConfiguration.Item("*.json", true, false));
+        addSchema(new UserDefinedJsonSchemaConfiguration("one", moduleDir + "/navigationWithCompositeDefinitionsObjectSchema.json", false, patterns));
+      }
+
+      @Override
+      public void configureFiles() throws Exception {
+        configureByFiles(null, "navigationIntoWithCompositeDefinitionsObjectSchema.json",
+                         "navigationWithCompositeDefinitionsObjectSchema.json");
+      }
+
+      @Override
+      public void doCheck() {
+        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        final PsiElement element = myFile.findElementAt(offset);
+        Assert.assertNotNull(element);
+
+        final PsiReference referenceAt = myFile.findReferenceAt(offset);
+        Assert.assertNotNull(referenceAt);
+        final PsiElement resolve = referenceAt.resolve();
+        Assert.assertNotNull(resolve);
+        Assert.assertEquals("\"id\"", resolve.getText());
+        final PsiElement parent = resolve.getParent();
+        Assert.assertTrue(parent instanceof JsonProperty);
+        Assert.assertEquals("id", ((JsonProperty)parent).getName());
+        Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
+        Assert.assertEquals(JsonSchemaObject.PROPERTIES, ((JsonProperty)parent.getParent().getParent()).getName());
       }
     });
   }

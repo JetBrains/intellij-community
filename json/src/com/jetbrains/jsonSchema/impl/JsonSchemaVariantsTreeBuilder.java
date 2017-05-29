@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.JsonObject;
+import com.intellij.json.psi.JsonProperty;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -432,10 +434,18 @@ public class JsonSchemaVariantsTreeBuilder {
       assert myName != null;
       if (JsonSchemaObject.DEFINITIONS.equals(myName) &&
           parent.getDefinitionsMap() != null && (!isInMainSchema(parent) || myLiteralResolve)) {
-        final JsonObject definitions = parent.getDefinitions();
-        if (definitions == null) return Pair.create(ThreeState.NO, null);
-        final JsonSchemaObject object = new JsonSchemaObject(definitions);
-        object.setProperties(parent.getDefinitionsMap());
+        // definitions pointer here is fictive so lets find any
+        final Map<String, JsonSchemaObject> definitionsMap = parent.getDefinitionsMap();
+        final JsonObject anyDefinitions = definitionsMap.values().stream()
+          .filter(def -> {
+            final JsonProperty parentObj = ObjectUtils.tryCast(def.getJsonObject().getParent(), JsonProperty.class);
+            return parentObj != null && parentObj.isValid() && parentObj.getValue() instanceof JsonObject;
+          })
+          .map(def -> (JsonObject)((JsonProperty) def.getJsonObject().getParent()).getValue())
+          .findFirst().orElse(null);
+        if (anyDefinitions == null) return Pair.create(ThreeState.NO, null);
+        final JsonSchemaObject object = new JsonSchemaObject(anyDefinitions);
+        object.setProperties(definitionsMap);
         return Pair.create(ThreeState.UNSURE, object);
       }
       final JsonSchemaObject child = parent.getProperties().get(myName);
