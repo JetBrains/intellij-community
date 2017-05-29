@@ -25,7 +25,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
@@ -45,7 +44,6 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.util.*;
-import java.util.zip.CRC32;
 
 /**
  * @author stathik
@@ -122,12 +120,7 @@ public class RepositoryHelper {
       if (repositoryUrl == null) {
         uriBuilder = new URIBuilder(ApplicationInfoImpl.getShadowInstance().getPluginsListUrl());
         pluginListFile = new File(PathManager.getPluginsPath(), channel == null ? PLUGIN_LIST_FILE : channel + "_" + PLUGIN_LIST_FILE);
-        if (pluginListFile.length() > 0) {
-          uriBuilder.addParameter("crc32", crc32(pluginListFile));
-          eTag = loadPluginListETag(pluginListFile);
-        } else {
-          eTag = "";
-        }
+        eTag = pluginListFile.length() > 0 ? loadPluginListETag(pluginListFile) : "";
       }
       else {
         uriBuilder = new URIBuilder(repositoryUrl);
@@ -223,15 +216,6 @@ public class RepositoryHelper {
   @NotNull
   private static File getPluginListETagFile(@NotNull File pluginListFile) {
     return new File(pluginListFile.getParentFile(), pluginListFile.getName() + ".etag");
-  }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private static String crc32(File file) throws IOException {
-    CRC32 crc32 = new CRC32();
-    crc32.update(FileUtil.loadFileBytes(file));
-    int hash = (int)crc32.getValue();
-    byte[] bytes = {(byte)hash, (byte)(hash >> 8), (byte)(hash >> 16), (byte)(hash >> 24)};
-    return StringUtil.toHexString(bytes);
   }
 
   /**
