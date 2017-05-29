@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.components.impl.stores
 
+import com.intellij.util.SystemIndependent
+
 interface ModuleStore {
-  fun setPath(path: String, isNew: Boolean)
+  fun setPath(@SystemIndependent path: String, isNew: Boolean)
 }

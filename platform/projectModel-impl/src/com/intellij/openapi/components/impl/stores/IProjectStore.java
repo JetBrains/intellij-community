@@ -18,13 +18,12 @@ package com.intellij.openapi.components.impl.stores;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemIndependent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface IProjectStore extends IComponentStore {
-  /**
-   * System-independent path.
-   */
+  @SystemIndependent
   @NotNull
   String getProjectBasePath();
 
@@ -34,9 +33,7 @@ public interface IProjectStore extends IComponentStore {
   @NotNull
   StorageScheme getStorageScheme();
 
-  /**
-   * System-independent path.
-   */
+  @SystemIndependent
   @NotNull
   String getProjectFilePath();
 
@@ -63,15 +60,18 @@ public interface IProjectStore extends IComponentStore {
   VirtualFile getDirectoryStoreFile();
 
   @Nullable
+  @SystemIndependent
   String getDirectoryStorePath(boolean ignoreProjectStorageScheme);
 
   /**
    * Directory of project configuration files for directory-based project. Or null.
    */
+  @SystemIndependent
   default String getDirectoryStorePath() {
     return getDirectoryStorePath(false);
   }
 
   @NotNull
+  @SystemIndependent
   String getDirectoryStorePathOrBase();
 }
