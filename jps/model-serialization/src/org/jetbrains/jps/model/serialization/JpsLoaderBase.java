@@ -51,11 +51,11 @@ public abstract class JpsLoaderBase {
   }
 
   protected <E extends JpsElement> void loadComponents(@NotNull Path dir,
-                                                       final String defaultFileName,
+                                                       @NotNull Path defaultConfigFile,
                                                        JpsElementExtensionSerializerBase<E> serializer,
                                                        final E element) {
     String fileName = serializer.getConfigFileName();
-    Path configFile = dir.resolve(fileName != null ? fileName : defaultFileName);
+    Path configFile = fileName == null ? defaultConfigFile : dir.resolve(fileName);
     Runnable timingLog = TimingLog.startActivity("loading: " + configFile.getFileName() + ":" + serializer.getComponentName());
     Element componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
     if (componentTag != null) {

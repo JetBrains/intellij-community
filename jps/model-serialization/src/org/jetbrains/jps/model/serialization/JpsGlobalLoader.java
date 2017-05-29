@@ -55,7 +55,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
 
   public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
     Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
-    new JpsGlobalLoader(global, Collections.emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
+    new JpsGlobalLoader(global, Collections.emptyMap()).loadGlobalComponents(optionsDir, optionsDir.resolve("other.xml"), new PathVariablesSerializer());
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
   }
@@ -69,19 +69,20 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   private void load(@NotNull Path optionsDir) {
+    Path defaultConfigFile = optionsDir.resolve("other.xml");
     LOG.debug("Loading config from " + optionsDir.toAbsolutePath());
     for (JpsGlobalExtensionSerializer serializer : SERIALIZERS) {
-      loadGlobalComponents(optionsDir, serializer);
+      loadGlobalComponents(optionsDir, defaultConfigFile, serializer);
     }
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsGlobalExtensionSerializer serializer : extension.getGlobalExtensionSerializers()) {
-        loadGlobalComponents(optionsDir, serializer);
+        loadGlobalComponents(optionsDir, defaultConfigFile, serializer);
       }
     }
   }
 
-  private void loadGlobalComponents(@NotNull Path optionsDir, JpsGlobalExtensionSerializer serializer) {
-    loadComponents(optionsDir, "other.xml", serializer, myGlobal);
+  private void loadGlobalComponents(@NotNull Path optionsDir, @NotNull Path defaultConfigFile, JpsGlobalExtensionSerializer serializer) {
+    loadComponents(optionsDir, defaultConfigFile.getParent(), serializer, myGlobal);
   }
 
   public static class PathVariablesSerializer extends JpsGlobalExtensionSerializer {
