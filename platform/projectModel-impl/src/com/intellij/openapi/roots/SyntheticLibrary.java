@@ -18,9 +18,11 @@ package com.intellij.openapi.roots;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +65,15 @@ public abstract class SyntheticLibrary {
   }
 
   /**
+   * @return a condition for excluding file from a library by its name or {@code null}
+   * E.g. you can exclude all non-java file by returning {@code name -> !name.endsWith(".java")}
+   */
+  @Nullable
+  public Condition<String> getExcludeCondition() {
+    return null;
+  }
+
+  /**
    * This method is vital if this library is shown under "External Libraries" (the library should implement ItemPresentation for that).
    * In this case, each {@link com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode#getChildren()} invocation will create a new
    * {@link com.intellij.ide.projectView.impl.nodes.SyntheticLibraryElementNode} instance passing this library as a value.
@@ -86,11 +97,13 @@ public abstract class SyntheticLibrary {
 
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots) {
-    return newImmutableLibrary(sourceRoots, Collections.emptySet());
+    return newImmutableLibrary(sourceRoots, Collections.emptySet(), null);
   }
 
   @NotNull
-  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots, @NotNull Set<VirtualFile> excludedRoots) {
+  public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
+                                                     @NotNull Set<VirtualFile> excludedRoots,
+                                                     @Nullable Condition<String> excludeCondition) {
     return new SyntheticLibrary() {
       @NotNull
       @Override
@@ -104,6 +117,12 @@ public abstract class SyntheticLibrary {
         return excludedRoots;
       }
 
+      @Nullable
+      @Override
+      public Condition<String> getExcludeCondition() {
+        return excludeCondition;
+      }
+
       @Override
       public boolean equals(Object o) {
         if (this == o) return true;
@@ -111,6 +130,10 @@ public abstract class SyntheticLibrary {
         SyntheticLibrary library = (SyntheticLibrary)o;
         if (!sourceRoots.equals(library.getSourceRoots())) return false;
         if (!excludedRoots.equals(library.getExcludedRoots())) return false;
+        if (excludeCondition != null ? !excludeCondition.equals(library.getExcludeCondition())
+                                     : library.getExcludeCondition() != null) {
+          return false;
+        }
         return true;
       }
 
@@ -118,6 +141,7 @@ public abstract class SyntheticLibrary {
       public int hashCode() {
         int result = sourceRoots.hashCode();
         result = 31 * result + excludedRoots.hashCode();
+        result = 31 * result + (excludeCondition != null ? excludeCondition.hashCode() : 0);
         return result;
       }
     };

@@ -156,7 +156,7 @@ private class DefaultWebServerRootsProvider : WebServerRootsProvider() {
           }
         }
         else {
-          isLibrary = info.isInLibrarySource
+          isLibrary = info.isInLibrarySource(file)
           isRootNameOptionalInPath = !isLibrary
         }
 

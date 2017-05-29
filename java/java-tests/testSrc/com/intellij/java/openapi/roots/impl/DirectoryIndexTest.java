@@ -178,7 +178,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
         public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
           return myProject == project ? Collections.singletonList(
             SyntheticLibrary.newImmutableLibrary(ContainerUtil.newArrayList(myLibAdditionalDir, myLibAdditionalOutsideDir),
-                                                 ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir))
+                                                 ContainerUtil.newHashSet(myLibAdditionalExcludedDir, myLibAdditionalOutsideExcludedDir), null)
           ) : Collections.emptyList();
         }
       }, getTestRootDisposable());
@@ -960,7 +960,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       assertFalse("isInModuleSource", info.isInModuleSource());
     }
     assertEquals(isInLibraryClasses, info.hasLibraryClassRoot());
-    assertEquals(isInLibrarySource, info.isInLibrarySource());
+    assertEquals(isInLibrarySource, info.isInLibrarySource(file));
     assertEquals(isInLibraryClasses || isInLibrarySource, myFileIndex.isInLibrary(file));
 
     if (file.isDirectory()) {

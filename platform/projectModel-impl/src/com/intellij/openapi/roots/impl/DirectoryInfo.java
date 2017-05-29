@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.SyntheticLibrary;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,13 +50,25 @@ public abstract class DirectoryInfo {
   /**
    * Returns {@code true} if {@code file} located under this directory is excluded from the project. If {@code file} is a directory it means
    * that all of its content is recursively excluded from the project.
+   *
    * @param file a file under the directory described by this instance.
    */
   public abstract boolean isExcluded(@NotNull VirtualFile file);
 
   public abstract boolean isInModuleSource();
 
+  /**
+   * @return {@code true} if {@code file} located under this directory is located in library sources.
+   * @deprecated use {@link #isInLibrarySource(VirtualFile)} instead, this method doesn't take {@link SyntheticLibrary#getExcludeCondition()} into account
+   */
   public abstract boolean isInLibrarySource();
+
+  /**
+   * @param file a file under the directory described by this instance.
+   * @return {@code true} if {@code file} located under this directory is located in library sources.
+   * If {@code file} is a directory it means that all of its content is recursively in not part of the libraries.
+   */
+  public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
 
   @Nullable
   public abstract VirtualFile getSourceRoot();

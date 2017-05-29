@@ -161,7 +161,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInSource(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInModuleSource() || info.isInLibrarySource();
+    return info.isInModuleSource() || info.isInLibrarySource(fileOrDir);
   }
 
   @Override
@@ -173,13 +173,13 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInProject(fileOrDir) && info.isInLibrarySource();
+    return info.isInProject(fileOrDir) && info.isInLibrarySource(fileOrDir);
   }
 
   // a slightly faster implementation then the default one
   public boolean isInLibrary(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInProject(fileOrDir) && (info.hasLibraryClassRoot() || info.isInLibrarySource());
+    return info.isInProject(fileOrDir) && (info.hasLibraryClassRoot() || info.isInLibrarySource(fileOrDir));
   }
 
   @Override
