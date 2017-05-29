@@ -29,13 +29,8 @@ public class JavaSdkVersionUtil {
   }
 
   public static JavaSdkVersion getJavaSdkVersion(@NotNull PsiElement element) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(element);
-    JavaSdkVersion version = null;
-    if (module != null) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      version = getJavaSdkVersion(sdk);
-    }
-    return version;
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    return module != null ? getJavaSdkVersion(ModuleRootManager.getInstance(module).getSdk()) : null;
   }
 
   public static JavaSdkVersion getJavaSdkVersion(@Nullable Sdk sdk) {
