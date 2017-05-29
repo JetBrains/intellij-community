@@ -804,7 +804,6 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
-        ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
         FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
           if(isCancelled()) {
@@ -819,26 +818,12 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             resultsFilesCount.incrementAndGet();
             lastUsageFileRef.set(usageFile);
           }
-          final boolean merged;
-          Usage recent = recentUsageRef.get();
-          UsageInfo2UsageAdapter recentAdapter =
-            recent != null && recent instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)recent : null;
-          UsageInfo2UsageAdapter currentAdapter = usage instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)usage : null;
-          if (currentAdapter != null && recentAdapter != null && recentAdapter.getFile().equals(usageFile) && recentAdapter.getLine() == currentAdapter.getLine()) {
-            merged = recentAdapter.merge(currentAdapter);
-          } else {
-            merged = false;
-          }
-          recentUsageRef.set(usage);
-
 
           ApplicationManager.getApplication().invokeLater(() -> {
             if(isCancelled()) {
               return;
             }
-            if (!merged) {
-              model.addRow(new Object[]{usage});
-            }
+            model.addRow(new Object[]{usage});
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);
