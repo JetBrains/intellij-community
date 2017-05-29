@@ -799,6 +799,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-21931
+  public void testSpacesAroundElseInConditionalExpression() {
+    doTest();
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
