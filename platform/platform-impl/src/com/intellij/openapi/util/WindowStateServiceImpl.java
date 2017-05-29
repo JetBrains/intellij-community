@@ -283,7 +283,15 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         state.scaleUp(keyPair.second);
       } else {
         myStateMap.remove(keyPair.first);
-        myStateMap.remove(oldKeyPair.get().first);
+
+        // check if we need to remove the old key state
+        keyPair = oldKeyPair.get();
+        if ((state = myStateMap.get(keyPair.first)) != null) {
+          state = state.copy(); // we don't want to update it
+          if (!state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
+            myStateMap.remove(keyPair.first);
+          }
+        }
       }
     }
     else {
