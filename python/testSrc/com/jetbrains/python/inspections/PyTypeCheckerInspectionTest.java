@@ -407,4 +407,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testOverloadsAndImplementationInImportedClass() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
   }
+
+  // PY-23429
+  public void testMatchingModuleAgainstStructuralType() {
+    doMultiFileTest();
+  }
 }

@@ -1,0 +1,2 @@
+class Barrier:
+    pass
