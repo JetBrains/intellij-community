@@ -36,7 +36,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +45,7 @@ import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 import javax.swing.*;
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -63,6 +63,9 @@ public class JavaSdkImpl extends JavaSdk {
   private static final Pattern VERSION_STRING_PATTERN = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
   private static final String JAVA_VERSION_PREFIX = "java version ";
   private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
+
+  private final Map<String, String> myCachedSdkHomeToVersionString = new ConcurrentHashMap<>();
+  private final Map<String, JavaSdkVersion> myCachedVersionStringToJavaVersion = new ConcurrentHashMap<>();
 
   public JavaSdkImpl(final VirtualFileManager fileManager, final FileTypeManager fileTypeManager) {
     super("JavaSDK");
@@ -87,14 +90,8 @@ public class JavaSdkImpl extends JavaSdk {
         final VirtualFile file = event.getFile();
         if (FileTypes.ARCHIVE.equals(fileTypeManager.getFileTypeByFileName(event.getFileName()))) {
           final String filePath = file.getPath();
-          synchronized (myCachedSdkHomeToVersionString) {
-            for (String sdkHome : myCachedSdkHomeToVersionString.keySet()) {
-              if (FileUtil.isAncestor(sdkHome, filePath, false)) {
-                myCachedSdkHomeToVersionString.remove(sdkHome);
-                myCachedVersionStringToJavaVersion.clear();
-                break;
-              }
-            }
+          if (myCachedSdkHomeToVersionString.keySet().removeIf(sdkHome -> FileUtil.isAncestor(sdkHome, filePath, false))) {
+            myCachedVersionStringToJavaVersion.clear();
           }
         }
       }
@@ -324,9 +321,6 @@ public class JavaSdkImpl extends JavaSdk {
     modificator.removeRoot(root, annoType);
     modificator.addRoot(root, annoType);
   }
-
-  private final Map<String, String> myCachedSdkHomeToVersionString = Collections.synchronizedMap(new HashMap<>());
-  private final Map<String, JavaSdkVersion> myCachedVersionStringToJavaVersion = Collections.synchronizedMap(new HashMap<>());
 
   @Override
   public final String getVersionString(String sdkHome) {
