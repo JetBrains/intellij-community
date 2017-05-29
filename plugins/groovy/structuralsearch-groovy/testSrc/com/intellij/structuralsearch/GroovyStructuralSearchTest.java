@@ -151,6 +151,6 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
 
   private void findAndCheck(String source, String pattern, int expectedOccurences) {
     testMatcher.clearContext();
-    assertEquals(expectedOccurences, findMatchesCount(source, pattern, true, GroovyFileType.GROOVY_FILE_TYPE));
+    assertEquals(expectedOccurences, findMatchesCount(source, pattern, GroovyFileType.GROOVY_FILE_TYPE));
   }
 }
