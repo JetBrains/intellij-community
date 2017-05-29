@@ -160,7 +160,17 @@ public abstract class MethodContract {
     }
 
     /**
-     * @return negated constraint or this if the constraint cannot be negated
+     * @return true if constraint can be negated
+     * @see #negate()
+     */
+    public boolean canBeNegated() {
+      return this != ANY_VALUE && this != THROW_EXCEPTION;
+    }
+
+    /**
+     * @return negated constraint
+     * @throws IllegalStateException if constraint cannot be negated
+     * @see #canBeNegated()
      */
     public ValueConstraint negate() {
       switch (this) {
@@ -168,7 +178,8 @@ public abstract class MethodContract {
         case NOT_NULL_VALUE: return NULL_VALUE;
         case TRUE_VALUE: return FALSE_VALUE;
         case FALSE_VALUE: return TRUE_VALUE;
-        default: return this;
+        default:
+          throw new IllegalStateException("ValueConstraint = " + this);
       }
     }
 

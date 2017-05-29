@@ -421,7 +421,7 @@ public class BytecodeAnalysisConverter {
         ValueConstraint left = c1.arguments[i];
         ValueConstraint right = c2.arguments[i];
         if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
-        if (idx >= 0 || left == right || left != right.negate()) return null;
+        if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
         idx = i;
       }
       return c1;
