@@ -36,6 +36,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.*;
@@ -52,7 +53,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     return BASE_PATH;
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaCrossReferenceCompletion() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -95,7 +95,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     assertStringItems(strings);
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testRefreshSchemaCompletionSimpleVariant() throws Exception {
     skeleton(new Callback() {
       private String myModuleDir;
@@ -126,7 +125,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaCrossReferenceCompletionWithSchemaEditing() throws Exception {
     skeleton(new Callback() {
       private String myModuleDir;
@@ -197,7 +195,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     assertStringItems("\"one1\"", "\"two1\"");
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaRefsCrossResolve() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -233,7 +230,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testJsonSchemaGlobalRefsCrossResolve() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -270,7 +266,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testJson2SchemaPropertyResolve() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -313,7 +308,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testFindRefInOtherFile() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -343,7 +337,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testFindRefToOtherFile() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -374,7 +367,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateToPropertyDefinitionInPackageJsonSchema() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -405,7 +397,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateToPropertyDefinitionNestedDefinitions() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -434,7 +425,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateToAllOfOneOfDefinitions() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -465,7 +455,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNestedAllOneAnyWithInheritanceNavigation() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
     skeleton(new Callback() {
@@ -496,7 +485,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNestedAllOneAnyWithInheritanceCompletion() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
     skeleton(new Callback() {
@@ -521,7 +509,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNestedAllOneAnyWithInheritanceHighlighting() throws Exception {
     final String prefix = "nestedAllOneAnyWithInheritance/";
     skeleton(new Callback() {
@@ -546,7 +533,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateToDefinitionByRef() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -606,7 +592,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateFromSchemaDefinitionToMainSchema() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -637,7 +622,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateToRefInsideMainSchema() throws Exception {
     final JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
     final List<JsonSchemaFileProvider> providers = new JsonSchemaProjectSelfProviderFactory().getProviders(myProject);
@@ -672,7 +656,6 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     Assert.assertEquals("positiveInteger", ((JsonProperty) resolve.getParent()).getName());
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigateToDefinitionByRefInFileWithIncorrectReference() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -691,16 +674,20 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       @Override
       public void doCheck() {
         final String midia = "midia";
-        checkNavigationIntoDefinition(midia);
+        checkNavigationTo(midia, JsonSchemaObject.DEFINITIONS);
       }
     });
   }
 
-  private void checkNavigationIntoDefinition(String name) {
+  private void checkNavigationTo(@NotNull String name, @NotNull String base) {
     int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
     final PsiElement element = myFile.findElementAt(offset);
     Assert.assertNotNull(element);
 
+    checkNavigationTo(name, offset, base);
+  }
+
+  private void checkNavigationTo(@NotNull String name, int offset, @NotNull String base) {
     final PsiReference referenceAt = myFile.findReferenceAt(offset);
     Assert.assertNotNull(referenceAt);
     final PsiElement resolve = referenceAt.resolve();
@@ -710,10 +697,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     Assert.assertTrue(parent instanceof JsonProperty);
     Assert.assertEquals(name, ((JsonProperty)parent).getName());
     Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-    Assert.assertEquals(JsonSchemaObject.DEFINITIONS, ((JsonProperty)parent.getParent().getParent()).getName());
+    Assert.assertEquals(base, ((JsonProperty)parent.getParent().getParent()).getName());
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testInsideCycledSchemaNavigation() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -730,12 +716,11 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationIntoDefinition("all");
+        checkNavigationTo("all", JsonSchemaObject.DEFINITIONS);
       }
     });
   }
 
-  @CanChangeDocumentDuringHighlighting
   public void testNavigationIntoCycledSchema() throws Exception {
     skeleton(new Callback() {
       @Override
@@ -753,20 +738,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiElement element = myFile.findElementAt(offset);
-        Assert.assertNotNull(element);
-
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
-        Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"bbb\"", resolve.getText());
-        final PsiElement parent = resolve.getParent();
-        Assert.assertTrue(parent instanceof JsonProperty);
-        Assert.assertEquals("bbb", ((JsonProperty)parent).getName());
-        Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-        Assert.assertEquals("properties", ((JsonProperty)parent.getParent().getParent()).getName());
+        checkNavigationTo("bbb", JsonSchemaObject.PROPERTIES);
       }
     });
   }
@@ -792,19 +764,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final List<JsonStringLiteral> list = strings.stream()
           .filter(expression -> expression.getText().contains("#/definitions")).collect(Collectors.toList());
         Assert.assertEquals(3, list.size());
-        list.forEach(literal -> {
-          final PsiReference ref = myFile.findReferenceAt(literal.getTextRange().getStartOffset() + 1);
-          Assert.assertNotNull(ref);
-          final PsiElement resolve = ref.resolve();
-          Assert.assertNotNull(literal.getText(), resolve);
-          Assert.assertTrue(resolve.isValid());
-          Assert.assertEquals("\"cycle.schema\"", resolve.getText());
-          final PsiElement parent = resolve.getParent();
-          Assert.assertTrue(parent instanceof JsonProperty);
-          Assert.assertEquals("cycle.schema", ((JsonProperty)parent).getName());
-          Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-          Assert.assertEquals("definitions", ((JsonProperty)parent.getParent().getParent()).getName());
-        });
+        list.forEach(literal -> checkNavigationTo("cycle.schema", literal.getTextRange().getStartOffset() + 1, JsonSchemaObject.DEFINITIONS));
       }
     });
   }
@@ -827,20 +787,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiElement element = myFile.findElementAt(offset);
-        Assert.assertNotNull(element);
-
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
-        Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"id\"", resolve.getText());
-        final PsiElement parent = resolve.getParent();
-        Assert.assertTrue(parent instanceof JsonProperty);
-        Assert.assertEquals("id", ((JsonProperty)parent).getName());
-        Assert.assertTrue(parent.getParent().getParent() instanceof JsonProperty);
-        Assert.assertEquals(JsonSchemaObject.PROPERTIES, ((JsonProperty)parent.getParent().getParent()).getName());
+        checkNavigationTo("id", JsonSchemaObject.PROPERTIES);
       }
     });
   }
