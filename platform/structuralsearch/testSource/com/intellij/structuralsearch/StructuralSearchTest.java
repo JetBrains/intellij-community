@@ -1753,13 +1753,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   //  assertEquals( 3, findMatchesCount(s1,s2));
   //}
 
-  @SuppressWarnings("unused")
-  public void _testStaticInstanceInitializers() {
-    String s1 = "public class DiallingNumber {\n static { int a = 1; } static { int b = 1; } { int c = 2; }}";
-    assertEquals("Static / instance initializers", 2, findMatchesCount(s1, "class '_Class { static { 't*; } }"));
-    assertEquals("Static / instance initializers", 1,
-                 findMatchesCount(s1, "class '_Class { @Modifier(\"Instance\") { 't*; } }"));
-    assertEquals("Static / instance initializers", 3, findMatchesCount(s1, "class '_Class { { 't*; } }"));
+  public void testStaticInstanceInitializers() {
+    String s1 = "public class DiallingNumber {" +
+                "  static { int a = 1; }" +
+                "  static { int b = 1; }" +
+                "  { int c = 2; }" +
+                "}";
+    assertEquals("Static / instance initializers", 2, findMatchesCount(s1, "static { 't*; }"));
+    assertEquals("Static / instance initializers", 1, findMatchesCount(s1, "@Modifier(\"Instance\") { 't*; }"));
+    assertEquals("Static / instance initializers", 3, findMatchesCount(s1, "{ 't*; }"));
   }
 
   @NotNull
