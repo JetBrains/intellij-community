@@ -60,6 +60,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.lwawt.macosx.CPlatformWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -425,6 +426,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
 
     final AnCancelAction anCancelAction = new AnCancelAction();
     final JRootPane rootPane = getRootPane();
+    rootPane.putClientProperty(CPlatformWindow.WINDOW_DARK_APPEARANCE , UIUtil.isUnderDarcula());
     anCancelAction.registerCustomShortcutSet(CommonShortcuts.ESCAPE, rootPane);
     myDisposeActions.add(() -> anCancelAction.unregisterCustomShortcutSet(rootPane));
 

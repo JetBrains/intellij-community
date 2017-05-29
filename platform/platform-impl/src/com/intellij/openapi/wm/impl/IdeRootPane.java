@@ -49,6 +49,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.lwawt.macosx.CPlatformWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -125,7 +126,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     IdeGlassPaneImpl glassPane = new IdeGlassPaneImpl(this, true);
     setGlassPane(glassPane);
     myGlassPaneInitialized = true;
-
+    putClientProperty(CPlatformWindow.WINDOW_DARK_APPEARANCE , UIUtil.isUnderDarcula());
     glassPane.setVisible(false);
   }
 
@@ -344,6 +345,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   @Override
   public void uiSettingsChanged(UISettings uiSettings) {
+    putClientProperty(CPlatformWindow.WINDOW_DARK_APPEARANCE , UIUtil.isUnderDarcula());
     setMemoryIndicatorVisible(uiSettings.getShowMemoryIndicator());
     updateToolbarVisibility();
     updateStatusBarVisibility();
