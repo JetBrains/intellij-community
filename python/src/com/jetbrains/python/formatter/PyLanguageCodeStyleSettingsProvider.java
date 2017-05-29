@@ -162,6 +162,9 @@ public class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettin
     indentOptions.INDENT_SIZE = 4;
     defaultSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     defaultSettings.KEEP_BLANK_LINES_IN_DECLARATIONS = 1;
+    // Don't set it to 2 -- this setting is used implicitly in a lot of methods related to spacing,
+    // e.g. in SpacingBuilder#blankLines(), and can lead to unexpected side-effects in formatter's
+    // behavior
     defaultSettings.KEEP_BLANK_LINES_IN_CODE = 1;
     return defaultSettings;
   }
