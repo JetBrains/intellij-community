@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +36,11 @@ public class JpsRunConfigurationSerializer {
   private static final Logger LOG = Logger.getInstance(JpsRunConfigurationSerializer.class);
 
   public static void loadRunConfigurations(@NotNull JpsProject project, @Nullable Element runManagerTag) {
+    List<Element> elements = JDOMUtil.getChildren(runManagerTag, "configuration");
+    if (elements.isEmpty()) {
+      return;
+    }
+
     Map<String, JpsRunConfigurationPropertiesSerializer<?>> serializers = new HashMap<>();
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsRunConfigurationPropertiesSerializer<?> serializer : extension.getRunConfigurationPropertiesSerializers()) {
@@ -42,7 +48,7 @@ public class JpsRunConfigurationSerializer {
       }
     }
 
-    for (Element configurationTag : JDOMUtil.getChildren(runManagerTag, "configuration")) {
+    for (Element configurationTag : elements) {
       if (Boolean.parseBoolean(configurationTag.getAttributeValue("default"))) {
         continue;
       }

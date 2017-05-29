@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -59,7 +60,7 @@ public class JpsMacroExpander {
     }
   }
 
-  public void substitute(Element element, boolean caseSensitive) {
+  public void substitute(@NotNull Element element, boolean caseSensitive) {
     myExpandMacroMap.substitute(element, caseSensitive);
   }
 

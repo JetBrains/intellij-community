@@ -21,11 +21,13 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 /**
@@ -40,6 +42,10 @@ public abstract class JpsLoaderBase {
     myMacroExpander = macroExpander;
   }
 
+  /**
+   * Returns null if file doesn't exist
+   */
+  @Nullable
   protected Element loadRootElement(@NotNull Path file) {
     return loadRootElement(file, myMacroExpander);
   }
@@ -51,14 +57,7 @@ public abstract class JpsLoaderBase {
     String fileName = serializer.getConfigFileName();
     Path configFile = dir.resolve(fileName != null ? fileName : defaultFileName);
     Runnable timingLog = TimingLog.startActivity("loading: " + configFile.getFileName() + ":" + serializer.getComponentName());
-    Element componentTag;
-    if (Files.exists(configFile)) {
-      componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
-    }
-    else {
-      componentTag = null;
-    }
-
+    Element componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
     if (componentTag != null) {
       serializer.loadExtension(element, componentTag);
     }
@@ -68,35 +67,45 @@ public abstract class JpsLoaderBase {
     timingLog.run();
   }
 
-  protected static Element loadRootElement(@NotNull Path file, final JpsMacroExpander macroExpander) {
-    try {
-      final Element element = tryLoadRootElement(file);
+  /**
+   * Returns null if file doesn't exist
+   */
+  @Nullable
+  protected static Element loadRootElement(@NotNull Path file, @NotNull JpsMacroExpander macroExpander) {
+    final Element element = tryLoadRootElement(file);
+    if (element != null) {
       macroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
-      return element;
     }
-    catch (JDOMException e) {
-      throw new CannotLoadJpsModelException(file.toFile(), "Cannot parse xml file " + file.toAbsolutePath() + ": " + e.getMessage(), e);
-    }
-    catch (IOException e) {
-      throw new CannotLoadJpsModelException(file.toFile(), "Cannot read file " + file.toAbsolutePath() + ": " + e.getMessage(), e);
-    }
+    return element;
   }
 
-  private static Element tryLoadRootElement(@NotNull Path file) throws IOException, JDOMException {
-    for (int i = 0; i < MAX_ATTEMPTS - 1; i++) {
+  @Nullable
+  private static Element tryLoadRootElement(@NotNull Path file) {
+    int i = 0;
+    while (true) {
       try {
         return JDOMUtil.load(Files.newBufferedReader(file));
       }
-      catch (Exception e) {
+      catch (NoSuchFileException e) {
+        return null;
+      }
+      catch (IOException | JDOMException e) {
+        if (++i == MAX_ATTEMPTS) {
+          //noinspection InstanceofCatchParameter
+          throw new CannotLoadJpsModelException(file.toFile(), "Cannot " + (e instanceof IOException ? "read" : "parse") + " file " + file.toAbsolutePath() + ": " + e.getMessage(), e);
+        }
+
         LOG.info("Loading attempt #" + i + " failed", e);
       }
+
       //most likely configuration file is being written by IDE so we'll wait a little
       try {
         //noinspection BusyWait
         Thread.sleep(300);
       }
-      catch (InterruptedException ignored) { }
+      catch (InterruptedException ignored) {
+        return null;
+      }
     }
-    return JDOMUtil.load(Files.newBufferedReader(file));
   }
 }

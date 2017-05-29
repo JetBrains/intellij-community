@@ -142,11 +142,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       for (Path configurationFile : listXmlFiles(dir.resolve("runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
       }
-      Path workspaceFile = dir.resolve("workspace.xml");
-      if (Files.exists(workspaceFile)) {
-        Element runManager = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "RunManager");
-        JpsRunConfigurationSerializer.loadRunConfigurations(myProject, runManager);
-      }
+      JpsRunConfigurationSerializer.loadRunConfigurations(myProject, JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("workspace.xml")), "RunManager"));
       runConfTimingLog.run();
     }
   }
@@ -178,7 +174,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     String projectName = FileUtil.getNameWithoutExtension(iprFile.getFileName().toString());
     myProject.setName(projectName);
     Path iwsFile = iprFile.getParent().resolve(projectName + ".iws");
-    Element iwsRoot = Files.exists(iwsFile) ? loadRootElement(iwsFile) : null;
+    Element iwsRoot = loadRootElement(iwsFile);
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
@@ -207,7 +203,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @Nullable
-  private JpsSdkType<?> loadProjectRoot(Element root) {
+  private JpsSdkType<?> loadProjectRoot(@Nullable Element root) {
     JpsSdkType<?> sdkType = null;
     Element rootManagerElement = JDomSerializationUtil.findComponent(root, "ProjectRootManager");
     if (rootManagerElement != null) {
@@ -225,7 +221,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(Element root, final @Nullable JpsSdkType<?> projectSdkType) {
+  private void loadModules(@Nullable Element root, final @Nullable JpsSdkType<?> projectSdkType) {
     Runnable timingLog = TimingLog.startActivity("loading modules");
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
@@ -263,14 +259,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
       futureModuleFilesContents.add(ourThreadPool.submit(() -> {
         final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
 
-        Element data = null;
-        if (Files.exists(file)) {
-          data = loadRootElement(file, expander);
-        }
-
+        Element data = loadRootElement(file, expander);
         Path externalPath = externalModuleDir == null ? null : externalModuleDir.resolve(FileUtilRt.getNameWithoutExtension(file.getFileName().toString()) + ".xml");
-        if (externalPath != null && Files.exists(externalPath)) {
-          Element externalData = loadRootElement(externalPath, expander);
+        Element externalData = externalPath == null ? null : loadRootElement(externalPath, expander);
+        if (externalData != null) {
           if (data == null) {
             data = externalData;
           }
