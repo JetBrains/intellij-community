@@ -12,7 +12,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -110,7 +109,7 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
   }
 
   protected VirtualFile copyFileToTask(String name) {
-    return myFixture.copyFileToProject(name, FileUtil.join(getProject().getBasePath(), "lesson1", "task1", name));
+    return myFixture.copyFileToProject(name, "lesson1/task1/" + name);
   }
 
   protected VirtualFile configureByTaskFile(String name) {
@@ -187,14 +186,19 @@ public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase
   }
 
   public Pair<Document, List<AnswerPlaceholder>> getPlaceholders(String name, boolean useLength, boolean removeMarkers) {
-    VirtualFile resultFile = LocalFileSystem.getInstance().findFileByPath(getBasePath() + "/" + name);
-    Document document = FileDocumentManager.getInstance().getDocument(resultFile);
-    Document tempDocument = EditorFactory.getInstance().createDocument(document.getCharsSequence());
-    if (removeMarkers) {
-      EditorTestUtil.extractCaretAndSelectionMarkers(tempDocument);
+    try {
+      String text = FileUtil.loadFile(new File(getBasePath(), name));
+      Document tempDocument = EditorFactory.getInstance().createDocument(text);
+      if (removeMarkers) {
+        EditorTestUtil.extractCaretAndSelectionMarkers(tempDocument);
+      }
+      List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, useLength);
+      return Pair.create(tempDocument, placeholders);
     }
-    List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, useLength);
-    return Pair.create(tempDocument, placeholders);
+    catch (IOException e) {
+      LOG.error(e);
+    }
+    return Pair.create(null, null);
   }
 
   @Override
