@@ -48,10 +48,8 @@ class CircletConnectionComponent(val project: Project) :
                             }
                         }
                     }, 100, TimeUnit.MILLISECONDS)
-
                 }
             }
-
         }
 
 
