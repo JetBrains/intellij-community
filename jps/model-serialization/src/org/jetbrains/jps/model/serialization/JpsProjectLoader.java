@@ -130,6 +130,13 @@ public class JpsProjectLoader extends JpsLoaderBase {
     for (Path libraryFile : listXmlFiles(dir.resolve("libraries"))) {
       loadProjectLibraries(loadRootElement(libraryFile));
     }
+
+    Path externalConfigDir = resolveExternalProjectConfig("project");
+    if (externalConfigDir != null) {
+      LOG.info("External project config dir is used: " + externalConfigDir);
+      loadProjectLibraries(loadRootElement(externalConfigDir.resolve("libraries.xml")));
+    }
+
     timingLog.run();
 
     Runnable artifactsTimingLog = TimingLog.startActivity("loading artifacts");
@@ -245,15 +252,20 @@ public class JpsProjectLoader extends JpsLoaderBase {
     timingLog.run();
   }
 
+  @Nullable
+  private static Path resolveExternalProjectConfig(@NotNull String subDirName) {
+    String externalProjectConfigDir = System.getProperty("external.project.config");
+    return StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, subDirName);
+  }
+
   @NotNull
   public static List<JpsModule> loadModules(@NotNull List<Path> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
-    String externalProjectConfigDir = System.getProperty("external.project.config");
-    Path externalModuleDir = StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, "modules");
+    Path externalModuleDir = resolveExternalProjectConfig("modules");
     if (externalModuleDir != null) {
-      LOG.info("External project config dir is used: " + externalProjectConfigDir);
+      LOG.info("External project config dir is used for modules: " + externalModuleDir);
     }
 
     for (Path file : moduleFiles) {

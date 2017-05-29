@@ -1141,7 +1141,7 @@ public class BuildManager implements Disposable {
     }
 
     if (StreamProviderKt.isExternalStorageEnabled()) {
-      cmdLine.addParameter("-Dexternal.project.config=" + ProjectUtil.getExternalConfigurationDir(project));
+      cmdLine.addParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + "=" + ProjectUtil.getExternalConfigurationDir(project));
     }
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
