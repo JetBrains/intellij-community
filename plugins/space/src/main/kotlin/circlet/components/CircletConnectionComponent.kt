@@ -37,7 +37,10 @@ class CircletConnectionComponent(val project: Project) :
 
                                     client.connected.view(orgLt) { ntlt, value ->
                                         if (value)
+                                        {
                                             notifyConnected()
+                                            this@CircletConnectionComponent.client.value = client
+                                        }
                                         else
                                             notifyReconnect(ntlt)
                                     }
