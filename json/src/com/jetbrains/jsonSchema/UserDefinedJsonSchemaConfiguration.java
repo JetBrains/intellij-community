@@ -27,6 +27,7 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,17 +40,18 @@ import java.util.regex.Matcher;
 /**
  * @author Irina.Chernushina on 4/19/2017.
  */
+@Tag("SchemaInfo")
 public class UserDefinedJsonSchemaConfiguration {
   private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
-    if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
-    if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
-    return o1.getPath().compareToIgnoreCase(o2.getPath());
+    if (o1.pattern != o2.pattern) return o1.pattern ? -1 : 1;
+    if (o1.directory != o2.directory) return o1.directory ? -1 : 1;
+    return o1.path.compareToIgnoreCase(o2.path);
   };
 
-  public String myName;
-  public String myRelativePathToSchema;
-  public boolean myApplicationLevel;
-  public List<Item> myPatterns = new SmartList<>();
+  public String name;
+  public String relativePathToSchema;
+  public boolean applicationLevel;
+  public List<Item> patterns = new SmartList<>();
   @Transient
   private final AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>> myCalculatedPatterns =
     new AtomicClearableLazyValue<List<PairProcessor<Project, VirtualFile>>>() {
@@ -65,44 +67,44 @@ public class UserDefinedJsonSchemaConfiguration {
 
   public UserDefinedJsonSchemaConfiguration(@NotNull String name, @NotNull String relativePathToSchema,
                                             boolean applicationLevel, @Nullable List<Item> patterns) {
-    myName = name;
-    myRelativePathToSchema = relativePathToSchema;
-    myApplicationLevel = applicationLevel;
+    this.name = name;
+    this.relativePathToSchema = relativePathToSchema;
+    this.applicationLevel = applicationLevel;
     setPatterns(patterns);
   }
 
   public String getName() {
-    return myName;
+    return name;
   }
 
   public void setName(@NotNull String name) {
-    myName = name;
+    this.name = name;
   }
 
   public String getRelativePathToSchema() {
-    return myRelativePathToSchema;
+    return relativePathToSchema;
   }
 
   public void setRelativePathToSchema(String relativePathToSchema) {
-    myRelativePathToSchema = relativePathToSchema;
+    this.relativePathToSchema = relativePathToSchema;
   }
 
   public boolean isApplicationLevel() {
-    return myApplicationLevel;
+    return applicationLevel;
   }
 
   public void setApplicationLevel(boolean applicationLevel) {
-    myApplicationLevel = applicationLevel;
+    this.applicationLevel = applicationLevel;
   }
 
   public List<Item> getPatterns() {
-    return myPatterns;
+    return patterns;
   }
 
   public void setPatterns(@Nullable List<Item> patterns) {
-    myPatterns.clear();
-    if (patterns != null) myPatterns.addAll(patterns);
-    Collections.sort(myPatterns, ITEM_COMPARATOR);
+    this.patterns.clear();
+    if (patterns != null) this.patterns.addAll(patterns);
+    Collections.sort(this.patterns, ITEM_COMPARATOR);
     myCalculatedPatterns.drop();
   }
 
@@ -113,10 +115,10 @@ public class UserDefinedJsonSchemaConfiguration {
 
   private List<PairProcessor<Project, VirtualFile>> recalculatePatterns() {
     final List<PairProcessor<Project, VirtualFile>> result = new SmartList<>();
-    for (final Item pattern : myPatterns) {
-      if (pattern.isPattern()) {
+    for (final Item pattern : patterns) {
+      if (pattern.pattern) {
         result.add(new PairProcessor<Project, VirtualFile>() {
-          private final Matcher matcher = PatternUtil.fromMask(pattern.getPath()).matcher("");
+          private final Matcher matcher = PatternUtil.fromMask(pattern.path).matcher("");
 
           @Override
           public boolean process(Project project, VirtualFile file) {
@@ -125,7 +127,7 @@ public class UserDefinedJsonSchemaConfiguration {
           }
         });
       }
-      else if (pattern.isDirectory()) {
+      else if (pattern.directory) {
         result.add((project, vfile) -> {
           final VirtualFile relativeFile = getRelativeFile(project, pattern);
           return relativeFile != null && VfsUtilCore.isAncestor(relativeFile, vfile, true);
@@ -144,7 +146,7 @@ public class UserDefinedJsonSchemaConfiguration {
       return null;
     }
 
-    final String path = FileUtilRt.toSystemIndependentName(pattern.getPath());
+    final String path = FileUtilRt.toSystemIndependentName(StringUtil.notNullize(pattern.path));
     final List<String> parts = ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
     if (parts.isEmpty()) {
       return project.getBaseDir();
@@ -161,68 +163,68 @@ public class UserDefinedJsonSchemaConfiguration {
 
     UserDefinedJsonSchemaConfiguration info = (UserDefinedJsonSchemaConfiguration)o;
 
-    if (myApplicationLevel != info.myApplicationLevel) return false;
-    if (myName != null ? !myName.equals(info.myName) : info.myName != null) return false;
-    if (myRelativePathToSchema != null
-        ? !myRelativePathToSchema.equals(info.myRelativePathToSchema)
-        : info.myRelativePathToSchema != null) {
+    if (applicationLevel != info.applicationLevel) return false;
+    if (name != null ? !name.equals(info.name) : info.name != null) return false;
+    if (relativePathToSchema != null
+        ? !relativePathToSchema.equals(info.relativePathToSchema)
+        : info.relativePathToSchema != null) {
       return false;
     }
-    if (myPatterns != null ? !myPatterns.equals(info.myPatterns) : info.myPatterns != null) return false;
+    if (patterns != null ? !patterns.equals(info.patterns) : info.patterns != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myName != null ? myName.hashCode() : 0;
-    result = 31 * result + (myRelativePathToSchema != null ? myRelativePathToSchema.hashCode() : 0);
-    result = 31 * result + (myApplicationLevel ? 1 : 0);
-    result = 31 * result + (myPatterns != null ? myPatterns.hashCode() : 0);
+    int result = name != null ? name.hashCode() : 0;
+    result = 31 * result + (relativePathToSchema != null ? relativePathToSchema.hashCode() : 0);
+    result = 31 * result + (applicationLevel ? 1 : 0);
+    result = 31 * result + (patterns != null ? patterns.hashCode() : 0);
     return result;
   }
 
   public static class Item {
-    public String myPath;
-    public boolean myIsPattern;
-    public boolean myIsDirectory;
+    public String path;
+    public boolean pattern;
+    public boolean directory;
 
     public Item() {
     }
 
     public Item(String path, boolean isPattern, boolean isDirectory) {
-      myPath = path;
-      myIsPattern = isPattern;
-      myIsDirectory = isDirectory;
+      this.path = path;
+      pattern = isPattern;
+      directory = isDirectory;
     }
 
     public String getPath() {
-      return myPath;
+      return path;
     }
 
     public void setPath(String path) {
-      myPath = path;
+      this.path = path;
     }
 
     public boolean isPattern() {
-      return myIsPattern;
+      return pattern;
     }
 
     public void setPattern(boolean pattern) {
-      myIsPattern = pattern;
+      this.pattern = pattern;
     }
 
     public boolean isDirectory() {
-      return myIsDirectory;
+      return directory;
     }
 
     public void setDirectory(boolean directory) {
-      myIsDirectory = directory;
+      this.directory = directory;
     }
 
     public String getPresentation() {
-      final String prefix = myIsPattern ? "Pattern: " : (myIsDirectory ? "Directory: " : "File: ");
-      return prefix + myPath;
+      final String prefix = pattern ? "Pattern: " : (directory ? "Directory: " : "File: ");
+      return prefix + path;
     }
 
     @Override
@@ -232,18 +234,18 @@ public class UserDefinedJsonSchemaConfiguration {
 
       Item item = (Item)o;
 
-      if (myIsPattern != item.myIsPattern) return false;
-      if (myIsDirectory != item.myIsDirectory) return false;
-      if (myPath != null ? !myPath.equals(item.myPath) : item.myPath != null) return false;
+      if (pattern != item.pattern) return false;
+      if (directory != item.directory) return false;
+      if (path != null ? !path.equals(item.path) : item.path != null) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPath != null ? myPath.hashCode() : 0;
-      result = 31 * result + (myIsPattern ? 1 : 0);
-      result = 31 * result + (myIsDirectory ? 1 : 0);
+      int result = path != null ? path.hashCode() : 0;
+      result = 31 * result + (pattern ? 1 : 0);
+      result = 31 * result + (directory ? 1 : 0);
       return result;
     }
   }
