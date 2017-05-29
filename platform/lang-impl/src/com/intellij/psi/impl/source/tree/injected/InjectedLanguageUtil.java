@@ -303,18 +303,15 @@ public class InjectedLanguageUtil {
     InjectedLanguageManagerImpl injectedManager = InjectedLanguageManagerImpl.getInstanceImpl(project);
     MultiHostRegistrarImpl registrar = null;
     PsiElement current = element;
-    boolean computed = false;
     nextParent:
     while (current != null && current != hostPsiFile && !(current instanceof PsiDirectory)) {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = current.getUserData(INJECTED_PSI);
       if (data == null) {
-        computed = true;
         registrar = InjectedPsiCachedValueProvider.doCompute(current, injectedManager, project, hostPsiFile);
       }
       else {
-        computed = false;
         registrar = data.getValue(current);
       }
 
@@ -340,20 +337,18 @@ public class InjectedLanguageUtil {
 
     if (probeUp) {
       // cache only if we walked all parents
-      ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue = null;
-
       for (PsiElement e = element; e != current && e != null && e != hostPsiFile; e = e.getParent()) {
         ProgressManager.checkCanceled();
         if (registrar == null) {
           e.putUserData(INJECTED_PSI, null);
         }
-        else if (computed) {
-          if (cachedValue == null) {
-            cachedValue = CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
-            CachedValueProvider.Result<MultiHostRegistrarImpl> result =
-              CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, registrar);
-            ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
-          }
+        else {
+          ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> cachedValue =
+            CachedValuesManager.getManager(project).createParameterizedCachedValue(INJECTED_PSI_PROVIDER, false);
+
+          CachedValueProvider.Result<MultiHostRegistrarImpl> result =
+            CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, registrar);
+          ((PsiParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement>)cachedValue).setValue(result);
 
           e.putUserData(INJECTED_PSI, cachedValue);
         }
