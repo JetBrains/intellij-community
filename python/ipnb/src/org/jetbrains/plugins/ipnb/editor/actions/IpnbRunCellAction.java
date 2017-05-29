@@ -25,6 +25,7 @@ public class IpnbRunCellAction extends IpnbRunCellBaseAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
     final IpnbFilePanel component = myFileEditor.getIpnbFilePanel();
+    component.executeSaveFileCommand();
     runCell(component, true);
   }
 }

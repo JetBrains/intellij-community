@@ -40,9 +40,12 @@ public class IpnbHeadingCellActionBase extends AnAction {
     final List<IpnbCell> cells = filePanel.getIpnbFile().getCells();
     final int index = cells.indexOf(selectedCellPanel.getCell());
     final IpnbHeadingCell heading = new IpnbHeadingCell(cell.getSource(), myLevel, cell.getMetadata());
-    if (index >= 0) {
-      cells.set(index, heading);
-    }
-    filePanel.replaceComponent(selectedCellPanel, heading);
+    filePanel.executeSaveFileCommand();
+    filePanel.executeUndoableCommand(() -> {
+      if (index >= 0) {
+        cells.set(index, heading);
+      }
+      filePanel.replaceComponent(selectedCellPanel, heading);
+    }, "Change Cell Type To Heading " + myLevel);
   }
 }
