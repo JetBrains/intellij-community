@@ -1060,7 +1060,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
     for (runTask in configuration.beforeRunTasks) {
-      if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings.isTemporary) {
+      if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
         makeStable(runTask.settings)
         checkIfDependenciesAreStable(runTask.settings.configuration)
       }
