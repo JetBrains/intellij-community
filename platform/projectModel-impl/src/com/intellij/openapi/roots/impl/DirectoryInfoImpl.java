@@ -31,7 +31,7 @@ public class DirectoryInfoImpl extends DirectoryInfo {
   private final VirtualFile contentRoot;
   private final VirtualFile sourceRoot;
   private final boolean myInModuleSource;
-  private final boolean myInLibrarySource;
+  protected final boolean myInLibrarySource;
   protected final boolean myExcluded;
   private final byte mySourceRootTypeId;
 

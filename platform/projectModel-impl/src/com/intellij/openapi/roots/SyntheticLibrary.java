@@ -67,9 +67,14 @@ public abstract class SyntheticLibrary {
   /**
    * @return a condition for excluding file from a library by its name or {@code null}
    * E.g. you can exclude all non-java file by returning {@code name -> !name.endsWith(".java")}
+   * <p>
+   * Excluding directory leads to excluding all its content recursively.
+   * <p>
+   * NOTE: The condition is participating in building indexing and project model,
+   * it must be bloody fast in order not to affect overall IDE performance.
    */
   @Nullable
-  public Condition<String> getExcludeCondition() {
+  public Condition<CharSequence> getExcludeCondition() {
     return null;
   }
 
@@ -80,7 +85,7 @@ public abstract class SyntheticLibrary {
    * In order to figure out if "External Library" children are updated or not, AbstractTreeUi uses
    * node's equals/hashCode methods which in turn depend on this library's equals/hashCode methods:
    * see {@link com.intellij.ide.util.treeView.AbstractTreeNode#hashCode()}.
-   *
+   * <p>
    * Please make sure that two SyntheticLibrary instances are equal if they reference the same state. Otherwise, constant UI updates
    * will degrade performance.
    * Consider implementing a better equals/hashCode if needed or instantiate {@link SyntheticLibrary} only if state
@@ -103,7 +108,7 @@ public abstract class SyntheticLibrary {
   @NotNull
   public static SyntheticLibrary newImmutableLibrary(@NotNull Collection<VirtualFile> sourceRoots,
                                                      @NotNull Set<VirtualFile> excludedRoots,
-                                                     @Nullable Condition<String> excludeCondition) {
+                                                     @Nullable Condition<CharSequence> excludeCondition) {
     return new SyntheticLibrary() {
       @NotNull
       @Override
@@ -119,7 +124,7 @@ public abstract class SyntheticLibrary {
 
       @Nullable
       @Override
-      public Condition<String> getExcludeCondition() {
+      public Condition<CharSequence> getExcludeCondition() {
         return excludeCondition;
       }
 

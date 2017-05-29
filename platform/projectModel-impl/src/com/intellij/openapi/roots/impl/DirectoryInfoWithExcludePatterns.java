@@ -44,13 +44,9 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
 
   @Override
   public boolean isInLibrarySource(@NotNull VirtualFile file) {
-    if (myLibraryExcludePatterns == null) {
-      return super.isInLibrarySource(file);
+    if (myLibraryExcludePatterns == null || !myInLibrarySource) {
+      return myInLibrarySource;
     }
-    if (!super.isInLibrarySource()) {
-      return false;
-    }
-
     VirtualFile current = file;
     while (current != null && !myRoot.equals(current)) {
       if (myLibraryExcludePatterns.findAssociatedFileType(current.getNameSequence()) != null) {
@@ -66,29 +62,21 @@ public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
 
   @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
-    if (myExcluded) {
-      return true;
-    }
+    if (myExcluded) return true;
     if (myLibraryExcludePatterns == null && myContentExcludePatterns == null) {
       LOG.error("Directory info of '" + getRoot() + "' with exclude patterns have no any exclude patterns: " + toString());
-      return super.isExcluded(file);
+      return false;
     }
 
     boolean inContent = getContentRoot() != null;
-    boolean inLibrarySources = super.isInLibrarySource(file);
-    if (!inContent && !inLibrarySources) return super.isExcluded(file);
+    if (!inContent && !myInLibrarySource) return false;
 
     VirtualFile current = file;
     while (current != null && !myRoot.equals(current)) {
       CharSequence name = current.getNameSequence();
       boolean excludedFromModule = myContentExcludePatterns != null && myContentExcludePatterns.findAssociatedFileType(name) != null;
       boolean excludedFromLibrary = myLibraryExcludePatterns != null && myLibraryExcludePatterns.findAssociatedFileType(name) != null;
-      if (inContent && inLibrarySources) {
-        if (excludedFromLibrary && excludedFromModule) {
-          return true;
-        }
-      }
-      else if (inLibrarySources && excludedFromLibrary || inContent && excludedFromModule) {
+      if ((!inContent || excludedFromModule) && (!myInLibrarySource || excludedFromLibrary)) {
         return true;
       }
       current = current.getParent();

@@ -17,7 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileNameMatcher;
+import com.intellij.openapi.fileTypes.FileNameMatcherEx;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
@@ -685,8 +685,8 @@ public class RootIndex {
       for (Object library : sourceOfLibraries.get(root)) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
-          Condition<String> exclusion = ((SyntheticLibrary)library).getExcludeCondition();
-          if (exclusion != null && exclusion.value(root.getName())) {
+          Condition<CharSequence> exclusion = ((SyntheticLibrary)library).getExcludeCondition();
+          if (exclusion != null && exclusion.value(root.getNameSequence())) {
             continue;
           }
         }
@@ -820,14 +820,14 @@ public class RootIndex {
     FileTypeAssocTable<Boolean> excludePatterns = null;
     if (libraryRootInfo != null) {
       for (Object library : libraryRootInfo.second) {
-        Condition<String> exclusionPredicate = library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeCondition() : null;
+        Condition<CharSequence> exclusionPredicate = library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeCondition() : null;
         if (exclusionPredicate == null) continue;
         if (excludePatterns == null) {
           excludePatterns = new FileTypeAssocTable<>();
         }
-        excludePatterns.addAssociation(new FileNameMatcher() {
+        excludePatterns.addAssociation(new FileNameMatcherEx() {
           @Override
-          public boolean accept(@NotNull String fileName) {
+          public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
             return exclusionPredicate.value(fileName);
           }
 

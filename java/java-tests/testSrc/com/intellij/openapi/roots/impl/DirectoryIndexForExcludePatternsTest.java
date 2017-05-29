@@ -102,7 +102,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
     VirtualFile txt2 = createChildData(dir, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, fileName -> "a.txt".equals(fileName));
+    registerLibrary(myLibraryRoot, fileName -> "a.txt".contentEquals(fileName));
 
     assertExcluded(txt1, null);
     assertNotInLibrarySources(txt1, null);
@@ -122,7 +122,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
     VirtualFile txt2 = createChildData(dir, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, fileName -> "dir".equals(fileName));
+    registerLibrary(myLibraryRoot, fileName -> "dir".contentEquals(fileName));
 
     assertExcluded(txt2, null);
     assertNotInLibrarySources(txt2, null);
@@ -141,7 +141,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
     VirtualFile txt2 = createChildData(dir, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, fileName -> "dir".equals(fileName));
+    registerLibrary(myLibraryRoot, fileName -> "dir".contentEquals(fileName));
 
     assertNotExcluded(txt2);
     assertNotInLibrarySources(txt2, myModule);
@@ -158,7 +158,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
     VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, fileName -> fileName.equals(myLibraryRoot.getName()));
+    registerLibrary(myLibraryRoot, fileName -> fileName.equals(myLibraryRoot.getNameSequence()));
 
     assertFalse(myIndex.getInfoForFile(txt).isInProject(txt));
     assertFalse(myIndex.getInfoForFile(java).isInProject(java));
@@ -168,7 +168,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
     VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
     VirtualFile java = createChildData(myLibraryRoot, "A.java");
-    registerLibrary(myLibraryRoot, fileName -> fileName.equals(myLibraryRoot.getName()));
+    registerLibrary(myLibraryRoot, fileName -> fileName.equals(myLibraryRoot.getNameSequence()));
 
     assertInProject(txt);
     assertNotInLibrarySources(txt, myModule);
@@ -182,7 +182,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
                                            model -> MarkRootActionBase.findContentEntry(model, myContentRoot).addExcludePattern(pattern));
   }
 
-  private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<String> excludePattern) {
+  private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<CharSequence> excludePattern) {
     WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
       () -> PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
         @NotNull
