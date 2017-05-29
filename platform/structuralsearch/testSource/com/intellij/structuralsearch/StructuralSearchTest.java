@@ -1111,8 +1111,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
   }
 
   public void testSearchJavaDoc() {
-    final String s58 = "/** @'T '_T2 */ class '_ { }";
-    assertEquals("java doc comment in class in file", 1, findMatchesCount(s57,s58,true));
+    assertEquals("java doc comment in class in file", 1, findMatchesCount(s57, "/** @'T '_T2 */ class '_ { }", true));
+
+    final String s = "class A {" +
+                     "  void m() {" +
+                     "    /** tool */" +
+                     "    class Local {}" +
+                     "  }" +
+                     "}";
+    assertEquals("dangling javadoc followed by a local class", 1, findMatchesCount(s, "{\n/** tool */\nclass 'A {}\n}", true));
 
     assertEquals("javadoc comment for field", 2, findMatchesCount(s57, "class '_ { /** @serializable '_* */ '_ '_; }"));
     assertEquals("javadoc comment for method", 2, findMatchesCount(s57, "class '_ { /** @'T 1.4 */ '_ '_() {} }"));
