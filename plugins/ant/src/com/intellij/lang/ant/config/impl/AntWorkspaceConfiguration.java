@@ -69,7 +69,7 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
   }
 
   public void readExternal(Element parentNode) throws InvalidDataException {
-    loadGlobalSettings(parentNode);
+    DefaultJDOMExternalizer.readExternal(this, parentNode);
     myProperties.set(parentNode);
   }
 
@@ -99,14 +99,6 @@ public class AntWorkspaceConfiguration implements PersistentStateComponent<Eleme
       }
       ((AntBuildFileBase)buildFile).readWorkspaceProperties(fileElement);
     }
-  }
-
-  public void loadFromProjectSettings(Element parentNode) throws InvalidDataException {
-    loadGlobalSettings(parentNode);
-  }
-
-  private void loadGlobalSettings(Element parentNode) throws InvalidDataException {
-    DefaultJDOMExternalizer.readExternal(this, parentNode);
   }
 
   @Nullable
