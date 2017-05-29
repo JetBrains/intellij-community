@@ -276,6 +276,10 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   private void updateToolWindowContent() {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
+      if (myToolWindowContent == null) {
+        return;
+      }
+
       String tabName = null;
       Icon tabIcon = null;
       if (!myShowConfigurations) {
