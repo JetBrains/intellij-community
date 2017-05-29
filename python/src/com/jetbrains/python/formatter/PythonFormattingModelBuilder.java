@@ -121,7 +121,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
       .beforeInside(RPAR, FROM_IMPORT_STATEMENT).spaces(0, pySettings.FROM_IMPORT_NEW_LINE_BEFORE_RIGHT_PARENTHESIS)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
-      .between(FROM_KEYWORD, DOT).spaces(1)
+      .after(FROM_KEYWORD).spaces(1)
       .between(DOT, IMPORT_KEYWORD).spaces(1)
       .around(DOT).spaces(0)
       .aroundInside(AT, DECORATOR_CALL).none()
