@@ -160,7 +160,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
                                                                         IF_KEYWORD, ELIF_KEYWORD, ELSE_KEYWORD,
                                                                         FOR_KEYWORD, RETURN_KEYWORD, RAISE_KEYWORD,
                                                                         ASSERT_KEYWORD, CLASS_KEYWORD, DEF_KEYWORD, DEL_KEYWORD,
-                                                                        EXEC_KEYWORD, GLOBAL_KEYWORD, IMPORT_KEYWORD, LAMBDA_KEYWORD,
+                                                                        EXEC_KEYWORD, GLOBAL_KEYWORD, NONLOCAL_KEYWORD, IMPORT_KEYWORD, LAMBDA_KEYWORD,
                                                                         NOT_KEYWORD, WHILE_KEYWORD, YIELD_KEYWORD);
 
   private static TokenSet allButLambda() {

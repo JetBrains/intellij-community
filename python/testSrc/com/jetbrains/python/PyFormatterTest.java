@@ -804,6 +804,11 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  // PY-20970
+  public void testSpacesAfterNonlocal() {
+    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+  }
+
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
