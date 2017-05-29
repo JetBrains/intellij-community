@@ -114,6 +114,7 @@ public class RepositoryHelper {
                                                        @Nullable final ProgressIndicator indicator) throws IOException {
     String url;
     final File pluginListFile;
+    final String eTag;
     final String host;
 
     try {
@@ -123,11 +124,15 @@ public class RepositoryHelper {
         pluginListFile = new File(PathManager.getPluginsPath(), channel == null ? PLUGIN_LIST_FILE : channel + "_" + PLUGIN_LIST_FILE);
         if (pluginListFile.length() > 0) {
           uriBuilder.addParameter("crc32", crc32(pluginListFile));
+          eTag = loadPluginListETag(pluginListFile);
+        } else {
+          eTag = "";
         }
       }
       else {
         uriBuilder = new URIBuilder(repositoryUrl);
         pluginListFile = null;
+        eTag = "";
       }
 
       if (!URLUtil.FILE_PROTOCOL.equals(uriBuilder.getScheme())) {
@@ -147,7 +152,7 @@ public class RepositoryHelper {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", host));
     }
 
-    RequestBuilder request = HttpRequests.request(url).forceHttps(forceHttps);
+    RequestBuilder request = HttpRequests.request(url).forceHttps(forceHttps).tuner(connection -> connection.setRequestProperty("If-None-Match", eTag));
     return process(repositoryUrl, request.connect(new HttpRequests.RequestProcessor<List<IdeaPluginDescriptor>>() {
       @Override
       public List<IdeaPluginDescriptor> process(@NotNull HttpRequests.Request request) throws IOException {
@@ -172,6 +177,7 @@ public class RepositoryHelper {
           synchronized (PLUGIN_LIST_FILE) {
             FileUtil.ensureExists(pluginListFile.getParentFile());
             request.saveToFile(pluginListFile, indicator);
+            savePluginListETag(pluginListFile, connection);
             return loadPluginList(pluginListFile);
           }
         }
@@ -180,6 +186,43 @@ public class RepositoryHelper {
         }
       }
     }));
+  }
+
+  @NotNull
+  private static String loadPluginListETag(@NotNull File pluginListFile) {
+    String eTag = "";
+    File pluginListETagFile = getPluginListETagFile(pluginListFile);
+    try {
+      List<String> lines = FileUtil.loadLines(pluginListETagFile);
+      if (lines.size() != 1) {
+        LOG.warn("Couldn't load plugin list ETag from '" + pluginListETagFile.getAbsolutePath() + "'. Unexpected number of lines: " + lines.size());
+        FileUtil.delete(pluginListETagFile);
+      } else {
+        eTag = lines.get(0);
+      }
+    }
+    catch (Exception e) {
+      LOG.warn("Couldn't load plugin list ETag from '" + pluginListETagFile.getAbsolutePath() + "'", e);
+    }
+    return eTag;
+  }
+
+  private static void savePluginListETag(@NotNull File pluginListFile, @NotNull URLConnection connection) {
+    File pluginListETagFile = getPluginListETagFile(pluginListFile);
+    String eTag = connection.getHeaderField("ETag");
+    if (eTag != null) {
+      try {
+        FileUtil.writeToFile(pluginListETagFile, eTag);
+      }
+      catch (Exception e) {
+        LOG.warn("Couldn't save plugin list ETag to '" + pluginListETagFile.getAbsolutePath() + "'", e);
+      }
+    }
+  }
+
+  @NotNull
+  private static File getPluginListETagFile(@NotNull File pluginListFile) {
+    return new File(pluginListFile.getParentFile(), pluginListFile.getName() + ".etag");
   }
 
   @SuppressWarnings("SpellCheckingInspection")
