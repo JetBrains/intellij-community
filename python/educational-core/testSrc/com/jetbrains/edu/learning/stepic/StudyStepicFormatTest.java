@@ -3,7 +3,6 @@ package com.jetbrains.edu.learning.stepic;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.edu.learning.StudySerializationUtils;
 import com.jetbrains.edu.learning.courseFormat.AnswerPlaceholder;
@@ -93,6 +92,6 @@ public class StudyStepicFormatTest {
 
   @NotNull
   private static String getTestDataPath() {
-    return FileUtil.join(PlatformTestUtil.getCommunityPath(), "python/educational-core/testData/stepic");
+    return FileUtil.join("testData/stepic");
   }
 }

@@ -75,6 +75,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -876,7 +877,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (back != null && !singleProjectGenerator) {
       actionsListPanel.add(back, BorderLayout.SOUTH);
     }
-    
+
+    final HashMap<Object, JPanel> panelsMap = ContainerUtil.newHashMap();
     ListSelectionListener selectionListener = e -> {
       if (e.getValueIsAdjusting()) {
         // Update when a change has been finalized.
@@ -888,7 +890,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
       Object value = list.getSelectedValue();
       if (value instanceof AbstractActionWithPanel) {
-        JPanel panel = ((AbstractActionWithPanel)value).createPanel();
+        final JPanel panel = panelsMap.computeIfAbsent(value, o -> ((AbstractActionWithPanel)value).createPanel());
+        ((AbstractActionWithPanel)value).onPanelSelected();
+
         panel.setBorder(JBUI.Borders.empty(7, 10));
         selected.set(panel);
         main.add(selected.get());

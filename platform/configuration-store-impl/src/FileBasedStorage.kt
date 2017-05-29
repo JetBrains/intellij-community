@@ -26,7 +26,6 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
-import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.io.FileUtilRt
@@ -42,9 +41,7 @@ import com.intellij.util.loadElement
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import org.jdom.JDOMException
-import java.io.FileNotFoundException
 import java.io.IOException
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
@@ -58,8 +55,8 @@ open class FileBasedStorage(file: Path,
                             roamingType: RoamingType? = null,
                             provider: StreamProvider? = null) : XmlElementStorage(fileSpec, rootElementName, pathMacroManager, roamingType, provider) {
   private @Volatile var cachedVirtualFile: VirtualFile? = null
-  private var lineSeparator: LineSeparator? = null
-  private var blockSavingTheContent = false
+  protected var lineSeparator: LineSeparator? = null
+  protected var blockSavingTheContent = false
 
   @Volatile var file = file
     private set
@@ -115,9 +112,9 @@ open class FileBasedStorage(file: Path,
       return cachedVirtualFile
     }
 
-  private inline fun runAndHandleExceptions(task: () -> Unit) {
+  protected inline fun <T> runAndHandleExceptions(task: () -> T): T? {
     try {
-      task()
+      return task()
     }
     catch (e: JDOMException) {
       processReadException(e)
@@ -125,6 +122,7 @@ open class FileBasedStorage(file: Path,
     catch (e: IOException) {
       processReadException(e)
     }
+    return null
   }
 
   fun preloadStorageData(isEmpty: Boolean) {
@@ -138,34 +136,7 @@ open class FileBasedStorage(file: Path,
 
   override fun loadLocalData(): Element? {
     blockSavingTheContent = false
-    // use VFS to load module file because it is refreshed and loaded into VFS in any case
-    val isModuleFile = fileSpec == StoragePathMacros.MODULE_FILE
-    if (!isModuleFile) {
-      runAndHandleExceptions {
-        return loadLocalDataUsingIo()
-      }
-    }
-
-    var virtualFile = cachedVirtualFile
-    if (virtualFile == null) {
-      virtualFile = LocalFileSystem.getInstance().findFileByPath(file.systemIndependentPath)
-      if (virtualFile == null || !virtualFile.exists()) {
-        throw FileNotFoundException(ProjectBundle.message("module.file.does.not.exist.error", file.systemIndependentPath))
-      }
-      cachedVirtualFile = virtualFile
-    }
-
-    if (virtualFile.length == 0L) {
-      processReadException(null)
-    }
-    else {
-      runAndHandleExceptions {
-        val charBuffer = StandardCharsets.UTF_8.decode(ByteBuffer.wrap(virtualFile!!.contentsToByteArray()))
-        lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-        return loadElement(charBuffer)
-      }
-    }
-    return null
+    return runAndHandleExceptions { loadLocalDataUsingIo() }
   }
 
   private fun loadLocalDataUsingIo(): Element? {
@@ -192,7 +163,7 @@ open class FileBasedStorage(file: Path,
     return null
   }
 
-  private fun processReadException(e: Exception?) {
+  protected fun processReadException(e: Exception?) {
     val contentTruncated = e == null
     blockSavingTheContent = !contentTruncated && (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) || fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
     if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {

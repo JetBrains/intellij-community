@@ -100,8 +100,8 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   //*********CONTEXT FUNCTIONS ON LAMBDA RECEIVERS
-  fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func.invoke(welcomeFrame())
+  open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
+    func.invoke(findWelcomeFrame())
   }
 
   fun ideFrame(func: IdeFrameFixture.() -> Unit) {
@@ -239,9 +239,6 @@ open class GuiTestCase : GuiTestBase() {
 
   }
 
-  fun ideFrame() = findIdeFrame()!!
-  fun welcomeFrame() = findWelcomeFrame()
-
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
   fun dialog(title: String? = null, timeout: Long): JDialogFixture {
@@ -377,6 +374,10 @@ open class GuiTestCase : GuiTestBase() {
 
 
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
+
+  fun JListFixture.doubleClickItem(itemName: String) {
+    this.item(itemName).doubleClick()
+  }
 
   //necessary only for Windows
   fun getScaleSuffix(): String? {

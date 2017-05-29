@@ -178,6 +178,7 @@ def test_timedelta():
 
 def test_datetime():
     from datetime import datetime, timedelta, date, time
+    import sys
 
     datetime(2000, 12, 25)
     datetime(2000, 12, 25, 23)
@@ -220,6 +221,11 @@ def test_datetime():
     assert dt.timetz() == time(23, 59, 59)
     assert dt.ctime() == "Mon Dec 25 23:59:59 2000"
     assert dt.isoformat() == "2000-12-25T23:59:59"
+    assert dt.isoformat(' ') == "2000-12-25 23:59:59"
+    assert dt.isoformat(sep=' ') == "2000-12-25 23:59:59"
+    if sys.version_info >= (3, 6):
+        assert dt.isoformat(' ', 'minutes') == "2000-12-25 23:59"
+        assert dt.isoformat(sep=' ', timespec='minutes') == "2000-12-25 23:59"
     assert dt.utcoffset() is None
     assert dt.tzname() is None
     assert dt.dst() is None

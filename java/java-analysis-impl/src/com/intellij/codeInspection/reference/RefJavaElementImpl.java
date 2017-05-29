@@ -83,11 +83,15 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
   }
 
   @NotNull
-  public static String getName(PsiElement element) {
+  private static String getName(PsiElement element) {
    if (element instanceof PsiAnonymousClass) {
      PsiAnonymousClass psiAnonymousClass = (PsiAnonymousClass)element;
      PsiClass psiBaseClass = psiAnonymousClass.getBaseClassType().resolve();
-     return InspectionsBundle.message("inspection.reference.anonymous.name", psiBaseClass == null ? "" : psiBaseClass.getQualifiedName());
+     if (psiBaseClass == null) {
+       return "anonymous class";
+     } else {
+       return InspectionsBundle.message("inspection.reference.anonymous.name", psiBaseClass.getName());
+     }
    }
 
    if (element instanceof PsiSyntheticClass) {

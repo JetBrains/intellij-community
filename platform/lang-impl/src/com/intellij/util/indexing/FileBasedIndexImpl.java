@@ -2260,6 +2260,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private SerializationManagerEx mySerializationManagerEx;
 
     FileIndexDataInitialization(FileBasedIndexExtension[] extensions) {
+      // init contentless indices first
+      Arrays.sort(extensions, Comparator.comparingInt(o -> (o.dependsOnFileContent() ? 1 : 0)));
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
         ID<?, ?> name = extension.getName();
         RebuildStatus.registerIndex(name);

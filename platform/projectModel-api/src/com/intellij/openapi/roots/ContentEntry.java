@@ -204,4 +204,5 @@ public interface ContentEntry extends Synthetic {
 
   void addExcludePattern(@NotNull String pattern);
   void removeExcludePattern(@NotNull String pattern);
+  void setExcludePatterns(@NotNull List<String> patterns);
 }

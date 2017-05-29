@@ -39,7 +39,7 @@ open class ProjectLibraryTable : LibraryTableBase() {
   override fun getPresentation() = PROJECT_LIBRARY_TABLE_PRESENTATION
 
   class LibraryStateSplitter : StateSplitterEx() {
-    override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR)
+    override fun splitState(state: Element): MutableList<Pair<Element, String>> = StateSplitterEx.splitState(state, LibraryImpl.LIBRARY_NAME_ATTR, true)
   }
 }
 

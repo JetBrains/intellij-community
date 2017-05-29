@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,9 @@ import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationI
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
@@ -53,7 +54,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
-    File optionsDir = new File(FileUtil.toCanonicalPath(optionsPath));
+    Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
     new JpsGlobalLoader(global, Collections.emptyMap()).loadGlobalComponents(optionsDir, new PathVariablesSerializer());
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(global);
     new JpsGlobalLoader(global, pathVariables).load(optionsDir);
@@ -67,8 +68,8 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     return JpsModelSerializationDataService.getPathVariableValue(global, name);
   }
 
-  private void load(File optionsDir) {
-    LOG.debug("Loading config from " + optionsDir.getAbsolutePath());
+  private void load(@NotNull Path optionsDir) {
+    LOG.debug("Loading config from " + optionsDir.toAbsolutePath());
     for (JpsGlobalExtensionSerializer serializer : SERIALIZERS) {
       loadGlobalComponents(optionsDir, serializer);
     }
@@ -79,7 +80,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
     }
   }
 
-  private void loadGlobalComponents(File optionsDir, JpsGlobalExtensionSerializer serializer) {
+  private void loadGlobalComponents(@NotNull Path optionsDir, JpsGlobalExtensionSerializer serializer) {
     loadComponents(optionsDir, "other.xml", serializer, myGlobal);
   }
 

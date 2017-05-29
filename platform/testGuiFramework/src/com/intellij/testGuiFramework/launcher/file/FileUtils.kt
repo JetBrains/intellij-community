@@ -1,7 +1,6 @@
 package com.intellij.testGuiFramework.launcher.file
 
 import com.intellij.openapi.diagnostic.Logger
-import java.io.FileNotFoundException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
@@ -24,7 +23,7 @@ object FileUtils {
 
     fun getAppFilePath(location: String): String {
         val fromPath = Paths.get(location)
-        val fileApp = fromPath.toFile().listFiles().filter {file -> file.name.endsWith(".app")}.firstOrNull() ?: throw FileNotFoundException("Unable to find .app file in $location")
+        val fileApp = fromPath.toFile().listFiles().filter {file -> file.name.endsWith(".app")}.firstOrNull() ?: throw Exception("Unable to find .app file in $location")
         return fileApp.path
     }
 

@@ -39,20 +39,27 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleExcludedStateAction;
 import com.intellij.openapi.roots.ui.configuration.actions.ToggleSourcesStateAction;
+import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -76,6 +83,7 @@ public class ContentEntryTreeEditor {
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
   private final FileChooserDescriptor myDescriptor;
+  private final JTextField myExcludePatternsField;
 
   public ContentEntryTreeEditor(Project project, List<ModuleSourceRootEditHandler<?>> editHandlers) {
     myProject = project;
@@ -89,9 +97,31 @@ public class ContentEntryTreeEditor {
     TreeUtil.installActions(myTree);
     new TreeSpeedSearch(myTree);
 
+    JPanel excludePatternsPanel = new JPanel(new VerticalFlowLayout());
+    excludePatternsPanel.add(new JLabel(ProjectBundle.message("module.paths.exclude.patterns")));
+    myExcludePatternsField = new JTextField();
+    myExcludePatternsField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        if (myContentEntryEditor != null) {
+          ContentEntry entry = myContentEntryEditor.getContentEntry();
+          if (entry != null) {
+            List<String> patterns = StringUtil.split(myExcludePatternsField.getText().trim(), ";");
+            if (!patterns.equals(entry.getExcludePatterns())) {
+              entry.setExcludePatterns(patterns);
+            }
+          }
+        }
+      }
+    });
+    excludePatternsPanel.add(myExcludePatternsField);
+    JBLabel excludePatternsLegendLabel = new JBLabel(XmlStringUtil.wrapInHtml("Semicolon-separated patterns of file names to be excluded; <b>?</b> (exactly one symbol) and <b>*</b> (zero or more symbols) wildcards are supported."));
+    excludePatternsLegendLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
+    excludePatternsPanel.add(excludePatternsLegendLabel);
     myTreePanel = new MyPanel(new BorderLayout());
     final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
     myTreePanel.add(scrollPane, BorderLayout.CENTER);
+    myTreePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
 
     myTreePanel.setVisible(false);
     myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
@@ -156,6 +186,7 @@ public class ContentEntryTreeEditor {
       String path = VfsUtilCore.urlToPath(entry.getUrl());
       myDescriptor.setTitle(FileUtil.toSystemDependentName(path));
     }
+    myExcludePatternsField.setText(StringUtil.join(entry.getExcludePatterns(), ";"));
 
     final Runnable init = () -> {
       //noinspection ConstantConditions

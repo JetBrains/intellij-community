@@ -56,6 +56,12 @@ public class AutoPopupController implements Disposable {
    * This doesn't affect other conditions when autopopup is not possible (e.g. power save mode).
    */
   public static final Key<Boolean> ALWAYS_AUTO_POPUP = Key.create("Always Show Completion Auto-Popup");
+  /**
+   * If editor has Boolean.TRUE by this key completion popup would be shown every time when editor gets focus
+   * and the popup wouldn't have advertising text in bottom.
+   * For example this key can be used for TextFieldWithAutoCompletion. (It looks like usual JTextField and completion shortcut is not obvious to be active.)
+   */
+  public static final Key<Boolean> ALWAYS_AUTO_POPUP_NO_ADS = Key.create("Always Show Completion Auto-Popup");
 
   private final Project myProject;
   private final Alarm myAlarm = new Alarm();
@@ -103,7 +109,7 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
-    boolean alwaysAutoPopup = editor != null && Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP));
+    boolean alwaysAutoPopup = editor != null && (Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP)) || Boolean.TRUE.equals(editor.getUserData(ALWAYS_AUTO_POPUP_NO_ADS)));
     if (!CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && !alwaysAutoPopup) {
       return;
     }

@@ -71,17 +71,15 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
 
     val myServerHandler = object : ServerHandler() {
 
-      override fun acceptObject(message: TransportMessage) = message.content is JUnitInfo && message.content.obj is Description && message.content.obj.methodName == method.name
+      override fun acceptObject(message: TransportMessage) = message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)
       override fun handleObject(message: TransportMessage) {
         val jUnitInfo = message.content as JUnitInfo
         when (jUnitInfo.type) {
           Type.STARTED -> eachNotifier.fireTestStarted()
           Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption((jUnitInfo.obj as Failure).exception as AssumptionViolatedException)
-          Type.IGNORED -> { notifier.fireTestIgnored(description); cdl.countDown() }
-          Type.FAILURE -> eachNotifier.addFailure((jUnitInfo.obj as Failure).exception)
-          Type.FINISHED -> {
-            cdl.countDown()
-          }
+          Type.IGNORED -> { eachNotifier.fireTestIgnored(); cdl.countDown() }
+          Type.FAILURE -> eachNotifier.addFailure(jUnitInfo.obj as Throwable)
+          Type.FINISHED -> { cdl.countDown() }
           else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
         }
       }
@@ -111,6 +109,8 @@ constructor(testClass: Class<*>) : BlockJUnit4ClassRunner(testClass) {
     if (!cdl.await(10, TimeUnit.MINUTES)) {
       //kill idea if tests exceeded timeout
       killProcessIfPossible()
+      eachNotifier.addFailure(Exception("Test timeout error."))
+      eachNotifier.fireTestFinished()
     } else {
       if (criticalError.get()) killProcessIfPossible()
       server.removeAllHandlers()

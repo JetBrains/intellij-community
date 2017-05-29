@@ -15,7 +15,9 @@
  */
 package com.siyeh.ipp.collections;
 
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ipp.IPPTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -27,7 +29,7 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Collections.emptyList(\"text\"/*_Replace with 'Arrays.asList()'*/);" +
+      "    return Collections.emptyList(\"text\"/*_Replace with 'java.util.Arrays.asList()'*/);" +
       "  }" +
       "}",
 
@@ -45,7 +47,7 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
       "import java.util.*;" +
       "class X {" +
       "  List<String> f() {" +
-      "    return Collections.singletonList(\"text\"/*_Replace with 'Arrays.asList()'*/);" +
+      "    return Collections.singletonList(\"text\"/*_Replace with 'java.util.Arrays.asList()'*/);" +
       "  }" +
       "}",
 
@@ -56,5 +58,11 @@ public class ReplaceWithArraysAsListIntentionTest extends IPPTestCase {
       "  }" +
       "}"
     );
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 }

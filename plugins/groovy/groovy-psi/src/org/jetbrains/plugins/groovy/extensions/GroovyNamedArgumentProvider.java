@@ -109,6 +109,7 @@ public abstract class GroovyNamedArgumentProvider {
 
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
+          method = PsiUtil.handleMirrorMethod(method);
           PsiParameter[] parameters = method.getParameterList().getParameters();
 
           if (!method.isConstructor() && !(parameters.length > 0 && canBeMap(parameters[0]))) continue;

@@ -86,10 +86,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
     PsiClass psiClass = getContainingClass(element);
 
-    if (psiClass == null || element.getContainingFile().getContainingDirectory() == null) return false;
+    if (psiClass == null) return false;
 
-    Module srcModule = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (srcModule == null) return false;
+    PsiFile file = psiClass.getContainingFile();
+    if (file.getContainingDirectory() == null || JavaProjectRootsUtil.isOutsideJavaSourceRoot(file)) return false;
 
     if (psiClass.isAnnotationType() ||
         psiClass instanceof PsiAnonymousClass) {

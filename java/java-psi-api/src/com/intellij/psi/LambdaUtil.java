@@ -771,8 +771,7 @@ public class LambdaUtil {
       }
       final MethodCandidateInfo.CurrentCandidateProperties properties = MethodCandidateInfo.getCurrentMethod(psiCall.getArgumentList());
       if (properties != null) {
-        if (properties.isApplicabilityCheck() ||
-            lambdaExpression != null && lambdaExpression.hasFormalParameterTypes()) {
+        if (properties.isApplicabilityCheck() || lambdaExpression != null) {
           break;
         }
       }

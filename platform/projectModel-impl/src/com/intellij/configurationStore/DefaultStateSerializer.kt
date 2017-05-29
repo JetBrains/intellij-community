@@ -21,7 +21,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ReflectionUtil
 import org.jdom.Element
 
-private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.DefaultStateSerializer")
+internal val LOG = Logger.getInstance("#com.intellij.configurationStore")
 
 fun <T> deserializeState(stateElement: Element?, stateClass: Class<T>, mergeInto: T?): T? {
   @Suppress("DEPRECATION", "UNCHECKED_CAST")

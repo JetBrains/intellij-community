@@ -32,8 +32,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
@@ -46,11 +46,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSettingsStepBase> {
+public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.AbstractCallback<T> {
   private static final Logger LOG = Logger.getInstance(PythonGenerateProjectCallback.class);
 
   @Override
-  public void consume(@Nullable ProjectSettingsStepBase step) {
+  public void consume(@Nullable ProjectSettingsStepBase<T> step, @NotNull ProjectGeneratorPeer<T> projectGeneratorPeer) {
     if (!(step instanceof ProjectSpecificSettingsStep)) return;
 
     final ProjectSpecificSettingsStep settingsStep = (ProjectSpecificSettingsStep)step;
@@ -71,7 +71,7 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
         }
       }
     }
-    final Project newProject = generateProject(settingsStep);
+    final Project newProject = generateProject(settingsStep, projectGeneratorPeer);
     if (generator instanceof PythonProjectGenerator && sdk == null && newProject != null) {
       final PyNewProjectSettings settings = (PyNewProjectSettings)((PythonProjectGenerator)generator).getProjectSettings();
       ((PythonProjectGenerator)generator).createAndAddVirtualEnv(newProject, settings);
@@ -113,21 +113,24 @@ public class PythonGenerateProjectCallback implements NullableConsumer<ProjectSe
   }
 
   @Nullable
-  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings) {
+  private static Project generateProject(@NotNull final ProjectSettingsStepBase settings,
+                                         @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     final DirectoryProjectGenerator generator = settings.getProjectGenerator();
     final String location = FileUtil.expandUserHome(settings.getProjectLocation());
     return AbstractNewProjectStep.doGenerateProject(null, location, generator,
-                                                    file -> computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings));
+                                                    computeProjectSettings(generator, (ProjectSpecificSettingsStep)settings, projectGeneratorPeer));
   }
 
-  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator, final ProjectSpecificSettingsStep settings) {
+  public static Object computeProjectSettings(DirectoryProjectGenerator<?> generator,
+                                              final ProjectSpecificSettingsStep settings,
+                                              @NotNull final ProjectGeneratorPeer projectGeneratorPeer) {
     Object projectSettings = null;
     if (generator instanceof PythonProjectGenerator) {
       final PythonProjectGenerator<?> projectGenerator = (PythonProjectGenerator<?>)generator;
       projectSettings = projectGenerator.getProjectSettings();
     }
     else if (generator instanceof WebProjectTemplate) {
-      projectSettings = ((WebProjectTemplate<?>)generator).getPeer().getSettings();
+      projectSettings = projectGeneratorPeer.getSettings();
     }
     if (projectSettings instanceof PyNewProjectSettings) {
       final PyNewProjectSettings newProjectSettings = (PyNewProjectSettings)projectSettings;

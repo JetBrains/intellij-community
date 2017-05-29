@@ -1541,7 +1541,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
     }
-    setCursor(cursor);
+    UIUtil.setCursor(this, cursor);
   }
 
   @Override

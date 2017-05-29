@@ -27,7 +27,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.Result;
-import com.intellij.openapi.compiler.*;
+import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -149,12 +149,10 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
       if (myProject.isDisposed()) {
         return;
       }
-      ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(myProject);
-      ProjectTask artifactsBuildProjectTask =
-        projectTaskManager.createArtifactsBuildTask(true, artifacts.toArray(new Artifact[artifacts.size()]));
+      ProjectTask artifactsBuildProjectTask = createProjectTask(myProject, artifacts);
       finished.down();
       Object sessionId = ExecutionManagerImpl.EXECUTION_SESSION_ID_KEY.get(env);
-      projectTaskManager.run(new ProjectTaskContext(sessionId), artifactsBuildProjectTask, callback);
+      ProjectTaskManager.getInstance(myProject).run(new ProjectTaskContext(sessionId), artifactsBuildProjectTask, callback);
     }, ModalityState.NON_MODAL);
 
     finished.waitFor();
@@ -193,5 +191,5 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
 
   protected abstract T doCreateTask(Project project);
 
-  protected abstract CompileScope createCompileScope(Project project, List<Artifact> artifacts);
+  protected abstract ProjectTask createProjectTask(Project project, List<Artifact> artifacts);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.components.StateSplitterEx.EXTERNAL_SYSTEM_ID_ATTRIBUTE;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
 import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
@@ -63,7 +64,6 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   @NonNls public static final String PROPERTIES_ELEMENT = "properties";
   private static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private static final String EXCLUDED_ROOTS_TAG = "excluded";
-  private static final String EXTERNAL_SYSTEM_ID_ATTRIBUTE = "external-system-id";
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;

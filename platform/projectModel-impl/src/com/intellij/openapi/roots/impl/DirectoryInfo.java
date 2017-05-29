@@ -30,6 +30,7 @@ public abstract class DirectoryInfo {
   public abstract boolean isInProject();
 
   /**
+   * @param file a file under the directory described by this instance.
    * @return {@code true} if {@code file} is located under project content or library roots and not excluded or ignored
    */
   public abstract boolean isInProject(@NotNull VirtualFile file);
@@ -46,7 +47,9 @@ public abstract class DirectoryInfo {
   public abstract boolean isExcluded();
 
   /**
-   * @return {@code true} if {@code file} located under this directory is excluded from the project.
+   * Returns {@code true} if {@code file} located under this directory is excluded from the project. If {@code file} is a directory it means
+   * that all of its content is recursively excluded from the project.
+   * @param file a file under the directory described by this instance.
    */
   public abstract boolean isExcluded(@NotNull VirtualFile file);
 

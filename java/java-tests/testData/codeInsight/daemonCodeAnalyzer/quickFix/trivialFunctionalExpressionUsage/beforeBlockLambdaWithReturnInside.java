@@ -2,11 +2,10 @@
 
 class Test {
     void foo() {
-        Runnable r = () -> {
+        ((Runnable) () -> {
             if (true) return;
             System.out.println("");
-        };
-        r.r<caret>un();
+        }).r<caret>un();
         System.out.println("");
     }
 }

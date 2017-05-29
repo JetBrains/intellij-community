@@ -134,7 +134,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert presentation.itemTextBold
   }
 
-  private LookupElementPresentation renderElement(LookupElement element) {
+  private static LookupElementPresentation renderElement(LookupElement element) {
     return LookupElementPresentation.renderElement(element)
   }
 
@@ -1716,6 +1716,11 @@ class Bar {
   void testShowMostSpecificOverride() {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
+  }
+
+  void testShowMostSpecificOverrideOnlyFromClass() {
+    configure()
+    assert 'Door' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
   }
 
   void testShowVarInitializers() {

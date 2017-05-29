@@ -200,7 +200,17 @@ public class CompletionLookupArranger extends LookupArranger {
 
       // restart completion on any prefix change
       myProcess.addWatchedPrefix(0, StandardPatterns.string());
+
+      if (ApplicationManager.getApplication().isUnitTestMode()) printTestWarning();
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void printTestWarning() {
+    System.err.println("Your test might miss some lookup items, because only " + (myLimit / 2) + " most relevant items are guaranteed to be shown in the lookup. You can:");
+    System.err.println("1. Make the prefix used for completion longer, so that there are less suggestions.");
+    System.err.println("2. Increase 'ide.completion.variant.limit' (using RegistryValue#setValue with a test root disposable).");
+    System.err.println("3. Ignore this warning.");
   }
 
   private void removeItem(LookupElement element, ProcessingContext context) {

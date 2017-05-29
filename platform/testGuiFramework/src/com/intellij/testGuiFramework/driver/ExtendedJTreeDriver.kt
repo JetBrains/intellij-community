@@ -16,6 +16,7 @@
 package com.intellij.testGuiFramework.driver
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.ui.LoadingNode
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
 import org.fest.swing.cell.JTreeCellReader
@@ -217,11 +218,16 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
       for (stringIndex in 0..pathElementCount - 1) {
         val pathString = pathStrings[stringIndex]
         if (stringIndex == 0 && tree.isRootVisible) {
-          if (pathString != value(tree, node)) throw pathNotFound(pathStrings)
+            if (pathString != value(tree, node)) throw pathNotFound(pathStrings)
           newPathValues.add(node)
         }
         else {
-          node = traverseChildren(tree, node, pathString) ?: throw pathNotFound(pathStrings)
+          try {
+            node = traverseChildren(tree, node, pathString) ?: throw pathNotFound(pathStrings)
+          } catch(e: LoadingNodeException) {      //if we met loading node let's tell it to caller and probably expand path to clarify this node
+            e.treePath = TreePath(newPathValues.toTypedArray())
+            throw e
+          }
           newPathValues.add(node)
         }
       }
@@ -237,6 +243,7 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
       for (childIndex in 0..childCount - 1) {
         val child = model.getChild(node, childIndex)
+        if (child is LoadingNode) throw LoadingNodeException(child, null)
         if (pathString == value(tree, child)) {
           if (match != null) throw multipleMatchingNodes(pathString, value(tree, node))
           match = child
@@ -266,6 +273,11 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
       return cellReader!!
     }
   }
+
+  /**
+   * node that has as child LoadingNode
+   */
+  class LoadingNodeException(val node: Any, var treePath: TreePath?): Exception("Meet loading node: $node")
 
 
   private fun childCount(tree: JTree, path: TreePath): Int {
@@ -298,10 +310,20 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     }!!
   }
 
-  private fun matchingPathFor(tree: JTree, pathStrings: List<String>): TreePath {
-    return computeOnEdt {
-      matchingPathWithRootIfInvisible(tree, pathStrings)
-    }!!
+
+  /**
+   * we are trying to find TreePath for a tree, if we met loading node (LoadingTreeNode)
+   */
+  private fun matchingPathFor(tree: JTree, pathStrings: List<String>, countDownAttempts: Int = 30): TreePath {
+    if (countDownAttempts == 0) throw Exception("Unable to find path($pathStrings) for tree: $tree, attempts count exceeded")
+    try {
+      return computeOnEdtWithTry {
+        matchingPathWithRootIfInvisible(tree, pathStrings)
+      }!!
+    } catch (e: LoadingNodeException) {
+      if (e.treePath != null) expandTreePath(tree, e.treePath!!)
+      return matchingPathFor(tree, pathStrings, countDownAttempts - 1)
+    }
   }
 
   private fun matchingPathWithRootIfInvisible(tree: JTree, pathStrings: List<String>): TreePath {
@@ -386,6 +408,22 @@ class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
     override fun executeInEDT(): ReturnType = query()
   })
+
+  private fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
+    val result = GuiActionRunner.execute(object : GuiQuery<kotlin.Pair<ReturnType?, Throwable?>>() {
+      override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
+        try {
+          return Pair(query(), null)
+        }
+        catch (e: Exception) {
+          return Pair(null, e)
+        }
+      }
+    })
+    if (result?.second != null) throw result!!.second!!
+    return result!!.first
+  }
+
 
   private fun pause(timeout: Long, condition: () -> Boolean) {
     Pause.pause(object: Condition("ExtendedJTreeDriver wait condition:") {

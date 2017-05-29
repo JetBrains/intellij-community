@@ -31,25 +31,26 @@ class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener(
   val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.JUnitClientListener")
 
   override fun testStarted(description: Description?) {
-    sendObjectFun(JUnitInfo(Type.STARTED, description))
+    sendObjectFun(JUnitInfo(Type.STARTED, description, JUnitInfo.getClassAndMethodName(description!!)))
   }
 
   override fun testAssumptionFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable()))
+    sendObjectFun(JUnitInfo(Type.ASSUMPTION_FAILURE, failure.friendlySerializable(), JUnitInfo.getClassAndMethodName(failure!!.description)))
   }
 
   override fun testFailure(failure: Failure?) {
-    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception))
+    sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception, JUnitInfo.getClassAndMethodName(failure.description)))
     LOG.error(failure.exception)
   }
 
   override fun testFinished(description: Description?) {
-    sendObjectFun(JUnitInfo(Type.FINISHED, description))
+    sendObjectFun(JUnitInfo(Type.FINISHED, description, JUnitInfo.getClassAndMethodName(description!!)))
   }
 
   override fun testIgnored(description: Description?) {
-    sendObjectFun(JUnitInfo(Type.IGNORED, description))
+    sendObjectFun(JUnitInfo(Type.IGNORED, description, JUnitInfo.getClassAndMethodName(description!!)))
   }
+
 
   private fun Failure?.friendlySerializable(): Failure? {
     if (this == null) return null

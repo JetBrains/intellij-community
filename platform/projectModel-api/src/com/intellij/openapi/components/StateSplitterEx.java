@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components;
 
+import com.intellij.configurationStore.StreamProviderKt;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -27,6 +28,8 @@ import java.util.List;
 
 @SuppressWarnings("deprecation")
 public abstract class StateSplitterEx implements StateSplitter {
+  public static final String EXTERNAL_SYSTEM_ID_ATTRIBUTE = "external-system-id";
+
   @Override
   public abstract List<Pair<Element, String>> splitState(@NotNull Element state);
 
@@ -41,17 +44,20 @@ public abstract class StateSplitterEx implements StateSplitter {
 
   @NotNull
   protected static List<Pair<Element, String>> splitState(@NotNull Element state, @NotNull String attributeName) {
-    UniqueNameGenerator generator = new UniqueNameGenerator();
-    List<Pair<Element, String>> result = new SmartList<>();
-    for (Element subState : state.getChildren()) {
-      result.add(createItem(generator, subState, attributeName));
-    }
-    return result;
+    return splitState(state, attributeName, false);
   }
 
   @NotNull
-  protected static Pair<Element, String> createItem(@NotNull UniqueNameGenerator generator, @NotNull Element element, @NotNull String attributeName) {
-    return createItem(element.getAttributeValue(attributeName), generator, element);
+  protected static List<Pair<Element, String>> splitState(@NotNull Element state, @NotNull String attributeName, boolean filterOutExternalElements) {
+    UniqueNameGenerator generator = new UniqueNameGenerator();
+    List<Pair<Element, String>> result = new SmartList<>();
+    boolean isExternalStorageEnabled = filterOutExternalElements && StreamProviderKt.isExternalStorageEnabled();
+    for (Element subState : state.getChildren()) {
+      if (!isExternalStorageEnabled || subState.getAttribute(EXTERNAL_SYSTEM_ID_ATTRIBUTE) == null) {
+        result.add(createItem(subState.getAttributeValue(attributeName), generator, subState));
+      }
+    }
+    return result;
   }
 
   @NotNull

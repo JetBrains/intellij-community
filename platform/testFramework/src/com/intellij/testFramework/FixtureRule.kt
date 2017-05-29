@@ -17,7 +17,6 @@ package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.ComponentManager
@@ -84,14 +83,14 @@ class ProjectRule : ApplicationRule() {
       Throwable(projectPath, null).printStackTrace(PrintStream(buffer))
 
       val project = PlatformTestCase.createProject(projectPath, "Light project: $buffer") as ProjectEx
-      Disposer.register(ApplicationManager.getApplication(), Disposable {
+      PlatformTestUtil.registerProjectCleanup {
         try {
           disposeProject()
         }
         finally {
           Files.deleteIfExists(projectFile)
         }
-      })
+      }
 
       (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).storePointers()
       return project
@@ -101,7 +100,7 @@ class ProjectRule : ApplicationRule() {
       val project = sharedProject ?: return
       sharedProject = null
       sharedModule = null
-      Disposer.dispose(project)
+      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, true)
     }
   }
 

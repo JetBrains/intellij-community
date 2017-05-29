@@ -138,6 +138,10 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
     doTestConfiguredFile(false, false, filePath);
   }
 
+  public void testCheckedExceptionConstraintToTopLevel() throws Exception {
+    doTestCachedUnresolved();
+  }
+
   private void doTestCachedUnresolved() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     PsiMethodCallExpression callExpression =

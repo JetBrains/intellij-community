@@ -19,8 +19,12 @@ import com.intellij.debugger.DebuggerBundle
 import com.intellij.debugger.DebuggerManagerEx
 import com.intellij.debugger.actions.ArrayAction
 import com.intellij.debugger.actions.ArrayFilterAction
+import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.settings.NodeRendererSettings
 import com.intellij.icons.AllIcons
+import com.intellij.psi.JavaCodeFragment
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.tree.TreeModelAdapter
@@ -30,6 +34,8 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
+import com.sun.jdi.ArrayReference
+import com.sun.jdi.ArrayType
 import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.TreeNode
@@ -39,7 +45,21 @@ import javax.swing.tree.TreeNode
  */
 class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, val myTemp : Boolean) : XDebuggerTreeInplaceEditor(node, "arrayFilter") {
   init {
-    val arrayRenderer = ArrayAction.getArrayRenderer((myNode.parent as XValueNodeImpl).valueContainer)
+    val javaValue = (myNode.parent as XValueNodeImpl).valueContainer
+    myExpressionEditor.setDocumentProcessor({ d ->
+                                              if (javaValue is JavaValue) {
+                                                var type: String? = null
+                                                val value = javaValue.descriptor.value
+                                                if (value is ArrayReference) {
+                                                  type = (value.type() as ArrayType).componentTypeName()
+                                                }
+                                                val pair = DebuggerUtilsImpl.getPsiClassAndType(type, project)
+                                                val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(d)
+                                                if (psiFile is JavaCodeFragment) psiFile.thisType = pair.second
+                                              }
+                                              d
+                                            })
+    val arrayRenderer = ArrayAction.getArrayRenderer(javaValue)
     myExpressionEditor.expression = if (arrayRenderer is ArrayRenderer.Filtered) arrayRenderer.expression else null
   }
 

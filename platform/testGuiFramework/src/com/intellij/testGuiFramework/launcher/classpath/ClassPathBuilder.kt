@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtilRt
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
-import java.util.*
 import java.util.stream.Collectors
 
 /**
@@ -27,27 +26,20 @@ class ClassPathBuilder(val ideaLibPath: String,
   fun build(guiTestPath: String) = build(listOf(guiTestPath))
 
   fun build(guiTestPaths: List<String>): String {
-    val cp = ArrayList<String>()
     val ideaLibJars = File(ideaLibPath).listFiles().map(toPath).filter(isJar)
     val jdkJars = File(jdkPath + File.separator + "lib").getFilesRecursive().filter(isJar) +
                   File(jdkPath + File.separator + "jre" + File.separator + "lib").getFilesRecursive().filter(isJar)
-    val jUnitJars = File(jUnitPath).listFiles().map(toPath).filter(isJar)
+    val jUnitJar = listOf(File(jUnitPath).path)
     val festJars = File(festLibsPath).listFiles().map(toPath).filter(isFestJar)
 
     LOG.info("Building classpath for IDE path: $ideaLibPath (${ideaLibJars.countJars()})")
     LOG.info("Building classpath for JDK path: $jdkPath (${jdkJars.countJars()})")
-    LOG.info("Building classpath for JUnit path: $jUnitPath (${jUnitJars.countJars()})")
+    LOG.info("Building classpath for JUnit path: $jUnitPath")
     LOG.info("Building classpath for FEST jars path: $festLibsPath (${festJars.countJars()})")
     LOG.info("Building classpath for testGuiFramework path: $testGuiFrameworkPath")
     LOG.info("Building classpath for GUI tests paths: $guiTestPaths")
 
-    return cp.plus(ideaLibJars)
-      .plus(jdkJars)
-      .plus(festJars)
-      .plus(jUnitJars)
-      .plus(testGuiFrameworkPath)
-      .plus(guiTestPaths)
-      .buildOsSpec()
+    return (ideaLibJars + jdkJars + festJars + jUnitJar + testGuiFrameworkPath + guiTestPaths).buildOsSpec()
   }
 
   private fun List<String>.countJars() = if (this.size == 1) "1 jar" else "${this.size} jars"

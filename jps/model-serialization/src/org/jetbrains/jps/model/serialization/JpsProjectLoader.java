@@ -18,12 +18,11 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -50,14 +49,13 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
+import java.util.stream.Stream;
 
 /**
  * @author nik
@@ -70,81 +68,82 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 
-  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
+  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, Path baseDir) {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
     myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
   }
 
-  static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, File baseDir) {
+  static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, @NotNull Path baseDir) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, baseDir);
+    expander.addFileHierarchyReplacements(PathMacroUtil.PROJECT_DIR_MACRO_NAME, baseDir.toFile());
     return expander;
   }
 
   public static void loadProject(final JpsProject project, Map<String, String> pathVariables, String projectPath) throws IOException {
-    File file = new File(FileUtil.toCanonicalPath(projectPath));
-    if (file.isFile() && projectPath.endsWith(".ipr")) {
-      new JpsProjectLoader(project, pathVariables, file.getParentFile()).loadFromIpr(file);
+    Path file = Paths.get(FileUtil.toCanonicalPath(projectPath));
+    if (Files.isRegularFile(file) && projectPath.endsWith(".ipr")) {
+      new JpsProjectLoader(project, pathVariables, file.getParent()).loadFromIpr(file);
     }
     else {
-      File dotIdea = new File(file, PathMacroUtil.DIRECTORY_STORE_NAME);
-      File directory;
-      if (dotIdea.isDirectory()) {
+      Path dotIdea = file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
+      Path directory;
+      if (Files.isDirectory(dotIdea)) {
         directory = dotIdea;
       }
-      else if (file.isDirectory() && file.getName().equals(PathMacroUtil.DIRECTORY_STORE_NAME)) {
+      else if (Files.isDirectory(file) && file.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
         directory = file;
       }
       else {
         throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
-      new JpsProjectLoader(project, pathVariables, directory.getParentFile()).loadFromDirectory(directory);
+      new JpsProjectLoader(project, pathVariables, directory.getParent()).loadFromDirectory(directory);
     }
   }
 
-  public static String getDirectoryBaseProjectName(File dir) {
-    File nameFile = new File(dir, ".name");
-    if (nameFile.isFile()) {
-      try {
-        return FileUtilRt.loadFile(nameFile).trim();
-      }
-      catch (IOException ignored) {
+  @NotNull
+  public static String getDirectoryBaseProjectName(@NotNull Path dir) {
+    try (Stream<String> stream = Files.lines(dir.resolve(".name"))) {
+      String value = stream.findFirst().map(String::trim).orElse(null);
+      if (value != null) {
+        return value;
       }
     }
-    return dir.getParentFile().getName();
+    catch (IOException ignored) {
+    }
+    return dir.getParent().getFileName().toString();
   }
 
-  private void loadFromDirectory(File dir) {
+  private void loadFromDirectory(@NotNull Path dir) {
     myProject.setName(getDirectoryBaseProjectName(dir));
-    JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
+    JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(dir.resolve("misc.xml")));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
         loadComponents(dir, "misc.xml", serializer, myProject);
       }
     }
-    loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);
+    loadModules(loadRootElement(dir.resolve("modules.xml")), projectSdkType);
 
     Runnable timingLog = TimingLog.startActivity("loading project libraries");
-    for (File libraryFile : listXmlFiles(new File(dir, "libraries"))) {
+    for (Path libraryFile : listXmlFiles(dir.resolve("libraries"))) {
       loadProjectLibraries(loadRootElement(libraryFile));
     }
     timingLog.run();
 
     Runnable artifactsTimingLog = TimingLog.startActivity("loading artifacts");
-    for (File artifactFile : listXmlFiles(new File(dir, "artifacts"))) {
+    for (Path artifactFile : listXmlFiles(dir.resolve("artifacts"))) {
       loadArtifacts(loadRootElement(artifactFile));
     }
     artifactsTimingLog.run();
 
     if (hasRunConfigurationSerializers()) {
       Runnable runConfTimingLog = TimingLog.startActivity("loading run configurations");
-      for (File configurationFile : listXmlFiles(new File(dir, "runConfigurations"))) {
+      for (Path configurationFile : listXmlFiles(dir.resolve("runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
       }
-      File workspaceFile = new File(dir, "workspace.xml");
-      if (workspaceFile.exists()) {
+      Path workspaceFile = dir.resolve("workspace.xml");
+      if (Files.exists(workspaceFile)) {
         Element runManager = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "RunManager");
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, runManager);
       }
@@ -162,18 +161,24 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @NotNull
-  private static File[] listXmlFiles(final File dir) {
-    File[] files = dir.listFiles(FileFilters.filesWithExtension("xml"));
-    return files != null ? files : ArrayUtil.EMPTY_FILE_ARRAY;
+  private static List<Path> listXmlFiles(@NotNull Path dir) {
+    try {
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, it -> it.getFileName().toString().endsWith(".xml") && Files.isRegularFile(it))) {
+        return ContainerUtil.collect(stream.iterator());
+      }
+    }
+    catch (IOException e) {
+      return Collections.emptyList();
+    }
   }
 
-  private void loadFromIpr(File iprFile) {
+  private void loadFromIpr(@NotNull Path iprFile) {
     final Element iprRoot = loadRootElement(iprFile);
 
-    String projectName = FileUtil.getNameWithoutExtension(iprFile);
+    String projectName = FileUtil.getNameWithoutExtension(iprFile.getFileName().toString());
     myProject.setName(projectName);
-    File iwsFile = new File(iprFile.getParent(), projectName + ".iws");
-    Element iwsRoot = iwsFile.exists() ? loadRootElement(iwsFile) : null;
+    Path iwsFile = iprFile.getParent().resolve(projectName + ".iws");
+    Element iwsRoot = Files.exists(iwsFile) ? loadRootElement(iwsFile) : null;
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
@@ -226,11 +231,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     if (componentRoot == null) return;
 
 
-    final Set<File> foundFiles = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
-    final List<File> moduleFiles = new ArrayList<>();
+    final Set<Path> foundFiles = new THashSet<>();
+    final List<Path> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
-      final File file = new File(path);
+      final Path file = Paths.get(path);
       if (foundFiles.add(file)) {
         moduleFiles.add(file);
       }
@@ -244,28 +249,28 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @NotNull
-  public static List<JpsModule> loadModules(@NotNull List<File> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
+  public static List<JpsModule> loadModules(@NotNull List<Path> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<>();
-    List<Future<Pair<File, Element>>> futureModuleFilesContents = new ArrayList<>();
+    List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
     String externalProjectConfigDir = System.getProperty("external.project.config");
     Path externalModuleDir = StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, "modules");
     if (externalModuleDir != null) {
       LOG.info("External project config dir is used: " + externalProjectConfigDir);
     }
 
-    for (final File file : moduleFiles) {
+    for (Path file : moduleFiles) {
       futureModuleFilesContents.add(ourThreadPool.submit(() -> {
         final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
 
         Element data = null;
-        if (file.exists()) {
+        if (Files.exists(file)) {
           data = loadRootElement(file, expander);
         }
 
-        Path externalPath = externalModuleDir == null ? null : externalModuleDir.resolve(FileUtilRt.getNameWithoutExtension(file.getName()) + ".xml");
+        Path externalPath = externalModuleDir == null ? null : externalModuleDir.resolve(FileUtilRt.getNameWithoutExtension(file.getFileName().toString()) + ".xml");
         if (externalPath != null && Files.exists(externalPath)) {
-          Element externalData = loadRootElement(externalPath.toFile(), expander);
+          Element externalData = loadRootElement(externalPath, expander);
           if (data == null) {
             data = externalData;
           }
@@ -275,17 +280,16 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
 
         if (data == null) {
-          LOG.info("Module '" + FileUtil.getNameWithoutExtension(file) + "' is skipped: " + file.getAbsolutePath() + " doesn't exist");
+          LOG.info("Module '" + FileUtil.getNameWithoutExtension(file.getFileName().toString()) + "' is skipped: " + file.toAbsolutePath() + " doesn't exist");
         }
 
-        //new File(file.getName())
         return Pair.create(file, data);
       }));
     }
 
     try {
       final List<String> classpathDirs = new ArrayList<>();
-      for (Future<Pair<File, Element>> moduleFile : futureModuleFilesContents) {
+      for (Future<Pair<Path, Element>> moduleFile : futureModuleFilesContents) {
         final String classpathDir = moduleFile.get().getSecond().getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
         if (classpathDir != null) {
           classpathDirs.add(classpathDir);
@@ -293,8 +297,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
       }
 
       List<Future<JpsModule>> futures = new ArrayList<>();
-      for (final Future<Pair<File, Element>> futureModuleFile : futureModuleFilesContents) {
-        final Pair<File, Element> moduleFile = futureModuleFile.get();
+      for (final Future<Pair<Path, Element>> futureModuleFile : futureModuleFilesContents) {
+        final Pair<Path, Element> moduleFile = futureModuleFile.get();
         futures.add(ourThreadPool.submit(
           () -> loadModule(moduleFile.getFirst(), moduleFile.getSecond(), classpathDirs, projectSdkType, pathVariables)));
       }
@@ -311,21 +315,21 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
-  @Nullable
-  private static JpsModule loadModule(@NotNull File file, @NotNull Element moduleRoot, List<String> paths,
+  @NotNull
+  private static JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
                                       @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables) {
-    String name = FileUtil.getNameWithoutExtension(file);
+    String name = FileUtil.getNameWithoutExtension(file.getFileName().toString());
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
     module.getContainer().setChild(JpsModuleSerializationDataExtensionImpl.ROLE,
-                                   new JpsModuleSerializationDataExtensionImpl(file.getParentFile()));
+                                   new JpsModuleSerializationDataExtensionImpl(file.getParent()));
 
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       extension.loadModuleOptions(module, moduleRoot);
     }
 
-    String baseModulePath = FileUtil.toSystemIndependentName(file.getParent());
+    String baseModulePath = FileUtil.toSystemIndependentName(file.getParent().toString());
     String classpath = moduleRoot.getAttributeValue(CLASSPATH_ATTRIBUTE);
     if (classpath == null) {
       JpsModuleRootModelSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"),
@@ -345,9 +349,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return module;
   }
 
-  static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, File moduleFile) {
+  static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, @NotNull Path moduleFile) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.getAbsolutePath());
+    String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.toAbsolutePath().toString());
     if (moduleDirPath != null) {
       expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtil.toSystemDependentName(moduleDirPath)));
     }

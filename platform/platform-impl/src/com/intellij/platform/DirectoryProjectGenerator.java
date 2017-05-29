@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,30 +31,75 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public interface DirectoryProjectGenerator<T> {
-  ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
+public abstract class DirectoryProjectGenerator<T> {
+  public static final ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
-  @NotNull
-  @Nls
-  String getName();
+  @Deprecated
+  @Nullable
+  public Integer getPreferredDescriptionWidth() {
+    return null;
+  }
 
   /**
    * @deprecated todo[vokin]: delete in 2016.3
    */
   @Nullable
-  default T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
+  T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
     return null;
+  }
+
+  @Nullable
+  public String getDescription() {
+    return null;
+  }
+
+  @Nullable
+  public String getHelpId() {
+    return null;
+  }
+
+  // to be removed in 2017.3
+  @Deprecated
+  public boolean isPrimaryGenerator() {
+    return true;
+  }
+
+  @NotNull
+  @Nls
+  public abstract String getName();
+
+  @NotNull
+  public final NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
+      @NotNull
+      @Override
+      protected ProjectGeneratorPeer<T> compute() {
+        return createPeer();
+      }
+    };
+  }
+
+  /**
+   * Creates new peer - new project settings and UI for them
+   */
+  @NotNull
+  protected ProjectGeneratorPeer<T> createPeer() {
+    return new GeneratorPeerImpl<>();
   }
 
   /**
    * @return 16x16 icon or null, if no icon is available
    */
   @Nullable
-  Icon getLogo();
+  public abstract Icon getLogo();
 
-  void generateProject(@NotNull final Project project, @NotNull final VirtualFile baseDir,
-                       @Nullable final T settings, @NotNull final Module module);
+  public abstract void generateProject(@NotNull final Project project,
+                                       @NotNull final VirtualFile baseDir,
+                                       @Nullable final T settings,
+                                       @NotNull final Module module);
 
   @NotNull
-  ValidationResult validate(@NotNull String baseDirPath);
+  public ValidationResult validate(@NotNull String baseDirPath) {
+    return ValidationResult.OK;
+  }
 }

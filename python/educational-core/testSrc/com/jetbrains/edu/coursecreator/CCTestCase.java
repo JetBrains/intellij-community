@@ -15,7 +15,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.ComparisonFailure;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +33,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class CCTestCase extends CodeInsightFixtureTestCase {
+public abstract class CCTestCase extends LightPlatformCodeInsightFixtureTestCase {
   private static final Logger LOG = Logger.getInstance(CCTestCase.class);
 
   @Nullable
@@ -74,7 +75,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/community/python/educational-core/testData";
+    return new File("testData").getAbsolutePath().replace(File.separatorChar, '/');
   }
 
   @Override
@@ -186,7 +187,7 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
   }
 
   public Pair<Document, List<AnswerPlaceholder>> getPlaceholders(String name, boolean useLength, boolean removeMarkers) {
-    VirtualFile resultFile = LocalFileSystem.getInstance().findFileByPath(getTestDataPath() + "/" + name);
+    VirtualFile resultFile = LocalFileSystem.getInstance().findFileByPath(getBasePath() + "/" + name);
     Document document = FileDocumentManager.getInstance().getDocument(resultFile);
     Document tempDocument = EditorFactory.getInstance().createDocument(document.getCharsSequence());
     if (removeMarkers) {
@@ -194,6 +195,11 @@ public abstract class CCTestCase extends CodeInsightFixtureTestCase {
     }
     List<AnswerPlaceholder> placeholders = getPlaceholders(tempDocument, useLength);
     return Pair.create(tempDocument, placeholders);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return getBasePath();
   }
 }
 

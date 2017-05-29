@@ -25,7 +25,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -35,16 +34,15 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.platform.CustomStepProjectGenerator;
 import com.intellij.platform.DirectoryProjectGenerator;
 import com.intellij.platform.PlatformProjectOpenProcessor;
+import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.projectImport.ProjectOpenedCallback;
-import com.intellij.util.Function;
-import com.intellij.util.NullableConsumer;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -57,17 +55,17 @@ import java.util.List;
 import static com.intellij.platform.ProjectTemplatesFactory.CUSTOM_GROUP;
 
 
-public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAware {
+public class AbstractNewProjectStep<T> extends DefaultActionGroup implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AbstractNewProjectStep.class);
 
-  protected AbstractNewProjectStep(@NotNull Customization customization) {
+  protected AbstractNewProjectStep(@NotNull Customization<T> customization) {
     super("Select Project Type", true);
 
-    NullableConsumer<ProjectSettingsStepBase> callback = customization.createCallback();
+    AbstractCallback<T> callback = customization.createCallback();
     ProjectSpecificAction projectSpecificAction = customization.createProjectSpecificAction(callback);
     addProjectSpecificAction(projectSpecificAction);
 
-    DirectoryProjectGenerator[] generators = customization.getProjectGenerators();
+    DirectoryProjectGenerator<T>[] generators = customization.getProjectGenerators();
     customization.setUpBasicAction(projectSpecificAction, generators);
 
     addAll(customization.getActions(generators, callback));
@@ -88,32 +86,32 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     addAll(projectSpecificAction.getChildren(null));
   }
 
-  protected static abstract class Customization {
+  protected static abstract class Customization<T> {
     @NotNull
-    protected ProjectSpecificAction createProjectSpecificAction(@NotNull final NullableConsumer<ProjectSettingsStepBase> callback) {
-      DirectoryProjectGenerator emptyProjectGenerator = createEmptyProjectGenerator();
+    protected ProjectSpecificAction createProjectSpecificAction(@NotNull final AbstractCallback<T> callback) {
+      DirectoryProjectGenerator<T> emptyProjectGenerator = createEmptyProjectGenerator();
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
     }
 
     @NotNull
-    protected abstract NullableConsumer<ProjectSettingsStepBase> createCallback();
+    protected abstract AbstractCallback<T> createCallback();
 
     @NotNull
-    protected abstract DirectoryProjectGenerator createEmptyProjectGenerator();
+    protected abstract DirectoryProjectGenerator<T> createEmptyProjectGenerator();
 
     @NotNull
-    protected abstract ProjectSettingsStepBase createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator projectGenerator,
-                                                                                 @NotNull NullableConsumer<ProjectSettingsStepBase> callback);
+    protected abstract ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
+                                                                                    @NotNull AbstractCallback<T> callback);
 
 
     @NotNull
-    protected DirectoryProjectGenerator[] getProjectGenerators() {
+    protected DirectoryProjectGenerator<T>[] getProjectGenerators() {
       return Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     }
 
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator[] generators, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T>[] generators, @NotNull AbstractCallback<T> callback) {
       final List<AnAction> actions = ContainerUtil.newArrayList();
-      for (DirectoryProjectGenerator projectGenerator : generators) {
+      for (DirectoryProjectGenerator<T> projectGenerator : generators) {
         try {
           actions.addAll(ContainerUtil.list(getActions(projectGenerator, callback)));
         } catch (Throwable throwable) {
@@ -124,13 +122,13 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     }
 
     @NotNull
-    public AnAction[] getActions(@NotNull DirectoryProjectGenerator generator, @NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getActions(@NotNull DirectoryProjectGenerator<T> generator, @NotNull AbstractCallback<T> callback) {
       if (shouldIgnore(generator)) {
         return AnAction.EMPTY_ARRAY;
       }
 
-      ProjectSettingsStepBase step = generator instanceof CustomStepProjectGenerator ?
-                                     ((ProjectSettingsStepBase)((CustomStepProjectGenerator)generator).createStep(generator, callback)) :
+      ProjectSettingsStepBase<T> step = generator instanceof CustomStepProjectGenerator ?
+                                     ((ProjectSettingsStepBase<T>)((CustomStepProjectGenerator<T>)generator).createStep(generator, callback)) :
                                      createProjectSpecificSettingsStep(generator, callback);
 
       ProjectSpecificAction projectSpecificAction = new ProjectSpecificAction(generator, step);
@@ -142,7 +140,7 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     }
 
     @NotNull
-    public AnAction[] getExtraActions(@NotNull NullableConsumer<ProjectSettingsStepBase> callback) {
+    public AnAction[] getExtraActions(@NotNull AbstractCallback<T> callback) {
       return AnAction.EMPTY_ARRAY;
     }
 
@@ -154,27 +152,34 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     }
   }
 
-  protected static abstract class AbstractCallback implements NullableConsumer<ProjectSettingsStepBase> {
-    @Override
-    public void consume(@Nullable final ProjectSettingsStepBase settings) {
+  public static class AbstractCallback<T> implements PairConsumer<ProjectSettingsStepBase<T>, ProjectGeneratorPeer<T>> {
+    public void consume(@Nullable final ProjectSettingsStepBase<T> settings, @NotNull final ProjectGeneratorPeer<T> projectGeneratorPeer) {
       if (settings == null) return;
 
       // todo projectToClose should be passed from calling action, this is just a quick workaround
       IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
       final Project projectToClose = frame != null ? frame.getProject() : null;
       final DirectoryProjectGenerator generator = settings.getProjectGenerator();
-      doGenerateProject(projectToClose, settings.getProjectLocation(), generator,
-                        file -> getProjectSettings(generator));
+
+      //backward compatibility
+      final Object projectSettings = getProjectSettings(generator);
+      Object actualSettings = projectSettings != null ? projectSettings : projectGeneratorPeer.getSettings();
+
+      doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
     }
 
+    // use createLazyPeer and get settings from it instead
+    @Deprecated
     @Nullable
-    abstract protected Object getProjectSettings(@NotNull DirectoryProjectGenerator generator);
+    protected Object getProjectSettings(@NotNull DirectoryProjectGenerator generator) {
+      return null;
+    }
   }
 
   public static Project doGenerateProject(@Nullable final Project projectToClose,
                                           @NotNull final String locationString,
                                           @Nullable final DirectoryProjectGenerator generator,
-                                          @NotNull final Function<VirtualFile, Object> settingsComputable) {
+                                          @Nullable Object settings) {
     final File location = new File(FileUtil.toSystemDependentName(locationString));
     if (!location.exists() && !location.mkdirs()) {
       String message = ActionsBundle.message("action.NewDirectoryProject.cannot.create.dir", location.getAbsolutePath());
@@ -201,26 +206,15 @@ public class AbstractNewProjectStep extends DefaultActionGroup implements DumbAw
     String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
     UsageTrigger.trigger("AbstractNewProjectStep." + generatorName);
 
-    Object settings = null;
-    if (generator != null) {
-      try {
-        settings = settingsComputable.fun(baseDir);
-      }
-      catch (ProcessCanceledException e) {
-        return null;
-      }
-    }
-
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(location.getParent()));
 
     ProjectOpenedCallback callback = null;
     if(generator instanceof TemplateProjectDirectoryGenerator){
       ((TemplateProjectDirectoryGenerator)generator).generateProject(baseDir.getName(), locationString);
     } else {
-      final Object finalSettings = settings;
       callback = (p, module) -> {
         if (generator != null) {
-          generator.generateProject(p, baseDir, finalSettings, module);
+          generator.generateProject(p, baseDir, settings, module);
         }
       };
     }

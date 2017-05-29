@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.model.JpsElement;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * @author nik
@@ -38,19 +40,19 @@ public abstract class JpsLoaderBase {
     myMacroExpander = macroExpander;
   }
 
-  protected Element loadRootElement(final File file) {
+  protected Element loadRootElement(@NotNull Path file) {
     return loadRootElement(file, myMacroExpander);
   }
 
-  protected <E extends JpsElement> void loadComponents(File dir,
+  protected <E extends JpsElement> void loadComponents(@NotNull Path dir,
                                                        final String defaultFileName,
                                                        JpsElementExtensionSerializerBase<E> serializer,
                                                        final E element) {
     String fileName = serializer.getConfigFileName();
-    File configFile = new File(dir, fileName != null ? fileName : defaultFileName);
-    Runnable timingLog = TimingLog.startActivity("loading: " + configFile.getName() + ":" + serializer.getComponentName());
+    Path configFile = dir.resolve(fileName != null ? fileName : defaultFileName);
+    Runnable timingLog = TimingLog.startActivity("loading: " + configFile.getFileName() + ":" + serializer.getComponentName());
     Element componentTag;
-    if (configFile.exists()) {
+    if (Files.exists(configFile)) {
       componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
     }
     else {
@@ -66,24 +68,24 @@ public abstract class JpsLoaderBase {
     timingLog.run();
   }
 
-  protected static Element loadRootElement(final File file, final JpsMacroExpander macroExpander) {
+  protected static Element loadRootElement(@NotNull Path file, final JpsMacroExpander macroExpander) {
     try {
       final Element element = tryLoadRootElement(file);
       macroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
       return element;
     }
     catch (JDOMException e) {
-      throw new CannotLoadJpsModelException(file, "Cannot parse xml file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
+      throw new CannotLoadJpsModelException(file.toFile(), "Cannot parse xml file " + file.toAbsolutePath() + ": " + e.getMessage(), e);
     }
     catch (IOException e) {
-      throw new CannotLoadJpsModelException(file, "Cannot read file " + file.getAbsolutePath() + ": " + e.getMessage(), e);
+      throw new CannotLoadJpsModelException(file.toFile(), "Cannot read file " + file.toAbsolutePath() + ": " + e.getMessage(), e);
     }
   }
 
-  private static Element tryLoadRootElement(File file) throws IOException, JDOMException {
+  private static Element tryLoadRootElement(@NotNull Path file) throws IOException, JDOMException {
     for (int i = 0; i < MAX_ATTEMPTS - 1; i++) {
       try {
-        return JDOMUtil.load(file);
+        return JDOMUtil.load(Files.newBufferedReader(file));
       }
       catch (Exception e) {
         LOG.info("Loading attempt #" + i + " failed", e);
@@ -95,6 +97,6 @@ public abstract class JpsLoaderBase {
       }
       catch (InterruptedException ignored) { }
     }
-    return JDOMUtil.load(file);
+    return JDOMUtil.load(Files.newBufferedReader(file));
   }
 }
