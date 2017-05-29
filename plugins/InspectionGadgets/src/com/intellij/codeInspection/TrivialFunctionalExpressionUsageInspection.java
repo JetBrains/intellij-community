@@ -75,8 +75,13 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
                 return true;
               }
             }
-            else {
-              return true;
+          }
+
+          if(callParent instanceof PsiExpressionStatement) {
+            PsiElement statementParent = callParent.getParent();
+            // Disable in "for" initialization or update
+            if(statementParent instanceof PsiForStatement && callParent != ((PsiForStatement)statementParent).getBody()) {
+              return false;
             }
           }
 
