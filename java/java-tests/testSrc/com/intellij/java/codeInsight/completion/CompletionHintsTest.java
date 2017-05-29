@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -247,6 +248,46 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
     waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }");
+  }
+
+  public void testIntroduceVariableIntention() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+                                                     "    void m() {\n" +
+                                                     "        Character.for<caret>\n" +
+                                                     "    }\n" +
+                                                     "}");
+    complete("forDigit");
+    waitForAllAsyncStuff();
+    IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("class C {\n" +
+                          "    void m() {\n" +
+                          "        int i = ;\n" +
+                          "        Character.forDigit(i<caret>, )\n" +
+                          "    }\n" +
+                          "}");
+  }
+
+  public void testIntroduceVariableIntentionInIfWithoutBraces() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+                                                     "    void m() {\n" +
+                                                     "        if (true) Character.for<caret>\n" +
+                                                     "    }\n" +
+                                                     "}");
+    complete("forDigit");
+    waitForAllAsyncStuff();
+    IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("class C {\n" +
+                          "    void m() {\n" +
+                          "        if (true) {\n" +
+                          "            int i = ;\n" +
+                          "            Character.forDigit(i<caret>, )\n" +
+                          "        }\n" +
+                          "    }\n" +
+                          "}");
   }
 
   private void waitForParameterInfoUpdate() throws TimeoutException {
