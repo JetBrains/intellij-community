@@ -73,9 +73,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
   @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
     ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
-    for(ProjectOpenProcessor processor: processors) {
+    for (ProjectOpenProcessor processor : processors) {
       if (processor instanceof PlatformProjectOpenProcessor) {
-        return (PlatformProjectOpenProcessor) processor;
+        return (PlatformProjectOpenProcessor)processor;
       }
     }
     return null;
