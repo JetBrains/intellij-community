@@ -1,35 +1,62 @@
 package circlet.components
 
+import circlet.*
 import runtime.async.*
 import circlet.login.*
-import circlet.reactive.*
 import circlet.utils.*
+import com.intellij.concurrency.*
 import com.intellij.notification.*
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.*
 import com.intellij.xml.util.*
 import klogging.*
 import runtime.reactive.*
+import java.util.concurrent.*
 
 private val log = KLoggers.logger("plugin/IdePluginClient.kt")
 
-class IdePluginClient(val project: Project) :
+class CircletConnectionComponent(val project: Project) :
     AbstractProjectComponent(project),
     ILifetimedComponent by LifetimedComponent(project) {
 
     val loginDataComponent = component<CircletLoginComponent>()
-
-    val app = Property.createMutable<IdeaCircletApp?>(null)
+    val refreshLifetimes = SequentialLifetimes(componentLifetime)
+    val client = mutableProperty<CircletClient?>(null)
 
     init {
+        loginDataComponent.token.view(componentLifetime) { tklt, tk ->
+            loginDataComponent.enabled.whenTrue(tklt) { enabledLt ->
+                loginDataComponent.orgName.view(enabledLt) { orgLt, orgName ->
+                    val refreshLt = refreshLifetimes.next()
+                    JobScheduler.getScheduler().schedule({
+                        if (!refreshLt.isTerminated) {
+                            async {
+                                try {
+                                    val client = CircletClient(refreshLt)
+                                    client.start(IdeaPersistence, "https://localhost:8084", orgName)
 
-        loginDataComponent.enabled.whenTrue(componentLifetime) { enabledLt ->
-            async {
-                val ideaApp = IdeaCircletApp(enabledLt)
-                ideaApp.start(IdeaPersistence, "http://localhost")
-                app.value = ideaApp
+                                    client.connected.view(orgLt) { ntlt, value ->
+                                        if (value)
+                                            notifyConnected()
+                                        else
+                                            notifyReconnect(ntlt)
+                                    }
+                                } catch (th: Throwable) {
+                                    refreshLt.terminate()
+                                    authCheckFailedNotification()
+                                }
+                            }
+                        }
+                    }, 100, TimeUnit.MILLISECONDS)
+
+                }
             }
-            enabledLt.add { app.value = null }
+
+        }
+
+
+        loginDataComponent.enabled.whenFalse(componentLifetime) {
+            notifyDisconnected(it)
         }
 
     }
@@ -45,7 +72,6 @@ class IdePluginClient(val project: Project) :
     fun askPassword() {
         LoginDialog(LoginDialogViewModel(component<CircletLoginComponent>())).show()
     }
-
 
     private fun notifyReconnect(lt: Lifetime) {
         val notification = Notification(
@@ -71,7 +97,7 @@ class IdePluginClient(val project: Project) :
         val notification = Notification(
             "IdePLuginClient.notifyDisconnected",
             "Circlet",
-            XmlStringUtil.wrapInHtml("Logged in"),
+            XmlStringUtil.wrapInHtml("Logged in to ${loginDataComponent.orgName.value}"),
             NotificationType.INFORMATION,
             { a, b -> enable() })
         notification.notify(project)
@@ -83,7 +109,7 @@ class IdePluginClient(val project: Project) :
             "Circlet",
             XmlStringUtil.wrapInHtml("Authorization failed.<br> <a href=\"update\">Re-enter credentials</a>"),
             NotificationType.INFORMATION,
-            { a, b -> project.component<IdePluginClient>().askPassword() })
+            { a, b -> project.component<CircletConnectionComponent>().askPassword() })
             .notify(project)
     }
 }

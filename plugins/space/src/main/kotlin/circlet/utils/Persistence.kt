@@ -20,6 +20,19 @@ object IdeaPersistence : Persistence {
 
     suspend override fun clear() {
     }
-
-
 }
+
+object SandboxPersistence : Persistence {
+    suspend override fun put(key: String, value: String): String {
+        return value
+    }
+
+    suspend override fun get(key: String): String? = null
+
+    suspend override fun delete(key: String) {
+    }
+
+    suspend override fun clear() {
+    }
+}
+

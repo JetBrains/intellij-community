@@ -19,7 +19,7 @@ class EnableAction : AnAction() {
         val project = e.project
         project ?: return
 
-        project.component<IdePluginClient>().enable()
+        project.component<CircletConnectionComponent>().enable()
     }
 }
 

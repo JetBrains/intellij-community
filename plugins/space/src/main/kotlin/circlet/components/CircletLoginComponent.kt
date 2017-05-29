@@ -8,7 +8,9 @@ import runtime.reactive.*
 private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 
 data class IdePLuginClientData(
-    var myEnabled: Boolean? = null
+    var enabled: Boolean? = null,
+    var orgName : String? = null,
+    var login : String? = null
 )
 
 @State(
@@ -20,15 +22,18 @@ class CircletLoginComponent() :
     ILifetimedApplicationComponent by LifetimedApplicationComponent(),
     PersistentStateComponent<IdePLuginClientData> {
 
-    val credentialsUpdated = Signal.create<Boolean>()
-
     val enabled = Property.createMutable(false)
+    val orgName = Property.createMutable("")
+    val token = mutableProperty<Int>(0)
+    val login = Property.createMutable("")
 
     override fun loadState(state: IdePLuginClientData) {
-        enabled.value = state.myEnabled ?: false
+        enabled.value = state.enabled ?: false
+        orgName.value = state.orgName ?: ""
+        login.value = state.login ?: ""
     }
 
     override fun getState(): IdePLuginClientData =
-        IdePLuginClientData(enabled.value)
+        IdePLuginClientData(enabled = enabled.value, orgName = orgName.value, login = login.value)
 
 }

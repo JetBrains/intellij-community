@@ -21,6 +21,6 @@ class ReEnterCredentials : AnAction() {
         val project = e.project
         project ?: return
 
-        project.component<IdePluginClient>().askPassword()
+        project.component<CircletConnectionComponent>().askPassword()
     }
 }

@@ -29,7 +29,7 @@
 
     <project-components>
         <component>
-            <implementation-class>circlet.components.IdePluginClient</implementation-class>
+            <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
         </component>
     </project-components>
 

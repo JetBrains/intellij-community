@@ -22,7 +22,7 @@ class DisableAction : AnAction() {
         val project = e.project
         project ?: return
 
-        project.component<IdePluginClient>().disable()
+        project.component<CircletConnectionComponent>().disable()
     }
 }
 
