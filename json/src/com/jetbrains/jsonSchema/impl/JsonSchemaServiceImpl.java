@@ -201,9 +201,12 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list) {
-      return list.stream()
-        .filter(provider -> provider.getSchemaFile() != null)
-        .collect(Collectors.toMap(JsonSchemaFileProvider::getSchemaFile, Function.identity()));
+      // if there are different providers with the same schema files,
+      // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
+      final Map<VirtualFile, JsonSchemaFileProvider> map = new HashMap<>();
+      list.stream().filter(provider -> provider.getSchemaFile() != null)
+        .forEach(provider -> map.put(provider.getSchemaFile(), provider));
+      return map;
     }
   }
 }
