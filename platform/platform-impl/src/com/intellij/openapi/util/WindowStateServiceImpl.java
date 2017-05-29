@@ -278,12 +278,15 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                        boolean maximized, boolean maximizedSet,
                        boolean fullScreen, boolean fullScreenSet) {
     WindowState state = myStateMap.get(keyPair.first);
-    if (state == null) {
-      // may be convert the old key state to the new key
-      state = myStateMap.remove(oldKeyPair.first);
+
+    // may be convert the old key state to the new key
+    WindowState oldState = myStateMap.remove(oldKeyPair.first);
+    if (oldState != null) {
+      oldState.scaleDown(oldKeyPair.second);
       if (state != null) {
-        state.scaleDown(oldKeyPair.second);
-        myStateMap.put(keyPair.first, state);
+        state.merge(oldState);
+      } else {
+        myStateMap.put(keyPair.first, state = oldState);
       }
     }
     if (state != null) {
@@ -458,6 +461,18 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         myFullScreen = fullScreen;
       }
       return myLocation != null || mySize != null;
+    }
+
+    /**
+     * Merges this state with the passed one, prefering this state.
+     */
+    private void merge(@NotNull WindowState state) {
+      if (myLocation == null && state.myLocation != null) {
+        myLocation = state.myLocation.getLocation();
+      }
+      if (mySize == null && state.mySize != null) {
+        mySize = state.mySize.getSize();
+      }
     }
   }
 
