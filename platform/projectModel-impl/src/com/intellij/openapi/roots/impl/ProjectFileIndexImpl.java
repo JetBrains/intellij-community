@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -47,17 +48,15 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
   }
 
   @Override
-  public boolean iterateContent(@NotNull ContentIterator processor) {
-    Module[] modules =
-      ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModules());
+  public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
+    Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(myProject).getModules());
     for (final Module module : modules) {
       for (VirtualFile contentRoot : getRootsToIterate(module)) {
-        if (!iterateContentUnderDirectory(contentRoot, processor)) {
+        if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
           return false;
         }
       }
     }
-
     return true;
   }
 

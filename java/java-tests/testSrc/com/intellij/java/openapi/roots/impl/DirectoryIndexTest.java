@@ -58,7 +58,7 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
   private VirtualFile myPack1Dir, myPack2Dir;
   private VirtualFile myFileLibDir, myFileLibSrc, myFileLibCls;
   private VirtualFile myLibAdditionalOutsideDir, myLibAdditionalOutsideSrcDir, myLibAdditionalOutsideExcludedDir;
-  private VirtualFile myLibDir, myLibSrcDir, myLibAdditionalDir, myLibAdditionalSrcDir, myLibAdditionalExcludedDir, myLibClsDir;
+  private VirtualFile myLibDir, myLibSrcDir, myLibAdditionalDir, myLibAdditionalSrcDir, myLibAdditionalSrcFile, myLibAdditionalExcludedDir, myLibClsDir;
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
@@ -91,11 +91,12 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
                 lib
                     src
                       exc
-                    additional-lib
-                      src
-                      excluded
                     cls
                       exc
+                additional-lib
+                    src
+                    a.txt
+                    excluded
                 module2
                     src2
                         CVS
@@ -124,8 +125,9 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
       myLibDir = createChildDirectory(myModule1Dir, "lib");
       myLibSrcDir = createChildDirectory(myLibDir, "src");
       myExcludedLibSrcDir = createChildDirectory(myLibSrcDir, "exc");
-      myLibAdditionalDir = createChildDirectory(myLibDir, "additional-lib");
+      myLibAdditionalDir = createChildDirectory(myModule1Dir, "additional-lib");
       myLibAdditionalSrcDir = createChildDirectory(myLibAdditionalDir, "src");
+      myLibAdditionalSrcFile = createChildData(myLibAdditionalDir, "a.txt");
       myLibAdditionalExcludedDir = createChildDirectory(myLibAdditionalDir, "excluded");
       myLibClsDir = createChildDirectory(myLibDir, "cls");
       myExcludedLibClsDir = createChildDirectory(myLibClsDir, "exc");
@@ -621,6 +623,15 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
     assertInProject(LocalFileSystem.getInstance().findFileByIoFile(f));
   }
 
+  public void testSyntheticLibraryInContent() {
+    ModuleRootModificationUtil.addContentRoot(myModule, FileUtil.toSystemIndependentName(myModule1Dir.getPath()));
+    checkInfo(myLibAdditionalDir, myModule, false, true, null, null);
+    checkInfo(myLibAdditionalSrcDir, myModule, false, true, null, null);
+    checkInfo(myLibAdditionalExcludedDir, myModule, false, false, null, null);
+    assertInProject(myLibAdditionalExcludedDir);
+    assertIndexableContent(Arrays.asList(myLibAdditionalSrcDir, myLibAdditionalSrcFile, myLibAdditionalExcludedDir), null);
+  }
+
   public void testLibraryDirInContent() {
     ModuleRootModificationUtil.addModuleLibrary(myModule, myModule1Dir.getUrl());
 
@@ -636,11 +647,6 @@ public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
     //myModule is included into order entries instead of myModule2 because classes root for libraries dominates on source roots
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
-    checkInfo(myLibAdditionalDir, myModule, true, true, null, null, myModule);
-
-    checkInfo(myLibAdditionalSrcDir, myModule, true, true, null, null, myModule);
-    checkInfo(myLibAdditionalExcludedDir, myModule, true, false, "lib.additional-lib.excluded", null, myModule);
-    assertIndexableContent(Arrays.asList(myLibAdditionalSrcDir, myLibAdditionalExcludedDir), null);
 
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
