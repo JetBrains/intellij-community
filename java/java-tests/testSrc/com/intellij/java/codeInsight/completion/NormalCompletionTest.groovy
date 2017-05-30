@@ -45,7 +45,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testSimple() throws Exception {
     configureByFile("Simple.java")
-    assertStringItems("_field", "_local1", "_local2", "_baseField", "_method", "_baseMethod")
+    assertStringItems("_local1", "_local2", "_field", "_baseField", "_method", "_baseMethod")
   }
 
   void testCastToPrimitive1() throws Exception {

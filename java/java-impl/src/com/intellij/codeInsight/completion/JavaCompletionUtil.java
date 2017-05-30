@@ -462,15 +462,14 @@ public class JavaCompletionUtil {
       }), -1);
     }
     if (containsMember(qualifierType, object)) {
-      LookupElementRenderer<LookupElementDecorator<LookupElement>> boldRenderer =
-        new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
-          @Override
-          public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
-            element.getDelegate().renderElement(presentation);
-            presentation.setItemTextBold(true);
-          }
-        };
-      return PrioritizedLookupElement.withExplicitProximity(LookupElementDecorator.withRenderer(item, boldRenderer), 1);
+      LookupElementDecorator<LookupElement> bold = LookupElementDecorator.withRenderer(item, new LookupElementRenderer<LookupElementDecorator<LookupElement>>() {
+        @Override
+        public void renderElement(LookupElementDecorator<LookupElement> element, LookupElementPresentation presentation) {
+          element.getDelegate().renderElement(presentation);
+          presentation.setItemTextBold(true);
+        }
+      });
+      return object instanceof PsiField ? bold : PrioritizedLookupElement.withExplicitProximity(bold, 1);
     }
     return item;
   }
