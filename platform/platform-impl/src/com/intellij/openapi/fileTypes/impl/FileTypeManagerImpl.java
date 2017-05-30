@@ -502,7 +502,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
+  public FileType getFileTypeByFileName(@NotNull CharSequence fileName) {
     FileType type = myPatternsTable.findAssociatedFileType(fileName);
     return ObjectUtils.notNull(type, UnknownFileType.INSTANCE);
   }

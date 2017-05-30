@@ -25,6 +25,8 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesListener;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -66,6 +68,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   private boolean myCompilationPhase; // guarded by myLock
   private volatile GlobalSearchScope myExcludedFilesScope; // calculated outside myLock
   private final Set<String> myCompilationAffectedModules = ContainerUtil.newConcurrentSet(); // used outside myLock
+  private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
 
   public DirtyScopeHolder(@NotNull CompilerReferenceServiceImpl service,
@@ -282,7 +285,8 @@ public class DirtyScopeHolder extends UserDataHolderBase {
   }
 
   private Module getModuleForSourceContentFile(@NotNull VirtualFile file) {
-    if (myService.getFileTypes().contains(file.getFileType()) && myService.getFileIndex().isInSourceContent(file)) {
+    FileType fileType = myFileTypeRegistry.getFileTypeByFileName(file.getNameSequence());
+    if (myService.getFileTypes().contains(fileType) && myService.getFileIndex().isInSourceContent(file)) {
       return myService.getFileIndex().getModuleForFile(file);
     }
     return null;
