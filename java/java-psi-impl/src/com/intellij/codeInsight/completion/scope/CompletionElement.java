@@ -97,15 +97,14 @@ public class CompletionElement{
     Object anotherElement = another.getElement();
     if (!(anotherElement instanceof PsiMethod && myElement instanceof PsiMethod)) return false;
 
-    if (isInterfaceMethod((PsiMethod)myElement) && !isInterfaceMethod((PsiMethod)anotherElement)) return false;
+    if (((PsiMethod)myElement).hasModifierProperty(PsiModifier.ABSTRACT) && 
+        !((PsiMethod)anotherElement).hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return false;
+    }
 
     PsiType prevType = another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType());
     PsiType candidateType = mySubstitutor.substitute(((PsiMethod)myElement).getReturnType());
     return prevType != null && candidateType != null && !prevType.equals(candidateType) && prevType.isAssignableFrom(candidateType);
   }
 
-  private static boolean isInterfaceMethod(PsiMethod anotherElement) {
-    PsiClass aClass = anotherElement.getContainingClass();
-    return aClass != null && aClass.isInterface();
-  }
 }
