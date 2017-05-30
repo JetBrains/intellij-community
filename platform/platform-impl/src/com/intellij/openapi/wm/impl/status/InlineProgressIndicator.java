@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -79,7 +78,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       final GridBagConstraints c = new GridBagConstraints();
       c.weightx = 1;
       c.weighty = 1;
-      c.insets = new Insets(SystemInfo.isMacOSLion ? 1 : 0, 0, 1, myInfo.isCancellable() ? 0 : 4);
+      c.insets = new Insets(1, 0, 1, myInfo.isCancellable() ? 0 : 4);
       c.fill = GridBagConstraints.HORIZONTAL;
       progressWrapper.add(myProgress, c);
 
