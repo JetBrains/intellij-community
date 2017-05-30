@@ -140,7 +140,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     int currentNumberOfParameters = expressionList.getExpressions().length;
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(context.getProject());
     Document document = psiDocumentManager.getCachedDocument(context.getFile());
-    if (context.getHighlightedParameter() != null && document != null && psiDocumentManager.isCommitted(document) && 
+    if ((context.getHighlightedParameter() != null || candidates.length == 1) && 
+        document != null && psiDocumentManager.isCommitted(document) && 
         originalNumberOfParameters != currentNumberOfParameters && !(originalNumberOfParameters == 1 && currentNumberOfParameters == 0)) {
       List<Inlay> hints = expressionList.getUserData(JavaMethodCallElement.COMPLETION_HINTS);
       if (hints != null) {
