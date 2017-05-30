@@ -141,6 +141,9 @@ public class FrameWrapper implements Disposable, DataProvider {
     } else {
       ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
+
+    ((RootPaneContainer)frame).getRootPane().putClientProperty("jetbrains.awt.windowDarkAppearance" , UIUtil.isUnderDarcula());
+
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override
       public void windowOpened(WindowEvent e) {
