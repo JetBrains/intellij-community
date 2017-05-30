@@ -93,10 +93,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 
-/**
- * @author max
- */
-public class InspectionResultsView extends JPanel implements Disposable, OccurenceNavigator, DataProvider {
+public class InspectionResultsView extends JPanel implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(InspectionResultsView.class);
 
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
@@ -863,36 +860,6 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
 
   private OccurenceNavigator getOccurenceNavigator() {
     return myOccurenceNavigator;
-  }
-
-  @Override
-  public boolean hasNextOccurence() {
-    return myOccurenceNavigator != null && myOccurenceNavigator.hasNextOccurence();
-  }
-
-  @Override
-  public boolean hasPreviousOccurence() {
-    return myOccurenceNavigator != null && myOccurenceNavigator.hasPreviousOccurence();
-  }
-
-  @Override
-  public OccurenceInfo goNextOccurence() {
-    return myOccurenceNavigator != null ? myOccurenceNavigator.goNextOccurence() : null;
-  }
-
-  @Override
-  public OccurenceInfo goPreviousOccurence() {
-    return myOccurenceNavigator != null ? myOccurenceNavigator.goPreviousOccurence() : null;
-  }
-
-  @Override
-  public String getNextOccurenceActionName() {
-    return myOccurenceNavigator != null ? myOccurenceNavigator.getNextOccurenceActionName() : "";
-  }
-
-  @Override
-  public String getPreviousOccurenceActionName() {
-    return myOccurenceNavigator != null ? myOccurenceNavigator.getPreviousOccurenceActionName() : "";
   }
 
   @NotNull
