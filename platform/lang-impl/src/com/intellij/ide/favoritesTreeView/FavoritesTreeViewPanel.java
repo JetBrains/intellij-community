@@ -573,10 +573,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   public void setupToolWindow(ToolWindowEx window) {
-    final CollapseAllAction collapseAction = new CollapseAllAction(myTree);
-    collapseAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
-    collapseAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
-    window.setTitleActions(collapseAction);
+    AnAction[] actions = new AnAction[] {
+      CommonActionsManager.getInstance().createExpandAllHeaderAction(myTree),
+      CommonActionsManager.getInstance().createCollapseAllHeaderAction(myTree)
+    };
+    window.setTitleActions(actions);
 
     final DefaultActionGroup group = new DefaultActionGroup();
     final ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(myProject);
