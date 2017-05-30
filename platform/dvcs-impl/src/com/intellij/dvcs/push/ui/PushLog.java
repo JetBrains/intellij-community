@@ -35,6 +35,7 @@ import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -232,7 +233,7 @@ public class PushLog extends JPanel implements DataProvider {
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);
     myChangesBrowser.addToolbarAction(editSourceAction);
-    myChangesBrowser.setMinimumSize(new Dimension(200, myChangesBrowser.getPreferredSize().height));
+    myChangesBrowser.setMinimumSize(new Dimension(JBUI.scale(200), myChangesBrowser.getPreferredSize().height));
     setDefaultEmptyText();
 
     JBSplitter splitter = new JBSplitter(SPLITTER_PROPORTION, 0.7f);
@@ -264,7 +265,7 @@ public class PushLog extends JPanel implements DataProvider {
 
     setLayout(new BorderLayout());
     add(splitter);
-    myTree.setMinimumSize(new Dimension(400, myTree.getPreferredSize().height));
+    myTree.setMinimumSize(new Dimension(JBUI.scale(400), myTree.getPreferredSize().height));
     myTree.setRowHeight(0);
     myScrollPane.setMinimumSize(new Dimension(myTree.getMinimumSize().width, myScrollPane.getPreferredSize().height));
   }
