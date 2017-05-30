@@ -16,7 +16,6 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
@@ -30,7 +29,6 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.ExportHTMLAction;
 import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
@@ -46,7 +44,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -386,8 +383,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private JComponent createLeftActionsToolbar() {
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new RerunAction(this));
-    group.add(new CloseAction());
+    group.add(new RerunAction(this, this));
+    group.add(new CloseAction(myGlobalInspectionContext));
     final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
@@ -1074,42 +1071,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     return myDisposed;
   }
 
-  private class CloseAction extends AnAction implements DumbAware {
-    private CloseAction() {
-      super(CommonBundle.message("action.close"), null, AllIcons.Actions.Cancel);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      myGlobalInspectionContext.close(true);
-    }
-  }
-
   public void updateCurrentProfile() {
     final String name = myInspectionProfile.getName();
     myInspectionProfile = myInspectionProfile.getProfileManager().getProfile(name);
-  }
-
-  private class RerunAction extends AnAction {
-    RerunAction(JComponent comp) {
-      super(InspectionsBundle.message("inspection.action.rerun"), InspectionsBundle.message("inspection.action.rerun"),
-            AllIcons.Actions.Rerun);
-      registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      e.getPresentation().setEnabled(isRerunAvailable());
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      rerun();
-    }
-
-    private void rerun() {
-      InspectionResultsView.this.rerun();
-    }
   }
 
   public boolean isRerunAvailable() {
