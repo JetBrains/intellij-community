@@ -61,7 +61,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     public boolean mySaveCallSignatures = false;
     public boolean mySupportGeventDebugging = false;
     public boolean mySupportQtDebugging = true;
-    public String myPyQtBackend = "auto";
+    public String myPyQtBackend = "Auto";
   }
 
 
