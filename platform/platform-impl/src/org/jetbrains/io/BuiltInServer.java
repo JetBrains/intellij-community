@@ -53,9 +53,7 @@ public class BuiltInServer implements Disposable {
     }
   }
 
-  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup,
-                        int port,
-                        @NotNull ChannelRegistrar channelRegistrar) {
+  private BuiltInServer(@NotNull EventLoopGroup eventLoopGroup, int port, @NotNull ChannelRegistrar channelRegistrar) {
     this.eventLoopGroup = eventLoopGroup;
     this.port = port;
     this.channelRegistrar = channelRegistrar;
@@ -96,15 +94,15 @@ public class BuiltInServer implements Disposable {
                                             boolean tryAnyPort,
                                             @Nullable NotNullProducer<ChannelHandler> handler) throws Exception {
     BuiltInServerThreadFactory threadFactory = new BuiltInServerThreadFactory();
-    NioEventLoopGroup nioEventLoopGroup;
+    EventLoopGroup loopGroup;
     try {
-      nioEventLoopGroup = new NioEventLoopGroup(workerCount, threadFactory);
+      loopGroup = new NioEventLoopGroup(workerCount, threadFactory);
     }
     catch (IllegalStateException e) {
       Logger.getInstance(BuiltInServer.class).warn(e);
-      return start(new OioEventLoopGroup(1, threadFactory), true, 6942, 50, false, handler);
+      loopGroup = new OioEventLoopGroup(1, threadFactory);
     }
-    return start(nioEventLoopGroup, true, firstPort, portsCount, tryAnyPort, handler);
+    return start(loopGroup, true, firstPort, portsCount, tryAnyPort, handler);
   }
 
   @NotNull
