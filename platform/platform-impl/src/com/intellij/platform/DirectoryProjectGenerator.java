@@ -31,12 +31,12 @@ import javax.swing.*;
 /**
  * @author yole
  */
-public abstract class DirectoryProjectGenerator<T> {
-  public static final ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
+public interface DirectoryProjectGenerator<T> {
+  ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
   @Deprecated
   @Nullable
-  public Integer getPreferredDescriptionWidth() {
+  default Integer getPreferredDescriptionWidth() {
     return null;
   }
 
@@ -44,32 +44,32 @@ public abstract class DirectoryProjectGenerator<T> {
    * @deprecated todo[vokin]: delete in 2016.3
    */
   @Nullable
-  T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
+  default T showGenerationSettings(final VirtualFile baseDir) throws ProcessCanceledException {
     return null;
   }
 
   @Nullable
-  public String getDescription() {
+  default String getDescription() {
     return null;
   }
 
   @Nullable
-  public String getHelpId() {
+  default String getHelpId() {
     return null;
   }
 
   // to be removed in 2017.3
   @Deprecated
-  public boolean isPrimaryGenerator() {
+  default boolean isPrimaryGenerator() {
     return true;
   }
 
   @NotNull
   @Nls
-  public abstract String getName();
+  String getName();
 
   @NotNull
-  public final NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return new NotNullLazyValue<ProjectGeneratorPeer<T>>() {
       @NotNull
       @Override
@@ -83,7 +83,7 @@ public abstract class DirectoryProjectGenerator<T> {
    * Creates new peer - new project settings and UI for them
    */
   @NotNull
-  protected ProjectGeneratorPeer<T> createPeer() {
+  default ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
   }
 
@@ -91,15 +91,13 @@ public abstract class DirectoryProjectGenerator<T> {
    * @return 16x16 icon or null, if no icon is available
    */
   @Nullable
-  public abstract Icon getLogo();
+  Icon getLogo();
 
-  public abstract void generateProject(@NotNull final Project project,
-                                       @NotNull final VirtualFile baseDir,
-                                       @Nullable final T settings,
-                                       @NotNull final Module module);
+  void generateProject(@NotNull final Project project,
+                       @NotNull final VirtualFile baseDir,
+                       @Nullable final T settings,
+                       @NotNull final Module module);
 
   @NotNull
-  public ValidationResult validate(@NotNull String baseDirPath) {
-    return ValidationResult.OK;
-  }
+  ValidationResult validate(@NotNull String baseDirPath);
 }
