@@ -32,7 +32,7 @@ import javax.swing.*;
 
 @Deprecated
 //[kradima] to be removed in 2017.3
-public abstract class WebProjectGenerator<T> extends DirectoryProjectGenerator<T> {
+public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBase<T> {
   @Nullable
   public Integer getPreferredDescriptionWidth() {
     return null;
@@ -51,6 +51,8 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGenerator<T
   public boolean isPrimaryGenerator() {
     return true;
   }
+
+  public abstract String getDescription();
 
   @Deprecated
   public interface GeneratorPeer<T> extends ProjectGeneratorPeer<T> {

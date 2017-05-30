@@ -23,7 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.remote.*;
@@ -61,7 +61,7 @@ import java.util.function.Consumer;
  *
  * @param <T> project settings
  */
-public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGenerator<T> {
+public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGeneratorBase<T> {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final boolean myAllowRemoteProjectCreation;
   @Nullable private MouseListener myErrorLabelMouseListener;
