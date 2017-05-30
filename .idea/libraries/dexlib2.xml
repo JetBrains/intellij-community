@@ -1,10 +1,13 @@
 <component name="libraryTable">
   <library name="dexlib2">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/dexlib2-2.2.0.jar!/" />
-      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/util-2.2.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/dexlib2-2.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/util-2.2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/dexlib2-2.2.1-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../adt/idea/android/lib/src/util-2.2.1-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
