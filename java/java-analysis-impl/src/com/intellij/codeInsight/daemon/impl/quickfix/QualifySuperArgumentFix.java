@@ -40,7 +40,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
   public static void registerQuickFixAction(@NotNull PsiSuperExpression expr, HighlightInfo highlightInfo) {
     LOG.assertTrue(expr.getQualifier() == null);
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(expr, PsiClass.class);
-    if (containingClass != null && containingClass.isInterface()) {
+    if (containingClass != null) {
       final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(expr, PsiMethodCallExpression.class);
       if (callExpression != null) {
         final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(callExpression.getProject());
@@ -50,7 +50,8 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
             final PsiExpression superQualifierCopy = copy.getMethodExpression().getQualifierExpression();
             LOG.assertTrue(superQualifierCopy != null);
             superQualifierCopy.delete();
-            if (((PsiMethodCallExpression)elementFactory.createExpressionFromText(copy.getText(), superClass)).resolveMethod() != null) {
+            PsiMethod method = ((PsiMethodCallExpression)elementFactory.createExpressionFromText(copy.getText(), superClass)).resolveMethod();
+            if (method != null && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
               QuickFixAction.registerQuickFixAction(highlightInfo, new QualifySuperArgumentFix(expr, superClass));
             }
           }
