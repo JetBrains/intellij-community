@@ -594,7 +594,7 @@ public class StudySerializationUtils {
       }
     }
 
-    private static void removeIndexFromSubtaskInfos(JsonObject placeholderObject) {
+    public static void removeIndexFromSubtaskInfos(JsonObject placeholderObject) {
       JsonArray infos = placeholderObject.getAsJsonArray(SUBTASK_INFOS);
       Map<Integer, JsonObject> objectsToInsert = new HashMap<>();
       for (JsonElement info : infos) {
