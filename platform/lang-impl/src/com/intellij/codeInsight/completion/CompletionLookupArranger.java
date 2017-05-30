@@ -42,8 +42,7 @@ import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionLookupArranger");
-  private static final Key<PresentationInvariant> GLOBAL_PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
-  private final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
+  private static final Key<PresentationInvariant> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private final Comparator<LookupElement> BY_PRESENTATION_COMPARATOR = (o1, o2) -> {
     PresentationInvariant invariant = PRESENTATION_INVARIANT.get(o1);
     assert invariant != null;
@@ -153,7 +152,6 @@ public class CompletionLookupArranger extends LookupArranger {
 
     PresentationInvariant invariant = new PresentationInvariant(presentation.getItemText(), presentation.getTailText(), presentation.getTypeText());
     element.putUserData(PRESENTATION_INVARIANT, invariant);
-    element.putUserData(GLOBAL_PRESENTATION_INVARIANT, invariant);
 
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
@@ -387,7 +385,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
       for (int i = 0; i < items.size(); i++) {
         PresentationInvariant invariant = PRESENTATION_INVARIANT.get(items.get(i));
-        if (invariant != null && invariant.equals(GLOBAL_PRESENTATION_INVARIANT.get(lastSelection))) {
+        if (invariant != null && invariant.equals(PRESENTATION_INVARIANT.get(lastSelection))) {
           return i;
         }
       }
