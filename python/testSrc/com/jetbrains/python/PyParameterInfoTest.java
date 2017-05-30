@@ -606,6 +606,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     );
   }
 
+  // PY-23625
+  public void testEscapingInDefaultValue() {
+    final int offset = loadTest(1).get("<arg1>").getTextOffset();
+
+    feignCtrlP(offset).check("p: str=\"\\n\", t: str=\"\\t\", r: str=\"\\r\"", new String[]{"p: str=\"\\n\", "});
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where Ctrl+P is pressed.
