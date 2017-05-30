@@ -48,6 +48,7 @@ import javax.swing.border.Border;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -369,7 +370,7 @@ public abstract class ChangesBrowserBase<T> extends JPanel implements TypeSafeDa
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     myDiffAction = new DumbAwareAction() {
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(canShowDiff());
+        e.getPresentation().setEnabled(canShowDiff() || e.getInputEvent() instanceof KeyEvent);
       }
 
       public void actionPerformed(AnActionEvent e) {
