@@ -21,15 +21,18 @@ package org.intellij.images.vfs;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.IconUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
 import org.apache.sanselan.ImageReadException;
 import org.apache.sanselan.common.byteSources.ByteSourceArray;
 import org.apache.sanselan.formats.ico.IcoImageParser;
+import org.intellij.images.editor.ImageDocument.ScaledImageProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,10 +40,13 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
 
 /**
@@ -50,10 +56,11 @@ import java.util.Iterator;
  */
 public final class IfsUtil {
   public static final String ICO_FORMAT = "ico";
+  public static final String SVG_FORMAT = "svg";
 
   private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
   private static final Key<String> FORMAT_KEY = Key.create("Image.format");
-  private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
+  private static final Key<SoftReference<ScaledImageProvider>> IMAGE_PROVIDER_REF_KEY = Key.create("Image.bufferedImageProvider");
   private static final IcoImageParser ICO_IMAGE_PARSER = new IcoImageParser();
 
   /**
@@ -65,8 +72,8 @@ public final class IfsUtil {
    */
   private static boolean refresh(@NotNull VirtualFile file) throws IOException {
     Long loadedTimeStamp = file.getUserData(TIMESTAMP_KEY);
-    SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-    if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageRef) == null) {
+    SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
+    if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageProviderRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
 
@@ -74,10 +81,23 @@ public final class IfsUtil {
           try {
             final BufferedImage image = ICO_IMAGE_PARSER.getBufferedImage(new ByteSourceArray(content), null);
             file.putUserData(FORMAT_KEY, ICO_FORMAT);
-            file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
+            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> image));
             return true;
           }
           catch (ImageReadException ignore) { }
+        }
+
+        if (isScalableImage(file)) {
+          try {
+            Icon icon = IconLoader.findIcon(new URL(file.getUrl()));
+            file.putUserData(FORMAT_KEY, SVG_FORMAT);
+            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
+              Icon scaledIcon = IconUtil.scale(icon, null, zoom.floatValue());
+              return (BufferedImage)IconLoader.toImage(scaledIcon);
+            }));
+            return true;
+          }
+          catch (MalformedURLException ignore) {}
         }
 
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
@@ -92,7 +112,7 @@ public final class IfsUtil {
               imageReader.setInput(imageInputStream, true, true);
               int minIndex = imageReader.getMinIndex();
               BufferedImage image = imageReader.read(minIndex, param);
-              file.putUserData(BUFFERED_IMAGE_REF_KEY, new SoftReference<>(image));
+              file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> image));
               return true;
             } finally {
               imageReader.dispose();
@@ -111,9 +131,20 @@ public final class IfsUtil {
 
   @Nullable
   public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
+    ScaledImageProvider imageProvider = getImageProvider(file);
+    if (imageProvider == null) return null;
+    return imageProvider.apply(1d);
+  }
+
+  @Nullable
+  public static ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
     refresh(file);
-    SoftReference<BufferedImage> imageRef = file.getUserData(BUFFERED_IMAGE_REF_KEY);
-    return SoftReference.dereference(imageRef);
+    SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
+    return SoftReference.dereference(imageProviderRef);
+  }
+
+  private static boolean isScalableImage(@NotNull VirtualFile file) {
+    return SVG_FORMAT.equalsIgnoreCase(file.getExtension());
   }
 
   @Nullable

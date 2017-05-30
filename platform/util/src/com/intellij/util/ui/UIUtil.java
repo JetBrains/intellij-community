@@ -2028,7 +2028,7 @@ public class UIUtil {
       g.drawImage(image, x, y, observer);
     }
     else {
-      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
+      g.drawImage(image, x, y, x + width, y + height, observer);
     }
   }
 

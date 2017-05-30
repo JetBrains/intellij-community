@@ -16,6 +16,8 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.RetrievableIcon;
@@ -40,6 +42,7 @@ import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 
 public final class IconLoader {
@@ -383,6 +386,7 @@ public final class IconLoader {
     private URL myUrl;
     private volatile boolean dark;
     private volatile int numberOfPatchers = ourPatchers.size();
+    private boolean svg;
 
     private ImageFilter[] myFilters;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
@@ -395,12 +399,14 @@ public final class IconLoader {
       dark = icon.dark;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
+      svg = myOriginalPath != null ? myOriginalPath.toLowerCase().endsWith("svg") : false;
     }
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
       dark = USE_DARK_ICONS;
       myFilters = new ImageFilter[] {IMAGE_FILTER};
+      svg = url.toString().endsWith("svg");
     }
 
     private void setGlobalFilter(ImageFilter globalFilter) {
@@ -553,23 +559,36 @@ public final class IconLoader {
        * Retrieves the orig icon based on the pixScale, then scale it by the instanceScale.
        */
       public ImageIcon getOrScaleIcon(float pixScale, float instanceScale) {
-        float effectiveScale = pixScale * instanceScale;
+        final float effectiveScale = pixScale * instanceScale;
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(effectiveScale));
         if (icon != null) {
           return icon;
         }
 
-        boolean needRetinaImage = JBUI.isHiDPI(effectiveScale);
-        Image image = getOrLoadOrigImage(needRetinaImage);
-        if (image == null) return null;
-
-        if (!UIUtil.isJreHiDPIEnabled() && needRetinaImage) {
-          instanceScale = effectiveScale / 2f; // the image is 2x raw BufferedImage, compensate it
+        Image image;
+        if (svg) {
+          image = doWithTmpRegValue("ide.svg.icon", true, new Callable<Image>() {
+            @Override
+            public Image call() {
+              return ImageLoader.loadFromUrl(myUrl, true, myFilters, effectiveScale);
+            }
+          });
         }
+        else {
+          boolean needRetinaImage = JBUI.isHiDPI(effectiveScale);
+          image = getOrLoadOrigImage(needRetinaImage);
+          if (image == null) return null;
 
-        image = ImageUtil.scaleImage(image, instanceScale);
+          if (!UIUtil.isJreHiDPIEnabled() && needRetinaImage) {
+            instanceScale = effectiveScale / 2f; // the image is 2x raw BufferedImage, compensate it
+          }
+
+          image = ImageUtil.scaleImage(image, instanceScale);
+        }
         icon = checkIcon(image, myUrl);
-        scaledIconsCache.put(effectiveScale, new SoftReference<ImageIcon>(icon));
+        if (icon != null && (icon.getIconWidth() * icon.getIconHeight() * 4) < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
+          scaledIconsCache.put(effectiveScale, new SoftReference<ImageIcon>(icon));
+        }
         return icon;
       }
 
@@ -657,5 +676,23 @@ public final class IconLoader {
      * not null component to paint.
      */
     private static final JComponent ourFakeComponent = new JLabel();
+  }
+
+  /**
+   * Do something with the temporarily registry value.
+   */
+  private static <T> T doWithTmpRegValue(String key, Boolean tempValue, Callable<T> action) {
+    RegistryValue regVal = Registry.get(key);
+    boolean regValOrig = regVal.asBoolean();
+    regVal.setValue(tempValue);
+    try {
+      return action.call();
+    }
+    catch (Exception ignore) {
+      return null;
+    }
+    finally {
+      regVal.setValue(regValOrig);
+    }
   }
 }
