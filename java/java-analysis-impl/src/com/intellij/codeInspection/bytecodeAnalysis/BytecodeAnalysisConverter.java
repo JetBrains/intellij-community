@@ -18,7 +18,6 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -37,12 +36,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter {
-
-  // how many bytes are taken from class fqn digest
-  public static final int CLASS_HASH_SIZE = 10;
-  // how many bytes are taken from signature digest
-  public static final int SIGNATURE_HASH_SIZE = 4;
-  public static final int HASH_SIZE = CLASS_HASH_SIZE + SIGNATURE_HASH_SIZE;
 
   private static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
     @Override
@@ -65,49 +58,26 @@ public class BytecodeAnalysisConverter {
   }
 
   /**
-   * Converts a Psi method to a small hash key (Key).
+   * Converts a Psi method to a hashed EKey.
    * Returns null if conversion is impossible (something is not resolvable).
    */
   @Nullable
   public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction, @NotNull MessageDigest md) {
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
+    final PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass == null) {
       return null;
     }
-    byte[] classDigest = psiClassDigest(psiClass, md);
-    if (classDigest == null) {
+    String className = descriptor(psiClass, 0, false);
+    String methodSig = methodSignature(psiMethod);
+    if (className == null || methodSig == null) {
       return null;
     }
-    byte[] sigDigest = methodDigest(psiMethod, md);
-    if (sigDigest == null) {
-      return null;
-    }
-    byte[] digest = new byte[HASH_SIZE];
-    System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
-    System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new EKey(new HMethod(digest), direction, true, false);
+    String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
+    return new EKey(new Method(className, methodName, methodSig).hashed(md), direction, true, false);
   }
 
   @Nullable
-  private static byte[] psiClassDigest(@NotNull PsiClass psiClass, @NotNull MessageDigest md) {
-    String descriptor = descriptor(psiClass, 0, false);
-    if (descriptor == null) {
-      return null;
-    }
-    return md.digest(descriptor.getBytes(CharsetToolkit.UTF8_CHARSET));
-  }
-
-  @Nullable
-  private static byte[] methodDigest(@NotNull PsiMethod psiMethod, @NotNull MessageDigest md) {
-    String descriptor = descriptor(psiMethod);
-    if (descriptor == null) {
-      return null;
-    }
-    return md.digest(descriptor.getBytes(CharsetToolkit.UTF8_CHARSET));
-  }
-
-  @Nullable
-  private static String descriptor(@NotNull PsiMethod psiMethod) {
+  private static String methodSignature(@NotNull PsiMethod psiMethod) {
     StringBuilder sb = new StringBuilder();
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
     if (psiClass == null) {
@@ -118,7 +88,6 @@ public class BytecodeAnalysisConverter {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     PsiType returnType = psiMethod.getReturnType();
 
-    sb.append(returnType == null ? "<init>" : psiMethod.getName());
     sb.append('(');
 
     String desc;

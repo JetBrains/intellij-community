@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -28,7 +27,6 @@ import java.util.Set;
  */
 final class Component {
   static final Component[] EMPTY_ARRAY = new Component[0];
-  static final ArrayFactory<Component> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new Component[count];
   @NotNull Value value;
   @NotNull final EKey[] ids;
 

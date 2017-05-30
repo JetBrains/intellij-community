@@ -15,18 +15,40 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.openapi.vfs.CharsetToolkit;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.MessageDigest;
 import java.util.Arrays;
 
+import static com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter.getMessageDigest;
+
 /**
  * Hashed representation of method.
  */
 public final class HMethod implements MethodDescriptor {
+  // how many bytes are taken from class fqn digest
+  private static final int CLASS_HASH_SIZE = 10;
+  // how many bytes are taken from signature digest
+  private static final int SIGNATURE_HASH_SIZE = 4;
+  static final int HASH_SIZE = CLASS_HASH_SIZE + SIGNATURE_HASH_SIZE;
+
   @NotNull
   final byte[] myBytes;
+
+  HMethod(Method method, MessageDigest md) {
+    if (md == null) {
+      md = getMessageDigest();
+    }
+    byte[] classDigest = md.digest(method.internalClassName.getBytes(CharsetToolkit.UTF8_CHARSET));
+    md.update(method.methodName.getBytes(CharsetToolkit.UTF8_CHARSET));
+    md.update(method.methodDesc.getBytes(CharsetToolkit.UTF8_CHARSET));
+    byte[] sigDigest = md.digest();
+    myBytes = new byte[HASH_SIZE];
+    System.arraycopy(classDigest, 0, myBytes, 0, CLASS_HASH_SIZE);
+    System.arraycopy(sigDigest, 0, myBytes, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
+  }
 
   public HMethod(@NotNull byte[] bytes) {
     myBytes = bytes;

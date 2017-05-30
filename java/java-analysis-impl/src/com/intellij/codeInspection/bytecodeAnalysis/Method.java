@@ -15,14 +15,11 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
 
 import java.security.MessageDigest;
-
-import static com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter.*;
 
 public final class Method implements MethodDescriptor {
   final String internalClassName;
@@ -72,17 +69,7 @@ public final class Method implements MethodDescriptor {
   @NotNull
   @Override
   public HMethod hashed(@Nullable MessageDigest md) {
-    if (md == null) {
-      md = getMessageDigest();
-    }
-    byte[] classDigest = md.digest(internalClassName.getBytes(CharsetToolkit.UTF8_CHARSET));
-    md.update(methodName.getBytes(CharsetToolkit.UTF8_CHARSET));
-    md.update(methodDesc.getBytes(CharsetToolkit.UTF8_CHARSET));
-    byte[] sigDigest = md.digest();
-    byte[] digest = new byte[HASH_SIZE];
-    System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
-    System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HMethod(digest);
+    return new HMethod(this, md);
   }
 
   @Override

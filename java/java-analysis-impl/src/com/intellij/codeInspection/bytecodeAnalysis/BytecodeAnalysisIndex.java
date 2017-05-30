@@ -141,7 +141,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
 
     @Override
     public HMethod read(@NotNull DataInput in) throws IOException {
-      byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+      byte[] bytes = new byte[HMethod.HASH_SIZE];
       in.readFully(bytes);
       return new HMethod(bytes);
     }
@@ -270,7 +270,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
               effects.add(EffectQuantum.ThisChangeQuantum);
             }
             else if (effectMask == -3){
-              byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+              byte[] bytes = new byte[HMethod.HASH_SIZE];
               in.readFully(bytes);
               int rawDirKey = DataInputOutputUtil.readINT(in);
               boolean isStable = in.readBoolean();
@@ -324,7 +324,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
               int componentSize = DataInputOutputUtil.readINT(in);
               EKey[] ids = new EKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
-                byte[] bytes = new byte[BytecodeAnalysisConverter.HASH_SIZE];
+                byte[] bytes = new byte[HMethod.HASH_SIZE];
                 in.readFully(bytes);
                 int rawDirKey = DataInputOutputUtil.readINT(in);
                 ids[j] = new EKey(new HMethod(bytes), Direction.fromInt(Math.abs(rawDirKey)), in.readBoolean(), rawDirKey < 0);
