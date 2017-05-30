@@ -82,7 +82,7 @@ class MemoryDiskConflictResolver {
 
     for (VirtualFile file : conflicts) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-      if (document != null && askReloadFromDisk(file, document)) {
+      if (document != null && file.getModificationStamp() != document.getModificationStamp() && askReloadFromDisk(file, document)) {
         FileDocumentManager.getInstance().reloadFromDisk(document);
       }
     }
