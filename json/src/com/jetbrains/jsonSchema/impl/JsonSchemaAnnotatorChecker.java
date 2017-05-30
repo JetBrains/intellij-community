@@ -331,7 +331,7 @@ class JsonSchemaAnnotatorChecker {
     final JsonSchemaType type = JsonSchemaType.getType(value);
     JsonSchemaObject selected = null;
     if (type == null) {
-      checker.typeError(value.getDelegate());
+      if (!value.isShouldBeIgnored()) checker.typeError(value.getDelegate());
     }
     else {
       final List<JsonSchemaObject> filtered = collection.stream()
