@@ -57,7 +57,7 @@ public class ProjectBytecodeAnalysis {
   private final Project myProject;
   private final boolean nullableMethod;
   private final boolean nullableMethodTransitivity;
-  private final Map<Bytes, List<HEquations>> myEquationCache = ContainerUtil.createConcurrentSoftValueMap();
+  private final Map<HMethod, List<Equations>> myEquationCache = ContainerUtil.createConcurrentSoftValueMap();
 
   public static ProjectBytecodeAnalysis getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectBytecodeAnalysis.class);
@@ -117,12 +117,12 @@ public class ProjectBytecodeAnalysis {
 
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      HKey primaryKey = getKey(listOwner, md);
+      EKey primaryKey = getKey(listOwner, md);
       if (primaryKey == null) {
         return PsiAnnotation.EMPTY_ARRAY;
       }
       if (listOwner instanceof PsiMethod) {
-        ArrayList<HKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
+        ArrayList<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
         return toPsi(primaryKey, methodAnnotations);
       } else if (listOwner instanceof PsiParameter) {
@@ -148,7 +148,7 @@ public class ProjectBytecodeAnalysis {
    * @return Psi annotations
    */
   @NotNull
-  private PsiAnnotation[] toPsi(HKey primaryKey, MethodAnnotations methodAnnotations) {
+  private PsiAnnotation[] toPsi(EKey primaryKey, MethodAnnotations methodAnnotations) {
     boolean notNull = methodAnnotations.notNulls.contains(primaryKey);
     boolean nullable = methodAnnotations.nullables.contains(primaryKey);
     boolean pure = methodAnnotations.pures.contains(primaryKey);
@@ -233,7 +233,7 @@ public class ProjectBytecodeAnalysis {
   }
 
   @Nullable
-  public static HKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
+  public static EKey getKey(@NotNull PsiModifierListOwner owner, MessageDigest md) {
     LOG.assertTrue(owner instanceof PsiCompiledElement, owner);
     if (owner instanceof PsiMethod) {
       return BytecodeAnalysisConverter.psiKey((PsiMethod)owner, Out, md);
@@ -244,7 +244,7 @@ public class ProjectBytecodeAnalysis {
         PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiMethod) {
           final int index = ((PsiParameterList)parent).getParameterIndex((PsiParameter)owner);
-          return BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, In.NOT_NULL_MASK), md);
+          return BytecodeAnalysisConverter.psiKey((PsiMethod)gParent, new In(index, false), md);
         }
       }
     }
@@ -258,44 +258,44 @@ public class ProjectBytecodeAnalysis {
    * @param primaryKey primary compressed key for this method
    * @return compressed keys for this method
    */
-  public static ArrayList<HKey> collectMethodKeys(@NotNull PsiMethod method, HKey primaryKey) {
+  public static ArrayList<EKey> collectMethodKeys(@NotNull PsiMethod method, EKey primaryKey) {
     return BytecodeAnalysisConverter.mkInOutKeys(method, primaryKey);
   }
 
-  private ParameterAnnotations loadParameterAnnotations(@NotNull HKey notNullKey)
+  private ParameterAnnotations loadParameterAnnotations(@NotNull EKey notNullKey)
     throws EquationsLimitException {
 
     final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(notNullKey), notNullSolver);
 
-    Map<HKey, Value> notNullSolutions = notNullSolver.solve();
+    Map<EKey, Value> notNullSolutions = notNullSolver.solve();
     // subtle point
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
     final Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
-    final HKey nullableKey = new HKey(notNullKey.key, notNullKey.dirKey + 1, true, false);
+    final EKey nullableKey = new EKey(notNullKey.method, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver);
-    Map<HKey, Value> nullableSolutions = nullableSolver.solve();
+    Map<EKey, Value> nullableSolutions = nullableSolver.solve();
     // subtle point
     boolean nullable =
       (Value.Null == nullableSolutions.get(nullableKey)) || (Value.Null == nullableSolutions.get(nullableKey.mkUnstable()));
     return new ParameterAnnotations(notNull, nullable);
   }
 
-  private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull HKey key, ArrayList<HKey> allKeys)
+  private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull EKey key, ArrayList<EKey> allKeys)
     throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
 
     final PuritySolver puritySolver = new PuritySolver();
     collectPurityEquations(key.withDirection(Pure), puritySolver);
 
-    Map<HKey, Set<HEffectQuantum>> puritySolutions = puritySolver.solve();
+    Map<EKey, Set<EffectQuantum>> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParameters().length;
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
-    HKey failureKey = key.withDirection(Throw);
+    EKey failureKey = key.withDirection(Throw);
     final Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(failureKey), failureSolver);
     if (failureSolver.solve().get(failureKey) == Value.Fail) {
@@ -304,20 +304,20 @@ public class ProjectBytecodeAnalysis {
     } else {
       final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
       collectEquations(allKeys, outSolver);
-      Map<HKey, Value> solutions = outSolver.solve();
+      Map<EKey, Value> solutions = outSolver.solve();
       BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
     }
 
     if (nullableMethod) {
       final Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
-      HKey nullableKey = key.withDirection(NullableOut);
+      EKey nullableKey = key.withDirection(NullableOut);
       if (nullableMethodTransitivity) {
         collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
       }
       else {
         collectSingleEquation(nullableKey, nullableMethodSolver);
       }
-      Map<HKey, Value> nullableSolutions = nullableMethodSolver.solve();
+      Map<EKey, Value> nullableSolutions = nullableMethodSolver.solve();
       if (nullableSolutions.get(nullableKey) == Value.Null || nullableSolutions.get(nullableKey.invertStability()) == Value.Null) {
         result.nullables.add(key);
       }
@@ -325,18 +325,19 @@ public class ProjectBytecodeAnalysis {
     return result;
   }
 
-  private List<HEquations> getEquations(Bytes key) {
-    List<HEquations> result = myEquationCache.get(key);
+  private List<Equations> getEquations(MethodDescriptor methodDescriptor) {
+    HMethod key = methodDescriptor.hashed(null);
+    List<Equations> result = myEquationCache.get(key);
     if (result == null) {
       myEquationCache.put(key, result = BytecodeAnalysisIndex.getEquations(ProjectScope.getLibrariesScope(myProject), key));
     }
     return result;
   }
 
-  private void collectPurityEquations(HKey key, PuritySolver puritySolver)
+  private void collectPurityEquations(EKey key, PuritySolver puritySolver)
     throws EquationsLimitException {
-    HashSet<HKey> queued = new HashSet<>();
-    Stack<HKey> queue = new Stack<>();
+    HashSet<EKey> queued = new HashSet<>();
+    Stack<EKey> queue = new Stack<>();
 
     queue.push(key);
     queued.add(key);
@@ -346,19 +347,18 @@ public class ProjectBytecodeAnalysis {
         throw new EquationsLimitException();
       }
       ProgressManager.checkCanceled();
-      HKey hKey = queue.pop();
-      Bytes bytes = new Bytes(hKey.key);
+      EKey hKey = queue.pop();
 
-      for (HEquations hEquations : getEquations(bytes)) {
-        boolean stable = hEquations.stable;
-        for (DirectionResultPair pair : hEquations.results) {
+      for (Equations equations : getEquations(hKey.method)) {
+        boolean stable = equations.stable;
+        for (DirectionResultPair pair : equations.results) {
           int dirKey = pair.directionKey;
           if (dirKey == hKey.dirKey) {
-            Set<HEffectQuantum> effects = ((HEffects)pair.hResult).effects;
-            puritySolver.addEquation(new HKey(bytes.bytes, dirKey, stable, false), effects);
-            for (HEffectQuantum effect : effects) {
-              if (effect instanceof HEffectQuantum.CallQuantum) {
-                HKey depKey = ((HEffectQuantum.CallQuantum)effect).key;
+            Set<EffectQuantum> effects = ((Effects)pair.hResult).effects;
+            puritySolver.addEquation(new EKey(hKey.method, dirKey, stable, false), effects);
+            for (EffectQuantum effect : effects) {
+              if (effect instanceof EffectQuantum.CallQuantum) {
+                EKey depKey = ((EffectQuantum.CallQuantum)effect).key;
                 if (!queued.contains(depKey)) {
                   queue.push(depKey);
                   queued.add(depKey);
@@ -371,11 +371,11 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectEquations(List<HKey> keys, Solver solver) throws EquationsLimitException {
-    HashSet<HKey> queued = new HashSet<>();
-    Stack<HKey> queue = new Stack<>();
+  private void collectEquations(List<EKey> keys, Solver solver) throws EquationsLimitException {
+    HashSet<EKey> queued = new HashSet<>();
+    Stack<EKey> queue = new Stack<>();
 
-    for (HKey key : keys) {
+    for (EKey key : keys) {
       queue.push(key);
       queued.add(key);
     }
@@ -385,21 +385,20 @@ public class ProjectBytecodeAnalysis {
         throw new EquationsLimitException();
       }
       ProgressManager.checkCanceled();
-      HKey hKey = queue.pop();
-      Bytes bytes = new Bytes(hKey.key);
+      EKey hKey = queue.pop();
 
-      for (HEquations hEquations : getEquations(bytes)) {
-        boolean stable = hEquations.stable;
-        for (DirectionResultPair pair : hEquations.results) {
+      for (Equations equations : getEquations(hKey.method)) {
+        boolean stable = equations.stable;
+        for (DirectionResultPair pair : equations.results) {
           int dirKey = pair.directionKey;
           if (dirKey == hKey.dirKey) {
-            HResult result = pair.hResult;
+            Result result = pair.hResult;
 
-            solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable, false), result));
-            if (result instanceof HPending) {
-              HPending pending = (HPending)result;
-              for (HComponent component : pending.delta) {
-                for (HKey depKey : component.ids) {
+            solver.addEquation(new Equation(new EKey(hKey.method, dirKey, stable, false), result));
+            if (result instanceof Pending) {
+              Pending pending = (Pending)result;
+              for (Component component : pending.delta) {
+                for (EKey depKey : component.ids) {
                   if (!queued.contains(depKey)) {
                     queue.push(depKey);
                     queued.add(depKey);
@@ -413,17 +412,16 @@ public class ProjectBytecodeAnalysis {
     }
   }
 
-  private void collectSingleEquation(HKey hKey, Solver solver) throws EquationsLimitException {
+  private void collectSingleEquation(EKey hKey, Solver solver) throws EquationsLimitException {
     ProgressManager.checkCanceled();
-    Bytes bytes = new Bytes(hKey.key);
 
-    for (HEquations hEquations : getEquations(bytes)) {
-      boolean stable = hEquations.stable;
-      for (DirectionResultPair pair : hEquations.results) {
+    for (Equations equations : getEquations(hKey.method)) {
+      boolean stable = equations.stable;
+      for (DirectionResultPair pair : equations.results) {
         int dirKey = pair.directionKey;
         if (dirKey == hKey.dirKey) {
-          HResult result = pair.hResult;
-          solver.addEquation(new HEquation(new HKey(bytes.bytes, dirKey, stable, false), result));
+          Result result = pair.hResult;
+          solver.addEquation(new Equation(new EKey(hKey.method, dirKey, stable, false), result));
         }
       }
     }
@@ -440,13 +438,13 @@ public class ProjectBytecodeAnalysis {
 
 class MethodAnnotations {
   // @NotNull keys
-  final Set<HKey> notNulls = new HashSet<>(1);
+  final Set<EKey> notNulls = new HashSet<>(1);
   // @Nullable keys
-  final Set<HKey> nullables = new HashSet<>(1);
+  final Set<EKey> nullables = new HashSet<>(1);
   // @Contract(pure=true) part of contract
-  final Set<HKey> pures = new HashSet<>(1);
+  final Set<EKey> pures = new HashSet<>(1);
   // @Contracts
-  final Map<HKey, String> contractsValues = new HashMap<>();
+  final Map<EKey, String> contractsValues = new HashMap<>();
 }
 
 class ParameterAnnotations {

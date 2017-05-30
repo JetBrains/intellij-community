@@ -32,11 +32,6 @@
     <item name='org.apache.velocity.runtime.parser.Parser Parser(org.apache.velocity.runtime.RuntimeServices) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.runtime.parser.Parser java.lang.String escapedDirective(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

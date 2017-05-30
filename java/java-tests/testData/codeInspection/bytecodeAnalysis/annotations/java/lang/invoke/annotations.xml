@@ -343,11 +343,6 @@
     <item name='java.lang.invoke.BoundMethodHandle java.lang.RuntimeException badBoundArgumentException(java.lang.Object, java.lang.invoke.MethodHandle, int) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.lang.invoke.BoundMethodHandle java.lang.String noParens(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='java.lang.invoke.BoundMethodHandle java.lang.String noParens(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

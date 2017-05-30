@@ -104,14 +104,14 @@ interface CombinedData {
     }
 
     @NotNull
-    Set<Key> getKeysForParameter(int idx, ParamValueBasedDirection direction) {
-      Set<Key> keys = new HashSet<>();
+    Set<EKey> getKeysForParameter(int idx, ParamValueBasedDirection direction) {
+      Set<EKey> keys = new HashSet<>();
       for (int argI = 0; argI < this.args.size(); argI++) {
         BasicValue arg = this.args.get(argI);
         if (arg instanceof NthParamValue) {
           NthParamValue npv = (NthParamValue)arg;
           if (npv.n == idx) {
-            keys.add(new Key(this.method, direction.withIndex(argI), this.stableCall));
+            keys.add(new EKey(this.method, direction.withIndex(argI), this.stableCall));
           }
         }
       }
@@ -203,7 +203,7 @@ final class CombinedAnalysis {
   }
 
   final Equation notNullParamEquation(int i, boolean stable) {
-    final Key key = new Key(method, new In(i, In.NOT_NULL_MASK), stable);
+    final EKey key = new EKey(method, new In(i, false), stable);
     final Result result;
     if (interpreter.dereferencedParams[i]) {
       result = new Final(Value.NotNull);
@@ -214,18 +214,18 @@ final class CombinedAnalysis {
         result = new Final(Value.Top);
       }
       else {
-        Set<Key> keys = new HashSet<>();
+        Set<EKey> keys = new HashSet<>();
         for (ParamKey pk: calls) {
-          keys.add(new Key(pk.method, new In(pk.i, In.NOT_NULL_MASK), pk.stable));
+          keys.add(new EKey(pk.method, new In(pk.i, false), pk.stable));
         }
-        result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+        result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
       }
     }
     return new Equation(key, result);
   }
 
   final Equation nullableParamEquation(int i, boolean stable) {
-    final Key key = new Key(method, new In(i, In.NULLABLE_MASK), stable);
+    final EKey key = new EKey(method, new In(i, true), stable);
     final Result result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
       result = new Final(Value.Top);
@@ -236,9 +236,9 @@ final class CombinedAnalysis {
         result = new Final(Value.Null);
       }
       else {
-        Set<Product> sum = new HashSet<>();
+        Set<Component> sum = new HashSet<>();
         for (ParamKey pk: calls) {
-          sum.add(new Product(Value.Top, Collections.singleton(new Key(pk.method, new In(pk.i, In.NULLABLE_MASK), pk.stable))));
+          sum.add(new Component(Value.Top, Collections.singleton(new EKey(pk.method, new In(pk.i, true), pk.stable))));
         }
         result = new Pending(sum);
       }
@@ -249,7 +249,7 @@ final class CombinedAnalysis {
   @Nullable
   final Equation contractEquation(int i, Value inValue, boolean stable) {
     final InOut direction = new InOut(i, inValue);
-    final Key key = new Key(method, direction, stable);
+    final EKey key = new EKey(method, direction, stable);
     final Result result;
     if (exception || (inValue == Value.Null && interpreter.dereferencedParams[i])) {
       result = new Final(Value.Bot);
@@ -271,14 +271,14 @@ final class CombinedAnalysis {
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
-      Set<Key> keys = call.getKeysForParameter(i, direction);
+      Set<EKey> keys = call.getKeysForParameter(i, direction);
       if (ASMUtils.isReferenceType(call.getType())) {
-        keys.add(new Key(call.method, Out, call.stableCall));
+        keys.add(new EKey(call.method, Out, call.stableCall));
       }
       if (keys.isEmpty()) {
         return null;
       } else {
-        result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+        result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
       }
     }
     else {
@@ -289,15 +289,15 @@ final class CombinedAnalysis {
 
   @Nullable
   final Equation failEquation(boolean stable) {
-    final Key key = new Key(method, Throw, stable);
+    final EKey key = new EKey(method, Throw, stable);
     final Result result;
     if (exception) {
       result = new Final(Value.Fail);
     }
     else if (!interpreter.calls.isEmpty()) {
-      Set<Key> keys =
-        interpreter.calls.stream().map(call -> new Key(call.method, Throw, call.stableCall)).collect(Collectors.toSet());
-      result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+      Set<EKey> keys =
+        interpreter.calls.stream().map(call -> new EKey(call.method, Throw, call.stableCall)).collect(Collectors.toSet());
+      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -308,18 +308,18 @@ final class CombinedAnalysis {
   @Nullable
   final Equation failEquation(int i, Value inValue, boolean stable) {
     final InThrow direction = new InThrow(i, inValue);
-    final Key key = new Key(method, direction, stable);
+    final EKey key = new EKey(method, direction, stable);
     final Result result;
     if (exception) {
       result = new Final(Value.Fail);
     }
     else if (!interpreter.calls.isEmpty()) {
-      Set<Key> keys = new HashSet<>();
+      Set<EKey> keys = new HashSet<>();
       for (TrackableCallValue call : interpreter.calls) {
         keys.addAll(call.getKeysForParameter(i, direction));
-        keys.add(new Key(call.method, Throw, call.stableCall));
+        keys.add(new EKey(call.method, Throw, call.stableCall));
       }
-      result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -329,7 +329,7 @@ final class CombinedAnalysis {
 
   @Nullable
   final Equation outContractEquation(boolean stable) {
-    final Key key = new Key(method, Out, stable);
+    final EKey key = new EKey(method, Out, stable);
     final Result result;
     if (exception) {
       result = new Final(Value.Bot);
@@ -348,9 +348,9 @@ final class CombinedAnalysis {
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
-      Key callKey = new Key(call.method, Out, call.stableCall);
-      Set<Key> keys = new SingletonSet<>(callKey);
-      result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+      EKey callKey = new EKey(call.method, Out, call.stableCall);
+      Set<EKey> keys = new SingletonSet<>(callKey);
+      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
     }
     else {
       return null;
@@ -359,7 +359,7 @@ final class CombinedAnalysis {
   }
 
   final Equation nullableResultEquation(boolean stable) {
-    final Key key = new Key(method, NullableOut, stable);
+    final EKey key = new EKey(method, NullableOut, stable);
     final Result result;
     if (exception ||
         returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
@@ -367,9 +367,9 @@ final class CombinedAnalysis {
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
-      Key callKey = new Key(call.method, NullableOut, call.stableCall || call.thisCall);
-      Set<Key> keys = new SingletonSet<>(callKey);
-      result = new Pending(new SingletonSet<>(new Product(Value.Null, keys)));
+      EKey callKey = new EKey(call.method, NullableOut, call.stableCall || call.thisCall);
+      Set<EKey> keys = new SingletonSet<>(callKey);
+      result = new Pending(new SingletonSet<>(new Component(Value.Null, keys)));
     }
     else if (returnValue instanceof TrackableNullValue) {
       result = new Final(Value.Null);
@@ -735,22 +735,22 @@ final class NegationAnalysis {
   }
 
   final Equation contractEquation(int i, Value inValue, boolean stable) {
-    final Key key = new Key(method, new InOut(i, inValue), stable);
+    final EKey key = new EKey(method, new InOut(i, inValue), stable);
     final Result result;
-    HashSet<Key> keys = new HashSet<>();
+    HashSet<EKey> keys = new HashSet<>();
     for (int argI = 0; argI < conditionValue.args.size(); argI++) {
       BasicValue arg = conditionValue.args.get(argI);
       if (arg instanceof NthParamValue) {
         NthParamValue npv = (NthParamValue)arg;
         if (npv.n == i) {
-          keys.add(new Key(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
+          keys.add(new EKey(conditionValue.method, new InOut(argI, inValue), conditionValue.stableCall, true));
         }
       }
     }
     if (keys.isEmpty()) {
       result = new Final(Value.Top);
     } else {
-      result = new Pending(new SingletonSet<>(new Product(Value.Top, keys)));
+      result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
     }
     return new Equation(key, result);
   }

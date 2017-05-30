@@ -15,49 +15,46 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-public final class Key {
-  final Method method;
-  final Direction direction;
-  final boolean stable;
-  final boolean negated;
+import one.util.streamex.IntStreamEx;
+import org.jetbrains.annotations.NotNull;
 
-  public Key(Method method, Direction direction, boolean stable) {
-    this.method = method;
-    this.direction = direction;
-    this.stable = stable;
-    this.negated = false;
-  }
+import java.security.MessageDigest;
+import java.util.Arrays;
 
-  Key(Method method, Direction direction, boolean stable, boolean negated) {
-    this.method = method;
-    this.direction = direction;
-    this.stable = stable;
-    this.negated = negated;
+/**
+ * Hashed representation of method.
+ */
+public final class HMethod implements MethodDescriptor {
+  @NotNull
+  final byte[] myBytes;
+
+  public HMethod(@NotNull byte[] bytes) {
+    myBytes = bytes;
   }
 
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-
-    Key key = (Key) o;
-
-    if (!direction.equals(key.direction)) return false;
-    if (!method.equals(key.method)) return false;
-    if (stable != key.stable) return false;
-    return true;
+    return Arrays.equals(myBytes, ((HMethod)o).myBytes);
   }
 
   @Override
   public int hashCode() {
-    int result = method.hashCode();
-    result = 31 * result + direction.hashCode();
-    result = 31 * result + (stable ? 1 : 0);
-    return result;
+    return Arrays.hashCode(myBytes);
   }
 
+  @NotNull
   @Override
+  public HMethod hashed(MessageDigest md) {
+    return this;
+  }
+
   public String toString() {
-    return method + " " + direction + " " + stable;
+    return bytesToString(myBytes);
+  }
+
+  static String bytesToString(byte[] key) {
+    return IntStreamEx.of(key).mapToObj(b -> String.format("%02x", b & 0xFF)).joining(".");
   }
 }

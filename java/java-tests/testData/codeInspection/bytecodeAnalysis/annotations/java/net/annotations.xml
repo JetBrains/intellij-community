@@ -486,11 +486,6 @@
             <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
         </annotation>
     </item>
-    <item name='java.net.URI java.lang.String encode(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='java.net.URI java.lang.String encode(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -537,11 +532,6 @@
     <item name='java.net.URI java.lang.String normalize(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.net.URI java.lang.String quote(java.lang.String, long, long)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='java.net.URI java.lang.String quote(java.lang.String, long, long) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -586,29 +576,14 @@
     <item name='java.net.URI java.net.URI create(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.net.URI java.net.URI normalize(java.net.URI)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='java.net.URI java.net.URI normalize(java.net.URI) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URI java.net.URI parseServerAuthority()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.net.URI java.net.URI relativize(java.net.URI)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='java.net.URI java.net.URI relativize(java.net.URI) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.net.URI java.net.URI relativize(java.net.URI, java.net.URI)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null&quot;"/>
-        </annotation>
     </item>
     <item name='java.net.URI java.net.URI relativize(java.net.URI, java.net.URI) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

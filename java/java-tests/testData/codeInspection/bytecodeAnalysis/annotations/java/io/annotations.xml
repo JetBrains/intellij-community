@@ -281,7 +281,6 @@
     </item>
     <item name='java.io.File java.lang.String slashify(java.lang.String, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null,_-&gt;!null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

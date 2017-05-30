@@ -1673,11 +1673,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.Collections.EmptyList T[] toArray(T[])'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='java.util.Collections.EmptyList T[] toArray(T[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1859,11 +1854,6 @@
     <item name='java.util.Collections.EmptySet EmptySet()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.Collections.EmptySet T[] toArray(T[])'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='java.util.Collections.EmptySet T[] toArray(T[]) 0'>
