@@ -10,7 +10,14 @@ class Bar {
     System.out.println(foo.qwe);
     System.out.println(foo.qwe);
     System.out.println(foo.qwe);
+    System.out.println(foo.qwe);
 
+    foo.zxc();
+    foo.zxc();
+    foo.zxc();
+    foo.zxc();
+    foo.zxc();
+    foo.zxc();
     foo.zxc();
     foo.zxc();
     foo.zxc();

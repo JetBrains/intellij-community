@@ -49,7 +49,7 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
   }
 
   public void testSimpleMembers() {
-    doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "qwe", "asd(0)", "zxc(0)");
+    doTestMemberCompletionOrdering(new String[] {"Bar.java", "Foo.java"}, "qwe", "zxc(0)", "asd(0)");
   }
 
   //public void testOverloads() {
