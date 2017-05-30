@@ -33,7 +33,7 @@ import java.awt.event.ActionListener;
 import static com.intellij.application.options.CodeStyleAbstractPanel.fillWrappingCombo;
 
 public class HtmlCodeStyleSettingsForm {
-  private JTextField myKeepBlankLines;
+  protected JTextField myKeepBlankLinesField;
   private JComboBox myWrapAttributes;
   private JCheckBox myAlignAttributes;
   private JCheckBox myKeepWhiteSpaces;
@@ -52,18 +52,19 @@ public class HtmlCodeStyleSettingsForm {
   private JCheckBox myShouldKeepBlankLines;
   private JCheckBox mySpaceInEmptyTag;
   private JCheckBox myWrapText;
-  private JCheckBox myShouldKeepLineBreaksInText;
+  protected JCheckBox myShouldKeepLineBreaksInText;
   private TextFieldWithBrowseButton myDontBreakIfInlineContent;
   private JComboBox myQuotesCombo;
   private JBCheckBox myEnforceQuotesBox;
-  private ComboBox myBeforeFirstAttributeCombo;
-  private ComboBox myAfterLastAttributeCombo;
+  protected ComboBox myNewlineBeforeAttributesCombo;
+  protected ComboBox myNewlineAfterAttributesCombo;
+  protected JLabel myKeepBlankLinesLabel;
 
   public HtmlCodeStyleSettingsForm() {
     fillWrappingCombo(myWrapAttributes);
     fillEnumCombobox(myQuotesCombo, CodeStyleSettings.QuoteStyle.class);
-    fillEnumCombobox(myBeforeFirstAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
-    fillEnumCombobox(myAfterLastAttributeCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
+    fillEnumCombobox(myNewlineBeforeAttributesCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
+    fillEnumCombobox(myNewlineAfterAttributesCombo, CodeStyleSettings.HtmlTagNewLineStyle.class);
 
     customizeField(ApplicationBundle.message("title.insert.new.line.before.tags"), myInsertNewLineTagNames);
     customizeField(ApplicationBundle.message("title.remove.line.breaks.before.tags"), myRemoveNewLineTagNames);
@@ -87,6 +88,8 @@ public class HtmlCodeStyleSettingsForm {
         if (!quotesRequired) myEnforceQuotesBox.setSelected(false);
       }
     });
+    myNewlineBeforeAttributesCombo.setVisible(false);
+    myNewlineAfterAttributesCombo.setVisible(false);
   }
 
   public JPanel getTopPanel() {
@@ -94,7 +97,7 @@ public class HtmlCodeStyleSettingsForm {
   }
 
   public void apply(HtmlCodeStyleSettings settings) {
-    settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLines);
+    settings.HTML_KEEP_BLANK_LINES = getIntValue(myKeepBlankLinesField);
     settings.HTML_ATTRIBUTE_WRAP = CodeStyleAbstractPanel.ourWrappings[myWrapAttributes.getSelectedIndex()];
     settings.HTML_TEXT_WRAP = myWrapText.isSelected() ? CommonCodeStyleSettings.WRAP_AS_NEEDED : CommonCodeStyleSettings.DO_NOT_WRAP;
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = mySpaceInEmptyTag.isSelected();
@@ -115,8 +118,8 @@ public class HtmlCodeStyleSettingsForm {
     settings.HTML_KEEP_LINE_BREAKS_IN_TEXT = myShouldKeepLineBreaksInText.isSelected();
     settings.HTML_QUOTE_STYLE = (CodeStyleSettings.QuoteStyle)myQuotesCombo.getSelectedItem();
     settings.HTML_ENFORCE_QUOTES = myEnforceQuotesBox.isSelected();
-    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myBeforeFirstAttributeCombo.getSelectedItem();
-    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myAfterLastAttributeCombo.getSelectedItem();
+    settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myNewlineBeforeAttributesCombo.getSelectedItem();
+    settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE = (CodeStyleSettings.HtmlTagNewLineStyle)myNewlineAfterAttributesCombo.getSelectedItem();
   }
 
   private static int getIntValue(JTextField keepBlankLines) {
@@ -129,7 +132,7 @@ public class HtmlCodeStyleSettingsForm {
   }
 
   public void reset(final HtmlCodeStyleSettings settings) {
-    myKeepBlankLines.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
+    myKeepBlankLinesField.setText(String.valueOf(settings.HTML_KEEP_BLANK_LINES));
     myWrapAttributes.setSelectedIndex(CodeStyleAbstractPanel.getIndexForWrapping(settings.HTML_ATTRIBUTE_WRAP));
     myWrapText.setSelected(settings.HTML_TEXT_WRAP != CommonCodeStyleSettings.DO_NOT_WRAP);
     mySpaceInEmptyTag.setSelected(settings.HTML_SPACE_INSIDE_EMPTY_TAG);
@@ -150,12 +153,12 @@ public class HtmlCodeStyleSettingsForm {
     myKeepWhiteSpacesTagNames.setText(settings.HTML_KEEP_WHITESPACES_INSIDE);
     myQuotesCombo.setSelectedItem(settings.HTML_QUOTE_STYLE);
     myEnforceQuotesBox.setSelected(settings.HTML_ENFORCE_QUOTES);
-    myBeforeFirstAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
-    myAfterLastAttributeCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
+    myNewlineBeforeAttributesCombo.setSelectedItem(settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE);
+    myNewlineAfterAttributesCombo.setSelectedItem(settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE);
   }
 
   public boolean isModified(HtmlCodeStyleSettings settings) {
-    if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLines)) {
+    if (settings.HTML_KEEP_BLANK_LINES != getIntValue(myKeepBlankLinesField)) {
       return true;
     }
     if (settings.HTML_ATTRIBUTE_WRAP != CodeStyleAbstractPanel.ourWrappings[myWrapAttributes.getSelectedIndex()]) {
@@ -224,10 +227,10 @@ public class HtmlCodeStyleSettingsForm {
     if (myQuotesCombo.getSelectedItem() != settings.HTML_QUOTE_STYLE) {
       return true;
     }
-    if (myBeforeFirstAttributeCombo.getSelectedItem() != settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE) {
+    if (myNewlineBeforeAttributesCombo.getSelectedItem() != settings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE) {
       return true;
     }
-    if (myAfterLastAttributeCombo.getSelectedItem() != settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE) {
+    if (myNewlineAfterAttributesCombo.getSelectedItem() != settings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE) {
       return true;
     }
 

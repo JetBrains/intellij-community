@@ -43,7 +43,7 @@ public class HtmlCodeStylePanel extends CodeStyleAbstractPanel {
   protected HtmlCodeStylePanel(@NotNull CodeStyleSettings settings) {
     super(settings);
     installPreviewPanel(myPreviewPanel);
-    //addPanelToWatch(myPanel);
+    addPanelToWatch(myPanel);
   }
 
   @Override
