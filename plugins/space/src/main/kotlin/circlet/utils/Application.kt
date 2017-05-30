@@ -86,7 +86,7 @@ class LifetimedApplicationComponent() : ILifetimedApplicationComponent {
 }
 
 fun Notification.notify(lifetime: Lifetime, project: Project?) {
-    lifetime.inContext { afterTermination { expire() } }
+    lifetime.add { expire() }
     Notifications.Bus.notify(this, project)
 }
 

@@ -33,17 +33,14 @@ class CircletConnectionComponent(val project: Project) :
                             async {
                                 try {
                                     val client = CircletClient(refreshLt)
-                                    client.start(IdeaPersistence, "https://localhost:8084", orgName)
-
-                                    client.connected.view(orgLt) { ntlt, value ->
-                                        if (value)
-                                        {
-                                            notifyConnected()
-                                            this@CircletConnectionComponent.client.value = client
-                                        }
-                                        else
-                                            notifyReconnect(ntlt)
+                                    client.connected.whenTrue(refreshLt) { ntlt ->
+                                        notifyConnected()
+                                        this@CircletConnectionComponent.client.value = client
                                     }
+                                    client.failed.whenTrue(refreshLt) { ntlt ->
+                                        notifyReconnect(ntlt)
+                                    }
+                                    client.start(IdeaPersistence, "https://localhost:8084", orgName)
                                 } catch (th: Throwable) {
                                     refreshLt.terminate()
                                     authCheckFailedNotification()
