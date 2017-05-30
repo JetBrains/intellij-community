@@ -493,7 +493,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
           final FindUsagesProcessPresentation processPresentation =
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-          Ref<VirtualFile> lastUsageFileRef = new Ref<>();
+          ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
 
           FindInProjectUtil.findUsages(findModel, myProject, info -> {
             if(isCancelled()) {

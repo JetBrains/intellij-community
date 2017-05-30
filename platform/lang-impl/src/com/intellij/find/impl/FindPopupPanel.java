@@ -803,8 +803,8 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
 
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
-        Ref<VirtualFile> lastUsageFileRef = new Ref<>();
-        Ref<Usage> recentUsageRef = new Ref<>();
+        ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
+        ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
         FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
           if(isCancelled()) {
