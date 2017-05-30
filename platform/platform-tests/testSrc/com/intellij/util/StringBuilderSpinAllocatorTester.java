@@ -16,25 +16,24 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import org.junit.Assert;
 
 import java.util.Collections;
 import java.util.Random;
 
-import static org.junit.Assume.assumeTrue;
-
 public class StringBuilderSpinAllocatorTester {
 
   public static void main(String[] args) {
+    LightPlatformTestCase.initApplication(); 
     testSequentialPerformance();
     testConcurrentPerformance();
+    System.exit(0);
   }
 
   public static final int THREADS = 1000;
 
   private static void testSequentialPerformance() {
-    assumeTrue(!PlatformTestUtil.COVERAGE_ENABLED_BUILD);
     for (int i=0; i<10; i++) {
       long spinTime = time(count, spinAlloc);
       long regularTime = time(count, regularAlloc);
@@ -42,7 +41,6 @@ public class StringBuilderSpinAllocatorTester {
     }
   }
   private static void testConcurrentPerformance() {
-    assumeTrue(!PlatformTestUtil.COVERAGE_ENABLED_BUILD);
     for (int i=0; i<10; i++) {
       long spinTime = concurrentTime(count/THREADS, spinAlloc);
       long regularTime = concurrentTime(count/THREADS, regularAlloc);
