@@ -19,8 +19,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 public class ArrayBackedFMap implements KeyFMap {
   static final int ARRAY_THRESHOLD = 8;
   // Invariant: keys are always sorted
@@ -35,9 +33,8 @@ public class ArrayBackedFMap implements KeyFMap {
   @NotNull
   @Override
   public <V> KeyFMap plus(@NotNull Key<V> key, @NotNull V value) {
-    int oldSize = size();
     int keyCode = key.hashCode();
-    int keyPos = Arrays.binarySearch(keys, keyCode);
+    int keyPos = indexOf(keyCode);
     if (keyPos >= 0) {
       if (values[keyPos] == value) {
         return this;
@@ -47,7 +44,7 @@ public class ArrayBackedFMap implements KeyFMap {
       // Can reuse keys as it is never mutated
       return new ArrayBackedFMap(keys, newValues);
     }
-    if (oldSize < ARRAY_THRESHOLD) {
+    if (size() < ARRAY_THRESHOLD) {
       int[] newKeys = ArrayUtil.insert(keys, -keyPos - 1, keyCode);
       Object[] newValues = ArrayUtil.insert(values, -keyPos - 1, value);
       return new ArrayBackedFMap(newKeys, newValues);
@@ -59,44 +56,42 @@ public class ArrayBackedFMap implements KeyFMap {
     return keys.length;
   }
 
+  private int indexOf(int keyCode) {
+    for (int i = 0; i < keys.length; i++) {
+      int key = keys[i];
+      if (key == keyCode) return i;
+      if (key > keyCode) return -i-1;
+    }
+    return -keys.length - 1;
+  }
+
   @NotNull
   @Override
   public KeyFMap minus(@NotNull Key<?> key) {
-    int oldSize = size();
-    int keyCode = key.hashCode();
-    for (int i = 0; i< oldSize; i++) {
-      int oldKey = keys[i];
-      if (keyCode == oldKey) {
-        if (oldSize == 3) {
-          int i1 = (2-i)/2;
-          int i2 = 3 - (i+2)/2;
-          Key<Object> key1 = Key.getKeyByIndex(keys[i1]);
-          Key<Object> key2 = Key.getKeyByIndex(keys[i2]);
-          if (key1 == null && key2 == null) return EMPTY_MAP;
-          if (key1 == null) return new OneElementFMap(key2, values[i2]);
-          if (key2 == null) return new OneElementFMap(key1, values[i1]);
-          return new PairElementsFMap(key1, values[i1], key2, values[i2]);
-        }
-        int[] newKeys = ArrayUtil.remove(keys, i);
-        Object[] newValues = ArrayUtil.remove(values, i, ArrayUtil.OBJECT_ARRAY_FACTORY);
-        return new ArrayBackedFMap(newKeys, newValues);
+    int i = indexOf(key.hashCode());
+    if (i >= 0) {
+      if (size() == 3) {
+        int i1 = (2-i)/2;
+        int i2 = 3 - (i+2)/2;
+        Key<Object> key1 = Key.getKeyByIndex(keys[i1]);
+        Key<Object> key2 = Key.getKeyByIndex(keys[i2]);
+        if (key1 == null && key2 == null) return EMPTY_MAP;
+        if (key1 == null) return new OneElementFMap(key2, values[i2]);
+        if (key2 == null) return new OneElementFMap(key1, values[i1]);
+        return new PairElementsFMap(key1, values[i1], key2, values[i2]);
       }
+      int[] newKeys = ArrayUtil.remove(keys, i);
+      Object[] newValues = ArrayUtil.remove(values, i, ArrayUtil.OBJECT_ARRAY_FACTORY);
+      return new ArrayBackedFMap(newKeys, newValues);
     }
     return this;
   }
 
   @Override
   public <V> V get(@NotNull Key<V> key) {
-    int oldSize = size();
-    int keyCode = key.hashCode();
-    for (int i = 0; i < oldSize; i++) {
-      int oldKey = keys[i];
-      if (keyCode == oldKey) {
-        //noinspection unchecked
-        return (V)values[i];
-      }
-    }
-    return null;
+    int i = indexOf(key.hashCode());
+    //noinspection unchecked
+    return i < 0 ? null : (V) values[i];
   }
 
   @Override
