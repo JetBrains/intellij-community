@@ -80,6 +80,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     checkWebProjectValid();
   }
 
+  @NotNull
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return myProjectGenerator.createLazyPeer();
   }
