@@ -99,7 +99,7 @@ class ExternalSystemModulePropertyManager(private val module: Module) {
     module.setOption(EXTERNAL_SYSTEM_ID_KEY, id.id)
   }
 
-  fun seExternalModuleType(type: String?) {
+  fun setExternalModuleType(type: String?) {
     module.setOption(EXTERNAL_SYSTEM_MODULE_TYPE_KEY, type)
   }
 

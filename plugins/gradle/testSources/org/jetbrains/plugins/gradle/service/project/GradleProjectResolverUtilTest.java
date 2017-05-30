@@ -63,7 +63,7 @@ public class GradleProjectResolverUtilTest {
     final Module module = myProjectRule.getModule();
     ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
     modulePropertyManager.setExternalId(SYSTEM_ID);
-    modulePropertyManager.seExternalModuleType(moduleType);
+    modulePropertyManager.setExternalModuleType(moduleType);
     modulePropertyManager.setLinkedProjectId(projectId);
     return module;
   }
