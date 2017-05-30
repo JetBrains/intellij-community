@@ -222,7 +222,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     */
 
 
-    HKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out, myMessageDigest);
+    EKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out, myMessageDigest);
     if (noKey) {
       assertTrue(null == psiKey);
       return;
@@ -230,7 +230,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     else {
       assertFalse(null == psiKey);
     }
-    HKey asmKey = BytecodeAnalysisConverter.asmKey(new Key(method, Direction.Out, true), myMessageDigest);
+    EKey asmKey = new EKey(method, Direction.Out, true).hashed(myMessageDigest);
     Assert.assertEquals(asmKey, psiKey);
   }
 

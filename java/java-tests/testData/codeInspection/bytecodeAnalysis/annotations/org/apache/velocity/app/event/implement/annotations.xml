@@ -82,11 +82,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='org.apache.velocity.app.event.implement.IncludeRelativePath java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.app.event.implement.IncludeRelativePath java.lang.String includeEvent(java.lang.String, java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

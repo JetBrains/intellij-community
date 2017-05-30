@@ -679,7 +679,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @NonNls
   @NotNull
-  private static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
+  public static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
       text = "  <annotation name=\'" + annotationFQName + "\'>\n";
@@ -696,6 +696,11 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @Nullable
   private XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName) {
+    return createAnnotationsXml(root, packageName, myPsiManager);
+  }
+
+  @Nullable
+  public static XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName, PsiManager manager) {
     final String[] dirs = packageName.split("[\\.]");
     for (String dir : dirs) {
       if (dir.isEmpty()) break;
@@ -710,7 +715,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       }
       root = subdir;
     }
-    final PsiDirectory directory = myPsiManager.findDirectory(root);
+    final PsiDirectory directory = manager.findDirectory(root);
     if (directory == null) return null;
 
     final PsiFile psiFile = directory.findFile(ANNOTATIONS_XML);
@@ -719,7 +724,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     }
 
     try {
-      final PsiFileFactory factory = PsiFileFactory.getInstance(myPsiManager.getProject());
+      final PsiFileFactory factory = PsiFileFactory.getInstance(manager.getProject());
       return (XmlFile)directory.add(factory.createFileFromText(ANNOTATIONS_XML, XmlFileType.INSTANCE, "<root></root>"));
     }
     catch (IncorrectOperationException e) {

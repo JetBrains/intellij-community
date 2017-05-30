@@ -29,7 +29,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -63,6 +63,16 @@ abstract class ContractAnalysis extends Analysis<Result> {
   @NotNull
   Equation mkEquation(Result res) {
     return new Equation(aKey, res);
+  }
+
+  static Result checkLimit(Result result) throws AnalyzerException {
+    if(result instanceof Pending) {
+      int size = Arrays.stream(((Pending)result).delta).mapToInt(prod -> prod.ids.length).sum();
+      if (size > Analysis.EQUATION_SIZE_LIMIT) {
+        throw new AnalyzerException(null, "Equation size is too big");
+      }
+    }
+    return result;
   }
 
   @NotNull
@@ -279,14 +289,14 @@ class InOutAnalysis extends ContractAnalysis {
           subResult = new Final(inValue);
         }
         else if (stackTop instanceof CallResultValue) {
-          Set<Key> keys = ((CallResultValue) stackTop).inters;
-          subResult = new Pending(Collections.singleton(new Product(Value.Top, keys)));
+          Set<EKey> keys = ((CallResultValue) stackTop).inters;
+          subResult = new Pending(new Component[] {new Component(Value.Top, keys)});
         }
         else {
           earlyResult = new Final(Value.Top);
           return true;
         }
-        internalResult = resultUtil.join(internalResult, subResult);
+        internalResult = checkLimit(resultUtil.join(internalResult, subResult));
         if (internalResult instanceof Final && ((Final)internalResult).value == Value.Top) {
           earlyResult = internalResult;
         }
@@ -507,22 +517,22 @@ class InOutInterpreter extends BasicInterpreter {
           boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
           if (!Type.VOID_TYPE.equals(retType)) {
             if (direction != null) {
-              HashSet<Key> keys = new HashSet<>();
+              HashSet<EKey> keys = new HashSet<>();
               for (int i = shift; i < values.size(); i++) {
                 if (values.get(i) instanceof ParamValue) {
-                  keys.add(new Key(method, direction.withIndex(i - shift), stable));
+                  keys.add(new EKey(method, direction.withIndex(i - shift), stable));
                 }
               }
               if (isRefRetType) {
-                keys.add(new Key(method, Out, stable));
+                keys.add(new EKey(method, Out, stable));
               }
               if (!keys.isEmpty()) {
                 return new CallResultValue(retType, keys);
               }
             }
             else if (isRefRetType) {
-              HashSet<Key> keys = new HashSet<>();
-              keys.add(new Key(method, Out, stable));
+              HashSet<EKey> keys = new HashSet<>();
+              keys.add(new EKey(method, Out, stable));
               return new CallResultValue(retType, keys);
             }
           }

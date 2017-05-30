@@ -3119,18 +3119,8 @@
     <item name='org.apache.commons.lang.StringUtils java.lang.String chomp(java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.commons.lang.StringUtils java.lang.String chompLast(java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String chompLast(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.lang.StringUtils java.lang.String chompLast(java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;!null&quot;"/>
-        </annotation>
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String chompLast(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3216,11 +3206,6 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String escape(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='org.apache.commons.lang.StringUtils java.lang.String getChomp(java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null&quot;"/>
-        </annotation>
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String getChomp(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3450,11 +3435,6 @@
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='org.apache.commons.lang.StringUtils java.lang.String prechomp(java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;!null&quot;"/>
-        </annotation>
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String prechomp(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

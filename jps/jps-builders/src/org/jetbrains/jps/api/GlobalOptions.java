@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,4 +38,9 @@ public interface GlobalOptions {
   String JPS_SYSTEM_BUILDER_ID = "JPS";
   // notification about the files changed during compilation, but not compiled in current compilation session
   String JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID = "!unprocessed_fs_changes_detected!";
+
+  /**
+   * The path to external project config directory (used for external system projects).
+   */
+  String EXTERNAL_PROJECT_CONFIG = "external.project.config";
 }

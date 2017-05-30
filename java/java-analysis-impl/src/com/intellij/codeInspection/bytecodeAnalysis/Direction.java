@@ -49,7 +49,7 @@ public abstract class Direction {
     int subDirectionId = paramKey % DIRECTIONS_PER_PARAM_ID;
     // 0 - 1 - @NotNull, @Nullable, parameter
     if (subDirectionId < IN_OUT_OFFSET) {
-      return new In(paramId, subDirectionId);
+      return new In(paramId, subDirectionId == 1);
     }
     if (subDirectionId < IN_THROW_OFFSET) {
       int valueId = subDirectionId - IN_OUT_OFFSET;
@@ -60,7 +60,7 @@ public abstract class Direction {
   }
 
   /**
-   * Encodes Direction object as int.
+   * Encodes Direction object as non-negative int.
    *
    * @return unique int for direction
    */
@@ -114,27 +114,21 @@ public abstract class Direction {
   }
 
   static final class In extends ParamIdBasedDirection {
-    static final int NOT_NULL_MASK = 0;
-    static final int NULLABLE_MASK = 1;
-    /**
-     * @see #NOT_NULL_MASK
-     * @see #NULLABLE_MASK
-     */
-    final int nullityMask;
+    final boolean nullable;
 
-    In(int paramIndex, int nullityMask) {
+    In(int paramIndex, boolean nullable) {
       super(paramIndex);
-      this.nullityMask = nullityMask;
+      this.nullable = nullable;
     }
 
     @Override
     int asInt() {
-      return super.asInt() + nullityMask;
+      return super.asInt() + (nullable ? 1 : 0);
     }
 
     @Override
     public String toString() {
-      return "In " + paramIndex;
+      return "In " + paramIndex + "(" + (nullable ? "nullable" : "not null") + ")";
     }
   }
 

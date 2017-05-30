@@ -34,11 +34,6 @@
     <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String formatVector(java.util.List, java.lang.String, java.lang.String) 2'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String limitLen(int, java.lang.String, java.lang.String)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null,_-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.app.tools.VelocityFormatter java.lang.String limitLen(int, java.lang.String, java.lang.String) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

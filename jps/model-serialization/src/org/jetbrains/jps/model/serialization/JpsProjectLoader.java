@@ -117,10 +117,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   private void loadFromDirectory(@NotNull Path dir) {
     myProject.setName(getDirectoryBaseProjectName(dir));
-    JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(dir.resolve("misc.xml")));
+    Path defaultConfigFile = dir.resolve("misc.xml");
+    JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(defaultConfigFile));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
-        loadComponents(dir, "misc.xml", serializer, myProject);
+        loadComponents(dir, defaultConfigFile, serializer, myProject);
       }
     }
     loadModules(loadRootElement(dir.resolve("modules.xml")), projectSdkType);
@@ -129,6 +130,13 @@ public class JpsProjectLoader extends JpsLoaderBase {
     for (Path libraryFile : listXmlFiles(dir.resolve("libraries"))) {
       loadProjectLibraries(loadRootElement(libraryFile));
     }
+
+    Path externalConfigDir = resolveExternalProjectConfig("project");
+    if (externalConfigDir != null) {
+      LOG.info("External project config dir is used: " + externalConfigDir);
+      loadProjectLibraries(loadRootElement(externalConfigDir.resolve("libraries.xml")));
+    }
+
     timingLog.run();
 
     Runnable artifactsTimingLog = TimingLog.startActivity("loading artifacts");
@@ -142,11 +150,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       for (Path configurationFile : listXmlFiles(dir.resolve("runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
       }
-      Path workspaceFile = dir.resolve("workspace.xml");
-      if (Files.exists(workspaceFile)) {
-        Element runManager = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "RunManager");
-        JpsRunConfigurationSerializer.loadRunConfigurations(myProject, runManager);
-      }
+      JpsRunConfigurationSerializer.loadRunConfigurations(myProject, JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("workspace.xml")), "RunManager"));
       runConfTimingLog.run();
     }
   }
@@ -178,7 +182,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     String projectName = FileUtil.getNameWithoutExtension(iprFile.getFileName().toString());
     myProject.setName(projectName);
     Path iwsFile = iprFile.getParent().resolve(projectName + ".iws");
-    Element iwsRoot = Files.exists(iwsFile) ? loadRootElement(iwsFile) : null;
+    Element iwsRoot = loadRootElement(iwsFile);
 
     JpsSdkType<?> projectSdkType = loadProjectRoot(iprRoot);
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
@@ -207,7 +211,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   @Nullable
-  private JpsSdkType<?> loadProjectRoot(Element root) {
+  private JpsSdkType<?> loadProjectRoot(@Nullable Element root) {
     JpsSdkType<?> sdkType = null;
     Element rootManagerElement = JDomSerializationUtil.findComponent(root, "ProjectRootManager");
     if (rootManagerElement != null) {
@@ -225,7 +229,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(Element root, final @Nullable JpsSdkType<?> projectSdkType) {
+  private void loadModules(@Nullable Element root, final @Nullable JpsSdkType<?> projectSdkType) {
     Runnable timingLog = TimingLog.startActivity("loading modules");
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
@@ -248,29 +252,30 @@ public class JpsProjectLoader extends JpsLoaderBase {
     timingLog.run();
   }
 
+  @Nullable
+  private static Path resolveExternalProjectConfig(@NotNull String subDirName) {
+    String externalProjectConfigDir = System.getProperty("external.project.config");
+    return StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, subDirName);
+  }
+
   @NotNull
   public static List<JpsModule> loadModules(@NotNull List<Path> moduleFiles, @Nullable final JpsSdkType<?> projectSdkType,
                                             @NotNull final Map<String, String> pathVariables) {
     List<JpsModule> modules = new ArrayList<>();
     List<Future<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
-    String externalProjectConfigDir = System.getProperty("external.project.config");
-    Path externalModuleDir = StringUtil.isEmptyOrSpaces(externalProjectConfigDir) ? null : Paths.get(externalProjectConfigDir, "modules");
+    Path externalModuleDir = resolveExternalProjectConfig("modules");
     if (externalModuleDir != null) {
-      LOG.info("External project config dir is used: " + externalProjectConfigDir);
+      LOG.info("External project config dir is used for modules: " + externalModuleDir);
     }
 
     for (Path file : moduleFiles) {
       futureModuleFilesContents.add(ourThreadPool.submit(() -> {
         final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
 
-        Element data = null;
-        if (Files.exists(file)) {
-          data = loadRootElement(file, expander);
-        }
-
+        Element data = loadRootElement(file, expander);
         Path externalPath = externalModuleDir == null ? null : externalModuleDir.resolve(FileUtilRt.getNameWithoutExtension(file.getFileName().toString()) + ".xml");
-        if (externalPath != null && Files.exists(externalPath)) {
-          Element externalData = loadRootElement(externalPath, expander);
+        Element externalData = externalPath == null ? null : loadRootElement(externalPath, expander);
+        if (externalData != null) {
           if (data == null) {
             data = externalData;
           }

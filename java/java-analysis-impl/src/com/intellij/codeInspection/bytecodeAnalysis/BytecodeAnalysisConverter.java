@@ -17,9 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -38,12 +36,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter {
-
-  // how many bytes are taken from class fqn digest
-  public static final int CLASS_HASH_SIZE = 10;
-  // how many bytes are taken from signature digest
-  public static final int SIGNATURE_HASH_SIZE = 4;
-  public static final int HASH_SIZE = CLASS_HASH_SIZE + SIGNATURE_HASH_SIZE;
 
   private static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
     @Override
@@ -66,118 +58,26 @@ public class BytecodeAnalysisConverter {
   }
 
   /**
-   * Converts an equation over asm keys into equation over small hash keys.
-   */
-  @NotNull
-  static DirectionResultPair convert(@NotNull Equation equation, @NotNull MessageDigest md) {
-    ProgressManager.checkCanceled();
-
-    Result rhs = equation.rhs;
-    HResult hResult;
-    if (rhs instanceof Final) {
-      hResult = new HFinal(((Final)rhs).value);
-    }
-    else if (rhs instanceof Pending) {
-      Pending pending = (Pending)rhs;
-      Set<Product> sumOrigin = pending.sum;
-      HComponent[] components = new HComponent[sumOrigin.size()];
-      int componentI = 0;
-      for (Product prod : sumOrigin) {
-        HKey[] intProd = new HKey[prod.ids.size()];
-        int idI = 0;
-        for (Key key : prod.ids) {
-          intProd[idI] = asmKey(key, md);
-          idI++;
-        }
-        HComponent intIdComponent = new HComponent(prod.value, intProd);
-        components[componentI] = intIdComponent;
-        componentI++;
-      }
-      hResult = new HPending(components);
-    } else {
-      Effects wrapper = (Effects)rhs;
-      Set<EffectQuantum> effects = wrapper.effects;
-      Set<HEffectQuantum> hEffects = new HashSet<>();
-      for (EffectQuantum effect : effects) {
-        if (effect == EffectQuantum.TopEffectQuantum) {
-          hEffects.add(HEffectQuantum.TopEffectQuantum);
-        }
-        else if (effect == EffectQuantum.ThisChangeQuantum) {
-          hEffects.add(HEffectQuantum.ThisChangeQuantum);
-        }
-        else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-          EffectQuantum.ParamChangeQuantum paramChangeQuantum = (EffectQuantum.ParamChangeQuantum)effect;
-          hEffects.add(new HEffectQuantum.ParamChangeQuantum(paramChangeQuantum.n));
-        }
-        else if (effect instanceof EffectQuantum.CallQuantum) {
-          EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
-          hEffects.add(new HEffectQuantum.CallQuantum(asmKey(callQuantum.key, md), callQuantum.data, callQuantum.isStatic));
-        }
-      }
-      hResult = new HEffects(hEffects);
-    }
-    return new DirectionResultPair(equation.id.direction.asInt(), hResult);
-  }
-
-  /**
-   * Converts an asm method key to a small hash key (HKey)
-   */
-  @NotNull
-  public static HKey asmKey(@NotNull Key key, @NotNull MessageDigest md) {
-    byte[] classDigest = md.digest(key.method.internalClassName.getBytes(CharsetToolkit.UTF8_CHARSET));
-    md.update(key.method.methodName.getBytes(CharsetToolkit.UTF8_CHARSET));
-    md.update(key.method.methodDesc.getBytes(CharsetToolkit.UTF8_CHARSET));
-    byte[] sigDigest = md.digest();
-    byte[] digest = new byte[HASH_SIZE];
-    System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
-    System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HKey(digest, key.direction.asInt(), key.stable, key.negated);
-  }
-
-  /**
-   * Converts a Psi method to a small hash key (HKey).
+   * Converts a Psi method to a hashed EKey.
    * Returns null if conversion is impossible (something is not resolvable).
    */
   @Nullable
-  public static HKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction, @NotNull MessageDigest md) {
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
+  public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction, @NotNull MessageDigest md) {
+    final PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass == null) {
       return null;
     }
-    byte[] classDigest = psiClassDigest(psiClass, md);
-    if (classDigest == null) {
+    String className = descriptor(psiClass, 0, false);
+    String methodSig = methodSignature(psiMethod);
+    if (className == null || methodSig == null) {
       return null;
     }
-    byte[] sigDigest = methodDigest(psiMethod, md);
-    if (sigDigest == null) {
-      return null;
-    }
-    byte[] digest = new byte[HASH_SIZE];
-    System.arraycopy(classDigest, 0, digest, 0, CLASS_HASH_SIZE);
-    System.arraycopy(sigDigest, 0, digest, CLASS_HASH_SIZE, SIGNATURE_HASH_SIZE);
-    return new HKey(digest, direction.asInt(), true, false);
+    String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
+    return new EKey(new Method(className, methodName, methodSig).hashed(md), direction, true, false);
   }
 
   @Nullable
-  private static byte[] psiClassDigest(@NotNull PsiClass psiClass, @NotNull MessageDigest md) {
-    String descriptor = descriptor(psiClass, 0, false);
-    if (descriptor == null) {
-      return null;
-    }
-    return md.digest(descriptor.getBytes(CharsetToolkit.UTF8_CHARSET));
-  }
-
-  @Nullable
-  private static byte[] methodDigest(@NotNull PsiMethod psiMethod, @NotNull MessageDigest md) {
-    String descriptor = descriptor(psiMethod);
-    if (descriptor == null) {
-      return null;
-    }
-    return md.digest(descriptor.getBytes(CharsetToolkit.UTF8_CHARSET));
-  }
-
-  @Nullable
-  private static String descriptor(@NotNull PsiMethod psiMethod) {
+  private static String methodSignature(@NotNull PsiMethod psiMethod) {
     StringBuilder sb = new StringBuilder();
     final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
     if (psiClass == null) {
@@ -188,7 +88,6 @@ public class BytecodeAnalysisConverter {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     PsiType returnType = psiMethod.getReturnType();
 
-    sb.append(returnType == null ? "<init>" : psiMethod.getName());
     sb.append('(');
 
     String desc;
@@ -317,16 +216,16 @@ public class BytecodeAnalysisConverter {
 
 
   /**
-   * Given a PSI method and its primary HKey enumerate all contract keys for it.
+   * Given a PSI method and its primary Key enumerate all contract keys for it.
    *
    * @param psiMethod psi method
    * @param primaryKey primary stable keys
    * @return corresponding (stable!) keys
    */
   @NotNull
-  public static ArrayList<HKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull HKey primaryKey) {
+  public static ArrayList<EKey> mkInOutKeys(@NotNull PsiMethod psiMethod, @NotNull EKey primaryKey) {
     PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    ArrayList<HKey> keys = new ArrayList<>(parameters.length * 2 + 2);
+    ArrayList<EKey> keys = new ArrayList<>(parameters.length * 2 + 2);
     keys.add(primaryKey);
     for (int i = 0; i < parameters.length; i++) {
       if (!(parameters[i].getType() instanceof PsiPrimitiveType)) {
@@ -352,21 +251,21 @@ public class BytecodeAnalysisConverter {
    * @param methodKey a primary key of a method being analyzed. not it is stable
    * @param arity arity of this method (hint for constructing @Contract annotations)
    */
-  public static void addMethodAnnotations(@NotNull Map<HKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull HKey methodKey, int arity) {
+  public static void addMethodAnnotations(@NotNull Map<EKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull EKey methodKey, int arity) {
     List<StandardMethodContract> contractClauses = new ArrayList<>();
-    Set<HKey> notNulls = methodAnnotations.notNulls;
-    Set<HKey> pures = methodAnnotations.pures;
-    Map<HKey, String> contracts = methodAnnotations.contractsValues;
+    Set<EKey> notNulls = methodAnnotations.notNulls;
+    Set<EKey> pures = methodAnnotations.pures;
+    Map<EKey, String> contracts = methodAnnotations.contractsValues;
 
-    for (Map.Entry<HKey, Value> entry : solution.entrySet()) {
+    for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
       // NB: keys from Psi are always stable, so we need to stabilize keys from equations
       Value value = entry.getValue();
       if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
         continue;
       }
-      HKey key = entry.getKey().mkStable();
+      EKey key = entry.getKey().mkStable();
       Direction direction = key.getDirection();
-      HKey baseKey = key.mkBase();
+      EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
       }
@@ -433,18 +332,18 @@ public class BytecodeAnalysisConverter {
     return contractClauses;
   }
 
-  public static void addEffectAnnotations(Map<HKey, Set<HEffectQuantum>> puritySolutions,
+  public static void addEffectAnnotations(Map<EKey, Set<EffectQuantum>> puritySolutions,
                                           MethodAnnotations result,
-                                          HKey methodKey,
+                                          EKey methodKey,
                                           boolean constructor) {
-    for (Map.Entry<HKey, Set<HEffectQuantum>> entry : puritySolutions.entrySet()) {
-      Set<HEffectQuantum> effects = entry.getValue();
-      HKey key = entry.getKey().mkStable();
-      HKey baseKey = key.mkBase();
+    for (Map.Entry<EKey, Set<EffectQuantum>> entry : puritySolutions.entrySet()) {
+      Set<EffectQuantum> effects = entry.getValue();
+      EKey key = entry.getKey().mkStable();
+      EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
       }
-      if (effects.isEmpty() || (constructor && effects.size() == 1 && effects.contains(HEffectQuantum.ThisChangeQuantum))) {
+      if (effects.isEmpty() || (constructor && effects.size() == 1 && effects.contains(EffectQuantum.ThisChangeQuantum))) {
         // Pure constructor is allowed to change "this" object as this is a new object anyways
         result.pures.add(methodKey);
       }

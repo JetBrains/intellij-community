@@ -69,8 +69,8 @@ class AbstractValues {
     }
   }
   static final class CallResultValue extends BasicValue {
-    final Set<Key> inters;
-    CallResultValue(Type tp, Set<Key> inters) {
+    final Set<EKey> inters;
+    CallResultValue(Type tp, Set<EKey> inters) {
       super(tp);
       this.inters = inters;
     }
@@ -161,8 +161,8 @@ class AbstractValues {
   static boolean equiv(BasicValue curr, BasicValue prev) {
     if (curr.getClass() == prev.getClass()) {
       if (curr instanceof CallResultValue && prev instanceof CallResultValue) {
-        Set<Key> keys1 = ((CallResultValue)prev).inters;
-        Set<Key> keys2 = ((CallResultValue)curr).inters;
+        Set<EKey> keys1 = ((CallResultValue)prev).inters;
+        Set<EKey> keys2 = ((CallResultValue)curr).inters;
         return keys1.equals(keys2);
       }
       else return true;
@@ -220,7 +220,7 @@ abstract class Analysis<Res> {
   final DFSTree dfsTree;
 
   final protected List<State>[] computed;
-  final Key aKey;
+  final EKey aKey;
 
   Res earlyResult;
 
@@ -231,7 +231,7 @@ abstract class Analysis<Res> {
     methodNode = controlFlow.methodNode;
     method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
-    aKey = new Key(method, direction, stable);
+    aKey = new EKey(method, direction, stable);
     computed = (List<State>[]) new List[controlFlow.transitions.length];
   }
 

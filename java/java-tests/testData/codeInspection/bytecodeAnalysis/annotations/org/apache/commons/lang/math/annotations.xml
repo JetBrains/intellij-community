@@ -285,17 +285,12 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction add(org.apache.commons.lang.math.Fraction)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
-        </annotation>
-    </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction add(org.apache.commons.lang.math.Fraction) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;!null;_,false-&gt;!null&quot;"/>
+            <val val="&quot;_,false-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction addSub(org.apache.commons.lang.math.Fraction, boolean) 0'>
@@ -357,11 +352,6 @@
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction reduce()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction subtract(org.apache.commons.lang.math.Fraction)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.math.Fraction org.apache.commons.lang.math.Fraction subtract(org.apache.commons.lang.math.Fraction) 0'>

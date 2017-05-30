@@ -15,9 +15,13 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.tree.MethodInsnNode;
 
-public final class Method {
+import java.security.MessageDigest;
+
+public final class Method implements MethodDescriptor {
   final String internalClassName;
   final String methodName;
   final String methodDesc;
@@ -60,6 +64,12 @@ public final class Method {
     this.internalClassName = mNode.owner;
     this.methodName = mNode.name;
     this.methodDesc = mNode.desc;
+  }
+
+  @NotNull
+  @Override
+  public HMethod hashed(@Nullable MessageDigest md) {
+    return new HMethod(this, md);
   }
 
   @Override

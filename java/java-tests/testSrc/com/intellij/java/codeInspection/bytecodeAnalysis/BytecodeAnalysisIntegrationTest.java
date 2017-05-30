@@ -17,10 +17,15 @@ package com.intellij.java.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
+import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -38,19 +43,21 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.IdeaDecompiler;
 
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author lambdamix
@@ -61,6 +68,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   private MessageDigest myMessageDigest;
   private final List<String> myDiffs = new ArrayList<>();
   private boolean myNullableMethodRegistryValue;
+  private VirtualFile myAnnotationsDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -88,8 +96,8 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
 
   private void setUpExternalUpAnnotations() {
     String annotationsPath = PathManagerEx.getTestDataPath() + "/codeInspection/bytecodeAnalysis/annotations";
-    VirtualFile annotationsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(annotationsPath);
-    assertNotNull(annotationsDir);
+    myAnnotationsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(annotationsPath);
+    assertNotNull(myAnnotationsDir);
 
     ModuleRootModificationUtil.updateModel(myModule, new AsynchConsumer<ModifiableRootModel>() {
       @Override
@@ -101,7 +109,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
         Library[] libs = libraryTable.getLibraries();
         for (Library library : libs) {
           Library.ModifiableModel libraryModel = library.getModifiableModel();
-          libraryModel.addRoot(annotationsDir, AnnotationOrderRootType.getInstance());
+          libraryModel.addRoot(myAnnotationsDir, AnnotationOrderRootType.getInstance());
           libraryModel.commit();
         }
         Sdk sdk = modifiableRootModel.getSdk();
@@ -114,15 +122,16 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
             throw new RuntimeException(e);
           }
           SdkModificator sdkModificator = clone.getSdkModificator();
-          sdkModificator.addRoot(annotationsDir, AnnotationOrderRootType.getInstance());
+          sdkModificator.addRoot(myAnnotationsDir, AnnotationOrderRootType.getInstance());
           sdkModificator.commitChanges();
           modifiableRootModel.setSdk(clone);
         }
       }
     });
 
-    VfsUtilCore.visitChildrenRecursively(annotationsDir, new VirtualFileVisitor() { });
-    annotationsDir.refresh(false, true);
+    VfsUtilCore.visitChildrenRecursively(myAnnotationsDir, new VirtualFileVisitor() {
+    });
+    myAnnotationsDir.refresh(false, true);
   }
 
   private void openDecompiledClass(String name) {
@@ -198,78 +207,9 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     assert rootPackage != null;
 
     GlobalSearchScope scope = GlobalSearchScope.allScope(getProject());
-    JavaRecursiveElementVisitor visitor = new JavaRecursiveElementVisitor() {
-      @Override
-      public void visitPackage(PsiPackage aPackage) {
-        // annotations are in class paths, but we are not interested in inferred annotations for them
-        if ("org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
-          return;
-        }
-        for (PsiPackage subPackage : aPackage.getSubPackages(scope)) {
-          visitPackage(subPackage);
-        }
-        for (PsiClass aClass : aPackage.getClasses(scope)) {
-          processClass(aClass);
-          for (PsiClass innerClass : aClass.getInnerClasses()) {
-            processClass(innerClass);
-          }
-        }
-      }
-
-      private void processClass(PsiClass aClass) {
-        for (PsiMethod method : aClass.getMethods()) {
-          exportMethodAnnotations(method);
-        }
-        for (PsiClass innerClass : aClass.getInnerClasses()) {
-          processClass(innerClass);
-        }
-      }
-    };
+    JavaRecursiveElementVisitor visitor = new AnnotationExporter(scope);
 
     rootPackage.accept(visitor);
-  }
-
-  private void exportMethodAnnotations(PsiMethod method) {
-    // @Contract
-    PsiAnnotation inferredContractAnnotation = findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    if (inferredContractAnnotation != null) {
-      PsiNameValuePair[] attributes = inferredContractAnnotation.getParameterList().getAttributes();
-      ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(), attributes);
-    }
-
-    {
-      // @NotNull method
-      PsiAnnotation inferredNotNullMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
-      if (inferredNotNullMethodAnnotation != null) {
-        ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(method, AnnotationUtil.NOT_NULL, method.getContainingFile(), null);
-      }
-    }
-
-    {
-      // @Nullable method
-      PsiAnnotation inferredNullableMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NULLABLE);
-      if (inferredNullableMethodAnnotation != null) {
-        ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(method, AnnotationUtil.NULLABLE, method.getContainingFile(), null);
-      }
-    }
-
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      {
-        // @NotNull parameter
-        PsiAnnotation inferredNotNull = findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL);
-        if (inferredNotNull != null) {
-          ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(parameter, AnnotationUtil.NOT_NULL, method.getContainingFile(), null);
-        }
-      }
-
-      {
-        // @Nullable parameter
-        PsiAnnotation inferredNullable = findInferredAnnotation(parameter, AnnotationUtil.NULLABLE);
-        if (inferredNullable != null) {
-          ExternalAnnotationsManager.getInstance(myModule.getProject()).annotateExternally(parameter, AnnotationUtil.NULLABLE, method.getContainingFile(), null);
-        }
-      }
-    }
   }
 
   private void checkMethodAnnotations(PsiMethod method) {
@@ -343,5 +283,117 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   @Nullable
   private PsiAnnotation findExternalAnnotation(PsiModifierListOwner owner, String fqn) {
     return ExternalAnnotationsManager.getInstance(myModule.getProject()).findExternalAnnotation(owner, fqn);
+  }
+
+  private class AnnotationExporter extends JavaRecursiveElementVisitor {
+    private final GlobalSearchScope myScope;
+
+    public AnnotationExporter(GlobalSearchScope scope) {myScope = scope;}
+
+    @Override
+    public void visitPackage(PsiPackage aPackage) {
+      // annotations are in class paths, but we are not interested in inferred annotations for them
+      if ("org.intellij.lang.annotations".equals(aPackage.getQualifiedName())) {
+        return;
+      }
+      for (PsiPackage subPackage : aPackage.getSubPackages(myScope)) {
+        visitPackage(subPackage);
+      }
+      Map<String, Map<String, PsiNameValuePair[]>> packageAnnotations = new TreeMap<>();
+      for (PsiClass aClass : aPackage.getClasses(myScope)) {
+        processClass(aClass, packageAnnotations);
+      }
+      saveXmlForPackage(myAnnotationsDir, aPackage, convertToXml(packageAnnotations));
+    }
+
+    private void saveXmlForPackage(VirtualFile root, PsiPackage aPackage, XmlTag newContent) {
+      XmlTag[] tags = newContent.getSubTags();
+      if (tags.length == 0) return;
+      new WriteCommandAction(getProject()) {
+        @Override
+        protected void run(@NotNull Result result) throws Throwable {
+          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, aPackage.getQualifiedName(), aPackage.getManager());
+          if (xml == null) {
+            throw new IllegalStateException("Unable to get XML for package " + aPackage.getQualifiedName() + "; root = " + root);
+          }
+          XmlTag rootTag = xml.getRootTag();
+          if (rootTag == null) {
+            throw new IllegalStateException("No root tag in " + xml);
+          }
+          XmlTag[] existingItems = rootTag.getSubTags();
+          if (existingItems.length > 0) {
+            rootTag.deleteChildRange(ArrayUtil.getFirstElement(existingItems), ArrayUtil.getLastElement(existingItems));
+          }
+          rootTag.collapseIfEmpty();
+          for (XmlTag item : tags) {
+            rootTag.addSubTag(item, false);
+          }
+          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(xml.getProject());
+          Document doc = documentManager.getDocument(xml);
+          documentManager.doPostponedOperationsAndUnblockDocument(doc);
+          FileDocumentManager.getInstance().saveDocument(doc);
+        }
+      }.execute();
+    }
+
+    @NotNull
+    private XmlTag convertToXml(Map<String, Map<String, PsiNameValuePair[]>> annotations) {
+      String xmlContent = EntryStream.of(annotations)
+        .mapValues(map -> EntryStream.of(map).mapKeyValue(ExternalAnnotationsManagerImpl::createAnnotationTag).joining())
+        .mapKeyValue((externalName, content) -> "<item name=\'" + StringUtil.escapeXml(externalName) + "\'>\n" + content + "</item>")
+        .joining("", "<root>\n", "</root>\n");
+      XmlElementFactory factory = XmlElementFactory.getInstance(getProject());
+      return factory.createTagFromText(xmlContent);
+    }
+
+    private void processClass(PsiClass aClass, Map<String, Map<String, PsiNameValuePair[]>> packageAnnotations) {
+      for (PsiMethod method : aClass.getMethods()) {
+        annotateMethod(method, packageAnnotations);
+      }
+      for (PsiClass innerClass : aClass.getInnerClasses()) {
+        processClass(innerClass, packageAnnotations);
+      }
+    }
+
+    private void annotateMethod(PsiMethod method, Map<String, Map<String, PsiNameValuePair[]>> packageAnnotations) {
+      // @Contract
+      PsiAnnotation inferredContractAnnotation = findInferredAnnotation(method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+      if (inferredContractAnnotation != null) {
+        PsiNameValuePair[] attributes = inferredContractAnnotation.getParameterList().getAttributes();
+        annotate(packageAnnotations, method, ORG_JETBRAINS_ANNOTATIONS_CONTRACT, attributes);
+      }
+
+      // @NotNull method
+      PsiAnnotation inferredNotNullMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NOT_NULL);
+      if (inferredNotNullMethodAnnotation != null) {
+        annotate(packageAnnotations, method, AnnotationUtil.NOT_NULL, PsiNameValuePair.EMPTY_ARRAY);
+      }
+      // @Nullable method
+      PsiAnnotation inferredNullableMethodAnnotation = findInferredAnnotation(method, AnnotationUtil.NULLABLE);
+      if (inferredNullableMethodAnnotation != null) {
+        annotate(packageAnnotations, method, AnnotationUtil.NULLABLE, PsiNameValuePair.EMPTY_ARRAY);
+      }
+
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        // @NotNull parameter
+        PsiAnnotation inferredNotNull = findInferredAnnotation(parameter, AnnotationUtil.NOT_NULL);
+        if (inferredNotNull != null) {
+          annotate(packageAnnotations, parameter, AnnotationUtil.NOT_NULL, PsiNameValuePair.EMPTY_ARRAY);
+        }
+        // @Nullable parameter
+        PsiAnnotation inferredNullable = findInferredAnnotation(parameter, AnnotationUtil.NULLABLE);
+        if (inferredNullable != null) {
+          annotate(packageAnnotations, parameter, AnnotationUtil.NULLABLE, PsiNameValuePair.EMPTY_ARRAY);
+        }
+      }
+    }
+
+    private void annotate(Map<String, Map<String, PsiNameValuePair[]>> packageAnnotations,
+                          PsiModifierListOwner owner,
+                          String annotationFQN,
+                          PsiNameValuePair[] attributes) {
+      packageAnnotations.computeIfAbsent(PsiFormatUtil.getExternalName(owner, false, Integer.MAX_VALUE),
+                                         k -> new TreeMap<>()).put(annotationFQN, attributes);
+    }
   }
 }

@@ -38,18 +38,18 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 
 abstract class PResults {
   // SoP = sum of products
-  static Set<Set<Key>> join(Set<Set<Key>> sop1, Set<Set<Key>> sop2) {
-    Set<Set<Key>> sop = new HashSet<>();
+  static Set<Set<EKey>> join(Set<Set<EKey>> sop1, Set<Set<EKey>> sop2) {
+    Set<Set<EKey>> sop = new HashSet<>();
     sop.addAll(sop1);
     sop.addAll(sop2);
     return sop;
   }
 
-  static Set<Set<Key>> meet(Set<Set<Key>> sop1, Set<Set<Key>> sop2) {
-    Set<Set<Key>> sop = new HashSet<>();
-    for (Set<Key> prod1 : sop1) {
-      for (Set<Key> prod2 : sop2) {
-        Set<Key> prod = new HashSet<>();
+  static Set<Set<EKey>> meet(Set<Set<EKey>> sop1, Set<Set<EKey>> sop2) {
+    Set<Set<EKey>> sop = new HashSet<>();
+    for (Set<EKey> prod1 : sop1) {
+      for (Set<EKey> prod2 : sop2) {
+        Set<EKey> prod = new HashSet<>();
         prod.addAll(prod1);
         prod.addAll(prod2);
         sop.add(prod);
@@ -83,23 +83,23 @@ abstract class PResults {
     }
   };
   static final class ConditionalNPE implements PResult {
-    final Set<Set<Key>> sop;
-    public ConditionalNPE(Set<Set<Key>> sop) throws AnalyzerException {
+    final Set<Set<EKey>> sop;
+    public ConditionalNPE(Set<Set<EKey>> sop) throws AnalyzerException {
       this.sop = sop;
       checkLimit(sop);
     }
 
-    public ConditionalNPE(Key key) {
+    public ConditionalNPE(EKey key) {
       sop = new HashSet<>();
-      Set<Key> prod = new HashSet<>();
+      Set<EKey> prod = new HashSet<>();
       prod.add(key);
       sop.add(prod);
     }
 
-    static void checkLimit(Set<Set<Key>> sop) throws AnalyzerException {
+    static void checkLimit(Set<Set<EKey>> sop) throws AnalyzerException {
       int size = sop.stream().mapToInt(Set::size).sum();
       if (size > Analysis.EQUATION_SIZE_LIMIT) {
-        throw new AnalyzerException(null, "Equation size is too big");
+        throw new AnalyzerException(null, "HEquation size is too big");
       }
     }
   }
@@ -198,7 +198,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = condNpe.sop.stream().map(prod -> new Product(Value.Top, prod)).collect(Collectors.toSet());
+      Set<Component> components = condNpe.sop.stream().map(prod -> new Component(Value.Top, prod)).collect(Collectors.toSet());
       return new Equation(aKey, new Pending(components));
     }
   }
@@ -421,7 +421,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
-      Set<Product> components = condNpe.sop.stream().map(prod -> new Product(Value.Top, prod)).collect(Collectors.toSet());
+      Set<Component> components = condNpe.sop.stream().map(prod -> new Component(Value.Top, prod)).collect(Collectors.toSet());
       return new Equation(aKey, new Pending(components));
     }
   }
@@ -593,13 +593,13 @@ class NullableInAnalysis extends Analysis<PResult> {
 abstract class NullityInterpreter extends BasicInterpreter {
   boolean top;
   final boolean nullableAnalysis;
-  final int nullityMask;
+  final boolean nullable;
   private PResult subResult = Identity;
   protected boolean taken;
 
-  NullityInterpreter(boolean nullableAnalysis, int nullityMask) {
+  NullityInterpreter(boolean nullableAnalysis, boolean nullable) {
     this.nullableAnalysis = nullableAnalysis;
-    this.nullityMask = nullityMask;
+    this.nullable = nullable;
   }
 
   abstract PResult combine(PResult res1, PResult res2) throws AnalyzerException;
@@ -736,8 +736,8 @@ abstract class NullityInterpreter extends BasicInterpreter {
       boolean stable = opcode == INVOKESTATIC || opcode == INVOKESPECIAL;
       for (int i = 0; i < values.size(); i++) {
         BasicValue value = values.get(i);
-        if (value instanceof ParamValue || (NullValue == value && nullityMask == In.NULLABLE_MASK && "<init>".equals(method.methodName))) {
-          subResult = combine(subResult, new ConditionalNPE(new Key(method, new In(i, nullityMask), stable)));
+        if (value instanceof ParamValue || (NullValue == value && nullable && "<init>".equals(method.methodName))) {
+          subResult = combine(subResult, new ConditionalNPE(new EKey(method, new In(i, nullable), stable)));
         }
       }
     }
@@ -747,7 +747,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
 class NotNullInterpreter extends NullityInterpreter {
 
   NotNullInterpreter() {
-    super(false, In.NOT_NULL_MASK);
+    super(false, false);
   }
 
   @Override
@@ -759,7 +759,7 @@ class NotNullInterpreter extends NullityInterpreter {
 class NullableInterpreter extends NullityInterpreter {
 
   NullableInterpreter() {
-    super(true, In.NULLABLE_MASK);
+    super(true, true);
   }
 
   @Override
