@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework.fixtures
+package com.intellij.java.testFramework.fixtures
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteAction
@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
@@ -77,6 +78,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
 
       val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")

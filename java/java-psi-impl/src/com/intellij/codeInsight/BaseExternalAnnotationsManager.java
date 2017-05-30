@@ -74,6 +74,11 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   protected abstract boolean hasAnyAnnotationsRoots();
 
   @Override
+  public boolean hasAnnotationRootsForFile(@NotNull VirtualFile file) {
+    return hasAnyAnnotationsRoots();
+  }
+
+  @Override
   public boolean isExternalAnnotation(@NotNull PsiAnnotation annotation) {
     return annotation.getUserData(EXTERNAL_ANNO_MARKER) != null;
   }

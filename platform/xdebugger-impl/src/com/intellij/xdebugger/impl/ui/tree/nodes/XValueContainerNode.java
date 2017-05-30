@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -209,12 +210,17 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     fireNodesInserted(messages);
   }
 
-  public XDebuggerTreeNode addTemporaryEditorNode() {
+  @NotNull
+  public XDebuggerTreeNode addTemporaryEditorNode(@Nullable Icon icon, @Nullable String text) {
     if (isLeaf()) {
       setLeaf(false);
     }
     myTree.expandPath(getPath());
     MessageTreeNode node = new MessageTreeNode(myTree, this, true);
+    node.setIcon(icon);
+    if (!StringUtil.isEmpty(text)) {
+      node.getText().append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
     if (myMessageChildren == null) {
       myMessageChildren = ContainerUtil.newSmartList();
     }

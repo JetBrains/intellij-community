@@ -20,15 +20,16 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
 import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.isWin
+import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import com.intellij.util.containers.HashSet
-import junit.framework.Assert.fail
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.junit.Assert.fail
 import java.io.BufferedReader
 import java.io.File
 import java.io.InputStreamReader
@@ -57,13 +58,23 @@ object GuiTestLocalLauncher {
 
   fun runIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
-    val args = createArgs(ide, port)
+    val args = createArgs(ide = ide, port = port)
     return startIde(ide, args)
   }
 
   fun runIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0), port: Int = 0) {
     //todo: check that we are going to run test locally
-    val args = createArgs(path, port)
+    val args = createArgsByPath(path, port)
+    return startIde(ide, args)
+  }
+
+  fun firstStartIdeLocally(ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
+    val args = createArgsForFirstStart(ide)
+    return startIde(ide, args)
+  }
+
+  fun firstStartIdeByPath(path: String, ide: Ide = Ide(IdeType.IDEA_ULTIMATE, 0, 0)) {
+    val args = createArgsForFirstStartByPath(ide, path)
     return startIde(ide, args)
   }
 
@@ -84,22 +95,41 @@ object GuiTestLocalLauncher {
     ideaTestThread.start()
   }
 
-  private fun createArgs(ide: Ide, port: Int = 0): List<String> {
+  private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0): List<String>
+    = createArgsBase(ide, mainClass, GuiTestStarter.COMMAND_NAME, port)
+
+  private fun createArgsForFirstStart(ide: Ide, port: Int = 0): List<String>
+    = createArgsBase(ide, com.intellij.testGuiFramework.impl.FirstStart::class.qualifiedName!! + "Kt", null, port)
+
+  private fun createArgsBase(ide: Ide, mainClass: String, commandName: String?, port: Int): List<String> {
     var resultingArgs = listOf<String>()
       .plus(getCurrentJavaExec())
       .plus(getDefaultVmOptions(ide))
       .plus("-classpath")
       .plus(getOsSpecificClasspath(ide.ideType.mainModule))
-      .plus("com.intellij.idea.Main")
-      .plus(GuiTestStarter.COMMAND_NAME)
+      .plus(mainClass)
 
+    if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
-
     LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+
     return resultingArgs
   }
 
-  private fun createArgs(path: String, port: Int = 0): List<String> {
+
+  private fun createArgsForFirstStartByPath(ide: Ide, path: String): List<String> {
+
+    val classpath = PathUtils(path).makeClassPathBuilder().build(emptyList())
+    val resultingArgs = listOf<String>()
+      .plus(getCurrentJavaExec())
+      .plus(getDefaultVmOptions(ide))
+      .plus("-classpath")
+      .plus(classpath)
+      .plus(com.intellij.testGuiFramework.impl.FirstStart::class.qualifiedName!! + "Kt")
+    return resultingArgs
+  }
+
+  private fun createArgsByPath(path: String, port: Int = 0): List<String> {
     var resultingArgs = listOf<String>()
       .plus("open")
       .plus(path) //path to exec
@@ -138,12 +168,7 @@ object GuiTestLocalLauncher {
         "-Xrunjdwp:transport=dt_socket,server=y,suspend=$suspendDebug,address=$debugPort") //todo: add System.getProperty(...) to customize debug port
 
   private fun getCurrentJavaExec(): String {
-    val homePath = System.getProperty("java.home")
-    val jreDir = File(homePath)
-    val homeDir = File(jreDir.parent)
-    val binDir = File(homeDir, "bin")
-    val javaName: String = if (System.getProperty("os.name").toLowerCase().contains("win")) "java.exe" else "java"
-    return File(binDir, javaName).path
+    return PathUtils.getJreBinPath()
   }
 
   private fun getOsSpecificClasspath(moduleName: String): String = ClassPathBuilder.buildOsSpecific(
@@ -162,14 +187,17 @@ object GuiTestLocalLauncher {
   private fun getTestClasspath(): List<File> {
     val classLoader = this.javaClass.classLoader
     val urlClassLoaderClass = classLoader.javaClass
-    val getUrlsMethod = urlClassLoaderClass.getMethod("getUrls")
+    val getUrlsMethod = urlClassLoaderClass.methods.filter { it.name.toLowerCase() == "geturls"}.firstOrNull()!!
     @Suppress("UNCHECKED_CAST")
-    var urls = getUrlsMethod.invoke(classLoader) as List<URL>
+    val urlsListOrArray = getUrlsMethod.invoke(classLoader)
+    var urls = (urlsListOrArray as? List<*> ?: (urlsListOrArray as Array<*>).toList()).filterIsInstance(URL::class.java)
     if (isWin()) {
       val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
-      val jarStream = JarInputStream(File(classPathUrl!!.path).inputStream())
-      val mf = jarStream.manifest
-      urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
+      if (classPathUrl != null) {
+        val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
+        val mf = jarStream.manifest
+        urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
+      }
     }
     return urls.map { Paths.get(it.toURI()).toFile() }
   }
@@ -205,4 +233,9 @@ object GuiTestLocalLauncher {
 
     return model.project.modules
   }
+}
+
+fun main(args: Array<String>) {
+//  GuiTestLocalLauncher.firstStartIdeLocally()
+  GuiTestLocalLauncher.firstStartIdeByPath("/Users/jetbrains/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/172.2300/IntelliJ IDEA 2017.2 EAP.app")
 }

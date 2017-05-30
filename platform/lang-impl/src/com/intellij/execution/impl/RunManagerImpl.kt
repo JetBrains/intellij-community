@@ -19,6 +19,7 @@ import com.intellij.ProjectTopics
 import com.intellij.configurationStore.SchemeManagerIprProvider
 import com.intellij.configurationStore.save
 import com.intellij.execution.*
+import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
@@ -487,6 +488,13 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun getState(): Element {
+    for (settings in idToSettings.values) {
+      if (settings.type is UnknownConfigurationType) {
+        continue
+      }
+      checkIfDependenciesAreStable(settings.configuration)
+    }
+
     val element = Element("state")
 
     workspaceSchemeManager.save()
@@ -1053,6 +1061,24 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
     configuration.beforeRunTasks = result
     fireBeforeRunTasksUpdated()
+  }
+
+  fun checkIfDependenciesAreStable(configuration: RunConfiguration) {
+    if (isFirstLoadState.get()) return
+    for (runTask in configuration.beforeRunTasks) {
+      if (runTask is RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask && runTask.settings != null && runTask.settings.isTemporary) {
+        makeStable(runTask.settings)
+        checkIfDependenciesAreStable(runTask.settings.configuration)
+      }
+    }
+    if (configuration is CompoundRunConfiguration) {
+      configuration.setToRun.mapNotNull { getSettings(it) }.forEach {
+        if (it.isTemporary) {
+          makeStable(it)
+          checkIfDependenciesAreStable(it.configuration)
+        }
+      }
+    }
   }
 
   fun removeNotExistingSharedConfigurations(existing: Set<String>) {

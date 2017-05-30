@@ -175,7 +175,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       if (size() == 0) return;
       checkMax(true);
 
-      modCount++;
+      incModCount();
+
       List<IntervalNode<T>> affected = new SmartList<>();
       collectAffectedMarkersAndShiftSubtrees(getRoot(), e, affected);
       checkMax(false);

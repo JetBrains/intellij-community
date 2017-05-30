@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
+import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl
@@ -26,6 +27,8 @@ import com.intellij.psi.util.TypeConversionUtil
 object JavaInlayHintsProvider {
 
   fun hints(callExpression: PsiCallExpression): Set<InlayInfo> {
+    if (JavaMethodCallElement.hasCompletionHints(callExpression)) return emptySet()
+    
     val resolveResult = callExpression.resolveMethodGenerics()
     val hints = methodHints(callExpression, resolveResult)
     if (hints.isNotEmpty()) return hints

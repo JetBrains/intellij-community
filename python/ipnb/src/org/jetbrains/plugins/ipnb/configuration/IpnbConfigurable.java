@@ -49,12 +49,15 @@ public class IpnbConfigurable implements SearchableConfigurable {
     
     final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     myNotebookDirectoryField.addBrowseFolderListener("Select Working Directory", null, myProject, fileChooserDescriptor);
-    
-    myUrlField.setText(IpnbSettings.getInstance(myProject).getURL());
+
+    IpnbSettings ipnbSettings = IpnbSettings.getInstance(myProject);
+    myUrlField.setText(ipnbSettings.getURL());
     myUrlField.addFocusListener(createUrlProtocolValidationListener());
 
-    final String workingDirectory = IpnbSettings.getInstance(myProject).getWorkingDirectory();
-    myNotebookDirectoryField.setText(workingDirectory.isEmpty() ? myProject.getBasePath() : workingDirectory);
+    if (ipnbSettings.getWorkingDirectory().isEmpty()) {
+      ipnbSettings.setWorkingDirectory(myProject.getBasePath());
+    }
+    myNotebookDirectoryField.setText(ipnbSettings.getWorkingDirectory());
   }
 
   @NotNull
@@ -346,7 +349,7 @@ public class IpnbConfigurable implements SearchableConfigurable {
       final String arguments = ipnbSettings.getArguments();
       final String text = StringUtil.trim(StringUtil.notNullize(myAdditionalOptions.getText()));
       
-      return !text.equals(arguments);
+      return !text.equals(DEFAULT_PARAMETERS_TEXT) && !text.equals(arguments);
     }
   }
    

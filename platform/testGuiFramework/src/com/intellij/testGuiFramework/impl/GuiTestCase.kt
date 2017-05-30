@@ -100,8 +100,8 @@ open class GuiTestCase : GuiTestBase() {
   }
 
   //*********CONTEXT FUNCTIONS ON LAMBDA RECEIVERS
-  fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
-    func.invoke(welcomeFrame())
+  open fun welcomeFrame(func: WelcomeFrameFixture.() -> Unit) {
+    func.invoke(findWelcomeFrame())
   }
 
   fun ideFrame(func: IdeFrameFixture.() -> Unit) {
@@ -163,6 +163,12 @@ open class GuiTestCase : GuiTestBase() {
     target() as Container, actionName, timeout)
   else throw UnsupportedOperationException(
     "Sorry, unable to find ActionButton component by action name \"${actionName}\" with ${target().toString()} as a Container")
+
+  fun <S, C : Component> ComponentFixture<S, C>.actionButtonByClass(actionClassName: String, /*timeout in seconds*/
+                                                             timeout: Long = defaultTimeout): ActionButtonFixture = if (target() is Container) actionButtonByClass(
+    target() as Container, actionClassName, timeout)
+  else throw UnsupportedOperationException(
+    "Sorry, unable to find ActionButton component by action class name \"${actionClassName}\" with ${target().toString()} as a Container")
 
   fun <S, C : Component> ComponentFixture<S, C>.radioButton(textLabel: String, /*timeout in seconds*/
                                                             timeout: Long = defaultTimeout): JRadioButtonFixture = if (target() is Container) radioButton(
@@ -233,19 +239,11 @@ open class GuiTestCase : GuiTestBase() {
 
   }
 
-  fun ideFrame() = findIdeFrame()!!
-  fun welcomeFrame() = findWelcomeFrame()
-
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
   fun dialog(title: String? = null, timeout: Long): JDialogFixture {
     if (title == null) {
-      val jDialog = waitUntilFound(/*robot*/ myRobot,
-        /*root*/ null,
-        /*matcher*/ object : GenericTypeMatcher<JDialog>(JDialog::class.java) {
-        override fun isMatching(p0: JDialog): Boolean = true
-      },
-        /*timeout*/ timeout.toFestTimeout())
+      val jDialog = waitUntilFound(null, JDialog::class.java, timeout) { jDialog -> true }
       return JDialogFixture(myRobot, jDialog)
     }
     else {
@@ -260,41 +258,32 @@ open class GuiTestCase : GuiTestBase() {
   private fun jList(container: Container, containingItem: String? = null, timeout: Long): JListFixture {
 
     val extCellReader = ExtendedJListCellReader()
-    val myJList = waitUntilFound(myRobot, container, object : GenericTypeMatcher<JList<*>>(JList::class.java) {
-      override fun isMatching(myList: JList<*>): Boolean {
-        if (containingItem == null) return true //if were searching for any jList()
-        val elements = (0..myList.model.size - 1).map { it -> extCellReader.valueAt(myList, it) }
-        return elements.any { it.toString() == containingItem }
+    val myJList = waitUntilFound(container, JList::class.java, timeout) { jList ->
+      if (containingItem == null) true //if were searching for any jList()
+      else {
+        val elements = (0..jList.model.size - 1).map { it -> extCellReader.valueAt(jList, it) }
+        elements.any { it.toString() == containingItem }
       }
-    }, timeout.toFestTimeout())
+    }
     val jListFixture = JListFixture(myRobot, myJList)
     jListFixture.replaceCellReader(extCellReader)
     return jListFixture
   }
 
   private fun button(container: Container, name: String, timeout: Long): JButtonFixture {
-    val jButton = GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JButton>(JButton::class.java) {
-      override fun isMatching(jButton: JButton): Boolean = (jButton.isShowing && jButton.text == name)
-    }, timeout.toFestTimeout())
-
+    val jButton = waitUntilFound(container, JButton::class.java, timeout) { jButton -> jButton.isShowing && jButton.text == name }
     return JButtonFixture(myRobot, jButton)
   }
 
   private fun combobox(container: Container, labelText: String, timeout: Long): JComboBoxFixture {
     //wait until label has appeared
-    GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.isShowing && jLabel.text == labelText)
-    }, timeout.toFestTimeout())
-
+    waitUntilFound(container, JLabel::class.java, timeout) { jLabel -> jLabel.isShowing && jLabel.text == labelText }
     return GuiTestUtil.findComboBox(myRobot, container, labelText)
   }
 
   private fun checkbox(container: Container, labelText: String, timeout: Long): CheckBoxFixture {
     //wait until label has appeared
-    GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JCheckBox>(JCheckBox::class.java) {
-      override fun isMatching(checkBox: JCheckBox): Boolean = (checkBox.isShowing && checkBox.text == labelText)
-    }, timeout.toFestTimeout())
-
+    waitUntilFound(container, JCheckBox::class.java, timeout) { checkBox -> checkBox.isShowing && checkBox.text == labelText }
     return CheckBoxFixture.findByText(labelText, container, myRobot, false)
   }
 
@@ -311,6 +300,9 @@ open class GuiTestCase : GuiTestBase() {
     }
   }
 
+  private fun actionButtonByClass(container: Container, actionClassName: String, timeout: Long): ActionButtonFixture =
+    ActionButtonFixture.findByActionClassName(actionClassName, myRobot, container, timeout.toFestTimeout())
+
   private fun editor(ideFrameFixture: IdeFrameFixture, timeout: Long): EditorFixture = EditorFixture(myRobot, ideFrameFixture)
 
   private fun radioButton(container: Container, labelText: String, timeout: Long) = GuiTestUtil.findRadioButton(myRobot, container,
@@ -320,15 +312,11 @@ open class GuiTestCase : GuiTestBase() {
   private fun textfield(container: Container, labelText: String?, timeout: Long): JTextComponentFixture {
     //if 'textfield()' goes without label
     if (labelText.isNullOrEmpty()) {
-      val jTextField = GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JTextField>(JTextField::class.java) {
-        override fun isMatching(jTextField: JTextField): Boolean = jTextField.isShowing
-      }, timeout.toFestTimeout())
+      val jTextField = waitUntilFound(container, JTextField::class.java, timeout) { jTextField -> jTextField.isShowing }
       return JTextComponentFixture(myRobot, jTextField)
     }
 
-    val jLabel = GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<JLabel>(JLabel::class.java) {
-      override fun isMatching(jLabel: JLabel): Boolean = (jLabel.isShowing && jLabel.text == labelText)
-    }, timeout.toFestTimeout())
+    val jLabel = waitUntilFound(container, JLabel::class.java, timeout) { jLabel -> jLabel.isShowing && jLabel.text == labelText }
     if (jLabel.labelFor != null && jLabel.labelFor is TextFieldWithBrowseButton)
       return JTextComponentFixture(myRobot, (jLabel.labelFor as TextFieldWithBrowseButton).textField)
     else
@@ -387,6 +375,10 @@ open class GuiTestCase : GuiTestBase() {
 
   //*********SOME EXTENSION FUNCTIONS FOR FIXTURES
 
+  fun JListFixture.doubleClickItem(itemName: String) {
+    this.item(itemName).doubleClick()
+  }
+
   //necessary only for Windows
   fun getScaleSuffix(): String? {
     val scaleEnabled: Boolean = (GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale.enabled")?.toLowerCase().equals(
@@ -394,6 +386,15 @@ open class GuiTestCase : GuiTestBase() {
     if (!scaleEnabled) return ""
     val uiScaleVal = GuiTestUtil.getSystemPropertyOrEnvironmentVariable("sun.java2d.uiScale") ?: return ""
     return "@${uiScaleVal}x"
+  }
+
+  private fun <ComponentType : Component> waitUntilFound(container: Container?,
+                                                         componentClass: Class<ComponentType>,
+                                                         timeout: Long,
+                                                         matcher: (ComponentType) -> Boolean): ComponentType {
+    return GuiTestUtil.waitUntilFound(myRobot, container, object : GenericTypeMatcher<ComponentType>(componentClass) {
+      override fun isMatching(cmp: ComponentType): Boolean = matcher(cmp)
+    }, timeout.toFestTimeout())
   }
 
 

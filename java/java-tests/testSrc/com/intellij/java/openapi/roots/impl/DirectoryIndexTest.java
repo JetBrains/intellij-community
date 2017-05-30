@@ -26,17 +26,18 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryIndexImpl;
+import com.intellij.openapi.roots.impl.DirectoryIndexTestCase;
 import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.roots.impl.ModuleFileIndexImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
@@ -47,8 +48,7 @@ import java.io.File;
 import java.util.*;
 
 @PlatformTestCase.WrapInCommand
-public class DirectoryIndexTest extends IdeaTestCase {
-  private DirectoryIndexImpl myIndex;
+public class DirectoryIndexTest extends DirectoryIndexTestCase {
 
   private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
@@ -65,7 +65,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private VirtualFile myModule1OutputDir;
   private VirtualFile myResDir, myTestResDir;
   private VirtualFile myExcludedLibSrcDir, myExcludedLibClsDir;
-  private ProjectFileIndex myFileIndex;
 
   @Override
   protected void setUp() throws Exception {
@@ -192,16 +191,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
       }
     });
 
-    myIndex = (DirectoryIndexImpl)DirectoryIndex.getInstance(myProject);
-    myFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     // to not interfere with previous test firing vfs events
     VirtualFileManager.getInstance().syncRefresh();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    myFileIndex = null;
-    myIndex = null;
     myModule2 = null;
     myModule3 = null;
     super.tearDown();
@@ -222,6 +217,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     checkInfo(myLibAdditionalOutsideSrcDir, null, false, true, null, null);
     assertExcludedFromProject(myLibAdditionalOutsideExcludedDir);
+    assertIndexableContent(Collections.singletonList(myLibAdditionalOutsideSrcDir),
+                           Collections.singletonList(myLibAdditionalOutsideExcludedDir));
 
     checkInfo(myModule1Dir, myModule, false, false, null, null);
     checkInfo(mySrcDir1, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);
@@ -643,6 +640,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     checkInfo(myLibAdditionalSrcDir, myModule, true, true, null, null, myModule);
     checkInfo(myLibAdditionalExcludedDir, myModule, true, false, "lib.additional-lib.excluded", null, myModule);
+    assertIndexableContent(Arrays.asList(myLibAdditionalSrcDir, myLibAdditionalExcludedDir), null);
 
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
     assertInstanceOf(assertOneElement(toArray(myIndex.getOrderEntries(assertInProject(myResDir)))), ModuleSourceOrderEntry.class);
@@ -745,25 +743,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
     assertFalse(myFileIndex.isInContent(fileRoot));
     assertFalse(myFileIndex.isInSource(fileRoot));
     assertIteratedContent(myFileIndex, Arrays.asList(fileSourceRoot, fileTestSourceRoot), Collections.singletonList(fileRoot));
-  }
-
-  private void assertIteratedContent(Module module, @Nullable List<VirtualFile> contains, @Nullable List<VirtualFile> doesntContain) {
-    assertIteratedContent(ModuleRootManager.getInstance(module).getFileIndex(), contains, doesntContain);
-    assertIteratedContent(myFileIndex, contains, doesntContain);
-  }
-
-  private static void assertIteratedContent(FileIndex fileIndex,
-                                            @Nullable List<VirtualFile> contains,
-                                            @Nullable List<VirtualFile> doesntContain) {
-    final Set<VirtualFile> collected = new THashSet<>();
-    fileIndex.iterateContent(fileOrDir -> {
-      if (!collected.add(fileOrDir)) {
-        fail(fileOrDir + " visited twice");
-      }
-      return true;
-    });
-    if (contains != null) assertContainsElements(collected, contains);
-    if (doesntContain != null) assertDoesntContain(collected, doesntContain);
   }
 
   public void testFileSourceRootsUnderDirContentRoot() {
@@ -949,7 +928,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     PsiTestUtil.addSourceRoot(myModule2, src);
     PsiTestUtil.addExcludedRoot(myModule2, src);
     assertExcluded(src, myModule2);
-    assertIteratedContent(myModule2, null, Arrays.asList(sourceFile));
+    assertIteratedContent(myModule2, null, Collections.singletonList(sourceFile));
   }
 
   public void testSourceRootFromUnsupportedFileSystem() {
@@ -987,33 +966,6 @@ public class DirectoryIndexTest extends IdeaTestCase {
       OrderEntry found = ModuleFileIndexImpl.findOrderEntryWithOwnerModule(aModule, myIndex.getOrderEntries(info));
       assertNotNull("not found: " + aModule + " in " + Arrays.toString(toArray(myIndex.getOrderEntries(info))), found);
     }
-  }
-
-  private void assertNotInProject(VirtualFile file) {
-    DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertFalse(info.toString(), info.isInProject());
-    assertFalse(info.toString(), info.isExcluded());
-  }
-
-  private void assertExcluded(VirtualFile file, Module module) {
-    DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertTrue(info.toString(), info.isExcluded());
-    assertEquals(module, info.getModule());
-  }
-
-  private DirectoryInfo assertInProject(VirtualFile file) {
-    DirectoryInfo info = myIndex.getInfoForFile(file);
-    assertTrue(file.toString(), info.isInProject());
-    myIndex.assertConsistency(info);
-    return info;
-  }
-
-  private void assertNotExcluded(VirtualFile file) {
-    assertFalse(myIndex.getInfoForFile(file).isExcluded());
-  }
-
-  private void assertExcludedFromProject(VirtualFile file) {
-    assertExcluded(file, null);
   }
 
   private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {

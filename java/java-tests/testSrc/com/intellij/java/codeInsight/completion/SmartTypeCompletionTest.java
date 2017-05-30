@@ -473,7 +473,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoUninitializedFieldsInConstructor() throws Throwable {
     configureByTestName();
-    assertStringItems("aac", "aab", "hashCode");
+    assertStringItems("aab", "aac", "hashCode");
   }
   public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
   public void testFieldsSetAbove() throws Throwable { doTest(); }
@@ -1268,4 +1268,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.type('\t');
     checkResultByTestName();
   }
+
+  public void testFreeGenericsAfterClassLiteral() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
+  }
+
 }

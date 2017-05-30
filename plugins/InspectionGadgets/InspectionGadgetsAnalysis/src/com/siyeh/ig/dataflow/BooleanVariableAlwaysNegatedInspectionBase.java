@@ -50,6 +50,11 @@ class BooleanVariableAlwaysNegatedInspectionBase extends BaseInspection {
   }
 
   @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new BooleanVariableAlwaysNegatedVisitor();
   }

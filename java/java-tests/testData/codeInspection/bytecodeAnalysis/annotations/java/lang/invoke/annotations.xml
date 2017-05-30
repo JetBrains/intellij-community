@@ -7,7 +7,7 @@
     </item>
     <item name='java.lang.invoke.AdapterMethodHandle boolean canBoxArgument(java.lang.Class&lt;?&gt;, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null,_-&gt;false;_,!null-&gt;false;_,null-&gt;false;null,_-&gt;false&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -128,12 +128,14 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.AdapterMethodHandle java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.AdapterMethodHandle java.lang.invoke.MethodHandle makeBoxArgument(java.lang.invoke.MethodType, java.lang.invoke.MethodHandle, int, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value"
-                 val="&quot;!null,_,_,_-&gt;null;_,!null,_,_-&gt;null;_,_,_,!null-&gt;null;_,_,_,null-&gt;null;_,null,_,_-&gt;null;null,_,_,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;_,_,_,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -349,6 +351,11 @@
     <item name='java.lang.invoke.BoundMethodHandle java.lang.String noParens(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.BoundMethodHandle java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.CallSite CallSite(java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -371,6 +378,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.CallSite java.lang.invoke.WrongMethodTypeException wrongTargetType(java.lang.invoke.MethodHandle, java.lang.invoke.MethodType)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.CallSite java.lang.invoke.WrongMethodTypeException wrongTargetType(java.lang.invoke.MethodHandle, java.lang.invoke.MethodType) 0'>
@@ -409,6 +419,7 @@
     </item>
     <item name='java.lang.invoke.ConstantCallSite void setTarget(java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -440,6 +451,7 @@
     </item>
     <item name='java.lang.invoke.FilterGeneric java.lang.invoke.FilterGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType, java.lang.invoke.FilterGeneric.Kind, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -526,6 +538,11 @@
     </item>
     <item name='java.lang.invoke.FilterGeneric.Adapter java.lang.Class&lt;? extends java.lang.invoke.FilterGeneric.Adapter&gt; findSubClass(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.lang.invoke.FilterGeneric.Adapter java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.FilterGeneric.F0 F0(java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -785,6 +802,11 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.FilterOneArgument java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.FilterOneArgument java.lang.invoke.MethodHandle make(java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;!null,_-&gt;!null;_,!null-&gt;!null&quot;"/>
@@ -807,6 +829,7 @@
     </item>
     <item name='java.lang.invoke.FromGeneric java.lang.invoke.FromGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -986,6 +1009,16 @@
     <item name='java.lang.invoke.FromGeneric.Adapter java.lang.Class&lt;? extends java.lang.invoke.FromGeneric.Adapter&gt; findSubClass(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.lang.invoke.FromGeneric.Adapter java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.lang.invoke.InvokeDynamic InvokeDynamic()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;fail&quot;"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.InvokeGeneric boolean returnConversionNeeded(java.lang.invoke.MethodType, java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;_,null-&gt;false&quot;"/>
@@ -1002,6 +1035,7 @@
     </item>
     <item name='java.lang.invoke.InvokeGeneric java.lang.invoke.MethodHandle addReturnConversion(java.lang.invoke.MethodHandle, java.lang.Class&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1187,6 +1221,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.IllegalAccessException makeAccessException(java.lang.String, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.IllegalAccessException makeAccessException(java.lang.String, java.lang.Object) 0'>
@@ -1211,6 +1248,11 @@
     </item>
     <item name='java.lang.invoke.MemberName java.lang.String getSignature()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.lang.invoke.MemberName java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MemberName java.lang.invoke.MemberName.Factory getFactory()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1259,6 +1301,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodHandle java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodHandle java.lang.invoke.MethodHandle asCollector(java.lang.Class&lt;?&gt;, int) 0'>
@@ -1387,6 +1432,11 @@
     <item name='java.lang.invoke.MethodHandleImpl.AllocateObject AllocateObject(java.lang.invoke.MethodHandle, java.lang.Class&lt;C&gt;, java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.AllocateObject java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.AllocateObject java.lang.invoke.MethodHandle make(java.lang.Class&lt;?&gt;, java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -1476,6 +1526,11 @@
     <item name='java.lang.invoke.MethodHandleImpl.FieldAccessor java.lang.String fname(java.lang.Class&lt;?&gt;, boolean, boolean)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.FieldAccessor java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.FieldAccessor java.lang.invoke.MethodHandle ahandle(java.lang.Class&lt;?&gt;, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1540,8 +1595,18 @@
     <item name='java.lang.invoke.MethodHandleImpl.GuardWithCatch GuardWithCatch(java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle, java.lang.Class&lt;? extends java.lang.Throwable&gt;, java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandleImpl.GuardWithCatch java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandleImpl.GuardWithTest GuardWithTest(java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleImpl.GuardWithTest java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleImpl.GuardWithTest java.lang.invoke.MethodHandle make(java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle, java.lang.invoke.MethodHandle)'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1585,6 +1650,11 @@
     </item>
     <item name='java.lang.invoke.MethodHandleNatives void notifyGenericMethodType(java.lang.invoke.MethodType) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.lang.invoke.MethodHandleNatives void raiseException(int, java.lang.Object, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;fail&quot;"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandleNatives void raiseException(int, java.lang.Object, java.lang.Object) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1904,6 +1974,11 @@
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.String accessFailedMessage(java.lang.Class&lt;?&gt;, java.lang.invoke.MemberName) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.lang.invoke.MethodHandles.Lookup java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.invoke.MemberName resolveOrFail(java.lang.Class&lt;?&gt;, java.lang.String, java.lang.Class&lt;?&gt;, boolean) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1990,7 +2065,7 @@
     </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.invoke.MethodHandle makeAccessor(java.lang.Class&lt;?&gt;, java.lang.invoke.MemberName, boolean, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,null,_,_-&gt;!null&quot;"/>
+            <val val="&quot;_,_,true,_-&gt;!null;_,null,_,_-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='java.lang.invoke.MethodHandles.Lookup java.lang.invoke.MethodHandle makeAccessor(java.lang.Class&lt;?&gt;, java.lang.invoke.MemberName, boolean, boolean) 1'>
@@ -2081,12 +2156,18 @@
         </annotation>
     </item>
     <item name='java.lang.invoke.MethodType java.lang.IndexOutOfBoundsException newIndexOutOfBoundsException(java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodType java.lang.IndexOutOfBoundsException newIndexOutOfBoundsException(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodType java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.MethodType java.lang.invoke.MethodType appendParameterTypes(java.lang.Class&lt;?&gt;...) 0'>
@@ -2316,6 +2397,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.SpreadGeneric java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.lang.invoke.SpreadGeneric java.lang.invoke.MethodHandle make(java.lang.invoke.MethodHandle, int) 0'>
@@ -2332,6 +2416,7 @@
     </item>
     <item name='java.lang.invoke.SpreadGeneric java.lang.invoke.SpreadGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType, int, java.lang.invoke.MethodHandle[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2363,6 +2448,11 @@
     </item>
     <item name='java.lang.invoke.SpreadGeneric.Adapter java.lang.Class&lt;? extends java.lang.invoke.SpreadGeneric.Adapter&gt; findSubClass(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.lang.invoke.SpreadGeneric.Adapter java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.SpreadGeneric.S0 S0(java.lang.invoke.SpreadGeneric, java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2510,6 +2600,7 @@
     </item>
     <item name='java.lang.invoke.ToGeneric java.lang.invoke.ToGeneric.Adapter buildAdapterFromBytecodes(java.lang.invoke.MethodType)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2673,6 +2764,11 @@
     </item>
     <item name='java.lang.invoke.ToGeneric.Adapter java.lang.Class&lt;? extends java.lang.invoke.ToGeneric.Adapter&gt; findSubClass(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.lang.invoke.ToGeneric.Adapter java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.lang.invoke.VolatileCallSite VolatileCallSite(java.lang.invoke.MethodHandle) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

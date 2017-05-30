@@ -216,13 +216,6 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @Override
   public void loadState(Element state) {
     myIsInitialized = Boolean.FALSE;
-    try {
-      myAntWorkspaceConfiguration.loadFromProjectSettings(state);
-    }
-    catch (InvalidDataException e) {
-      LOG.error(e);
-      return;
-    }
 
     List<Pair<Element, String>> files = new ArrayList<>();
     for (Iterator<Element> iterator = state.getChildren(BUILD_FILE).iterator(); iterator.hasNext(); ) {

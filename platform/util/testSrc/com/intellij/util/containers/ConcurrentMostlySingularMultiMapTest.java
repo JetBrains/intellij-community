@@ -43,44 +43,4 @@ public class ConcurrentMostlySingularMultiMapTest extends TestCase {
     assertEquals(0, map.size());
     assertEquals(empty, map.get(KEY));
   }
-
-  public void testAddRemove() {
-    ConcurrentMostlySingularMultiMap<String, String> map = new ConcurrentMostlySingularMultiMap<>();
-    assertEquals(Collections.emptyList(), map.get("key"));
-    assertEquals(Collections.emptyList(), map.get("multiKey"));
-
-    map.add("key", "single");
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-    assertEquals(Collections.emptyList(), map.get("multiKey"));
-
-    map.add("multiKey", "multi1");
-    assertEquals(Collections.singletonList("multi1"), map.get("multiKey"));
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-
-    map.add("multiKey", "multi2");
-    assertEquals(ContainerUtil.newArrayList("multi1", "multi2"), map.get("multiKey"));
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-
-    map.add("multiKey", "multi3");
-    assertEquals(ContainerUtil.newArrayList("multi1", "multi2", "multi3"), map.get("multiKey"));
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-
-    map.remove("multiKey", "multi1");
-    assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-
-    for (int i = 4; i < 24; i++) {
-      map.add("multiKey", "multi" + Integer.toString(i));
-    }
-    assertEquals(2 + 20, ContainerUtil.newArrayList(map.get("multiKey")).size());
-    assertEquals(2 + 20, map.valuesForKey("multiKey"));
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-    assertEquals(1, map.valuesForKey("key"));
-
-    for (int i = 23; i >= 4; i--) {
-      map.remove("multiKey", "multi" + Integer.toString(i));
-    }
-    assertEquals(ContainerUtil.newArrayList("multi2", "multi3"), map.get("multiKey"));
-    assertEquals(Collections.singletonList("single"), map.get("key"));
-  }
 }

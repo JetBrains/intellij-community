@@ -38,3 +38,4 @@ org.jetbrains.plugins.phpstorm-remote-interpreter
 com.jetbrains.php.behat
 com.jetbrains.php.blade
 com.jetbrains.performancePlugin
+Docker

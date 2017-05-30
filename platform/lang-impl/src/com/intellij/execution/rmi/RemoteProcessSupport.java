@@ -312,7 +312,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           LOG.warn(text.trim());
         }
         else {
-          LOG.info(text.trim());
+          LOG.debug(text.trim());
         }
 
         RunningInfo result = null;

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.JavaInlayParameterHintsProvider;
 import com.intellij.codeInsight.hints.Option;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
@@ -61,7 +63,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
 
     // check that hints don't disappear after daemon highlighting passes
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
 
     // test Tab/Shift+Tab navigation
@@ -78,15 +80,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.type("\"a");
     myFixture.performEditorAction("NextParameter");
     myFixture.type("\"b");
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>\"a\", <hint text=\"value:\"/>\"b\") } }");
 
     // test hints disappearance when caret moves out of parameter list
-    myFixture.performEditorAction("EditorRight");
-    myFixture.performEditorAction("EditorRight");
-    ParameterInfoController.waitForDelayedActions(getEditor(), 10, TimeUnit.SECONDS);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
 
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(\"a\", \"b\") } }");
   }
 
@@ -97,7 +98,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
 
     // check that hints don't disappear after daemon highlighting passes
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
 
     // test Tab/Shift+Tab navigation
@@ -114,15 +115,14 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.type("1");
     myFixture.performEditorAction("NextParameter");
     myFixture.type("2");
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
 
     // test hints don't disappear when caret moves out of parameter list
-    myFixture.performEditorAction("EditorRight");
-    myFixture.performEditorAction("EditorRight");
-    ParameterInfoController.waitForDelayedActions(getEditor(), 10, TimeUnit.SECONDS);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
 
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1, <hint text=\"radix:\"/>2) } }");
   }
 
@@ -136,7 +136,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
       complete("forDigit");
       myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
 
-      runHintsPass();
+      waitForAllAsyncStuff();
       myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
     }
     finally {
@@ -180,25 +180,25 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
                                     "}");
   }
 
-  public void testNestedCompletion() {
+  public void testNestedCompletion() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>, <hint text=\"value:\"/>) } }");
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.setProperty(<hint text=\"key:\"/>System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>), <hint text=\"value:\"/>) } }");
     myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
   }
 
-  public void testTabWithNestedCompletion() {
+  public void testTabWithNestedCompletion() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
     complete("setProperty");
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.type("System.getPro");
     complete("getProperty(String key, String def)");
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(<caret>, ), ) } }");
     myFixture.performEditorAction("NextParameter");
     myFixture.checkResult("class C { void m() { System.setProperty(System.getProperty(, <caret>), ) } }");
@@ -221,8 +221,7 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     complete("getProperty(String key, String def)");
     myFixture.checkResultWithInlays("class C { void m() { System.getProperty(<hint text=\"key:\"/>, <hint text=\"def:\"/>) } }");
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
-    ParameterInfoController.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
-    runHintsPass();
+    waitForAllAsyncStuff();
     myFixture.checkResultWithInlays("class C { void m() { System.getProperty( ) } }");
   }
 
@@ -235,6 +234,64 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResult("class C { void m() { System.setProperty(new String().trim(), <caret>) } }");
     assertEquals(getEditor().offsetToVisualPosition(getEditor().getCaretModel().getOffset(), true, false), 
                  getEditor().getCaretModel().getVisualPosition());
+  }
+
+  public void testNoHintsDuplicationWhenTypingToTheLeftOfHint() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+    complete("forDigit");
+    waitForAllAsyncStuff();
+    type("1");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT);
+    type("2");
+    waitForAllAsyncStuff();
+    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,2 <hint text=\"radix:\"/>) } }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END);
+    waitForAllAsyncStuff();
+    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>1,<hint text=\"radix:\"/>2 ) } }");
+  }
+
+  public void testIntroduceVariableIntention() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+                                                     "    void m() {\n" +
+                                                     "        Character.for<caret>\n" +
+                                                     "    }\n" +
+                                                     "}");
+    complete("forDigit");
+    waitForAllAsyncStuff();
+    IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("class C {\n" +
+                          "    void m() {\n" +
+                          "        int i = ;\n" +
+                          "        Character.forDigit(i<caret>, )\n" +
+                          "    }\n" +
+                          "}");
+  }
+
+  public void testIntroduceVariableIntentionInIfWithoutBraces() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C {\n" +
+                                                     "    void m() {\n" +
+                                                     "        if (true) Character.for<caret>\n" +
+                                                     "    }\n" +
+                                                     "}");
+    complete("forDigit");
+    waitForAllAsyncStuff();
+    IntentionAction intention = myFixture.findSingleIntention("Introduce local variable");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResult("class C {\n" +
+                          "    void m() {\n" +
+                          "        if (true) {\n" +
+                          "            int i = ;\n" +
+                          "            Character.forDigit(i<caret>, )\n" +
+                          "        }\n" +
+                          "    }\n" +
+                          "}");
+  }
+
+  private void waitForParameterInfoUpdate() throws TimeoutException {
+    ParameterInfoController.waitForDelayedActions(getEditor(), 1, TimeUnit.MINUTES);
   }
 
   private void showParameterInfo() {
@@ -261,7 +318,8 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     }
   }
 
-  private void runHintsPass() {
+  private void waitForAllAsyncStuff() throws TimeoutException {
+    waitForParameterInfoUpdate();
     myFixture.doHighlighting();
     waitTillAnimationCompletes();
   }

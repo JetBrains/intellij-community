@@ -76,7 +76,7 @@ public class SuppressFix extends AbstractBatchSuppressByNoInspectionCommentFix {
       container = PsiTreeUtil.getParentOfType(container, PsiJavaDocumentedElement.class);
       if (container == null) return null;
     }
-    return (PsiJavaDocumentedElement)container;
+    return container instanceof SyntheticElement ? null : (PsiJavaDocumentedElement)container;
   }
 
   @Override

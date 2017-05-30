@@ -22,6 +22,7 @@ import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,8 @@ public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigura
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
+    Project project = e.getProject();
+    if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
       List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
       e.getPresentation().setEnabled(targetNodes.stream().anyMatch(node -> {
         Content content = node.getContent();
@@ -47,18 +49,19 @@ public class StopAction extends RunDashboardTreeLeafAction<DashboardRunConfigura
       }));
     }
     else {
-      Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
+      Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       e.getPresentation().setEnabled(content != null && !RunContentManagerImpl.isTerminated(content));
     }
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
+    Project project = e.getProject();
+    if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
       super.actionPerformed(e);
     }
     else {
-      Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
+      Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       if (content != null) {
         ExecutionManagerImpl.stopProcess(RunContentManagerImpl.getRunContentDescriptorByContent(content));
       }

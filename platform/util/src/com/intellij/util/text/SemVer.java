@@ -70,6 +70,12 @@ public final class SemVer implements Comparable<SemVer> {
     return myPatch - other.myPatch;
   }
 
+  public boolean isGreaterOrEqualThan(int major, int minor, int patch) {
+    if (myMajor != major) return myMajor > major;
+    if (myMinor != minor) return myMinor > minor;
+    return myPatch >= patch;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -93,7 +99,7 @@ public final class SemVer implements Comparable<SemVer> {
   }
 
   @Nullable
-  public static SemVer parseFromText(String text) {
+  public static SemVer parseFromText(@Nullable String text) {
     if (text != null) {
       int majorEndIdx = text.indexOf('.');
       if (majorEndIdx >= 0) {

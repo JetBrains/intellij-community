@@ -44,7 +44,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   private boolean myInitResetInvoked = false;
   private boolean myRevertCompleted = false;
 
-  private boolean myApplyCompleted = false;
   private final Project myProject;
 
   public CodeStyleSchemesConfigurable(Project project) {
@@ -78,7 +77,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
         myRootSchemesPanel = null;
         myResetCompleted = false;
         myRevertCompleted = false;
-        myApplyCompleted = false;
         myInitResetInvoked = false;
       }
     }
@@ -155,23 +153,14 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
 
   @Override
   public void apply() throws ConfigurationException {
-    if (!myApplyCompleted) {
-      try {
-        super.apply();
+    super.apply();
+    myModel.apply();
 
-        for (CodeStyleConfigurableWrapper panel : myPanels) {
-          panel.applyPanel();
-        }
-
-        myModel.apply();
-        EditorFactory.getInstance().refreshAllEditors();
-      }
-      finally {
-        myApplyCompleted = true;
-      }
-
+    for (CodeStyleConfigurableWrapper panel : myPanels) {
+      panel.applyPanel();
     }
 
+    EditorFactory.getInstance().refreshAllEditors();
   }
 
   @Override
@@ -207,7 +196,6 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   }
 
   void resetCompleted() {
-    myApplyCompleted = false;
     myRevertCompleted = false;
   }
 
@@ -251,12 +239,12 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
   @Override
   public boolean isModified() {
     if (myModel != null) {
-      if (myPanels != null && myPanels.size() > 0 && myPanels.get(0).isModified()) {
-        return true;
+      if (myModel.containsModifiedCodeStyleSettings()) return true;
+      for (Configurable panel : myPanels) {
+        if (panel.isModified()) return true;
       }
       boolean schemeListModified = myModel.isSchemeListModified();
       if (schemeListModified) {
-        myApplyCompleted = false;
         myRevertCompleted = false;
       }
       return schemeListModified;

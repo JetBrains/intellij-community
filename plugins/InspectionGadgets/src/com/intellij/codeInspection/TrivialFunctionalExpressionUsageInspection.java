@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
-import java.util.List;
 
 public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLocalInspectionTool {
   @NotNull
@@ -62,14 +61,28 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
                    || statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
           }
 
-          final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(expression);
-          if (returnExpressions.size() > 1 ||
-              (returnExpressions.size() == 1 && !(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement))) {
+          final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
+          if (returnStatements.length > 1) {
             return false;
           }
 
-          if (!returnExpressions.isEmpty() && callParent instanceof PsiLocalVariable) {
-            return true;
+          if (returnStatements.length == 1) {
+            if (!(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement)) {
+              return false;
+            }
+            if (returnStatements[0].getReturnValue() != null) {
+              if (callParent instanceof PsiLocalVariable) {
+                return true;
+              }
+            }
+          }
+
+          if(callParent instanceof PsiExpressionStatement) {
+            PsiElement statementParent = callParent.getParent();
+            // Disable in "for" initialization or update
+            if(statementParent instanceof PsiForStatement && callParent != ((PsiForStatement)statementParent).getBody()) {
+              return false;
+            }
           }
 
           return (callParent instanceof PsiStatement && !(callParent instanceof PsiLoopStatement)) ||

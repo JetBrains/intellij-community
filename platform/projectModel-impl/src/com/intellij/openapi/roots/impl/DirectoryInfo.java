@@ -17,14 +17,23 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class DirectoryInfo {
   /**
-   * @return {@code true} if located under project content or library roots and not excluded or ignored
+   * @return {@code true} if the whole directory is located under project content or library roots and not excluded or ignored
+   * @deprecated use {@link #isInProject(VirtualFile)} instead, this method doesn't take {@link ContentEntry#getExcludePatterns()} into account
    */
   public abstract boolean isInProject();
+
+  /**
+   * @param file a file under the directory described by this instance.
+   * @return {@code true} if {@code file} is located under project content or library roots and not excluded or ignored
+   */
+  public abstract boolean isInProject(@NotNull VirtualFile file);
 
   /**
    * @return {@code true} if located under ignored directory
@@ -32,9 +41,17 @@ public abstract class DirectoryInfo {
   public abstract boolean isIgnored();
 
   /**
-   * @return {@code true} if located project content, output or library root but excluded from the project
+   * @return {@code true} if the whole directory is located in project content, output or library root but excluded from the project
+   * @deprecated use {@link #isExcluded(VirtualFile)} instead, this method doesn't take {@link ContentEntry#getExcludePatterns()} into account
    */
   public abstract boolean isExcluded();
+
+  /**
+   * Returns {@code true} if {@code file} located under this directory is excluded from the project. If {@code file} is a directory it means
+   * that all of its content is recursively excluded from the project.
+   * @param file a file under the directory described by this instance.
+   */
+  public abstract boolean isExcluded(@NotNull VirtualFile file);
 
   public abstract boolean isInModuleSource();
 

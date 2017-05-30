@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,6 +46,11 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   }
 
   public boolean isInProject() {
+    return false;
+  }
+
+  @Override
+  public boolean isInProject(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -91,6 +97,11 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
 
   public boolean isExcluded() {
     return false;
+  }
+
+  @Override
+  public boolean isExcluded(@NotNull VirtualFile file) {
+    return isExcluded();
   }
 
   public Module getModule() {

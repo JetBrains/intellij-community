@@ -22,6 +22,7 @@ import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.impl.watch.UserExpressionDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -68,7 +69,7 @@ public class CustomFieldInplaceEditor extends XDebuggerTreeInplaceEditor {
   public static void editNew(@NotNull XValueNodeImpl parentNode) {
     ValueDescriptorImpl descriptor = ((JavaValue)parentNode.getValueContainer()).getDescriptor();
     EnumerationChildrenRenderer renderer = EnumerationChildrenRenderer.getCurrent(descriptor);
-    XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode();
+    XDebuggerTreeNode newNode = parentNode.addTemporaryEditorNode(AllIcons.Debugger.Watch, null);
     DebuggerUIUtil.invokeLater(() -> new CustomFieldInplaceEditor(newNode, null, renderer) {
       @Override
       public void cancelEditing() {

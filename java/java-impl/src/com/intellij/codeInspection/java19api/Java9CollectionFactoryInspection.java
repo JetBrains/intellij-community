@@ -181,6 +181,16 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
       if (mapDefinition instanceof PsiReferenceExpression) {
         return fromVariable((PsiReferenceExpression)mapDefinition, "Map", CommonClassNames.JAVA_UTIL_HASH_MAP, MAP_PUT);
       }
+      if (mapDefinition instanceof PsiNewExpression) {
+        PsiAnonymousClass anonymousClass = ((PsiNewExpression)mapDefinition).getAnonymousClass();
+        PsiExpressionList argumentList = ((PsiNewExpression)mapDefinition).getArgumentList();
+        if (anonymousClass != null && argumentList != null && argumentList.getExpressions().length == 0) {
+          PsiJavaCodeReferenceElement baseClassReference = anonymousClass.getBaseClassReference();
+          if (CommonClassNames.JAVA_UTIL_HASH_MAP.equals(baseClassReference.getQualifiedName())) {
+            return fromInitializer(anonymousClass, "Map", MAP_PUT);
+          }
+        }
+      }
       return null;
     }
 
@@ -245,7 +255,7 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
         if (anonymousClass != null && args.length == 0) {
           PsiJavaCodeReferenceElement baseClassReference = anonymousClass.getBaseClassReference();
           if (className.equals(baseClassReference.getQualifiedName())) {
-            return fromInitializer(anonymousClass, type);
+            return fromInitializer(anonymousClass, type, COLLECTION_ADD);
           }
         }
       }
@@ -264,17 +274,17 @@ public class Java9CollectionFactoryInspection extends BaseLocalInspectionTool {
     }
 
     @Nullable
-    private static PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type) {
+    private static PrepopulatedCollectionModel fromInitializer(PsiAnonymousClass anonymousClass, String type, CallMatcher addMethod) {
       PsiClassInitializer initializer = ClassUtils.getDoubleBraceInitializer(anonymousClass);
       if(initializer != null) {
         List<PsiExpression> contents = new ArrayList<>();
         for(PsiStatement statement : initializer.getBody().getStatements()) {
           if(!(statement instanceof PsiExpressionStatement)) return null;
           PsiMethodCallExpression call = tryCast(((PsiExpressionStatement)statement).getExpression(), PsiMethodCallExpression.class);
-          if(!COLLECTION_ADD.test(call)) return null;
+          if(!addMethod.test(call)) return null;
           PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if(qualifier != null && !qualifier.getText().equals("this")) return null;
-          contents.add(call.getArgumentList().getExpressions()[0]);
+          contents.addAll(Arrays.asList(call.getArgumentList().getExpressions()));
         }
         return new PrepopulatedCollectionModel(contents, Collections.emptyList(), type);
       }

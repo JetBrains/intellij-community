@@ -47,15 +47,16 @@ import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
 import com.intellij.util.text.CharArrayUtil;
+import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-
-import static com.intellij.lang.WhitespacesBinders.DEFAULT_LEFT_BINDER;
-import static com.intellij.lang.WhitespacesBinders.DEFAULT_RIGHT_BINDER;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author max
@@ -102,9 +103,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
   private IElementType myCachedTokenType;
 
   private final TIntObjectHashMap<LazyParseableToken> myChameleonCache = new TIntObjectHashMap<>();
-  private final Map<StartMarker, Throwable> myDebugAllocationPositions = new IdentityHashMap<>(0);
-  private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myLeftBinders = new IdentityHashMap<>(0);
-  private final Map<ProductionMarker, WhitespacesAndCommentsBinder> myRightBinders = new IdentityHashMap<>(0);
+  private final Map<StartMarker, Throwable> myDebugAllocationPositions = new THashMap<>(0, ContainerUtil.identityStrategy());
 
   private final LimitedPool<StartMarker> START_MARKERS = new LimitedPool<>(2000, new LimitedPool.ObjectFactory<StartMarker>() {
     @NotNull
@@ -254,18 +253,28 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return null;
   }
 
-  private abstract static class Node implements LighterASTNode {
-    public abstract int hc();
+  private interface Node extends LighterASTNode {
+    int hc();
   }
 
-  public abstract static class ProductionMarker extends Node {
+  public abstract static class ProductionMarker {
     protected int myLexemeIndex;
-    protected ProductionMarker myParent;
-    protected ProductionMarker myNext;
+    protected WhitespacesAndCommentsBinder myEdgeTokenBinder;
 
     public void clean() {
       myLexemeIndex = 0;
-      myParent = myNext = null;
+    }
+
+    public IElementType getTokenType() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
+
+    public int getStartOffset() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+    }
+
+    public int getEndOffset() {
+      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
 
     public void remapTokenType(@NotNull IElementType type) {
@@ -279,31 +288,30 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     public int getEndIndex() {
       throw new UnsupportedOperationException("Shall not be called on this kind of markers");
     }
+  }
 
-    @NotNull
-    abstract WhitespacesAndCommentsBinder getBinder();
+  private abstract static class NodeMarker extends ProductionMarker implements Node {
+    protected NodeMarker myParent;
+    protected NodeMarker myNext;
 
-    abstract void setBinder(@NotNull WhitespacesAndCommentsBinder binder);
-
-    void assignBinder(@NotNull WhitespacesAndCommentsBinder binder,
-                      @NotNull Map<ProductionMarker, WhitespacesAndCommentsBinder> map,
-                      @NotNull WhitespacesAndCommentsBinder defaultBinder) {
-      if (binder != defaultBinder) {
-        map.put(this, binder);
-      }
-      else {
-        map.remove(this);
-      }
+    @Override
+    public void clean() {
+      super.clean();
+      myParent = myNext = null;
     }
   }
 
-  private static class StartMarker extends ProductionMarker implements Marker {
+  private static class StartMarker extends NodeMarker implements Marker {
     private PsiBuilderImpl myBuilder;
     private IElementType myType;
     private DoneMarker myDoneMarker;
-    private ProductionMarker myFirstChild;
-    private ProductionMarker myLastChild;
+    private NodeMarker myFirstChild;
+    private NodeMarker myLastChild;
     private int myHC = -1;
+
+    private StartMarker() {
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_LEFT_BINDER;
+    }
 
     @Override
     public void clean() {
@@ -311,12 +319,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (myBuilder.myDebugMode) {
         myBuilder.myDebugAllocationPositions.remove(this);
       }
-      myBuilder.myLeftBinders.remove(this);
       myBuilder = null;
       myType = null;
       myDoneMarker = null;
       myFirstChild = myLastChild = null;
       myHC = -1;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_LEFT_BINDER;
     }
 
     @Override
@@ -326,7 +334,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         int hc = 0;
         final CharSequence buf = builder.myText;
         final char[] bufArray = builder.myTextArray;
-        ProductionMarker child = myFirstChild;
+        NodeMarker child = myFirstChild;
         int lexIdx = myLexemeIndex;
 
         while (child != null) {
@@ -337,12 +345,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
           lexIdx = lastLeaf;
           hc += child.hc();
           if (child instanceof StartMarker) {
-            lexIdx = ((StartMarker)child).myDoneMarker.myLexemeIndex;
+            lexIdx = child.getEndIndex();
           }
           child = child.myNext;
         }
 
-        for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[myDoneMarker.myLexemeIndex]; i++) {
+        for (int i = builder.myLexStarts[lexIdx]; i < builder.myLexStarts[getEndIndex()]; i++) {
           hc += bufArray != null ? bufArray[i] : buf.charAt(i);
         }
 
@@ -359,7 +367,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public int getEndOffset() {
-      return myBuilder.myLexStarts[myDoneMarker.myLexemeIndex] + myBuilder.myOffset;
+      return myBuilder.myLexStarts[getEndIndex()] + myBuilder.myOffset;
     }
 
     @Override
@@ -367,18 +375,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       return myDoneMarker.myLexemeIndex;
     }
 
-    @NotNull
-    @Override
-    public WhitespacesAndCommentsBinder getBinder() {
-      return myBuilder.myLeftBinders.getOrDefault(this, DEFAULT_LEFT_BINDER);
-    }
-
-    @Override
-    public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      assignBinder(binder, myBuilder.myLeftBinders, DEFAULT_LEFT_BINDER);
-    }
-
-    public void addChild(@NotNull ProductionMarker node) {
+    public void addChild(@NotNull NodeMarker node) {
       if (myFirstChild == null) {
         myFirstChild = node;
         myLastChild = node;
@@ -456,12 +453,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     @Override
     public void setCustomEdgeTokenBinders(final WhitespacesAndCommentsBinder left, final WhitespacesAndCommentsBinder right) {
       if (left != null) {
-        setBinder(left);
+        myEdgeTokenBinder = left;
       }
 
       if (right != null) {
         if (myDoneMarker == null) throw new IllegalArgumentException("Cannot set right-edge processor for unclosed marker");
-        myDoneMarker.setBinder(right);
+        myDoneMarker.myEdgeTokenBinder = right;
       }
     }
 
@@ -488,7 +485,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     return pre;
   }
 
-  private abstract static class Token extends Node {
+  private abstract static class Token implements Node {
     protected PsiBuilderImpl myBuilder;
     private IElementType myTokenType;
     private int myTokenStart;
@@ -639,34 +636,21 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     private StartMarker myStart;
     private boolean myCollapse;
 
-    DoneMarker() {}
-    
+    DoneMarker() {
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
+    }
+
     DoneMarker(final StartMarker marker, final int currentLexeme) {
+      this();
       myLexemeIndex = currentLexeme;
       myStart = marker;
     }
 
     @Override
     public void clean() {
-      myStart.myBuilder.myRightBinders.remove(this);
       super.clean();
       myStart = null;
-    }
-
-    @NotNull
-    @Override
-    public WhitespacesAndCommentsBinder getBinder() {
-      return myStart.myBuilder.myRightBinders.getOrDefault(this, DEFAULT_RIGHT_BINDER);
-    }
-
-    @Override
-    public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      assignBinder(binder, myStart.myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
-    }
-
-    @Override
-    public int hc() {
-      throw new UnsupportedOperationException("Shall not be called on this kind of markers");
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
     @NotNull
@@ -701,7 +685,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     }
   }
 
-  private static class ErrorItem extends ProductionMarker {
+  private static class ErrorItem extends NodeMarker {
     private final PsiBuilderImpl myBuilder;
     private String myMessage;
 
@@ -709,24 +693,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       myBuilder = builder;
       myMessage = message;
       myLexemeIndex = idx;
+      myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
     }
 
     @Override
     public void clean() {
-      myBuilder.myRightBinders.remove(this);
       super.clean();
       myMessage = null;
-    }
-
-    @NotNull
-    @Override
-    public WhitespacesAndCommentsBinder getBinder() {
-      return myBuilder.myRightBinders.getOrDefault(this, DEFAULT_RIGHT_BINDER);
-    }
-
-    @Override
-    public void setBinder(@NotNull WhitespacesAndCommentsBinder binder) {
-      assignBinder(binder, myBuilder.myRightBinders, DEFAULT_RIGHT_BINDER);
     }
 
     @Override
@@ -978,7 +951,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, myCurrentLexeme, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).setBinder(DEFAULT_RIGHT_BINDER);
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -992,7 +965,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     DoneWithErrorMarker doneMarker = new DoneWithErrorMarker((StartMarker)marker, ((StartMarker)before).myLexemeIndex, message);
     boolean tieToTheLeft = isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).setBinder(DEFAULT_RIGHT_BINDER);
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -1006,7 +979,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myLexemeIndex = myCurrentLexeme;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, myCurrentLexeme);
-    if (tieToTheLeft) ((StartMarker)marker).setBinder(DEFAULT_RIGHT_BINDER);
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(doneMarker);
@@ -1023,7 +996,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     doneMarker.myStart = (StartMarker)marker;
     boolean tieToTheLeft = doneMarker.myStart.myType.isLeftBound() &&
                            isEmpty(((StartMarker)marker).myLexemeIndex, ((StartMarker)before).myLexemeIndex);
-    if (tieToTheLeft) ((StartMarker)marker).setBinder(DEFAULT_RIGHT_BINDER);
+    if (tieToTheLeft) ((StartMarker)marker).myEdgeTokenBinder = WhitespacesBinders.DEFAULT_RIGHT_BINDER;
 
     ((StartMarker)marker).myDoneMarker = doneMarker;
     myProduction.add(beforeIndex, doneMarker);
@@ -1218,11 +1191,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
     for (int i = 1; i < myProduction.size(); i++) {
       final ProductionMarker item = myProduction.get(i);
 
-      if (curNode == null) LOG.error("Unexpected end of the production");
+      if (curNode == null) throw new AssertionError("Unexpected end of the production");
 
-      item.myParent = curNode;
       if (item instanceof StartMarker) {
         final StartMarker marker = (StartMarker)item;
+        marker.myParent = curNode;
         marker.myFirstChild = marker.myLastChild = marker.myNext = null;
         curNode.addChild(marker);
         nodes.push(curNode);
@@ -1236,10 +1209,11 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         curDepth--;
       }
       else if (item instanceof ErrorItem) {
+        ((ErrorItem)item).myParent = curNode;
         int curToken = item.myLexemeIndex;
         if (curToken == lastErrorIndex) continue;
         lastErrorIndex = curToken;
-        curNode.addChild(item);
+        curNode.addChild((NodeMarker)item);
       }
     }
 
@@ -1248,8 +1222,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       LOG.error("Tokens " + missed + " were not inserted into the tree. " +(myFile != null? myFile.getLanguage()+", ":"")+"Text:\n" + myText);
     }
 
-    if (rootMarker.myDoneMarker.myLexemeIndex < myLexemeCount) {
-      final List<IElementType> missed = ContainerUtil.newArrayList(myLexTypes, rootMarker.myDoneMarker.myLexemeIndex, myLexemeCount);
+    if (rootMarker.getEndIndex() < myLexemeCount) {
+      final List<IElementType> missed = ContainerUtil.newArrayList(myLexTypes, rootMarker.getEndIndex(), myLexemeCount);
       LOG.error("Tokens " + missed + " are outside of root element \"" + rootMarker.myType + "\". Text:\n" + myText);
     }
 
@@ -1284,7 +1258,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         assertMarkersBalanced(((StartMarker)item).myDoneMarker != null, item);
       }
 
-      WhitespacesAndCommentsBinder binder = item.getBinder();
+      WhitespacesAndCommentsBinder binder = item.myEdgeTokenBinder;
       boolean recursive = binder instanceof WhitespacesAndCommentsBinder.RecursiveBinder;
       int prevProductionLexIndex = recursive ? 0 : myProduction.get(i - 1).myLexemeIndex;
       int wsStartIndex = Math.max(item.myLexemeIndex, lastIndex);
@@ -1389,18 +1363,20 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         else {
           lexIndex = collapseLeaves(curNode, marker);
         }
+        item = marker.myNext;
       }
       else if (item instanceof ErrorItem) {
         final CompositeElement errorElement = Factory.createErrorElement(((ErrorItem)item).myMessage);
         curNode.rawAddChildrenWithoutNotifications(errorElement);
+        item = ((ErrorItem)item).myNext;
       }
       else if (item instanceof DoneMarker) {
         curMarker = (StartMarker)((DoneMarker)item).myStart.myParent;
         curNode = curNode.getTreeParent();
-        item = ((DoneMarker)item).myStart;
+        item = ((DoneMarker)item).myStart.myNext;
       }
 
-      item = item.myNext != null ? item.myNext : curMarker.myDoneMarker;
+      if (item == null ) item = curMarker.myDoneMarker;
     }
   }
 
@@ -1423,15 +1399,15 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
   private int collapseLeaves(@NotNull CompositeElement ast, @NotNull StartMarker startMarker) {
     final int start = myLexStarts[startMarker.myLexemeIndex];
-    final int end = myLexStarts[startMarker.myDoneMarker.myLexemeIndex];
+    final int end = myLexStarts[startMarker.getEndIndex()];
     final IElementType markerType = startMarker.myType;
     final TreeElement leaf = createLeaf(markerType, start, end);
     if (markerType instanceof ILazyParseableElementType && ((ILazyParseableElementType)markerType).reuseCollapsedTokens() &&
-        startMarker.myLexemeIndex < startMarker.myDoneMarker.myLexemeIndex) {
-      int length = startMarker.myDoneMarker.myLexemeIndex - startMarker.myLexemeIndex;
+        startMarker.myLexemeIndex < startMarker.getEndIndex()) {
+      int length = startMarker.getEndIndex() - startMarker.myLexemeIndex;
       int[] relativeStarts = new int[length + 1];
       IElementType[] types = new IElementType[length + 1];
-      for (int i = startMarker.myLexemeIndex; i < startMarker.myDoneMarker.myLexemeIndex; i++) {
+      for (int i = startMarker.myLexemeIndex; i < startMarker.getEndIndex(); i++) {
         relativeStarts[i - startMarker.myLexemeIndex] = myLexStarts[i] - start;
         types[i - startMarker.myLexemeIndex] = myLexTypes[i];
       }
@@ -1439,7 +1415,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       leaf.putUserData(LAZY_PARSEABLE_TOKENS, new TokenSequence(relativeStarts, types, length));
     }
     ast.rawAddChildrenWithoutNotifications(leaf);
-    return startMarker.myDoneMarker.myLexemeIndex;
+    return startMarker.getEndIndex();
   }
 
   @NotNull
@@ -1635,8 +1611,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
 
     @Override
     public LighterASTNode getParent(@NotNull final LighterASTNode node) {
-      if (node instanceof ProductionMarker) {
-        return ((ProductionMarker)node).myParent;
+      if (node instanceof NodeMarker) {
+        return ((NodeMarker)node).myParent;
       }
       if (node instanceof Token) {
         return ((Token)node).myParentNode;
@@ -1658,8 +1634,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       if (item instanceof LazyParseableToken) {
         final FlyweightCapableTreeStructure<LighterASTNode> tree = ((LazyParseableToken)item).parseContents();
         final LighterASTNode root = tree.getRoot();
-        if (root instanceof ProductionMarker) {
-          ((ProductionMarker)root).myParent = ((Token)item).myParentNode;
+        if (root instanceof NodeMarker) {
+          ((NodeMarker)root).myParent = ((Token)item).myParentNode;
         }
         return tree.getChildren(tree.prepareForGetChildren(root), into);  // todo: set offset shift for kids?
       }
@@ -1668,13 +1644,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
       StartMarker marker = (StartMarker)item;
 
       count = 0;
-      ProductionMarker child = marker.myFirstChild;
+      NodeMarker child = marker.myFirstChild;
       int lexIndex = marker.myLexemeIndex;
       while (child != null) {
         lexIndex = insertLeaves(lexIndex, child.myLexemeIndex, marker.myBuilder, marker);
 
         if (child instanceof StartMarker && ((StartMarker)child).myDoneMarker.myCollapse) {
-          int lastIndex = ((StartMarker)child).myDoneMarker.myLexemeIndex;
+          int lastIndex = child.getEndIndex();
           insertLeaf(child.getTokenType(), marker.myBuilder, child.myLexemeIndex, lastIndex, true, marker);
         }
         else {
@@ -1683,12 +1659,12 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder {
         }
 
         if (child instanceof StartMarker) {
-          lexIndex = ((StartMarker)child).myDoneMarker.myLexemeIndex;
+          lexIndex = child.getEndIndex();
         }
         child = child.myNext;
       }
 
-      insertLeaves(lexIndex, marker.myDoneMarker.myLexemeIndex, marker.myBuilder, marker);
+      insertLeaves(lexIndex, marker.getEndIndex(), marker.myBuilder, marker);
       into.set(nodes == null ? LighterASTNode.EMPTY_ARRAY : nodes);
       nodes = null;
 

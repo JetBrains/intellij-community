@@ -40,7 +40,12 @@ public class Test01 {
   }
 
   static void t(@ExpectNotNull Object o) {
-    o.toString();
+    use(o);
+  }
+
+  private static String use(@ExpectNotNull Object o) {
+    System.out.println(o);
+    return o.toString();
   }
 
   @ExpectContract(pure = true)
@@ -50,12 +55,12 @@ public class Test01 {
 
   @ExpectContract("null->null")
   static String toString1(Object o) {
-    return o == null ? null : o.toString();
+    return o == null ? null : use(o);
   }
 
   @ExpectContract("null->!null")
   static String toString2(Object o) {
-    return o == null ? "null" : o.toString();
+    return o == null ? "null" : use(o);
   }
 
   @ExpectContract(pure = true)
@@ -123,11 +128,27 @@ public class Test01 {
     return s::trim;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(pure = true, value="null,_->fail")
   public static void assertNotNull(@ExpectNotNull Object obj, String message) {
     if(obj == null) {
       throw new IllegalArgumentException(message);
     }
+  }
+
+  @ExpectContract(pure = true, value="false,_,_->fail;true,_,_->true")
+  public static boolean assertTrue(boolean val, String message, int data) {
+    if(!val) {
+      throw new IllegalArgumentException(message+":"+data);
+    }
+    return val;
+  }
+
+  @ExpectContract(pure = true, value="true,_->fail;_,_->false")
+  public static boolean assertFalse(boolean val, String message) {
+    if(val) {
+      throw new IllegalArgumentException(message);
+    }
+    return false;
   }
 
   @ExpectNotNull
@@ -153,5 +174,42 @@ public class Test01 {
     //noinspection SuspiciousSystemArraycopy
     System.arraycopy(arr, from, copy, 0, Math.min(arr.length - from, diff));
     return copy;
+  }
+
+  @ExpectContract(value = "_->fail", pure = true)
+  public static void callAlwaysFail(int x) {
+    alwaysFail();
+  }
+
+  @ExpectContract(value = "_->fail", pure = true)
+  public static void callAlwaysFailRef(String x) {
+    callAlwaysFailTwoRefs(x, null);
+  }
+
+  @ExpectContract(value = "_,_->fail", pure = true)
+  public static void callAlwaysFailTwoRefs(String x, String y) {
+    alwaysFail();
+  }
+
+  @ExpectContract(value = "->fail", pure = true)
+  private static void alwaysFail() {
+    throw new UnsupportedOperationException();
+  }
+
+  @ExpectContract(value = "!null->null;null->!null", pure = true)
+  static String invert(String x) {
+    return x == null ? "empty" : null;
+  }
+
+  @ExpectContract(value = "false->true;true->false", pure = true)
+  static boolean invertBool(boolean x) {
+    return !x;
+  }
+
+  @ExpectContract(value = "_,true->true;null,_->true", pure=true)
+  boolean checkTrueFail(Object a, boolean b) {
+    if (a == null) return true;
+    if (b) throw new RuntimeException();
+    return b;
   }
 }

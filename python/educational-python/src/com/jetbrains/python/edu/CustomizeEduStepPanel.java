@@ -6,37 +6,44 @@ import icons.PythonEducationalIcons;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class CustomizeEduStepPanel extends JPanel {
   static final String COURSE_CREATOR_ENABLED = "Edu.CourseCreator.Enabled";
-  private final JButton myStudent;
+  private final JLabel myStudent;
 
   public CustomizeEduStepPanel() {
+    final FlowLayout layout = new FlowLayout();
+    layout.setHgap(20);
+    setLayout(layout);
     int iconSize = 180;
     final JPanel studentPanel = new JPanel(new VerticalFlowLayout());
-    myStudent = new JButton(PythonEducationalIcons.Student);
+    final JLabel teacher = new JLabel(PythonEducationalIcons.Teacher);
+    myStudent = new JLabel(PythonEducationalIcons.StudentHover);
     myStudent.setPreferredSize(new Dimension(iconSize, iconSize));
-    myStudent.addActionListener(new ActionListener() {
+    myStudent.addMouseListener(new MouseAdapter() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void mouseClicked(MouseEvent e) {
         PropertiesComponent.getInstance().setValue(COURSE_CREATOR_ENABLED, false);
+        myStudent.setIcon(PythonEducationalIcons.StudentHover);
+        teacher.setIcon(PythonEducationalIcons.Teacher);
       }
     });
     studentPanel.add(myStudent);
     studentPanel.add(new JLabel("Student", SwingConstants.CENTER));
     add(studentPanel);
 
-    final JButton teacher = new JButton(PythonEducationalIcons.Teacher);
     teacher.setPreferredSize(new Dimension(iconSize, iconSize));
     final JPanel teacherPanel = new JPanel(new VerticalFlowLayout());
     teacherPanel.add(teacher);
     teacherPanel.add(new JLabel("Teacher", SwingConstants.CENTER));
-    teacher.addActionListener(new ActionListener() {
+    teacher.addMouseListener(new MouseAdapter() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void mouseClicked(MouseEvent e) {
         PropertiesComponent.getInstance().setValue(COURSE_CREATOR_ENABLED, true);
+        myStudent.setIcon(PythonEducationalIcons.Student);
+        teacher.setIcon(PythonEducationalIcons.TeacherHover);
       }
     });
     add(teacherPanel);

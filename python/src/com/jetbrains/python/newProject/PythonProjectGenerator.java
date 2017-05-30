@@ -61,7 +61,7 @@ import java.util.function.Consumer;
  *
  * @param <T> project settings
  */
-public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> implements DirectoryProjectGenerator<T> {
+public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> extends DirectoryProjectGenerator<T> {
   private final List<SettingsListener> myListeners = ContainerUtil.newArrayList();
   private final boolean myAllowRemoteProjectCreation;
   @Nullable private MouseListener myErrorLabelMouseListener;

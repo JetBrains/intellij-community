@@ -89,6 +89,7 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntHashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -107,6 +108,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Stream;
 
 /**
  * @author Eugene Zhuravlev
@@ -1362,8 +1364,12 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   private void cleanupMemoryStorage() {
     myLastIndexedDocStamps.clear();
-    waitUntilIndicesAreInitialized();
-    IndexConfiguration state = getState();
+    IndexConfiguration state = myState;
+    if (state == null) {
+      // avoid waiting for end of indices initialization (IDEA-173382)
+      // in memory content will appear on indexing (in read action) and here is event dispatch (write context)
+      return;
+    }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
       final MapReduceIndex index = (MapReduceIndex)state.getIndex(indexId);
       assert index != null;
@@ -1425,7 +1431,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   int getChangedFileCount() {
-    return myChangedFilesCollector.getChangedFileCount();
+    return myChangedFilesCollector.myVfsEventsMerger.getApproximateChangesCount() + myChangedFilesCollector.myFilesToUpdate.size();
+  }
+
+  String dumpSomeChangedFiles() {
+    Stream<String> events = myChangedFilesCollector.myVfsEventsMerger.dumpChangedFilePaths();
+    Stream<String> files = myChangedFilesCollector.myFilesToUpdate.values().stream().map(VirtualFile::getPath);
+    return StreamEx.of(events).append(files).limit(20).joining(", ");
   }
 
   @NotNull
@@ -1917,10 +1929,6 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       }
     }
 
-    int getChangedFileCount() {
-      return myVfsEventsMerger.getApproximateChangesCount() + myFilesToUpdate.size();
-    }
-
     private void processFilesInReadAction() {
       assert ApplicationManager.getApplication().isReadAccessAllowed();
       myWorkersFinishedSync.register();
@@ -2252,6 +2260,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     private SerializationManagerEx mySerializationManagerEx;
 
     FileIndexDataInitialization(FileBasedIndexExtension[] extensions) {
+      // init contentless indices first
+      Arrays.sort(extensions, Comparator.comparingInt(o -> (o.dependsOnFileContent() ? 1 : 0)));
       for (FileBasedIndexExtension<?, ?> extension : extensions) {
         ID<?, ?> name = extension.getName();
         RebuildStatus.registerIndex(name);

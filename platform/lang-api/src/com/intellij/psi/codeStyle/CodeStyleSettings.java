@@ -173,7 +173,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   public void copyFrom(CodeStyleSettings from) {
     copyPublicFields(from, this);
-
+    copyPublicFields(from.OTHER_INDENT_OPTIONS, OTHER_INDENT_OPTIONS);
     copyCustomSettingsFrom(from);
   }
 
@@ -410,9 +410,10 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
 
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
-  
   public boolean JD_PRESERVE_LINE_FEEDS;
   public boolean JD_PARAM_DESCRIPTION_ON_NEW_LINE;
+
+  public boolean JD_INDENT_ON_CONTINUATION = false;
 
 // endregion
 
@@ -1146,6 +1147,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean equals(Object obj) {
     if (!(obj instanceof CodeStyleSettings)) return false;
     if (!ReflectionUtil.comparePublicNonFinalFields(this, obj)) return false;
+    if (!OTHER_INDENT_OPTIONS.equals(((CodeStyleSettings)obj).OTHER_INDENT_OPTIONS)) return false;
     if (!myCommonSettingsManager.equals(((CodeStyleSettings)obj).myCommonSettingsManager)) return false;
     for (CustomCodeStyleSettings customSettings : myCustomSettings.values()) {
       if (!customSettings.equals(((CodeStyleSettings)obj).getCustomSettings(customSettings.getClass()))) return false;

@@ -37,6 +37,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.TreeItem;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -270,7 +271,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
     };
 
-    table.setMinimumSize(new Dimension(300, 50));
+    table.setMinimumSize(new JBDimension(300, 50));
     final PopupChooserBuilder builder = new PopupChooserBuilder(table);
 
     if (showComments) {
@@ -280,7 +281,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     builder.setTitle(VcsBundle.message("lookup.title.vcs.file.revisions")).
         setItemChoosenCallback(runnable).
         setResizable(true).
-        setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new Dimension(300, 300));
+        setDimensionServiceKey("Vcs.CompareWithSelectedRevision.Popup").setMinSize(new JBDimension(300, 300));
     final JBPopup popup = builder.createPopup();
     
     popup.showCenteredInCurrentWindow(project);
@@ -309,7 +310,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     commentLabel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT | SideBorder.BOTTOM));
     textScrollPane.setBorder(null);
     jPanel.add(textScrollPane, BorderLayout.CENTER);
-    jPanel.setPreferredSize(new Dimension(300, 100));
+    jPanel.setPreferredSize(new JBDimension(300, 100));
     return jPanel;
   }
 

@@ -1286,7 +1286,7 @@ public class UsageViewImpl implements UsageView {
     return mySearchInProgress;
   }
 
-  void setSearchInProgress(boolean searchInProgress) {
+  public void setSearchInProgress(boolean searchInProgress) {
     mySearchInProgress = searchInProgress;
     if (!myPresentation.isDetachedMode()) {
       UIUtil.invokeLaterIfNeeded(() -> {

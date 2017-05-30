@@ -132,7 +132,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
     DirectoryInfo info = getInfoForFile(dir);
-    return info.isInProject() ? info : null;
+    return info.isInProject(dir) ? info : null;
   }
 
   @NotNull

@@ -1,20 +1,14 @@
 {
   "properties": {
     "withPattern": {
-      "pattern": <warning descr="Unclosed character class near index 3
-^[]$
-   ^">"^[]$"</warning>
+      "pattern": "^[]$"
     },
     "everythingFine": {
       "pattern": "^[a]$"
     }
   },
   "patternProperties": {
-    <warning descr="Unclosed character class near index 8
-.*p[0-9.*
-        ^">"p[0-9"</warning>: {},
-    <warning descr="Unclosed character class near index 8
-.*b[0-7.*
-        ^">"b[0-7"</warning>: {}
+    "p[0-9": {},
+    "b[0-7": {}
   }
 }

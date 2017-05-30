@@ -221,6 +221,11 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertEquals("c.getMethods", element.getLookupString());
   }
 
+  public void testReturnStatement() {
+    JavaRelevantChainLookupElement element = assertOneElement(doCompletion());
+    assertEquals("f.createClass", element.getLookupString());
+  }
+
   public void assertAdvisorLookupElementEquals(String lookupText,
                                                int unreachableParametersCount,
                                                int chainSize,
@@ -239,7 +244,7 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
                                                  int parametersInContext,
                                                  int unreachableParametersCount) {
     assertEquals(chainSize, chainRelevance.getChainSize());
-    assertEquals(unreachableParametersCount, chainRelevance.getUnreachableParametersCount());
+    assertEquals(unreachableParametersCount, chainRelevance.getUnreachableParameterCount());
     assertEquals(parametersInContext, chainRelevance.getParametersInContext());
   }
 

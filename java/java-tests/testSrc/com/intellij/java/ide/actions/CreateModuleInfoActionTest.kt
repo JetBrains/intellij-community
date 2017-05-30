@@ -25,8 +25,8 @@ import com.intellij.psi.PsiJavaModule
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 
 class CreateModuleInfoActionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun test() {

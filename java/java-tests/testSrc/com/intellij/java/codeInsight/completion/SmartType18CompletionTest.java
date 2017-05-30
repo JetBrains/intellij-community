@@ -249,4 +249,10 @@ public void testConvertToObjectStream() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "TimeUnit.DAYS");
   }
+
+  public void testFreeGenericsAfterClassLiteral() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "String.class", "tryCast");
+  }
+
 }

@@ -55,6 +55,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NonNls private static final String FIND_PREFIX = "find";
   @NonNls private static final String CREATE_PREFIX = "create";
   @NonNls private static final String SET_PREFIX = "set";
+  
+  @NonNls private static final String[] ourPrepositions = {
+    "as", "at", "by", "down", "for", "from", "in", "into", "of", "on", "onto", "out", "over",
+    "per", "to", "up", "upon", "via", "with"};
+
 
   private final Project myProject;
 
@@ -530,7 +535,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     final PsiElement[] literals = PsiTreeUtil.collectElements(expr, new PsiElementFilter() {
       @Override
       public boolean isAccepted(PsiElement element) {
-        if (isStringPsiLiteral(element) && StringUtil.isJavaIdentifier(StringUtil.unquoteString(element.getText()))) {
+        if (isStringPsiLiteral(element) && isNameSupplier(element)) {
           final PsiElement exprList = element.getParent();
           if (exprList instanceof PsiExpressionList) {
             final PsiElement call = exprList.getParent();
@@ -544,11 +549,18 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
         return false;
       }
+
+      private boolean isNameSupplier(PsiElement element) {
+        String stringPresentation = StringUtil.unquoteString(element.getText());
+        String[] words = stringPresentation.split(" ");
+        if (words.length > 5) return false;
+        return Arrays.stream(words).allMatch(StringUtil::isJavaIdentifier);
+      }
     });
 
     if (literals.length == 1) {
       final String text = StringUtil.unquoteString(literals[0].getText());
-      return getSuggestionsByName(text, variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
+      return getSuggestionsByName(text.replaceAll(" ", "_"), variableKind, expr.getType() instanceof PsiArrayType, correctKeywords);
     }
     return null;
   }
@@ -771,12 +783,12 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     }
-    else if (expr.getParent() instanceof PsiAssignmentExpression && variableKind == VariableKind.PARAMETER) {
+    else if (expr.getParent() instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expr.getParent();
       if (expr == assignmentExpression.getRExpression()) {
         final PsiExpression leftExpression = assignmentExpression.getLExpression();
-        if (leftExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression) leftExpression).getQualifier() == null) {
-          String name = leftExpression.getText();
+        if (leftExpression instanceof PsiReferenceExpression) {
+          String name = ((PsiReferenceExpression)leftExpression).getReferenceName();
           if (name != null) {
             final PsiElement resolve = ((PsiReferenceExpression)leftExpression).resolve();
             if (resolve instanceof PsiVariable) {
@@ -786,6 +798,15 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
             return new NamesByExprInfo(name, names);
           }
         }
+      }
+    }
+     //skip places where name for this local variable is calculated, otherwise grab the name 
+    else if (expr.getParent() instanceof PsiLocalVariable && variableKind != VariableKind.LOCAL_VARIABLE) {
+      PsiVariable variable = (PsiVariable)expr.getParent();
+      String variableName = variable.getName();
+      if (variableName != null) {
+        String propertyName = variableNameToPropertyName(variableName, getVariableKind(variable));
+        return new NamesByExprInfo(propertyName, getSuggestionsByName(propertyName, variableKind, false, correctKeywords));
       }
     }
 
@@ -877,7 +898,33 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       answer.add(correctKeywords ? changeIfNotIdentifier(suggestion) : suggestion);
     }
 
+    ContainerUtil.addIfNotNull(answer, getWordByPreposition(name, prefix, suffix, upperCaseStyle, isArray));
     return ArrayUtil.toStringArray(answer);
+  }
+
+  private static String getWordByPreposition(@NotNull String name, String prefix, String suffix, boolean upperCaseStyle, boolean isArray) {
+    String[] words = NameUtil.splitNameIntoWords(name);
+    for (int i = 1; i < words.length; i++) {
+      for (String preposition : ourPrepositions) {
+        if (preposition.equalsIgnoreCase(words[i])) {
+          String mainWord = words[i - 1];
+          if (upperCaseStyle) {
+            mainWord = StringUtil.toUpperCase(mainWord);
+          }
+          else {
+            if (prefix.isEmpty() || StringUtil.endsWithChar(prefix, '_')) {
+              mainWord = StringUtil.toLowerCase(mainWord);
+            }
+            else {
+              mainWord = StringUtil.capitalize(mainWord);
+            }
+          }
+          String result = prefix + mainWord + suffix;
+          return isArray ? StringUtil.pluralize(result) : result;
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,10 +80,16 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     if (home == null || VfsUtilCore.isAncestor(file, home, false)) {
       return false;
     }
-    if (ourCanInspectDirs || VfsUtilCore.isAncestor(home, file, true)) {
+    if (VfsUtilCore.isAncestor(home, file, true)) {
       return true;
     }
-    return false;
+    if (SystemInfo.isUnix && file.isInLocalFileSystem()) {
+      VirtualFile parent = file.getParent();
+      if (parent != null && parent.getParent() == null) {
+        return false;
+      }
+    }
+    return ourCanInspectDirs;
   }
 
   private static Icon getImporterIcon(VirtualFile file) {

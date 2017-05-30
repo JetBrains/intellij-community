@@ -128,7 +128,7 @@ public abstract class InspectionRVContentProvider {
     return false;
   }
 
-  @Nullable
+  @NotNull
   public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
 

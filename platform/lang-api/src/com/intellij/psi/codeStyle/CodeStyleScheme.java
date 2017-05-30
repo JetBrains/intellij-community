@@ -28,9 +28,6 @@ public interface CodeStyleScheme extends Scheme {
 
   boolean isDefault();
 
-  default void resetToDefaults() {
-  }
-
   @NotNull
   CodeStyleSettings getCodeStyleSettings();
 }

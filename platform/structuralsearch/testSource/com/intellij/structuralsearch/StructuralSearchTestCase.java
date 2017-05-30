@@ -51,13 +51,12 @@ abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     super.tearDown();
   }
 
-  protected int findMatchesCount(String in, String pattern, boolean filePattern, FileType fileType) {
-    return findMatches(in,pattern,filePattern, fileType).size();
+  protected int findMatchesCount(String in, String pattern, FileType fileType) {
+    return findMatches(in, pattern, fileType).size();
   }
 
   protected List<MatchResult> findMatches(String in,
                                           String pattern,
-                                          boolean filePattern,
                                           FileType patternFileType,
                                           Language patternLanguage,
                                           FileType sourceFileType,
@@ -69,19 +68,15 @@ abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     options.setDialect(patternLanguage);
 
     MatcherImpl.validate(getProject(), options);
-    return testMatcher.testFindMatches(in, options, filePattern, sourceFileType, sourceExtension, physicalSourceFile);
+    return testMatcher.testFindMatches(in, options, true, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
-  protected List<MatchResult> findMatches(String in, String pattern, boolean filePattern, FileType patternFileType) {
-    return findMatches(in, pattern, filePattern, patternFileType, null, patternFileType, null, false);
-  }
-
-  protected int findMatchesCount(String in, String pattern, boolean filePattern) {
-    return findMatchesCount(in, pattern,filePattern, StdFileTypes.JAVA);
+  protected List<MatchResult> findMatches(String in, String pattern, FileType patternFileType) {
+    return findMatches(in, pattern, patternFileType, null, patternFileType, null, false);
   }
 
   protected int findMatchesCount(String in, String pattern) {
-    return findMatchesCount(in,pattern,false);
+    return findMatchesCount(in, pattern, StdFileTypes.JAVA);
   }
 
   protected String loadFile(String fileName) throws IOException {

@@ -25,7 +25,8 @@ public class CreateMethodFromUsagePerformanceTest extends LightQuickFixTestCase 
 
   public void testWithHugeNumberOfParameters() {
     PlatformTestUtil.startPerformanceTest("5000 args for a new method", 2000000, () -> {
-      configureFromFileText("Foo.java", "class Foo {{ f<caret>oo(" + StringUtil.repeat("\"a\", ", 5000) + " \"a\");}}");
+      String text = "class Foo {{ f<caret>oo(" + StringUtil.repeat("\"a\", ", 5000) + " \"a\");}}";
+      configureFromFileText("Foo.java", text);
       doAction("Create method 'foo'");
     })
       .assertTiming();

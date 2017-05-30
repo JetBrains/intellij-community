@@ -9,12 +9,13 @@
     <fileTypeFactory implementation="org.jetbrains.plugins.ipnb.IpnbFileTypeFactory"/>
 
     <projectConfigurable groupId="language"  instance="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable"
-                         id="org.jetbrains.plugins.ipnb.configuration.IpnbConfigurable" displayName="Jupyter Notebook"
+                         id="IpnbConfigurable" displayName="Jupyter Notebook"
                          nonDefaultProject="true"/>
     <projectService serviceInterface="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"
                     serviceImplementation="org.jetbrains.plugins.ipnb.configuration.IpnbSettings"/>
     <lang.parserDefinition language="IpnbPython" implementationClass="org.jetbrains.plugins.ipnb.psi.IpnbPyParserDefinition"/>
     <stubElementTypeHolder class="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenTypes"/>
+    <referencesSearch implementation="org.jetbrains.plugins.ipnb.psi.IpnbSearchExecutor"/>
   </extensions>
   <extensions defaultExtensionNs="Pythonid">
     <dialectsTokenSetContributor implementation="org.jetbrains.plugins.ipnb.psi.IpnbPyTokenSetContributor"/>
@@ -27,10 +28,6 @@
     use-shortcut-of="Run">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbAddCellAboveAction" id="IpnbAddCellAboveAction" text="Insert Cell Above">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift EQUALS"/>
-    </action>
-
     <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbConvertToPythonAction" id="IpnbConvertToPythonAction"
             text="Convert to Python Script">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup"/>
@@ -41,19 +38,6 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
 
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellDownAction" id="IpnbMoveCellDownAction" text="Move Cell Down">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift DOWN"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMoveCellUpAction" id="IpnbMoveCellUpAction" text="Move Cell Up">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift UP"/>
-    </action>
-
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbMarkdownCellAction" id="IpnbMarkdownCellAction" text="Markdown Cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift m"/>
-    </action>
-    <action class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCodeCellAction" id="IpnbCodeCellAction" text="Code Cell">
-      <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift s"/>
-    </action>
     <action id="NewIPynbFile" class="org.jetbrains.plugins.ipnb.editor.actions.IpnbCreateFileAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewPythonFile"/>
     </action>

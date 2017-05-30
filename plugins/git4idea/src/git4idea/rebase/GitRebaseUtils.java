@@ -120,7 +120,7 @@ public class GitRebaseUtils {
     GitRebaseSpec spec = GitUtil.getRepositoryManager(project).getOngoingRebaseSpec();
     if (spec != null) {
       new GitAbortRebaseProcess(project, spec.getOngoingRebase(), spec.getHeadPositionsToRollback(), spec.getInitialBranchNames(),
-                                indicator, spec.getSaver()).abortWithConfirmation();
+                                indicator, spec.getSaver(), true).abortWithConfirmation();
     }
     else {
       LOG.warn("Refusing to abort: no rebase spec");
@@ -133,7 +133,7 @@ public class GitRebaseUtils {
    */
   public static void abort(@NotNull final Project project, @Nullable final GitRepository repository, @NotNull ProgressIndicator indicator) {
     new GitAbortRebaseProcess(project, repository, Collections.emptyMap(),
-                              Collections.emptyMap(), indicator, null).abortWithConfirmation();
+                              Collections.emptyMap(), indicator, null, true).abortWithConfirmation();
   }
 
   private static boolean isRebaseAllowed(@NotNull Project project, @NotNull Collection<GitRepository> repositories) {

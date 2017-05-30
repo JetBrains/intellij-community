@@ -93,13 +93,19 @@ public class CompletionElement{
     return myEqualityObject != null ? myEqualityObject.hashCode() : 0;
   }
 
-  public boolean isMoreSpecificThan(@NotNull CompletionElement prev) {
-    Object prevElement = prev.getElement();
-    if (!(prevElement instanceof PsiMethod && myElement instanceof PsiMethod)) return false;
+  public boolean isMoreSpecificThan(@NotNull CompletionElement another) {
+    Object anotherElement = another.getElement();
+    if (!(anotherElement instanceof PsiMethod && myElement instanceof PsiMethod)) return false;
 
-    PsiType prevType = prev.getSubstitutor().substitute(((PsiMethod)prevElement).getReturnType());
+    if (isInterfaceMethod((PsiMethod)myElement) && !isInterfaceMethod((PsiMethod)anotherElement)) return false;
+
+    PsiType prevType = another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType());
     PsiType candidateType = mySubstitutor.substitute(((PsiMethod)myElement).getReturnType());
     return prevType != null && candidateType != null && !prevType.equals(candidateType) && prevType.isAssignableFrom(candidateType);
   }
 
+  private static boolean isInterfaceMethod(PsiMethod anotherElement) {
+    PsiClass aClass = anotherElement.getContainingClass();
+    return aClass != null && aClass.isInterface();
+  }
 }

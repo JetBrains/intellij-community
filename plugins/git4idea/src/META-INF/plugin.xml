@@ -113,6 +113,8 @@
             description="Produce a new commit, which reverts the changes made in the original commit"/>
     <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
             description="Undo last commit and put its changes into selected changelist"/>
+    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
+            description="Change commit message" />
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -125,6 +127,8 @@
       <reference id="Git.Reset.In.Log" />
       <reference id="Git.Revert.In.Log" />
       <reference id="Git.Uncommit" />
+      <separator />
+      <reference id="Git.Reword.Commit" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
     </group>
 

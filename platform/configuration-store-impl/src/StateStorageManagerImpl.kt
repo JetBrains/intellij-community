@@ -24,7 +24,6 @@ import com.intellij.openapi.components.StateStorageChooserEx.Resolution
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.PathUtilRt
@@ -46,12 +45,6 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 private val MACRO_PATTERN = Pattern.compile("(\\$[^$]*\\$)")
-
-// test only
-var IS_EXTERNAL_STORAGE_ENABLED = false
-
-fun isExternalStorageEnabled() = Registry.`is`("store.imported.project.elements.separately", false) || IS_EXTERNAL_STORAGE_ENABLED
-
 
 /**
  * If componentManager not specified, storage will not add file tracker
@@ -245,7 +238,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     if (storageClass != StateStorage::class.java) {
       val constructor = storageClass.constructors.first()
       constructor.isAccessible = true
-      return constructor.newInstance(componentManager!!, this) as StateStorage
+      if (constructor.parameterCount == 2) {
+        return constructor.newInstance(componentManager!!, this) as StateStorage
+      }
+      else {
+        return constructor.newInstance(collapsedPath, componentManager!!, this) as StateStorage
+      }
     }
 
     val effectiveRoamingType = getEffectiveRoamingType(roamingType, collapsedPath)
@@ -285,13 +283,13 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   private class MyDirectoryStorage(override val storageManager: StateStorageManagerImpl, file: Path, @Suppress("DEPRECATION") splitter: StateSplitter) :
     DirectoryBasedStorage(file, splitter, storageManager.macroSubstitutor), StorageVirtualFileTracker.TrackedStorage
 
-  private class MyFileStorage(override val storageManager: StateStorageManagerImpl,
-                              file: Path,
-                              fileSpec: String,
-                              rootElementName: String?,
-                              roamingType: RoamingType,
-                              pathMacroManager: TrackingPathMacroSubstitutor? = null,
-                              provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
+  protected open class MyFileStorage(override val storageManager: StateStorageManagerImpl,
+                                     file: Path,
+                                     fileSpec: String,
+                                     rootElementName: String?,
+                                     roamingType: RoamingType,
+                                     pathMacroManager: TrackingPathMacroSubstitutor? = null,
+                                     provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog
 
@@ -313,7 +311,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
     }
 
     override fun getResolution(component: PersistentStateComponent<*>, operation: StateStorageOperation): Resolution {
-      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement && isExternalStorageEnabled() && component.externalSource != null) {
+      if (operation == StateStorageOperation.WRITE && component is ProjectModelElement && isExternalStorageEnabled && component.externalSource != null) {
         return Resolution.CLEAR
       }
       return Resolution.DO

@@ -16,6 +16,8 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -34,4 +36,6 @@ public interface CodeStyleSettingsListener extends EventListener {
 
   default void schemeChanged(CodeStyleScheme scheme) {
   }
+
+  default void settingsChanged(@NotNull CodeStyleSettings settings) {}
 }

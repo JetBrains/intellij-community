@@ -29,6 +29,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.reporting.isSendAllowed
+import com.intellij.reporting.isUnitTestMode
 import com.intellij.stats.completion.experiment.WebServiceStatusProvider
 import com.intellij.stats.completion.experiment.isPerformExperiment
 import java.beans.PropertyChangeListener
@@ -47,7 +49,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
             actionListener.listener = CompletionPopupListener.Adapter()
         }
         else if (lookup is LookupImpl) {
-            if (ApplicationManager.getApplication().isUnitTestMode && !isEnabledInTests) return@PropertyChangeListener
+            if (isUnitTestMode() && !isEnabledInTests) return@PropertyChangeListener
 
             val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
             val tracker = CompletionActionsTracker(lookup, logger, experimentHelper)
@@ -57,8 +59,10 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
         }
     }
 
+    private fun shouldInitialize() = isSendAllowed() || isUnitTestMode()
+
     override fun initComponent() {
-        if (!ApplicationManager.getApplication().isUnitTestMode) return
+        if (!shouldInitialize()) return
 
         ActionManager.getInstance().addAnActionListener(actionListener)
         ApplicationManager.getApplication().messageBus.connect().subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
@@ -75,7 +79,7 @@ class CompletionTrackerInitializer(experimentHelper: WebServiceStatusProvider): 
     }
 
     override fun disposeComponent() {
-        if (!ApplicationManager.getApplication().isUnitTestMode) return
+        if (!shouldInitialize()) return
 
         ActionManager.getInstance().removeAnActionListener(actionListener)
     }

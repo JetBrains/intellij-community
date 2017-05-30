@@ -23,10 +23,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -320,7 +317,42 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     addToMap(dfaValue.getID(), resultIndex);
 
-    return resultIndex;
+    return tryMergeClassByQualifier(resultIndex);
+  }
+
+  /**
+   * Given a class index which contains single value, tries to find equivalent class
+   * based on qualifier equivalence. E.g. if {@code classIndex} is {@code [length|s1]}
+   * and there are another classes {@code [s1, s2]} and {@code [length|s2]}, then
+   * {@code [length|s1, length|s2]} created and returned (if strings s1 and s2 are the same,
+   * then their lengths are also the same).
+   *
+   * @param classIndex index of a class to merge (should contain single element)
+   * @return an index of a merged class or original classIndex if merging is impossible.
+   */
+  private int tryMergeClassByQualifier(int classIndex) {
+    List<DfaValue> values = myEqClasses.get(classIndex).getMemberValues();
+    if (values.size() != 1) return classIndex;
+    DfaValue dfaValue = values.get(0);
+    if (!(dfaValue instanceof DfaVariableValue)) return classIndex;
+    DfaVariableValue variableValue = (DfaVariableValue)dfaValue;
+    DfaVariableValue qualifier = variableValue.getQualifier();
+    PsiModifierListOwner variable = variableValue.getPsiVariable();
+    if (qualifier == null) return classIndex;
+    Integer index = getOrCreateEqClassIndex(qualifier);
+    if (index == null) return classIndex;
+    for (DfaValue eqQualifier : myEqClasses.get(index).getMemberValues()) {
+      if (eqQualifier != qualifier && eqQualifier instanceof DfaVariableValue) {
+        DfaVariableValue eqValue = getFactory().getVarFactory()
+          .createVariableValue(variable, variableValue.getVariableType(), variableValue.isNegated(), (DfaVariableValue)eqQualifier);
+        int i = getEqClassIndex(eqValue);
+        if (i != -1) {
+          uniteClasses(i, classIndex);
+          return i;
+        }
+      }
+    }
+    return classIndex;
   }
 
   private void addToMap(int id, int index) {

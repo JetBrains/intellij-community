@@ -65,7 +65,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTBlock boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTBlock java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -83,7 +83,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTComment boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTComment boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer) 0'>
@@ -115,7 +115,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDirective boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDirective java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
@@ -127,6 +127,11 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDirective java.lang.String getDirectiveName()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.node.ASTDirective java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -185,7 +190,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTElseStatement boolean evaluate(org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val name="value" val="&quot;_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -207,7 +212,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscape boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscape boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer) 0'>
@@ -239,7 +244,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscapedDirective boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscapedDirective boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer) 0'>
@@ -276,7 +281,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTFalse boolean evaluate(org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -382,7 +387,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIfStatement boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIfStatement java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -531,8 +536,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTMathNode java.lang.Object handleSpecial(java.lang.Object, java.lang.Object, org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value"
-                 val="&quot;!null,_,_-&gt;null;_,!null,_-&gt;null;_,_,!null-&gt;null;_,_,null-&gt;null;_,null,_-&gt;null;null,_,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;_,_,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -726,7 +730,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTReference boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTReference java.lang.Object execute(java.lang.Object, org.apache.velocity.context.InternalContextAdapter)'>
@@ -855,7 +859,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTText boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTText boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer) 0'>
@@ -887,7 +891,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTTextblock boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTTextblock boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer) 0'>
@@ -919,7 +923,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTTrue boolean evaluate(org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val name="value" val="&quot;_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1136,7 +1140,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode boolean evaluate(org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1150,7 +1154,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;true;_,!null-&gt;true;_,null-&gt;true;null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode int getColumn()'>
@@ -1185,7 +1189,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object execute(java.lang.Object, org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null,_-&gt;null;_,!null-&gt;null;_,null-&gt;null;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;_,_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1206,7 +1210,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1225,7 +1229,15 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.String toString(java.lang.String) 0'>

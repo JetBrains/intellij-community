@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class CopyOptionsDialog extends DialogWrapper {
     final JPanel commitMessageWrapper = new JPanel(new BorderLayout());
     commitMessageWrapper.add(new JLabel("Commit Message:"), BorderLayout.NORTH);
 
-    myCommitMessage = CommitMessage.createCommitTextEditor(myProject);
+    myCommitMessage = CommitMessage.createCommitMessageEditor(myProject);
 
     commitMessageWrapper.add(myCommitMessage, BorderLayout.CENTER);
     return commitMessageWrapper;

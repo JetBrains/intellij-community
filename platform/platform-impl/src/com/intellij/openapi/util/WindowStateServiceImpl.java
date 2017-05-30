@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Supplier;
 
 /**
  * @author Sergey.Malenkov
@@ -260,25 +261,39 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
                       boolean fullScreen, boolean fullScreenSet) {
     synchronized (myStateMap) {
       GraphicsDevice screen = getScreen(object);
-      putImpl(getKey(screen, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      KeyPair oldKeyPair = getOldKey(screen, key);
+
+      putImpl(getKey(screen, key), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       if (screen != null) {
-        putImpl(getKey(null, key), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+        putImpl(getKey(null, key), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
       }
-      putImpl(new KeyPair(key, 1f), location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
+      putImpl(new KeyPair(key, 1f), oldKeyPair, location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet);
     }
   }
 
   private void putImpl(@NotNull KeyPair keyPair,
+                       @NotNull KeyPair oldKeyPair,
                        Point location, boolean locationSet,
                        Dimension size, boolean sizeSet,
                        boolean maximized, boolean maximizedSet,
                        boolean fullScreen, boolean fullScreenSet) {
     WindowState state = myStateMap.get(keyPair.first);
+
+    // may be convert the old key state to the new key
+    WindowState oldState = myStateMap.remove(oldKeyPair.first);
+    if (oldState != null) {
+      oldState.scaleDown(oldKeyPair.second);
+      if (state != null) {
+        state.merge(oldState);
+      } else {
+        myStateMap.put(keyPair.first, state = oldState);
+      }
+    }
     if (state != null) {
       if (state.set(location, locationSet, size, sizeSet, maximized, maximizedSet, fullScreen, fullScreenSet)) {
         state.scaleUp(keyPair.second);
       } else {
-        myStateMap.remove(keyPair);
+        myStateMap.remove(keyPair.first);
       }
     }
     else {
@@ -300,6 +315,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       return new KeyPair(key + ".headless", 1f);
     }
     StringBuilder sb = new StringBuilder(key);
+    float scale = 1f;
     for (GraphicsDevice device : environment.getScreenDevices()) {
       Rectangle bounds = device.getDefaultConfiguration().getBounds();
       sb.append('/').append(bounds.x);
@@ -313,8 +329,11 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
       sb.append('.').append(bounds.y);
       sb.append('.').append(bounds.width);
       sb.append('.').append(bounds.height);
+      if (UIUtil.isJreHiDPIEnabled()) {
+        scale = JBUI.sysScale(screen.getDefaultConfiguration());
+      }
     }
-    return new KeyPair(sb.toString(), 1f);
+    return new KeyPair(sb.toString(), scale);
   }
 
   @NotNull
@@ -442,6 +461,18 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
         myFullScreen = fullScreen;
       }
       return myLocation != null || mySize != null;
+    }
+
+    /**
+     * Merges this state with the passed one, prefering this state.
+     */
+    private void merge(@NotNull WindowState state) {
+      if (myLocation == null && state.myLocation != null) {
+        myLocation = state.myLocation.getLocation();
+      }
+      if (mySize == null && state.mySize != null) {
+        mySize = state.mySize.getSize();
+      }
     }
   }
 

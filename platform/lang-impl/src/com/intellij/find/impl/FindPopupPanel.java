@@ -16,6 +16,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.find.*;
 import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.icons.AllIcons;
@@ -29,6 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -305,11 +307,18 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
     myCbFileFilter.addItemListener(liveResultsPreviewUpdateListener);
     myFileMaskField =
       new TextFieldWithAutoCompletion<String>(myProject, new TextFieldWithAutoCompletion.StringsCompletionProvider(myFileMasks, null),
-                                              false, null) {
+                                              true, null) {
         @Override
         public void setEnabled(boolean enabled) {
           super.setEnabled(enabled);
           setBackground(enabled ? JBColor.background() : UIUtil.getComboBoxDisabledBackground());
+        }
+
+        @Override
+        protected EditorEx createEditor() {
+          EditorEx editor = super.createEditor();
+          editor.putUserData(AutoPopupController.ALWAYS_AUTO_POPUP_NO_ADS, Boolean.TRUE);
+          return editor;
         }
       };
     myFileMaskField.setPreferredWidth(JBUI.scale(100));
@@ -815,6 +824,7 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
         Ref<VirtualFile> lastUsageFileRef = new Ref<>();
+        Ref<Usage> recentUsageRef = new Ref<>();
 
         FindInProjectUtil.findUsages(myHelper.getModel().clone(), myProject, info -> {
           if(isCancelled()) {
@@ -829,12 +839,26 @@ public class FindPopupPanel extends JBPanel implements FindUI, DataProvider {
             resultsFilesCount.incrementAndGet();
             lastUsageFileRef.set(usageFile);
           }
+          final boolean merged;
+          Usage recent = recentUsageRef.get();
+          UsageInfo2UsageAdapter recentAdapter =
+            recent != null && recent instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)recent : null;
+          UsageInfo2UsageAdapter currentAdapter = usage instanceof UsageInfo2UsageAdapter ? (UsageInfo2UsageAdapter)usage : null;
+          if (currentAdapter != null && recentAdapter != null && recentAdapter.getFile().equals(usageFile) && recentAdapter.getLine() == currentAdapter.getLine()) {
+            merged = recentAdapter.merge(currentAdapter);
+          } else {
+            merged = false;
+          }
+          recentUsageRef.set(usage);
+
 
           ApplicationManager.getApplication().invokeLater(() -> {
             if(isCancelled()) {
               return;
             }
-            model.addRow(new Object[]{usage});
+            if (!merged) {
+              model.addRow(new Object[]{usage});
+            }
             myCodePreviewComponent.setVisible(true);
             if (model.getRowCount() == 1 && myResultsPreviewTable.getModel() == model) {
               myResultsPreviewTable.setRowSelectionInterval(0, 0);

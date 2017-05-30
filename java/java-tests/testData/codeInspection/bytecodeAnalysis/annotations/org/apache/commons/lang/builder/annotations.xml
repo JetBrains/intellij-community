@@ -478,6 +478,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.builder.ReflectionToStringBuilder java.lang.String toString(java.lang.Object, org.apache.commons.lang.builder.ToStringStyle) 1'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -689,6 +694,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringBuilder java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.lang.builder.ToStringBuilder java.lang.StringBuffer getStringBuffer()'>

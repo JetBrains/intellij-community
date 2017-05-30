@@ -28,7 +28,8 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManagerExKt;
+import com.intellij.openapi.application.PathManagerEx;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Editor;
@@ -48,11 +49,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
@@ -61,6 +64,7 @@ import gnu.trove.THashSet;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenPlugin;
@@ -86,6 +90,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
 public class MavenUtil {
@@ -222,7 +227,7 @@ public class MavenUtil {
 
   @NotNull
   public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
-    return PathManagerExKt.getAppSystemDir().resolve("Maven").resolve(folder);
+    return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
   public static File getBaseDir(@NotNull VirtualFile file) {
@@ -958,5 +963,31 @@ public class MavenUtil {
     return fileName.equals(MavenConstants.POM_XML) ||
            fileName.endsWith(".pom") || fileName.startsWith("pom.") ||
            fileName.equals(MavenConstants.SUPER_POM_XML);
+  }
+
+  public static boolean isPotentialPomFile(String path) {
+    return ArrayUtil.contains(FileUtilRt.getExtension(path), MavenConstants.POM_EXTENSIONS);
+  }
+
+  public static boolean isPomFile(@Nullable Project project, @Nullable VirtualFile file) {
+    if (file == null) return false;
+
+    if (isPomFileName(file.getName())) return true;
+    if (!isPotentialPomFile(file.getPath())) return false;
+
+    if (project == null) return false;
+
+    MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
+    if (mavenProjectsManager.findProject(file) != null) return true;
+
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile == null) return false;
+      return MavenDomUtil.isProjectFile(psiFile);
+    });
+  }
+
+  public static Stream<VirtualFile> streamPomFiles(@Nullable Project project, @NotNull VirtualFile root) {
+    return Stream.of(root.getChildren()).filter(file -> isPomFile(project, file));
   }
 }

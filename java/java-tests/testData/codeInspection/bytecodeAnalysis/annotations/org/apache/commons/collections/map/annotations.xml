@@ -97,6 +97,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap org.apache.commons.collections.MapIterator mapIterator()'>
@@ -199,6 +202,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashEntry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashIterator HashIterator(org.apache.commons.collections.map.AbstractHashedMap)'>
@@ -215,6 +221,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashIterator java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractHashedMap.HashIterator org.apache.commons.collections.map.AbstractHashedMap.HashEntry currentEntry()'>
@@ -305,6 +314,11 @@
     <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry entryBefore(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.collections.map.AbstractLinkedMap org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry getEntry(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap void addEntry(org.apache.commons.collections.map.AbstractHashedMap.HashEntry, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -354,6 +368,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.map.AbstractLinkedMap.LinkIterator org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry currentEntry()'>
@@ -395,7 +412,7 @@
     </item>
     <item name='org.apache.commons.collections.map.LRUMap boolean removeLRU(org.apache.commons.collections.map.AbstractLinkedMap.LinkEntry)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val name="value" val="&quot;_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

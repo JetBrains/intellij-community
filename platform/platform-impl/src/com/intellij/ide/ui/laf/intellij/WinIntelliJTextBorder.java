@@ -47,7 +47,7 @@ public class WinIntelliJTextBorder extends DarculaTextBorder {
       return JBUI.insets(3, 3, 2, 2).asUIResource();
     }
     else {
-      return JBUI.insets(4, 5).asUIResource();
+      return JBUI.insets(3, 5).asUIResource();
     }
   }
 

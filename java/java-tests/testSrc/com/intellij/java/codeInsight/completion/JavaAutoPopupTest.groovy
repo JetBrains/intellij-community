@@ -518,7 +518,7 @@ class Foo {
 
   void "test vertical arrows in non-focused lookup"() {
     String toType = "ArrayIndexOutOfBoundsException ind"
-    testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 1
+    testArrows toType, LookupImpl.FocusDegree.UNFOCUSED, 0, 2
 
     UISettings.instance.cycleScrolling = false
     try {

@@ -18,8 +18,8 @@ package com.intellij.java.codeInsight.daemon.quickFix
 import com.intellij.JavaTestUtil.getRelativeJavaTestDataPath
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
-import com.intellij.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
+import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 
 /**
  * @author Pavel.Dolgov

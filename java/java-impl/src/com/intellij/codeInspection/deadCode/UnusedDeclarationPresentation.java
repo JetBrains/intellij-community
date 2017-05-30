@@ -191,6 +191,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     super.exportResults(parentNode, refEntity, excludedDescriptions);
   }
 
+  @NotNull
   @Override
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
     boolean showFixes = false;
@@ -208,9 +209,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           .filter(component -> component instanceof ProblemDescriptionNode).count();
         if (count > 0) {
           final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
-          if (fixes != null) {
-            return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
-          }
+          return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
         }
       }
       return myQuickFixActions;

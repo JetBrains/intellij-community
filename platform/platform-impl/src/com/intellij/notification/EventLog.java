@@ -17,9 +17,11 @@
 package com.intellij.notification;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.ide.DataManager;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.editor.Document;
@@ -52,7 +54,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -169,7 +173,9 @@ public class EventLog {
       Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
-          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())));
+          Object source = event.getSource();
+          DataContext context = source instanceof Component ? DataManager.getInstance().getDataContext((Component)source) : null;
+          Notification.fire(notification, notification.getActions().get(Integer.parseInt(event.getDescription())), context);
         }
       });
       if (title.length() > 0 || content.length() > 0) {

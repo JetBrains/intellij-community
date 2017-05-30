@@ -42,7 +42,12 @@ public class LeakHunter {
   }
 
   @TestOnly
-  public static void checkLeak(@NotNull Object root, @NotNull Class suspectClass) throws AssertionError {
+  public static void checkNonDefaultProjectLeak() throws Exception {
+    checkLeak(allRoots(), ProjectImpl.class, project -> !project.isDefault());
+  }
+
+  @TestOnly
+  public static void checkLeak(@NotNull Object root, @NotNull Class<?> suspectClass) throws AssertionError {
     checkLeak(root, suspectClass, null);
   }
 

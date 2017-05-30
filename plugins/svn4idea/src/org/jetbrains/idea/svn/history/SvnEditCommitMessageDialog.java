@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class SvnEditCommitMessageDialog extends DialogWrapper {
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(labelPanel, BorderLayout.WEST);
     parentPanel.add(wrapper, BorderLayout.NORTH);
-    myCommitMessage = new CommitMessage(myProject, false);
+    myCommitMessage = new CommitMessage(myProject, false, true);
     myCommitMessage.setText(myOldText);
     parentPanel.add(myCommitMessage, BorderLayout.CENTER);
     return parentPanel;

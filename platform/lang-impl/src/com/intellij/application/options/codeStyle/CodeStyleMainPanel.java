@@ -28,6 +28,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
@@ -117,6 +118,11 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
       @Override
       public void schemeChanged(final CodeStyleScheme scheme) {
         ensurePanel(scheme).reset(scheme.getCodeStyleSettings());
+      }
+
+      @Override
+      public void settingsChanged(@NotNull CodeStyleSettings settings) {
+        ensureCurrentPanel().reset(settings);
       }
     });
 
@@ -229,7 +235,7 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     String name = scheme.getName();
     if (!mySettingsPanels.containsKey(name)) {
       NewCodeStyleSettingsPanel panel = myFactory.createPanel(scheme);
-      panel.reset(scheme.getCodeStyleSettings());
+      panel.reset(myModel.getCloneSettings(scheme));
       panel.setModel(myModel);
       CodeStyleAbstractPanel settingsPanel = panel.getSelectedPanel();
       if (settingsPanel instanceof TabbedLanguageCodeStylePanel) {

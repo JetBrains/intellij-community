@@ -330,7 +330,7 @@ public class GitRebaseProcess {
     return filter(repositories, repository -> myChangeListManager.haveChangesUnder(repository.getRoot()) != ThreeState.NO);
   }
 
-  private void notifySuccess(@NotNull Map<GitRepository, GitSuccessfulRebase> successful,
+  protected void notifySuccess(@NotNull Map<GitRepository, GitSuccessfulRebase> successful,
                              @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
     String rebasedBranch = getCommonCurrentBranchNameIfAllTheSame(myRebaseSpec.getAllRepositories());
     List<SuccessType> successTypes = map(successful.values(), GitSuccessfulRebase::getSuccessType);

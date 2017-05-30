@@ -368,7 +368,7 @@ public class ParameterInfoController implements Disposable {
   private void moveToParameterAtOffset(int offset) {
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
     PsiElement argsList = findArgumentList(file, offset, -1);
-    if (argsList == null && !Registry.is("java.completion.argument.hints")) return;
+    if (argsList == null && !areParametersHintsEnabledOnCompletion()) return;
 
     offset = adjustOffsetToInlay(offset);
 
@@ -408,7 +408,7 @@ public class ParameterInfoController implements Disposable {
     int currentParameterIndex =
       noDelimiter ? JBIterable.of(parameters).indexOf((o) -> o.getTextRange().containsOffset(offset)) :
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
-    if (Registry.is("java.completion.argument.hints")) {
+    if (areParametersHintsEnabledOnCompletion()) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
       if (prevOrNextParameterIndex < 0 || prevOrNextParameterIndex >= parameters.length) {
@@ -535,6 +535,21 @@ public class ParameterInfoController implements Disposable {
     int aboveSpace = p2.y;
     return aboveSpace > underSpace ? new Pair<>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<>(p1,
                                                                                                     HintManager.ABOVE);
+  }
+
+  public static boolean areParameterTemplatesEnabledOnCompletion() {
+    return Registry.is("java.completion.argument.live.template") && !areParametersHintsEnabledInternallyOnCompletion();
+  }
+
+  public static boolean areParametersHintsEnabledOnCompletion() {
+    return Registry.is("java.completion.argument.hints") && !Registry.is("java.completion.argument.live.template") || 
+           areParametersHintsEnabledInternallyOnCompletion();
+  }
+
+  private static boolean areParametersHintsEnabledInternallyOnCompletion() {
+    return Registry.is("java.completion.argument.hints.internal") && 
+           ApplicationManager.getApplication().isInternal() && 
+           !ApplicationManager.getApplication().isUnitTestMode();
   }
 
   public class MyUpdateParameterInfoContext implements UpdateParameterInfoContext {

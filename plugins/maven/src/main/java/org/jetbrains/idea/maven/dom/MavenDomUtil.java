@@ -78,6 +78,15 @@ public class MavenDomUtil {
 
   public static boolean isProjectFile(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
+
+    XmlTag rootTag = ((XmlFile)file).getRootTag();
+    if (rootTag == null || !"project".equals(rootTag.getName())) return false;
+
+    String xmlns = rootTag.getAttributeValue("xmlns");
+    if (xmlns != null && xmlns.startsWith("http://maven.apache.org/POM/")) {
+      return true;
+    }
+
     return MavenUtil.isPomFileName(file.getName());
   }
 
@@ -454,5 +463,22 @@ public class MavenDomUtil {
       }
     }
     return -1;
+  }
+
+  @NotNull
+  public static String getProjectName(MavenDomProjectModel model) {
+    MavenProject mavenProject = findProject(model);
+    if (mavenProject != null) {
+      return mavenProject.getDisplayName();
+    }
+    else {
+      String name = model.getName().getStringValue();
+      if (!StringUtil.isEmptyOrSpaces(name)) {
+        return name;
+      }
+      else {
+        return "pom.xml"; // ?
+      }
+    }
   }
 }

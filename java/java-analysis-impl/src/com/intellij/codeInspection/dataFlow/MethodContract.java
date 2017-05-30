@@ -65,7 +65,7 @@ public abstract class MethodContract {
   /**
    * @return true if this contract result does not depend on arguments
    */
-  boolean isTrivial() {
+  public boolean isTrivial() {
     return getConditions().isEmpty();
   }
 
@@ -157,6 +157,30 @@ public abstract class MethodContract {
         return ContractValue.booleanValue(true);
       }
       return ContractValue.condition(left, RelationType.equivalence(!shouldUseNonEqComparison()), ContractValue.argument(argumentIndex));
+    }
+
+    /**
+     * @return true if constraint can be negated
+     * @see #negate()
+     */
+    public boolean canBeNegated() {
+      return this != ANY_VALUE && this != THROW_EXCEPTION;
+    }
+
+    /**
+     * @return negated constraint
+     * @throws IllegalStateException if constraint cannot be negated
+     * @see #canBeNegated()
+     */
+    public ValueConstraint negate() {
+      switch (this) {
+        case NULL_VALUE: return NOT_NULL_VALUE;
+        case NOT_NULL_VALUE: return NULL_VALUE;
+        case TRUE_VALUE: return FALSE_VALUE;
+        case FALSE_VALUE: return TRUE_VALUE;
+        default:
+          throw new IllegalStateException("ValueConstraint = " + this);
+      }
     }
 
     @Override

@@ -73,10 +73,10 @@ public class QuickFixPreviewPanelFactory {
       return myEmpty;
     }
 
-    private boolean fillPanel(@Nullable QuickFixAction[] fixes,
+    private boolean fillPanel(@NotNull QuickFixAction[] fixes,
                               CommonProblemDescriptor[] descriptors,
                               @NotNull InspectionResultsView view) {
-      boolean hasFixes = fixes != null && fixes.length != 0;
+      boolean hasFixes = fixes.length != 0;
       int problemCount = descriptors.length;
       boolean multipleDescriptors = problemCount > 1;
       setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
@@ -97,7 +97,7 @@ public class QuickFixPreviewPanelFactory {
         actions.add(suppressionCombo);
       }
       if (actions.getChildrenCount() != 0) {
-        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+        final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("inspection.view.quick.fix.preview", actions, true);
         final JComponent component = toolbar.getComponent();
         toolbar.setTargetComponent(view);
         add(component);

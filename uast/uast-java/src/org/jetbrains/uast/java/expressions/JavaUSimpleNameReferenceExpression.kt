@@ -50,7 +50,7 @@ class LazyJavaUTypeReferenceExpression(
 class JavaClassUSimpleNameReferenceExpression(
         override val identifier: String,
         val ref: PsiJavaReference,
-        override val psi: PsiElement?,
+        override val psi: PsiElement,
         override val uastParent: UElement?
 ) : JavaAbstractUExpression(), USimpleNameReferenceExpression {
     override fun resolve() = ref.resolve()

@@ -33,8 +33,10 @@ import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
 import java.io.DataOutputStream;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class CompilerBackwardReferenceIndex {
   private final static Logger LOG = Logger.getInstance(CompilerBackwardReferenceIndex.class);
@@ -232,11 +234,11 @@ public class CompilerBackwardReferenceIndex {
       throws IOException {
       super(extension,
             createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new MapBasedForwardIndex<Key, Value>(extension) {
+            readOnly ? null : new KeyCollectionBasedForwardIndex<Key, Value>(extension) {
               @NotNull
               @Override
               public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-                IndexId<Key, Value> id = extension.getName();
+                IndexId<Key, Value> id = getIndexExtension().getName();
                 return new PersistentHashMap<>(new File(indexDir, id.getName() + ".inputs"),
                                                EnumeratorIntegerDescriptor.INSTANCE,
                                                new InputIndexDataExternalizer<>(extension.getKeyDescriptor(),

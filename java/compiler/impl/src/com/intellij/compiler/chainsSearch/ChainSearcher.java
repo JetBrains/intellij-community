@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.LightRef;
 import org.jetbrains.jps.backwardRefs.SignatureData;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.SortedSet;
+import java.util.*;
 
 public class ChainSearcher {
   @NotNull
@@ -117,16 +114,16 @@ public class ChainSearcher {
                                                                 ChainCompletionContext context,
                                                                 CompilerReferenceServiceEx referenceServiceEx) {
     if (!context.getTarget().getClassQName().equals(currentChain.getHeadSignature().getOwner())) {
-
+      Set<LightRef> references = context.getContextClassReferences();
       boolean isRelevantQualifier = false;
-      for (LightRef ref: context.getContextClassReferences()) {
+      for (LightRef ref: references) {
         if (referenceServiceEx.mayHappen(currentChain.getHeadSignature().getOwnerRef(), ref, ChainSearchMagicConstants.VAR_PROBABILITY_THRESHOLD)) {
           isRelevantQualifier = true;
           break;
         }
       }
 
-      if (isRelevantQualifier) {
+      if (references.isEmpty() || isRelevantQualifier) {
         addChainIfNotPresent(currentChain, result);
       }
     }

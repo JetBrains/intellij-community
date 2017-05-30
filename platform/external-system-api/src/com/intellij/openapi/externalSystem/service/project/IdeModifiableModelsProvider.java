@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import org.jetbrains.annotations.NonNls;
@@ -34,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  * @since 9/11/2015
  */
-public interface IdeModifiableModelsProvider extends IdeModelsProvider {
+public interface IdeModifiableModelsProvider extends IdeModelsProvider, UserDataHolder {
   @NotNull
   Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
 

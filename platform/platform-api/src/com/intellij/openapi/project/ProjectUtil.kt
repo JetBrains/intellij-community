@@ -163,6 +163,10 @@ fun Project.getProjectCachePath(cacheName: String, forceNameUse: Boolean = false
   return getProjectCachePath(appSystemDir.resolve(cacheName), forceNameUse)
 }
 
+fun Project.getExternalConfigurationDir(): Path {
+  return getProjectCachePath("external_build_system")
+}
+
 /**
  * Use parameters only for migration purposes, once all usages will be migrated, parameters will be removed
  */

@@ -25,8 +25,18 @@
     <item name='java.net.DatagramPacket DatagramPacket(byte[], int, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.DatagramPacket DatagramPacket(byte[], int, int, java.net.InetAddress, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.net.DatagramPacket DatagramPacket(byte[], int, int, java.net.InetAddress, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.DatagramPacket DatagramPacket(byte[], int, java.net.InetAddress, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.net.DatagramPacket DatagramPacket(byte[], int, java.net.InetAddress, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -109,7 +119,7 @@
     </item>
     <item name='java.net.InetAddress boolean equals(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -205,6 +215,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.InetAddress java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.InetAddress java.net.InetAddress getByAddress(byte[])'>
@@ -257,6 +270,9 @@
         </annotation>
     </item>
     <item name='java.net.ServerSocket java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.ServerSocket java.net.InetAddress getInetAddress()'>
@@ -303,6 +319,9 @@
         </annotation>
     </item>
     <item name='java.net.Socket java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.Socket java.net.InetAddress getInetAddress()'>
@@ -532,6 +551,11 @@
     <item name='java.net.URI java.lang.String resolvePath(java.lang.String, java.lang.String, boolean) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.URI java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.net.URI java.lang.String toString(java.lang.String, java.lang.String, java.lang.String, java.lang.String, java.lang.String, int, java.lang.String, java.lang.String, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -742,6 +766,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.net.URL java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.net.URL java.net.URI toURI()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -816,7 +845,7 @@
     </item>
     <item name='java.net.URLConnection java.lang.String getDefaultRequestProperty(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -832,7 +861,7 @@
     </item>
     <item name='java.net.URLConnection java.lang.String getHeaderField(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -865,6 +894,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.net.URLConnection java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URLConnection java.lang.String typeToPackageName(java.lang.String)'>

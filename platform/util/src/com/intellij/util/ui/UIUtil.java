@@ -4033,4 +4033,10 @@ public class UIUtil {
       p.repaint();
     }
   }
+
+  public static void setCursor(Component component, Cursor cursor) {
+    // cursor is updated by native code even if component has the same cursor, causing performance problems (IDEA-167733)
+    if(component.isCursorSet() && component.getCursor() == cursor) return;
+    component.setCursor(cursor);
+  }
 }

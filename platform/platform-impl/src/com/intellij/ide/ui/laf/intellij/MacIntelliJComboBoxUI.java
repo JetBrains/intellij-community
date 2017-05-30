@@ -48,20 +48,18 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
   private PropertyChangeListener myEditorBorderChangeListener;
   private PropertyChangeListener myEditableChangeListener;
 
-  public MacIntelliJComboBoxUI(JComboBox comboBox) {
-    this.comboBox = comboBox;
-    this.DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
-    comboBox.setOpaque(false);
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
-    return new MacIntelliJComboBoxUI((JComboBox)c);
+    return new MacIntelliJComboBoxUI();
   }
 
   @Override
   public void installUI(final JComponent c) {
     super.installUI(c);
+
+    DEFAULT_ICON = EmptyIcon.create(MacIntelliJIconCache.getIcon("comboRight", comboBox.isEditable(), false, false, true));
+    comboBox.setOpaque(false);
+
     myEditorBorderChangeListener = (evt) -> {
       Object value = evt.getNewValue();
       if (value == ourDefaultEditorBorder) return;
@@ -171,10 +169,9 @@ public class MacIntelliJComboBoxUI extends BasicComboBoxUI {
 
             @Override
             public Color getBackground() {
-              if (!comboBox.isEnabled()) {
-                return UIManager.getColor("ComboBox.disabledBackground");
-              }
-              return super.getBackground();
+              return (comboBox != null && !comboBox.isEnabled()) ?
+                     UIManager.getColor("ComboBox.disabledBackground") :
+                     super.getBackground();
             }
 
             public void setText(String s) {

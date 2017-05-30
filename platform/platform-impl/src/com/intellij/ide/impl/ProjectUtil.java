@@ -246,9 +246,9 @@ public class ProjectUtil {
   }
 
   /**
-   * @return {@link com.intellij.ide.GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
-   *         {@link com.intellij.ide.GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
-   *         {@link com.intellij.openapi.ui.Messages#CANCEL} - if user canceled the dialog
+   * @return {@link GeneralSettings#OPEN_PROJECT_SAME_WINDOW}
+   *         {@link GeneralSettings#OPEN_PROJECT_NEW_WINDOW}
+   *         {@link Messages#CANCEL} - if user canceled the dialog
    * @param isNewProject
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
@@ -258,8 +258,8 @@ public class ProjectUtil {
       if (isNewProject) {
         int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
                                                 IdeBundle.message("title.new.project"),
-                                                IdeBundle.message("button.existingframe"),
-                                                IdeBundle.message("button.newframe"),
+                                                IdeBundle.message("button.existing.frame"),
+                                                IdeBundle.message("button.new.frame"),
                                                 Messages.getQuestionIcon(),
                                                 new ProjectNewWindowDoNotAskOption());
         return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
@@ -267,8 +267,8 @@ public class ProjectUtil {
       else {
         int exitCode = Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
                                                       IdeBundle.message("title.open.project"),
-                                                      IdeBundle.message("button.existingframe"),
-                                                      IdeBundle.message("button.newframe"),
+                                                      IdeBundle.message("button.existing.frame"),
+                                                      IdeBundle.message("button.new.frame"),
                                                       CommonBundle.getCancelButtonText(),
                                                       Messages.getQuestionIcon(),
                                                       new ProjectNewWindowDoNotAskOption());

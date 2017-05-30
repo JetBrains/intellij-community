@@ -195,7 +195,43 @@ public class JavaEnterActionTest extends AbstractEnterActionTestCase {
                "    }\n" +
                "}");
   }
-  
-  
-  
+
+  public void testEnter_NewArgumentWithTabs() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaCommon.getIndentOptions().USE_TAB_CHARACTER = true;
+    javaCommon.getIndentOptions().SMART_TABS = true;
+    setCodeStyleSettings(settings);
+
+    doTextTest("java",
+               "class T {\n" +
+               "\tvoid test(\n" +
+               "\t\t\tint a,<caret>\n" +
+               ") {}",
+               "class T {\n" +
+               "\tvoid test(\n" +
+               "\t\t\tint a,\n" +
+               "\t\t\t<caret>\n" +
+               ") {}");
+  }
+
+  public void testEnter_NewArgumentWithTabsNoAlign() throws IOException {
+    CodeStyleSettings settings = getCodeStyleSettings();
+    CommonCodeStyleSettings javaCommon = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    javaCommon.getIndentOptions().USE_TAB_CHARACTER = true;
+    javaCommon.getIndentOptions().SMART_TABS = true;
+    javaCommon.ALIGN_MULTILINE_PARAMETERS = false;
+    setCodeStyleSettings(settings);
+
+    doTextTest("java",
+               "class T {\n" +
+               "\tvoid test(\n" +
+               "\t\t\tint a,<caret>\n" +
+               ") {}",
+               "class T {\n" +
+               "\tvoid test(\n" +
+               "\t\t\tint a,\n" +
+               "\t\t\t<caret>\n" +
+               ") {}");
+  }
 }

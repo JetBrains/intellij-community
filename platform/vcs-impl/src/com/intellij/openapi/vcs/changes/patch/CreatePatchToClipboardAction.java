@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -32,13 +31,14 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.util.ArrayUtil;
 
-import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.patch.PatchWriter.writeAsPatchToClipboard;
+
 public class CreatePatchToClipboardAction extends DumbAwareAction {
+
   private static final Logger LOG = Logger.getInstance(CreatePatchToClipboardAction.class);
 
   public CreatePatchToClipboardAction() {
@@ -59,15 +59,12 @@ public class CreatePatchToClipboardAction extends DumbAwareAction {
       try {
         String base = PatchWriter.calculateBaseForWritingPatch(project, changes).getPath();
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, base, false);
-        ProgressManager.checkCanceled();
-        StringWriter writer = new StringWriter();
-        PatchWriter.write(project, writer, base, patches, new CommitContext(), true);
-        CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
+        writeAsPatchToClipboard(project, patches, base, new CommitContext());
         VcsNotifier.getInstance(project).notifySuccess("Patch copied to clipboard");
       }
       catch (IOException | VcsException exception) {
         LOG.error("Can't create patch", exception);
-        VcsNotifier.getInstance(project).notifyWeakError("Create patch failed");
+        VcsNotifier.getInstance(project).notifyWeakError("Patch creation failed");
       }
     }, VcsBundle.message("create.patch.commit.action.progress"), true, project);
   }

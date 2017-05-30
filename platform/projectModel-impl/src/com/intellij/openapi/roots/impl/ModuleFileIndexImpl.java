@@ -51,12 +51,12 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       for (VirtualFile[] roots : allRoots) {
         for (VirtualFile root : roots) {
           DirectoryInfo info = getInfoForFileOrDirectory(root);
-          if (!info.isInProject()) continue;
+          if (!info.isInProject(root)) continue;
 
           VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = myDirectoryIndex.getInfoForFile(parent);
-            if (parentInfo.isInProject() && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
+            if (parentInfo.isInProject(parent) && myModule.equals(parentInfo.getModule())) continue; // inner content - skip it
           }
           result.add(root);
         }
@@ -77,7 +77,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
     DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
-    return info.isInProject() && myModule.equals(info.getModule());
+    return info.isInProject(fileOrDir) && myModule.equals(info.getModule());
   }
 
   @Override

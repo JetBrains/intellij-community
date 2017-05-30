@@ -378,4 +378,7 @@
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
   <action id="EditorMatchBrace"/>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R"/>
+  </action>
 </keymap>

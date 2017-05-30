@@ -112,14 +112,14 @@ public class ChangelistConflictTracker {
     myChangeListListener = new ChangeListAdapter() {
       @Override
       public void changeListChanged(ChangeList list) {
-        if (myChangeListManager.isDefaultChangeList(list)) {
+        if (((LocalChangeList)list).isDefault()) {
           clearChanges(list.getChanges());
         }
       }
 
       @Override
       public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
-        if (myChangeListManager.isDefaultChangeList(toList)) {
+        if (((LocalChangeList)toList).isDefault()) {
           clearChanges(changes);
         }
       }
@@ -179,7 +179,7 @@ public class ChangelistConflictTracker {
 
   public boolean isFromActiveChangelist(VirtualFile file) {
     LocalChangeList changeList = myChangeListManager.getChangeList(file);
-    return changeList == null || myChangeListManager.isDefaultChangeList(changeList);
+    return changeList == null || changeList.isDefault();
   }
 
   private void clearChanges(Collection<Change> changes) {

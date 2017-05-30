@@ -22,28 +22,25 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 
 public class EditName implements ChangeListCommand {
-  @NotNull
-  private final String myFromName;
-  @NotNull
-  private final String myToName;
+  @NotNull private final String myFromName;
+  @NotNull private final String myToName;
+
   private boolean myResult;
   private LocalChangeList myListCopy;
 
-  public EditName(@NotNull final String fromName, @NotNull final String toName) {
+  public EditName(@NotNull String fromName, @NotNull String toName) {
     myFromName = fromName;
     myToName = toName;
   }
 
   public void apply(final ChangeListWorker worker) {
-    final LocalChangeList fromList = worker.getCopyByName(myFromName);
-    if (fromList != null && (! fromList.isReadOnly())) {
-      myResult = worker.editName(myFromName, myToName);
-      myListCopy = worker.getCopyByName(myToName);
-    }
+    myResult = worker.editName(myFromName, myToName);
+
+    myListCopy = worker.getChangeListCopyByName(myToName);
   }
 
   public void doNotify(final EventDispatcher<ChangeListListener> dispatcher) {
-    if (myListCopy != null && (! myListCopy.isReadOnly())) {
+    if (myListCopy != null && myResult) {
       dispatcher.getMulticaster().changeListRenamed(myListCopy, myFromName);
     }
   }

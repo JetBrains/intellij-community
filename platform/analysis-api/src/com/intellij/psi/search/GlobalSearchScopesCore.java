@@ -30,12 +30,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.List;
+import java.util.*;
 
 public class GlobalSearchScopesCore {
   @NotNull
@@ -309,12 +307,23 @@ public class GlobalSearchScopesCore {
     }
 
     private boolean in(@NotNull VirtualFile parent) {
+      Set<VirtualFile> directoriesWithSubdirectories = null;
       for (int i = 0; i < myDirectories.length; i++) {
         VirtualFile directory = myDirectories[i];
         boolean withSubdirectories = myWithSubdirectories.get(i);
-        if (withSubdirectories ? VfsUtilCore.isAncestor(directory, parent, false) : directory.equals(parent)) return true;
+        if (withSubdirectories) {
+          if (directory.getFileSystem().equals(parent.getFileSystem())) {
+            if (directoriesWithSubdirectories == null) {
+              directoriesWithSubdirectories = new SmartHashSet<>();
+            }
+            directoriesWithSubdirectories.add(directory);
+          }
+        }
+        else if (directory.equals(parent)) {
+          return true;
+        }
       }
-      return false;
+      return VfsUtilCore.isUnder(parent, directoriesWithSubdirectories);
     }
 
     @Override

@@ -142,7 +142,11 @@ public class ExpressionStatisticsAction extends AnAction {
       data.packages++;
     }
     else if (target instanceof PsiField) {
-      data.fields++;
+      if (((PsiField)target).hasModifierProperty(PsiModifier.STATIC) && ((PsiField)target).hasModifierProperty(PsiModifier.FINAL)) {
+        data.constants++;
+      } else {
+        data.fields++;
+      }
     }
     else {
       data.other++;
@@ -155,6 +159,7 @@ public class ExpressionStatisticsAction extends AnAction {
     int methods;
     int classes;
     int fields;
+    int constants;
     int packages;
     int other;
 
@@ -163,11 +168,12 @@ public class ExpressionStatisticsAction extends AnAction {
       return "localVars=" + localVars +
              "\nparameters=" + parameters +
              "\nmethods=" + methods +
+             "\nconstants=" + constants +
              "\nfields=" + fields +
              "\nclasses=" + classes +
              "\npackages=" + packages +
              "\nother=" + other +
-             "\ntotal=" + (localVars + parameters + methods + fields + classes + packages + other);
+             "\ntotal=" + (localVars + parameters + methods + constants + fields + classes + packages + other);
     }
   }
 

@@ -117,7 +117,7 @@ public class IndexingStamp {
       @Override
       public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
         try {
-          return new DataOutputStream(new FileOutputStream(file));
+          return new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
         }
         catch (FileNotFoundException ex) {
           if (lastAttempt) throw ex;

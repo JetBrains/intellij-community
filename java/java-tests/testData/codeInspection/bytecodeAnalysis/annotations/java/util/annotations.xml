@@ -9,6 +9,7 @@
     </item>
     <item name='java.util.AbstractCollection boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -28,6 +29,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.AbstractCollection java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.AbstractList AbstractList()'>
@@ -42,6 +46,7 @@
     </item>
     <item name='java.util.AbstractList E set(int, E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -50,7 +55,7 @@
     </item>
     <item name='java.util.AbstractList boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val val="&quot;_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='java.util.AbstractList boolean addAll(int, java.util.Collection&lt;? extends E&gt;) 1'>
@@ -82,6 +87,7 @@
     </item>
     <item name='java.util.AbstractList void add(int, E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -131,6 +137,7 @@
     </item>
     <item name='java.util.AbstractMap V put(K, V)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -156,6 +163,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.AbstractMap java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.AbstractMap void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
@@ -203,7 +213,7 @@
     </item>
     <item name='java.util.AbstractQueue boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val val="&quot;_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='java.util.AbstractQueue boolean addAll(java.util.Collection&lt;? extends E&gt;) 0'>
@@ -251,7 +261,7 @@
     </item>
     <item name='java.util.ArrayList boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val val="&quot;_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='java.util.ArrayList boolean addAll(int, java.util.Collection&lt;? extends E&gt;) 1'>
@@ -631,6 +641,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.Arrays java.lang.String toString(java.lang.Object[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Arrays java.lang.String toString(java.lang.Object[]) 0'>
@@ -722,6 +735,11 @@
     </item>
     <item name='java.util.Arrays void fill(short[], short) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Arrays void rangeCheck(int, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Arrays void sort(T[], int, int, java.util.Comparator&lt;? super T&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -873,6 +891,9 @@
         </annotation>
     </item>
     <item name='java.util.Calendar java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar java.util.Calendar getInstance()'>
@@ -1317,7 +1338,12 @@
     </item>
     <item name='java.util.Collections.AsLIFOQueue boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;true;null-&gt;true&quot;"/>
+            <val val="&quot;_-&gt;true&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.Collections.AsLIFOQueue java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.Collections.CheckedCollection CheckedCollection(java.util.Collection&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
@@ -1339,6 +1365,11 @@
     </item>
     <item name='java.util.Collections.CheckedCollection java.lang.String badElementMsg(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Collections.CheckedCollection java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.CheckedCollection java.util.Collection&lt;E&gt; checkedCopyOf(java.util.Collection&lt;? extends E&gt;)'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1401,6 +1432,11 @@
     <item name='java.util.Collections.CheckedMap java.lang.String badValueMsg(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Collections.CheckedMap java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Collections.CheckedMap void putAll(java.util.Map&lt;? extends K,? extends V&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1417,6 +1453,7 @@
     </item>
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet boolean add(java.util.Map.Entry&lt;K,V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1425,6 +1462,7 @@
     </item>
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet boolean addAll(java.util.Collection&lt;? extends java.util.Map.Entry&lt;K,V&gt;&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1453,6 +1491,11 @@
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet boolean remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.Collections.CheckedMap.CheckedEntrySet java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet java.util.Collections.CheckedMap.CheckedEntrySet.CheckedEntry&lt;K,V,T&gt; checkedEntry(java.util.Map.Entry&lt;K,V&gt;, java.lang.Class&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -1478,6 +1521,11 @@
     </item>
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet.CheckedEntry java.lang.String badValueMsg(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Collections.CheckedMap.CheckedEntrySet.CheckedEntry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.CheckedRandomAccessList CheckedRandomAccessList(java.util.List&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -1569,6 +1617,9 @@
         </annotation>
     </item>
     <item name='java.util.Collections.CopiesList java.lang.Object[] toArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CopiesList java.util.List&lt;E&gt; subList(int, int)'>
@@ -1632,7 +1683,7 @@
     </item>
     <item name='java.util.Collections.EmptyList boolean contains(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1713,6 +1764,7 @@
     </item>
     <item name='java.util.Collections.EmptyListIterator void add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1721,6 +1773,7 @@
     </item>
     <item name='java.util.Collections.EmptyListIterator void set(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1734,7 +1787,7 @@
     </item>
     <item name='java.util.Collections.EmptyMap V get(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;null;null-&gt;null&quot;"/>
+            <val name="value" val="&quot;_-&gt;null&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -1744,7 +1797,7 @@
     </item>
     <item name='java.util.Collections.EmptyMap boolean containsKey(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1753,7 +1806,7 @@
     </item>
     <item name='java.util.Collections.EmptyMap boolean containsValue(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1818,7 +1871,7 @@
     </item>
     <item name='java.util.Collections.EmptySet boolean contains(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1877,6 +1930,11 @@
     </item>
     <item name='java.util.Collections.SetFromMap SetFromMap(java.util.Map&lt;E,java.lang.Boolean&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.util.Collections.SetFromMap java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.SetFromMap void readObject(java.io.ObjectInputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1964,6 +2022,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Collections.SynchronizedCollection java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.util.Collections.SynchronizedCollection void writeObject(java.io.ObjectOutputStream) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1998,6 +2061,11 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedMap SynchronizedMap(java.util.Map&lt;K,V&gt;, java.lang.Object)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.Collections.SynchronizedMap java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -2094,6 +2162,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableCollection boolean add(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2102,6 +2171,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableCollection boolean addAll(java.util.Collection&lt;? extends E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2110,6 +2180,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableCollection boolean remove(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2118,6 +2189,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableCollection boolean removeAll(java.util.Collection&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2126,11 +2198,17 @@
     </item>
     <item name='java.util.Collections.UnmodifiableCollection boolean retainAll(java.util.Collection&lt;?&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.Collections.UnmodifiableCollection boolean retainAll(java.util.Collection&lt;?&gt;) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Collections.UnmodifiableCollection java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.UnmodifiableCollection java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2147,6 +2225,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableList E set(int, E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2163,6 +2242,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableList boolean addAll(int, java.util.Collection&lt;? extends E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2183,6 +2263,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableList void add(int, E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2199,6 +2280,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableMap V put(K, V)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2210,11 +2292,17 @@
     </item>
     <item name='java.util.Collections.UnmodifiableMap V remove(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.util.Collections.UnmodifiableMap V remove(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Collections.UnmodifiableMap java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.UnmodifiableMap void clear()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2223,6 +2311,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableMap void putAll(java.util.Map&lt;? extends K,? extends V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2264,6 +2353,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet.UnmodifiableEntry V setValue(V)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;fail&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2272,6 +2362,11 @@
     </item>
     <item name='java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet.UnmodifiableEntry boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet.UnmodifiableEntry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Collections.UnmodifiableRandomAccessList UnmodifiableRandomAccessList(java.util.List&lt;? extends E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -2369,6 +2464,11 @@
     </item>
     <item name='java.util.Date java.lang.Object clone()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
+    </item>
+    <item name='java.util.Date java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='java.util.Date long parse(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2614,6 +2714,9 @@
         </annotation>
     </item>
     <item name='java.util.Hashtable java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Hashtable java.util.Enumeration&lt;K&gt; keys()'>
@@ -2684,6 +2787,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Hashtable.Entry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Hashtable.EntrySet EntrySet()'>
@@ -2882,6 +2988,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.IdentityHashMap.EntryIterator.Entry java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.IdentityHashMap.EntryIterator.Entry void checkIndexForEntryUse()'>
@@ -2988,7 +3097,7 @@
     </item>
     <item name='java.util.LinkedHashMap boolean removeEldestEntry(java.util.Map.Entry&lt;K,V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value" val="&quot;!null-&gt;false;null-&gt;false&quot;"/>
+            <val name="value" val="&quot;_-&gt;false&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

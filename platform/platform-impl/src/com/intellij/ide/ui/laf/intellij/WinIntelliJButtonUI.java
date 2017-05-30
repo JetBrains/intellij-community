@@ -17,6 +17,7 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
 import sun.swing.SwingUtilities2;
 
@@ -65,15 +66,14 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (!(c.getBorder() instanceof WinIntelliJButtonBorder) && !isComboButton(c)) {
-      //Insets i = c.getInsets();
-      //g.fillRect(i.left, i.top, c.getWidth() - i.left - i.right, c.getHeight() - i.top - i.bottom);
       super.paint(g, c);
       return;
     }
 
     if (isHelpButton(c)) {
       Icon help = MacIntelliJIconCache.getIcon("winHelp");
-      help.paintIcon(c, g, (c.getWidth() - help.getIconWidth()) / 2, (c.getHeight() - help.getIconHeight()) / 2);
+      Insets i = c.getInsets();
+      help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     } else if (c instanceof AbstractButton) {
       AbstractButton b = (AbstractButton)c;
       ButtonModel bm = b.getModel();
@@ -102,7 +102,8 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   public Dimension getPreferredSize(JComponent c) {
     if (isHelpButton(c)) {
       Icon icon = MacIntelliJIconCache.getIcon("winHelp");
-      return new Dimension(icon.getIconWidth(), icon.getIconHeight());
+      Insets i = c.getInsets();
+      return new Dimension(icon.getIconWidth() + i.left + i.right, JBUI.scale(22));
     } else if (isSquare(c)) {
       return new JBDimension(22, 22);
     } else {

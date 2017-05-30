@@ -53,8 +53,13 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
+    Project project = e.getProject();
+    if (project == null) {
+      update(e, false);
+      return;
+    }
     List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
-    if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
+    if (RunDashboardManager.getInstance(project).isShowConfigurations()) {
       boolean running = targetNodes.stream().anyMatch(node -> {
         Content content = node.getContent();
         return content != null && !RunContentManagerImpl.isTerminated(content);
@@ -62,18 +67,19 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
       update(e, running);
     }
     else {
-      Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
+      Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       update(e, content != null && !RunContentManagerImpl.isTerminated(content));
     }
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
+    Project project = e.getProject();
+    if (project == null || RunDashboardManager.getInstance(project).isShowConfigurations()) {
       super.actionPerformed(e);
     }
     else {
-      Content content = RunDashboardManager.getInstance(e.getProject()).getDashboardContentManager().getSelectedContent();
+      Content content = RunDashboardManager.getInstance(project).getDashboardContentManager().getSelectedContent();
       if (content != null) {
         RunContentDescriptor descriptor = RunContentManagerImpl.getRunContentDescriptorByContent(content);
         JComponent component = content.getComponent();
@@ -82,10 +88,6 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
         }
         ExecutionEnvironment environment = LangDataKeys.EXECUTION_ENVIRONMENT.getData(DataManager.getInstance().getDataContext(component));
         if (environment == null) {
-          return;
-        }
-        Project project = e.getProject();
-        if (project == null) {
           return;
         }
         ExecutionManager.getInstance(project).restartRunProfile(project,

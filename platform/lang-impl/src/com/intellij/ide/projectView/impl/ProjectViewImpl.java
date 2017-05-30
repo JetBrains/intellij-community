@@ -934,17 +934,34 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @NotNull
   @Override
-  public ActionCallback changeViewCB(@NotNull String viewId, String subId) {
+  public ActionCallback changeViewCB(@NotNull String viewId, @Nullable String subId) {
     AbstractProjectViewPane pane = getProjectViewPaneById(viewId);
     LOG.assertTrue(pane != null, "Project view pane not found: " + viewId + "; subId:" + subId + "; project: " + myProject);
-    if (!viewId.equals(getCurrentViewId())
-        || subId != null && !subId.equals(pane.getSubId())) {
-      for (Content content : getContentManager().getContents()) {
-        if (viewId.equals(content.getUserData(ID_KEY)) && StringUtil.equals(subId, content.getUserData(SUB_ID_KEY))) {
-          return getContentManager().setSelectedContentCB(content);
-        }
+
+    boolean hasSubViews = pane.getSubIds().length > 0;
+    if (hasSubViews) {
+      if (subId == null) {
+        // we try not to change subview
+        // get currently selected subId from the pane
+        subId = pane.getSubId();
       }
     }
+    else {
+      if (subId != null) {
+        LOG.error("View doesn't have subviews: " + viewId + "; subId:" + subId + "; project: " + myProject);
+      }
+    }
+    if (viewId.equals(myCurrentViewId) && Objects.equals(subId, myCurrentViewSubId)) return ActionCallback.REJECTED;
+
+    // at this point null subId means that view has no subviews OR subview was never selected
+    // we then search first content with the right viewId ignoring subIds of contents
+
+    for (Content content : getContentManager().getContents()) {
+      if (viewId.equals(content.getUserData(ID_KEY)) && (subId == null || subId.equals(content.getUserData(SUB_ID_KEY)))) {
+        return getContentManager().setSelectedContentCB(content);
+      }
+    }
+
     return ActionCallback.REJECTED;
   }
 

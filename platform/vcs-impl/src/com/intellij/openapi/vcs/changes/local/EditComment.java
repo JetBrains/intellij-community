@@ -20,25 +20,29 @@ import com.intellij.openapi.vcs.changes.ChangeListListener;
 import com.intellij.openapi.vcs.changes.ChangeListWorker;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EditComment implements ChangeListCommand {
   private final String myName;
   private final String myNewComment;
+
   private String myOldComment;
   private LocalChangeList myListCopy;
 
-  public EditComment(final String name, final String newComment) {
+  public EditComment(@NotNull String name, @Nullable String newComment) {
     myNewComment = newComment;
     myName = name;
   }
 
   public void apply(final ChangeListWorker worker) {
-    myListCopy = worker.getCopyByName(myName);
-    if (myListCopy != null) {
-      myOldComment = worker.editComment(myName, myNewComment);
-      if (Comparing.equal(myOldComment, myNewComment)) {
-        myListCopy = null;  // nothing changed, no notify
-      }
+    myOldComment = worker.editComment(myName, myNewComment);
+
+    if (myOldComment != null && !Comparing.equal(myOldComment, myNewComment)) {
+      myListCopy = worker.getChangeListCopyByName(myName);
+    }
+    else {
+      myListCopy = null; // nothing changed, no notify
     }
   }
 

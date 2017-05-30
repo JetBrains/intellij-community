@@ -39,13 +39,21 @@ public abstract class ProjectView {
   public abstract ActionCallback selectCB(Object element, VirtualFile file, boolean requestFocus);
 
   /**
-   * Changes currently selected view and subview (if any).<br/>
-   * If a view (which is identified by {@code viewId}) has subviews but {@code subId} is {@code null} then no action is taken.
+   * Changes currently selected view and subview (if any).
+   * <p>
+   * When default subview is requested:<br/>
+   * - if the view had never been selected then the first subview is selected <br/>
+   * - otherwise subview won't be changed
+   * <p>
+   * It's an error when a view has no subviews and {@code subId} is not null.
    *
-   * @param subId subview id. {@code null} means view should not have subviews
+   * @param viewId id of view to be selected
+   * @param subId  id of subview to be selected
+   * @return callback which will be set to {@link ActionCallback#setDone done} if new content was selected
+   * or to {@link ActionCallback#setRejected rejected} if content didn't change.
    */
   @NotNull
-  public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable String subId);
+  public abstract ActionCallback changeViewCB(@NotNull String viewId, @Nullable("default subview") String subId);
 
   @Nullable
   public abstract PsiElement getParentOfCurrentSelection();

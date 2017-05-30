@@ -40,7 +40,7 @@ open class ConfigurableFactory : Disposable {
   open fun createCodeStyleConfigurable(provider: CodeStyleSettingsProvider, codeStyleSchemesModel: CodeStyleSchemesModel, owner: CodeStyleSchemesConfigurable): CodeStyleConfigurableWrapper {
     val codeStyleConfigurableWrapper = CodeStyleConfigurableWrapper(provider, object : CodeStyleSettingsPanelFactory() {
       override fun createPanel(scheme: CodeStyleScheme): NewCodeStyleSettingsPanel {
-        return NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.codeStyleSettings, codeStyleSchemesModel.getCloneSettings(scheme)))
+        return NewCodeStyleSettingsPanel(provider.createSettingsPage(scheme.codeStyleSettings, codeStyleSchemesModel.getCloneSettings(scheme)), codeStyleSchemesModel)
       }
     }, owner)
     return codeStyleConfigurableWrapper

@@ -51,6 +51,16 @@
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.security.Identity java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.security.Identity java.lang.String toString(boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;true-&gt;!null&quot;"/>
+        </annotation>
+    </item>
     <item name='java.security.NoSuchAlgorithmException NoSuchAlgorithmException()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -100,6 +110,9 @@
         </annotation>
     </item>
     <item name='java.security.Provider java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.security.Provider java.lang.String[] getTypeAndAlgorithm(java.lang.String)'>
@@ -223,6 +236,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.security.Signer java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
 </root>

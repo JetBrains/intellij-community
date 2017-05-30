@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -32,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public class PathUtil {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.PathUtil");
+
   private PathUtil() { }
 
   @Nullable
@@ -134,9 +137,8 @@ public class PathUtil {
    * @see SystemIndependent
    */
   public static void assertSystemIndependentName(@Nullable String path) {
-    // A simplified check that test only for a drive letter (to improve the performance and avoid possible false-negatives).
-    if (path != null && path.length() > 3 && path.substring(1).startsWith(":\\")) {
-      throw new IllegalArgumentException("System-dependent path: " + path);
+    if (path != null && path.contains("\\")) {
+      LOG.error("System-dependent path: " + path);
     }
   }
 

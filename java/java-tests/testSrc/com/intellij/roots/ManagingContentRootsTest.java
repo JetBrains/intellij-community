@@ -18,12 +18,19 @@ package com.intellij.roots;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ContentEntryImpl;
+import com.intellij.openapi.roots.impl.ModuleRootManagerComponent;
+import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 
 import java.io.IOException;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class ManagingContentRootsTest extends IdeaTestCase {
   private VirtualFile dir;
@@ -90,6 +97,36 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     });
   }
 
+  public void testAddExcludePattern() {
+    PsiTestUtil.addContentRoot(myModule, dir);
+    ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("*.txt"));
+    assertEquals("*.txt", assertOneElement(findContentEntry(dir.getUrl()).getExcludePatterns()));
+    ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).removeExcludePattern("*.txt"));
+    assertEmpty(findContentEntry(dir.getUrl()).getExcludePatterns());
+  }
+
+  public void testExcludePatternSerialization() {
+    PsiTestUtil.addContentRoot(myModule, dir);
+    ModuleRootModificationUtil.updateModel(myModule, model -> findContentEntry(dir.getUrl(), model).addExcludePattern("exc"));
+    Element entry = new Element(ContentEntryImpl.ELEMENT_NAME);
+    ((ContentEntryImpl)findContentEntry(dir.getUrl())).writeExternal(entry);
+    String elementText = "<content url=\"" + dir.getUrl() + "\">\n" +
+                         "  <excludePattern pattern=\"exc\" />\n" +
+                         "</content>";
+    assertThat(entry).isEqualTo(elementText);
+  }
+
+  public void testExcludePatternDeserialization() throws IOException, JDOMException {
+    ModuleRootManagerImpl.ModuleRootManagerState state = new ModuleRootManagerImpl.ModuleRootManagerState();
+    state.readExternal(JDOMUtil.load("<component name=\"NewModuleRootManager\">" +
+                                     "  <content url=\"" + dir.getUrl() + "\">\n" +
+                                     "    <excludePattern pattern=\"exc\" />\n" +
+                                     "  </content>" +
+                                     "</component>\n"));
+    ((ModuleRootManagerComponent)getRootManager()).loadState(state);
+    assertEquals("exc", assertOneElement(findContentEntry(dir.getUrl()).getExcludePatterns()));
+  }
+
   private ContentEntry findContentEntry(String url) {
     return findContentEntry(url, getRootManager());
   }
@@ -102,7 +139,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
   }
 
   private void addContentRoot(final String path) {
-    ApplicationManager.getApplication().runWriteAction(() -> ModuleRootModificationUtil.addContentRoot(getModule(), path));
+    ModuleRootModificationUtil.addContentRoot(getModule(), path);
   }
 
   private ModuleRootManager getRootManager() {

@@ -430,4 +430,31 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     editorColorsScheme.setColor(EditorColors.TEARLINE_COLOR, new Color(255, 0, 0));
     assertFalse(editorColorsScheme.settingsEqual(defaultScheme));
   }
+
+  public void testReadFontPreferences() throws Exception {
+    String[] fontFamilyNames = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
+    if (fontFamilyNames.length < 2) return;
+    String name1 = fontFamilyNames[0];
+    String name2 = fontFamilyNames[1];
+    EditorColorsScheme scheme = loadScheme(
+      "<scheme name=\"fira\" version=\"142\" parent_scheme=\"Default\">\n" +
+      "  <option name=\"LINE_SPACING\" value=\"0.93\" />\n" +
+      "  <font>\n" +
+      "    <option name=\"EDITOR_FONT_NAME\" value=\"" + name1 + "\" />\n" +
+      "    <option name=\"EDITOR_FONT_SIZE\" value=\"12\" />\n" +
+      "  </font>\n" +
+      "  <font>\n" +
+      "    <option name=\"EDITOR_FONT_NAME\" value=\"" + name2 + "\" />\n" +
+      "    <option name=\"EDITOR_FONT_SIZE\" value=\"12\" />\n" +
+      "  </font>\n" +
+      "  <option name=\"EDITOR_LIGATURES\" value=\"true\" />\n" +
+      "  <option name=\"CONSOLE_FONT_NAME\" value=\""+ name2 + "\" />" +
+      "</scheme>\n"
+    );
+    assertEquals(name1, scheme.getEditorFontName());
+    assertEquals(name2, scheme.getConsoleFontName());
+    assertEquals(0.93f, scheme.getLineSpacing());
+    assertTrue(scheme.getFontPreferences().useLigatures());
+    assertFalse(scheme.getConsoleFontPreferences().useLigatures());
+  }
 }

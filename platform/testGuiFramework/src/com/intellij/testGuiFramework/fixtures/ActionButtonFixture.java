@@ -76,6 +76,41 @@ public class ActionButtonFixture extends JComponentFixture<ActionButtonFixture, 
   }
 
   @NotNull
+  public static ActionButtonFixture findByActionClassName(@NotNull final String actionClassName,
+                                                   @NotNull final Robot robot,
+                                                   @NotNull final Container container, Timeout timeout) {
+    final Ref<ActionButton> actionButtonRef = new Ref<ActionButton>();
+    Pause.pause(new Condition("Find ActionButton by action class name: '" + actionClassName + "'") {
+      @Override
+      public boolean test() {
+        Collection<ActionButton> found = robot.finder().findAll(container, new GenericTypeMatcher<ActionButton>(ActionButton.class) {
+          @Override
+          protected boolean isMatching(@NotNull ActionButton button) {
+            if (button.isVisible()) {
+              AnAction action = button.getAction();
+              if (action != null) {
+                return action.getClass().getSimpleName().equals(actionClassName);
+              }
+            }
+            return false;
+          }
+        });
+        if (found.size() == 1) {
+          actionButtonRef.set(getFirstItem(found));
+          return true;
+        }
+        return false;
+      }
+    }, timeout);
+
+    ActionButton button = actionButtonRef.get();
+    if (button == null) {
+      throw new ComponentLookupException("Failed to find ActionButton with action class name: '" + actionClassName + "'");
+    }
+    return new ActionButtonFixture(robot, button);
+  }
+
+  @NotNull
   public static ActionButtonFixture findByActionId(@NotNull final String actionId,
                                                    @NotNull final Robot robot,
                                                    @NotNull final Container container) {

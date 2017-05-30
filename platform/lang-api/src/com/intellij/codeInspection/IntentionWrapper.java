@@ -30,6 +30,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionClassHolder, IntentionActionDelegate {
   private final IntentionAction myAction;
   private final PsiFile myFile;
@@ -66,6 +70,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     myAction.invoke(project, editor, file);
   }
+
   @Nullable
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
@@ -88,7 +93,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
 
     if (virtualFile != null) {
       FileEditor editor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
-      myAction.invoke(project, editor instanceof TextEditor ? ((TextEditor) editor).getEditor() : null, myFile);
+      myAction.invoke(project, editor instanceof TextEditor ? ((TextEditor)editor).getEditor() : null, myFile);
     }
   }
 
@@ -111,4 +116,23 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
     return new IntentionWrapper(action, file);
   }
 
+  @NotNull
+  public static LocalQuickFix[] wrapToQuickFixes(@NotNull IntentionAction[] actions, @NotNull PsiFile file) {
+    if (actions.length == 0) return LocalQuickFix.EMPTY_ARRAY;
+    LocalQuickFix[] fixes = new LocalQuickFix[actions.length];
+    for (int i = 0; i < actions.length; i++) {
+      fixes[i] = wrapToQuickFix(actions[i], file);
+    }
+    return fixes;
+  }
+
+  @NotNull
+  public static List<LocalQuickFix> wrapToQuickFixes(@NotNull List<IntentionAction> actions, @NotNull PsiFile file) {
+    if (actions.isEmpty()) return Collections.emptyList();
+    List<LocalQuickFix> fixes = new ArrayList<>(actions.size());
+    for (IntentionAction action : actions) {
+      fixes.add(wrapToQuickFix(action, file));
+    }
+    return fixes;
+  }
 }

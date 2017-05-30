@@ -193,4 +193,16 @@ public interface ContentEntry extends Synthetic {
   boolean removeExcludeFolder(@NotNull String url);
 
   void clearExcludeFolders();
+
+  /**
+   * Returns patterns for names of files which should be excluded from this content root. If name of a file under this content root matches
+   * any of the patterns it'll be excluded from the module, if name of a directory matches any of the patterns the directory and all of its
+   * contents will be excluded. '?' and '*' wildcards are supported.
+   */
+  @NotNull
+  List<String> getExcludePatterns();
+
+  void addExcludePattern(@NotNull String pattern);
+  void removeExcludePattern(@NotNull String pattern);
+  void setExcludePatterns(@NotNull List<String> patterns);
 }

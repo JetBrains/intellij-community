@@ -53,7 +53,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
   private static final ID<Bytes, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
   private static final VirtualFileGist<Map<Bytes, HEquations>> ourGist = GistManager.getInstance().newVirtualFileGist(
-    "BytecodeAnalysisIndex", 2, new HEquationsExternalizer(), new ClassDataIndexer());
+    "BytecodeAnalysisIndex", 5, new HEquationsExternalizer(), new ClassDataIndexer());
 
   @NotNull
   @Override
@@ -256,7 +256,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<Bytes> {
       ArrayList<DirectionResultPair> results = new ArrayList<>(size);
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
-        Direction direction = BytecodeAnalysisConverter.extractDirection(directionKey);
+        Direction direction = Direction.fromInt(directionKey);
         if (direction == Direction.Pure) {
           Set<HEffectQuantum> effects = new HashSet<>();
           int effectsSize = DataInputOutputUtil.readINT(in);

@@ -16,15 +16,25 @@
 package com.siyeh.ipp.collections;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ReplaceWithArraysAsListIntention extends Intention {
+public class ReplaceWithArraysAsListIntention extends MutablyNamedIntention {
+
+  private String replacementText = null;
+
+  @Override
+  protected String getTextForElement(PsiElement element) {
+    return IntentionPowerPackBundle.message("replace.with.arrays.as.list.intention.name", replacementText);
+  }
 
   @NotNull
   @Override
@@ -38,16 +48,16 @@ public class ReplaceWithArraysAsListIntention extends Intention {
       if (method == null) {
         return false;
       }
-      final String name = method.getName();
-      if (!name.equals("emptyList") && !name.equals("singletonList")) {
-        return false;
-      }
       final PsiClass aClass = method.getContainingClass();
       if (aClass == null) {
         return false;
       }
       final String qualifiedName = aClass.getQualifiedName();
-      return qualifiedName != null && qualifiedName.equals("java.util.Collections");
+      if (qualifiedName == null || !qualifiedName.equals("java.util.Collections")) {
+        return false;
+      }
+      final String name = method.getName();
+      return (replacementText = getReplacementMethodText(name, e)) != null;
     };
   }
 
@@ -55,6 +65,37 @@ public class ReplaceWithArraysAsListIntention extends Intention {
   protected void processIntention(@NotNull PsiElement element) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-    PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, "java.util.Arrays.asList" + argumentList.getText());
+    PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + argumentList.getText());
+  }
+
+  private static String getReplacementMethodText(String methodName, PsiElement context) {
+    if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
+      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+        return "java.util.List.of";
+      }
+      else if (ClassUtils.findClass("com.google.common.collect.ImmutableList", context) != null) {
+        return "com.google.common.collect.ImmutableList.of";
+      }
+      else {
+        return "java.util.Arrays.asList";
+      }
+    }
+    else if (methodName.equals("emptySet") || methodName.equals("singleton")) {
+      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+        return "java.util.Set.of";
+      }
+      else if (ClassUtils.findClass("com.google.common.collect.ImmutableSet", context) != null) {
+        return "com.google.common.collect.ImmutableSet.of";
+      }
+    }
+    else if (methodName.equals("emptyMap") || methodName.equals("singletonMap")) {
+      if (PsiUtil.isLanguageLevel9OrHigher(context)) {
+        return "java.util.Map.of";
+      }
+      else if (ClassUtils.findClass("com.google.common.collect.ImmutableMap", context) != null) {
+        return "com.google.common.collect.ImmutableMap.of";
+      }
+    }
+    return null;
   }
 }

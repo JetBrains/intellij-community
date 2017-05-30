@@ -801,7 +801,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myRefCountHolder.registerReference(reference, new CandidateInfo(resolve, PsiSubstitutor.EMPTY));
         }
       }
-    };
+    }
   }
 
   @Override

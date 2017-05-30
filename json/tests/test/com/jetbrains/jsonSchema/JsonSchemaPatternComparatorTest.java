@@ -67,15 +67,15 @@ public class JsonSchemaPatternComparatorTest extends LightPlatformCodeInsightFix
     Assert.assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test")));
   }
 
-  private static JsonSchemaMappingsConfigurationBase.Item p(@NotNull final String p) {
-    return new JsonSchemaMappingsConfigurationBase.Item(p, true, false);
+  private static UserDefinedJsonSchemaConfiguration.Item p(@NotNull final String p) {
+    return new UserDefinedJsonSchemaConfiguration.Item(p, true, false);
   }
 
-  private static JsonSchemaMappingsConfigurationBase.Item d(@NotNull final String d) {
-    return new JsonSchemaMappingsConfigurationBase.Item(d, false, true);
+  private static UserDefinedJsonSchemaConfiguration.Item d(@NotNull final String d) {
+    return new UserDefinedJsonSchemaConfiguration.Item(d, false, true);
   }
 
-  private static JsonSchemaMappingsConfigurationBase.Item f(@NotNull final String f) {
-    return new JsonSchemaMappingsConfigurationBase.Item(f, false, false);
+  private static UserDefinedJsonSchemaConfiguration.Item f(@NotNull final String f) {
+    return new UserDefinedJsonSchemaConfiguration.Item(f, false, false);
   }
 }

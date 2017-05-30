@@ -70,6 +70,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   private lateinit var watcher: FileWatcher
   private lateinit var alarm: Alarm
 
+  private val watchedPaths = mutableListOf<String>()
   private val watcherEvents = Semaphore()
   private val resetHappened = AtomicBoolean()
 
@@ -85,10 +86,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
-    watcher.startup { reset ->
-      alarm.cancelAllRequests()
-      alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
-      if (reset) resetHappened.set(true)
+    watchedPaths += tempDir.root.path
+    watcher.startup { path ->
+      if (path == FileWatcher.RESET || path != FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
+        alarm.cancelAllRequests()
+        alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
+        if (path == FileWatcher.RESET) resetHappened.set(true)
+      }
     }
     wait { !watcher.isOperational }
 
@@ -96,7 +100,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   @After fun tearDown() {
-    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+    LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
     watcher.shutdown()
     wait { watcher.isOperational }
@@ -106,7 +110,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
       (fs as LocalFileSystemImpl).cleanupForNextTest()
     }
 
-    LOG.debug("================== tearing down up " + getTestName(false) + " ==================")
+    LOG.debug("================== tearing down " + getTestName(false) + " ==================")
   }
 
   //</editor-fold>
@@ -322,6 +326,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val substRoot = IoTestUtil.createSubst(target.path)
     VfsRootAccess.allowRootAccess(testRootDisposable, substRoot.path)
     val vfsRoot = fs.findFileByIoFile(substRoot)!!
+    watchedPaths += substRoot.path
 
     val substFile = File(substRoot, "sub/test.txt")
     refresh(target)
@@ -562,7 +567,11 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcherEvents.down()
     alarm.cancelAllRequests()
     resetHappened.set(false)
+
+    TimeoutUtil.sleep(50)
     action()
+    LOG.debug("** action performed")
+
     watcherEvents.waitFor(timeout)
     watcherEvents.up()
     assumeFalse("reset happened", resetHappened.get())

@@ -27,6 +27,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Block.Reference java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.BlockMacro BlockMacro(java.lang.String)'>
@@ -62,7 +65,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Break boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;false;_,!null,_-&gt;false;_,_,!null-&gt;false;_,null,_-&gt;false;null,_,_-&gt;false&quot;"/>
+            <val val="&quot;_,_,_-&gt;false&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Break boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 1'>
@@ -95,7 +98,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Define boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;true;_,!null,_-&gt;true;_,_,!null-&gt;true;_,_,null-&gt;true;_,null,_-&gt;true&quot;"/>
+            <val val="&quot;_,_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Define boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0'>
@@ -288,7 +291,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Include boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;true;_,!null,_-&gt;true;_,_,!null-&gt;true;_,null,_-&gt;true;null,_,_-&gt;true&quot;"/>
+            <val val="&quot;_,_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Include boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 2'>
@@ -333,7 +336,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Literal boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_-&gt;true;_,!null,_-&gt;true;_,_,!null-&gt;true;_,_,null-&gt;true;null,_,_-&gt;true&quot;"/>
+            <val val="&quot;_,_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.Literal boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node) 0'>
@@ -374,8 +377,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.Macro boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="value"
-                 val="&quot;!null,_,_-&gt;true;_,!null,_-&gt;true;_,_,!null-&gt;true;_,_,null-&gt;true;_,null,_-&gt;true;null,_,_-&gt;true&quot;"/>
+            <val name="value" val="&quot;_,_,_-&gt;true&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -538,6 +540,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.Scope.Info java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.directive.Stop Stop()'>
@@ -598,7 +603,7 @@
     </item>
     <item name='org.apache.velocity.runtime.directive.VelocimacroProxy boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.runtime.Renderable)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_,_,_-&gt;true;_,!null,_,_-&gt;true;_,_,!null,_-&gt;true;_,_,_,!null-&gt;true;_,_,_,null-&gt;true;_,null,_,_-&gt;true;null,_,_,_-&gt;true&quot;"/>
+            <val val="&quot;_,_,_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.directive.VelocimacroProxy boolean render(org.apache.velocity.context.InternalContextAdapter, java.io.Writer, org.apache.velocity.runtime.parser.node.Node, org.apache.velocity.runtime.Renderable) 2'>

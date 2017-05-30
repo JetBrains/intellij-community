@@ -21,10 +21,12 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.jetbrains.extensions.getQName
 import com.jetbrains.extenstions.getElementAndResolvableName
 import com.jetbrains.extenstions.resolveToElement
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.PythonRunConfiguration
 
@@ -45,7 +47,8 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
  * We just save its name and provide it again to rerun
  * TODO: Doc derived problem
  */
-private class PyTargetBasedPsiLocation(val target: com.jetbrains.python.testing.ConfigurationTarget, element: com.intellij.psi.PsiElement) : com.intellij.execution.PsiLocation<PsiElement>(element) {
+private class PyTargetBasedPsiLocation(val target: com.jetbrains.python.testing.ConfigurationTarget,
+                                       element: com.intellij.psi.PsiElement) : com.intellij.execution.PsiLocation<PsiElement>(element) {
   override fun equals(other: Any?): Boolean {
     if (other is com.jetbrains.python.testing.PyTargetBasedPsiLocation) {
       return target == other.target
@@ -74,7 +77,10 @@ private fun findConfigurationFactoryFromSettings(module: com.intellij.openapi.mo
 private val PATH_URL = java.util.regex.Pattern.compile("^python<([^<>]+)>$")
 
 object PyTestsLocator : com.intellij.execution.testframework.sm.runner.SMTestLocator {
-  override fun getLocation(protocol: String, path: String, project: com.intellij.openapi.project.Project, scope: com.intellij.psi.search.GlobalSearchScope): List<com.intellij.execution.Location<out PsiElement>> {
+  override fun getLocation(protocol: String,
+                           path: String,
+                           project: com.intellij.openapi.project.Project,
+                           scope: com.intellij.psi.search.GlobalSearchScope): List<com.intellij.execution.Location<out PsiElement>> {
     if (scope !is com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope) {
       return listOf()
     }
@@ -91,16 +97,18 @@ object PyTestsLocator : com.intellij.execution.testframework.sm.runner.SMTestLoc
     val qualifiedName = com.intellij.psi.util.QualifiedName.fromDottedString(path)
     // Assume qname id good and resolve it directly
     val element = qualifiedName.resolveToElement(com.jetbrains.extenstions.QNameResolveContext(scope.module,
-                                                                     evalContext = TypeEvalContext.codeAnalysis(project,
-                                                                                                                                   null),
-                                                                     folderToStart = folder,
-                                                                     allowInaccurateResult = true))
+                                                                                               evalContext = TypeEvalContext.codeAnalysis(
+                                                                                                 project,
+                                                                                                 null),
+                                                                                               folderToStart = folder,
+                                                                                               allowInaccurateResult = true))
     if (element != null) {
       // Path is qualified name of python test according to runners protocol
       // Parentheses are part of generators / parametrized tests
       // Until https://github.com/JetBrains/teamcity-messages/issues/121 they are disabled,
       // so we cut them out of path not to provide unsupported targets to runners
-      val pathNoParentheses = com.intellij.psi.util.QualifiedName.fromComponents(qualifiedName.components.filter { !it.contains('(') }).toString()
+      val pathNoParentheses = com.intellij.psi.util.QualifiedName.fromComponents(
+        qualifiedName.components.filter { !it.contains('(') }).toString()
       return listOf(
         com.jetbrains.python.testing.PyTargetBasedPsiLocation(ConfigurationTarget(pathNoParentheses, TestTargetType.PYTHON), element))
     }
@@ -110,7 +118,8 @@ object PyTestsLocator : com.intellij.execution.testframework.sm.runner.SMTestLoc
   }
 }
 
-abstract class PyTestExecutionEnvironment<T : com.jetbrains.python.testing.PyAbstractTestConfiguration>(configuration: T, environment: com.intellij.execution.runners.ExecutionEnvironment)
+abstract class PyTestExecutionEnvironment<T : com.jetbrains.python.testing.PyAbstractTestConfiguration>(configuration: T,
+                                                                                                        environment: com.intellij.execution.runners.ExecutionEnvironment)
   : com.jetbrains.python.testing.PythonTestCommandLineStateBase<T>(configuration, environment) {
 
   override fun getTestLocator(): com.intellij.execution.testframework.sm.runner.SMTestLocator = com.jetbrains.python.testing.PyTestsLocator
@@ -151,10 +160,12 @@ enum class TestTargetType {
  * Default target path (run all tests ion project folder)
  */
 private val DEFAULT_PATH = ""
+
 /**
  * Target depends on target type. It could be path to file/folder or python target
  */
-data class ConfigurationTarget(@com.jetbrains.python.testing.ConfigField var target: String, @com.jetbrains.python.testing.ConfigField var targetType: com.jetbrains.python.testing.TestTargetType) {
+data class ConfigurationTarget(@com.jetbrains.python.testing.ConfigField var target: String,
+                               @com.jetbrains.python.testing.ConfigField var targetType: com.jetbrains.python.testing.TestTargetType) {
   fun copyTo(dst: com.jetbrains.python.testing.ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -220,7 +231,7 @@ data class ConfigurationTarget(@com.jetbrains.python.testing.ConfigField var tar
     )
     val qualifiedNameParts = com.intellij.psi.util.QualifiedName.fromDottedString(target.trim()).tryResolveAndSplit(qNameResolveContext) ?:
                              throw com.intellij.execution.ExecutionException("Can't find file where $target declared. " +
-                                                      "Make sure it is in project root")
+                                                                             "Make sure it is in project root")
 
     // We can't provide element qname here: it may point to parent class in case of inherited functions,
     // so we make fix file part, but obey element(symbol) part of qname
@@ -235,7 +246,7 @@ data class ConfigurationTarget(@com.jetbrains.python.testing.ConfigField var tar
       if (elementAndName != null) {
         // qNameInsideOfDirectory may contain redundant elements like subtests so we use name that was really resolved
         // element.qname can't be used because inherited test resolves to parent
-        return listOf("--target",elementAndName.name.toString())
+        return listOf("--target", elementAndName.name.toString())
       }
       // Use "full" (path from closest root) otherwise
       val name = (element.containingFile as? com.jetbrains.python.psi.PyFile)?.getQName()?.append(qualifiedNameParts.elementName) ?:
@@ -252,7 +263,8 @@ data class ConfigurationTarget(@com.jetbrains.python.testing.ConfigField var tar
       val elementFile = element.containingFile.virtualFile
       val workingDir = elementFile.fileSystem.findFileByPath(configuration.workingDirectorySafe)
 
-      val fileSystemPartOfTarget = (if (workingDir != null) com.intellij.openapi.vfs.VfsUtil.getRelativePath(elementFile, workingDir) else null)
+      val fileSystemPartOfTarget = (if (workingDir != null) com.intellij.openapi.vfs.VfsUtil.getRelativePath(elementFile, workingDir)
+      else null)
                                    ?: elementFile.path
 
       if (pyTarget.componentCount == 0) {
@@ -296,7 +308,8 @@ private val com.jetbrains.reflection.Property.prefixedName: String
 abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project.Project,
                                            configurationFactory: com.intellij.execution.configurations.ConfigurationFactory,
                                            private val runBareFunctions: Boolean = true)
-  : com.jetbrains.python.testing.AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), com.jetbrains.python.testing.PyRerunAwareConfiguration,
+  : com.jetbrains.python.testing.AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project,
+                                                                                                 configurationFactory), com.jetbrains.python.testing.PyRerunAwareConfiguration,
     com.intellij.execution.configurations.RefactoringListenerProvider {
   @com.jetbrains.reflection.DelegationProperty
   val target = com.jetbrains.python.testing.ConfigurationTarget(DEFAULT_PATH, TestTargetType.PATH)
@@ -342,7 +355,8 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
   /**
    * Renames python target if python symbol, module or folder renamed
    */
-  private inner class PyElementTargetRenamer(private val originalElement: com.intellij.psi.PsiElement, workingDirectoryFile: com.intellij.openapi.vfs.VirtualFile?) :
+  private inner class PyElementTargetRenamer(private val originalElement: com.intellij.psi.PsiElement,
+                                             workingDirectoryFile: com.intellij.openapi.vfs.VirtualFile?) :
     com.jetbrains.python.testing.PyAbstractTestConfiguration.PyConfigurationRenamer(workingDirectoryFile) {
     override fun refactored(element: com.intellij.psi.PsiElement, oldQualifiedName: String?) {
       super.refactored(element, oldQualifiedName)
@@ -358,7 +372,8 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
   /**
    * Renames folder target if file or folder really renamed
    */
-  private inner class PyVirtualFileRenamer(private val virtualFile: com.intellij.openapi.vfs.VirtualFile, workingDirectoryFile: com.intellij.openapi.vfs.VirtualFile?) :
+  private inner class PyVirtualFileRenamer(private val virtualFile: com.intellij.openapi.vfs.VirtualFile,
+                                           workingDirectoryFile: com.intellij.openapi.vfs.VirtualFile?) :
     com.jetbrains.python.testing.PyAbstractTestConfiguration.PyConfigurationRenamer(workingDirectoryFile) {
     override fun refactored(element: com.intellij.psi.PsiElement, oldQualifiedName: String?) {
       super.refactored(element, oldQualifiedName)
@@ -375,7 +390,8 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
     if (targetElement != null && com.intellij.psi.util.PsiTreeUtil.isAncestor(element, targetElement, false)) {
       return PyElementTargetRenamer(targetElement, workingDirectoryFile)
     }
-    if (targetFile != null && element is com.intellij.psi.PsiFileSystemItem && com.intellij.openapi.vfs.VfsUtil.isAncestor(element.virtualFile, targetFile, false)) {
+    if (targetFile != null && element is com.intellij.psi.PsiFileSystemItem && com.intellij.openapi.vfs.VfsUtil.isAncestor(
+      element.virtualFile, targetFile, false)) {
       return PyVirtualFileRenamer(targetFile, workingDirectoryFile)
     }
     return null
@@ -416,7 +432,8 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
     return com.jetbrains.python.testing.ConfigurationTarget(qualifiedName, TestTargetType.PYTHON).generateArgumentsLine(this)
   }
 
-  override fun getTestSpec(location: com.intellij.execution.Location<*>, failedTest: com.intellij.execution.testframework.AbstractTestProxy): String? {
+  override fun getTestSpec(location: com.intellij.execution.Location<*>,
+                           failedTest: com.intellij.execution.testframework.AbstractTestProxy): String? {
     val list = getPythonTestSpecByLocation(location)
     if (list.isEmpty()) {
       return null
@@ -532,11 +549,16 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
     // contains tests etc
     when (element) {
       is com.jetbrains.python.psi.PyFile -> com.jetbrains.python.testing.isTestFile(element)
-      is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any { it is com.jetbrains.python.psi.PyFile && com.jetbrains.python.testing.isTestFile(
-        it)
+      is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
+        it is com.jetbrains.python.psi.PyFile && com.jetbrains.python.testing.isTestFile(
+          it)
       }
-      is com.jetbrains.python.psi.PyFunction -> com.jetbrains.python.testing.PythonUnitTestUtil.isTestCaseFunction(element, runBareFunctions)
-      is com.jetbrains.python.psi.PyClass -> com.jetbrains.python.testing.PythonUnitTestUtil.isTestCaseClass(element, com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(element.project, element.containingFile))
+      is com.jetbrains.python.psi.PyFunction -> com.jetbrains.python.testing.PythonUnitTestUtil.isTestCaseFunction(element,
+                                                                                                                   runBareFunctions)
+      is com.jetbrains.python.psi.PyClass -> com.jetbrains.python.testing.PythonUnitTestUtil.isTestCaseClass(element,
+                                                                                                             com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(
+                                                                                                               element.project,
+                                                                                                               element.containingFile))
       else -> false
     }
 
@@ -552,7 +574,9 @@ abstract class PyAbstractTestConfiguration(project: com.intellij.openapi.project
 
 private fun isTestFile(file: com.jetbrains.python.psi.PyFile): Boolean {
   return com.jetbrains.python.testing.PythonUnitTestUtil.isUnitTestFile(file) ||
-         com.jetbrains.python.testing.PythonUnitTestUtil.getTestCaseClassesFromFile(file, com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(file.project, file)).isNotEmpty()
+         com.jetbrains.python.testing.PythonUnitTestUtil.getTestCaseClassesFromFile(file,
+                                                                                    com.jetbrains.python.psi.types.TypeEvalContext.userInitiated(
+                                                                                      file.project, file)).isNotEmpty()
 }
 
 abstract class PyAbstractTestFactory<out CONF_T : com.jetbrains.python.testing.PyAbstractTestConfiguration> : com.jetbrains.python.run.PythonConfigurationFactoryBase(
@@ -620,6 +644,18 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
 
 
   /**
+   * Inspects file relative imports, finds farthest and returns folder with imported file
+   */
+  private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
+    val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.max() ?: 0
+    var elementFolder = file.parent ?: return null
+    for (i in 1..maxRelativeLevel) {
+      elementFolder = elementFolder.parent ?: return null
+    }
+    return elementFolder
+  }
+
+  /**
    * Creates [ConfigurationTarget] to make  configuration work with provided element.
    * Also reports working dir what should be set to configuration to work correctly
    * @return [target, workingDirectory]
@@ -638,21 +674,27 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
           is com.jetbrains.python.psi.PyQualifiedNameOwner -> { // Function, class, method
 
             val module = configuration.module ?: return null
-            val elementFolder = element.containingFile.virtualFile.parent ?: return null
 
+            val elementFile = element.containingFile as? PyFile ?: return null
+            val workingDirectory = getDirectoryForFileToBeImportedFrom(elementFile) ?: return null
             val context = com.jetbrains.extenstions.QNameResolveContext(module,
                                                                         evalContext = TypeEvalContext.userInitiated(configuration.project,
                                                                                                                     null),
-                                                                        folderToStart = elementFolder)
+                                                                        folderToStart = workingDirectory.virtualFile)
             val parts = element.tryResolveAndSplit(context) ?: return null
-            val qualifiedName = parts.getElementNamePrependingFile()
+            val qualifiedName = parts.getElementNamePrependingFile(workingDirectory)
             return com.intellij.openapi.util.Pair(ConfigurationTarget(qualifiedName.toString(), TestTargetType.PYTHON),
-                                                  elementFolder.path)
+                                                  workingDirectory.virtualFile.path)
           }
           is com.intellij.psi.PsiFileSystemItem -> {
             val virtualFile = element.virtualFile
             val path = virtualFile
-            val workingDirectory = (if (virtualFile.isDirectory) virtualFile else virtualFile.parent).path
+
+            val workingDirectory = when (element) {
+                                     is PyFile -> getDirectoryForFileToBeImportedFrom(element)
+                                     is PsiDirectory -> element
+                                     else -> return null
+                                   }?.virtualFile?.path ?: return null
             return com.intellij.openapi.util.Pair(ConfigurationTarget(path.path, TestTargetType.PATH), workingDirectory)
           }
         }
@@ -664,7 +706,8 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
   }
 
 
-  override fun isConfigurationFromContext(configuration: com.jetbrains.python.testing.PyAbstractTestConfiguration, context: com.intellij.execution.actions.ConfigurationContext?): Boolean {
+  override fun isConfigurationFromContext(configuration: com.jetbrains.python.testing.PyAbstractTestConfiguration,
+                                          context: com.intellij.execution.actions.ConfigurationContext?): Boolean {
 
     val location = context?.location
     if (location is com.jetbrains.python.testing.PyTargetBasedPsiLocation) {
@@ -673,7 +716,8 @@ object PyTestsConfigurationProducer : com.jetbrains.python.testing.AbstractPytho
     }
 
     val psiElement = context?.psiLocation ?: return false
-    val targetForConfig = com.jetbrains.python.testing.PyTestsConfigurationProducer.getTargetForConfig(configuration, psiElement) ?: return false
+    val targetForConfig = com.jetbrains.python.testing.PyTestsConfigurationProducer.getTargetForConfig(configuration,
+                                                                                                       psiElement) ?: return false
     return configuration.target == targetForConfig.first
   }
 }

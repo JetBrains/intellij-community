@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
 import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -31,6 +32,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.datatransfer.StringSelection;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collection;
@@ -39,8 +41,6 @@ import java.util.List;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 public class PatchWriter {
-  private PatchWriter() {
-  }
 
   public static void writePatches(@NotNull final Project project,
                                   @NotNull String fileName,
@@ -62,17 +62,26 @@ public class PatchWriter {
     }
   }
 
-  public static void write(@NotNull Project project,
-                           @NotNull Writer writer,
-                           @Nullable String basePath,
-                           @NotNull List<FilePatch> patches,
-                           @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
+  private static void write(@NotNull Project project,
+                            @NotNull Writer writer,
+                            @Nullable String basePath,
+                            @NotNull List<FilePatch> patches,
+                            @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
     final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
     UnifiedDiffWriter
       .write(project, basePath, patches, writer, lineSeparator, Extensions.getExtensions(PatchEP.EP_NAME, project), commitContext);
     if (includeBinaries) {
       BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
     }
+  }
+
+  public static void writeAsPatchToClipboard(@NotNull Project project,
+                                             @NotNull List<FilePatch> patches,
+                                             @NotNull String basePath,
+                                             @Nullable CommitContext commitContext) throws IOException {
+    StringWriter writer = new StringWriter();
+    write(project, writer, basePath, patches, commitContext, true);
+    CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 
   @NotNull

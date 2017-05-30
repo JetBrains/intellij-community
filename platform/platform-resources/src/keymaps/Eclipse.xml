@@ -182,24 +182,8 @@
   </action>
   <action id="GotoSuperMethod"/>
   <action id="GotoTypeDeclaration"/>
-  <action id="Graph.Faces.OpenSelectedPages">
-    <keyboard-shortcut first-keystroke="F12"/>
-    <keyboard-shortcut first-keystroke="shift control E"/>
-  </action>
-  <action id="GuiDesigner.CreateComponent">
-    <keyboard-shortcut first-keystroke="alt INSERT"/>
-  </action>
-  <action id="GuiDesigner.CreateListener"/>
-  <action id="GuiDesigner.Duplicate">
-    <keyboard-shortcut first-keystroke="control alt UP"/>
-    <keyboard-shortcut first-keystroke="control alt DOWN"/>
-  </action>
   <action id="GuiDesigner.EditComponent"/>
   <action id="GuiDesigner.EditGroup"/>
-  <action id="GuiDesigner.GoToListener">
-    <keyboard-shortcut first-keystroke="control T"/>
-    <keyboard-shortcut first-keystroke="control alt B"/>
-  </action>
   <action id="HighlightUsagesInFile">
     <keyboard-shortcut first-keystroke="shift alt O"/>
     <keyboard-shortcut first-keystroke="shift control F7"/>
@@ -366,5 +350,8 @@
   <action id="context.clear"/>
   <action id="EditorMatchBrace">
     <keyboard-shortcut first-keystroke="shift control P"/>
+  </action>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="shift alt R"/>
   </action>
 </keymap>

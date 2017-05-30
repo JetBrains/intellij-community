@@ -60,14 +60,18 @@ public class RollbackWorker {
                          final boolean deleteLocallyAddedFiles,
                          @Nullable final Runnable afterVcsRefreshInAwt,
                          @Nullable final String localHistoryActionName) {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    final Runnable notifier = changeListManager.prepareForChangeDeletion(changes);
+    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+    Collection<LocalChangeList> affectedChangelists = changeListManager.getInvolvedListsFilterChanges(changes, new ArrayList<>());
+
     final Runnable afterRefresh = () -> {
       InvokeAfterUpdateMode updateMode = myInvokedFromModalContext ?
                                          InvokeAfterUpdateMode.SYNCHRONOUS_CANCELLABLE :
                                          InvokeAfterUpdateMode.SILENT;
       changeListManager.invokeAfterUpdate(() -> {
-        notifier.run();
+        for (LocalChangeList list : affectedChangelists) {
+          changeListManager.scheduleAutomaticEmptyChangeListDeletion(list);
+        }
+
         if (afterVcsRefreshInAwt != null) {
           afterVcsRefreshInAwt.run();
         }
@@ -103,7 +107,7 @@ public class RollbackWorker {
     else {
       rollbackAction.run();
     }
-    ((ChangeListManagerImpl) changeListManager).showLocalChangesInvalidated();
+    changeListManager.showLocalChangesInvalidated();
   }
 
   private class MyRollbackRunnable implements Runnable {

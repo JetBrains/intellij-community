@@ -289,10 +289,6 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     @Override
     public ExternalizationSession startExternalization() {
       return new ExternalizationSession() {
-        @Override
-        public void setState(@Nullable Object component, @NotNull String componentName, @NotNull Object state) {
-        }
-
         @Nullable
         @Override
         public SaveSession createSaveSession() {

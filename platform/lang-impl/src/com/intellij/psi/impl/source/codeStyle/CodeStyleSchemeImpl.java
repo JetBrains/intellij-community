@@ -113,11 +113,6 @@ public class CodeStyleSchemeImpl extends ExternalizableSchemeAdapter implements 
     return myIsDefault;
   }
 
-  @Override
-  public void resetToDefaults() {
-    myCodeStyleSettings = new CodeStyleSettings();
-  }
-
   @Nullable
   @Override
   public SchemeState getSchemeState() {

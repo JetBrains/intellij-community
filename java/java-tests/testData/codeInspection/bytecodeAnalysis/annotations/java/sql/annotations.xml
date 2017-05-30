@@ -72,6 +72,9 @@
         </annotation>
     </item>
     <item name='java.sql.Date java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Date java.sql.Date valueOf(java.lang.String) 0'>
@@ -178,6 +181,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.sql.RowId java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.sql.SQLClientInfoException java.util.Map&lt;java.lang.String,java.sql.ClientInfoStatus&gt; getFailedProperties()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -227,6 +235,9 @@
         </annotation>
     </item>
     <item name='java.sql.Time java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Time java.sql.Time valueOf(java.lang.String)'>
@@ -275,6 +286,9 @@
         </annotation>
     </item>
     <item name='java.sql.Timestamp java.lang.String toString()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Timestamp java.sql.Timestamp valueOf(java.lang.String)'>

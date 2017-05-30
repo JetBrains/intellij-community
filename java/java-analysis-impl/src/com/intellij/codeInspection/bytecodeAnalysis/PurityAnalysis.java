@@ -556,13 +556,15 @@ final class HardCodedPurity {
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
     new Method("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
-    // Declared in final class StringBuilder
-    new Method("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
     // Native
     new Method("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
     new Method("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
     new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;I)Ljava/lang/Object;"),
-    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;")
+    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;"),
+    new Method("java/lang/Float", "floatToRawIntBits", "(F)I"),
+    new Method("java/lang/Float", "intBitsToFloat", "(I)F"),
+    new Method("java/lang/Double", "doubleToRawLongBits", "(D)J"),
+    new Method("java/lang/Double", "longBitsToDouble", "(J)D")
     );
   private static Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
   private static Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
@@ -591,7 +593,8 @@ final class HardCodedPurity {
   }
 
   static boolean isPureMethod(Key key) {
-    return pureMethods.contains(key.method);
+    return key.method.methodName.equals("toString") && key.method.methodDesc.equals("()Ljava/lang/String;") ||
+           pureMethods.contains(key.method);
   }
 
   static boolean isOwnedField(FieldInsnNode fieldInsn) {

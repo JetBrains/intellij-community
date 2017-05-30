@@ -352,6 +352,51 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Override
+  public void elementRenamedOrMoved(@NotNull PsiModifierListOwner element, @NotNull String oldExternalName) { 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    try {
+      final List<XmlFile> files = findExternalAnnotationsXmlFiles(element);
+      if (files == null) {
+        return;
+      }
+      for (final XmlFile file : files) {
+        if (!file.isValid()) {
+          continue;
+        }
+        final XmlDocument document = file.getDocument();
+        if (document == null) {
+          continue;
+        }
+        final XmlTag rootTag = document.getRootTag();
+        if (rootTag == null) {
+          continue;
+        }
+
+        for (XmlTag tag : rootTag.getSubTags()) {
+          String className = StringUtil.unescapeXml(tag.getAttributeValue("name"));
+          if (Comparing.strEqual(className, oldExternalName)) {
+            WriteCommandAction
+              .runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
+                PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
+                try {
+                  tag.setAttribute("name", StringUtil.escapeXml(getExternalName(element, false)));
+                  commitChanges(file);
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
+              }, file);
+          }
+        }
+      }
+    }
+    finally {
+      dropCache();
+    }
+  }
+
+  
+  @Override
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull final String annotationFQN,
                                         @Nullable final PsiNameValuePair[] value) {
@@ -681,6 +726,19 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       LOG.error(e);
     }
     return null;
+  }
+
+  @Override
+  public boolean hasAnnotationRootsForFile(@NotNull VirtualFile file) {
+    if (hasAnyAnnotationsRoots()) {
+      ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myPsiManager.getProject()).getFileIndex();
+      for (OrderEntry entry : fileIndex.getOrderEntriesForFile(file)) {
+        if (!(entry instanceof ModuleOrderEntry) && AnnotationOrderRootType.getUrls(entry).length > 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override

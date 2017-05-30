@@ -317,9 +317,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
         p = focusOwner.getLocationOnScreen();
       }
 
-      Dimension size = WizardPopup.this.getSize();
-      boolean isEmpty = size == null || size.height <= 1 && size.width <= 1;
-      return isEmpty ? computeNotBiggerDimension(super.getPreferredSize().getSize(), p) : size;
+      return computeNotBiggerDimension(super.getPreferredSize().getSize(), p);
     }
 
     private Dimension computeNotBiggerDimension(Dimension ofContent, final Point locationOnScreen) {

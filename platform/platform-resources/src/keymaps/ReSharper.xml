@@ -72,13 +72,10 @@
   <action id="SurroundWithLiveTemplate">
     <keyboard-shortcut first-keystroke="control E" second-keystroke="U"/>
   </action>
-  <action id="TypeHierarchyBase.BaseOnThisType">
-    <keyboard-shortcut first-keystroke="meta UP"/>
-  </action>
-  <action id="UsageView.ShowRecentFindUsages">
-    <keyboard-shortcut first-keystroke="control COMMA"/>
-  </action>
   <action id="Vcs.ShowMessageHistory">
     <keyboard-shortcut first-keystroke="control M"/>
+  </action>
+  <action id="Git.Reword.Commit">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
   </action>
 </keymap>

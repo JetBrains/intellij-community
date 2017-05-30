@@ -42,7 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
-import com.intellij.testGuiFramework.impl.FirstStart;
+import com.intellij.testGuiFramework.impl.FirstStartToRemove;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
@@ -211,7 +211,7 @@ GuiTestUtil {
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
 
-      if(isFirstStart) (new FirstStart(robot)).completeBefore();
+      if(isFirstStart) (new FirstStartToRemove(robot)).completeBefore();
 
       final MyProjectManagerListener listener = new MyProjectManagerListener();
       final Ref<MessageBusConnection> connection = new Ref<>();
@@ -231,7 +231,7 @@ GuiTestUtil {
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
 
-      if(isFirstStart) (new FirstStart(robot)).completeAfter();
+      if(isFirstStart) (new FirstStartToRemove(robot)).completeAfter();
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which

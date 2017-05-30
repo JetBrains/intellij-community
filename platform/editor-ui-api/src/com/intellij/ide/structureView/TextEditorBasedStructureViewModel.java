@@ -125,9 +125,11 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   @Override
   public Object getCurrentEditorElement() {
     if (myEditor == null) return null;
-    final int offset = myEditor.getCaretModel().getOffset();
-    final PsiFile file = getPsiFile();
+    
+    PsiFile file = getPsiFile();
+    if (!file.isValid()) return null;
 
+    int offset = myEditor.getCaretModel().getOffset();
     return findAcceptableElement(file.getViewProvider().findElementAt(offset, file.getLanguage()));
   }
 

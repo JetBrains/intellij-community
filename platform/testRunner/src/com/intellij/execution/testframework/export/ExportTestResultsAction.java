@@ -20,10 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.xml.transform.OutputKeys;
@@ -71,11 +69,13 @@ public class ExportTestResultsAction extends DumbAwareAction {
   private String myToolWindowId;
   private RunConfiguration myRunConfiguration;
 
-  public static ExportTestResultsAction create(String toolWindowId, RunConfiguration runtimeConfiguration) {
+  public static ExportTestResultsAction create(String toolWindowId, RunConfiguration runtimeConfiguration, JComponent component) {
     ExportTestResultsAction action = new ExportTestResultsAction();
-    action.copyFrom(ActionManager.getInstance().getAction(ID));
+    AnAction sourceAction = ActionManager.getInstance().getAction(ID);
+    action.copyFrom(sourceAction);
     action.myToolWindowId = toolWindowId;
     action.myRunConfiguration = runtimeConfiguration;
+    action.registerCustomShortcutSet(sourceAction.getShortcutSet(), component);
     return action;
   }
 

@@ -86,7 +86,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return selectStrategy(context).getContextName() + " '''" + MavenArtifactCoordinatesHelper.getId(context) + "''' not found";
+    return selectStrategy(context).getContextName() + " '" + MavenArtifactCoordinatesHelper.getId(context) + "' not found";
   }
 
   @Override

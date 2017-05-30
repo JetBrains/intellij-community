@@ -87,7 +87,7 @@ public class FixedSizeButton extends JButton {
   }
 
   public Dimension getPreferredSize() {
-    if (myComponent != null) {
+    if (myComponent != null && !UIUtil.isUnderWin10LookAndFeel()) { // On Win10 LaF rely on UI defined size.
       int size = myComponent.getPreferredSize().height;
       if (myComponent instanceof JComboBox && (!SystemInfo.isMac && UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
         // JComboBox's preferred height is 2px greater than JTextField's one, because

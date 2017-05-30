@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.testFramework.fixtures
+package com.intellij.java.testFramework.fixtures
 
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
-import com.intellij.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.MAIN
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 abstract class LightJava9ModulesCodeInsightFixtureTestCase : LightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = MultiModuleJava9ProjectDescriptor

@@ -99,6 +99,7 @@
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.NewifyMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
@@ -178,7 +179,8 @@
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovySourceCodeNamedArgumentProvider" order="last"/>
-    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyConstructorNamedArgumentProvider"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewifyNamedArgumentProvider"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewExprNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
 
 
@@ -1651,9 +1653,7 @@
   <actions>
     <action id="Groovy.Shell.Execute" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="Console.Execute.Multiline"
             text="Execute Groovy Code"
-            description="Execute Groovy code in console">
-      <keyboard-shortcut first-keystroke="control ENTER" keymap="$default"/>
-    </action>
+            description="Execute Groovy code in console"/>
 
     <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
            popup="true"

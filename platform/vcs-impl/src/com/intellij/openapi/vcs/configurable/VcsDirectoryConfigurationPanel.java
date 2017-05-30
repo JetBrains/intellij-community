@@ -550,7 +550,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
           return !myIsDisabled && onlyRegisteredRootsInSelection();
         }
       }).disableUpDownActions().createPanel();
-    panelForTable.setPreferredSize(new Dimension(-1, 200));
+    panelForTable.setPreferredSize(new JBDimension(-1, 200));
     return panelForTable;
   }
 

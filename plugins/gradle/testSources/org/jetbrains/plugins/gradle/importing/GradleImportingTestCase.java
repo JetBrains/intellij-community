@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import org.gradle.StartParameter;
 import org.gradle.util.GradleVersion;
 import org.gradle.wrapper.GradleWrapperMain;
@@ -72,10 +73,6 @@ import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderT
 import static org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS;
 import static org.junit.Assume.assumeThat;
 
-/**
- * @author Vladislav.Soroka
- * @since 6/30/2014
- */
 @RunWith(value = Parameterized.class)
 public abstract class GradleImportingTestCase extends ExternalSystemImportingTestCase {
   public static final String BASE_GRADLE_VERSION = AbstractModelBuilderTest.BASE_GRADLE_VERSION;
@@ -133,7 +130,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
         }
       }.execute();
       Messages.setTestDialog(TestDialog.DEFAULT);
-      FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
+      PathKt.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     finally {
       super.tearDown();

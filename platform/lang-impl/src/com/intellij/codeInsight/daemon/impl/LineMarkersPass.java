@@ -110,8 +110,11 @@ public class LineMarkersPass extends TextEditorHighlightingPass implements DumbA
 
              queryProviders(elements.inside, root, providersList, (element, info) -> {
                lineMarkers.add(info);
-               ApplicationManager.getApplication()
-                 .invokeLater(() -> LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info), myProject.getDisposed());
+               ApplicationManager.getApplication().invokeLater(() -> {
+                 if (isValid()) {
+                   LineMarkersUtil.addLineMarkerToEditorIncrementally(myProject, getDocument(), info);
+                 }
+               }, myProject.getDisposed());
              });
              queryProviders(elements.outside, root, providersList, (element, info) -> lineMarkers.add(info));
              return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,18 +90,29 @@ public class FileBasedIndexScanRunnableCollectorImpl extends FileBasedIndexScanR
         contributedRoots = contributedRoots.append(IndexableSetContributor.getRootsToIndex(contributor));
         contributedRoots = contributedRoots.append(IndexableSetContributor.getProjectRootsToIndex(contributor, myProject));
       }
-      for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
-        if (myProject.isDisposed()) {
-          return tasks;
-        }
-        contributedRoots = contributedRoots.append(provider.getAdditionalProjectLibraries(myProject), SyntheticLibrary::getSourceRoots);
-      }
       for (VirtualFile root : contributedRoots) {
         if (visitedRoots.add(root)) {
           tasks.add(() -> {
             if (myProject.isDisposed() || !root.isValid()) return;
             FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, null);
           });
+        }
+      }
+
+      // iterate synthetic project libraries
+      for (AdditionalLibraryRootsProvider provider : Extensions.getExtensions(AdditionalLibraryRootsProvider.EP_NAME)) {
+        if (myProject.isDisposed()) {
+          return tasks;
+        }
+        for (SyntheticLibrary library : provider.getAdditionalProjectLibraries(myProject)) {
+          for (VirtualFile root : library.getSourceRoots()) {
+            if (visitedRoots.add(root)) {
+              tasks.add(() -> {
+                if (myProject.isDisposed() || !root.isValid()) return;
+                FileBasedIndex.iterateRecursively(root, processor, indicator, visitedRoots, myProjectFileIndex);
+              });
+            }
+          }
         }
       }
 

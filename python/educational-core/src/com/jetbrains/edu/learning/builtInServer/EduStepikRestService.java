@@ -25,9 +25,11 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
 import com.jetbrains.edu.learning.StudySettings;
+import com.jetbrains.edu.learning.courseFormat.Lesson;
 import com.jetbrains.edu.learning.stepic.EduStepicAuthorizedClient;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
 import com.jetbrains.edu.learning.stepic.StepicUser;
+import com.jetbrains.edu.learning.stepic.StepicWrappers;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
@@ -46,13 +48,20 @@ import java.util.regex.Pattern;
 
 import static com.jetbrains.edu.learning.builtInServer.EduBuiltInServerUtils.*;
 import static com.jetbrains.edu.learning.stepic.EduStepicNames.EDU_STEPIK_SERVICE_NAME;
-import static com.jetbrains.edu.learning.stepic.EduStepicNames.STEP_ID;
+import static com.jetbrains.edu.learning.stepic.EduStepicNames.LINK;
 
 public class EduStepikRestService extends RestService {
   private static final Logger LOG = Logger.getInstance(EduStepikRestService.class.getName());
-  private static final Pattern OPEN_COURSE_PATTERN = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "/course/(\\d+)");
+  private static final Pattern OPEN_COURSE_PATTERN = Pattern.compile("/" + EDU_STEPIK_SERVICE_NAME + "\\?link=.+");
+  private static final Pattern COURSE_PATTERN = Pattern.compile("https://stepik\\.org/lesson/[a-zA-Z\\-]*-(\\d+)/step/(\\d+)");
   private static final Pattern
     OAUTH_CODE_PATTERN = Pattern.compile("/" + RestService.PREFIX + "/" + EDU_STEPIK_SERVICE_NAME + "/oauth" + "\\?code=(\\w+)");
+
+  @NotNull
+  private static String log(@NotNull String message) {
+    LOG.info(message);
+    return message;
+  }
 
   @NotNull
   @Override
@@ -84,23 +93,62 @@ public class EduStepikRestService extends RestService {
   @Override
   public String execute(@NotNull QueryStringDecoder urlDecoder, @NotNull FullHttpRequest request, @NotNull ChannelHandlerContext context)
     throws IOException {
-    LOG.info("Request: " + urlDecoder.uri());
+    String uri = urlDecoder.uri();
+    LOG.info("Request: " + uri);
 
-    String path = urlDecoder.path();
-    Matcher matcher = OPEN_COURSE_PATTERN.matcher(path);
+    Matcher matcher = OPEN_COURSE_PATTERN.matcher(uri);
     if (matcher.matches()) {
-      int courseId = Integer.parseInt(matcher.group(1));
-      List<String> stepIds = urlDecoder.parameters().get(STEP_ID);
-      int stepId = 0;
-      if (stepIds != null && !stepIds.isEmpty()) {
-        String firstStepId = "";
-        try {
-          firstStepId = stepIds.get(0);
-          stepId = Integer.parseInt(firstStepId);
-        } catch (NumberFormatException e) {
-          LOG.warn("Wrong a request parameter: step_id=" + firstStepId, e);
-        }
+      int courseId;
+      int stepId;
+      String link = getStringParameter(LINK, urlDecoder);
+
+      if (link == null) {
+        return log("The link parameter was not found");
       }
+
+      LOG.info("Try to open a course: " + link);
+
+      QueryStringDecoder linkDecoder = new QueryStringDecoder(link);
+
+      matcher = COURSE_PATTERN.matcher(linkDecoder.path());
+
+      if (!matcher.matches()) {
+        return log("Unrecognized the link parameter");
+      }
+
+      int lessonId;
+      int stepIndex;
+      try {
+        lessonId = Integer.parseInt(matcher.group(1));
+        stepIndex = Integer.parseInt(matcher.group(2));
+      } catch (NumberFormatException e) {
+        return log("Unrecognized the link");
+      }
+
+      int unitId = getIntParameter("unit", linkDecoder);
+
+      if (unitId == -1) {
+        return log("Unrecognized the Unit id");
+      }
+
+      StepicWrappers.Unit unit = EduStepicConnector.getUnit(unitId);
+      if (unit.getId() == 0) {
+        return log("Unrecognized the Unit id");
+      }
+
+      StepicWrappers.Section section = EduStepicConnector.getSection(unit.getSection());
+      courseId = section.getCourse();
+      if (courseId == 0) {
+        return log("Unrecognized the course id");
+      }
+      Lesson lesson = EduStepicConnector.getLesson(lessonId);
+      List<Integer> stepIds = lesson.steps;
+
+      if (stepIds.isEmpty()) {
+        return log("Unrecognized the step id");
+      }
+      stepId = stepIds.get(stepIndex - 1);
+
       LOG.info(String.format("Try to open a course: courseId=%s, stepId=%s", courseId, stepId));
 
       if (focusOpenProject(courseId, stepId) || openRecentProject(courseId, stepId) || createProject(courseId, stepId)) {
@@ -114,7 +162,8 @@ public class EduStepikRestService extends RestService {
       LOG.info(message);
       return message;
     }
-    Matcher codeMatcher = OAUTH_CODE_PATTERN.matcher(urlDecoder.uri());
+
+    Matcher codeMatcher = OAUTH_CODE_PATTERN.matcher(uri);
     if (codeMatcher.matches()) {
       String code = getStringParameter("code", urlDecoder);
       if (code != null) {
@@ -122,7 +171,8 @@ public class EduStepikRestService extends RestService {
         if (stepicUser != null) {
           StudySettings.getInstance().setUser(stepicUser);
           sendHtmlResponse(request, context, "/oauthResponsePages/okPage.html");
-          showStepicNotification(NotificationType.INFORMATION, "Logged in as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
+          showStepicNotification(NotificationType.INFORMATION,
+                                 "Logged in as " + stepicUser.getFirstName() + " " + stepicUser.getLastName());
           focusOnApplicationWindow();
           return null;
         }
@@ -134,7 +184,7 @@ public class EduStepikRestService extends RestService {
     }
 
     RestService.sendStatus(HttpResponseStatus.BAD_REQUEST, false, context.channel());
-    String message = "Unknown command: " + path;
+    String message = "Unknown command: " + uri;
     LOG.info(message);
     return message;
   }

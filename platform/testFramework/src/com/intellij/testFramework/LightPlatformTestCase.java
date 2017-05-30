@@ -409,8 +409,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
             e.printStackTrace();
           }
         }
-        EncodingManager encodingManager = EncodingManager.getInstance();
-        if (encodingManager instanceof EncodingManagerImpl) ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
 
         FileDocumentManager manager = FileDocumentManager.getInstance();
         if (manager instanceof FileDocumentManagerImpl) {
@@ -419,6 +417,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       })).
       append(() -> assertFalse(PsiManager.getInstance(project).isDisposed())).
       append(() -> {
+        EncodingManager encodingManager = EncodingManager.getInstance();
+        if (encodingManager instanceof EncodingManagerImpl) {
+          ((EncodingManagerImpl)encodingManager).clearDocumentQueue();
+        }
+
         if (!ourAssertionsInTestDetected) {
           if (IdeaLogger.ourErrorsOccurred != null) {
             throw IdeaLogger.ourErrorsOccurred;

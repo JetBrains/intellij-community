@@ -19,11 +19,12 @@ import com.intellij.extapi.psi.PsiFileBase;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.properties.*;
-import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.parsing.PropertiesElementTypes;
 import com.intellij.lang.properties.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -40,7 +41,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -188,7 +192,8 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
-    if (isPhysical()) {
+    VirtualFile file = getVirtualFile();
+    if (file != null && ProjectFileIndex.getInstance(getProject()).isInContent(file)) {
       return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
     } else {
       // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)

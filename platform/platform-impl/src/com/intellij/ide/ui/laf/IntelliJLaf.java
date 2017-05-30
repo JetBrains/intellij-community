@@ -17,6 +17,9 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
@@ -42,6 +45,15 @@ public class IntelliJLaf extends DarculaLaf {
 
   @Override
   protected BasicLookAndFeel createBaseLookAndFeel() {
+    Registry.get("ide.intellij.laf.win10.ui").addListener(new RegistryValueListener.Adapter() {
+      @Override
+      public void afterValueChanged(RegistryValue value) {
+        try { // Update UI
+          UIManager.setLookAndFeel(UIManager.getLookAndFeel());
+        } catch (UnsupportedLookAndFeelException ignored) {}
+      }
+    }, myDisposable);
+
     if (UIUtil.isUnderWin10LookAndFeel()) {
       try {
         final String name = UIManager.getSystemLookAndFeelClassName();

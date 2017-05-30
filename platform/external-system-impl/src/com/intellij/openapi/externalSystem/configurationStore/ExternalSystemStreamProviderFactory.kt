@@ -32,12 +32,13 @@ import com.intellij.util.Function
 import org.jdom.Element
 import java.util.*
 
-private val EXTERNAL_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalProjectStorage::class.java)
+private val EXTERNAL_MODULE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalModuleStorage::class.java)
 private val LOG = logger<ExternalSystemStreamProviderFactory>()
 
 // todo handle module rename
 internal class ExternalSystemStreamProviderFactory(private val project: Project) : StreamProviderFactory {
-  val moduleStorage = FileSystemExternalSystemStorage(project)
+  val moduleStorage = ModuleFileSystemExternalSystemStorage(project)
+  val fileStorage = ProjectFileSystemExternalSystemStorage(project)
 
   private var isStorageFlushInProgress = false
 
@@ -72,7 +73,21 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
-    if (componentManager !is Module || component !is ProjectModelElement || !isExternalStorageEnabled()) {
+    if (!isExternalStorageEnabled) {
+      return null
+    }
+
+    if (componentManager is Project) {
+      val fileSpec = storages.firstOrNull()?.value
+      if (fileSpec == "libraries") {
+        val result = ArrayList<Storage>(storages.size + 1)
+        result.add(FileStorageAnnotation("$fileSpec.xml", false, ExternalProjectStorage::class.java))
+        result.addAll(storages)
+        return result
+      }
+    }
+
+    if (component !is ProjectModelElement) {
       return null
     }
 
@@ -88,7 +103,12 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     // on write default storages also returned, because default FileBasedStorage will remove data if component has external source
 
     val result = ArrayList<Storage>(storages.size + 1)
-    result.add(EXTERNAL_STORAGE_ANNOTATION)
+    if (componentManager is Project) {
+      result.add(FileStorageAnnotation(storages.get(0).value, false, ExternalProjectStorage::class.java))
+    }
+    else {
+      result.add(EXTERNAL_MODULE_STORAGE_ANNOTATION)
+    }
     result.addAll(storages)
     return result
   }
