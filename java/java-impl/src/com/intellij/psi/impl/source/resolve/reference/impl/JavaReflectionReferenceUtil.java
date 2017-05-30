@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -247,6 +246,7 @@ public class JavaReflectionReferenceUtil {
 
   @Nullable
   private static PsiExpression findFinalFieldDefinition(@NotNull PsiReferenceExpression referenceExpression, @NotNull PsiField field) {
+    if (!field.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass psiClass = ObjectUtils.tryCast(field.getParent(), PsiClass.class);
     if (psiClass != null) {
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
@@ -273,34 +273,12 @@ public class JavaReflectionReferenceUtil {
     return null;
   }
 
+  @Nullable
   private static PsiExpression getAssignedExpression(@NotNull PsiMember maybeContainsAssignment, @NotNull PsiField field) {
-    final Ref<PsiExpression> refResult = new Ref<>();
-    maybeContainsAssignment.accept(new JavaRecursiveElementVisitor() {
-      boolean stopped = false;
-
-      @Override
-      public void visitElement(PsiElement element) {
-        if (!stopped) {
-          super.visitElement(element);
-        }
-      }
-
-      @Override
-      public void visitExpression(PsiExpression expression) {
-        // do nothing
-      }
-
-      @Override
-      public void visitAssignmentExpression(PsiAssignmentExpression expression) {
-        super.visitAssignmentExpression(expression);
-
-        if (VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field)) {
-          refResult.set(expression.getRExpression());
-          stopped = true;
-        }
-      }
-    });
-    return refResult.get();
+    final PsiAssignmentExpression assignment = SyntaxTraverser.psiTraverser(maybeContainsAssignment)
+      .filter(PsiAssignmentExpression.class)
+      .find(expression -> VariableAccessUtils.evaluatesToVariable(expression.getLExpression(), field));
+    return assignment != null ? assignment.getRExpression() : null;
   }
 
   private static PsiClass findClass(@NotNull String qualifiedName, @NotNull PsiElement context) {
