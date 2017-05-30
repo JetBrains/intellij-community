@@ -519,6 +519,11 @@ public class DocumentWindowImpl extends UserDataHolderBase implements Disposable
   }
 
   @Override
+  public boolean isLineModified(int line) {
+    return myDelegate.isLineModified(injectedToHostLine(line));
+  }
+
+  @Override
   @NotNull
   public Segment[] getHostRanges() {
     synchronized (myLock) {

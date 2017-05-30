@@ -278,7 +278,7 @@ public class AnalysisScope {
     final FileIndex fileIndex = getFileIndex();
     accept(file -> {
       if (file.isDirectory()) return true;
-      if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, file.getFileType())) return true;
+      if (ProjectCoreUtil.isProjectOrWorkspaceFile(file)) return true;
       if (fileIndex.isInContent(file) && !isFiltered(file)
           && !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
         return processFile(file, visitor, psiManager, needReadAction, clearResolveCache);

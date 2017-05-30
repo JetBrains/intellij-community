@@ -118,7 +118,7 @@ public class ImageComponentUI extends ComponentUI {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         }
-        UIUtil.drawImage(g, renderer, 0, 0, size.width, size.height, ic);
+        UIUtil.drawImage(g, renderer, new Rectangle(0, 0, size.width, size.height), null, ic);
 
         g2d.setRenderingHints(oldHints);
     }

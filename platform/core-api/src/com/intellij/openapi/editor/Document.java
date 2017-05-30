@@ -142,6 +142,13 @@ public interface Document extends UserDataHolder {
   int getLineEndOffset(int line);
 
   /**
+   * @return whether the line with the given index has been modified since the document has been saved
+   */
+  default boolean isLineModified(int line) {
+    return false;
+  }
+
+  /**
    * Inserts the specified text at the specified offset in the document. Line breaks in
    * the inserted text must be normalized as \n.
    *

@@ -74,7 +74,7 @@ fun guessProjectForFile(file: VirtualFile?): Project? = ProjectLocator.getInstan
  * guessProjectForFile works incorrectly - even if file is config (idea config file) first opened project will be returned
  */
 @JvmOverloads
-fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = file.fileType): Project? {
+fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence)): Project? {
   if (ProjectCoreUtil.isProjectOrWorkspaceFile(file, fileType)) {
     return null
   }
@@ -82,10 +82,7 @@ fun guessProjectForContentFile(file: VirtualFile, fileType: FileType = file.file
   return ProjectManager.getInstance().openProjects.firstOrNull { !it.isDefault && it.isInitialized && !it.isDisposed && ProjectRootManager.getInstance(it).fileIndex.isInContent(file) }
 }
 
-fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean {
-  // do not use file.getFileType() to avoid autodetection by content loading for arbitrary files
-  return ProjectCoreUtil.isProjectOrWorkspaceFile(file, FileTypeManager.getInstance().getFileTypeByFileName(file.name))
-}
+fun isProjectOrWorkspaceFile(file: VirtualFile): Boolean = ProjectCoreUtil.isProjectOrWorkspaceFile(file)
 
 fun guessCurrentProject(component: JComponent?): Project {
   var project: Project? = null

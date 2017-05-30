@@ -111,7 +111,7 @@ class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     final String path = getTestName(false) + ".java"
     myFixture.configureByFile(path)
     myFixture.complete(CompletionType.BASIC, 2)
-    assertPreferredItems(0, "BOOLEAN", "booleanMethod", "AN_OBJECT", "voidMethod")
+    assertPreferredItems(0, "booleanMethod", "BOOLEAN", "voidMethod", "AN_OBJECT")
   }
 
   void testDispreferDeclared() throws Throwable {

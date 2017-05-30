@@ -2008,6 +2008,45 @@ public class UIUtil {
     drawImage(g, image, x, y, -1, -1, observer);
   }
 
+  public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstRect, @Nullable Rectangle srcRect, ImageObserver observer) {
+    Image drawImage = image;
+    if (image instanceof JBHiDPIScaledImage) {
+      drawImage = ((JBHiDPIScaledImage)image).getDelegate();
+      if (drawImage == null) {
+        drawImage = image;
+      }
+    }
+    int dx = 0;
+    int dy = 0;
+    int dw = -1;
+    int dh = -1;
+    if (dstRect != null) {
+      dx = dstRect.x;
+      dy = dstRect.y;
+      dw = dstRect.width;
+      dh = dstRect.height;
+    }
+    if (dw == -1 && dh == -1) {
+      dw = ImageUtil.getUserWidth(image);
+      dh = ImageUtil.getUserHeight(image);
+    }
+    int sx = 0;
+    int sy = 0;
+    int sw = -1;
+    int sh = -1;
+    if (srcRect != null) {
+      sx = srcRect.x;
+      sy = srcRect.y;
+      sw = srcRect.width;
+      sh = srcRect.height;
+    }
+    if (sw == -1 && sh == -1) {
+      sw = ImageUtil.getRealWidth(image);
+      sh = ImageUtil.getRealHeight(image);
+    }
+    g.drawImage(drawImage, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, observer);
+  }
+
   public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
@@ -2028,7 +2067,7 @@ public class UIUtil {
       g.drawImage(image, x, y, observer);
     }
     else {
-      g.drawImage(image, x, y, x + width, y + height, observer);
+      g.drawImage(image, x, y, x + width, y + height, 0, 0, width, height, observer);
     }
   }
 
