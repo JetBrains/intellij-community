@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,34 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.impl.VcsLogUtil;
+import org.jetbrains.annotations.NotNull;
 
-public class VcsLogCreatePatchAction extends CreatePatchFromChangesAction {
+import java.util.Arrays;
 
+public class VcsLogCreatePatchAction implements AnActionExtensionProvider {
   @Override
-  public void update(AnActionEvent e) {
-    Change[] changes;
-    e.getPresentation().setEnabled((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0);
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(VcsLogDataKeys.VCS_LOG_UI) != null;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
+    Change[] changes = e.getData(VcsDataKeys.CHANGES);
+    e.getPresentation().setEnabled(changes != null && changes.length > 0);
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUtil.triggerUsage(e);
-    super.actionPerformed(e);
+
+    Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
+    String commitMessage = e.getData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
+    CreatePatchFromChangesAction.createPatch(e.getProject(), commitMessage, Arrays.asList(changes));
   }
 }

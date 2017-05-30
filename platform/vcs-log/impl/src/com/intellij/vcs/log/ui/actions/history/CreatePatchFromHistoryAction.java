@@ -15,10 +15,9 @@
  */
 package com.intellij.vcs.log.ui.actions.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -31,7 +30,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class CreatePatchFromHistoryAction extends AnAction implements DumbAware {
+public class CreatePatchFromHistoryAction implements AnActionExtensionProvider {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
