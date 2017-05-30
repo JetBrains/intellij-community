@@ -20,6 +20,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -187,14 +188,20 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
     final PyExpression defaultValue = getDefaultValue();
     if (defaultValueShouldBeIncluded(includeDefaultValue, defaultValue, argumentType)) {
-      String representation = PyUtil.getReadableRepr(defaultValue, true);
-      if (defaultValue instanceof PyStringLiteralExpression) {
-        final Pair<String, String> quotes = PyStringLiteralUtil.getQuotes(defaultValue.getText());
-        if (quotes != null) {
-          representation = quotes.getFirst() + PyStringLiteralUtil.getStringValue(defaultValue) + quotes.getSecond();
-        }
+      final Pair<String, String> quotes = defaultValue instanceof PyStringLiteralExpression
+                                          ? PyStringLiteralUtil.getQuotes(defaultValue.getText())
+                                          : null;
+
+      sb.append("=");
+      if (quotes != null) {
+        final String value = ((PyStringLiteralExpression)defaultValue).getStringValue();
+        sb.append(quotes.getFirst());
+        StringUtil.escapeStringCharacters(value.length(), value, sb);
+        sb.append(quotes.getSecond());
       }
-      sb.append("=").append(representation);
+      else {
+        sb.append(PyUtil.getReadableRepr(defaultValue, true));
+      }
     }
 
     return sb.toString();
