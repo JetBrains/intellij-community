@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -28,10 +29,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
-import com.intellij.ui.ErrorLabel;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollingUtil;
-import com.intellij.ui.SeparatorWithText;
+import com.intellij.ui.*;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.popup.KeepingPopupOpenAction;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -84,6 +82,39 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     }
     trackDimensions(dimensionKey);
+    createTitlePanelToolbar(dimensionKey);
+  }
+
+  void createTitlePanelToolbar(@Nullable String dimensionKey) {
+    if (dimensionKey == null) return;
+    AnAction restoreDefaultSizeAction =
+      new DumbAwareAction("Restore Size", "Restore default size for widget", AllIcons.Vcs.RestoreDefaultSize) {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
+          myUserSizeChanged = false;
+          pack(true, true);
+        }
+
+        @Override
+        public void update(AnActionEvent e) {
+          e.getPresentation().setEnabledAndVisible(myUserSizeChanged ||
+                                                   WindowStateService.getInstance(myProject).getSizeFor(myProject, dimensionKey) != null);
+        }
+      };
+    final ActionToolbar popupTitleToolbar = ActionManager.getInstance()
+    .createActionToolbar("BranchWidget", new DefaultActionGroup(restoreDefaultSizeAction), true);
+    final JComponent toolbarComponent = popupTitleToolbar.getComponent();
+    popupTitleToolbar.setReservePlaceAutoPopupIcon(false);
+    toolbarComponent.setBorder(JBUI.Borders.emptyRight(2));
+    toolbarComponent.setOpaque(false);
+
+    getTitle().setButtonComponent(new ActiveComponent.Adapter() {
+      @Override
+      public JComponent getComponent() {
+        return toolbarComponent;
+      }
+    }, null);
   }
 
   //for child popups only
