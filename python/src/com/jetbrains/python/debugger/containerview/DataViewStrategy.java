@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.debugger.containerview;
 
-import com.intellij.util.containers.ContainerUtil;
+import com.google.common.collect.ImmutableSet;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.array.ArrayViewStrategy;
@@ -30,7 +30,7 @@ import java.util.Set;
 
 public abstract class DataViewStrategy {
   private static class StrategyHolder {
-    private static final Set<DataViewStrategy> STRATEGIES = ContainerUtil.newHashSet(new ArrayViewStrategy(), new DataFrameViewStrategy(), new SeriesViewStrategy());
+    private static final Set<DataViewStrategy> STRATEGIES = ImmutableSet.of(new ArrayViewStrategy(), new DataFrameViewStrategy(), new SeriesViewStrategy());
   }
 
   public abstract AsyncArrayTableModel createTableModel(int rowCount, int columnCount, @NotNull PyDataViewerPanel panel, @NotNull PyDebugValue debugValue);

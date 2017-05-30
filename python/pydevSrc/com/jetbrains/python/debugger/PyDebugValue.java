@@ -1,11 +1,10 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.*;
 import com.jetbrains.python.debugger.pydev.PyVariableLocator;
 import org.jetbrains.annotations.NotNull;
@@ -22,8 +21,7 @@ public class PyDebugValue extends XNamedValue {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.PyDebugValue");
   private static final String DATA_FRAME = "DataFrame";
   private static final String SERIES = "Series";
-  private static final Map<String, String> EVALUATOR_POSTFIXES =
-    ContainerUtil.newHashMap(Pair.create("ndarray", "Array"), Pair.create(DATA_FRAME, DATA_FRAME), Pair.create(SERIES, SERIES));
+  private static final Map<String, String> EVALUATOR_POSTFIXES = ImmutableMap.of("ndarray", "Array", DATA_FRAME, DATA_FRAME, SERIES, SERIES);
   public static final int MAX_VALUE = 256;
 
   public static final String RETURN_VALUES_PREFIX = "__pydevd_ret_val_dict";
