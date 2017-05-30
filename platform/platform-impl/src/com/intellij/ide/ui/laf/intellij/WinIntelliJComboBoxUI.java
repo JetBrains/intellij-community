@@ -343,12 +343,6 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   @Override protected void configureEditor() {
     super.configureEditor();
 
-    if (Registry.is("ide.ui.composite.editor.for.combobox")) { // Copy from DarculaComboBoxUI
-      if (editor instanceof JPanel) {
-        editor.setFocusable(false);
-      }
-    }
-
     if (editor != null) {
       editorFocusListener = new FocusAdapter() {
         @Override public void focusGained(FocusEvent e) {

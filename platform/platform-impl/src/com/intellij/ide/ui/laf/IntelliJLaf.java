@@ -54,7 +54,7 @@ public class IntelliJLaf extends DarculaLaf {
       }
     }, myDisposable);
 
-    if (UIUtil.isUnderWin10LookAndFeel()) {
+    if (UIUtil.isUnderWindowsLookAndFeel()) {
       try {
         final String name = UIManager.getSystemLookAndFeelClassName();
         return (BasicLookAndFeel)Class.forName(name).newInstance();
