@@ -16,16 +16,24 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import org.jetbrains.annotations.NotNull;
 
-public class DiffShelvedChangesWithLocalAction extends DumbAwareAction {
+public class DiffShelvedChangesWithLocalAction implements AnActionExtensionProvider {
   @Override
-  public void update(final AnActionEvent e) {
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY) != null ||
+           e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setDescription("Compare shelved version with current");
     e.getPresentation().setEnabled(DiffShelvedChangesAction.isEnabled(e.getDataContext()));
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DiffShelvedChangesAction.showShelvedChangesDiff(e.getDataContext(), true);
   }
 }

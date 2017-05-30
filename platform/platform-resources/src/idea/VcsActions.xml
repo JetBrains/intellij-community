@@ -25,6 +25,9 @@
             text="Com_pare with Specified Revision..." popup="true"/>
     <action id="Vcs.ShowHistoryForBlock" class="com.intellij.openapi.vcs.actions.SelectedBlockHistoryAction"/>
     <action id="Vcs.GetVersion" class="com.intellij.openapi.vcs.history.actions.GetVersionAction"/>
+    <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffWithLocalAction"
+            text="Compare with Local" description="Compare version from selected revision with current version"
+            icon="AllIcons.Actions.DiffWithCurrent"/>
 
     <group class="com.intellij.openapi.vcs.actions.VcsActionGroup" id="VcsGroup"/>
 
@@ -146,9 +149,7 @@
               text="Unshelve..." description="Correct paths where to apply patches and unshelve" icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <reference id="Diff.ShowDiff"/>
-      <action id="ShelvedChanges.DiffWithLocal" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesWithLocalAction"
-              text="Compare with Local" description="Compare shelved version with current" use-shortcut-of="Vcs.ShowDiffWithLocal"
-              icon="AllIcons.Actions.DiffWithCurrent"/>
+      <reference id="Vcs.ShowDiffWithLocal"/>
       <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
               icon="AllIcons.Vcs.Patch"/>
       <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
@@ -265,10 +266,6 @@
       <separator/>
       <add-to-group group-id="NavBarVcsGroup" anchor="first"/>
     </group>
-
-    <action id="Vcs.ShowDiffWithLocal" class="com.intellij.openapi.vcs.history.actions.ShowDiffWithLocalAction"
-            text="Compare with Local" description="Compare version from selected revision with current version"
-            icon="AllIcons.Actions.DiffWithCurrent"/>
 
     <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
