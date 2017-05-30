@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,7 +134,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     }
 
     // set module type id explicitly otherwise it can not be set if there is an existing module (with the same filePath) and w/o 'type' attribute
-    module.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+    module.setModuleType(moduleTypeId);
     return module;
   }
 

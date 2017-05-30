@@ -148,11 +148,6 @@ public class CoreModule extends MockComponentManager implements ModuleEx {
   }
 
   @Override
-  public void clearOption(@NotNull String optionName) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public String getOptionValue(@NotNull String optionName) {
     throw new UnsupportedOperationException();
   }

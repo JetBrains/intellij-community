@@ -38,6 +38,7 @@ import com.intellij.util.ThrowableRunnable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
@@ -370,6 +371,7 @@ public class ModuleRootManagerImpl extends ModuleRootManager implements Disposab
   }
 
   @Override
+  @Nullable
   public ProjectModelExternalSource getExternalSource() {
     return ExternalProjectSystemRegistry.getInstance().getExternalSource(myModule);
   }

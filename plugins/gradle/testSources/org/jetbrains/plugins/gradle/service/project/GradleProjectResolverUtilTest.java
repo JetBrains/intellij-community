@@ -15,13 +15,14 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.testFramework.ProjectRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.ClassRule;
 import org.junit.Test;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.*;
-import static org.easymock.EasyMock.*;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 import static org.junit.Assert.assertEquals;
@@ -32,6 +33,8 @@ import static org.junit.Assert.assertNull;
  * @since 2/28/2017
  */
 public class GradleProjectResolverUtilTest {
+  @ClassRule
+  public static final ProjectRule myProjectRule = new ProjectRule();
 
   @Test
   public void testGetGradlePath() throws Exception {
@@ -39,19 +42,15 @@ public class GradleProjectResolverUtilTest {
 
     final Module rootModule = createModuleMock("rootModule");
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(rootModule));
-    verify(rootModule);
 
     final Module subModule = createModuleMock(":foo:subModule");
     assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(subModule));
-    verify(subModule);
 
     final Module sourceSetModule = createModuleMock("rootModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(sourceSetModule));
-    verify(sourceSetModule);
 
     final Module sourceSetSubModule = createModuleMock(":foo:subModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
     assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(sourceSetSubModule));
-    verify(sourceSetSubModule);
   }
 
   @NotNull
@@ -61,12 +60,11 @@ public class GradleProjectResolverUtilTest {
 
   @NotNull
   private static Module createModuleMock(@Nullable String projectId, @Nullable String moduleType) {
-    final Module mockModule = createMock(Module.class);
-    expect(mockModule.isDisposed()).andReturn(false).anyTimes();
-    expect(mockModule.getOptionValue(EXTERNAL_SYSTEM_ID_KEY)).andReturn(SYSTEM_ID.getId()).anyTimes();
-    expect(mockModule.getOptionValue(EXTERNAL_SYSTEM_MODULE_TYPE_KEY)).andReturn(moduleType).anyTimes();
-    expect(mockModule.getOptionValue(LINKED_PROJECT_ID_KEY)).andReturn(projectId).anyTimes();
-    replay(mockModule);
-    return mockModule;
+    final Module module = myProjectRule.getModule();
+    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
+    modulePropertyManager.setExternalId(SYSTEM_ID);
+    modulePropertyManager.seExternalModuleType(moduleType);
+    modulePropertyManager.setLinkedProjectId(projectId);
+    return module;
   }
 }

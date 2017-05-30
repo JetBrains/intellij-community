@@ -681,7 +681,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
       initModule(module, () -> {
         ((ModuleStore)ServiceKt.getStateStore(newModule)).setPath(finalFilePath, true);
 
-        newModule.setOption(Module.ELEMENT_TYPE, moduleTypeId);
+        newModule.setModuleType(moduleTypeId);
         if (options != null) {
           for (Map.Entry<String, String> option : options.entrySet()) {
             newModule.setOption(option.getKey(), option.getValue());

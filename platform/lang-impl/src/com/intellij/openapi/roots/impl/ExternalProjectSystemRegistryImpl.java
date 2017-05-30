@@ -18,58 +18,20 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author nik
  */
 public class ExternalProjectSystemRegistryImpl implements ExternalProjectSystemRegistry {
-  private final ConcurrentMap<String, ProjectModelExternalSource> myExternalSources = new ConcurrentHashMap<>();
-
   @Override
-  public ProjectModelExternalSource getExternalSource(Module module) {
-    //todo[nik] probably it would be better to introduce a special extension point instead
-    String externalSystemId = module.getOptionValue(EXTERNAL_SYSTEM_ID_KEY);
-    if (externalSystemId != null) {
-      return getSourceById(externalSystemId);
-    }
-    if ("true".equals(module.getOptionValue(IS_MAVEN_MODULE_KEY))) {
-      return getSourceById(MAVEN_EXTERNAL_SOURCE_ID);
-    }
+  public ProjectModelExternalSource getExternalSource(@NotNull Module module) {
     return null;
   }
 
   @Override
   @NotNull
   public ProjectModelExternalSource getSourceById(String id) {
-    return myExternalSources.computeIfAbsent(id, ProjectModelExternalSourceImpl::new);
-  }
-
-  private static class ProjectModelExternalSourceImpl implements ProjectModelExternalSource {
-    private final String myId;
-    private final String myDisplayName;
-
-    public ProjectModelExternalSourceImpl(String id) {
-      myId = id;
-      //todo[nik] specify display name explicitly instead, the current code is copied from ProjectSystemId constructor
-      myDisplayName = StringUtil.capitalize(myId.toLowerCase(Locale.US));
-    }
-
-    @NotNull
-    @Override
-    public String getDisplayName() {
-      return myDisplayName;
-    }
-
-    @NotNull
-    @Override
-    public String getId() {
-      return myId;
-    }
+    throw new IllegalStateException();
   }
 }

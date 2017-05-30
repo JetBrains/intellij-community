@@ -18,9 +18,9 @@ package com.intellij.openapi.externalSystem.util;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -76,8 +76,6 @@ import java.util.regex.Pattern;
  * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
-
-  private static final Logger LOG = Logger.getInstance(ExternalSystemApiUtil.class);
   private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";
@@ -802,48 +800,48 @@ public class ExternalSystemApiUtil {
 
   @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull ProjectSystemId systemId, @Nullable Module module) {
-    return module != null && !module.isDisposed() && systemId.getId().equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+    return module != null && !module.isDisposed() && systemId.getId().equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
   @Contract(value = "_, null -> false", pure=true)
   public static boolean isExternalSystemAwareModule(@NotNull String systemId, @Nullable Module module) {
-    return module != null && !module.isDisposed() && systemId.equals(module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY));
+    return module != null && !module.isDisposed() && systemId.equals(ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId());
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectPath(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectPath() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalRootProjectPath(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getRootProjectPath() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectId(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_ID_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getLinkedProjectId() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectGroup(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleGroup() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalProjectVersion(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleVersion() : null;
   }
 
   @Nullable
   @Contract(pure=true)
   public static String getExternalModuleType(@Nullable Module module) {
-    return module != null && !module.isDisposed() ? module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_TYPE_KEY) : null;
+    return module != null && !module.isDisposed() ? ExternalSystemModulePropertyManager.getInstance(module).getExternalModuleType() : null;
   }
 
   public static void subscribe(@NotNull Project project,

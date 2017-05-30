@@ -31,14 +31,13 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.SettingsSavingComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -548,10 +547,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     return isInitialized();
   }
 
-  public boolean isMavenizedModule(final Module m) {
+  public boolean isMavenizedModule(@NotNull Module m) {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
     try {
-      return !m.isDisposed() && "true".equals(m.getOptionValue(getMavenizedModuleOptionName()));
+      return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
     }
     finally {
       accessToken.finish();
@@ -562,26 +561,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     for (Module m : modules) {
       if (m.isDisposed()) continue;
-
-      if (mavenized) {
-        m.setOption(getMavenizedModuleOptionName(), "true");
-
-        // clear external system API options
-        // see com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService#setModuleOptions
-        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-        m.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-        m.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
-        m.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
-      }
-      else {
-        m.clearOption(getMavenizedModuleOptionName());
-      }
+      ExternalSystemModulePropertyManager.getInstance(m).setMavenized(mavenized);
     }
-  }
-
-  private static String getMavenizedModuleOptionName() {
-    return ExternalProjectSystemRegistry.IS_MAVEN_MODULE_KEY;
   }
 
   @TestOnly
