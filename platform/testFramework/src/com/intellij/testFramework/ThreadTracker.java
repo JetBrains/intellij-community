@@ -151,6 +151,10 @@ public class ThreadTracker {
           continue;
         }
 
+        if (isIdleCommonPoolThread(thread, stackTrace)) {
+          continue;
+        }
+
         @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
         String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
         for (final StackTraceElement stackTraceElement : stackTrace) {
@@ -178,6 +182,15 @@ public class ThreadTracker {
                            && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
 
     return insideTPEGetTask;
+  }
+
+  private static boolean isIdleCommonPoolThread(Thread thread, StackTraceElement[] stackTrace) {
+    if (!thread.getName().startsWith("ForkJoinPool.commonPool"))
+      return false;
+    boolean insideAwaitWork = Arrays.stream(stackTrace)
+      .anyMatch(element -> element.getMethodName().equals("awaitWork")
+                           && element.getClassName().equals("java.util.concurrent.ForkJoinPool"));
+    return insideAwaitWork;
   }
 
   public static void awaitJDIThreadsTermination(int timeout, @NotNull TimeUnit unit) {
