@@ -250,7 +250,9 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
       project.save();
     }
 
-    openFileFromCommandLine(project, virtualFile, line);
+    if (!virtualFile.isDirectory()) {
+      openFileFromCommandLine(project, virtualFile, line);
+    }
 
     if (!projectManager.openProject(project)) {
       WelcomeFrame.showIfNoProjectOpened();
@@ -288,16 +290,11 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return false;
   }
 
-  private static void openFileFromCommandLine(final Project project, final VirtualFile file, final int line) {
+  private static void openFileFromCommandLine(Project project, VirtualFile file, int line) {
     StartupManager.getInstance(project).registerPostStartupActivity(
       (DumbAwareRunnable)() -> ApplicationManager.getApplication().invokeLater(() -> {
-        if (!project.isDisposed() && file.isValid() && !file.isDirectory()) {
-          if (line > 0) {
-            new OpenFileDescriptor(project, file, line - 1, 0).navigate(true);
-          }
-          else {
-            new OpenFileDescriptor(project, file).navigate(true);
-          }
+        if (!project.isDisposed() && file.isValid()) {
+          (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : new OpenFileDescriptor(project, file)).navigate(true);
         }
       }, ModalityState.NON_MODAL));
   }

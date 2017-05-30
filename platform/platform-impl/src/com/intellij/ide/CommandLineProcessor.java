@@ -84,8 +84,7 @@ public class CommandLineProcessor {
     else {
       NonProjectFileWritingAccessProvider.allowWriting(file);
       Project project = findBestProject(file, projects);
-      OpenFileDescriptor descriptor = line == -1 ? new OpenFileDescriptor(project, file) : new OpenFileDescriptor(project, file, line-1, 0);
-      descriptor.navigate(true);
+      (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : new OpenFileDescriptor(project, file)).navigate(true);
       return project;
     }
   }
