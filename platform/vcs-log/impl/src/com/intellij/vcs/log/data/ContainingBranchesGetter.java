@@ -164,17 +164,17 @@ public class ContainingBranchesGetter {
   }
 
   private static class Task {
-    private final VirtualFile root;
-    private final Hash hash;
-    private final SLRUMap<CommitId, List<String>> cache;
-    @Nullable private final RefsModel refs;
-    @Nullable private final PermanentGraph<Integer> graph;
+    @NotNull private final VirtualFile root;
+    @NotNull private final Hash hash;
+    @NotNull private final SLRUMap<CommitId, List<String>> cache;
+    @NotNull private final RefsModel refs;
+    @NotNull private final PermanentGraph<Integer> graph;
 
-    public Task(VirtualFile root,
-                Hash hash,
-                SLRUMap<CommitId, List<String>> cache,
-                @Nullable PermanentGraph<Integer> graph,
-                @Nullable RefsModel refs) {
+    public Task(@NotNull VirtualFile root,
+                @NotNull Hash hash,
+                @NotNull SLRUMap<CommitId, List<String>> cache,
+                @NotNull PermanentGraph<Integer> graph,
+                @NotNull RefsModel refs) {
       this.root = root;
       this.hash = hash;
       this.cache = cache;
@@ -186,7 +186,7 @@ public class ContainingBranchesGetter {
     public List<String> getContainingBranches(@NotNull VcsLogData logData) {
       try {
         VcsLogProvider provider = logData.getLogProvider(root);
-        if (graph != null && refs != null && VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
+        if (VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
           Set<Integer> branchesIndexes = graph.getContainingBranches(logData.getCommitIndex(hash, root));
 
           Collection<VcsRef> branchesRefs = new HashSet<>();
