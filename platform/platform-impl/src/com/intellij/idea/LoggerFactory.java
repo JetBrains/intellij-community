@@ -17,14 +17,17 @@ package com.intellij.idea;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.xml.DOMConfigurator;
+import org.jdom.Document;
+import org.jdom.output.DOMOutputter;
 import org.jetbrains.annotations.NotNull;
+import org.w3c.dom.Element;
 
 import java.io.File;
-import java.io.StringReader;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public class LoggerFactory implements Logger.Factory {
@@ -67,7 +70,9 @@ public class LoggerFactory implements Logger.Factory {
         System.err.println("Cannot create log directory: " + file);
       }
 
-      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
+      Document document = JDOMUtil.loadDocument(text);
+      Element element = new DOMOutputter().output(document).getDocumentElement();
+      new DOMConfigurator().doConfigure(element, LogManager.getLoggerRepository());
 
       myInitialized = true;
     }
