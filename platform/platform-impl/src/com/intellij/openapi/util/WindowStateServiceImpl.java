@@ -464,7 +464,7 @@ abstract class WindowStateServiceImpl extends WindowStateService implements Pers
     }
 
     /**
-     * Merges this state with the passed one, prefering this state.
+     * Merges this state with the passed one, preferring this state.
      */
     private void merge(@NotNull WindowState state) {
       if (myLocation == null && state.myLocation != null) {
