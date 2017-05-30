@@ -58,11 +58,13 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
 
 public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static final DataKey<ListPopupModel> POPUP_MODEL = DataKey.create("VcsPopupModel");
+  private Project myProject;
   private MyPopupListElementRenderer myListElementRenderer;
   private boolean myShown;
-  @NotNull private Dimension myPrevSize = JBUI.emptySize();
   private boolean myUserSizeChanged;
-  private Project myProject;
+  private boolean myInternalSizeChanged;
+  @Nullable private final String myKey;
+  @NotNull private Dimension myPrevSize = JBUI.emptySize();
 
   public BranchActionGroupPopup(@NotNull String title,
                                 @NotNull Project project,
@@ -74,25 +76,24 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     myProject = project;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
-    if (dimensionKey != null) {
-      Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, dimensionKey);
+    myKey = dimensionKey;
+    if (myKey != null) {
+      Dimension storedSize = WindowStateService.getInstance(myProject).getSizeFor(myProject, myKey);
       if (storedSize != null) {
         //set forced size before component is shown
         setSize(storedSize);
       }
+      createTitlePanelToolbar(myKey);
     }
-    trackDimensions(dimensionKey);
-    createTitlePanelToolbar(dimensionKey);
   }
 
-  void createTitlePanelToolbar(@Nullable String dimensionKey) {
-    if (dimensionKey == null) return;
+  void createTitlePanelToolbar(@NotNull String dimensionKey) {
     AnAction restoreDefaultSizeAction =
       new DumbAwareAction("Restore Size", "Restore default size for widget", AllIcons.Vcs.RestoreDefaultSize) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           WindowStateService.getInstance(myProject).putSizeFor(myProject, dimensionKey, null);
-          myUserSizeChanged = false;
+          myInternalSizeChanged = true;
           pack(true, true);
         }
 
@@ -120,14 +121,16 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   //for child popups only
   private BranchActionGroupPopup(@Nullable WizardPopup aParent, @NotNull ListPopupStep aStep, @Nullable Object parentValue) {
     super(aParent, aStep, DataContext.EMPTY_CONTEXT, parentValue);
+    // don't store children popup userSize;
+    myKey = null;
     DataManager.registerDataProvider(getList(), dataId -> POPUP_MODEL.is(dataId) ? getListModel() : null);
     installOnHoverIconsSupport(getListElementRenderer());
-    // don't store children popup userSize;
-    trackDimensions(null);
   }
 
   private void trackDimensions(@Nullable String dimensionKey) {
-    getComponent().addComponentListener(new ComponentAdapter() {
+    Window popupWindow = getPopupWindow();
+    if (popupWindow == null) return;
+    popupWindow.addComponentListener(new ComponentAdapter() {
       @Override
       public void componentResized(ComponentEvent e) {
         if (myShown) {
@@ -149,7 +152,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private void processOnSizeChanged() {
     Dimension newSize = ObjectUtils.assertNotNull(getSize());
-    if (myPrevSize.height < newSize.height) {
+    if (!myInternalSizeChanged && myPrevSize.height < newSize.height) {
       List<MoreAction> mores = getMoreActions();
       for (MoreAction more : mores) {
         if (!getList().getScrollableTracksViewportHeight()) break;
@@ -160,7 +163,9 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
     }
     myPrevSize = newSize;
-    myUserSizeChanged = true;
+    //ugly properties to distinguish user size changed from pack method call after Restore Size action performed
+    myUserSizeChanged = !myInternalSizeChanged;
+    myInternalSizeChanged = false;
   }
 
   @NotNull
@@ -196,6 +201,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     if (size != null) {
       myPrevSize = size;
     }
+    trackDimensions(myKey);
   }
 
   private static void createSpeedSearchActions(@NotNull ActionGroup actionGroup,
