@@ -69,7 +69,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
 
     // allow editing only in the current branch
-    val branches = data.containingBranchesGetter.getContainingBranchesFromCache(commit.root, commit.id)
+    val branches = log.getContainingBranches(commit.id, commit.root)
     if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
       if (!branches.contains(HEAD)) {
         e.presentation.isEnabled = false
@@ -126,11 +126,11 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
 
   protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
     val branchesGetter = data.containingBranchesGetter
-    return branchesGetter.getContainingBranchesFromCache(root, hash) ?:
+    return branchesGetter.getContainingBranchesQuickly(root, hash) ?:
            branchesGetter.getContainingBranchesSynchronously(root, hash)
   }
 
-  protected fun findProtectedRemoteBranch(repository: GitRepository, branches: List<String>): String? {
+  protected fun findProtectedRemoteBranch(repository: GitRepository, branches: Collection<String>): String? {
     val settings = GitSharedSettings.getInstance(repository.project)
     // protected branches hold patterns for branch names without remote names
     return repository.branches.remoteBranches.

@@ -18,6 +18,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.VcsException;
@@ -26,7 +27,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
+import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +114,7 @@ public class ContainingBranchesGetter {
   @Nullable
   public List<String> requestContainingBranches(@NotNull VirtualFile root, @NotNull Hash hash) {
     LOG.assertTrue(EventQueue.isDispatchThread());
-    List<String> refs = myCache.get(new CommitId(hash, root));
+    List<String> refs = getContainingBranchesFromCache(root, hash);
     if (refs == null) {
       DataPack dataPack = myLogData.getDataPack();
       myTaskExecutor.queue(new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()));
@@ -123,6 +126,29 @@ public class ContainingBranchesGetter {
   public List<String> getContainingBranchesFromCache(@NotNull VirtualFile root, @NotNull Hash hash) {
     LOG.assertTrue(EventQueue.isDispatchThread());
     return myCache.get(new CommitId(hash, root));
+  }
+
+  @Nullable
+  public List<String> getContainingBranchesQuickly(@NotNull VirtualFile root, @NotNull Hash hash) {
+    LOG.assertTrue(EventQueue.isDispatchThread());
+    CommitId commitId = new CommitId(hash, root);
+    List<String> branches = myCache.get(commitId);
+    if (branches == null) {
+      int index = myLogData.getCommitIndex(hash, root);
+      PermanentGraph<Integer> pg = myLogData.getDataPack().getPermanentGraph();
+      if (pg instanceof PermanentGraphInfo) {
+        //noinspection unchecked
+        int nodeId = ((PermanentGraphInfo)pg).getPermanentCommitsInfo().getNodeId(index);
+        if (nodeId < 10000 && canUseGraphForComputation(myLogData.getLogProvider(root)) ) {
+          branches = getContainingBranchesSynchronously(root, hash);
+        }
+        else {
+          branches = BackgroundTaskUtil.tryComputeFast(indicator -> getContainingBranchesSynchronously(root, hash), 100);
+        }
+        if (branches != null) myCache.put(commitId, branches);
+      }
+    }
+    return branches;
   }
 
   @NotNull
@@ -163,6 +189,10 @@ public class ContainingBranchesGetter {
     return new Task(root, hash, myCache, dataPack.getPermanentGraph(), dataPack.getRefsModel()).getContainingBranches(myLogData);
   }
 
+  private static boolean canUseGraphForComputation(@NotNull VcsLogProvider logProvider) {
+    return VcsLogProperties.get(logProvider, VcsLogProperties.LIGHTWEIGHT_BRANCHES);
+  }
+
   private static class Task {
     @NotNull private final VirtualFile root;
     @NotNull private final Hash hash;
@@ -184,9 +214,10 @@ public class ContainingBranchesGetter {
 
     @NotNull
     public List<String> getContainingBranches(@NotNull VcsLogData logData) {
+      StopWatch sw = StopWatch.start("get containing branches");
       try {
         VcsLogProvider provider = logData.getLogProvider(root);
-        if (VcsLogProperties.get(provider, VcsLogProperties.LIGHTWEIGHT_BRANCHES)) {
+        if (canUseGraphForComputation(provider)) {
           Set<Integer> branchesIndexes = graph.getContainingBranches(logData.getCommitIndex(hash, root));
 
           Collection<VcsRef> branchesRefs = new HashSet<>();
@@ -210,6 +241,9 @@ public class ContainingBranchesGetter {
       catch (VcsException e) {
         LOG.warn(e);
         return Collections.emptyList();
+      }
+      finally {
+        sw.report();
       }
     }
   }
