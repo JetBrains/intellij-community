@@ -180,6 +180,12 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return stripTrailingSpaces(project, inChangedLinesOnly, true, new int[0]);
   }
 
+  @Override
+  public boolean isLineModified(int line) {
+    LineSet lineSet = myLineSet;
+    return lineSet != null && lineSet.isModified(line);
+  }
+
   /**
    * @return true if stripping was completed successfully, false if the document prevented stripping by e.g. caret(s) being in the way
    */
