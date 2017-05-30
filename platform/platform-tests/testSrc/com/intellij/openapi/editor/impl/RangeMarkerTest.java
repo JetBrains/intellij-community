@@ -51,6 +51,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 /**
  * @author mike
@@ -1197,19 +1201,203 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertValidMarker(marker, 0, 9);
   }
 
-  public void testMoveTextCrashes() {
+  public void testMoveTextCrashesStress() {
+    AtomicReference<List<Integer>> minOffsets = new AtomicReference<>();
+    AtomicInteger failPrinted = new AtomicInteger();
+    String text = StringUtil.repeat("blah", 1000);
+    IntStream.range(0, 10_000).parallel().forEach(iter -> {
+      DocumentEx doc = new DocumentImpl(text, true);
+      List<Integer> offsets = new ArrayList<>();
+      List<RangeMarker> markers = new ArrayList<>();
+
+      try {
+        List<Integer> oldOffsets = minOffsets.get();
+        int n = oldOffsets == null ? 261 : oldOffsets.size()/4;
+        //if (iter%1000==0) System.out.println(iter +" (length="+n+")");
+        
+        for (int i = 0; i < n; i++) {
+          int limit = doc.getTextLength() + 1;
+          int offset = raaand(limit);
+          int startOffset = 1+raaand(limit - 3);
+          int endOffset = startOffset + 1 + raaand(limit - startOffset - 2);
+          int targetOffset = raaand(limit - (endOffset - startOffset + 1));
+          if (targetOffset >= startOffset) targetOffset += endOffset - startOffset+1;
+
+          offsets.add(offset);
+          offsets.add(startOffset);
+          offsets.add(endOffset);
+          offsets.add(targetOffset);
+          RangeMarker marker = doc.createRangeMarker(offset, offset);
+          markers.add(marker);
+          doc.moveText(startOffset, endOffset, targetOffset);
+          assertTrue(marker.toString(), marker.isValid());
+          for (RangeMarker rm : markers) {
+            assertTrue(rm.isValid());
+          }
+        }
+      }
+      catch (AssertionError e) {
+        List<Integer> updated = minOffsets.updateAndGet(oldMarkers -> oldMarkers == null || offsets.size() < oldMarkers.size() ? offsets : oldMarkers);
+        if (updated == offsets && failPrinted.getAndIncrement() < 10) {
+          System.err.println("Aha: " + offsets.size() + " " + e+"\n"+minOffsets);
+        }
+      }
+      catch (Throwable e) {
+        e.printStackTrace();
+        throw e;
+      }
+    });
+    if (minOffsets.get() == null) {
+      System.out.println("Can't find anything, giving up");
+    }
+    else {
+      System.err.println("Moves and offsets ("+minOffsets.get().size()+"): " + minOffsets);
+      fail();
+    }
+  }
+
+  public static int raaand(int limit) {
+    return limit == 0 ? 0 : ThreadLocalRandom.current().nextInt(limit);
+  }
+
+  public void testWeirdMoveText1() {
+    int[] movesAndOffsets = {3375, 520, 1159, 2314, 3445, 1548, 2840, 3667, 333, 2517, 3072, 686, 174, 1703, 2848, 3575, 3380, 782, 2699, 2977, 3162, 903, 2979, 226, 2381, 131, 2996, 3944, 1722, 649, 1429, 2916, 383, 2945, 3273, 383, 500, 415, 1003, 1427, 824, 1400, 1474, 3291, 3386, 2408, 2979, 724, 2536, 242, 1423, 1934, 2562, 1451, 1934, 42, 1247, 3378, 3458, 1839, 3282, 180, 1523, 2905, 2067, 1631, 2476, 2536, 102, 502, 2361, 217, 863, 2898, 3836, 1669, 166, 3023, 3034, 2631, 2682, 3877, 3891, 88, 1708, 199, 957, 2563, 3608, 345, 2002, 3037, 1099, 55, 132, 3972, 3877, 3158, 3757, 3830, 3318, 500, 1136, 1729, 2198, 1742, 2851, 219, 1381, 66, 2743, 2990, 1549, 1466, 3407, 3945, 658, 2968, 3756, 1199, 1278, 1581, 2556, 2654, 2999, 603, 2765, 25, 1942, 1143, 3167, 1060, 1003, 671, 975, 3487, 2876, 104, 388, 1715, 3022, 670, 1685, 3834, 1595, 701, 2077, 3565, 1072, 2746, 3872, 1479, 1514, 166, 1226, 3743, 2557, 2887, 3477, 899, 3963, 1840, 3177, 500, 2947, 75, 2249, 2495, 1207, 3817, 3923, 1236, 3317, 513, 1566, 2376, 678, 1109, 2081, 104, 865, 2120, 3331, 588, 265, 1458, 3843, 312, 3813, 709, 934, 1754, 3914, 1769, 2724, 432, 371, 410, 994, 383, 747, 564, 2239, 3072, 3770, 761, 2889, 3748, 2845, 673, 803, 1127, 3538, 233, 1525, 3843, 680, 685, 1618, 2816, 150, 3155, 3972, 1316, 3992, 697, 2771, 3572, 3930, 1285, 1914, 2748, 1480, 1362, 3120, 435, 2250, 2175, 3214, 37, 1431, 765, 1807, 3032, 2566, 1388, 3415, 989, 1078, 2498, 3482, 710, 2780, 613, 914, 449, 3955, 95, 3197, 3491};
+    doTextMoves(movesAndOffsets);
+  }
+  public void testWeirdMoveText2() {
+    int[] movesAndOffsets = {686, 2802, 3005, 2522, 781, 2766, 3857, 827, 2343, 1686, 2001, 3625, 1193, 472, 3300, 3537, 421, 2255, 2826, 3423, 3650, 2040, 2706, 1877, 2331, 1033, 3226, 134, 115, 3776, 3837, 2422, 1916, 3478, 3863, 54, 3365, 1245, 2089, 779, 3778, 1483, 1723, 1245, 1496, 662, 1091, 427, 1580, 2763, 3723, 1778, 3736, 2016, 3854, 966, 863, 291, 582, 2933, 156, 1612, 3241, 1351, 559, 1121, 2315, 831, 2450, 1488, 3620, 1444, 606, 590, 3012, 3724, 2555, 3635, 3905, 1221, 3268, 2925, 3603, 221, 2667, 2821, 3176, 2770, 3992, 1782, 2125, 3450, 3690, 3356, 3608, 1244, 3900, 770, 1596, 503, 1213, 3642, 3959, 1905, 2711, 3827, 3999, 1934, 2215, 1391, 1882, 2298, 2637, 3201, 3395, 1565, 3542, 2745, 2992, 2708, 2278, 352, 2875, 3636, 574, 710, 1443, 2808, 1516, 2351, 3069, 520, 833, 2271, 2671, 3451, 2679, 3692, 3712, 1838, 1767, 1782, 3447, 3768, 1494, 1288, 1649, 1677, 1335, 127, 1697, 3297, 1445, 3564, 3691, 3032, 2155, 82, 717, 2360, 1314, 316, 3024, 3268, 2293, 283, 3825, 3968, 1708, 1411, 1471, 159, 925, 3245, 3492, 2623, 2164, 586, 3208, 3940, 3761, 1763, 2531, 837, 523, 3202, 3282, 44, 1770, 1527, 3101, 558, 2776, 1352, 1560, 1230, 3998, 3570, 3696, 3222, 1989, 567, 1919, 2735, 2934, 3357, 3594, 3710, 1289, 3452, 3781, 1765, 1127, 1482, 1961, 1154, 487, 3740, 3977, 2453, 3305, 3266, 3921, 2943, 3509, 637, 3081, 3514, 50, 3035, 3678, 3866, 3024, 1789, 2211, 2779, 3950, 2330, 2687, 2267, 1738, 2599, 2644, 2074, 3812, 3540, 3609, 2484, 2616, 1443, 3211, 408, 2718, 1909, 2136, 1073, 1808, 102, 3239, 55, 3239, 3492, 3525, 1099};
+    doTextMoves(movesAndOffsets);
+  }
+
+  private static void doTextMoves(int[] movesAndOffsets) {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
-    Random random = new Random();
-    for(int i = 0; i < 10000; i++) {
-      int limit = doc.getTextLength() + 1;
-      int offset = random.nextInt(limit);
-      doc.createRangeMarker(offset, offset);
-      int startOffset = random.nextInt(limit);
-      int endOffset = random.nextInt(limit);
-      int targetOffset = random.nextInt(limit);
-      if (endOffset > startOffset && (targetOffset < startOffset || targetOffset > endOffset)) {
-        doc.moveText(startOffset, endOffset, targetOffset);
+    List<RangeMarker> markers = new ArrayList<>();
+    for (int i = 0; i < movesAndOffsets.length; i+=4) {
+      int offset = movesAndOffsets[i];
+      int startOffset=movesAndOffsets[i+1];
+      int endOffset=movesAndOffsets[i+2];
+      int targetOffset=movesAndOffsets[i+3];
+      RangeMarker marker = doc.createRangeMarker(offset, offset);
+      markers.add(marker);
+
+      doc.moveText(startOffset, endOffset, targetOffset);
+      assertTrue(marker.toString(), marker.isValid());
+      for (RangeMarker rm : markers) {
+        assertTrue(rm.isValid());
       }
     }
+  }
+
+  public void testGetOffsetPerformance() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    List<RangeMarker> markers = new ArrayList<>();
+    int N = 100_000;
+    for (int i = 0; i < N; i++) {
+      int start = i % doc.getTextLength();
+      int end = start + 1;
+      RangeMarker marker = doc.createRangeMarker(start, end);
+      markers.add(marker);
+    }
+    PlatformTestUtil.startPerformanceTest("RM", 15000, ()->{
+      doc.insertString(0, " ");
+      for (int i=0; i<1000; i++) {
+        for (RangeMarker rm : markers) {
+          int length = rm.getEndOffset() - rm.getStartOffset();
+          assertEquals(1, length);
+          assertTrue(rm.isValid());
+        }
+      }
+      doc.deleteString(0, 1);
+    }).assertTiming();
+  }
+
+  public void testGetOffsetDuringModificationsPerformance() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    List<RangeMarker> markers = new ArrayList<>();
+    int N = 100_000;
+    for (int i = 0; i < N; i++) {
+      int start = i % doc.getTextLength();
+      int end = start + 1;
+      RangeMarker marker = doc.createRangeMarker(start, end);
+      markers.add(marker);
+    }
+    PlatformTestUtil.startPerformanceTest("RM", 20000, ()->{
+      doc.insertString(0, " ");
+      for (int i=0; i<1000; i++) {
+        for (int j = 0; j < markers.size(); j++) {
+          RangeMarker rm = markers.get(j);
+          doc.setModificationStamp(i+j);
+          int length = rm.getEndOffset() - rm.getStartOffset();
+          assertEquals(1, length);
+          assertTrue(rm.isValid());
+        }
+      }
+      doc.deleteString(0, 1);
+    }).assertTiming();
+  }
+
+  public void testDocModificationPerformance() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    List<RangeMarker> markers = new ArrayList<>();
+    int N = 100_000;
+    for (int i = 0; i < N; i++) {
+      int start = i % doc.getTextLength();
+      int end = start + 1;
+      RangeMarker marker = doc.createRangeMarker(start, end);
+      markers.add(marker);
+    }
+    PlatformTestUtil.startPerformanceTest("RM", 10000, ()->{
+      for (int i=0; i<15000; i++) {
+        doc.insertString(0, " ");
+        doc.deleteString(0, 1);
+      }
+    }).assertTiming();
+    for (RangeMarker rm : markers) {
+      assertTrue(rm.isValid());
+    }
+  }
+
+  public void testRMInsertPerformance() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    int N = 100_000;
+    List<RangeMarker> markers = new ArrayList<>(N);
+    PlatformTestUtil.startPerformanceTest("RM", 2000, ()->{
+      for (int i = 0; i < N; i++) {
+        int start = i % doc.getTextLength();
+        int end = start + 1;
+        RangeMarker marker = doc.createRangeMarker(start, end);
+        markers.add(marker);
+      }
+      for (RangeMarker marker : markers) {
+        marker.dispose();
+      }
+    }).assertTiming();
+  }
+
+  public void testProcessOverlappingPerformance() {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    int N = 100_000;
+    List<RangeMarker> markers = new ArrayList<>(N);
+    for (int i = 0; i < N; i++) {
+      int start = i % doc.getTextLength();
+      int end = start + 1;
+      RangeMarker marker = doc.createRangeMarker(start, end);
+      markers.add(marker);
+    }
+    PlatformTestUtil.startPerformanceTest("RM", 2000, ()->{
+      for (int it=0;it<50;it++) {
+        for (int i=1; i<doc.getTextLength()-1;i++) {
+          List<RangeMarker> overlaps = new ArrayList<>();
+          doc.processRangeMarkersOverlappingWith(i,i+1, rm->{
+            overlaps.add(rm);
+            return true;
+          });
+          if (overlaps.isEmpty()) {
+            fail("it="+it+"; i="+i);
+          }
+        }
+      }
+    }).assertTiming();
+    assertNotEmpty(markers);
   }
 }
