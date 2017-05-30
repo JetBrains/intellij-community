@@ -96,10 +96,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   public static final DataKey<InspectionResultsView> DATA_KEY = DataKey.create("inspectionView");
   private static final Key<Boolean> PREVIEW_EDITOR_IS_REUSED_KEY = Key.create("inspection.tool.window.preview.editor.is.reused");
 
-  private final Project myProject;
   private final InspectionTree myTree;
-  private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups =
-    ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<HighlightDisplayLevel, ConcurrentMap<String, InspectionGroupNode>> myGroups = ContainerUtil.newConcurrentMap();
   private final OccurenceNavigator myOccurenceNavigator;
   private volatile InspectionProfileImpl myInspectionProfile;
   private final boolean mySettingsEnabled;
@@ -138,7 +136,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
     setLayout(new BorderLayout());
-    myProject = globalInspectionContext.getProject();
     myInspectionProfile = globalInspectionContext.getCurrentProfile();
     myScope = globalInspectionContext.getCurrentScope();
     myGlobalInspectionContext = globalInspectionContext;
@@ -146,12 +143,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     myExcludedInspectionTreeNodesManager = new ExcludedInspectionTreeNodesManager(provider instanceof OfflineInspectionRVContentProvider,
                                                                                   isSingleInspectionRun());
 
-    myTree = new InspectionTree(myProject, globalInspectionContext, this);
+    myTree = new InspectionTree(globalInspectionContext, this);
     initTreeListeners();
 
     myOccurenceNavigator = initOccurenceNavigator();
 
-    mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(myProject).SPLITTER_PROPORTION);
+    mySplitter = new OnePixelSplitter(false, AnalysisUIOptions.getInstance(globalInspectionContext.getProject()).SPLITTER_PROPORTION);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     mySplitter.setHonorComponentsMinimumSize(false);
 
@@ -245,9 +242,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       }
     };
     createActionsToolbar();
-    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
+    PsiManager.getInstance(getProject()).addPsiTreeChangeListener(new InspectionViewPsiTreeChangeAdapter(this), this);
 
-    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(myProject);
+    ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(getProject());
     profileManager.addProfileChangeListener(new ProfileChangeAdapter() {
       @Override
       public void profileChanged(InspectionProfile profile) {
@@ -358,12 +355,9 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   private void createActionsToolbar() {
-    final JComponent leftActionsToolbar = createLeftActionsToolbar();
-    final JComponent rightActionsToolbar = createRightActionsToolbar();
-
     JPanel westPanel = new JPanel(new BorderLayout());
-    westPanel.add(leftActionsToolbar, BorderLayout.WEST);
-    westPanel.add(rightActionsToolbar, BorderLayout.EAST);
+    westPanel.add(createLeftActionsToolbar(), BorderLayout.WEST);
+    westPanel.add(createRightActionsToolbar(), BorderLayout.EAST);
     add(westPanel, BorderLayout.WEST);
   }
 
@@ -413,9 +407,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     }
   }
 
-
   private boolean isAutoScrollMode() {
-    String activeToolWindowId = ToolWindowManager.getInstance(myProject).getActiveToolWindowId();
+    String activeToolWindowId = ToolWindowManager.getInstance(getProject()).getActiveToolWindowId();
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
            (activeToolWindowId == null || activeToolWindowId.equals(ToolWindowId.INSPECTION));
   }
@@ -430,27 +423,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Nullable
   private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
-    final VirtualFile[] file = new VirtualFile[1];
-    final int[] offset = new int[1];
-
-    ApplicationManager.getApplication().runReadAction(() -> {
-      PsiElement psiElement = refElement.getElement();
-      if (psiElement != null) {
-        final PsiFile containingFile = psiElement.getContainingFile();
-        if (containingFile != null) {
-          file[0] = containingFile.getVirtualFile();
-          offset[0] = psiElement.getTextOffset();
-        }
-      }
-      else {
-        file[0] = null;
-      }
-    });
-
-    if (file[0] != null && file[0].isValid()) {
-      return new OpenFileDescriptor(refElement.getRefManager().getProject(), file[0], offset[0]);
-    }
-    return null;
+    PsiElement psiElement = refElement.getElement();
+    if (psiElement == null) return null;
+    final PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return null;
+    VirtualFile file = containingFile.getVirtualFile();
+    if (file == null) return null;
+    return new OpenFileDescriptor(refElement.getRefManager().getProject(), file, psiElement.getTextOffset());
   }
 
   public void setApplyingFix(boolean applyingFix) {
@@ -595,7 +574,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
         myPreviewEditor.getMarkupModel().removeAllHighlighters();
       }
       else {
-        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, myProject, file.getVirtualFile(), true);
+        myPreviewEditor = (EditorEx)EditorFactory.getInstance().createEditor(document, getProject(), file.getVirtualFile(), true);
         DiffUtil.setFoldingModelSupport(myPreviewEditor);
         final EditorSettings settings = myPreviewEditor.getSettings();
         settings.setLineNumbersShown(false);
@@ -615,7 +594,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       return Pair.create(myPreviewEditor.getComponent(), myPreviewEditor);
     }
     if (selectedEntity == null) {
-      return Pair.create(new InspectionNodeInfo(myTree, myProject), null);
+      return Pair.create(new InspectionNodeInfo(myTree, getProject()), null);
     }
     if (selectedEntity.isValid()) {
       return Pair.create(InspectionResultsViewUtil.getPreviewIsNotAvailable(selectedEntity), null);
@@ -784,7 +763,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           InspectionToolWrapper toolWrapper = state.getTool();
           if (ReadAction.compute(() -> myProvider.checkReportedProblems(myGlobalInspectionContext, toolWrapper))) {
             addTool(toolWrapper,
-                    profile.getErrorLevel(key, state.getScope(myProject), myProject),
+                    profile.getErrorLevel(key, state.getScope(getProject()), getProject()),
                     isGroupedBySeverity,
                     singleInspectionRun);
           }
@@ -843,7 +822,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     if (isGroupedBySeverity) {
       InspectionSeverityGroupNode severityGroupNode = mySeverityGroupNodes.get(level);
       if (severityGroupNode == null) {
-        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(myProject, level);
+        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(getProject(), level);
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = myTree.getRoot();
@@ -861,7 +840,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @NotNull
   public Project getProject() {
-    return myProject;
+    return myGlobalInspectionContext.getProject();
   }
 
   @Override
@@ -972,7 +951,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           startOffset = textRange.getStartOffset();
         }
       }
-      return new OpenFileDescriptor(myProject, virtualFile, startOffset);
+      return new OpenFileDescriptor(getProject(), virtualFile, startOffset);
     }
     return null;
   }
@@ -1083,7 +1062,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   public void rerun() {
     myRerun = true;
     if (myScope.isValid()) {
-      AnalysisUIOptions.getInstance(myProject).save(myGlobalInspectionContext.getUIOptions());
+      AnalysisUIOptions.getInstance(getProject()).save(myGlobalInspectionContext.getUIOptions());
       myGlobalInspectionContext.setTreeState(getTree().getTreeState());
       myGlobalInspectionContext.doInspections(myScope);
     }
