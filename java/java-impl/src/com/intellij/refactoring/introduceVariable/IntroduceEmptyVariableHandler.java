@@ -45,6 +45,7 @@ public class IntroduceEmptyVariableHandler {
 
   public void invoke(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiType type) {
     Project project = file.getProject();
+    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
     int offset = editor.getCaretModel().getOffset();
     PsiElement at = file.findElementAt(offset);
     PsiElement anchorStatement = RefactoringUtil.getParentStatement(at, false);
