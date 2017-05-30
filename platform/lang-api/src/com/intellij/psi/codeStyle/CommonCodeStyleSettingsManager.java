@@ -152,6 +152,10 @@ public class CommonCodeStyleSettingsManager {
           CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
           settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
         }
+        for (Map.Entry<String,Content> contentEntry : myUnknownSettingsMap.entrySet()) {
+          Content contentCopy = contentEntry.getValue().clone();
+          settingsManager.myUnknownSettingsMap.put(contentEntry.getKey(), contentCopy);
+        }
       }
       return settingsManager;
     }
