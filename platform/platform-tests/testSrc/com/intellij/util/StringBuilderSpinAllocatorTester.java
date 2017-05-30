@@ -16,19 +16,24 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.junit.Assert;
 
 import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.Assume.assumeTrue;
 
-public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
+public class StringBuilderSpinAllocatorTester {
+
+  public static void main(String[] args) {
+    testSequentialPerformance();
+    testConcurrentPerformance();
+  }
 
   public static final int THREADS = 1000;
 
-  public void testSequentialPerformance() {
+  private static void testSequentialPerformance() {
     assumeTrue(!PlatformTestUtil.COVERAGE_ENABLED_BUILD);
     for (int i=0; i<10; i++) {
       long spinTime = time(count, spinAlloc);
@@ -36,7 +41,7 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
       System.out.println("regular: " + regularTime + "; spin :" +spinTime+"; ratio: "+(10*spinTime/regularTime)/10.0+" times");
     }
   }
-  public void testConcurrentPerformance() {
+  private static void testConcurrentPerformance() {
     assumeTrue(!PlatformTestUtil.COVERAGE_ENABLED_BUILD);
     for (int i=0; i<10; i++) {
       long spinTime = concurrentTime(count/THREADS, spinAlloc);
@@ -53,13 +58,14 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
           return true;
         });
 
-      assertTrue(ok);
+      Assert.assertTrue(ok);
     });
   }
 
   static final int count = 100000;
   static final int iter = 1000;
   static Runnable spinAlloc = new Runnable() {
+    @SuppressWarnings("deprecation")
     @Override
     public void run() {
       for (int i = 0; i < iter; ++i) {
@@ -77,6 +83,7 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
     }
   };
   static Runnable regularAlloc = new Runnable() {
+    @SuppressWarnings("MismatchedQueryAndUpdateOfStringBuilder")
     @Override
     public void run() {
       for (int i = 0; i < iter; ++i) {
