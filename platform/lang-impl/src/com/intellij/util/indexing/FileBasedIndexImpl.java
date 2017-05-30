@@ -1435,9 +1435,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
   }
 
   String dumpSomeChangedFiles() {
-    Stream<String> events = myChangedFilesCollector.myVfsEventsMerger.dumpChangedFilePaths();
-    Stream<String> files = myChangedFilesCollector.myFilesToUpdate.values().stream().map(VirtualFile::getPath);
-    return StreamEx.of(events).append(files).limit(20).joining(", ");
+    Stream<VirtualFile> events = myChangedFilesCollector.myVfsEventsMerger.getChangedFiles();
+    Stream<VirtualFile> files = myChangedFilesCollector.myFilesToUpdate.values().stream();
+    return StreamEx.of(events).append(files).limit(20).map(VirtualFile::getPath).joining(", ");
   }
 
   @NotNull

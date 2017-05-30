@@ -83,8 +83,8 @@ public class VfsEventsMerger {
     return myChangeInfos.size();
   }
 
-  Stream<String> dumpChangedFilePaths() {
-    return myChangeInfos.values().stream().map(ci -> ci.getFile().getPath());
+  Stream<VirtualFile> getChangedFiles() {
+    return myChangeInfos.values().stream().map(ChangeInfo::getFile);
   }
 
   private final ConcurrentIntObjectMap<ChangeInfo> myChangeInfos = ContainerUtil.createConcurrentIntObjectMap();
