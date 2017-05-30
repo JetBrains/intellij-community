@@ -356,12 +356,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (!isEnabled(node) || reference == null || reference.isSoft()) {
         return;
       }
-      HighlightSeverity severity = HighlightSeverity.ERROR;
-      if (reference instanceof PsiReferenceEx) {
-        severity = ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
-        if (severity == null) return;
-      }
-      PyExceptPart guard = getImportErrorGuard(node);
+      final PyExceptPart guard = getImportErrorGuard(node);
       if (guard != null) {
         processReferenceInImportGuard(node, guard);
         return;
@@ -375,7 +370,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       PsiElement target = null;
-      boolean unresolved;
+      final boolean unresolved;
       if (reference instanceof PsiPolyVariantReference) {
         final PsiPolyVariantReference poly = (PsiPolyVariantReference)reference;
         final ResolveResult[] resolveResults = poly.multiResolve(false);
@@ -405,6 +400,10 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
         }
         if (!ignoreUnresolved) {
+          final HighlightSeverity severity = reference instanceof PsiReferenceEx
+                                             ? ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext)
+                                             : HighlightSeverity.ERROR;
+          if (severity == null) return;
           registerUnresolvedReferenceProblem(node, reference, severity);
         }
         // don't highlight unresolved imports as unused
