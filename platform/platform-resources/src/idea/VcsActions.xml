@@ -97,8 +97,7 @@
               text="Shelve Silently" description="Shelve changes to appropriate shelved changelists" icon="AllIcons.Vcs.ShelveSilent">
         <keyboard-shortcut first-keystroke="control alt H" keymap="$default"/>
       </action>
-      <action id="ChangesView.Diff" class="com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction"
-              icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
+      <action id="ChangesView.Diff" class="com.intellij.diff.actions.ShowDiffAction" icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
     </group>
 
     <group id="AlienCommitChangesDialog.AdditionalActions"/>
@@ -107,7 +106,7 @@
       <reference ref="CheckinProject"/>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.Move"/>
-      <reference ref="ChangesView.Diff"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="EditSource"/>
       <separator/>
       <action id="ChangesView.DeleteUnversioned" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction"
@@ -146,8 +145,7 @@
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"
               text="Unshelve..." description="Correct paths where to apply patches and unshelve" icon="AllIcons.Vcs.Unshelve"/>
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
-      <action id="ShelvedChanges.Diff" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesAction"
-          icon="AllIcons.Actions.Diff" use-shortcut-of="Diff.ShowDiff"/>
+      <reference id="Diff.ShowDiff"/>
       <action id="ShelvedChanges.DiffWithLocal" class="com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesWithLocalAction"
               text="Compare with Local" description="Compare shelved version with current" use-shortcut-of="Vcs.ShowDiffWithLocal"
               icon="AllIcons.Actions.DiffWithCurrent"/>
@@ -166,7 +164,7 @@
     </group>
 
     <group id="ShelvedChangesToolbar">
-      <reference ref="ShelvedChanges.Diff"/>
+      <reference ref="Diff.ShowDiff"/>
       <action id="ChangesView.UnshelveSilently" class="com.intellij.openapi.vcs.changes.actions.UnshelveSilentlyAction"
               text="Unshelve Silently" description="Unshelve changes to appropriate changelists" icon="AllIcons.Vcs.UnshelveSilent">
         <keyboard-shortcut first-keystroke="control alt U" keymap="$default"/>
@@ -239,8 +237,7 @@
     <group id="UpdateActionGroup">
       <reference ref="EditSource"/>
       <reference ref="$Delete"/>
-      <action id="Diff.UpdatedFiles" class="com.intellij.openapi.vcs.update.ShowUpdatedDiffAction"
-              use-shortcut-of="Diff.ShowDiff" icon="AllIcons.Actions.Diff"/>
+      <reference id="Diff.ShowDiff"/>
     </group>
 
     <action id="Vcs.ReformatCommitMessage" class="com.intellij.vcs.commit.ReformatCommitMessageAction" use-shortcut-of="ReformatCode"/>
@@ -300,7 +297,7 @@
       <separator/>
       <reference ref="ShelvedChanges.Rename"/>
       <separator/>
-      <reference ref="ShelvedChanges.Diff"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="ChangesView.CreatePatchFromChanges"/>
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
@@ -353,7 +350,7 @@
       <reference ref="ChangesView.RemoveChangeList"/>
       <reference ref="ChangesView.SetDefault"/>
       <reference ref="ChangesView.Move"/>
-      <reference ref="ChangesView.Diff"/>
+      <reference ref="Diff.ShowDiff"/>
       <reference ref="ChangesView.DeleteUnversioned"/>
       <reference ref="ChangesView.AddUnversioned"/>
       <reference ref="ChangesView.Ignore"/>

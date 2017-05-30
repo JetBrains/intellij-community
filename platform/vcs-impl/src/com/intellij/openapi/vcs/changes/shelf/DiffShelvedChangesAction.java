@@ -28,10 +28,7 @@ import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.requests.UnknownFileTypeDiffRequest;
 import com.intellij.diff.tools.util.SoftHardCacheMap;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
@@ -39,7 +36,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -77,18 +73,25 @@ import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.cre
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class DiffShelvedChangesAction extends AnAction implements DumbAware {
-
+public class DiffShelvedChangesAction implements AnActionExtensionProvider {
   private static final String DIFF_WITH_BASE_ERROR = "Base content not found or not applicable.";
   public static final String SHELVED_VERSION = "Shelved Version";
   public static final String BASE_VERSION = "Base Version";
   public static final String CURRENT_VERSION = "Current Version";
 
-  public void update(final AnActionEvent e) {
+  @Override
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY) != null ||
+           e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e.getDataContext()));
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     showShelvedChangesDiff(e.getDataContext());
   }
 

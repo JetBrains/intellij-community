@@ -34,8 +34,9 @@
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogFileHistoryProvider"
                         serviceImplementation="com.intellij.vcs.log.history.VcsLogFileHistoryProviderImpl"/>
 
-    <actionPromoter implementation="com.intellij.vcs.log.ui.actions.VcsLogActionPromoter"/>
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
+
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryAction"/>
   </extensions>
 
   <actions>
@@ -79,9 +80,6 @@
             use-shortcut-of="EditSource"
             text="Open Repository Version" description="Open editor with selected revision of the file"
             icon="AllIcons.Actions.EditSource"/>
-    <action class="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryAction" id="Vcs.Log.ShowDiff"
-            use-shortcut-of="Diff.ShowDiff" text="Show Diff" description="Show diff with previous version"
-            icon="AllIcons.Actions.Diff"/>
     <action class="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction" id="Vcs.Log.ShowDiffWithLocal"
             use-shortcut-of="Vcs.ShowDiffWithLocal"
             text="Show Diff with Local" description="Compare selected revision with the local version of the file"
@@ -129,7 +127,7 @@
     </group>
     <group id="Vcs.FileHistory.ContextMenu">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowDiffWithLocal"/>
       <reference id="Vcs.Log.CreatePatchFromHistory"/>
       <reference id="Vcs.Log.GetVersion"/>
@@ -139,7 +137,7 @@
       <reference id="VcsHistoryActionsGroup"/>
     </group>
     <group id="Vcs.FileHistory.Toolbar">
-      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowDiffWithLocal"/>
       <reference id="Vcs.Log.CreatePatchFromHistory"/>
       <reference id="Vcs.Log.GetVersion"/>
@@ -183,7 +181,7 @@
 
     <group id="Log.FileHistory.KeymapGroup" popup="false">
       <reference id="Vcs.Log.OpenRepositoryVersion"/>
-      <reference id="Vcs.Log.ShowDiff"/>
+      <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.Log.ShowDiffWithLocal"/>
       <reference id="Vcs.Log.CreatePatchFromHistory"/>
       <reference id="Vcs.Log.GetVersion"/>

@@ -153,7 +153,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
     DnDSupport.createBuilder(myTree).disableAsTarget().setImageProvider(this::createDraggedImage).setBeanProvider(this::createDragStartBean)
       .install();
 
-    final AnAction showDiffAction = ActionManager.getInstance().getAction("ShelvedChanges.Diff");
+    final AnAction showDiffAction = ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_DIFF_COMMON);
     showDiffAction.registerCustomShortcutSet(showDiffAction.getShortcutSet(), myTree);
     final EditSourceAction editSourceAction = new EditSourceAction();
     editSourceAction.registerCustomShortcutSet(editSourceAction.getShortcutSet(), myTree);

@@ -31,7 +31,6 @@ import com.intellij.history.Label;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
@@ -48,12 +47,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
+public class ShowUpdatedDiffAction implements AnActionExtensionProvider {
   @Override
-  public void update(AnActionEvent e) {
+  public boolean isActive(@NotNull AnActionEvent e) {
+    return isVisible(e.getDataContext());
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
 
     final Presentation presentation = e.getPresentation();
+    presentation.setDescription("Show diff with version before update");
 
     //presentation.setVisible(isVisible(dc));
     presentation.setEnabled(isVisible(dc) && isEnabled(dc));
@@ -69,7 +74,8 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     return iterable != null;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     if ((!isVisible(dc)) || (!isEnabled(dc))) return;
 
