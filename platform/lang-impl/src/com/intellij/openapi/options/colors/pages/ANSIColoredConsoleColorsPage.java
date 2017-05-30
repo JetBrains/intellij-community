@@ -32,6 +32,9 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     "\n" +
     "<logError>Log error</logError>\n" +
     "<logWarning>Log warning</logWarning>\n" +
+    "<logInfo>Log info</logInfo>\n" +
+    "<logVerbose>Log verbose</logVerbose>\n" +
+    "<logDebug>Log debug</logDebug>\n" +
     "<logExpired>An expired log entry</logExpired>\n" +
     "\n" +
     "# Process output highlighted using ANSI colors codes\n" +
@@ -62,6 +65,9 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
 
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.logError"), ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.warning"), ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.info"), ConsoleViewContentType.LOG_INFO_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.verbose"), ConsoleViewContentType.LOG_VERBOSE_OUTPUT_KEY),
+    new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.debug"), ConsoleViewContentType.LOG_DEBUG_OUTPUT_KEY),
     new AttributesDescriptor(OptionsBundle.message("options.general.color.descriptor.console.expired"), ConsoleViewContentType.LOG_EXPIRED_ENTRY),
 
     new AttributesDescriptor(OptionsBundle.message("color.settings.console.black"), ConsoleHighlighter.BLACK),
@@ -91,6 +97,9 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("stderr", ConsoleViewContentType.ERROR_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logError", ConsoleViewContentType.LOG_ERROR_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logWarning", ConsoleViewContentType.LOG_WARNING_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logInfo", ConsoleViewContentType.LOG_INFO_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logVerbose", ConsoleViewContentType.LOG_VERBOSE_OUTPUT_KEY);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logDebug", ConsoleViewContentType.LOG_DEBUG_OUTPUT_KEY);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("logExpired", ConsoleViewContentType.LOG_EXPIRED_ENTRY);
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("black", ConsoleHighlighter.BLACK);
