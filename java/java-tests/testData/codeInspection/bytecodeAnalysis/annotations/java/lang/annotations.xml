@@ -1278,6 +1278,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.lang.Iterable java.util.Iterator&lt;T&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='java.lang.Long Long(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>

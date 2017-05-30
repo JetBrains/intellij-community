@@ -1543,6 +1543,11 @@
     <item name='org.apache.commons.lang.CharSet CharSet(java.lang.String[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.CharSet boolean contains(char)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.CharSet boolean equals(java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -3315,7 +3320,8 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, char)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -3324,7 +3330,8 @@
     </item>
     <item name='org.apache.commons.lang.StringUtils java.lang.String join(java.util.Collection, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;null,_-&gt;null&quot;"/>
+            <val name="value" val="&quot;null,_-&gt;null&quot;"/>
+            <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
@@ -4137,8 +4144,18 @@
     <item name='org.apache.commons.lang.Validate void noNullElements(java.lang.Object[], java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.Validate void noNullElements(java.util.Collection, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>

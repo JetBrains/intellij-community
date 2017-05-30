@@ -16,9 +16,7 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
-import com.intellij.openapi.util.Couple;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -43,7 +41,7 @@ public class PurityAnalysis {
   @NotNull
   public static Equation analyze(Method method, MethodNode methodNode, boolean stable) {
     EKey key = new EKey(method, Direction.Pure, stable);
-    Set<EffectQuantum> hardCodedSolution = HardCodedPurity.getHardCodedSolution(method);
+    Set<EffectQuantum> hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
     if (hardCodedSolution != null) {
       return new Equation(key, new Effects(hardCodedSolution));
     }
@@ -386,11 +384,11 @@ class DataInterpreter extends Interpreter<DataValue> {
         EKey key = new EKey(method, Direction.Pure, stable);
         EffectQuantum quantum = new EffectQuantum.CallQuantum(key, data, opCode == Opcodes.INVOKESTATIC);
         DataValue result = (ASMUtils.getReturnSizeFast(mNode.desc) == 1) ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
-        if (HardCodedPurity.isPureMethod(method)) {
+        if (HardCodedPurity.getInstance().isPureMethod(method)) {
           quantum = null;
           result = DataValue.LocalDataValue;
         }
-        else if (HardCodedPurity.isThisChangingMethod(method)) {
+        else if (HardCodedPurity.getInstance().isThisChangingMethod(method)) {
           DataValue receiver = ArrayUtil.getFirstElement(data);
           if (receiver == DataValue.ThisDataValue) {
             quantum = EffectQuantum.ThisChangeQuantum;
@@ -398,7 +396,10 @@ class DataInterpreter extends Interpreter<DataValue> {
           else if (receiver == DataValue.LocalDataValue || receiver == DataValue.OwnedDataValue) {
             quantum = null;
           }
-          if (HardCodedPurity.isBuilderChainCall(method)) {
+          else if (receiver instanceof DataValue.ParameterDataValue) {
+            quantum = new EffectQuantum.ParamChangeQuantum(((DataValue.ParameterDataValue)receiver).n);
+          }
+          if (HardCodedPurity.getInstance().isBuilderChainCall(method)) {
             // mostly to support string concatenation
             result = receiver;
           }
@@ -424,7 +425,7 @@ class DataInterpreter extends Interpreter<DataValue> {
         return DataValue.UnknownDataValue2;
       case Opcodes.GETFIELD:
         FieldInsnNode fieldInsn = ((FieldInsnNode)insn);
-        if (value == DataValue.ThisDataValue && HardCodedPurity.isOwnedField(fieldInsn)) {
+        if (value == DataValue.ThisDataValue && HardCodedPurity.getInstance().isOwnedField(fieldInsn)) {
           return DataValue.OwnedDataValue;
         } else {
           return ASMUtils.getSizeFast(fieldInsn.desc) == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
@@ -471,63 +472,6 @@ class DataInterpreter extends Interpreter<DataValue> {
       int size = Math.min(v1.getSize(), v2.getSize());
       return size == 1 ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
     }
-  }
-}
-
-final class HardCodedPurity {
-  private static Set<Couple<String>> ownedFields = ContainerUtil.set(
-    new Couple<>("java/lang/AbstractStringBuilder", "value")
-  );
-  private static Set<Method> thisChangingMethods = ContainerUtil.set(
-    new Method("java/lang/Throwable", "fillInStackTrace", "()Ljava/lang/Throwable;")
-  );
-  // Assumed that all these methods are not only pure, but return object which could be safely modified
-  private static Set<Method> pureMethods = ContainerUtil.set(
-    // Maybe overloaded and be not pure, but this would be definitely bad code style
-    // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
-    new Method("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
-    // Native
-    new Method("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
-    new Method("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
-    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;I)Ljava/lang/Object;"),
-    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;"),
-    new Method("java/lang/Float", "floatToRawIntBits", "(F)I"),
-    new Method("java/lang/Float", "intBitsToFloat", "(I)F"),
-    new Method("java/lang/Double", "doubleToRawLongBits", "(D)J"),
-    new Method("java/lang/Double", "longBitsToDouble", "(J)D")
-    );
-  private static Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
-  private static Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
-  static {
-    // Native
-    solutions.put(new Method("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"),
-                  Collections.singleton(new EffectQuantum.ParamChangeQuantum(2)));
-    solutions.put(new Method("java/lang/Object", "hashCode", "()I"), Collections.emptySet());
-  }
-
-  static Set<EffectQuantum> getHardCodedSolution(Method method) {
-    return isThisChangingMethod(method) ? thisChange : isPureMethod(method) ? Collections.emptySet() : solutions.get(method);
-  }
-
-  static boolean isThisChangingMethod(Method method) {
-    return isBuilderChainCall(method) || thisChangingMethods.contains(method);
-  }
-
-  static boolean isBuilderChainCall(Method method) {
-    // Those methods are virtual, thus contracts cannot be inferred automatically,
-    // but all possible implementations are controlled
-    // (only final classes j.l.StringBuilder and j.l.StringBuffer extend package-private j.l.AbstractStringBuilder)
-    return (method.internalClassName.equals("java/lang/StringBuilder") || method.internalClassName.equals("java/lang/StringBuffer")) &&
-           method.methodName.startsWith("append");
-  }
-
-  static boolean isPureMethod(Method method) {
-    return method.methodName.equals("toString") && method.methodDesc.equals("()Ljava/lang/String;") ||
-           pureMethods.contains(method);
-  }
-
-  static boolean isOwnedField(FieldInsnNode fieldInsn) {
-    return ownedFields.contains(new Couple<>(fieldInsn.owner, fieldInsn.name));
   }
 }
 
