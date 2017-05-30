@@ -414,19 +414,13 @@ def change_attr_expression(thread_id, frame_id, attr, expression, dbg, value=SEN
 MAXIMUM_ARRAY_SIZE = 100
 
 
-def array_to_xml_converter(array, name, roffset, coffset, rows, cols, format):
-    array, metaxml, r, c, f = array_to_meta_xml(array, name, format)
-    xml = metaxml
+def array_to_xml(array, name, roffset, coffset, rows, cols, format):
+    array, xml, r, c, f = array_to_meta_xml(array, name, format)
     format = '%' + f
     if rows == -1 and cols == -1:
         rows = r
         cols = c
-    xml += array_to_xml(array, roffset, coffset, rows, cols, format)
-    return xml
 
-
-def array_to_xml(array, roffset, coffset, rows, cols, format):
-    xml = ""
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
     cols = min(cols, MAXIMUM_ARRAY_SIZE)
 
@@ -616,7 +610,7 @@ def header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
     xml += "</headerdata>\n"
     return xml
 
-TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml_converter, "DataFrame": dataframe_to_xml, "Series": dataframe_to_xml}
+TYPE_TO_XML_CONVERTERS = {"ndarray": array_to_xml, "DataFrame": dataframe_to_xml, "Series": dataframe_to_xml}
 
 
 def table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format):
