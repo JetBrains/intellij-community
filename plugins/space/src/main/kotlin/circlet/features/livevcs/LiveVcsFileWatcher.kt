@@ -1,5 +1,7 @@
 package circlet.features.livevcs
 
+import circlet.*
+import circlet.components.*
 import circlet.utils.*
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
@@ -10,14 +12,17 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.update.*
 import klogging.*
 import runtime.async.*
+import runtime.reactive.*
 
 private val log = KLoggers.logger("app-idea/LiveVcsFileWatcher.kt")
 
 class LiveVcsFileWatcher(private val project: Project,
                          private val changeListManager: ChangeListManager,
                          private val fileDocumentManager: FileDocumentManager,
-                         private val editorFactory: EditorFactory)
+                         private val connection: CircletConnectionComponent,
+                         editorFactory: EditorFactory)
     : ILifetimedComponent by LifetimedComponent(project), DocumentListenerAdapter, VirtualFileListenerAdapter {
+
     companion object {
         private val DELAY_MS = 1000
     }
@@ -26,14 +31,19 @@ class LiveVcsFileWatcher(private val project: Project,
     private val messageQueue = MergingUpdateQueue("LiveVcsFileWatcher::messageQueue",
         DELAY_MS, true, MergingUpdateQueue.ANY_COMPONENT, project)
 
-    init {
-        editorFactory.eventMulticaster.addDocumentListener(this, project)
+    private val client: CircletClient? get() = if (connection.client.hasValue) connection.client.value else null
 
-        async {
+    init {
+        connection.client.view(componentLifetime, { lt, client ->
+            client ?: return@view
+
+            editorFactory.eventMulticaster.addDocumentListener(this)
+            lt.add { editorFactory.eventMulticaster.removeDocumentListener(this) }
+
             for (change in changeListManager.allChanges) {
                 processChange(change)
             }
-        }
+        })
     }
 
     override fun documentChanged(e: DocumentEvent) {
@@ -48,7 +58,7 @@ class LiveVcsFileWatcher(private val project: Project,
         messageQueue.queue(object : Update("SendMessage") {
             override fun run() {
                 val change = changeListManager.getChange(vFile) ?: return
-                async { processChange(change) }
+                processChange(change)
             }
 
             override fun isDisposed(): Boolean = project.isDisposed
@@ -71,30 +81,45 @@ class LiveVcsFileWatcher(private val project: Project,
         queueMessageFor(event.file)
     }
 
-    suspend private fun processChange(change: Change) {
+    private fun processChange(change: Change) {
+        val client = client ?: return
         log.info { change.toString() }
-
-        when (change.type) {
-            Change.Type.MODIFICATION -> {
-                val path = change.path ?: return
-                val oldText = change.oldText
-                val newText = change.newText
+        val mutation = client.api.ql.mutation
+        async {
+            when (change.type) {
+                Change.Type.MODIFICATION -> {
+                    val path = change.path ?: return@async
+                    val oldText = change.oldText ?: return@async
+                    val newText = change.newText ?: return@async
+                    mutation.addFileChanged(path, oldText, newText)
+                }
+                Change.Type.NEW -> {
+                    val path = change.path ?: return@async
+                    val newText = change.newText ?: return@async
+                    mutation.addFileCreated(path)
+                    mutation.addFileChanged(path, "", newText)
+                }
+                Change.Type.DELETED -> {
+                    val path = change.path ?: return@async
+                    mutation.addFileRemoved(path)
+                }
+                Change.Type.MOVED -> {
+                    val oldPath = change.oldPath ?: return@async
+                    val newPath = change.path ?: return@async
+                    val newText = change.newText ?: return@async
+                    mutation.addFileRemoved(oldPath)
+                    mutation.addFileCreated(newPath)
+                    mutation.addFileChanged(newPath, "", newText)
+                }
+                else -> {
+                    log.error { "undefined type: ${change.type.name}" }
+                }
             }
-            Change.Type.NEW -> {
-                val path = change.path ?: return
-                val newText = change.newText
-            }
-            Change.Type.DELETED -> {
-                val path = change.path ?: return
-            }
-            Change.Type.MOVED -> {
-                // todo
-            }
-            else -> throw IllegalArgumentException("change.type")
         }
     }
 }
 
+private val Change.oldPath: String? get() = beforeRevision?.file?.virtualFile?.canonicalPath
 private val Change.path: String? get() = virtualFile?.canonicalPath
 private val Change.oldText: String? get() = beforeRevision?.content
 private val Change.newText: String? get() = afterRevision?.content
