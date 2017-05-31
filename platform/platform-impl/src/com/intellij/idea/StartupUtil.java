@@ -42,6 +42,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.net.SocketAppender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.BuiltInServer;
@@ -51,6 +52,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.List;
@@ -102,11 +105,14 @@ public class StartupUtil {
 
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
+    String socketAppenderProperty = System.getProperty("socket.log");
     try {
       org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
       if (!root.getAllAppenders().hasMoreElements()) {
         root.setLevel(Level.WARN);
-        root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+        if (socketAppenderProperty == null) {
+          root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+        }
       }
     }
     catch (Throwable e) {
@@ -134,6 +140,7 @@ public class StartupUtil {
 
     Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
+    if (socketAppenderProperty != null) configureSocketAppender(socketAppenderProperty);
     startLogging(log);
     loadSystemLibraries(log);
     fixProcessEnvironment(log);
@@ -145,6 +152,26 @@ public class StartupUtil {
     }
 
     appStarter.start(newConfigFolder);
+  }
+
+  private static void configureSocketAppender(@NotNull String socketAppenderProperty) {
+    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
+    try {
+      String[] chunks = socketAppenderProperty.split(":");
+      if (chunks.length < 2) {
+        return;
+      }
+      String host = chunks[0];
+      int port = Integer.parseInt(chunks[1]);
+      InetAddress inetAddress = InetAddress.getByName(host);
+      SocketAppender socketAppender = new SocketAppender(inetAddress, port);
+      socketAppender.activateOptions();
+      root.addAppender(socketAppender);
+    }
+    catch (UnknownHostException e) {
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
+    }
   }
 
   /**
