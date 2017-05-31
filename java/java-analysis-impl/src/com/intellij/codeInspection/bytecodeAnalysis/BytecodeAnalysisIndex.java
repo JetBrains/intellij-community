@@ -55,8 +55,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
 
   private static final int VERSION = 4; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
-  private static final int VERSION_MODIFIER_MAX = 2;
-  private static final int FINAL_VERSION = VERSION * VERSION_MODIFIER_MAX + VERSION_MODIFIER;
+  private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
   private static final VirtualFileGist<Map<HMethod, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new EquationsExternalizer(), new ClassDataIndexer());
