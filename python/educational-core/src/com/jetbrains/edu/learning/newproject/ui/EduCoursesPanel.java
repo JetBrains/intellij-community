@@ -81,7 +81,7 @@ public class EduCoursesPanel extends JPanel {
 
 
   private void initUI() {
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(mySplitPaneRoot, true);
+    GuiUtils.replaceJSplitPaneWithIDEASplitter(mySplitPaneRoot);
     mySplitPane.setDividerLocation(0.5);
     mySplitPane.setResizeWeight(0.5);
     myCourseNameLabel.setBorder(IdeBorderFactory.createEmptyBorder(20, 10, 5, 10));

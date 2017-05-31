@@ -22,7 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGenerator;
+import com.intellij.util.Function;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.newproject.EduCourseProjectGenerator;
@@ -92,8 +94,9 @@ public class EduCreateNewProjectDialog extends DialogWrapper {
     if (!projectGenerator.beforeProjectGenerated()) {
       return;
     }
+    Function<VirtualFile, Object> settings = file -> projectGenerator.getProjectSettings();
     DirectoryProjectGenerator directoryProjectGenerator = projectGenerator.getDirectoryProjectGenerator();
-    Project createdProject = AbstractNewProjectStep.doGenerateProject(null, location, directoryProjectGenerator, projectGenerator.getProjectSettings());
+    Project createdProject = AbstractNewProjectStep.doGenerateProject(null, location, directoryProjectGenerator, settings);
     if (createdProject == null) {
       return;
     }

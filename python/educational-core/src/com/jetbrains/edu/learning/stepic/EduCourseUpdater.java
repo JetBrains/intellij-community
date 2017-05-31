@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseGeneration.StudyProjectGenerator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,5 +39,21 @@ public class EduCourseUpdater implements ApplicationComponent {
   public EduCourseUpdater() {
     ApplicationManager.getApplication().executeOnPooledThread(
       () -> ourRemoteCourses = new StudyProjectGenerator().getCourses(true));
+  }
+
+  @Override
+  public void disposeComponent() {
+
+  }
+
+  @Override
+  public void initComponent() {
+
+  }
+
+  @NotNull
+  @Override
+  public String getComponentName() {
+    return "EduCourseUpdater";
   }
 }
