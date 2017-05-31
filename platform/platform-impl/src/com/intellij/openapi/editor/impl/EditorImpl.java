@@ -831,6 +831,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     for (Caret caret : getCaretModel().getAllCarets()) {
       caret.moveToOffset(caret.getOffset());
     }
+
+    if (myVirtualFile != null) EditorNotifications.getInstance(myProject).updateNotifications(myVirtualFile);
   }
 
   /**
