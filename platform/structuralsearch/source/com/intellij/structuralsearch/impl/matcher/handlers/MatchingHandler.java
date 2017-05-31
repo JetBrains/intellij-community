@@ -24,7 +24,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
-import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.AndPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
@@ -132,8 +132,8 @@ public abstract class MatchingHandler {
     if (start==null) return null;
     if (start instanceof RegExpPredicate) return start;
 
-    if(start instanceof BinaryPredicate) {
-      BinaryPredicate binary = (BinaryPredicate)start;
+    if(start instanceof AndPredicate) {
+      AndPredicate binary = (AndPredicate)start;
       final MatchPredicate result = findRegExpPredicate(binary.getFirst());
       if (result!=null) return result;
 

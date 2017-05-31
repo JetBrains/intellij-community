@@ -521,7 +521,7 @@ public class PatternCompiler {
     if (handler.getPredicate()==null) {
       handler.setPredicate(predicate);
     } else {
-      handler.setPredicate(new BinaryPredicate(handler.getPredicate(), predicate, false));
+      handler.setPredicate(new AndPredicate(handler.getPredicate(), predicate));
     }
   }
 }

@@ -18,15 +18,13 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 
-public final class BinaryPredicate extends MatchPredicate {
+public final class AndPredicate extends MatchPredicate {
   private final MatchPredicate first;
   private final MatchPredicate second;
-  private final boolean or;
 
-  public BinaryPredicate(MatchPredicate first, MatchPredicate second, boolean or) {
+  public AndPredicate(MatchPredicate first, MatchPredicate second) {
     this.first = first;
     this.second = second;
-    this.or = or;
   }
 
   @Override
@@ -36,14 +34,7 @@ public final class BinaryPredicate extends MatchPredicate {
 
   @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
-    if (or) {
-      return first.match(patternNode, matchedNode, start, end, context) ||
-             second.match(patternNode, matchedNode, start, end, context);
-    }
-    else {
-      return first.match(patternNode, matchedNode, start, end, context) &&
-             second.match(patternNode, matchedNode, start, end, context);
-    }
+    return first.match(patternNode, matchedNode, start, end, context) && second.match(patternNode, matchedNode, start, end, context);
   }
 
   public MatchPredicate getFirst() {
