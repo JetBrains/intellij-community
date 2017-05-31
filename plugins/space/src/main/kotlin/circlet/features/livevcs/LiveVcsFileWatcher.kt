@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.*
+import com.intellij.openapi.util.io.*
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.update.*
@@ -20,6 +22,7 @@ class LiveVcsFileWatcher(private val project: Project,
                          private val changeListManager: ChangeListManager,
                          private val fileDocumentManager: FileDocumentManager,
                          private val connection: CircletConnectionComponent,
+                         private val vcsManager : ProjectLevelVcsManager,
                          editorFactory: EditorFactory)
     : ILifetimedComponent by LifetimedComponent(project), DocumentListenerAdapter, VirtualFileListenerAdapter {
 
@@ -40,6 +43,7 @@ class LiveVcsFileWatcher(private val project: Project,
             editorFactory.eventMulticaster.addDocumentListener(this)
             lt.add { editorFactory.eventMulticaster.removeDocumentListener(this) }
 
+            // todo here bug!! contents are nulls
             for (change in changeListManager.allChanges) {
                 processChange(change)
             }
@@ -88,26 +92,26 @@ class LiveVcsFileWatcher(private val project: Project,
         async {
             when (change.type) {
                 Change.Type.MODIFICATION -> {
-                    val path = change.path ?: return@async
+                    val path = change.file ?: return@async
                     val oldText = change.oldText ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileChanged(path, oldText, newText)
+                    mutation.addFileChanged(path.getRelativePath(), oldText, newText)
                 }
                 Change.Type.NEW -> {
-                    val path = change.path ?: return@async
+                    val path = change.file ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileCreated(path, newText)
+                    mutation.addFileCreated(path.getRelativePath(), newText)
                 }
                 Change.Type.DELETED -> {
-                    val path = change.path ?: return@async
-                    mutation.addFileRemoved(path)
+                    val path = change.file ?: return@async
+                    mutation.addFileRemoved(path.getRelativePath())
                 }
                 Change.Type.MOVED -> {
-                    val oldPath = change.oldPath ?: return@async
-                    val newPath = change.path ?: return@async
+                    val oldPath = change.oldFile ?: return@async
+                    val newPath = change.file ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileRemoved(oldPath)
-                    mutation.addFileCreated(newPath, newText)
+                    mutation.addFileRemoved(oldPath.getRelativePath())
+                    mutation.addFileCreated(newPath.getRelativePath(), newText)
                 }
                 else -> {
                     log.error { "undefined type: ${change.type.name}" }
@@ -115,10 +119,18 @@ class LiveVcsFileWatcher(private val project: Project,
             }
         }
     }
+
+    private fun VirtualFile.getRelativePath(): String {
+        val root = vcsManager.getVcsRootFor(this)!!
+        return FileUtilRt.getRelativePath(VfsUtil.virtualToIoFile(root), VfsUtil.virtualToIoFile(this)) ?: run {
+            log.error { "Can't make relative path from: base = ${root.path} , path = ${this.path}" }
+            throw IllegalArgumentException()
+        }
+    }
 }
 
-private val Change.oldPath: String? get() = beforeRevision?.file?.virtualFile?.canonicalPath
-private val Change.path: String? get() = virtualFile?.canonicalPath
+private val Change.oldFile: VirtualFile? get() = beforeRevision?.file?.virtualFile
+private val Change.file: VirtualFile? get() = virtualFile
 private val Change.oldText: String? get() = beforeRevision?.content
 private val Change.newText: String? get() = afterRevision?.content
 
