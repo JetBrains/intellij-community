@@ -645,6 +645,15 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     marker1.dispose();
   }
 
+  public void testStickingToRight() {
+    RangeMarkerImpl marker = (RangeMarkerImpl)createMarker("ab", 1, 1);
+    marker.setStickingToRight(true);
+    marker.getDocument().insertString(1, " ");
+    assertTrue(marker.isValid());
+    assertEquals(2, marker.getStartOffset());
+    assertEquals(2, marker.getEndOffset());
+  }
+
   private static List<RangeMarker> add(DocumentEx document, int... offsets) {
     List<RangeMarker> result = new ArrayList<>();
     for (int i=0; i<offsets.length; i+=2) {

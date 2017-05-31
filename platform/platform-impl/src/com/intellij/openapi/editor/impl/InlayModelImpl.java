@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,8 @@ public class InlayModelImpl implements InlayModel, Disposable {
       @NotNull
       @Override
       protected RMNode<InlayImpl> createNewNode(@NotNull InlayImpl key, int start, int end,
-                                                boolean greedyToLeft, boolean greedyToRight, int layer) {
-        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight) {
+                                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+        return new RMNode<InlayImpl>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
           @Override
           protected Getter<InlayImpl> createGetter(@NotNull InlayImpl interval) {
             return interval;

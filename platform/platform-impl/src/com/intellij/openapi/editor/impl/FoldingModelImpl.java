@@ -588,7 +588,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
                                      @Nullable FoldingGroup group,
                                      boolean neverExpands) {
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
-    myRegionTree.addInterval(region, startOffset, endOffset, false, false, 0);
+    myRegionTree.addInterval(region, startOffset, endOffset, false, false, false, 0);
     LOG.assertTrue(region.isValid());
     return region;
   }

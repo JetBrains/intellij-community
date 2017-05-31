@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -400,7 +400,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   @NotNull
-  protected abstract IntervalNode<T> createNewNode(@NotNull T key, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer);
+  protected abstract IntervalNode<T> createNewNode(@NotNull T key, int start, int end, 
+                                                   boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer);
   protected abstract IntervalNode<T> lookupNode(@NotNull T key);
   protected abstract void setNode(@NotNull T key, @Nullable IntervalNode<T> node);
 
@@ -769,7 +770,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   }
 
   @NotNull
-  public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  public IntervalTreeImpl.IntervalNode<T> addInterval(@NotNull T interval, int start, int end, 
+                                                      boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     try {
       l.writeLock().lock();
       if (firingBeforeRemove) {
@@ -778,7 +780,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       checkMax(true);
       processReferenceQueue();
       incModCount();
-      IntervalNode<T> newNode = createNewNode(interval, start, end, greedyToLeft, greedyToRight, layer);
+      IntervalNode<T> newNode = createNewNode(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
       IntervalNode<T> insertedNode = findOrInsert(newNode);
       if (insertedNode == newNode) {
         setNode(interval, insertedNode);
@@ -1221,7 +1223,8 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return findMinOverlappingWith(root.getRight(), interval, modCountBefore, delta);
   }
 
-  void changeData(@NotNull T interval, int start, int end, boolean greedyToLeft, boolean greedyToRight, int layer) {
+  void changeData(@NotNull T interval, int start, int end, 
+                  boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     try {
       l.writeLock().lock();
 
@@ -1231,7 +1234,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
       boolean nodeRemoved = node.removeInterval(interval);
       assert nodeRemoved || !node.intervals.isEmpty();
 
-      IntervalNode<T> insertedNode = addInterval(interval, start, end, greedyToLeft, greedyToRight, layer);
+      IntervalNode<T> insertedNode = addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
       assert node != insertedNode;
 
       int after = size();

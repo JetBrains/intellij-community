@@ -1503,7 +1503,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
       super(myEditor.getDocument(), offset, offset, false);
-      myEditor.getCaretModel().myPositionMarkerTree.addInterval(this, offset, offset, false, false, 0);
+      myEditor.getCaretModel().myPositionMarkerTree.addInterval(this, offset, offset, false, false, false, 0);
     }
 
     @Override
@@ -1582,7 +1582,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
 
     private SelectionMarker(int start, int end) {
       super(myEditor.getDocument(), start, end, false);
-      myEditor.getCaretModel().mySelectionMarkerTree.addInterval(this, start, end, false, false, 0);
+      myEditor.getCaretModel().mySelectionMarkerTree.addInterval(this, start, end, false, false, false, 0);
     }
 
     private void resetVirtualSelection() {
