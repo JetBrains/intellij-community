@@ -163,11 +163,6 @@ public abstract class StructuralSearchProfile {
     throw new UnsupportedPatternException(SSRBundle.message("replacement.not.supported.for.filetype", fileType));
   }
 
-  @NotNull
-  public Language getLanguage(PsiElement element) {
-    return element.getLanguage();
-  }
-
   // only for nodes not filtered by lexical-nodes filter; they can be by default
   public boolean canBeVarDelimeter(@NotNull PsiElement element) {
     return false;
