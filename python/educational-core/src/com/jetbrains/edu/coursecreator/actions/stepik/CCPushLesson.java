@@ -1,7 +1,6 @@
 package com.jetbrains.edu.coursecreator.actions.stepik;
 
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -40,7 +39,12 @@ public class CCPushLesson extends DumbAwareAction {
       return;
     }
     if (!course.getCourseMode().equals(CCUtils.COURSE_MODE)) return;
-    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    final PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0 || directories.length > 1) {
+      return;
+    }
+
+    final PsiDirectory lessonDir = directories[0];
     if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
@@ -64,7 +68,12 @@ public class CCPushLesson extends DumbAwareAction {
     if (course == null || !(course instanceof RemoteCourse)) {
       return;
     }
-    PsiDirectory lessonDir = DirectoryChooserUtil.getOrChooseDirectory(view);
+    final PsiDirectory[] directories = view.getDirectories();
+    if (directories.length == 0 || directories.length > 1) {
+      return;
+    }
+
+    final PsiDirectory lessonDir = directories[0];
     if (lessonDir == null || !lessonDir.getName().contains("lesson")) {
       return;
     }
