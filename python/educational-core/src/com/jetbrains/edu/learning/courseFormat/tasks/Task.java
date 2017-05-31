@@ -9,8 +9,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
-import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
 import com.jetbrains.edu.learning.stepic.EduStepicConnector;
@@ -98,6 +98,14 @@ public abstract class Task implements StudyItem {
     return taskTexts;
   }
 
+  public void setTestsText(Map<String, String> testsText) {
+    this.testsText = testsText;
+  }
+
+  public void setTaskTexts(Map<String, String> taskTexts) {
+    this.taskTexts = taskTexts;
+  }
+
   public void addTestsTexts(String name, String text) {
     testsText.put(name, text);
   }
@@ -157,6 +165,10 @@ public abstract class Task implements StudyItem {
         VirtualFile srcDir = taskDir.findChild(EduNames.SRC);
         return srcDir != null ? srcDir : taskDir;
       }
+    }
+    Course course = getLesson().getCourse();
+    if (course.isTutorial()) {
+      return project.getBaseDir();
     }
     return null;
   }

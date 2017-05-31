@@ -176,10 +176,8 @@ public class StudyUtils {
     presentation.setEnabled(false);
     final Project project = e.getProject();
     if (project != null) {
-      final StudyEditor studyEditor = getSelectedStudyEditor(project);
-      if (studyEditor != null) {
-        presentation.setEnabledAndVisible(true);
-      }
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      presentation.setEnabled(virtualFile != null && getTaskFile(project, virtualFile) != null);
     }
   }
 
@@ -239,10 +237,11 @@ public class StudyUtils {
    * shows pop up in the center of "check task" button in study editor
    */
   public static void showCheckPopUp(@NotNull final Project project, @NotNull final Balloon balloon) {
-    final StudyEditor studyEditor = getSelectedStudyEditor(project);
-    assert studyEditor != null;
-
-    balloon.show(computeLocation(studyEditor.getEditor()), Balloon.Position.above);
+    Editor selectedTextEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
+    if (selectedTextEditor == null) {
+      return;
+    }
+    balloon.show(computeLocation(selectedTextEditor), Balloon.Position.above);
     Disposer.register(project, balloon);
   }
 
@@ -277,6 +276,13 @@ public class StudyUtils {
     }
     VirtualFile taskDir = getTaskDir(file);
     if (taskDir == null) {
+      if (course.isTutorial()) {
+        String relativePath = FileUtil.getRelativePath(project.getBaseDir().getPath(), file.getPath(), '/');
+        if (relativePath == null) {
+          return null;
+        }
+        return course.getLessons().get(0).getTaskList().get(0).getFile(relativePath);
+      }
       return null;
     }
     //need this because of multi-module generation
@@ -598,6 +604,16 @@ public class StudyUtils {
 
   @Nullable
   public static Task getTaskForFile(@NotNull Project project, @NotNull VirtualFile taskFile) {
+    Course course = StudyTaskManager.getInstance(project).getCourse();
+    if (course == null) {
+      return null;
+    }
+    if (course.isTutorial()) {
+      List<Task> taskList = course.getLessons().get(0).getTaskList();
+      if (taskList.size() == 1) {
+        return taskList.get(0);
+      }
+    }
     VirtualFile taskDir = getTaskDir(taskFile);
     if (taskDir == null) {
       return null;

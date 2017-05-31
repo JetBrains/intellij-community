@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,7 +89,7 @@ public class StudySubtaskUtils {
         taskFile.setHighlightErrors(false);
       }
     }
-    transformTestFile(project, toSubtaskIndex, taskDir);
+    transformTestFile(task, project, toSubtaskIndex, taskDir);
     task.setActiveSubtaskIndex(toSubtaskIndex);
     updateUI(project, task, taskDir, !CCUtils.isCourseCreator(project) && navigateToTask);
     if (CCUtils.isCourseCreator(project)) {
@@ -124,24 +125,32 @@ public class StudySubtaskUtils {
     }
   }
 
-  private static void transformTestFile(@NotNull Project project, int toSubtaskIndex, VirtualFile taskDir) {
+  private static void transformTestFile(TaskWithSubtasks task,
+                                        @NotNull Project project,
+                                        int toSubtaskIndex,
+                                        VirtualFile taskDir) {
 
     String subtaskTestFileName = getTestFileName(project, toSubtaskIndex);
     if (subtaskTestFileName == null) {
       return;
     }
-    String nameWithoutExtension = FileUtil.getNameWithoutExtension(subtaskTestFileName);
-    String extension = FileUtilRt.getExtension(subtaskTestFileName);
-    VirtualFile subtaskTestFile = taskDir.findChild(nameWithoutExtension + ".txt");
-    if (subtaskTestFile != null) {
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          subtaskTestFile.rename(project, nameWithoutExtension + "." + extension);
+    final Ref<VirtualFile> subtaskTestFile = new Ref<>();
+    for (Map.Entry<String, String> entry : task.getTestsText().entrySet()) {
+      if (entry.getKey().contains(subtaskTestFileName)) {
+        String nameWithoutEnxtension = FileUtil.getNameWithoutExtension(entry.getKey());
+        String extension = FileUtil.getExtension(entry.getKey());
+        subtaskTestFile.set(taskDir.findFileByRelativePath(nameWithoutEnxtension + ".txt"));
+        if (subtaskTestFile != null) {
+          ApplicationManager.getApplication().runWriteAction(() -> {
+            try {
+              subtaskTestFile.get().rename(project, FileUtil.getNameWithoutExtension(subtaskTestFileName) + "." + extension);
+            }
+            catch (IOException e) {
+              LOG.error(e);
+            }
+          });
         }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      });
+      }
     }
   }
 

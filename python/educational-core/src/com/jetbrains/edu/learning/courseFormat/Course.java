@@ -8,6 +8,8 @@ import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.core.EduUtils;
+import com.jetbrains.edu.learning.courseFormat.tasks.Task;
+import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import com.jetbrains.edu.learning.stepic.StepicUser;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -172,6 +174,16 @@ public class Course {
       return null;
     }
     return split[1];
+  }
+
+  public boolean isTutorial() {
+    if (getLessons().size() == 1) {
+      List<Task> taskList = getLessons().get(0).getTaskList();
+      if (taskList.size() == 1) {
+        return taskList.get(0) instanceof TaskWithSubtasks;
+      }
+    }
+    return false;
   }
 
   public void setAuthors(List<StepicUser> authors) {
