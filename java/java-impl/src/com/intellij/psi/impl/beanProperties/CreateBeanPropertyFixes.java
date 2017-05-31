@@ -29,6 +29,7 @@ import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
+import static com.intellij.util.ArrayUtil.toObjectArray;
 
 @ApiStatus.Experimental
 public class CreateBeanPropertyFixes {
@@ -56,6 +57,7 @@ public class CreateBeanPropertyFixes {
     if (factory == null) return IntentionAction.EMPTY_ARRAY;
     UClass uClass = UastContextKt.toUElement(psiClass, UClass.class);
     if (uClass == null) return IntentionAction.EMPTY_ARRAY;
-    return factory.createAddBeanPropertyActions(uClass, propertyName, PsiModifier.PUBLIC, type, createSetter, !createSetter);
+    return toObjectArray(factory.createAddBeanPropertyActions(uClass, propertyName, PsiModifier.PUBLIC, type, createSetter, !createSetter),
+                         IntentionAction.class);
   }
 }

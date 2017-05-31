@@ -21,10 +21,8 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UParameter
 
 /**
@@ -41,18 +39,17 @@ import org.jetbrains.uast.UParameter
 abstract class JvmCommonIntentionActionsFactory {
 
   open fun createChangeModifierAction(declaration: UDeclaration,
-                                      @PsiModifier.ModifierConstant @NonNls modifier: String,
+                                      @PsiModifier.ModifierConstant modifier: String,
                                       shouldPresent: Boolean): IntentionAction? = null
 
-  open fun createAddCallableMemberActions(info: NewCallableMemberInfo): List<IntentionAction> = emptyList()
+  open fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> = emptyList()
 
   open fun createAddBeanPropertyActions(uClass: UClass,
                                         propertyName: String,
                                         @PsiModifier.ModifierConstant visibilityModifier: String,
                                         propertyType: PsiType,
                                         setterRequired: Boolean,
-                                        getterRequired: Boolean): Array<IntentionAction> = emptyArray()
-
+                                        getterRequired: Boolean): List<IntentionAction> = emptyList()
 
   companion object : LanguageExtension<JvmCommonIntentionActionsFactory>(
     "com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory") {
@@ -63,39 +60,47 @@ abstract class JvmCommonIntentionActionsFactory {
 
 }
 
-data class NewCallableMemberInfo(
-  val kind: CallableKind,
+sealed class MethodInsertionInfo(
   val containingClass: UClass,
-  val name: String? = null,
+  @PsiModifier.ModifierConstant
   val modifiers: List<String> = emptyList(),
   val typeParams: List<PsiTypeParameter> = emptyList(),
-  val returnType: PsiType? = null,
-  val parameters: List<UParameter> = emptyList(),
-  val caller: UElement? = null,
-  val isAbstract: Boolean = false,
-  val focusAfterInserting: Boolean = false
+  val parameters: List<UParameter> = emptyList()
 ) {
-
-  enum class CallableKind {
-    FUNCTION,
-    CONSTRUCTOR
-  }
-
   companion object {
 
     @JvmStatic
-    fun constructorInfo(uClass: UClass, parameters: List<UParameter>) =
-      NewCallableMemberInfo(kind = CallableKind.CONSTRUCTOR, containingClass = uClass, parameters = parameters)
+    fun constructorInfo(containingClass: UClass, parameters: List<UParameter>) =
+      Constructor(containingClass = containingClass, parameters = parameters)
 
     @JvmStatic
-    fun simpleMethodInfo(uClass: UClass, methodName: String, modifier: String, returnType: PsiType, parameters: List<UParameter>) =
-      NewCallableMemberInfo(kind = CallableKind.FUNCTION,
-                            name = methodName,
-                            modifiers = listOf(modifier),
-                            containingClass = uClass,
-                            returnType = returnType,
-                            parameters = parameters)
-
+    fun simpleMethodInfo(containingClass: UClass,
+                         methodName: String,
+                         @PsiModifier.ModifierConstant modifier: String,
+                         returnType: PsiType,
+                         parameters: List<UParameter>) =
+      Method(name = methodName,
+             modifiers = listOf(modifier),
+             containingClass = containingClass,
+             returnType = returnType,
+             parameters = parameters)
   }
-}
 
+  class Method(
+    containingClass: UClass,
+    val name: String,
+    modifiers: List<String> = emptyList(),
+    typeParams: List<PsiTypeParameter> = emptyList(),
+    val returnType: PsiType,
+    parameters: List<UParameter> = emptyList(),
+    val isAbstract: Boolean = false
+  ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
+
+  class Constructor(
+    containingClass: UClass,
+    modifiers: List<String> = emptyList(),
+    typeParams: List<PsiTypeParameter> = emptyList(),
+    parameters: List<UParameter> = emptyList()
+  ) : MethodInsertionInfo(containingClass, modifiers, typeParams, parameters)
+
+}
