@@ -25,6 +25,7 @@ class LiveVcsFileWatcher(private val project: Project,
                          private val fileDocumentManager: FileDocumentManager,
                          private val connection: CircletConnectionComponent,
                          private val vcsManager: ProjectLevelVcsManager,
+                         vFileManager : VirtualFileManager,
                          editorFactory: EditorFactory)
     : ILifetimedComponent by LifetimedComponent(project), DocumentListenerAdapter, VirtualFileListenerAdapter {
 
@@ -44,7 +45,11 @@ class LiveVcsFileWatcher(private val project: Project,
             client ?: return@view
 
             editorFactory.eventMulticaster.addDocumentListener(this)
-            lt.add { editorFactory.eventMulticaster.removeDocumentListener(this) }
+            vFileManager.addVirtualFileListener(this)
+            lt.add {
+                vFileManager.removeVirtualFileListener(this)
+                editorFactory.eventMulticaster.removeDocumentListener(this)
+            }
 
             // todo here bug!! contents are nulls
             for (change in changeListManager.allChanges) {
