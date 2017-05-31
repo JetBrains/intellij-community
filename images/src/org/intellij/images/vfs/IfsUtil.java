@@ -43,10 +43,10 @@ import javax.imageio.stream.ImageInputStream;
 import javax.swing.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Iterator;
 
 /**
@@ -89,7 +89,7 @@ public final class IfsUtil {
 
         if (isScalableImage(file)) {
           try {
-            Icon icon = IconLoader.findIcon(new URL(file.getUrl()));
+            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL());
             file.putUserData(FORMAT_KEY, SVG_FORMAT);
             file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
               Icon scaledIcon = IconUtil.scale(icon, null, zoom.floatValue());
