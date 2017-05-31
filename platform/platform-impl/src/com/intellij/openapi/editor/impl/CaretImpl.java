@@ -191,15 +191,17 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       int columnShift = _columnShift;
       if (withSelection && lineShift == 0) {
         if (columnShift == -1) {
-          int column = myVisibleCaret.column - (hasSelection() && oldOffset == getSelectionEnd() ? 2 : 1);
-          if (column >= 0 && myEditor.getInlayModel().hasInlineElementAt(new VisualPosition(myVisibleCaret.line, column))) {
-            columnShift = -2;
+          int column;
+          while ((column = myVisibleCaret.column + columnShift - (hasSelection() && oldOffset == getSelectionEnd() ? 1 : 0)) >= 0 &&
+                 myEditor.getInlayModel().hasInlineElementAt(new VisualPosition(myVisibleCaret.line, column))) {
+            columnShift--;
           }
         }
         else if (columnShift == 1) {
-          if (myEditor.getInlayModel().hasInlineElementAt(
-            new VisualPosition(myVisibleCaret.line, myVisibleCaret.column + (hasSelection() && oldOffset == getSelectionStart() ? 1 : 0)))) {
-            columnShift = 2;
+          while (myEditor.getInlayModel().hasInlineElementAt(
+            new VisualPosition(myVisibleCaret.line, 
+                               myVisibleCaret.column + columnShift - (hasSelection() && oldOffset == getSelectionStart() ? 0 : 1)))) {
+            columnShift++;
           }
         }
       }

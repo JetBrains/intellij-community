@@ -235,6 +235,30 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(1, 1, 3);
   }
 
+  public void testSelectionWithTwoInlaysAtSameOffset() throws Exception {
+    initText("ab");
+    addInlay(1);
+    addInlay(1);
+    rightWithSelection();
+    checkCaretPositionAndSelection(1, 1, 1, 0, 1);
+    rightWithSelection();
+    checkCaretPositionAndSelection(2, 2, 4, 0, 2);
+    leftWithSelection();
+    checkCaretPositionAndSelection(1, 1, 1, 0, 1);
+    leftWithSelection();
+    checkCaretPositionAndSelection(0, 0, 0, 0, 0);
+
+    myEditor.getCaretModel().moveToOffset(2);
+    leftWithSelection();
+    checkCaretPositionAndSelection(1, 1, 3, 1, 2);
+    leftWithSelection();
+    checkCaretPositionAndSelection(0, 0, 0, 0, 2);
+    rightWithSelection();
+    checkCaretPositionAndSelection(1, 1, 3, 1, 2);
+    rightWithSelection();
+    checkCaretPositionAndSelection(2, 2, 4, 2, 2);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
