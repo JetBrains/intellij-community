@@ -30,6 +30,12 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     if (course == null) {
       return children;
     }
+
+    //TODO: hide tests in django course
+    if (!course.isAdaptive() && course.getLessons().size() == 1 && course.getLessons().get(0).getTaskList().size() == 1) {
+      return children;
+    }
+
     Collection<AbstractTreeNode> modifiedNodes = new ArrayList<>();
     for (AbstractTreeNode node : children) {
       if (parent instanceof ProjectViewProjectNode && node instanceof PsiDirectoryNode) {
