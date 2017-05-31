@@ -1074,6 +1074,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
             // workaround for jdi hang in trace mode
             if (!StringUtil.isEmpty(ourTrace)) {
+              //noinspection ResultOfMethodCallIgnored
               myArgs.forEach(Object::toString);
             }
 
