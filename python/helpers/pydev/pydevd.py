@@ -36,7 +36,7 @@ from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_fr
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, set_use_code_extra, dummy_trace_dispatch
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, dummy_trace_dispatch
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
@@ -254,6 +254,9 @@ class PyDB:
         self.is_filter_libraries = pydevd_utils.is_filter_libraries()
         self.show_return_values = False
         self.remove_return_values_flag = False
+
+        # this flag disables frame evaluation even if it's available
+        self.do_not_use_frame_eval = False
 
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
@@ -552,6 +555,16 @@ class PyDB:
         finally:
             self._main_lock.release()
 
+    def disable_tracing_while_running_if_frame_eval(self):
+        pydevd_tracing.settrace_while_running_if_frame_eval(self, self.dummy_trace_dispatch)
+
+    def enable_tracing_in_frames_while_running_if_frame_eval(self):
+        pydevd_tracing.settrace_while_running_if_frame_eval(self, self.trace_dispatch)
+
+    def set_tracing_for_untraced_contexts_if_not_frame_eval(self, ignore_frame=None, overwrite_prev_trace=False):
+        if self.frame_eval_func is not None:
+            return
+        self.set_tracing_for_untraced_contexts(ignore_frame, overwrite_prev_trace)
 
     def set_tracing_for_untraced_contexts(self, ignore_frame=None, overwrite_prev_trace=False):
         # Enable the tracing for existing threads (because there may be frames being executed that
@@ -639,8 +652,7 @@ class PyDB:
 
             if not updated_on_caught and eb.notify_always:
                 updated_on_caught = True
-                self.set_tracing_for_untraced_contexts()
-
+                self.set_tracing_for_untraced_contexts_if_not_frame_eval()
 
     def _process_thread_not_alive(self, threadId):
         """ if thread is not alive, cancel trace_dispatch processing """
@@ -813,9 +825,12 @@ class PyDB:
                 info.pydev_state = STATE_RUN
 
         if self.frame_eval_func is not None and info.pydev_state == STATE_RUN:
-            if info.pydev_step_cmd != -1:
-                if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
-                    self.set_trace_for_frame_and_parents(frame)
+            if info.pydev_step_cmd == -1:
+                if not self.do_not_use_frame_eval:
+                    self.SetTrace(self.dummy_trace_dispatch)
+                    self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True, dispatch_func=dummy_trace_dispatch)
+            else:
+                self.set_trace_for_frame_and_parents(frame, overwrite_prev_trace=True)
                 # enable old tracing function for stepping
                 self.SetTrace(self.trace_dispatch)
 
@@ -1042,7 +1057,7 @@ class PyDB:
     trace_dispatch = _trace_dispatch
     frame_eval_func = frame_eval_func
     dummy_trace_dispatch = dummy_trace_dispatch
-    set_use_code_extra = set_use_code_extra
+    enable_cache_frames_without_breaks = enable_cache_frames_without_breaks
 
 def set_debug(setup):
     setup['DEBUG_RECORD_SOCKET_READS'] = True
@@ -1211,13 +1226,14 @@ def _locked_settrace(
             time.sleep(0.1)  # busy wait until we receive run command
 
         global forked
+        frame_eval_for_tracing = debugger.frame_eval_func
         if frame_eval_func is not None and not forked:
             # Disable frame evaluation for Remote Debug Server
-            debugger.frame_eval_func = None
+            frame_eval_for_tracing = None
 
         # note that we do that through pydevd_tracing.SetTrace so that the tracing
         # is not warned to the user!
-        pydevd_tracing.SetTrace(debugger.trace_dispatch, debugger.frame_eval_func, debugger.dummy_trace_dispatch)
+        pydevd_tracing.SetTrace(debugger.trace_dispatch, frame_eval_for_tracing, debugger.dummy_trace_dispatch)
 
         if not trace_only_current_thread:
             # Trace future threads?
