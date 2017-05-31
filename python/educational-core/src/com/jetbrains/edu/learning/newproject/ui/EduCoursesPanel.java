@@ -409,7 +409,7 @@ public class EduCoursesPanel extends JPanel {
   }
 
   @NotNull
-  private static String nameToLocation(@NotNull String courseName) {
+  public static String nameToLocation(@NotNull String courseName) {
     String name = FileUtil.sanitizeFileName(courseName);
     return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), name, "").getAbsolutePath();
   }
