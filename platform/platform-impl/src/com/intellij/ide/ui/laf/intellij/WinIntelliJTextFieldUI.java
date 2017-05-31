@@ -59,7 +59,8 @@ public class WinIntelliJTextFieldUI extends DarculaTextFieldUI {
   @Override
   protected void paintBackground(Graphics g) {
     JTextComponent c = getComponent();
-    if (UIUtil.getParentOfType(JComboBox.class, c) != null) return;
+    if (UIUtil.getParentOfType(JComboBox.class, c) != null ||
+        UIUtil.getParentOfType(JSpinner.class, c) != null) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
     try {
