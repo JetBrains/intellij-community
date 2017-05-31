@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileNameMatcherEx;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -97,7 +99,8 @@ public class RootIndex {
   @NotNull
   private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();
-    for (final Module module : ModuleManager.getInstance(project).getModules()) {
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
       for (final VirtualFile contentRoot : moduleRootManager.getContentRoots()) {
@@ -201,6 +204,11 @@ public class RootIndex {
     }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));
+    }
+    for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
+      for (VirtualFilePointer pointer : description.getContentRoots()) {
+        ContainerUtil.addIfNotNull(info.excludedFromProject, pointer.getFile());
+      }
     }
     return info;
   }
