@@ -17,11 +17,7 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
-import com.intellij.structuralsearch.impl.matcher.handlers.MatchPredicate;
 
-/**
- * Binary predicate
- */
 public final class BinaryPredicate extends MatchPredicate {
   private final MatchPredicate first;
   private final MatchPredicate second;

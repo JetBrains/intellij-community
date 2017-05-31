@@ -18,20 +18,22 @@ package com.intellij.structuralsearch.impl.matcher.predicates;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 
-/**
- * @author Maxim.Mossienko
- */
-public class AbstractStringBasedPredicate extends MatchPredicate {
-  protected final String myName;
-  protected final String myWithin;
-
-  public AbstractStringBasedPredicate(String name, String within) {
-    myName = name;
-    myWithin = within;
+public abstract class MatchPredicate {
+  /**
+   * Matches given node against this predicate.
+   * @param matchedNode for matching
+   * @param context of the matching
+   * @return true if matching was successful, false otherwise
+   */
+  public boolean match(PsiElement patternNode,PsiElement matchedNode, int start, int end, MatchContext context) {
+    return match(patternNode,matchedNode,context);
   }
 
-  @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return match(patternNode, matchedNode, 0, -1, context);
-  }
+  /**
+   * Matches given handler node against given value.
+   * @param matchedNode for matching
+   * @param context of the matching
+   * @return true if matching was successful, false otherwise
+   */
+  public abstract boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context);
 }

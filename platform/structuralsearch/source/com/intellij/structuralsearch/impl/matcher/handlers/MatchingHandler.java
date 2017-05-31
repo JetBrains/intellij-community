@@ -17,13 +17,15 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.structuralsearch.StructuralSearchUtil;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
 import com.intellij.structuralsearch.impl.matcher.filters.DefaultFilter;
 import com.intellij.structuralsearch.impl.matcher.predicates.BinaryPredicate;
+import com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.NotPredicate;
 import com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -34,7 +36,7 @@ import java.util.Set;
 /**
  * Root of handlers for pattern node matching. Handles simplest type of the match.
  */
-public abstract class MatchingHandler extends MatchPredicate {
+public abstract class MatchingHandler {
   protected NodeFilter filter;
   private PsiElement pinnedElement;
 
@@ -48,7 +50,6 @@ public abstract class MatchingHandler extends MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
     return match(patternNode,matchedNode,context);
   }
@@ -59,7 +60,6 @@ public abstract class MatchingHandler extends MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  @Override
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode == null) {
       return matchedNode == null;
