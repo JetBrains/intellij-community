@@ -1803,7 +1803,7 @@ static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_SafeCallWrapper(P
 static PyObject *__pyx_tp_new_14_pydevd_bundle_13pydevd_cython_ThreadTracer(PyTypeObject *t, PyObject *a, PyObject *k); /*proto*/
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
-static PyObject *__pyx_int_4;
+static PyObject *__pyx_int_5;
 static PyObject *__pyx_int_32;
 static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple__2;
@@ -22771,7 +22771,7 @@ static int __Pyx_InitGlobals(void) {
   if (__Pyx_InitStrings(__pyx_string_tab) < 0) __PYX_ERR(0, 1, __pyx_L1_error);
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_4 = PyInt_FromLong(4); if (unlikely(!__pyx_int_4)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_5 = PyInt_FromLong(5); if (unlikely(!__pyx_int_5)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_32 = PyInt_FromLong(32); if (unlikely(!__pyx_int_32)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
@@ -22967,14 +22967,14 @@ PyMODINIT_FUNC PyInit_pydevd_cython(void)
   /* "_pydevd_bundle/pydevd_cython.pyx":12
  * # ENDIF
  * 
- * version = 4             # <<<<<<<<<<<<<<
+ * version = 5             # <<<<<<<<<<<<<<
  * 
  * if not hasattr(sys, '_current_frames'):
  */
-  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_4) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_d, __pyx_n_s_version, __pyx_int_5) < 0) __PYX_ERR(0, 12, __pyx_L1_error)
 
   /* "_pydevd_bundle/pydevd_cython.pyx":14
- * version = 4
+ * version = 5
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 
@@ -23272,7 +23272,7 @@ PyMODINIT_FUNC PyInit_pydevd_cython(void)
     __pyx_L3:;
 
     /* "_pydevd_bundle/pydevd_cython.pyx":14
- * version = 4
+ * version = 5
  * 
  * if not hasattr(sys, '_current_frames'):             # <<<<<<<<<<<<<<
  * 
