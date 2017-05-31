@@ -29,7 +29,8 @@ def is_use_code_extra():
     return UseCodeExtraHolder.use_code_extra
 
 
-def set_use_code_extra(new_value):
+# enable using `co_extra` field in order to cache frames without breakpoints
+def enable_cache_frames_without_breaks(new_value):
     UseCodeExtraHolder.use_code_extra = new_value
 
 
@@ -125,7 +126,7 @@ cdef PyObject* get_bytecode_while_frame_eval(PyFrameObject *frame_obj, int exc):
             if was_break:
                 update_globals_dict(frame.f_globals)
                 for bp in breakpoints_to_update:
-                    bp.code_objects.append(frame.f_code)
+                    bp.code_objects.add(frame.f_code)
         else:
             if main_debugger.has_plugin_line_breaks:
                 can_not_skip = main_debugger.plugin.can_not_skip(main_debugger, None, frame)
