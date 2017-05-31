@@ -58,11 +58,11 @@ public class BytecodeAnalysisConverter {
   }
 
   /**
-   * Converts a Psi method to a hashed EKey.
+   * Creates a stable non-negated EKey for given PsiMethod and direction
    * Returns null if conversion is impossible (something is not resolvable).
    */
   @Nullable
-  public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction, @NotNull MessageDigest md) {
+  public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (psiClass == null) {
       return null;
@@ -73,7 +73,7 @@ public class BytecodeAnalysisConverter {
       return null;
     }
     String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
-    return new EKey(new Method(className, methodName, methodSig).hashed(md), direction, true, false);
+    return new EKey(new Method(className, methodName, methodSig), direction, true, false);
   }
 
   @Nullable
@@ -356,5 +356,4 @@ public class BytecodeAnalysisConverter {
     constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
     return new StandardMethodContract(constraints, value.toValueConstraint());
   }
-
 }

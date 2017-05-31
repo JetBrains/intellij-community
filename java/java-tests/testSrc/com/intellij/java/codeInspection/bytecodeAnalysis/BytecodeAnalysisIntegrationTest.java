@@ -213,7 +213,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   }
 
   private void checkMethodAnnotations(PsiMethod method) {
-    if (ProjectBytecodeAnalysis.getKey(method, myMessageDigest) == null) {
+    if (ProjectBytecodeAnalysis.getInstance(getProject()).getKey(method, myMessageDigest) == null) {
       return;
     }
 

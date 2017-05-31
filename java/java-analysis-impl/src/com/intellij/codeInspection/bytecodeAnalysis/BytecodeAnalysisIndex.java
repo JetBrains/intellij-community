@@ -187,7 +187,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
       DataInputOutputUtil.writeINT(out, eqs.results.size());
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
-        Result rhs = pair.hResult;
+        Result rhs = pair.result;
         if (rhs instanceof Final) {
           Final finalResult = (Final)rhs;
           out.writeBoolean(true); // final flag

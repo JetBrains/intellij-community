@@ -222,7 +222,7 @@ public class BytecodeAnalysisTest extends JavaCodeInsightFixtureTestCase {
     */
 
 
-    EKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out, myMessageDigest);
+    EKey psiKey = BytecodeAnalysisConverter.psiKey(psiMethod, Direction.Out).hashed(myMessageDigest);
     if (noKey) {
       assertTrue(null == psiKey);
       return;
