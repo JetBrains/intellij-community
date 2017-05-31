@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,6 +74,8 @@ public class LibraryData extends AbstractNamedData implements Named {
 
   @Override
   public String toString() {
-    return String.format("library %s%s", getExternalName(), myUnresolved ? "(unresolved)" : "");
+    String externalName = getExternalName();
+    String displayName = StringUtil.isEmpty(externalName) ? myPaths.toString() : externalName;
+    return String.format("library %s%s", displayName, myUnresolved ? "(unresolved)" : "");
   }
 }
