@@ -1,6 +1,7 @@
 package circlet.features.livevcs
 
 import circlet.*
+import circlet.api.client.graphql.*
 import circlet.components.*
 import circlet.utils.*
 import com.intellij.openapi.editor.*
@@ -13,6 +14,7 @@ import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.update.*
 import klogging.*
+import runtime.*
 import runtime.async.*
 import runtime.reactive.*
 
@@ -22,17 +24,18 @@ class LiveVcsFileWatcher(private val project: Project,
                          private val changeListManager: ChangeListManager,
                          private val fileDocumentManager: FileDocumentManager,
                          private val connection: CircletConnectionComponent,
-                         private val vcsManager : ProjectLevelVcsManager,
+                         private val vcsManager: ProjectLevelVcsManager,
                          editorFactory: EditorFactory)
     : ILifetimedComponent by LifetimedComponent(project), DocumentListenerAdapter, VirtualFileListenerAdapter {
 
     companion object {
-        private val DELAY_MS = 1000
+        private val PUSH_DELAY_MS = 1 * 1000
+        private val PULL_DELAY_MS = 10 * 1000
     }
 
-    // maybe we should disaptch on background thread?
+    // todo maybe we should disaptch on background thread?
     private val messageQueue = MergingUpdateQueue("LiveVcsFileWatcher::messageQueue",
-        DELAY_MS, true, MergingUpdateQueue.ANY_COMPONENT, project)
+        PUSH_DELAY_MS, true, MergingUpdateQueue.ANY_COMPONENT, project)
 
     private val client: CircletClient? get() = if (connection.client.hasValue) connection.client.value else null
 
@@ -45,24 +48,67 @@ class LiveVcsFileWatcher(private val project: Project,
 
             // todo here bug!! contents are nulls
             for (change in changeListManager.allChanges) {
-                processChange(change)
+                pushChange(change, "initial")
             }
+
+            val lifetimes = SequentialLifetimes(lt)
+            Dispatch.dispatchInterval(PULL_DELAY_MS, lt, {
+                pullConflicts(lifetimes.next())
+            })
         })
+    }
+
+    private fun pullConflicts(lifetime: Lifetime) {
+        val client = client ?: return
+        log.trace { "Pull conflicts" }
+
+        val query = client.query
+        async {
+            val conflictingFiles = query.livevcs {
+                this.conflictingFiles {
+                    this.path()
+                    this.newText()
+                    this.user {
+                        this.id()
+                        this.firstName()
+                        this.lastName()
+                    }
+                }
+            }.conflictingFiles
+
+            if (!lifetime.isTerminated) {
+                processConflicts(lifetime, conflictingFiles)
+            }
+        }
+    }
+
+    private fun processConflicts(lifetime: Lifetime, conflictingFiles: Array<ConflictingFileWire>) {
+        application.invokeLater {
+            for (conflict in conflictingFiles) {
+                // todo
+            }
+        }
+
+        lifetime.add {
+            application.invokeLater {
+                // todo
+            }
+        }
     }
 
     override fun documentChanged(e: DocumentEvent) {
         val document = e.document
         val vFile = fileDocumentManager.getFile(document) ?: return
-        queueMessageFor(vFile)
+        queueMessageFor(vFile, "doc_change")
     }
 
-    private fun queueMessageFor(vFile: VirtualFile) {
+    private fun queueMessageFor(vFile: VirtualFile, origin: String) {
         if (!vFile.isInLocalFileSystem) return
 
         messageQueue.queue(object : Update("SendMessage") {
             override fun run() {
                 val change = changeListManager.getChange(vFile) ?: return
-                processChange(change)
+                pushChange(change, origin)
             }
 
             override fun isDisposed(): Boolean = project.isDisposed
@@ -70,25 +116,25 @@ class LiveVcsFileWatcher(private val project: Project,
     }
 
     override fun contentsChanged(event: VirtualFileEvent) {
-        queueMessageFor(event.file)
+        queueMessageFor(event.file, "vfs_content_change")
     }
 
     override fun fileDeleted(event: VirtualFileEvent) {
-        queueMessageFor(event.file)
+        queueMessageFor(event.file, "vfs_file_delte")
     }
 
     override fun fileCreated(event: VirtualFileEvent) {
-        queueMessageFor(event.file)
+        queueMessageFor(event.file, "vfs_file_created")
     }
 
     override fun fileMoved(event: VirtualFileMoveEvent) {
-        queueMessageFor(event.file)
+        queueMessageFor(event.file, "vfs_file_moved")
     }
 
-    private fun processChange(change: Change) {
+    private fun pushChange(change: Change, origin: String) {
         val client = client ?: return
-        log.info { change.toString() }
-        val mutation = client.api.ql.mutation
+        log.trace { "Push change from $origin: $change" }
+        val mutation = client.mutation
         async {
             when (change.type) {
                 Change.Type.MODIFICATION -> {
