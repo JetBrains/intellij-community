@@ -120,8 +120,6 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
-  public static final Topic<MavenImportListener> TOPIC = Topic.create("Maven import notifications", MavenImportListener.class);
-
   public static MavenProjectsManager getInstance(Project p) {
     return p.getComponent(MavenProjectsManager.class);
   }
@@ -1207,7 +1205,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     MavenProjectImporter projectImporter = importer.get();
     List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
     if (!projectsToImportWithChanges.isEmpty()) {
-      myProject.getMessageBus().syncPublisher(TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
+      myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
     }
     return createdModules;
   }
