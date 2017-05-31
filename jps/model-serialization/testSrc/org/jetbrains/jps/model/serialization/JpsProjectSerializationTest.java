@@ -230,6 +230,12 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     }
   }
 
+  public void testUnloadedModule() {
+    String projectPath = "/jps/model-serialization/testData/unloadedModule";
+    loadProject(projectPath);
+    assertEquals("main", assertOneElement(myProject.getModules()).getName());
+  }
+
   private void doTestSaveLibrary(@NotNull Path libFile, String libName, JpsLibrary library) {
     Element actual = new Element("library");
     JpsLibraryTableSerializer.saveLibrary(library, actual, libName);

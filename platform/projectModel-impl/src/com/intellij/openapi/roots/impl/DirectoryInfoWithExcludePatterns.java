@@ -20,27 +20,63 @@ import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
  */
 public class DirectoryInfoWithExcludePatterns extends DirectoryInfoImpl {
   private static final Logger LOG = Logger.getInstance(DirectoryInfoWithExcludePatterns.class);
-  private final FileTypeAssocTable<Boolean> myExcludePatterns;
+  @Nullable private final FileTypeAssocTable<Boolean> myContentExcludePatterns;
+  @Nullable private final FileTypeAssocTable<Boolean> myLibraryExcludePatterns;
 
   public DirectoryInfoWithExcludePatterns(@NotNull VirtualFile root, Module module, VirtualFile contentRoot, VirtualFile sourceRoot,
                                           VirtualFile libraryClassRoot, boolean inModuleSource, boolean inLibrarySource, boolean isExcluded,
-                                          int sourceRootTypeId, FileTypeAssocTable<Boolean> excludePatterns) {
+                                          int sourceRootTypeId,
+                                          @Nullable FileTypeAssocTable<Boolean> contentExcludePatterns,
+                                          @Nullable FileTypeAssocTable<Boolean> libraryExcludePatterns) {
     super(root, module, contentRoot, sourceRoot, libraryClassRoot, inModuleSource, inLibrarySource, isExcluded, sourceRootTypeId);
-    myExcludePatterns = excludePatterns;
+    myContentExcludePatterns = contentExcludePatterns;
+    myLibraryExcludePatterns = libraryExcludePatterns;
+    LOG.assertTrue(myContentExcludePatterns != null || myLibraryExcludePatterns != null,
+                   "Directory info of '" + root + "' with exclude patterns have no any exclude patterns: " + toString());
+  }
+
+  @Override
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
+    if (myLibraryExcludePatterns == null || !myInLibrarySource) {
+      return myInLibrarySource;
+    }
+    VirtualFile current = file;
+    while (current != null && !myRoot.equals(current)) {
+      if (myLibraryExcludePatterns.findAssociatedFileType(current.getNameSequence()) != null) {
+        return false;
+      }
+      current = current.getParent();
+    }
+    if (current == null) {
+      LOG.error("File " + file + " is not under this directory (" + myRoot + ")");
+    }
+    return true;
   }
 
   @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
     if (myExcluded) return true;
+    if (myLibraryExcludePatterns == null && myContentExcludePatterns == null) {
+      LOG.error("Directory info of '" + getRoot() + "' with exclude patterns have no any exclude patterns: " + toString());
+      return false;
+    }
+
+    boolean inContent = getContentRoot() != null;
+    if (!inContent && !myInLibrarySource) return false;
+
     VirtualFile current = file;
     while (current != null && !myRoot.equals(current)) {
-      if (myExcludePatterns.findAssociatedFileType(current.getNameSequence()) != null) {
+      CharSequence name = current.getNameSequence();
+      boolean excludedFromModule = myContentExcludePatterns != null && myContentExcludePatterns.findAssociatedFileType(name) != null;
+      boolean excludedFromLibrary = myLibraryExcludePatterns != null && myLibraryExcludePatterns.findAssociatedFileType(name) != null;
+      if ((!inContent || excludedFromModule) && (!myInLibrarySource || excludedFromLibrary)) {
         return true;
       }
       current = current.getParent();

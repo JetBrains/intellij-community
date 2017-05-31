@@ -44,6 +44,11 @@
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>
 
     <streamProviderFactory implementation="com.intellij.openapi.externalSystem.configurationStore.ExternalSystemStreamProviderFactory"/>
+
+    <moduleService serviceImplementation="com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
+                        serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>
   </extensions>
 
 </idea-plugin>

@@ -85,7 +85,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
     return variables;
   }
 
-  protected String getTestDataFileAbsolutePath(String relativePath) {
+  protected String getTestDataFileAbsolutePath(@NotNull String relativePath) {
     return PathManagerEx.findFileUnderProjectHome(relativePath, getClass()).getAbsolutePath();
   }
 

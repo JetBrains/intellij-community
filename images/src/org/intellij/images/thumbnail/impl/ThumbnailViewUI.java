@@ -303,13 +303,13 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
                     } catch (Exception e) {
                         // Ignore
                         ImageComponent imageComponent = getImageComponent();
-                        imageComponent.getDocument().setValue(null);
+                        imageComponent.getDocument().setValue((BufferedImage)null);
                     }
                 }
 
             } else {
                 ImageComponent imageComponent = getImageComponent();
-                imageComponent.getDocument().setValue(null);
+                imageComponent.getDocument().setValue((BufferedImage)null);
                 setFileName(null);
                 setFileSize(0);
                 setToolTipText(null);

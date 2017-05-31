@@ -133,11 +133,11 @@ class Equations {
 class DirectionResultPair {
   final int directionKey;
   @NotNull
-  final Result hResult;
+  final Result result;
 
-  DirectionResultPair(int directionKey, @NotNull Result hResult) {
+  DirectionResultPair(int directionKey, @NotNull Result result) {
     this.directionKey = directionKey;
-    this.hResult = hResult;
+    this.result = result;
   }
 
   @Override
@@ -146,12 +146,17 @@ class DirectionResultPair {
     if (o == null || getClass() != o.getClass()) return false;
 
     DirectionResultPair that = (DirectionResultPair)o;
-    return directionKey == that.directionKey && hResult.equals(that.hResult);
+    return directionKey == that.directionKey && result.equals(that.result);
   }
 
   @Override
   public int hashCode() {
-    return 31 * directionKey + hResult.hashCode();
+    return 31 * directionKey + result.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return Direction.fromInt(directionKey) + "->" + result;
   }
 }
 
@@ -178,7 +183,7 @@ final class Final implements Result {
 
   @Override
   public String toString() {
-    return "Final{" + "value=" + value + '}';
+    return "Final[" + value + ']';
   }
 }
 
@@ -213,6 +218,11 @@ final class Pending implements Result {
     }
     return new Pending(copy);
   }
+
+  @Override
+  public String toString() {
+    return "Pending["+delta.length+"]";
+  }
 }
 
 final class Effects implements Result {
@@ -232,5 +242,10 @@ final class Effects implements Result {
   @Override
   public int hashCode() {
     return effects.hashCode();
+  }
+
+  @Override
+  public String toString() {
+    return "Effects["+effects.size()+"]";
   }
 }

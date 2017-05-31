@@ -46,7 +46,7 @@ find /Volumes/"$VOLNAME" -maxdepth 1
 # set properties
 echo "Updating $VOLNAME disk image styles..."
 stat /Volumes/"$VOLNAME"/DSStorePlaceHolder || true
-rm -f /Volumes/"$VOLNAME"/DSStorePlaceHolder
+rm /Volumes/"$VOLNAME"/DSStorePlaceHolder
 perl makedmg.pl "$VOLNAME" ${BG_PIC}
 sync;sync;sync
 hdiutil detach ${device}

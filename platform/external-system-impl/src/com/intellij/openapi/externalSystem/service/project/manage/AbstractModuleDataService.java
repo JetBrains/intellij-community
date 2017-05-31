@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -30,7 +31,6 @@ import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -282,33 +282,13 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   }
 
   public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY);
-    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
-    module.clearOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY);
-    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY);
+    ExternalSystemModulePropertyManager.getInstance(module).unlinkExternalOptions();
   }
 
   protected void setModuleOptions(Module module, DataNode<E> moduleDataNode) {
     ModuleData moduleData = moduleDataNode.getData();
     module.putUserData(MODULE_DATA_KEY, moduleData);
-
-    module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, moduleData.getOwner().toString());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_ID_KEY, moduleData.getId());
-    module.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, moduleData.getLinkedExternalProjectPath());
-    final ProjectData projectData = moduleDataNode.getData(ProjectKeys.PROJECT);
-    module.setOption(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY, projectData != null ? projectData.getLinkedExternalProjectPath() : "");
-
-    if (moduleData.getGroup() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_GROUP_KEY, moduleData.getGroup());
-    }
-    if (moduleData.getVersion() != null) {
-      module.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_MODULE_VERSION_KEY, moduleData.getVersion());
-    }
-
-    // clear maven option
-    module.clearOption("org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule");
+    ExternalSystemModulePropertyManager.getInstance(module).setExternalOptions(moduleData.getOwner(), moduleData, moduleDataNode.getData(ProjectKeys.PROJECT));
   }
 
   @Override

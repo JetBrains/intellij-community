@@ -17,20 +17,24 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileNameMatcherEx;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,7 +99,8 @@ public class RootIndex {
   @NotNull
   private RootInfo buildRootInfo(@NotNull Project project) {
     final RootInfo info = new RootInfo();
-    for (final Module module : ModuleManager.getInstance(project).getModules()) {
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (final Module module : moduleManager.getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
 
       for (final VirtualFile contentRoot : moduleRootManager.getContentRoots()) {
@@ -199,6 +204,11 @@ public class RootIndex {
     }
     for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       info.excludedFromProject.addAll(ContainerUtil.filter(policy.getExcludeRootsForProject(), file -> ensureValid(file, policy)));
+    }
+    for (UnloadedModuleDescription description : moduleManager.getUnloadedModuleDescriptions()) {
+      for (VirtualFilePointer pointer : description.getContentRoots()) {
+        ContainerUtil.addIfNotNull(info.excludedFromProject, pointer.getFile());
+      }
     }
     return info;
   }
@@ -392,9 +402,12 @@ public class RootIndex {
         }
       }
 
-      @Nullable VirtualFile libraryClassRoot = myRootInfo.findLibraryRootInfo(roots, false);
-      @Nullable VirtualFile librarySourceRoot = myRootInfo.findLibraryRootInfo(roots, true);
-      result.addAll(myRootInfo.getLibraryOrderEntries(roots, libraryClassRoot, librarySourceRoot, myLibClassRootEntries, myLibSourceRootEntries));
+      @Nullable Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = myRootInfo.findLibraryRootInfo(roots, false);
+      @Nullable Pair<VirtualFile, Collection<Object>> librarySourceRootInfo = myRootInfo.findLibraryRootInfo(roots, true);
+      result.addAll(myRootInfo.getLibraryOrderEntries(roots,
+                                                      libraryClassRootInfo != null ? libraryClassRootInfo.first : null,
+                                                      librarySourceRootInfo != null ? librarySourceRootInfo.first : null,
+                                                      myLibClassRootEntries, myLibSourceRootEntries));
 
       VirtualFile moduleContentRoot = myRootInfo.findNearestContentRoot(roots);
       if (moduleContentRoot != null) {
@@ -479,7 +492,7 @@ public class RootIndex {
     if (!includeLibrarySources) {
       result = ContainerUtil.filter(result, file -> {
         DirectoryInfo info = getInfoForFile(file);
-        return info.isInProject(file) && (!info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot());
+        return info.isInProject(file) && (!info.isInLibrarySource(file) || info.isInModuleSource() || info.hasLibraryClassRoot());
       });
     }
     return new CollectionQuery<>(result);
@@ -637,21 +650,57 @@ public class RootIndex {
       return null;
     }
 
+    /**
+     * @return root and set of libraries that provided it
+     */
     @Nullable
-    private VirtualFile findLibraryRootInfo(@NotNull List<VirtualFile> hierarchy, boolean source) {
+    private Pair<VirtualFile, Collection<Object>> findLibraryRootInfo(@NotNull List<VirtualFile> hierarchy, boolean source) {
       Set<Object> librariesToIgnore = ContainerUtil.newHashSet();
       for (VirtualFile root : hierarchy) {
         librariesToIgnore.addAll(excludedFromLibraries.get(root));
-        if (source && libraryOrSdkSources.contains(root) &&
-            (!sourceOfLibraries.containsKey(root) || !librariesToIgnore.containsAll(sourceOfLibraries.get(root)))) {
-          return root;
+        if (source && libraryOrSdkSources.contains(root)) {
+          if (!sourceOfLibraries.containsKey(root)) {
+            return Pair.create(root, Collections.emptySet());
+          }
+          Collection<Object> rootProducers = findLibrarySourceRootProducers(librariesToIgnore, root);
+          if (!rootProducers.isEmpty()) {
+            return Pair.create(root, rootProducers);
+          }
         }
-        else if (!source && libraryOrSdkClasses.contains(root) &&
-                 (!classOfLibraries.containsKey(root) || !librariesToIgnore.containsAll(classOfLibraries.get(root)))) {
-          return root;
+        else if (!source && libraryOrSdkClasses.contains(root)) {
+          if (!classOfLibraries.containsKey(root)) {
+            return Pair.create(root, Collections.emptySet());
+          }
+          Collection<Object> rootProducers = findLibraryClassRootProducers(librariesToIgnore, root);
+          if (!rootProducers.isEmpty()) {
+            return Pair.create(root, rootProducers);
+          }
         }
       }
       return null;
+    }
+
+    @NotNull
+    private Collection<Object> findLibraryClassRootProducers(Set<Object> librariesToIgnore, VirtualFile root) {
+      Set<Object> libraries = ContainerUtil.newHashSet(classOfLibraries.get(root));
+      libraries.removeAll(librariesToIgnore);
+      return libraries;
+    }
+
+    @NotNull
+    private Collection<Object> findLibrarySourceRootProducers(Set<Object> librariesToIgnore, VirtualFile root) {
+      Set<Object> libraries = ContainerUtil.newHashSet();
+      for (Object library : sourceOfLibraries.get(root)) {
+        if (librariesToIgnore.contains(library)) continue;
+        if (library instanceof SyntheticLibrary) {
+          Condition<CharSequence> exclusion = ((SyntheticLibrary)library).getExcludeCondition();
+          if (exclusion != null && exclusion.value(root.getNameSequence())) {
+            continue;
+          }
+        }
+        libraries.add(library);
+      }
+      return libraries;
     }
 
     private String calcPackagePrefix(@NotNull VirtualFile root,
@@ -734,8 +783,12 @@ public class RootIndex {
                                                                @NotNull final List<VirtualFile> hierarchy,
                                                                @NotNull RootInfo info) {
     VirtualFile moduleContentRoot = info.findNearestContentRoot(hierarchy);
-    VirtualFile libraryClassRoot = info.findLibraryRootInfo(hierarchy, false);
-    VirtualFile librarySourceRoot = info.findLibraryRootInfo(hierarchy, true);
+    Pair<VirtualFile, Collection<Object>> librarySourceRootInfo = info.findLibraryRootInfo(hierarchy, true);
+    VirtualFile librarySourceRoot = librarySourceRootInfo != null ? librarySourceRootInfo.first : null;
+
+    Pair<VirtualFile, Collection<Object>> libraryClassRootInfo = info.findLibraryRootInfo(hierarchy, false);
+    VirtualFile libraryClassRoot = libraryClassRootInfo != null ? libraryClassRootInfo.first : null;
+
     boolean inProject = moduleContentRoot != null || libraryClassRoot != null || librarySourceRoot != null;
     VirtualFile nearestContentRoot;
     if (inProject) {
@@ -756,16 +809,45 @@ public class RootIndex {
     int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
 
     Module module = info.contentRootOf.get(nearestContentRoot);
-    FileTypeAssocTable<Boolean> excludePatterns = moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
-    DirectoryInfo directoryInfo = excludePatterns != null
+    FileTypeAssocTable<Boolean> contentExcludePatterns = moduleContentRoot != null ? info.excludeFromContentRootTables.get(moduleContentRoot) : null;
+    FileTypeAssocTable<Boolean> libraryExcludePatterns = getLibraryExclusionPatterns(librarySourceRootInfo);
+
+    DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExcludePatterns != null
                                   ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, libraryClassRoot,
-                                                                         inModuleSources, inLibrarySource, !inProject, typeId, excludePatterns)
+                                                                         inModuleSources, inLibrarySource, !inProject, typeId,
+                                                                         contentExcludePatterns, libraryExcludePatterns)
                                   : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources,
                                                           inLibrarySource, !inProject, typeId);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 
     return Pair.create(directoryInfo, packagePrefix);
+  }
+
+  private static FileTypeAssocTable<Boolean> getLibraryExclusionPatterns(@Nullable Pair<VirtualFile, Collection<Object>> libraryRootInfo) {
+    FileTypeAssocTable<Boolean> excludePatterns = null;
+    if (libraryRootInfo != null) {
+      for (Object library : libraryRootInfo.second) {
+        Condition<CharSequence> exclusionPredicate = library instanceof SyntheticLibrary ? ((SyntheticLibrary)library).getExcludeCondition() : null;
+        if (exclusionPredicate == null) continue;
+        if (excludePatterns == null) {
+          excludePatterns = new FileTypeAssocTable<>();
+        }
+        excludePatterns.addAssociation(new FileNameMatcherEx() {
+          @Override
+          public boolean acceptsCharSequence(@NotNull CharSequence fileName) {
+            return exclusionPredicate.value(fileName);
+          }
+
+          @NotNull
+          @Override
+          public String getPresentableString() {
+            return "Synthetic library exclusion rule";
+          }
+        }, true);
+      }
+    }
+    return excludePatterns;
   }
 
   @NotNull

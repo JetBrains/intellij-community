@@ -65,11 +65,6 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (!(c.getBorder() instanceof WinIntelliJButtonBorder) && !isComboButton(c)) {
-      super.paint(g, c);
-      return;
-    }
-
     if (isHelpButton(c)) {
       Icon help = MacIntelliJIconCache.getIcon("winHelp");
       Insets i = c.getInsets();
@@ -95,6 +90,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
       } finally {
         g2.dispose();
       }
+    }
+
+    // Draw border for emptyBorder buttons
+    if (!(c.getBorder() instanceof WinIntelliJButtonBorder) && !isComboButton(c)) {
+      WinIntelliJButtonBorder.paint(c, g, 0, 0, c.getWidth(), c.getHeight());
     }
   }
 

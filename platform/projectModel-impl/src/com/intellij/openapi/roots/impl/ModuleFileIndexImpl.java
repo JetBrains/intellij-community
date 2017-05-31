@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  public boolean iterateContent(@NotNull ContentIterator processor) {
+  public boolean iterateContent(@NotNull ContentIterator processor, @Nullable VirtualFileFilter filter) {
     final Set<VirtualFile> contentRoots = ReadAction.compute(() -> {
       if (myModule.isDisposed()) return Collections.emptySet();
 
@@ -65,14 +66,12 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
       return result;
     });
     for (VirtualFile contentRoot : contentRoots) {
-      if (!iterateContentUnderDirectory(contentRoot, processor)) {
+      if (!iterateContentUnderDirectory(contentRoot, processor, filter)) {
         return false;
       }
     }
-
     return true;
   }
-
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {

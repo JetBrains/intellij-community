@@ -45,7 +45,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testSimple() throws Exception {
     configureByFile("Simple.java")
-    assertStringItems("_field", "_local1", "_local2", "_baseField", "_method", "_baseMethod")
+    assertStringItems("_local1", "_local2", "_field", "_baseField", "_method", "_baseMethod")
   }
 
   void testCastToPrimitive1() throws Exception {
@@ -222,6 +222,7 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   protected void tearDown() throws Exception {
     CodeInsightSettings.instance.AUTOCOMPLETE_ON_CODE_COMPLETION = true
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = true
     super.tearDown()
   }
 
@@ -361,44 +362,22 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testMethodWithLeftParTailTypeNoPairBrace() throws Exception {
-    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false
-
-    try {
-      configureByFile(getTestName(false) + ".java")
-      type('(')
-      checkResult()
-    }
-    finally {
-      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old
-    }
+    doTest('(')
   }
 
   void testMethodWithLeftParTailTypeNoPairBrace2() throws Exception {
-    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false
 
-    try {
-      //no tail type should work the normal way
-      configureByFile("MethodWithLeftParTailTypeNoPairBrace.java")
-      selectItem(myItems[0])
-      checkResultByFile("MethodWithLeftParTailTypeNoPairBrace_after2.java")
-    }
-    finally {
-      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old
-    }
+    //no tail type should work the normal way
+    configureByFile("MethodWithLeftParTailTypeNoPairBrace.java")
+    selectItem(myItems[0])
+    checkResultByFile("MethodWithLeftParTailTypeNoPairBrace_after2.java")
   }
 
   void testMethodNoPairBrace() throws Exception {
-    final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false
-
-    try {
-      doTest '\n'
-    }
-    finally {
-      CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = old
-    }
+    doTest '\n'
   }
 
   void testExcessSpaceInTypeCast() throws Throwable {
@@ -1783,6 +1762,11 @@ class Bar {
     codeStyleSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     myFixture.addClass("package pkg; public class PathUtil { public static String toSystemDependentName() {} }")
     doTest('\n')
+  }
+  
+  void testPairAngleBracketDisabled() {
+    CodeInsightSettings.instance.AUTOINSERT_PAIR_BRACKET = false
+    doTest('<')
   }
 
 }

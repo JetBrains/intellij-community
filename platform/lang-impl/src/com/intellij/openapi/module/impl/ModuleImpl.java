@@ -217,9 +217,14 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   }
 
   @Override
-  public void setOption(@NotNull String key, @NotNull String value) {
+  public void setOption(@NotNull String key, @Nullable String value) {
     DeprecatedModuleOptionManager manager = getOptionManager();
-    if (!value.equals(manager.state.options.put(key, value))) {
+    if (value == null) {
+      if (manager.state.options.remove(key) != null) {
+        manager.incModificationCount();
+      }
+    }
+    else if (!value.equals(manager.state.options.put(key, value))) {
       manager.incModificationCount();
     }
   }
@@ -228,14 +233,6 @@ public class ModuleImpl extends PlatformComponentManagerImpl implements ModuleEx
   private DeprecatedModuleOptionManager getOptionManager() {
     //noinspection ConstantConditions
     return ModuleServiceManager.getService(this, DeprecatedModuleOptionManager.class);
-  }
-
-  @Override
-  public void clearOption(@NotNull String key) {
-    DeprecatedModuleOptionManager manager = getOptionManager();
-    if (manager.state.options.remove(key) != null) {
-      manager.incModificationCount();
-    }
   }
 
   @Override

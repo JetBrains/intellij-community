@@ -42,9 +42,7 @@ import java.io.IOException;
 import java.lang.reflect.Array;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.util.BitUtil.isSet;
@@ -545,6 +543,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     private final int myParamCount;
     private final PsiParameterStubImpl[] myParamStubs;
     private final Function<String, String> myMapping;
+    private int myParamNameIndex;
     private int myUsedParamSize;
     private int myUsedParamCount;
     private List<Set<String>> myFilters;
@@ -606,21 +605,30 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     @Override
+    public void visitParameter(String name, int access) {
+      if ((access & Opcodes.ACC_SYNTHETIC) == 0 && myParamNameIndex < myParamCount) {
+        setName(name, myParamNameIndex);
+        myParamNameIndex++;
+      }
+    }
+
+    @Override
     public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
       if (index >= myIgnoreCount) {
         // long and double variables increase the index by 2, not by 1
         int paramIndex = index - myIgnoreCount == myUsedParamSize ? myUsedParamCount : index - myIgnoreCount;
-        if (paramIndex >= myParamCount) return;
-
-        if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
-          PsiParameterStubImpl parameterStub = myParamStubs[paramIndex];
-          if (parameterStub != null) {
-            parameterStub.setName(name);
-          }
+        if (paramIndex < myParamCount) {
+          setName(name, paramIndex);
+          myUsedParamCount = paramIndex + 1;
+          myUsedParamSize += "D".equals(desc) || "J".equals(desc) ? 2 : 1;
         }
+      }
+    }
 
-        myUsedParamCount = paramIndex + 1;
-        myUsedParamSize += "D".equals(desc) || "J".equals(desc) ? 2 : 1;
+    private void setName(String name, int paramIndex) {
+      if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
+        PsiParameterStubImpl stub = myParamStubs[paramIndex];
+        if (stub != null) stub.setName(name);
       }
     }
 
@@ -774,7 +782,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
             className = p.first;
             if (p.second != null) {
               className = fun(p.first) + '.' + p.second;
-              mapping.put(className, pair(className, (String)null));
+              mapping.put(className, pair(className, null));
             }
           }
 

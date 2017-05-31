@@ -34,7 +34,7 @@ public interface ExternalProjectSystemRegistry {
   ProjectModelExternalSource getSourceById(String id);
 
   @Nullable
-  ProjectModelExternalSource getExternalSource(Module module);
+  ProjectModelExternalSource getExternalSource(@NotNull Module module);
 
   /**
    * These fields are temporary added to API until we have proper extension points for different external systems.

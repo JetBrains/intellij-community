@@ -43,6 +43,8 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
   public void testDoubleTest() { doTest(); /* IDEA-53195 */ }
   public void testAnnotatedNonStaticInnerClassConstructor() { doTest(); }
   public void testAnnotatedEnumConstructor() { doTest(); }
+  public void testInterfaceMethodParameters() { doTest(); }
+  public void testEnumMethodParameters() { doTest(); }
 
   public void testModifiers() {
     String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/cls/repo/pack/" + getTestName(false) + ".class";

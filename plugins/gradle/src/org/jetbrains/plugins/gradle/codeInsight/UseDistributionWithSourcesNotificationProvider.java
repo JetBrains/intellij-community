@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.codeInsight;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
@@ -167,12 +167,13 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
 
   @Nullable
   private static String getRootProjectPath(@NotNull Module module) {
-    String externalSystemId = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    ExternalSystemModulePropertyManager modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module);
+    String externalSystemId = modulePropertyManager.getExternalSystemId();
     if (externalSystemId == null || !GradleConstants.SYSTEM_ID.toString().equals(externalSystemId)) {
       return null;
     }
 
-    String path = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    String path = modulePropertyManager.getRootProjectPath();
     return StringUtil.isEmpty(path) ? null : path;
   }
 }

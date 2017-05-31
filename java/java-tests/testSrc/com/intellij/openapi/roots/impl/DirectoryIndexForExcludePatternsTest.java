@@ -16,13 +16,24 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ide.projectView.actions.MarkRootActionBase;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsProvider;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.roots.SyntheticLibrary;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author nik
@@ -69,7 +80,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertExcluded(underExcUnderDir, myModule);
     assertNotExcluded(dir);
     assertNotExcluded(underDir);
-    assertIteratedContent(myModule, Arrays.asList(underDir), Arrays.asList(underExc, underDirUnderExc, underExcUnderDir));
+    assertIteratedContent(myModule, Collections.singletonList(underDir), Arrays.asList(underExc, underDirUnderExc, underExcUnderDir));
   }
 
   public void testIllegalArgumentInIsExcludedMethod() {
@@ -85,8 +96,102 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
     assertFalse("DirectoryInfo#isExcluded must fail it its argument is not under DirectoryInfo's root", successeded);
   }
 
+  public void testExcludeFileFromLibrary() throws IOException {
+    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
+    VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
+    VirtualFile txt2 = createChildData(dir, "a.txt");
+    VirtualFile java = createChildData(myLibraryRoot, "A.java");
+    registerLibrary(myLibraryRoot, fileName -> "a.txt".contentEquals(fileName));
+
+    assertExcluded(txt1, null);
+    assertNotInLibrarySources(txt1, null);
+
+    assertExcluded(txt2, null);
+    assertNotInLibrarySources(txt2, null);
+
+    assertNotExcluded(java);
+    assertInLibrarySources(java, null);
+
+    assertIndexableContent(Collections.singletonList(java), Arrays.asList(txt1, txt2));
+  }
+
+  public void testExcludeDirectoryFromLibrary() throws IOException {
+    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
+    VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
+    VirtualFile txt2 = createChildData(dir, "a.txt");
+    VirtualFile java = createChildData(myLibraryRoot, "A.java");
+    registerLibrary(myLibraryRoot, fileName -> "dir".contentEquals(fileName));
+
+    assertExcluded(txt2, null);
+    assertNotInLibrarySources(txt2, null);
+
+    assertNotExcluded(txt1);
+    assertInLibrarySources(txt1, null);
+    assertNotExcluded(java);
+    assertInLibrarySources(java, null);
+
+    assertIndexableContent(Collections.singletonList(java), Collections.singletonList(txt2));
+  }
+
+  public void testExcludeDirectoryFromLibraryThatIsUnderContentRoot() throws IOException {
+    VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
+    VirtualFile dir = createChildDirectory(myLibraryRoot, "dir");
+    VirtualFile txt1 = createChildData(myLibraryRoot, "a.txt");
+    VirtualFile txt2 = createChildData(dir, "a.txt");
+    VirtualFile java = createChildData(myLibraryRoot, "A.java");
+    registerLibrary(myLibraryRoot, fileName -> "dir".contentEquals(fileName));
+
+    assertNotExcluded(txt2);
+    assertNotInLibrarySources(txt2, myModule);
+
+    assertNotExcluded(txt1);
+    assertInLibrarySources(txt1, myModule);
+    assertNotExcluded(java);
+    assertInLibrarySources(java, myModule);
+
+    assertIndexableContent(Arrays.asList(java, txt1, txt2), null);
+  }
+
+  public void testExcludeLibraryRoot() throws IOException {
+    VirtualFile myLibraryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(createTempDirectory());
+    VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
+    VirtualFile java = createChildData(myLibraryRoot, "A.java");
+    registerLibrary(myLibraryRoot, fileName -> fileName.equals(myLibraryRoot.getNameSequence()));
+
+    assertFalse(myIndex.getInfoForFile(txt).isInProject(txt));
+    assertFalse(myIndex.getInfoForFile(java).isInProject(java));
+  }
+
+  public void testExcludeLibraryRootThatIsUnderContentRoot() throws IOException {
+    VirtualFile myLibraryRoot = createChildDirectory(myContentRoot, "library");
+    VirtualFile txt = createChildData(myLibraryRoot, "a.txt");
+    VirtualFile java = createChildData(myLibraryRoot, "A.java");
+    registerLibrary(myLibraryRoot, fileName -> fileName.equals(myLibraryRoot.getNameSequence()));
+
+    assertInProject(txt);
+    assertNotInLibrarySources(txt, myModule);
+    assertInProject(java);
+    assertNotInLibrarySources(java, myModule);
+    assertIndexableContent(Arrays.asList(txt, java), null);
+  }
+
   private void addExcludePattern(@NotNull String pattern) {
     ModuleRootModificationUtil.updateModel(myModule,
                                            model -> MarkRootActionBase.findContentEntry(model, myContentRoot).addExcludePattern(pattern));
+  }
+
+  private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<CharSequence> excludePattern) {
+    WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
+      () -> PlatformTestUtil.registerExtension(AdditionalLibraryRootsProvider.EP_NAME, new AdditionalLibraryRootsProvider() {
+        @NotNull
+        @Override
+        public Collection<SyntheticLibrary> getAdditionalProjectLibraries(@NotNull Project project) {
+          return myProject == project ? Collections.singletonList(
+            SyntheticLibrary.newImmutableLibrary(Collections.singleton(root), Collections.emptySet(), excludePattern)
+          ) : Collections.emptyList();
+        }
+      }, getTestRootDisposable()), false, true));
   }
 }

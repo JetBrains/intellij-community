@@ -56,7 +56,7 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
 
   void testLocals2() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "TestSource2.java")
-    myFixture.assertPreferredCompletionItems 0, 'aaa', 'abc'
+    myFixture.assertPreferredCompletionItems 0, 'abc', 'aaa'
     checkResultByFile(FILE_PREFIX + "locals/" + "TestResult2.java")
   }
 

@@ -225,6 +225,15 @@ public class CompletionHintsTest extends LightFixtureCompletionTestCase {
     myFixture.checkResultWithInlays("class C { void m() { System.getProperty( ) } }");
   }
 
+  public void testHintsDisappearWhenNumberOfParametersIsChangedDirectlyWithNoOverloads() throws Exception {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { Character.for<caret> } }");
+    complete("forDigit");
+    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit(<hint text=\"digit:\"/>, <hint text=\"radix:\"/>) } }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE);
+    waitForAllAsyncStuff();
+    myFixture.checkResultWithInlays("class C { void m() { Character.forDigit( ) } }");
+  }
+
   public void testCaretIsToTheRightOfHintAfterSmartInnerCompletion() throws Exception {
     myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.setPro<caret> } }");
     complete("setProperty");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.gradle.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModel;
@@ -98,7 +98,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
     if (!type.equals(OrderRootType.CLASSES)) return false;
     if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, rootModel.getModule())) return false;
 
-    final String gradleProjectPath = rootModel.getModule().getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);
+    final String gradleProjectPath = ExternalSystemModulePropertyManager.getInstance(rootModel.getModule()).getRootProjectPath();
     if (gradleProjectPath == null) {
       LOG.error("Root project path of the Gradle project not found for " + rootModel.getModule());
       return false;

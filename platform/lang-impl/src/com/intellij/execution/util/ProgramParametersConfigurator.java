@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class ProgramParametersConfigurator {
     }
   }
 
-  protected String expandPath(String path, Module module, Project project) {
+  protected String expandPath(@Nullable String path, Module module, Project project) {
     path = PathMacroManager.getInstance(project).expandPath(path);
     if (module != null) {
       path = PathMacroManager.getInstance(module).expandPath(path);

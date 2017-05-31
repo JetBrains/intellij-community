@@ -2004,10 +2004,76 @@ public class UIUtil {
     return createImage(g, width, height, type);
   }
 
+  /**
+   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, ImageObserver)}
+   */
   public static void drawImage(Graphics g, Image image, int x, int y, ImageObserver observer) {
     drawImage(g, image, x, y, -1, -1, observer);
   }
 
+
+  /**
+   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)}
+   * When {@code dstBounds} is null, the image bounds are used instead.
+   *
+   * @see #bounds(int, int, int, int)
+   */
+  public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, ImageObserver observer) {
+      drawImage(g, image, dstBounds, null, observer);
+  }
+
+  /**
+   * A hidpi-aware wrapper over {@link Graphics#drawImage(Image, int, int, int, int, int, int, int, int, ImageObserver)}
+   * When {@code dstBounds} or {@code srcBounds} is null, the image bounds are used instead.
+   *
+   * @see #bounds(int, int, int, int)
+   */
+  public static void drawImage(Graphics g, Image image, @Nullable Rectangle dstBounds, @Nullable Rectangle srcBounds, ImageObserver observer) {
+    Image drawImage = image;
+    if (image instanceof JBHiDPIScaledImage) {
+      drawImage = ((JBHiDPIScaledImage)image).getDelegate();
+      if (drawImage == null) {
+        drawImage = image;
+      }
+    }
+    int dx = 0;
+    int dy = 0;
+    int dw = -1;
+    int dh = -1;
+    if (dstBounds != null) {
+      dx = dstBounds.x;
+      dy = dstBounds.y;
+      dw = dstBounds.width;
+      dh = dstBounds.height;
+    }
+    if (dw == -1 && dh == -1) {
+      dw = ImageUtil.getUserWidth(image);
+      dh = ImageUtil.getUserHeight(image);
+    }
+    int sx = 0;
+    int sy = 0;
+    int sw = -1;
+    int sh = -1;
+    if (srcBounds != null) {
+      sx = srcBounds.x;
+      sy = srcBounds.y;
+      sw = srcBounds.width;
+      sh = srcBounds.height;
+    }
+    if (sw == -1 && sh == -1) {
+      sw = ImageUtil.getRealWidth(image);
+      sh = ImageUtil.getRealHeight(image);
+    }
+    g.drawImage(drawImage, dx, dy, dx + dw, dy + dh, sx, sy, sx + sw, sy + sh, observer);
+  }
+
+  /**
+   * Note, the method interprets [x,y,width,height] as the destination and source bounds for hidpi-unaware images
+   * which doesn't conform to the {@link Graphics#drawImage(Image, int, int, int, int, ImageObserver)} method contract.
+   *
+   * @deprecated use {@link #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)}
+   */
+  @Deprecated
   public static void drawImage(Graphics g, Image image, int x, int y, int width, int height, ImageObserver observer) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
@@ -2047,6 +2113,15 @@ public class UIUtil {
     } else {
       ((Graphics2D)g).drawImage(image, op, x, y);
     }
+  }
+
+  /**
+   * An alias for the new rectangle call. Use as static import.
+   *
+   * @see #drawImage(Graphics, Image, Rectangle, Rectangle, ImageObserver)
+   */
+  public static Rectangle bounds(int x, int y, int width, int height) {
+    return new Rectangle(x, y, width, height);
   }
 
 

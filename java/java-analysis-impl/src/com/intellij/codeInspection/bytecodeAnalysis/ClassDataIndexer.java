@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.VirtualFileGist;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -60,8 +61,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     HashMap<HMethod, Equations> map = new HashMap<>();
     try {
       MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-      Map<EKey, List<Equation>> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
-      allEquations.forEach((methodKey, equations) -> map.put(methodKey.method.hashed(md), convertEquations(methodKey, equations)));
+      Map<EKey, Equations> allEquations = processClass(new ClassReader(file.contentsToByteArray(false)), file.getPresentableUrl());
+      allEquations.forEach((methodKey, equations) -> map.put(methodKey.method.hashed(md), hash(equations, md)));
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -74,6 +75,36 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     return map;
   }
 
+  private static Equations hash(Equations equations, MessageDigest md) {
+    return new Equations(ContainerUtil.map(equations.results, drp -> hash(drp, md)), equations.stable);
+  }
+
+  private static DirectionResultPair hash(DirectionResultPair drp, MessageDigest md) {
+    return new DirectionResultPair(drp.directionKey, hash(drp.result, md));
+  }
+
+  private static Result hash(Result result, MessageDigest md) {
+    if(result instanceof Effects) {
+      return new Effects(StreamEx.of(((Effects)result).effects).map(effect -> hash(effect, md)).toSet());
+    } else if(result instanceof Pending) {
+      return new Pending(ContainerUtil.map(((Pending)result).delta, component -> hash(component, md)));
+    }
+    return result;
+  }
+
+  private static Component hash(Component component, MessageDigest md) {
+    return new Component(component.value, StreamEx.of(component.ids).map(key -> key.hashed(md)).toArray(EKey[]::new));
+  }
+
+  private static EffectQuantum hash(EffectQuantum effect, MessageDigest md) {
+    if(effect instanceof EffectQuantum.CallQuantum) {
+      EffectQuantum.CallQuantum call = (EffectQuantum.CallQuantum)effect;
+      return new EffectQuantum.CallQuantum(call.key.hashed(md), call.data, call.isStatic);
+    }
+    return effect;
+  }
+
+
   @NotNull
   private static Equations convertEquations(EKey methodKey, List<Equation> rawMethodEquations) {
     List<DirectionResultPair> compressedMethodEquations =
@@ -81,7 +112,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     return new Equations(compressedMethodEquations, methodKey.stable);
   }
 
-  public static Map<EKey, List<Equation>> processClass(final ClassReader classReader, final String presentableUrl) {
+  public static Map<EKey, Equations> processClass(final ClassReader classReader, final String presentableUrl) {
 
     // It is OK to share pending states, actions and results for analyses.
     // Analyses are designed in such a way that they first write to states/actions/results and then read only those portion
@@ -90,7 +121,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     final State[] sharedPendingStates = new State[Analysis.STEPS_LIMIT];
     final PendingAction[] sharedPendingActions = new PendingAction[Analysis.STEPS_LIMIT];
     final PResults.PResult[] sharedResults = new PResults.PResult[Analysis.STEPS_LIMIT];
-    final Map<EKey, List<Equation>> equations = new HashMap<>();
+    final Map<EKey, Equations> equations = new HashMap<>();
 
     classReader.accept(new KeyedMethodVisitor() {
 
@@ -109,7 +140,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
           @Override
           public void visitEnd() {
             super.visitEnd();
-            equations.put(key, processMethod(node, jsr, method, key.stable));
+            equations.put(key, convertEquations(key, processMethod(node, jsr, method, key.stable)));
           }
         };
       }
@@ -119,6 +150,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
        *
        * @param methodNode asm node for method
        * @param jsr whether a method has jsr instruction
+       * @param method a method descriptor
+       * @param stable whether a method is stable (final or declared in a final class)
        */
       private List<Equation> processMethod(final MethodNode methodNode, boolean jsr, Method method, boolean stable) {
         ProgressManager.checkCanceled();

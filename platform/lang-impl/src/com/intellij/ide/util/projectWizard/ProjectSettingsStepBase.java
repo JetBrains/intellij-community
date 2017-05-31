@@ -68,7 +68,6 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    initLazyPeer();
     myProjectDirectory = findSequentNonExistingUntitled();
   }
 
@@ -81,13 +80,14 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     checkWebProjectValid();
   }
 
-  private void initLazyPeer() {
-    myLazyGeneratorPeer = myProjectGenerator.createLazyPeer();
+  @NotNull
+  protected NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+    return myProjectGenerator.createLazyPeer();
   }
 
   @Override
   public JPanel createPanel() {
-    initLazyPeer();
+    myLazyGeneratorPeer = createLazyPeer();
     final JPanel mainPanel = new JPanel(new BorderLayout());
 
     final JLabel label = createErrorLabel();

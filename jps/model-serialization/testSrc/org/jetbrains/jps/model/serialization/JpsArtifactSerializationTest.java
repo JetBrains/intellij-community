@@ -45,7 +45,7 @@ public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
 
   public void testSaveProject() throws IOException {
     loadProject(SAMPLE_PROJECT_PATH);
-    List<Path> artifactFiles = Files.list(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH + ".idea/artifacts")).collect(Collectors.toList());
+    List<Path> artifactFiles = Files.list(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH + "/.idea/artifacts")).collect(Collectors.toList());
     assertNotNull(artifactFiles);
     for (Path file : artifactFiles) {
       JpsArtifact artifact = getService().createReference(FileUtil.getNameWithoutExtension(file.getFileName().toString())).asExternal(myModel).resolve();

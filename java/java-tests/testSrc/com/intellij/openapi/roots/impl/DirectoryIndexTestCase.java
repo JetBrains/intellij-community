@@ -63,6 +63,18 @@ public abstract class DirectoryIndexTestCase extends IdeaTestCase {
     assertEquals(module, info.getModule());
   }
 
+  protected void assertInLibrarySources(VirtualFile file, Module module) {
+    DirectoryInfo info = myIndex.getInfoForFile(file);
+    assertTrue(info.toString(), info.isInLibrarySource(file));
+    assertEquals(module, info.getModule());
+  }
+
+  protected void assertNotInLibrarySources(VirtualFile file, Module module) {
+    DirectoryInfo info = myIndex.getInfoForFile(file);
+    assertFalse(info.toString(), info.isInLibrarySource(file));
+    assertEquals(module, info.getModule());
+  }
+
   protected DirectoryInfo assertInProject(VirtualFile file) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
     assertTrue(file.toString(), info.isInProject(file));

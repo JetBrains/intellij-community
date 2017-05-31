@@ -473,7 +473,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoUninitializedFieldsInConstructor() throws Throwable {
     configureByTestName();
-    assertStringItems("aab", "aac", "hashCode");
+    assertStringItems("aac", "aab", "hashCode");
   }
   public void testFieldsSetInAnotherConstructor() throws Throwable { doTest(); }
   public void testFieldsSetAbove() throws Throwable { doTest(); }

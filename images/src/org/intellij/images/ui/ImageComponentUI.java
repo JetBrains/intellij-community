@@ -26,6 +26,8 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+import static com.intellij.util.ui.UIUtil.bounds;
+
 /**
  * UI for {@link ImageComponent}.
  *
@@ -107,8 +109,8 @@ public class ImageComponentUI extends ComponentUI {
         Graphics2D g2d = (Graphics2D)g;
         RenderingHints oldHints = g2d.getRenderingHints();
 
-        BufferedImage image = ic.getDocument().getValue();
-        Image renderer = document.getValue();
+        BufferedImage image = document.getValue(ic.getZoomFactor());
+        Image renderer = image;
 
         if (size.width > image.getWidth() && size.height > image.getHeight()) {
             // disable any kind of source image manipulation when resizing
@@ -118,7 +120,7 @@ public class ImageComponentUI extends ComponentUI {
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         }
-        g.drawImage(renderer, 0, 0, size.width, size.height, ic);
+        UIUtil.drawImage(g, renderer, bounds(0, 0, size.width, size.height), ic);
 
         g2d.setRenderingHints(oldHints);
     }

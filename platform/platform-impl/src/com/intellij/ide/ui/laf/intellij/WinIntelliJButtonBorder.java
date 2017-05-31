@@ -34,6 +34,10 @@ import static com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPH
 public class WinIntelliJButtonBorder implements Border, UIResource {
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+    paint(c, g, x, y, width, height);
+  }
+
+  static void paint(Component c, Graphics g, int x, int y, int width, int height) {
     if (!(c instanceof AbstractButton) || DarculaButtonUI.isHelpButton((JComponent)c)) return;
 
     Graphics2D g2 = (Graphics2D)g.create();
@@ -50,11 +54,11 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
 
       if (!c.isEnabled()) {
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
-      } else if (b.hasFocus() || bm.isRollover()) {
-        color = UIManager.getColor("Button.intellij.native.focusedBorderColor");
       } else if (bm.isPressed()) {
         color = UIManager.getColor("Button.intellij.native.pressedBorderColor");
-      } else {
+      } else if (b.hasFocus() || bm.isRollover()) {
+        color = UIManager.getColor("Button.intellij.native.focusedBorderColor");
+      }  else {
         if (DarculaButtonUI.isDefaultButton(b)) {
           bw = JBUI.scale(2);
           color = UIManager.getColor("Button.intellij.native.focusedBorderColor");

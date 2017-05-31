@@ -917,6 +917,7 @@
 
     <projectService serviceInterface="com.intellij.openapi.module.ModulePointerManager"
                     serviceImplementation="com.intellij.openapi.module.impl.ModulePointerManagerImpl"/>
+    <projectService serviceImplementation="com.intellij.openapi.module.impl.UnloadedModulesListStorage"/>
 
     <customFoldingProvider implementation="com.intellij.lang.customFolding.NetBeansCustomFoldingProvider"/>
     <customFoldingProvider implementation="com.intellij.lang.customFolding.VisualStudioCustomFoldingProvider"/>
@@ -1028,6 +1029,8 @@
         order="last"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.psi.codeStyle.KeepTrailingSpacesOnEmptyLinesFilterFactory"/>
 
+    <applicationService serviceInterface="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"
+                        serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewFileNestingService"/>
     <treeStructureProvider implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
     <automaticRenamerFactory implementation="com.intellij.refactoring.rename.RelatedFilesRenamerFactory"/>

@@ -49,11 +49,11 @@ public class SVGLoader {
 
     static final int FALLBACK_VALUE = 16;
 
-    public int value(@NotNull Document document) {
+    public float value(@NotNull Document document) {
       String value = document.getDocumentElement().getAttribute(name());
       if (value.endsWith("px")) {
         try {
-          return Integer.parseInt(value.substring(0, value.length() - 2));
+          return Float.parseFloat(value.substring(0, value.length() - 2));
         }
         catch (NumberFormatException ex) {
           ex.printStackTrace();
@@ -71,12 +71,12 @@ public class SVGLoader {
   }
 
   private static class ViewBox {
-    private final int x;
-    private final int y;
-    private final int width;
-    private final int height;
+    private final float x;
+    private final float y;
+    private final float width;
+    private final float height;
 
-    public ViewBox(int x, int y, int width, int height) {
+    public ViewBox(float x, float y, float width, float height) {
       this.x = x;
       this.y = y;
       this.width = width;
@@ -86,10 +86,10 @@ public class SVGLoader {
     public static ViewBox fromString(String s) {
       final List<String> values = StringUtil.split(s, " ");
       if (values.size() == 4) {
-        return new ViewBox(Integer.parseInt(values.get(0)),
-                           Integer.parseInt(values.get(1)),
-                           Integer.parseInt(values.get(2)),
-                           Integer.parseInt(values.get(3)));
+        return new ViewBox(Float.parseFloat(values.get(0)),
+                           Float.parseFloat(values.get(1)),
+                           Float.parseFloat(values.get(2)),
+                           Float.parseFloat(values.get(3)));
       }
       throw new IllegalArgumentException("String should be formatted like 'x y width height'");
     }

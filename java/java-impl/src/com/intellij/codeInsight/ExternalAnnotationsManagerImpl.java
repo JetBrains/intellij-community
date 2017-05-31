@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -679,6 +680,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @NonNls
   @NotNull
+  @VisibleForTesting
   public static String createAnnotationTag(@NotNull String annotationFQName, @Nullable PsiNameValuePair[] values) {
     @NonNls String text;
     if (values != null && values.length != 0) {
@@ -700,6 +702,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   }
 
   @Nullable
+  @VisibleForTesting
   public static XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName, PsiManager manager) {
     final String[] dirs = packageName.split("[\\.]");
     for (String dir : dirs) {
