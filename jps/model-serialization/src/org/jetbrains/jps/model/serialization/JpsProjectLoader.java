@@ -124,7 +124,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
         loadComponents(dir, defaultConfigFile, serializer, myProject);
       }
     }
-    loadModules(loadRootElement(dir.resolve("modules.xml")), projectSdkType);
+    Path workspaceFile = dir.resolve("workspace.xml");
+    loadModules(loadRootElement(dir.resolve("modules.xml")), projectSdkType, workspaceFile);
 
     Runnable timingLog = TimingLog.startActivity("loading project libraries");
     for (Path libraryFile : listXmlFiles(dir.resolve("libraries"))) {
@@ -150,7 +151,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       for (Path configurationFile : listXmlFiles(dir.resolve("runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(myProject, loadRootElement(configurationFile));
       }
-      JpsRunConfigurationSerializer.loadRunConfigurations(myProject, JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("workspace.xml")), "RunManager"));
+      JpsRunConfigurationSerializer.loadRunConfigurations(myProject, JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "RunManager"));
       runConfTimingLog.run();
     }
   }
@@ -197,7 +198,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    loadModules(iprRoot, projectSdkType);
+    loadModules(iprRoot, projectSdkType, iwsFile);
     loadProjectLibraries(JDomSerializationUtil.findComponent(iprRoot, "libraryTable"));
     loadArtifacts(JDomSerializationUtil.findComponent(iprRoot, "ArtifactManager"));
     if (hasRunConfigurationSerializers()) {
@@ -229,18 +230,25 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(@Nullable Element root, final @Nullable JpsSdkType<?> projectSdkType) {
+  private void loadModules(@Nullable Element root, final @Nullable JpsSdkType<?> projectSdkType, Path workspaceFile) {
     Runnable timingLog = TimingLog.startActivity("loading modules");
     Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
 
+    Set<String> unloadedModules = new HashSet<>();
+    if (Files.exists(workspaceFile)) {
+      Element unloadedModulesList = JDomSerializationUtil.findComponent(loadRootElement(workspaceFile), "UnloadedModulesList");
+      for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
+        unloadedModules.add(element.getAttributeValue("name"));
+      }
+    }
 
     final Set<Path> foundFiles = new THashSet<>();
     final List<Path> moduleFiles = new ArrayList<>();
     for (Element moduleElement : JDOMUtil.getChildren(componentRoot.getChild("modules"), "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
       final Path file = Paths.get(path);
-      if (foundFiles.add(file)) {
+      if (foundFiles.add(file) && !unloadedModules.contains(getModuleName(file))) {
         moduleFiles.add(file);
       }
     }
@@ -285,7 +293,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
 
         if (data == null) {
-          LOG.info("Module '" + FileUtil.getNameWithoutExtension(file.getFileName().toString()) + "' is skipped: " + file.toAbsolutePath() + " doesn't exist");
+          LOG.info("Module '" + getModuleName(file) + "' is skipped: " + file.toAbsolutePath() + " doesn't exist");
         }
 
         return Pair.create(file, data);
@@ -323,7 +331,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   @NotNull
   private static JpsModule loadModule(@NotNull Path file, @NotNull Element moduleRoot, List<String> paths,
                                       @Nullable JpsSdkType<?> projectSdkType, Map<String, String> pathVariables) {
-    String name = FileUtil.getNameWithoutExtension(file.getFileName().toString());
+    String name = getModuleName(file);
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
@@ -352,6 +360,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
     JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"));
     return module;
+  }
+
+  @NotNull
+  private static String getModuleName(@NotNull Path file) {
+    return FileUtil.getNameWithoutExtension(file.getFileName().toString());
   }
 
   static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, @NotNull Path moduleFile) {

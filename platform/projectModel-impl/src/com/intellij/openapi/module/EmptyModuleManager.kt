@@ -48,4 +48,11 @@ class EmptyModuleManager(project: Project, messageBus: MessageBus) : ModuleManag
   override fun getModifiableModel() = throw UnsupportedOperationException()
 
   override fun getModuleGroupPath(module: Module) = emptyArray<String>()
+
+  override fun setUnloadedModules(unloadedModuleNames: MutableList<String>) {
+  }
+
+  override fun getAllModuleDescriptions() = emptyList<ModuleDescription>()
+
+  override fun getUnloadedModuleDescriptions() = emptyList<UnloadedModuleDescription>()
 }

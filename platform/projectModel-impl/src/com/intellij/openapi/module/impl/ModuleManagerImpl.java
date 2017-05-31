@@ -43,6 +43,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +64,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -86,6 +89,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
 
   private LinkedHashSet<ModulePath> myModulePathsToLoad;
   private final Set<ModulePath> myFailedModulePaths = new THashSet<>();
+  private Map<String, UnloadedModuleDescriptionImpl> myUnloadedModules = new LinkedHashMap<>();
 
   public static ModuleManagerImpl getInstanceImpl(Project project) {
     return (ModuleManagerImpl)getInstance(project);
@@ -161,6 +165,22 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public void loadState(Element state) {
     boolean isFirstLoadState = myModulePathsToLoad == null;
     myModulePathsToLoad = getPathsToModuleFiles(state);
+    Set<String> unloadedModuleNames = new HashSet<>(UnloadedModulesListStorage.getInstance(myProject).getUnloadedModuleNames());
+    Iterator<ModulePath> iterator = myModulePathsToLoad.iterator();
+    List<ModulePath> unloadedModulePaths = new ArrayList<>();
+    while (iterator.hasNext()) {
+      ModulePath modulePath = iterator.next();
+      if (unloadedModuleNames.contains(modulePath.getModuleName())) {
+        unloadedModulePaths.add(modulePath);
+        iterator.remove();
+      }
+    }
+    List<UnloadedModuleDescriptionImpl> descriptions = UnloadedModuleDescriptionImpl.createFromPaths(unloadedModulePaths, this);
+    myUnloadedModules.clear();
+    for (UnloadedModuleDescriptionImpl description : descriptions) {
+      myUnloadedModules.put(description.getName(), description);
+    }
+
     if (isFirstLoadState) {
       // someone else must call loadModules in a appropriate time (e.g. on projectComponentsInitialized)
       return;
@@ -421,12 +441,15 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   public void writeExternal(@NotNull Element element) {
     final Module[] collection = getModules();
 
-    List<SaveItem> sorted = new ArrayList<>(collection.length + myFailedModulePaths.size());
+    List<SaveItem> sorted = new ArrayList<>(collection.length + myFailedModulePaths.size() + myUnloadedModules.size());
     for (Module module : collection) {
       sorted.add(new ModuleSaveItem(module));
     }
     for (ModulePath modulePath : myFailedModulePaths) {
       sorted.add(new ModulePathSaveItem(modulePath));
+    }
+    for (UnloadedModuleDescriptionImpl description : myUnloadedModules.values()) {
+      sorted.add(new ModulePathSaveItem(description.getModulePath()));
     }
 
     if (!sorted.isEmpty()) {
@@ -955,6 +978,59 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
   @Override
   public boolean hasModuleGroups() {
     return myModuleModel.hasModuleGroups();
+  }
+
+  @Override
+  public Collection<ModuleDescription> getAllModuleDescriptions() {
+    Module[] modules = getModules();
+    List<ModuleDescription> descriptions = new ArrayList<>(modules.length + myUnloadedModules.size());
+    for (Module module : modules) {
+      descriptions.add(new LoadedModuleDescription(module));
+    }
+    descriptions.addAll(myUnloadedModules.values());
+    return descriptions;
+  }
+
+  @Override
+  public Collection<? extends UnloadedModuleDescription> getUnloadedModuleDescriptions() {
+    return myUnloadedModules.values();
+  }
+
+  @Override
+  public void setUnloadedModules(@NotNull List<String> unloadedModuleNames) {
+    if (myUnloadedModules.keySet().equals(unloadedModuleNames)) {
+      return;
+    }
+
+    UnloadedModulesListStorage.getInstance(myProject).setUnloadedModuleNames(unloadedModuleNames);
+    
+    final ModifiableModuleModel model = getModifiableModel();
+    Map<String, UnloadedModuleDescriptionImpl> toLoad = new LinkedHashMap<>(myUnloadedModules);
+    myUnloadedModules.clear();
+    for (String name : unloadedModuleNames) {
+      if (toLoad.containsKey(name)) {
+        myUnloadedModules.put(name, toLoad.remove(name));
+      }
+      else {
+        Module module = findModuleByName(name);
+        if (module != null) {
+          LoadedModuleDescription description = new LoadedModuleDescription(module);
+          ModuleSaveItem saveItem = new ModuleSaveItem(module);
+          ModulePath modulePath = new ModulePath(saveItem.getModuleFilePath(), saveItem.getGroupPathString());
+          VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
+          List<VirtualFilePointer> contentRoots = ContainerUtil.map(ModuleRootManager.getInstance(module).getContentRootUrls(), url -> pointerManager.create(url, this, null));
+          UnloadedModuleDescriptionImpl unloadedModuleDescription = new UnloadedModuleDescriptionImpl(modulePath, description.getDependencyModuleNames(), contentRoots);
+          model.disposeModule(module);
+          myUnloadedModules.put(name, unloadedModuleDescription);
+        }
+      }
+    }
+    List<ModulePath> oldFailedPaths = new ArrayList<>(myFailedModulePaths);
+    myModulePathsToLoad = toLoad.values().stream().map(d -> d.getModulePath()).collect(Collectors.toCollection(LinkedHashSet::new));
+    loadModules((ModuleModelImpl)model);
+    ApplicationManager.getApplication().runWriteAction(() -> model.commit());
+    myFailedModulePaths.addAll(oldFailedPaths);
+    myModulePathsToLoad.clear();
   }
 
   public void setModuleGroupPath(Module module, String[] groupPath) {
