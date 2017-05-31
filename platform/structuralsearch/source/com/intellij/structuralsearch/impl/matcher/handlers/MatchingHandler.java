@@ -50,16 +50,6 @@ public abstract class MatchingHandler {
    * @param context of the matching
    * @return true if matching was successful and false otherwise
    */
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
-    return match(patternNode,matchedNode,context);
-  }
-
-  /**
-   * Matches given handler node against given value.
-   * @param matchedNode for matching
-   * @param context of the matching
-   * @return true if matching was successful and false otherwise
-   */
   public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
     if (patternNode == null) {
       return matchedNode == null;
@@ -160,8 +150,8 @@ public abstract class MatchingHandler {
       // We do not reset certain handlers because they are also bound to higher level nodes
       // e.g. Identifier handler in name is also bound to PsiMethod
       if (pattern.isToResetHandler(element)) {
-        MatchingHandler handler = pattern.getHandlerSimple(element);
-        if (handler instanceof SubstitutionHandler) {
+        final MatchingHandler handler = pattern.getHandlerSimple(element);
+        if (handler != null) {
           handler.reset();
         }
       }
