@@ -122,11 +122,19 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addAll(createRepositoriesActions());
 
     popupGroup.addSeparator("Common Local Branches");
-    List<BranchActionGroup> localBranchActions =
-      myMultiRootBranchConfig.getLocalBranchNames().stream().map(l -> createLocalBranchActions(allRepositories, l)).filter(Objects::nonNull)
-        .collect(toList());
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(localBranchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(localBranchActions), SHOW_ALL_LOCALS_KEY, true);
+    List<BranchActionGroup> localBranchActions = myMultiRootBranchConfig.getLocalBranchNames().stream()
+      .map(l -> createLocalBranchActions(allRepositories, l))
+      .filter(Objects::nonNull)
+      .sorted(FAVORITE_BRANCH_COMPARATOR)
+      .collect(toList());
+    int topShownBranches = getNumOfTopShownBranches(localBranchActions);
+    String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
+    if (currentBranch != null) {
+      localBranchActions
+        .add(0, new GitBranchPopupActions.CurrentBranchActions(myProject, allRepositories, currentBranch, myCurrentRepository));
+      topShownBranches++;
+    }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, localBranchActions, topShownBranches, SHOW_ALL_LOCALS_KEY, true);
     popupGroup.addSeparator("Common Remote Branches");
 
     List<BranchActionGroup> remoteBranchActions = map(((GitMultiRootBranchConfig)myMultiRootBranchConfig).getRemoteBranches(),
