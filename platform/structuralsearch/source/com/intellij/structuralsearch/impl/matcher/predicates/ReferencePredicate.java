@@ -32,7 +32,7 @@ public final class ReferencePredicate extends MatchPredicate {
   }
 
   @Override
-  public boolean match(PsiElement node, PsiElement match, MatchContext context) {
+  public boolean match(PsiElement match, int start, int end, MatchContext context) {
     match = StructuralSearchUtil.getParentIfIdentifier(match);
 
     final PsiElement target = MatchUtils.getReferencedElement(match);

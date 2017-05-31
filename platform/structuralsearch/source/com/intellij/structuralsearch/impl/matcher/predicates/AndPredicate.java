@@ -28,13 +28,8 @@ public final class AndPredicate extends MatchPredicate {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return match(patternNode, matchedNode, 0, -1, context);
-  }
-
-  @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
-    return first.match(patternNode, matchedNode, start, end, context) && second.match(patternNode, matchedNode, start, end, context);
+  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
+    return first.match(matchedNode, start, end, context) && second.match(matchedNode, start, end, context);
   }
 
   public MatchPredicate getFirst() {

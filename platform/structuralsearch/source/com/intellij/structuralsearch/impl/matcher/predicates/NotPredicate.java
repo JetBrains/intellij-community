@@ -29,12 +29,7 @@ public final class NotPredicate extends MatchPredicate {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return match(patternNode, matchedNode, 0, -1, context);
-  }
-
-  @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, int start, int end, MatchContext context) {
-    return !myPredicate.match(patternNode, matchedNode, start, end, context);
+  public boolean match(PsiElement matchedNode, int start, int end, MatchContext context) {
+    return !myPredicate.match(matchedNode, start, end, context);
   }
 }

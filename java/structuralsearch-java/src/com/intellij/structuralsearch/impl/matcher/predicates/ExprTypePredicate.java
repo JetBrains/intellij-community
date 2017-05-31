@@ -35,12 +35,7 @@ public class ExprTypePredicate extends MatchPredicate {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
-    return match(patternNode, matchedNode, 0, -1, context);
-  }
-
-  @Override
-  public boolean match(PsiElement node, PsiElement match, int start, int end, MatchContext context) {
+  public boolean match(PsiElement match, int start, int end, MatchContext context) {
     if (match instanceof PsiIdentifier) {
       // since we pickup tokens
       match = match.getParent();
@@ -94,13 +89,13 @@ public class ExprTypePredicate extends MatchPredicate {
     if (withinHierarchy) {
       final NodeIterator parents = new HierarchyNodeIterator(clazz, true, true);
 
-      while(parents.hasNext() && !delegate.match(null, parents.current(), context)) {
+      while(parents.hasNext() && !delegate.match(parents.current(), context)) {
         parents.advance();
       }
 
       return parents.hasNext();
     } else {
-      return delegate.match(null, clazz, context);
+      return delegate.match(clazz, context);
     }
   }
 }

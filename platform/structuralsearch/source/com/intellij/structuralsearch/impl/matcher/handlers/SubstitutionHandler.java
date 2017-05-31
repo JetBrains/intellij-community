@@ -120,8 +120,8 @@ public class SubstitutionHandler extends MatchingHandler {
   }
 
   public boolean validate(final PsiElement match, int start, int end, MatchContext context) {
-    if (predicate!=null) {
-      if(!predicate.match(null,match,start,end,context)) return false;
+    if (predicate != null && !predicate.match(match, start, end, context)) {
+      return false;
     }
 
     if (maxOccurs==0) {

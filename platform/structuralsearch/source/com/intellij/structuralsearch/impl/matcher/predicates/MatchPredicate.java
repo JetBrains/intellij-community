@@ -25,15 +25,9 @@ public abstract class MatchPredicate {
    * @param context of the matching
    * @return true if matching was successful, false otherwise
    */
-  public boolean match(PsiElement patternNode,PsiElement matchedNode, int start, int end, MatchContext context) {
-    return match(patternNode,matchedNode,context);
-  }
+  public abstract boolean match(PsiElement matchedNode, int start, int end, MatchContext context);
 
-  /**
-   * Matches given handler node against given value.
-   * @param matchedNode for matching
-   * @param context of the matching
-   * @return true if matching was successful, false otherwise
-   */
-  public abstract boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context);
+  public final boolean match(PsiElement matchedNode, MatchContext context) {
+    return match(matchedNode, 0, -1, context);
+  }
 }

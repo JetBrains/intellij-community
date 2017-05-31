@@ -1054,11 +1054,11 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return;
     }
     if (target instanceof PsiModifierListOwner && ((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC)) {
-      myMatchingVisitor.setResult(predicate.match(null, PsiTreeUtil.getParentOfType(target, PsiClass.class), context));
+      myMatchingVisitor.setResult(predicate.match(PsiTreeUtil.getParentOfType(target, PsiClass.class), context));
     } else {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(target.getProject());
       final PsiExpression implicitReference = factory.createExpressionFromText("this", target);
-      myMatchingVisitor.setResult(predicate.match(null, implicitReference, context));
+      myMatchingVisitor.setResult(predicate.match(implicitReference, context));
     }
   }
 
@@ -1508,7 +1508,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         final PsiTypeElement otherTypeElement = factory.createTypeElement(otherType.getDeepComponentType());
         final SubstitutionHandler substitutionHandler = (SubstitutionHandler)handler;
         final MatchPredicate predicate = substitutionHandler.getPredicate();
-        myMatchingVisitor.setResult(predicate == null || predicate.match(null, otherTypeElement, matchContext));
+        myMatchingVisitor.setResult(predicate == null || predicate.match(otherTypeElement, matchContext));
       }
       else {
         final PsiType type = new1.getType();
