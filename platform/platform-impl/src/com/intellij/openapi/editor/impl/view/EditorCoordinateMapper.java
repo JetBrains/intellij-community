@@ -97,7 +97,7 @@ class EditorCoordinateMapper {
         }
         maxLogicalColumn = startLogicalLine == endLogicalLine ? Math.max(maxLogicalColumn, endLogicalColumn) : endLogicalColumn;
       }
-      else if (fragment.getCurrentInlays() == null) {
+      else if (fragment.getCurrentInlay() == null) {
         int minColumn = fragment.getMinLogicalColumn();
         int maxColumn = fragment.getMaxLogicalColumn();
         if (line == fragment.getStartLogicalLine() &&
@@ -151,7 +151,7 @@ class EditorCoordinateMapper {
         return new LogicalPosition(column == maxColumn ? fragment.getEndLogicalLine() : fragment.getStartLogicalLine(), 
                                    fragment.visualToLogicalColumn(column),
                                    fragment.isCollapsedFoldRegion() ? column < maxColumn :
-                                   fragment.getCurrentInlays() != null ? column == maxColumn :
+                                   fragment.getCurrentInlay() != null ? column == maxColumn :
                                    fragment.isRtl() ^ pos.leansRight);
       }
       maxLogicalColumn = logicalLine == fragment.getEndLogicalLine() ? Math.max(maxLogicalColumn, fragment.getMaxLogicalColumn()) : 
@@ -350,7 +350,7 @@ class EditorCoordinateMapper {
         firstFragment = false;
         int minOffset = fragment.getMinOffset();
         int maxOffset = fragment.getMaxOffset();
-        if (fragment.getCurrentInlays() == null &&
+        if (fragment.getCurrentInlay() == null &&
             (offset > minOffset && offset < maxOffset ||
             offset == minOffset && leanTowardsLargerOffsets ||
             offset == maxOffset && !leanTowardsLargerOffsets)) {

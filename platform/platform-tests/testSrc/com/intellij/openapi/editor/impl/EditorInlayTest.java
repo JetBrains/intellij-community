@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,6 +153,28 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertTrue(inlay.isValid());
     runWriteCommand(() -> ((DocumentEx)myEditor.getDocument()).moveText(2, 3, 1));
     assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), inlay.getOffset()));
+  }
+
+  public void testTwoInlaysAtSameOffset() throws Exception {
+    initText("ab");
+    addInlay(1);
+    addInlay(1);
+    right();
+    checkCaretPosition(1, 1, 1);
+    right();
+    checkCaretPosition(1, 1, 2);
+    right();
+    checkCaretPosition(1, 1, 3);
+    right();
+    checkCaretPosition(2, 2, 4);
+    left();
+    checkCaretPosition(1, 1, 3);
+    left();
+    checkCaretPosition(1, 1, 2);
+    left();
+    checkCaretPosition(1, 1, 1);
+    left();
+    checkCaretPosition(0, 0, 0);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
