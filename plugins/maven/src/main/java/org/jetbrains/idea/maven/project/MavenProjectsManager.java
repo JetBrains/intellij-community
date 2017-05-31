@@ -867,7 +867,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
         toResolve = new LinkedHashSet<>(myProjectsToResolve);
         myProjectsToResolve.clear();
       }
-      if(toResolve.isEmpty()) return;
+      if(toResolve.isEmpty()) {
+        result.setResult(Collections.emptyList());
+        return;
+      }
 
       final ResolveContext context = new ResolveContext();
       Runnable onCompletion = () -> {
