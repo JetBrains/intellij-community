@@ -177,6 +177,21 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPosition(0, 0, 0);
   }
 
+  public void testTypingBetweenInlaysAtSameOffset() throws Exception {
+    initText("ab");
+    Inlay inlay1 = addInlay(1);
+    Inlay inlay2 = addInlay(1);
+    right();
+    right();
+    type(' ');
+    checkResultByText("a <caret>b");
+    checkCaretPosition(2, 2, 3);
+    assertTrue(inlay1.isValid());
+    assertEquals(1, inlay1.getOffset());
+    assertTrue(inlay2.isValid());
+    assertEquals(2, inlay2.getOffset());
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);

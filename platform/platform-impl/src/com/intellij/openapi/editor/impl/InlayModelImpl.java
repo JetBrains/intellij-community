@@ -47,7 +47,8 @@ public class InlayModelImpl implements InlayModel, Disposable {
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
   final RangeMarkerTree<InlayImpl> myInlayTree;
-  boolean myStickToLargerOffsetsOnUpdate;
+
+  private List<Inlay> myInlaysToTheRightOfCaret;
 
   InlayModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -81,17 +82,31 @@ public class InlayModelImpl implements InlayModel, Disposable {
       public void beforeDocumentChange(DocumentEvent event) {
         if (myEditor.getDocument().isInBulkUpdate()) return;
         int offset = event.getOffset();
-        if (event.getOldLength() == 0 &&
-            offset == myEditor.getCaretModel().getOffset() &&
-            hasInlineElementAt(offset) &&
-            myEditor.getCaretModel().getVisualPosition().equals(myEditor.offsetToVisualPosition(offset, false, false))) {
-          myStickToLargerOffsetsOnUpdate = true;
+        if (event.getOldLength() == 0 && offset == myEditor.getCaretModel().getOffset()) {
+          List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+          int inlayCount = inlays.size();
+          if (inlayCount > 0) {
+            VisualPosition inlaysStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+            VisualPosition caretPosition = myEditor.getCaretModel().getVisualPosition();
+            if (inlaysStartPosition.line == caretPosition.line && 
+                caretPosition.column >= inlaysStartPosition.column && caretPosition.column < inlaysStartPosition.column + inlayCount) {
+              myInlaysToTheRightOfCaret = inlays.subList(caretPosition.column - inlaysStartPosition.column, inlayCount);
+              for (Inlay inlay : myInlaysToTheRightOfCaret) {
+                ((InlayImpl)inlay).setStickingToRight(true);
+              }
+            }
+          }
         }
       }
 
       @Override
       public void documentChanged(DocumentEvent event) {
-        myStickToLargerOffsetsOnUpdate = false;
+        if (myInlaysToTheRightOfCaret != null) {
+          for (Inlay inlay : myInlaysToTheRightOfCaret) {
+            ((InlayImpl)inlay).setStickingToRight(false);
+          }
+          myInlaysToTheRightOfCaret = null;
+        }
       }
     }, this);
   }
