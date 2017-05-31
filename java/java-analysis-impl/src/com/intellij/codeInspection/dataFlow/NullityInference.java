@@ -93,10 +93,18 @@ public class NullityInference {
 
     private void visitReturnedValue(LighterASTNode expr) {
       IElementType type = expr.getTokenType();
+      while (type == PARENTH_EXPRESSION) {
+        expr = JavaLightTreeUtil.findExpressionChild(tree, expr);
+        if (expr == null) {
+          hasUnknowns = true;
+          return;
+        }
+        type = expr.getTokenType();
+      }
       if (containsNulls(expr)) {
         hasNulls = true;
       }
-      else if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION ||
+      else if (type == LAMBDA_EXPRESSION || type == NEW_EXPRESSION || type == METHOD_REF_EXPRESSION ||
                type == LITERAL_EXPRESSION || type == BINARY_EXPRESSION || type == POLYADIC_EXPRESSION) {
         hasNotNulls = true;
       }
@@ -106,20 +114,29 @@ public class NullityInference {
           delegates.putValue(calledMethod, ExpressionRange.create(expr, body.getStartOffset()));
         }
       }
+      else if (type == CONDITIONAL_EXPRESSION) {
+        List<LighterASTNode> expressionChildren = JavaLightTreeUtil.getExpressionChildren(tree, expr);
+        if(expressionChildren.size() == 3) {
+          visitReturnedValue(expressionChildren.get(1)); // then-branch
+          visitReturnedValue(expressionChildren.get(2)); // else-branch
+        } else {
+          hasUnknowns = true;
+        }
+      }
+      else if (type == TYPE_CAST_EXPRESSION) {
+        LighterASTNode child = JavaLightTreeUtil.findExpressionChild(tree, expr);
+        if(child != null) {
+          visitReturnedValue(child);
+        } else {
+          hasUnknowns = true;
+        }
+      }
       else {
         hasUnknowns = true;
       }
     }
 
     private boolean containsNulls(@NotNull LighterASTNode value) {
-      if (value.getTokenType() == CONDITIONAL_EXPRESSION) {
-        List<LighterASTNode> exprChildren = JavaLightTreeUtil.getExpressionChildren(tree, value);
-        return exprChildren.subList(1, exprChildren.size()).stream().anyMatch(e -> containsNulls(e));
-      }
-      if (value.getTokenType() == PARENTH_EXPRESSION) {
-        LighterASTNode wrapped = JavaLightTreeUtil.findExpressionChild(tree, value);
-        return wrapped != null && containsNulls(wrapped);
-      }
       return value.getTokenType() == LITERAL_EXPRESSION && tree.getChildren(value).get(0).getTokenType() == JavaTokenType.NULL_KEYWORD;
     }
 
