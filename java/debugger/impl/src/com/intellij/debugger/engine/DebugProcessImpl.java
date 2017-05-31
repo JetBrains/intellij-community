@@ -1067,6 +1067,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
               }
             }
 
+            // workaround for multi-array args bug in jdi calls
+            for (Value arg : myArgs) {
+              if (arg instanceof ArrayReference) {
+                Type type = arg.type();
+                while (type instanceof ArrayType) {
+                  type = ((ArrayType)type).componentType(); // this will throw ClassNotLoadedException if necessary
+                }
+              }
+            }
+
             if (!Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
               // ensure args are not collected
               StreamEx.of(myArgs).select(ObjectReference.class).forEach(DebuggerUtilsEx::disableCollection);
