@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class SSBasedInspection extends LocalInspectionTool {
   private static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
     ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
-    final Replacer replacer = new Replacer(project, replaceConfiguration.getOptions());
+    final Replacer replacer = new Replacer(project, replaceConfiguration.getReplaceOptions());
     final ReplacementInfo replacementInfo = replacer.buildReplacement(matchResult);
 
     return new LocalQuickFix() {

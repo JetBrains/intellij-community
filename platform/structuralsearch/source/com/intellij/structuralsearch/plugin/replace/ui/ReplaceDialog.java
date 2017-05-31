@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -110,17 +125,17 @@ public class ReplaceDialog extends SearchDialog {
 
     if (configuration instanceof ReplaceConfiguration) {
       final ReplaceConfiguration config = (ReplaceConfiguration)configuration;
-      final ReplaceOptions options = config.getOptions();
+      final ReplaceOptions options = config.getReplaceOptions();
       super.setValuesFromConfig(config);
 
-      UIUtil.setContent(replaceCriteriaEdit, config.getOptions().getReplacement(), 0, replaceCriteriaEdit.getDocument().getTextLength(),
+      UIUtil.setContent(replaceCriteriaEdit, config.getReplaceOptions().getReplacement(), 0, replaceCriteriaEdit.getDocument().getTextLength(),
                         searchContext.getProject());
 
       shortenFQN.setSelected(options.isToShortenFQN());
       formatAccordingToStyle.setSelected(options.isToReformatAccordingToStyle());
       useStaticImport.setSelected(options.isToUseStaticImport());
 
-      ReplaceOptions newReplaceOptions = ((ReplaceConfiguration)model.getConfig()).getOptions();
+      ReplaceOptions newReplaceOptions = ((ReplaceConfiguration)model.getConfig()).getReplaceOptions();
       newReplaceOptions.clearVariableDefinitions();
       
       for (ReplacementVariableDefinition def : options.getReplacementVariableDefinitions()) {
@@ -140,7 +155,7 @@ public class ReplaceDialog extends SearchDialog {
     super.setValuesToConfig(config);
 
     final ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)config;
-    final ReplaceOptions options = replaceConfiguration.getOptions();
+    final ReplaceOptions options = replaceConfiguration.getReplaceOptions();
 
     options.setMatchOptions(replaceConfiguration.getMatchOptions());
     options.setReplacement(replaceCriteriaEdit.getDocument().getText());
@@ -175,7 +190,7 @@ public class ReplaceDialog extends SearchDialog {
     if (!super.isValid()) return false;
 
     try {
-      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getOptions());
+      Replacer.checkSupportedReplacementPattern(searchContext.getProject(), ((ReplaceConfiguration)model.getConfig()).getReplaceOptions());
     }
     catch (UnsupportedPatternException ex) {
       reportMessage("unsupported.replacement.pattern.message", replaceCriteriaEdit, ex.getMessage());
