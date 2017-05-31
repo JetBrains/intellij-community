@@ -96,8 +96,7 @@ class LiveVcsFileWatcher(private val project: Project,
                 Change.Type.NEW -> {
                     val path = change.path ?: return@async
                     val newText = change.newText ?: return@async
-                    mutation.addFileCreated(path)
-                    mutation.addFileChanged(path, "", newText)
+                    mutation.addFileCreated(path, newText)
                 }
                 Change.Type.DELETED -> {
                     val path = change.path ?: return@async
@@ -108,8 +107,7 @@ class LiveVcsFileWatcher(private val project: Project,
                     val newPath = change.path ?: return@async
                     val newText = change.newText ?: return@async
                     mutation.addFileRemoved(oldPath)
-                    mutation.addFileCreated(newPath)
-                    mutation.addFileChanged(newPath, "", newText)
+                    mutation.addFileCreated(newPath, newText)
                 }
                 else -> {
                     log.error { "undefined type: ${change.type.name}" }
