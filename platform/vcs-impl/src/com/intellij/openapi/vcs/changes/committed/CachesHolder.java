@@ -22,17 +22,17 @@ import com.intellij.openapi.vcs.CachingCommittedChangesProvider;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.NotNullFunction;
+import com.intellij.util.CommonProcessors.CollectProcessor;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import static com.intellij.util.containers.ContainerUtil.find;
-import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static com.intellij.util.containers.ContainerUtil.newConcurrentMap;
 import static org.apache.commons.codec.digest.DigestUtils.md5Hex;
 
@@ -58,12 +58,12 @@ public class CachesHolder {
     return new RootsCalculator(myProject, vcs, myLocationCache).getRoots();
   }
 
-  public void iterateAllCaches(@NotNull NotNullFunction<ChangesCacheFile, Boolean> consumer) {
+  public void iterateAllCaches(@NotNull Processor<ChangesCacheFile> processor) {
     for (AbstractVcs vcs : myPlManager.getAllActiveVcss()) {
       if (vcs.getCommittedChangesProvider() instanceof CachingCommittedChangesProvider) {
         for (Map.Entry<VirtualFile, RepositoryLocation> entry : getAllRootsUnderVcs(vcs).entrySet()) {
           ChangesCacheFile cacheFile = getCacheFile(vcs, entry.getKey(), entry.getValue());
-          if (Boolean.TRUE.equals(consumer.fun(cacheFile))) {
+          if (!processor.process(cacheFile)) {
             return;
           }
         }
@@ -77,13 +77,10 @@ public class CachesHolder {
   }
 
   @NotNull
-  public List<ChangesCacheFile> getAllCaches() {
-    List<ChangesCacheFile> result = newArrayList();
-    iterateAllCaches(changesCacheFile -> {
-      result.add(changesCacheFile);
-      return false;
-    });
-    return result;
+  public Collection<ChangesCacheFile> getAllCaches() {
+    CollectProcessor<ChangesCacheFile> processor = new CollectProcessor<>();
+    iterateAllCaches(processor);
+    return processor.getResults();
   }
 
   @NotNull
