@@ -8,6 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
@@ -32,7 +33,8 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     }
 
     //TODO: hide tests in django course
-    if (!course.isAdaptive() && course.getLessons().size() == 1 && course.getLessons().get(0).getTaskList().size() == 1) {
+    if (!CCUtils.isCourseCreator(project) && !course.isAdaptive() &&
+        course.getLessons().size() == 1 && course.getLessons().get(0).getTaskList().size() == 1) {
       return children;
     }
 
