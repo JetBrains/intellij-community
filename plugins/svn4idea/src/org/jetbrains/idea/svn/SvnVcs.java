@@ -810,11 +810,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private static class MyPair<T> implements RootUrlPair {
-    private final VirtualFile myFile;
-    private final String myUrl;
+    @NotNull private final VirtualFile myFile;
+    @NotNull private final String myUrl;
     private final T mySrc;
 
-    private MyPair(VirtualFile file, String url, T src) {
+    private MyPair(@NotNull VirtualFile file, @NotNull String url, T src) {
       myFile = file;
       myUrl = url;
       mySrc = src;
@@ -824,11 +824,13 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       return mySrc;
     }
 
+    @NotNull
     @Override
     public VirtualFile getVirtualFile() {
       return myFile;
     }
 
+    @NotNull
     @Override
     public String getUrl() {
       return myUrl;
