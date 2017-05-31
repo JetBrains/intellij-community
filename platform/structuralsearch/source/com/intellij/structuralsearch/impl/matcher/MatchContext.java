@@ -113,7 +113,7 @@ public class MatchContext {
     this.sink = sink;
   }
 
-  void clear() {
+  public void clear() {
     result = null;
     pattern = null;
   }

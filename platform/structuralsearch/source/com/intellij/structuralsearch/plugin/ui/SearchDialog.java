@@ -52,7 +52,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
-import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
@@ -806,7 +805,7 @@ public class SearchDialog extends DialogWrapper {
     boolean result = true;
 
     try {
-      MatcherImpl.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
+      Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
       if (myRunFindActionOnClose) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.structuralsearch.impl.matcher.MatcherImpl;
 
 import java.io.File;
 import java.io.IOException;
@@ -67,7 +66,7 @@ abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     options.setFileType(patternFileType);
     options.setDialect(patternLanguage);
 
-    MatcherImpl.validate(getProject(), options);
+    Matcher.validate(getProject(), options);
     return testMatcher.testFindMatches(in, options, true, sourceFileType, sourceExtension, physicalSourceFile);
   }
 
