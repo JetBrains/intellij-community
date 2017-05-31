@@ -232,7 +232,9 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
           g2.fill(innerRect);
 
           Icon icon = MacIntelliJIconCache.getIcon("comboDropTriangle", false, false, isEnabled());
-          icon.paintIcon(this, g2, JBUI.scale(6), JBUI.scale(9));
+          int x = (getWidth() - icon.getIconWidth()) / 2;
+          int y = (getHeight() - icon.getIconHeight()) / 2 + JBUI.scale(1);
+          icon.paintIcon(this, g2, x, y);
 
           // paint border around button when combobox is editable
           if (comboBox.isEditable() && comboBox.isEnabled()) {
