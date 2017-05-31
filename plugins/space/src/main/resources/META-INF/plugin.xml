@@ -31,6 +31,9 @@
         <component>
             <implementation-class>circlet.components.CircletConnectionComponent</implementation-class>
         </component>
+        <component>
+            <implementation-class>circlet.features.livevcs.LiveVcsFileWatcher</implementation-class>
+        </component>
     </project-components>
 
     <actions>
