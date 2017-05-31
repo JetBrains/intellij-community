@@ -192,6 +192,49 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(2, inlay2.getOffset());
   }
 
+  public void testHasInlayAtVisualPosition() throws Exception {
+    initText("ab");
+    addInlay(1);
+    addInlay(1);
+    assertTrue(myEditor.getInlayModel().hasInlineElementAt(new VisualPosition(0, 2)));
+  }
+
+  public void testBackspaceWithTwoInlaysAtSameOffset() throws Exception {
+    initText("ab<caret>c");
+    addInlay(1);
+    addInlay(1);
+    backspace();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 3);
+    backspace();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 2);
+    backspace();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 1);
+    backspace();
+    checkResultByText("c");
+    checkCaretPosition(0, 0, 0);
+  }
+
+  public void testDeleteWithTwoInlaysAtSameOffset() throws Exception {
+    initText("a<caret>bc");
+    addInlay(2);
+    addInlay(2);
+    delete();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 1);
+    delete();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 2);
+    delete();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 3);
+    delete();
+    checkResultByText("a");
+    checkCaretPosition(1, 1, 3);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);

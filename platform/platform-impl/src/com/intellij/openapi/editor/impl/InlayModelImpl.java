@@ -155,9 +155,11 @@ public class InlayModelImpl implements InlayModel, Disposable {
   @Override
   public boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
-    if (!hasInlineElementAt(offset)) return false;
+    int inlayCount = getInlineElementsInRange(offset, offset).size();
+    if (inlayCount == 0) return false;
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
-    return visualPosition.equals(inlayStartPosition);
+    return visualPosition.line == inlayStartPosition.line && 
+           visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
   }
 
   @Nullable
