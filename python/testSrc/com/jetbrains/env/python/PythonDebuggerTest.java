@@ -647,7 +647,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @StagingOn(os = TestEnv.WINDOWS)
   public void testWinLongName() throws Exception {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
+    if (!SystemInfo.isWindows) {
       return; // Only needs to run on windows
     }
     runPythonTest(new PyDebuggerTask("/debug", "long_n~1.py") {
