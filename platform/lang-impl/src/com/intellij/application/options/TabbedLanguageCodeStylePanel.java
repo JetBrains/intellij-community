@@ -358,11 +358,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         result.add(codeStyle);
       }
     }
-    final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(getDefaultLanguage());
-
-    if (provider != null) {
-      result.addAll(Arrays.asList(provider.getPredefinedCodeStyles()));
-    }
     return result.toArray(new PredefinedCodeStyle[result.size()]);
   }
 
@@ -525,11 +520,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         myConfigurable.reset();
       }
     }
-  }
-
-  @Override
-  public boolean isCopyFromMenuAvailable() {
-    return true;
   }
 
   @Override
