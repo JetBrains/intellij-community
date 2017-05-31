@@ -305,9 +305,15 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       }
       else {
         int beforeId = myPathsEnumerator.enumerate(beforePath);
-        data.add(new ChangeData(ChangeKind.RENAMED_TO, beforeId));
-        List<ChangeData> beforeData = fillDataWithNulls(result, parent, beforeId);
-        beforeData.add(new ChangeData(ChangeKind.RENAMED_FROM, afterId));
+        if (beforeId == afterId && !SystemInfo.isFileSystemCaseSensitive) {
+          // case only rename in case insensitive file system
+          // since ids for before and after paths are the same we just treating this rename as a modification
+          data.add(new ChangeData(ChangeKind.MODIFIED, -1));
+        } else {
+          data.add(new ChangeData(ChangeKind.RENAMED_TO, beforeId));
+          List<ChangeData> beforeData = fillDataWithNulls(result, parent, beforeId);
+          beforeData.add(new ChangeData(ChangeKind.RENAMED_FROM, afterId));
+        }
       }
     }
 
