@@ -453,6 +453,15 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                     "  @SuppressWarnings({\"other\", \"test\"}) String field;" +
                     "}";
     assertEquals("String literal in annotation", 2, findMatchesCount(source, "\"test\""));
+
+    String s2 = "class A {" +
+                "  String a = \"Alpha\";" +
+                "  String b = \"Bravo\";" +
+                "  String c = \"Charlie\";" +
+                "}";
+    assertEquals("match literal contents", 1, findMatchesCount(s2, "\"'String:[regex( alpha )]\""));
+    assertEquals("negate match literal contents", 2, findMatchesCount(s2, "\"'String:[!regex( alpha )]\""));
+    assertEquals("match literal contents and all types", 1, findMatchesCount(s2, "\"'String:[regex( alpha ) && exprtype( .* )]\""));
   }
 
   public void testCovariantArraySearch() {
