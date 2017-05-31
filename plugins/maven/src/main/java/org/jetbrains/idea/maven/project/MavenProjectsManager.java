@@ -51,6 +51,7 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
+import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -118,6 +119,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
+
+  public static final Topic<MavenImportListener> TOPIC = Topic.create("Maven import notifications", MavenImportListener.class);
 
   public static MavenProjectsManager getInstance(Project p) {
     return p.getComponent(MavenProjectsManager.class);
@@ -1141,7 +1144,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     final Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges;
     final boolean importModuleGroupsRequired;
     synchronized (myImportingDataLock) {
-      projectsToImportWithChanges = new LinkedHashMap<>(myProjectsToImport);
+      projectsToImportWithChanges = Collections.unmodifiableMap(new LinkedHashMap<>(myProjectsToImport));
       myProjectsToImport.clear();
       importModuleGroupsRequired = myImportModuleGroupsRequired;
       myImportModuleGroupsRequired = false;
@@ -1202,9 +1205,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     myImportingQueue.restartTimer();
 
     MavenProjectImporter projectImporter = importer.get();
-    if (projectImporter == null) return Collections.emptyList();
-
-    return projectImporter.getCreatedModules();
+    List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
+    if (!projectsToImportWithChanges.isEmpty()) {
+      myProject.getMessageBus().syncPublisher(TOPIC).importFinished(projectsToImportWithChanges.keySet(), createdModules);
+    }
+    return createdModules;
   }
 
   private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
