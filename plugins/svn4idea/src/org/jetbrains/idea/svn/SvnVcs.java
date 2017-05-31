@@ -97,7 +97,7 @@ import java.util.*;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.emptyList;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -782,15 +782,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
-    final List<MyPair<S>> infos = new ArrayList<>(in.size());
-    final SvnFileUrlMappingImpl mapping = (SvnFileUrlMappingImpl)getSvnFileUrlMapping();
-    final List<S> notMatched = new LinkedList<>();
+    List<MyPair<S>> infos = newArrayList();
+    List<S> notMatched = newArrayList();
     for (S s : in) {
-      final VirtualFile vf = convertor.apply(s);
+      VirtualFile vf = convertor.apply(s);
       if (vf == null) continue;
 
-      final File ioFile = virtualToIoFile(vf);
-      SVNURL url = mapping.getUrlForFile(ioFile);
+      File ioFile = virtualToIoFile(vf);
+      SVNURL url = getSvnFileUrlMapping().getUrlForFile(ioFile);
       if (url == null) {
         url = SvnUtil.getUrl(this, ioFile);
         if (url == null) {
@@ -800,13 +799,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
       infos.add(new MyPair<>(vf, url.toString(), s));
     }
-    final List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
+    List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
     List<S> converted = map(filtered, MyPair::getSrc);
-    if (!notMatched.isEmpty()) {
-      // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
-      converted.addAll(notMatched);
-    }
-    return converted;
+
+    // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
+    return concat(converted, notMatched);
   }
 
   private static class MyPair<T> implements RootUrlPair {
