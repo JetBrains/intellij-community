@@ -32,6 +32,11 @@ public class TaskWithSubtasksChecker extends StudyTaskChecker<TaskWithSubtasks> 
   }
 
   @Override
+  public boolean validateEnvironment() {
+    return myPyCharmTaskChecker.validateEnvironment();
+  }
+
+  @Override
   public StudyCheckResult check() {
     if (myPyCharmTaskChecker != null) {
       return myPyCharmTaskChecker.check();

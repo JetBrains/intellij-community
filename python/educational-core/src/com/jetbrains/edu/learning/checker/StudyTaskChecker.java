@@ -28,6 +28,10 @@ public class StudyTaskChecker<T extends Task> {
       .invokeLater(() -> StudyCheckUtils.showTestResultPopUp(message, MessageType.ERROR.getPopupBackground(), myProject));
   }
 
+  public boolean validateEnvironment() {
+    return true;
+  }
+
   public StudyCheckResult check()  {
     return new StudyCheckResult(StudyStatus.Unchecked, "Check for " + myTask.getTaskType() + " task isn't available");
   }

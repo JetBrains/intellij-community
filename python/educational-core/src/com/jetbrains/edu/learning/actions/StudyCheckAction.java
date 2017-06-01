@@ -81,6 +81,10 @@ public class StudyCheckAction extends StudyActionWithShortcut {
     for (StudyCheckListener listener : Extensions.getExtensions(StudyCheckListener.EP_NAME)) {
       listener.beforeCheck(project, task);
     }
+    StudyTaskChecker taskChecker = task.getChecker(project);
+    if (!taskChecker.validateEnvironment()) {
+      return;
+    }
     ProgressManager.getInstance().run(new StudyCheckTask(project, task));
   }
 
