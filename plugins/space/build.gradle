@@ -37,6 +37,7 @@ dependencies {
 intellij {
     version 'IC-2017.1'
     pluginName 'Circlet Plugin'
+    updateSinceUntilBuild false
 
     publish {
         username 'serjic'
