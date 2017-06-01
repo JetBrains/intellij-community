@@ -90,7 +90,12 @@ class LiveVcsFileWatcher(private val project: Project,
     private fun processConflicts(lifetime: Lifetime, conflictingFiles: Array<ConflictingFileWire>) {
         application.invokeLater {
             for (conflict in conflictingFiles) {
-                // todo
+                val path = conflict.path
+                val user = conflict.user
+                val text = conflict.newText
+                val vFile = findFileByVcsRoots(path) ?: continue
+
+
             }
         }
 
@@ -99,6 +104,17 @@ class LiveVcsFileWatcher(private val project: Project,
                 // todo
             }
         }
+    }
+
+    private fun findFileByVcsRoots(path: String): VirtualFile? {
+        var vFile: VirtualFile? = null
+        for (root in vcsManager.allVcsRoots) {
+            val base = root.path
+            vFile = VfsUtil.findRelativeFile(base, *path.replace('\\', '/').split("/".toRegex()).toTypedArray())
+            if (vFile != null)
+                break
+        }
+        return vFile
     }
 
     override fun documentChanged(e: DocumentEvent) {
