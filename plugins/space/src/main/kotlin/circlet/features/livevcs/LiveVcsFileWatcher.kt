@@ -45,6 +45,8 @@ class LiveVcsFileWatcher(private val project: Project,
 
     private val client: CircletClient? get() = if (connection.client.hasValue) connection.client.value else null
 
+    val haacklt = SequentialLifetimes(componentLifetime)
+
     init {
         val seq = SequentialLifetimes(componentLifetime)
 
@@ -145,26 +147,24 @@ class LiveVcsFileWatcher(private val project: Project,
             return Continuation({
                 log.info { "start read action continuation" }
 
+                val lt = owner.haacklt.next()
+
                 application.assertIsDispatchThread()
                 if (lifetime.isTerminated || indicator.isCanceled) return@Continuation
 
                 for (patch in result) {
-                    val (aliveChanges, conflicts, doc, user) = patch
-                    for (change in aliveChanges) {
-                        // insertion
-//                    if (change.length == 0) {
-//                        // folding
-//                    }
-//                    else {
-                        val markupModel = DocumentMarkupModel.forDocument(doc, owner.project, false/*???*/)
+                    for (change in patch.aliveChanges) {
+
+                        val markupModel = DocumentMarkupModel.forDocument(patch.doc, owner.project, true)
+
                         val highlighter = markupModel.addRangeHighlighter(change.start, change.last,
-                            HighlighterLayer.ELEMENT_UNDER_CARET, null, HighlighterTargetArea.EXACT_RANGE)
+                            3700, TextAttributes(null, Color(208, 208, 208), null, EffectType.BOXED, 0), HighlighterTargetArea.EXACT_RANGE)
 
                         val isDeletion = change.text.isEmpty()
                         val bgColor = if (isDeletion) Color.GRAY else Color.GREEN
                         val statusBarTxt = "Text was modified remotly"
                         val tooltipTxt = if (isDeletion) null else change.text
-                        val textAttributes = TextAttributes(null, Color.GRAY, null, EffectType.BOXED, 0)
+                        val textAttributes = TextAttributes(null, bgColor, null, EffectType.BOXED, 0)
 
                         val highlightInfo = object : HighlightInfo(textAttributes, null, HighlightInfoType.INFORMATION,
                             change.start, change.last, statusBarTxt, tooltipTxt, HighlightSeverity.INFORMATION,
@@ -173,9 +173,9 @@ class LiveVcsFileWatcher(private val project: Project,
                         highlightInfo.highlighter = highlighter as RangeHighlighterEx
                         highlighter.errorStripeTooltip = highlightInfo
 
-                        lifetime.add { markupModel.removeHighlighter(highlighter) }
+                        log.info { "put highlighter at [${highlightInfo.startOffset}, ${highlightInfo.endOffset}] in length=${patch.doc.textLength}" }
 
-//                    }
+                        lt.add { markupModel.removeHighlighter(highlighter) }
                     }
                 }
 
@@ -225,6 +225,10 @@ class LiveVcsFileWatcher(private val project: Project,
             val localChanges = diff(baseText, myText)
 
             val (aliveChanges, conflicts) = intersects(localChanges, remoteChanges)
+
+            log.info { "Alive in ${vFile.presentableName}: ${aliveChanges.map { "${it.range} -> ${it.text.length}" }.joinToString(", ")}" }
+            log.info { "Conflicted in ${vFile.presentableName}: ${conflicts.map { "${it.local} -> ${it.remote}" }.joinToString(", ")}" }
+
             if (aliveChanges.isEmpty() && conflicts.isEmpty()) return null
 
             return Patch(aliveChanges, conflicts, document, c.user)
