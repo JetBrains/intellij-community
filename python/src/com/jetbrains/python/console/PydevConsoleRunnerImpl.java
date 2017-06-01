@@ -38,6 +38,7 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,6 +48,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.editor.actions.SplitLineAction;
@@ -205,6 +207,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     // Help
     actions.add(CommonActionsManager.getInstance().createHelpAction("interactive_console"));
+
+    actions.add(new SoftWrapAction());
 
     toolbarActions.addAll(actions);
 
@@ -772,6 +776,32 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     };
     stopAction.copyFrom(generalStopAction);
     return stopAction;
+  }
+
+  private class SoftWrapAction extends ToggleAction implements DumbAware {
+    private boolean isSelected = false;
+
+    SoftWrapAction() {
+      super(ActionsBundle.actionText("EditorToggleUseSoftWraps"), ActionsBundle.actionDescription("EditorToggleUseSoftWraps"),
+            AllIcons.Actions.ToggleSoftWrap);
+    }
+
+    @Override
+    public boolean isSelected(AnActionEvent e) {
+      return isSelected;
+    }
+
+    @Override
+    public void setSelected(AnActionEvent e, boolean state) {
+      isSelected = state;
+      EditorSettings editorSettings = getConsoleView().getEditor().getSettings();
+      if (isSelected) {
+        editorSettings.setUseSoftWraps(true);
+      }
+      else {
+        editorSettings.setUseSoftWraps(false);
+      }
+    }
   }
 
   private AnAction createCloseAction(final RunContentDescriptor descriptor) {
