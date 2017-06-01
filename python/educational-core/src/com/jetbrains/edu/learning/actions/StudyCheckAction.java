@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -157,12 +158,14 @@ public class StudyCheckAction extends StudyActionWithShortcut {
         default:
           StudyCheckUtils.showTestResultPopUp(message, MessageType.WARNING.getPopupBackground(), myProject);
       }
-      StudyUtils.updateToolWindows(myProject);
-      ProjectView.getInstance(myProject).refresh();
+      ApplicationManager.getApplication().invokeLater(() -> {
+        StudyUtils.updateToolWindows(myProject);
+        ProjectView.getInstance(myProject).refresh();
 
-      for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
-        listener.afterCheck(myProject, myTask);
-      }
+        for (StudyCheckListener listener : StudyCheckListener.EP_NAME.getExtensions()) {
+          listener.afterCheck(myProject, myTask);
+        }
+      });
       myChecker.clearState();
       myCheckInProgress.set(false);
     }
