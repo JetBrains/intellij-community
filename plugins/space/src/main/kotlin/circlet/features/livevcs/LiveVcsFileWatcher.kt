@@ -120,7 +120,7 @@ class LiveVcsFileWatcher(private val project: Project,
                 if (lifetime.isTerminated || indicator.isCanceled) return@Continuation
 
                 val myHighlighters = mutableSetOf<RangeHighlighter>()
-                val markupModel: MarkupModel? = if (result.isEmpty()) null
+                val markupModel: MarkupModel? = if (result.isEmpty()) return@Continuation
                 else DocumentMarkupModel.forDocument(result.first().doc, owner.project, false/*???*/)
 
                 for (patch in result) {
