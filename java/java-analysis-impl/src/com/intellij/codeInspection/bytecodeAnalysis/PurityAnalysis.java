@@ -17,7 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -33,12 +33,15 @@ import java.util.*;
  * Algorithm: https://github.com/ilya-klyuchnikov/faba/blob/ef1c15b4758517652e939f67099bbec0260e9e68/notes/purity.md
  */
 public class PurityAnalysis {
-  static final Set<EffectQuantum> topEffect = Collections.singleton(EffectQuantum.TopEffectQuantum);
-  static final Set<EffectQuantum> topHEffect = Collections.singleton(EffectQuantum.TopEffectQuantum);
-
   static final int UN_ANALYZABLE_FLAG = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_INTERFACE;
 
-  @NotNull
+  /**
+   * @param method a method descriptor
+   * @param methodNode an ASM MethodNode
+   * @param stable whether a method is stable (e.g. final or declared in final class)
+   * @return a purity equation or null for top result (either impure or unknown, impurity assumed)
+   */
+  @Nullable
   public static Equation analyze(Method method, MethodNode methodNode, boolean stable) {
     EKey key = new EKey(method, Direction.Pure, stable);
     Set<EffectQuantum> hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
@@ -46,24 +49,20 @@ public class PurityAnalysis {
       return new Equation(key, new Effects(hardCodedSolution));
     }
 
-    if ((methodNode.access & UN_ANALYZABLE_FLAG) != 0) {
-      return new Equation(key, new Effects(topEffect));
-    }
+    if ((methodNode.access & UN_ANALYZABLE_FLAG) != 0) return null;
 
     DataInterpreter dataInterpreter = new DataInterpreter(methodNode);
     try {
       new Analyzer<>(dataInterpreter).analyze("this", methodNode);
     }
     catch (AnalyzerException e) {
-      return new Equation(key, new Effects(topEffect));
+      return null;
     }
     EffectQuantum[] quanta = dataInterpreter.effects;
     Set<EffectQuantum> effects = new HashSet<>();
     for (EffectQuantum effectQuantum : quanta) {
       if (effectQuantum != null) {
-        if (effectQuantum == EffectQuantum.TopEffectQuantum) {
-          return new Equation(key, new Effects(topEffect));
-        }
+        if (effectQuantum == EffectQuantum.TopEffectQuantum) return null;
         effects.add(effectQuantum);
       }
     }
@@ -476,6 +475,7 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class PuritySolver {
+  private static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
   private HashMap<EKey, Set<EffectQuantum>> solved = new HashMap<>();
   private HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final Stack<EKey> moving = new Stack<>();
@@ -519,7 +519,7 @@ final class PuritySolver {
       }
       else {
         propagateKeys = new EKey[]{key.mkStable(), key};
-        propagateEffects = new Set[]{effects, PurityAnalysis.topHEffect};
+        propagateEffects = new Set[]{effects, TOP_EFFECTS};
       }
       for (int i = 0; i < propagateKeys.length; i++) {
         EKey pKey = propagateKeys[i];
@@ -554,8 +554,8 @@ final class PuritySolver {
               }
             }
 
-            if (PurityAnalysis.topHEffect.equals(delta)) {
-              solved.put(dKey, PurityAnalysis.topHEffect);
+            if (TOP_EFFECTS.equals(delta)) {
+              solved.put(dKey, TOP_EFFECTS);
               moving.push(dKey);
             }
             else if (callKeys.isEmpty()) {
@@ -576,7 +576,7 @@ final class PuritySolver {
   }
 
   private static Set<EffectQuantum> substitute(Set<EffectQuantum> effects, DataValue[] data, boolean isStatic) {
-    if (effects.isEmpty() || PurityAnalysis.topHEffect.equals(effects)) {
+    if (effects.isEmpty() || TOP_EFFECTS.equals(effects)) {
       return effects;
     }
     Set<EffectQuantum> newEffects = new HashSet<>(effects.size());
@@ -600,7 +600,7 @@ final class PuritySolver {
         newEffects.add(new EffectQuantum.ParamChangeQuantum(((DataValue.ParameterDataValue)arg).n));
         continue;
       }
-      return PurityAnalysis.topHEffect;
+      return TOP_EFFECTS;
     }
     return newEffects;
   }

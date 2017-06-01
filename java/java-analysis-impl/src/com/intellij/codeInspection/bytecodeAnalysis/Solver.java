@@ -17,6 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -52,26 +53,27 @@ class ResultUtil {
   private static final EKey[] EMPTY_PRODUCT = new EKey[0];
   private final ELattice<Value> lattice;
   final Value top;
+  final Value bottom;
+
   ResultUtil(ELattice<Value> lattice) {
     this.lattice = lattice;
     top = lattice.top;
+    bottom = lattice.bot;
   }
 
   Result join(Result r1, Result r2) {
-    if (r1 instanceof Final && ((Final) r1).value == top) {
-      return r1;
-    }
-    if (r2 instanceof Final && ((Final) r2).value == top) {
-      return r2;
-    }
+    Result result = checkFinal(r1, r2);
+    if (result != null) return result;
+    result = checkFinal(r1, r2);
+    if (result != null) return result;
     if (r1 instanceof Final && r2 instanceof Final) {
       return new Final(lattice.join(((Final) r1).value, ((Final) r2).value));
     }
     if (r1 instanceof Final && r2 instanceof Pending) {
-      return addSingle((Pending)r2, (Final)r1);
+      return addSingle((Pending)r2, ((Final)r1).value);
     }
     if (r1 instanceof Pending && r2 instanceof Final) {
-      return addSingle((Pending)r1, (Final)r2);
+      return addSingle((Pending)r1, ((Final)r2).value);
     }
     assert r1 instanceof Pending && r2 instanceof Pending;
     Pending pending1 = (Pending) r1;
@@ -82,13 +84,33 @@ class ResultUtil {
     return new Pending(sum);
   }
 
+  @Nullable
+  private Result checkFinal(Result r1, Result r2) {
+    if (!(r1 instanceof Final)) return null;
+    Final f1 = (Final)r1;
+    if (f1.value == top) return r1;
+    if (f1.value == bottom) return r2;
+    return null;
+  }
+
   @NotNull
-  private static Pending addSingle(Pending pending, Final result) {
-    Component component = new Component(result.value, EMPTY_PRODUCT);
-    if(ArrayUtil.contains(component, pending.delta)) {
-      return pending;
+  private Result addSingle(Pending pending, Value value) {
+    for (int i = 0; i < pending.delta.length; i++) {
+      Component component = pending.delta[i];
+      if(component.ids.length == 0) {
+        Value join = lattice.join(component.value, value);
+        if(join == top) {
+          return new Final(top);
+        } else if(join == component.value) {
+          return pending;
+        } else {
+          Component[] components = pending.delta.clone();
+          components[i] = new Component(join, EMPTY_PRODUCT);
+          return new Pending(components);
+        }
+      }
     }
-    return new Pending(ArrayUtil.append(pending.delta, component));
+    return new Pending(ArrayUtil.append(pending.delta, new Component(value, EMPTY_PRODUCT)));
   }
 }
 

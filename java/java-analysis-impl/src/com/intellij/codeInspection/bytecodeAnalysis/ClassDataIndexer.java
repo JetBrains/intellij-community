@@ -16,10 +16,12 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.VirtualFileGist;
 import one.util.streamex.EntryStream;
@@ -30,8 +32,12 @@ import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.tree.MethodNode;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
@@ -55,6 +61,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
   public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
   public static final Final FINAL_NULL = new Final(Value.Null);
 
+  public static final Consumer<Map<HMethod, Equations>> ourIndexSizeStatistics =
+    ApplicationManager.getApplication().isUnitTestMode() ? new ClassDataIndexerStatistics() : map -> {};
+
   @Nullable
   @Override
   public Map<HMethod, Equations> calcData(@NotNull Project project, @NotNull VirtualFile file) {
@@ -72,6 +81,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
       // so here we suppose that exception is due to incorrect bytecode
       LOG.debug("Unexpected Error during indexing of bytecode", e);
     }
+    ourIndexSizeStatistics.consume(map);
     return map;
   }
 
@@ -162,7 +172,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         final boolean isInterestingResult = isReferenceResult || isBooleanResult;
 
         List<Equation> equations = new ArrayList<>();
-        equations.add(PurityAnalysis.analyze(method, methodNode, stable));
+        ContainerUtil.addIfNotNull(equations, PurityAnalysis.analyze(method, methodNode, stable));
 
         try {
           final ControlFlowGraph graph = ControlFlowGraph.build(className, methodNode, jsr);
@@ -337,7 +347,9 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
         } else {
           final InThrowAnalysis inThrowAnalysis = new InThrowAnalysis(richControlFlow, Throw, origins, stable, sharedPendingStates);
           throwEquation = inThrowAnalysis.analyze();
-          result.add(throwEquation);
+          if (!throwEquation.result.equals(FINAL_TOP)) {
+            result.add(throwEquation);
+          }
           shouldInferNonTrivialFailingContracts = !inThrowAnalysis.myHasNonTrivialReturn;
         }
 
@@ -481,5 +493,28 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMet
     }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
     return equations;
+  }
+
+  private static class ClassDataIndexerStatistics implements Consumer<Map<HMethod, Equations>> {
+    private static final AtomicLong ourTotalSize = new AtomicLong(0);
+    private static final AtomicLong ourTotalCount = new AtomicLong(0);
+
+    @Override
+    public void consume(Map<HMethod, Equations> map) {
+      try {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        new BytecodeAnalysisIndex.EquationsExternalizer().save(new DataOutputStream(stream), map);
+        ourTotalSize.addAndGet(stream.size());
+        ourTotalCount.incrementAndGet();
+      }
+      catch (IOException ignored) {
+      }
+    }
+
+    @Override
+    public String toString() {
+      return String.format(Locale.ENGLISH, "Classes: %d\nBytes: %d\nBytes per class: %.2f%n", ourTotalCount.get(), ourTotalSize.get(),
+                           ((double)ourTotalSize.get()) / ourTotalCount.get());
+    }
   }
 }

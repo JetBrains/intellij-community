@@ -20,6 +20,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
+import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
@@ -192,6 +193,7 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     };
 
     rootPackage.accept(visitor);
+    System.err.println(ClassDataIndexer.ourIndexSizeStatistics);
     assertEmpty(myDiffs);
   }
 
