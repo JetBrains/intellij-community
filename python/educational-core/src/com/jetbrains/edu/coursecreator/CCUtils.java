@@ -284,6 +284,18 @@ public class CCUtils {
         if (name.contains(".iml") || (configurator != null && configurator.excludeFromArchive(file.getPath()))) {
           return false;
         }
+
+        if (course.isTutorial()) {
+          final Task originalTask = course.getLessons().get(0).getTaskList().get(0);
+          if (originalTask != null) {
+            final String path = VfsUtilCore.getRelativePath(file, originalTask.getTaskDir(project));
+            final Map<String, String> tests = originalTask.getTestsText();
+            if (tests.containsKey(path)) {
+              return true;
+            }
+          }
+        }
+
         final TaskFile taskFile = StudyUtils.getTaskFile(project, file);
         if (taskFile == null) {
           final String path = VfsUtilCore.getRelativePath(file, baseDir);

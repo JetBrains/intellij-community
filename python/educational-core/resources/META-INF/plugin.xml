@@ -105,6 +105,7 @@
     <group id="CCProjectViewGroup" popup="true" text="Course Creator"
            class="com.jetbrains.edu.coursecreator.actions.CCProjectViewActionGroup">
       <action id="AddTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTaskFile"/>
+      <action id="CCAddAsTestFile" class="com.jetbrains.edu.coursecreator.actions.CCAddAsTestFile"/>
       <action id="HideTaskFile" class="com.jetbrains.edu.coursecreator.actions.CCHideFromStudent"/>
       <action id="ShowPreview" class="com.jetbrains.edu.coursecreator.actions.CCShowPreview">
         <add-to-group group-id="EditorTabPopupMenu"/>
