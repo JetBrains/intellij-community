@@ -136,8 +136,9 @@ public class StudySubtaskUtils {
     }
     final Ref<VirtualFile> subtaskTestFile = new Ref<>();
     for (Map.Entry<String, String> entry : task.getTestsText().entrySet()) {
-      if (entry.getKey().contains(FileUtil.getNameWithoutExtension(subtaskTestFileName))) {
-        String nameWithoutExtension = FileUtil.getNameWithoutExtension(entry.getKey());
+      String name = entry.getKey();
+      if (name.contains(FileUtil.getNameWithoutExtension(subtaskTestFileName))) {
+        String nameWithoutExtension = FileUtil.getNameWithoutExtension(name);
         String extension = FileUtil.getExtension(subtaskTestFileName);
         subtaskTestFile.set(taskDir.findFileByRelativePath(nameWithoutExtension + ".txt"));
         if (subtaskTestFile.get() != null) {
@@ -150,6 +151,19 @@ public class StudySubtaskUtils {
             }
           });
         }
+        continue;
+      }
+      if (!name.contains(EduNames.SUBTASK_MARKER + String.valueOf(toSubtaskIndex)) && name.contains(EduNames.SUBTASK_MARKER)
+          && name.contains(".kt")) {
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          try {
+            VirtualFile oldTest = taskDir.findFileByRelativePath(name);
+            oldTest.rename(project, FileUtil.getNameWithoutExtension(oldTest.getName()) + "." + "txt");
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        });
       }
     }
   }
