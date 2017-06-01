@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -228,12 +228,14 @@ public interface CaretModel {
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   * <p>
    * System selection will be updated, if such feature is supported by current editor.
+   *
+   * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
+   * support multiple carets
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()
+   * @see #setCaretsAndSelections(List, boolean)
    */
   void setCaretsAndSelections(@NotNull List<CaretState> caretStates);
 
@@ -241,10 +243,11 @@ public interface CaretModel {
    * Sets the number of carets, their positions and selection ranges according to the provided data. Null values for caret position or
    * selection boundaries will mean that corresponding caret's position and/or selection won't be changed.
    * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
-   * <p>
    * System selection will be updated, if such feature is supported by current editor
    * and corresponding invocation parameter is set to <code>true</code>.
+   *
+   * @throws IllegalArgumentException if {@code caretStates} list is empty, or if it contains more than one element and editor doesn't
+   * support multiple carets
    *
    * @see #supportsMultipleCarets()
    * @see #getCaretsAndSelections()
@@ -257,10 +260,7 @@ public interface CaretModel {
    * {@link #setCaretsAndSelections(List)} will restore the state of carets, including the internal caret order, in particular,
    * the caret, that was primary when this method was called, will be the primary one after corresponding
    * {@link #setCaretsAndSelections(List)} invocation.
-   * <p>
-   * If multiple carets are not supported, the behaviour is unspecified.
    *
-   * @see #supportsMultipleCarets()
    * @see #setCaretsAndSelections(List)
    */
   @NotNull

@@ -43,6 +43,7 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -215,23 +216,14 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   protected TextEditorState getStateImpl(final Project project, @NotNull Editor editor, @NotNull FileEditorStateLevel level){
     TextEditorState state = new TextEditorState();
     CaretModel caretModel = editor.getCaretModel();
-    if (caretModel.supportsMultipleCarets()) {
-      List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
-      state.CARETS = new TextEditorState.CaretState[caretsAndSelections.size()];
-      for (int i = 0; i < caretsAndSelections.size(); i++) {
-        CaretState caretState = caretsAndSelections.get(i);
-        LogicalPosition caretPosition = caretState.getCaretPosition();
-        LogicalPosition selectionStartPosition = caretState.getSelectionStart();
-        LogicalPosition selectionEndPosition = caretState.getSelectionEnd();
-        state.CARETS[i] = createCaretState(caretPosition, selectionStartPosition, selectionEndPosition);
-      }
-    }
-    else {
-      LogicalPosition caretPosition = caretModel.getLogicalPosition();
-      LogicalPosition selectionStartPosition = editor.offsetToLogicalPosition(editor.getSelectionModel().getSelectionStart());
-      LogicalPosition selectionEndPosition = editor.offsetToLogicalPosition(editor.getSelectionModel().getSelectionEnd());
-      state.CARETS = new TextEditorState.CaretState[1];
-      state.CARETS[0] = createCaretState(caretPosition, selectionStartPosition, selectionEndPosition);
+    List<CaretState> caretsAndSelections = caretModel.getCaretsAndSelections();
+    state.CARETS = new TextEditorState.CaretState[caretsAndSelections.size()];
+    for (int i = 0; i < caretsAndSelections.size(); i++) {
+      CaretState caretState = caretsAndSelections.get(i);
+      LogicalPosition caretPosition = caretState.getCaretPosition();
+      LogicalPosition selectionStartPosition = caretState.getSelectionStart();
+      LogicalPosition selectionEndPosition = caretState.getSelectionEnd();
+      state.CARETS[i] = createCaretState(caretPosition, selectionStartPosition, selectionEndPosition);
     }
 
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
@@ -271,32 +263,17 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state){
-    if (state.CARETS != null && state.CARETS.length > 0) {
-      if (editor.getCaretModel().supportsMultipleCarets()) {
-        CaretModel caretModel = editor.getCaretModel();
-        List<CaretState> states = new ArrayList<>(state.CARETS.length);
-        for (TextEditorState.CaretState caretState : state.CARETS) {
-          states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
-                                    new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
-                                    new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
-        }
-        caretModel.setCaretsAndSelections(states, false);
+    TextEditorState.CaretState[] carets = state.CARETS;
+    if (carets != null && carets.length > 0) {
+      if (!editor.getCaretModel().supportsMultipleCarets()) carets = Arrays.copyOf(carets, 1);
+      CaretModel caretModel = editor.getCaretModel();
+      List<CaretState> states = new ArrayList<>(carets.length);
+      for (TextEditorState.CaretState caretState : carets) {
+        states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
+                                  new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
+                                  new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
       }
-      else {
-        TextEditorState.CaretState caretState = state.CARETS[0];
-        LogicalPosition pos = new LogicalPosition(caretState.LINE, caretState.COLUMN);
-        editor.getCaretModel().moveToLogicalPosition(pos);
-        int startOffset = editor.logicalPositionToOffset(new LogicalPosition(caretState.SELECTION_START_LINE,
-                                                                             caretState.SELECTION_START_COLUMN));
-        int endOffset = editor.logicalPositionToOffset(new LogicalPosition(caretState.SELECTION_END_LINE,
-                                                                           caretState.SELECTION_END_COLUMN));
-        if (startOffset == endOffset) {
-          editor.getSelectionModel().removeSelection();
-        }
-        else {
-          editor.getSelectionModel().setSelection(startOffset, endOffset);
-        }
-      }
+      caretModel.setCaretsAndSelections(states, false);
     }
 
     final int relativeCaretPosition = state.RELATIVE_CARET_POSITION;
