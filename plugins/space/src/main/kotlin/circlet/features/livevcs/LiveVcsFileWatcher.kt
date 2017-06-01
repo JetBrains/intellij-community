@@ -86,6 +86,7 @@ class LiveVcsFileWatcher(private val project: Project,
                         this.changes {
                             this.newText()
                             this.user {
+                                this.id()
                                 this.email()
                                 this.firstName()
                                 this.lastName()
@@ -96,7 +97,7 @@ class LiveVcsFileWatcher(private val project: Project,
                 }.modifiedFiles
                 log.info { "got mofified files" }
                 if (!lifetime.isTerminated) {
-                    processConflicts(lifetime, modifiedFiles)
+                    processConflicts(lifetime, modifiedFiles, client)
                     log.info { "done processing conflicts" }
                     AlarmFactory.getInstance().create().addRequest({
                         pullConflicts(poller, client)
@@ -112,13 +113,13 @@ class LiveVcsFileWatcher(private val project: Project,
         }
     }
 
-    private suspend fun processConflicts(lifetime: Lifetime, modifiedFiles: Array<ModifiedFileWire>) {
-        MyTask(lifetime, modifiedFiles, this).scheduleTask()
+    private suspend fun processConflicts(lifetime: Lifetime, modifiedFiles: Array<ModifiedFileWire>, client: CircletClient) {
+        MyTask(lifetime, modifiedFiles, this, client).scheduleTask()
     }
 
     private class MyTask(private val lifetime: Lifetime,
                          private val modifiedFiles: Array<ModifiedFileWire>,
-                         private val owner: LiveVcsFileWatcher) : ReadTask() {
+                         private val owner: LiveVcsFileWatcher, val client: CircletClient) : ReadTask() {
 
         override fun onCanceled(indicator: ProgressIndicator) {
         }
@@ -197,6 +198,8 @@ class LiveVcsFileWatcher(private val project: Project,
                         val modifiedFile = modifiedFiles.firstOrNull { it.path == relativePath }
                         if (modifiedFile != null) {
                             for (change in modifiedFile.changes) {
+                                if (change.user.id.raw == client.user.uid) continue
+
                                 val patch = createPath(file, change) ?: continue
                                 patches.add(patch)
                                 indicator.checkCanceled()
