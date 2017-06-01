@@ -472,7 +472,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     setLastColumnNumber(myLogicalCaret.column);
     myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
     myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
-
+    myVisualColumnAdjustment = 0;
+    
     updateOffsetsFromLogicalPosition();
     int newOffset = getOffset();
     if (debugBuffer != null) {
@@ -529,7 +530,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myPositionMarker = new PositionMarker(offset);
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
-    myVisualColumnAdjustment = 0;
   }
 
   private void setLastColumnNumber(int lastColumnNumber) {
@@ -606,6 +606,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     LogicalPosition oldPosition = myLogicalCaret;
 
     setCurrentLogicalCaret(myEditor.visualToLogicalPosition(myVisibleCaret));
+    VisualPosition mappedPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
+    myVisualColumnAdjustment = mappedPosition.line == myVisibleCaret.line && myVisibleCaret.column > mappedPosition.column && 
+                               !myLogicalCaret.leansForward ? myVisibleCaret.column - mappedPosition.column : 0;
     updateOffsetsFromLogicalPosition();
 
     updateVisualLineInfo();
@@ -743,7 +746,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     VerticalInfo oldInfo = myCaretInfo;
     LogicalPosition visUnawarePos = new LogicalPosition(myLogicalCaret.line, myLogicalCaret.column, myLogicalCaret.leansForward);
     setCurrentLogicalCaret(visUnawarePos);
-    myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
+    VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
+    myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
     updateVisualLineInfo();
 
     myEditor.updateCaretCursor();
@@ -765,6 +769,12 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     else {
       updateVisualPosition();
     }
+  }
+
+  void onInlayRemoved(int offset, int order) {
+    int currentOffset = getOffset();
+    if (offset == currentOffset && myVisualColumnAdjustment > 0 && myVisualColumnAdjustment > order) myVisualColumnAdjustment--;
+    updateVisualPosition();
   }
 
   private void setCurrentLogicalCaret(@NotNull LogicalPosition position) {

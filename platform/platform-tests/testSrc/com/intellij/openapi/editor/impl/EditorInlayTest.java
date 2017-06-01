@@ -18,8 +18,10 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -271,6 +273,35 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkResultByText("ac");
     checkCaretPosition(1, 1, 2);
     assertInlaysPositions(1, 1);
+  }
+
+  public void testCaretPositionAfterInlayDisposalToTheLeft() throws Exception {
+    initText("ab");
+    Inlay inlay = addInlay(1);
+    addInlay(1);
+    right();
+    right();
+    Disposer.dispose(inlay);
+    checkCaretPosition(1, 1, 1);
+  }
+
+  public void testCaretPositionAfterInlayDisposalToTheRight() throws Exception {
+    initText("ab");
+    addInlay(1);
+    Inlay inlay = addInlay(1);
+    right();
+    right();
+    Disposer.dispose(inlay);
+    checkCaretPosition(1, 1, 2);
+  }
+
+  public void testPositionConversionForAdjacentInlays() throws Exception {
+    initText("ab");
+    addInlay(1);
+    addInlay(1);
+    LogicalPosition lp = myEditor.visualToLogicalPosition(new VisualPosition(0, 2));
+    assertEquals(new LogicalPosition(0, 1), lp);
+    assertFalse(lp.leansForward);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

@@ -19,10 +19,15 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
+  private static final Key<Integer> ORDER_KEY = Key.create("inlay.order.key");
+
   @NotNull
   private final EditorImpl myEditor;
   final int myOriginalOffset; // used for sorting of inlays, if they ever get merged into same offset after document modification
@@ -72,8 +77,11 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   public void dispose() {
     if (isValid()) {
       myOffsetBeforeDisposal = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
-      myEditor.getInlayModel().myInlayTree.removeInterval(this);
-      myEditor.getInlayModel().notifyRemoved(this);
+      InlayModelImpl inlayModel = myEditor.getInlayModel();
+      List<Inlay> inlays = inlayModel.getInlineElementsInRange(myOffsetBeforeDisposal, myOffsetBeforeDisposal);
+      putUserData(ORDER_KEY, inlays.indexOf(this));
+      inlayModel.myInlayTree.removeInterval(this);
+      inlayModel.notifyRemoved(this);
     }
   }
 
@@ -96,5 +104,10 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   @Override
   public InlayImpl get() {
     return this;
+  }
+
+  int getOrder() {
+    Integer value = getUserData(ORDER_KEY);
+    return value == null ? -1 : value;
   }
 }
