@@ -6,7 +6,10 @@ import circlet.components.*
 import circlet.utils.*
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.impl.*
 import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vcs.*
@@ -15,6 +18,7 @@ import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.update.*
 import klogging.*
 import runtime.*
+import runtime.TextChange
 import runtime.async.*
 import runtime.reactive.*
 
@@ -25,7 +29,7 @@ class LiveVcsFileWatcher(private val project: Project,
                          private val fileDocumentManager: FileDocumentManager,
                          private val connection: CircletConnectionComponent,
                          private val vcsManager: ProjectLevelVcsManager,
-                         vFileManager : VirtualFileManager,
+                         vFileManager: VirtualFileManager,
                          editorFactory: EditorFactory)
     : ILifetimedComponent by LifetimedComponent(project), DocumentListenerAdapter, VirtualFileListenerAdapter {
 
@@ -88,33 +92,91 @@ class LiveVcsFileWatcher(private val project: Project,
     }
 
     private fun processConflicts(lifetime: Lifetime, conflictingFiles: Array<ConflictingFileWire>) {
-        application.invokeLater {
-            for (conflict in conflictingFiles) {
-                val path = conflict.path
-                val user = conflict.user
-                val text = conflict.newText
-                val vFile = findFileByVcsRoots(path) ?: continue
-
-
-            }
-        }
-
-        lifetime.add {
-            application.invokeLater {
-                // todo
-            }
-        }
+        for (conflict in conflictingFiles)
+            MyTask(lifetime, conflict, this).scheduleTask()
     }
 
-    private fun findFileByVcsRoots(path: String): VirtualFile? {
-        var vFile: VirtualFile? = null
-        for (root in vcsManager.allVcsRoots) {
-            val base = root.path
-            vFile = VfsUtil.findRelativeFile(base, *path.replace('\\', '/').split("/".toRegex()).toTypedArray())
-            if (vFile != null)
-                break
+    private class MyTask(private val lifetime: Lifetime,
+                         private val conflict: ConflictingFileWire,
+                         private val owner: LiveVcsFileWatcher) : ReadTask() {
+
+        fun scheduleTask() {
+            val pi = ProgressIndicatorBase()
+            lifetime.add {
+                pi.cancel()
+            }
+            ProgressIndicatorUtils.scheduleWithWriteActionPriority(pi, this)
         }
-        return vFile
+
+        override fun performInReadAction(indicator: ProgressIndicator): Continuation? {
+            if (owner.project.isDisposed || lifetime.isTerminated) return null
+
+            val result = doWork(indicator) ?: return null
+            return Continuation({
+                application.assertIsDispatchThread()
+                if (lifetime.isTerminated || indicator.isCanceled) return@Continuation
+
+                val (conflicts, doc) = result
+                val user = conflict.user
+                val markupModel = DocumentMarkupModel.forDocument(doc, owner.project, false/*???*/)
+
+
+                lifetime.add {
+                    // remove higlightings
+                }
+            })
+        }
+
+        private fun doWork(indicator: ProgressIndicator): Pair<List<TextChange>, Document>? {
+            try {
+                if (indicator.isCanceled) return null
+                val path = conflict.path
+                val remoteText = conflict.newText
+                val vFile = findFileByVcsRoots(path) ?: return null
+                if (!vFile.isInLocalFileSystem) return null
+
+                val status = owner.changeListManager.getStatus(vFile)
+
+                if (status != FileStatus.MODIFIED) {
+                    log.warn { "We got conflicts for added file: ${path}" }
+                    return null
+                }
+
+                // getting already loaded document
+                val document = owner.fileDocumentManager.getCachedDocument(vFile) ?: return null
+
+                val change = owner.changeListManager.getChange(vFile)
+                val baseText = change?.oldText ?: document.text/* if file's not modified */
+                val myText = change?.newText ?: document.text/* if file's not modified */
+                val remoteChanges = diff(baseText, remoteText)
+                val localChanges = diff(baseText, myText)
+
+                val rebasedChanges = remoteChanges.map { rebase(localChanges, it) }
+                return rebasedChanges to document
+
+            } catch (pce: ProcessCanceledException) {
+                throw pce
+            } catch (t: Throwable) {
+                log.error(t)
+                return null
+            }
+        }
+
+        override fun onCanceled(indicator: ProgressIndicator) {
+            if (lifetime.isTerminated) return
+            MyTask(lifetime, conflict, owner).scheduleTask()
+        }
+
+        private fun findFileByVcsRoots(path: String): VirtualFile? {
+            var vFile: VirtualFile? = null
+            for (root in owner.vcsManager.allVcsRoots) {
+                val base = root.path
+                vFile = VfsUtil.findRelativeFile(base, *path.replace('\\', '/').split("/".toRegex()).toTypedArray())
+                if (vFile != null)
+                    break
+            }
+            return vFile
+        }
     }
 
     override fun documentChanged(e: DocumentEvent) {
