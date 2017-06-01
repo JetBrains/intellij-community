@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -306,9 +307,14 @@ class GitRepositoryReader {
 
   @NotNull
   private HeadInfo readHead() {
+    return readHeadInternal(myHeadFile, new ArrayList<>(2));
+  }
+
+  @NotNull
+  private HeadInfo readHeadInternal(File headFile, List<String> alreadyVisited) {
     String headContent;
     try {
-      headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
+      headContent = DvcsUtil.tryLoadFile(headFile, CharsetToolkit.UTF8);
     }
     catch (RepoStateException e) {
       LOG.error(e);
@@ -317,11 +323,22 @@ class GitRepositoryReader {
 
     Hash hash = parseHash(headContent);
     if (hash != null) {
-      return new HeadInfo(false, headContent);
+      if (alreadyVisited.isEmpty()) {
+        return new HeadInfo(false, headContent);
+      } else {
+        return new HeadInfo(true, alreadyVisited.get(alreadyVisited.size() - 1));
+      }
     }
     String target = getTarget(headContent);
     if (target != null) {
-      return new HeadInfo(true, target);
+      if (alreadyVisited.contains(target)) {
+        alreadyVisited.add(target);
+        LOG.error(new RepoStateException("Cyclic symbolic ref in HEAD: [" + StringUtil.join(alreadyVisited, " -> ") + "]"));
+        return new HeadInfo(false, null);
+      } else {
+        alreadyVisited.add(target);
+        return readHeadInternal(myGitFiles.getBranchFile(target), alreadyVisited);
+      }
     }
     LOG.error(new RepoStateException("Invalid format of the .git/HEAD file: [" + headContent + "]")); // including "refs/tags/v1"
     return new HeadInfo(false, null);
