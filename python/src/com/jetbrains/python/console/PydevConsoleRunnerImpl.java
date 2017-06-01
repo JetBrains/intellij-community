@@ -779,11 +779,12 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private class SoftWrapAction extends ToggleAction implements DumbAware {
-    private boolean isSelected = false;
+    private boolean isSelected = myConsoleSettings.isUseSoftWraps();
 
     SoftWrapAction() {
       super(ActionsBundle.actionText("EditorToggleUseSoftWraps"), ActionsBundle.actionDescription("EditorToggleUseSoftWraps"),
             AllIcons.Actions.ToggleSoftWrap);
+      myConsoleView.getEditor().getSettings().setUseSoftWraps(isSelected);
     }
 
     @Override
@@ -801,6 +802,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       else {
         editorSettings.setUseSoftWraps(false);
       }
+      myConsoleSettings.setUseSoftWraps(isSelected);
     }
   }
 
