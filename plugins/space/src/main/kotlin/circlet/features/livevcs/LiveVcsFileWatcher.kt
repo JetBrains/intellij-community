@@ -152,8 +152,8 @@ class LiveVcsFileWatcher(private val project: Project,
                 val localChanges = diff(baseText, myText)
 
                 val rebasedChanges = remoteChanges.map { rebase(localChanges, it) }
-                return rebasedChanges to document
-
+//                return rebasedChanges to document
+                return null
             } catch (pce: ProcessCanceledException) {
                 throw pce
             } catch (t: Throwable) {
