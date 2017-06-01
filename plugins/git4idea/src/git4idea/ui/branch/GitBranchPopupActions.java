@@ -330,6 +330,12 @@ class GitBranchPopupActions {
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{new LocalBranchActions.RenameBranchAction(myProject, myRepositories, myBranchName)};
     }
+
+    @Nullable
+    @Override
+    public String getPrefixInfo() {
+      return "current";
+    }
   }
 
   /**

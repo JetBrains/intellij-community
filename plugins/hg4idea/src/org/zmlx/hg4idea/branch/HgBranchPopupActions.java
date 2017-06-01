@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.branch;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.NewBranchAction;
+import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,7 +35,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -287,8 +287,7 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class CurrentBranch extends BranchActions{
-  
+  public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
     public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
     }
@@ -297,6 +296,12 @@ public class HgBranchPopupActions {
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return AnAction.EMPTY_ARRAY;
+    }
+
+    @Nullable
+    @Override
+    public String getPrefixInfo() {
+      return "current";
     }
   }
   
@@ -307,9 +312,6 @@ public class HgBranchPopupActions {
 
     BookmarkActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName, HgBranchType.BOOKMARK);
-      if (myRepositories.size() == 1 && branchName.equals(myRepositories.get(0).getCurrentBookmark())) {
-        getTemplatePresentation().setIcon(PlatformIcons.CHECK_ICON);
-      }
     }
 
     @NotNull
@@ -335,8 +337,8 @@ public class HgBranchPopupActions {
     }
   }
 
-  public static class CurrentActiveBookmark extends BookmarkActions{
-  
+  public static class CurrentActiveBookmark extends BookmarkActions implements PopupElementWithAdditionalInfo {
+
     public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
     }
@@ -345,6 +347,12 @@ public class HgBranchPopupActions {
     @Override
     public AnAction[] getChildren(@Nullable AnActionEvent e) {
       return new AnAction[]{new BookmarkActions.DeleteBookmarkAction(myProject, myRepositories, myBranchName)};
+    }
+
+    @Nullable
+    @Override
+    public String getPrefixInfo() {
+      return "active";
     }
   }
 }

@@ -38,6 +38,7 @@ import com.intellij.ui.popup.list.IconListPopupRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.util.FontUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -327,6 +328,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private class MyPopupListElementRenderer extends PopupListElementRenderer<Object> implements IconListPopupRenderer {
 
+    private ErrorLabel myPrefixLabel;
     private ErrorLabel myInfoLabel;
     private IconComponent myIconLabel;
 
@@ -365,26 +367,36 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       myIconLabel.setIcon(myDescriptor.getIconFor(value));
       PopupElementWithAdditionalInfo additionalInfoAction = getSpecificAction(value, PopupElementWithAdditionalInfo.class);
-      String infoText = additionalInfoAction != null ? additionalInfoAction.getInfoText() : null;
+      updateInfoComponent(myPrefixLabel, additionalInfoAction != null ? additionalInfoAction.getPrefixInfo() : null, isSelected);
+      updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
+    }
+
+    private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable String infoText, boolean isSelected) {
       if (infoText != null) {
-        myInfoLabel.setVisible(true);
-        myInfoLabel.setText(infoText);
+        infoLabel.setVisible(true);
+        infoLabel.setText(infoText);
 
         if (isSelected) {
-          setSelected(myInfoLabel);
+          setSelected(infoLabel);
         }
         else {
-          myInfoLabel.setBackground(getBackground());
-          myInfoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
+          infoLabel.setBackground(getBackground());
+          infoLabel.setForeground(JBColor.GRAY);    // different foreground than for other elements
         }
       }
       else {
-        myInfoLabel.setVisible(false);
+        infoLabel.setVisible(false);
       }
     }
 
     @Override
     protected JComponent createItemComponent() {
+      myPrefixLabel = new ErrorLabel();
+      myPrefixLabel.setOpaque(true);
+      myPrefixLabel.setBorder(JBUI.Borders.empty(1, 1, 1, DEFAULT_HGAP));
+      Font minusOneFont = FontUtil.minusOne(myPrefixLabel.getFont());
+      myPrefixLabel.setFont(minusOneFont);
+
       myTextLabel = new ErrorLabel();
       myTextLabel.setOpaque(true);
       myTextLabel.setBorder(JBUI.Borders.empty(1));
@@ -392,15 +404,19 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       myInfoLabel = new ErrorLabel();
       myInfoLabel.setOpaque(true);
       myInfoLabel.setBorder(JBUI.Borders.empty(1, DEFAULT_HGAP, 1, 1));
+      myInfoLabel.setFont(minusOneFont);
 
       JPanel compoundPanel = new OpaquePanel(new BorderLayout(), JBColor.WHITE);
       myIconLabel = new IconComponent();
       myInfoLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+      JPanel compoundTextPanel = new OpaquePanel(new BorderLayout(), compoundPanel.getBackground());
       JPanel textPanel = new OpaquePanel(new BorderLayout(), compoundPanel.getBackground());
       compoundPanel.add(myIconLabel, BorderLayout.WEST);
       textPanel.add(myTextLabel, BorderLayout.WEST);
       textPanel.add(myInfoLabel, BorderLayout.CENTER);
-      compoundPanel.add(textPanel, BorderLayout.CENTER);
+      compoundTextPanel.add(myPrefixLabel, BorderLayout.WEST);
+      compoundTextPanel.add(textPanel, BorderLayout.CENTER);
+      compoundPanel.add(compoundTextPanel, BorderLayout.CENTER);
       return layoutComponent(compoundPanel);
     }
 
