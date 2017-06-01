@@ -26,7 +26,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgProjectSettings;
@@ -99,16 +98,26 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
     List<HgCommonBranchActions> branchActions =
       myMultiRootBranchConfig.getLocalBranchNames().stream()
         .map(b -> createLocalBranchActions(allRepositories, b, false))
-        .filter(Objects::nonNull).collect(toList());
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(branchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(branchActions), SHOW_ALL_BRANCHES_KEY, true);
+        .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
+    int topShownBranches = getNumOfTopShownBranches(branchActions);
+    String commonBranch = myMultiRootBranchConfig.getCommonName(HgRepository::getCurrentBranch);
+    if (commonBranch != null) {
+      branchActions.add(0, new HgBranchPopupActions.CurrentBranch(myProject, allRepositories, commonBranch));
+      topShownBranches++;
+    }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, topShownBranches, SHOW_ALL_BRANCHES_KEY, true);
 
     popupGroup.addSeparator("Common Bookmarks");
     List<HgCommonBranchActions> bookmarkActions = ((HgMultiRootBranchConfig)myMultiRootBranchConfig).getBookmarkNames().stream()
       .map(bm -> createLocalBranchActions(allRepositories, bm, true))
-      .filter(Objects::nonNull).collect(toList());
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(bookmarkActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(bookmarkActions), SHOW_ALL_BOOKMARKS_KEY, true);
+      .filter(Objects::nonNull).sorted(FAVORITE_BRANCH_COMPARATOR).collect(toList());
+    int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
+    String commonBookmark = myMultiRootBranchConfig.getCommonName(HgRepository::getCurrentBookmark);
+    if (commonBookmark != null) {
+      bookmarkActions.add(0, new HgBranchPopupActions.CurrentActiveBookmark(myProject, allRepositories, commonBookmark));
+      topShownBookmarks++;
+    }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks, SHOW_ALL_BOOKMARKS_KEY, true);
   }
 
   @Nullable

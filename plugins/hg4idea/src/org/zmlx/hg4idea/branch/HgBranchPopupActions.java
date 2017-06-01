@@ -87,13 +87,19 @@ public class HgBranchPopupActions {
     }
 
     popupGroup.addSeparator("Bookmarks" + repoInfo);
+    String currentBookmark = myRepository.getCurrentBookmark();
     List<HgCommonBranchActions> bookmarkActions = getSortedNamesWithoutHashes(myRepository.getBookmarks()).stream()
+      .filter(bm -> !bm.equals(currentBookmark))
       .map(bm -> new BookmarkActions(myProject, Collections.singletonList(myRepository), bm))
+      .sorted(FAVORITE_BRANCH_COMPARATOR)
       .collect(toList());
-    // if there are only a few local favorites -> show all;  for remotes it's better to show only favorites; 
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(bookmarkActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(bookmarkActions), firstLevelGroup ? HgBranchPopup.SHOW_ALL_BOOKMARKS_KEY : null,
-                               firstLevelGroup);
+    int topShownBookmarks = getNumOfTopShownBranches(bookmarkActions);
+    if (currentBookmark != null) {
+      bookmarkActions.add(0, new CurrentActiveBookmark(myProject, Collections.singletonList(myRepository), currentBookmark));
+      topShownBookmarks++;
+    }
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, bookmarkActions, topShownBookmarks,
+                               firstLevelGroup ? HgBranchPopup.SHOW_ALL_BOOKMARKS_KEY : null, firstLevelGroup);
 
     //only opened branches have to be shown
     popupGroup.addSeparator("Branches" + repoInfo);
@@ -102,10 +108,11 @@ public class HgBranchPopupActions {
         .sorted()
         .filter(b -> !b.equals(myRepository.getCurrentBranch()))
         .map(b -> new BranchActions(myProject, Collections.singletonList(myRepository), b))
+        .sorted(FAVORITE_BRANCH_COMPARATOR)
         .collect(toList());
-    wrapWithMoreActionIfNeeded(myProject, popupGroup, ContainerUtil.sorted(branchActions, FAVORITE_BRANCH_COMPARATOR),
-                               getNumOfTopShownBranches(branchActions), firstLevelGroup ? HgBranchPopup.SHOW_ALL_BRANCHES_KEY : null,
-                               firstLevelGroup);
+    branchActions.add(0, new CurrentBranch(myProject, Collections.singletonList(myRepository), myRepository.getCurrentBranch()));
+    wrapWithMoreActionIfNeeded(myProject, popupGroup, branchActions, getNumOfTopShownBranches(branchActions) + 1,
+                               firstLevelGroup ? HgBranchPopup.SHOW_ALL_BRANCHES_KEY : null, firstLevelGroup);
     return popupGroup;
   }
 
@@ -279,6 +286,19 @@ public class HgBranchPopupActions {
       super(project, repositories, branchName, HgBranchType.BRANCH);
     }
   }
+
+  public static class CurrentBranch extends BranchActions{
+  
+    public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+      super(project, repositories, branchName);
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return AnAction.EMPTY_ARRAY;
+    }
+  }
   
   /**
    * Actions available for  bookmarks.
@@ -312,6 +332,19 @@ public class HgBranchPopupActions {
           }
         }, myProject);
       }
+    }
+  }
+
+  public static class CurrentActiveBookmark extends BookmarkActions{
+  
+    public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+      super(project, repositories, branchName);
+    }
+
+    @NotNull
+    @Override
+    public AnAction[] getChildren(@Nullable AnActionEvent e) {
+      return new AnAction[]{new BookmarkActions.DeleteBookmarkAction(myProject, myRepositories, myBranchName)};
     }
   }
 }
