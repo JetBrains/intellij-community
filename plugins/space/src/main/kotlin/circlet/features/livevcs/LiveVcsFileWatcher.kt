@@ -35,12 +35,8 @@ class LiveVcsFileWatcher(private val project: Project,
 
     companion object {
         private val PUSH_DELAY_MS = 1 * 1000
-        private val PULL_DELAY_MS = 10 * 1000
+        private val PULL_DELAY_MS = 1 * 1000
     }
-
-    // todo maybe we should disaptch on background thread?
-    private val messageQueue = MergingUpdateQueue("LiveVcsFileWatcher::messageQueue",
-        PUSH_DELAY_MS, true, MergingUpdateQueue.ANY_COMPONENT, project)
 
     private val client: CircletClient? get() = if (connection.client.hasValue) connection.client.value else null
 
@@ -151,7 +147,7 @@ class LiveVcsFileWatcher(private val project: Project,
                 val remoteChanges = diff(baseText, remoteText)
                 val localChanges = diff(baseText, myText)
 
-                val rebasedChanges = remoteChanges.map { rebase(localChanges, it) }
+//                val rebasedChanges = remoteChanges.map { rebase(localChanges, it) }
 //                return rebasedChanges to document
                 return null
             } catch (pce: ProcessCanceledException) {
@@ -182,39 +178,33 @@ class LiveVcsFileWatcher(private val project: Project,
     override fun documentChanged(e: DocumentEvent) {
         val document = e.document
         val vFile = fileDocumentManager.getFile(document) ?: return
-        queueMessageFor(vFile, "doc_change")
-    }
-
-    private fun queueMessageFor(vFile: VirtualFile, origin: String) {
-        if (!vFile.isInLocalFileSystem) return
-
-        messageQueue.queue(object : Update("SendMessage") {
-            override fun run() {
-                val change = changeListManager.getChange(vFile) ?: return
-                pushChange(change, origin)
-            }
-
-            override fun isDisposed(): Boolean = project.isDisposed
-        })
+        pushChange(vFile, "doc_change")
     }
 
     override fun contentsChanged(event: VirtualFileEvent) {
-        queueMessageFor(event.file, "vfs_content_change")
+        pushChange(event.file, "vfs_content_change")
     }
 
     override fun fileDeleted(event: VirtualFileEvent) {
-        queueMessageFor(event.file, "vfs_file_delte")
+        pushChange(event.file, "vfs_file_delte")
     }
 
     override fun fileCreated(event: VirtualFileEvent) {
-        queueMessageFor(event.file, "vfs_file_created")
+        pushChange(event.file, "vfs_file_created")
     }
 
     override fun fileMoved(event: VirtualFileMoveEvent) {
-        queueMessageFor(event.file, "vfs_file_moved")
+        pushChange(event.file, "vfs_file_moved")
+    }
+
+    private fun pushChange(vFile: VirtualFile, origin: String) {
+        if (!vFile.isInLocalFileSystem) return
+        val change = changeListManager.getChange(vFile) ?: return
+        pushChange(change, origin)
     }
 
     private fun pushChange(change: Change, origin: String) {
+        if (project.isDisposed) return
         val client = client ?: return
         log.trace { "Push change from $origin: $change" }
         val mutation = client.mutation
