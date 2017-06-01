@@ -46,6 +46,7 @@ public abstract class CCTaskFileActionBase extends AnAction {
       if (file.isDirectory()) {
         final List<VirtualFile> children = VfsUtil.collectChildrenRecursively(file);
         for (VirtualFile child : children) {
+          if (child.isDirectory()) continue;
           performAction(child, task, course, project);
         }
       }
