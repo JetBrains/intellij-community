@@ -149,8 +149,11 @@ public class StudyNavigator {
   }
 
   public static void navigateToTask(@NotNull Project project, @NotNull Task task) {
-    for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
-      FileEditorManager.getInstance(project).closeFile(file);
+    boolean tutorial = task.getLesson().getCourse().isTutorial();
+    if (!tutorial) {
+      for (VirtualFile file : FileEditorManager.getInstance(project).getOpenFiles()) {
+        FileEditorManager.getInstance(project).closeFile(file);
+      }
     }
     Map<String, TaskFile> taskFiles = task.getTaskFiles();
     VirtualFile taskDir = task.getTaskDir(project);
@@ -165,7 +168,7 @@ public class StudyNavigator {
       ProjectView.getInstance(project).select(taskDir, taskDir, false);
       return;
     }
-    VirtualFile fileToActivate = getFirstTaskFile(taskDir, project);
+    VirtualFile fileToActivate = tutorial ? null : getFirstTaskFile(taskDir, project);
     for (Map.Entry<String, TaskFile> entry : taskFiles.entrySet()) {
       final TaskFile taskFile = entry.getValue();
       if (taskFile.getActivePlaceholders().isEmpty()) {
