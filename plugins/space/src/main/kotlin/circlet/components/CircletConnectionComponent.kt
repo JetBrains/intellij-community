@@ -26,28 +26,30 @@ class CircletConnectionComponent(val project: Project) :
     init {
         loginDataComponent.token.view(componentLifetime) { tklt, tk ->
             loginDataComponent.enabled.whenTrue(tklt) { enabledLt ->
-                loginDataComponent.orgName.view(enabledLt) { orgLt, orgName ->
-                    val refreshLt = refreshLifetimes.next()
-                    JobScheduler.getScheduler().schedule({
-                        if (!refreshLt.isTerminated) {
-                            async {
-                                try {
-                                    val client = CircletClient(refreshLt)
-                                    client.connected.whenTrue(refreshLt) { ntlt ->
-                                        notifyConnected()
-                                        this@CircletConnectionComponent.client.value = client
+                loginDataComponent.url.view(enabledLt) { urllt, url ->
+                    loginDataComponent.orgName.view(urllt) { orgLt, orgName ->
+                        val refreshLt = refreshLifetimes.next()
+                        JobScheduler.getScheduler().schedule({
+                            if (!refreshLt.isTerminated) {
+                                async {
+                                    try {
+                                        val client = CircletClient(refreshLt)
+                                        client.connected.whenTrue(refreshLt) { ntlt ->
+                                            notifyConnected()
+                                            this@CircletConnectionComponent.client.value = client
+                                        }
+                                        client.failed.whenTrue(refreshLt) { ntlt ->
+                                            notifyReconnect(ntlt)
+                                        }
+                                        client.start(IdeaPersistence, url, orgName)
+                                    } catch (th: Throwable) {
+                                        refreshLt.terminate()
+                                        authCheckFailedNotification()
                                     }
-                                    client.failed.whenTrue(refreshLt) { ntlt ->
-                                        notifyReconnect(ntlt)
-                                    }
-                                    client.start(IdeaPersistence, "https://localhost:8084", orgName)
-                                } catch (th: Throwable) {
-                                    refreshLt.terminate()
-                                    authCheckFailedNotification()
                                 }
                             }
-                        }
-                    }, 100, TimeUnit.MILLISECONDS)
+                        }, 100, TimeUnit.MILLISECONDS)
+                    }
                 }
             }
         }
