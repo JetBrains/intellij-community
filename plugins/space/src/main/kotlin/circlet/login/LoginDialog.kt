@@ -10,6 +10,7 @@ import javax.swing.event.*
 
 class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPane.getRootFrame(), true), DocumentListener {
 
+    val urlField = JTextField(30)
     val orgField = JTextField(30)
     val loginField = JTextField(30)
     val passwordField = JPasswordField(30)
@@ -53,12 +54,31 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
                 cs.fill = GridBagConstraints.NONE
                 cs.anchor = GridBagConstraints.LINE_START
                 cs.insets = Insets(5.px, 5.px, 5.px, 5.px)
-                text = "Organization:"
+                text = "Server:"
             }, cs)
-
-            add(orgField.apply {
+            add(urlField.apply {
                 cs.gridx = 1
                 cs.gridy = 0
+                cs.weightx = 1.0
+                cs.gridwidth = 2
+                cs.insets = Insets(5.px, 0.px, 5.px, 5.px)
+                cs.fill = GridBagConstraints.HORIZONTAL
+                text = viewModel.url.value
+                document.addDocumentListener(this@LoginDialog)
+            }, cs)
+            add(JLabel().apply {
+                cs.gridx = 0
+                cs.gridy = 1
+                cs.gridwidth = 1
+                cs.weightx = 0.0
+                cs.fill = GridBagConstraints.NONE
+                cs.anchor = GridBagConstraints.LINE_START
+                cs.insets = Insets(5.px, 5.px, 5.px, 5.px)
+                text = "Organization:"
+            }, cs)
+            add(orgField.apply {
+                cs.gridx = 1
+                cs.gridy = 1
                 cs.weightx = 1.0
                 cs.gridwidth = 2
                 cs.insets = Insets(5.px, 0.px, 5.px, 5.px)
@@ -66,10 +86,9 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
                 text = viewModel.orgName.value
                 document.addDocumentListener(this@LoginDialog)
             }, cs)
-
             add(JLabel().apply {
                 cs.gridx = 0
-                cs.gridy = 1
+                cs.gridy = 2
                 cs.gridwidth = 1
                 cs.weightx = 0.0
                 cs.fill = GridBagConstraints.NONE
@@ -77,11 +96,9 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
                 cs.insets = Insets(5.px, 5.px, 5.px, 5.px)
                 text = "Login:"
             }, cs)
-
-
             add(loginField.apply {
                 cs.gridx = 1
-                cs.gridy = 1
+                cs.gridy = 2
                 cs.weightx = 1.0
                 cs.gridwidth = 2
                 cs.insets = Insets(5.px, 0.px, 5.px, 5.px)
@@ -89,10 +106,9 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
                 text = viewModel.login.value
                 document.addDocumentListener(this@LoginDialog)
             }, cs)
-
             add(JLabel().apply {
                 cs.gridx = 0
-                cs.gridy = 2
+                cs.gridy = 3
                 cs.gridwidth = 1
                 cs.weightx = 0.0
                 cs.anchor = GridBagConstraints.LINE_START
@@ -100,10 +116,9 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
                 cs.fill = GridBagConstraints.NONE
                 text = "Password:"
             }, cs)
-
             add(passwordField.apply {
                 cs.gridx = 1
-                cs.gridy = 2
+                cs.gridy = 3
                 cs.gridwidth = 2
                 cs.weightx = 1.0
                 cs.insets = Insets(5.px, 0.px, 5.px, 5.px)
@@ -121,9 +136,11 @@ class LoginDialog(val viewModel: LoginDialogViewModel) : DialogWrapper(JOptionPa
     }
 
     private fun refresh() {
+
         viewModel.login.value = loginField.text
         viewModel.pass.value = passwordField.text
         viewModel.orgName.value = orgField.text
+        viewModel.url.value = urlField.text
     }
 
     override fun changedUpdate(e: DocumentEvent?) = refresh()

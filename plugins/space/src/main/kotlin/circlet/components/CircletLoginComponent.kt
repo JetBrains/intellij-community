@@ -10,7 +10,8 @@ private val log = KLoggers.logger("app-idea/CircletLoginComponent.kt")
 data class IdePLuginClientData(
     var enabled: Boolean? = null,
     var orgName : String? = null,
-    var login : String? = null
+    var login : String? = null,
+    var url : String? = null
 )
 
 @State(
@@ -24,6 +25,7 @@ class CircletLoginComponent() :
 
     val enabled = Property.createMutable(false)
     val orgName = Property.createMutable("")
+    val url = Property.createMutable("")
     val token = mutableProperty<Int>(0)
     val login = Property.createMutable("")
 
@@ -31,9 +33,10 @@ class CircletLoginComponent() :
         enabled.value = state.enabled ?: false
         orgName.value = state.orgName ?: ""
         login.value = state.login ?: ""
+        url.value = state.url ?: "http://circlet-api.labs.intellij.net"
     }
 
     override fun getState(): IdePLuginClientData =
-        IdePLuginClientData(enabled = enabled.value, orgName = orgName.value, login = login.value)
+        IdePLuginClientData(enabled = enabled.value, orgName = orgName.value, login = login.value, url = url.value)
 
 }
