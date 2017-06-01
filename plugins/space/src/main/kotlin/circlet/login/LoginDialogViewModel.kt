@@ -7,6 +7,7 @@ import com.intellij.concurrency.*
 import klogging.*
 import runtime.async.*
 import runtime.reactive.*
+import java.net.*
 import java.util.concurrent.*
 
 private val log = KLoggers.logger("app-idea/LoginDialogViewModel.kt")
@@ -42,7 +43,7 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
         login.view(lifetime, { lt, loginText ->
             pass.view(lt) { ltlt, passText ->
                 url.view(ltlt) { ltltlt, urlText ->
-                    orgName.view(ltltlt) { ltltltlt, urlText ->
+                    orgName.view(ltltlt) { ltltltlt, orgName ->
                         loginStatus.value = LoginAuthStatus(LoginStatus.InProrgess, "")
                         val refreshLt = refreshLifetimes.next()
                         JobScheduler.getScheduler().schedule({
@@ -67,6 +68,10 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
     }
 
     private suspend fun getToken(lt: Lifetime): String {
+        // try create url before passing to the system.
+        val ur = URL(url.value)
+        if (ur.host == null)
+            error("host is null")
         val client = CircletClient(lt)
         client.start(SandboxPersistence, url.value, orgName.value)
         return client.tryLogin(login.value, pass.value).raw
@@ -74,23 +79,23 @@ class LoginDialogViewModel(val loginComponent: CircletLoginComponent) {
 
     fun commit() {
         async {
-            Lifetime().apply {
-                try {
-                    val token = getToken(this)
-                    IdeaPersistence.put("circlet_token", token)
-                } catch (th: Throwable) {
-                    loginComponent.url.value = url.value
-                    loginComponent.orgName.value = orgName.value
-                    loginComponent.login.value = login.value
-                    IdeaPersistence.delete("circlet_token")
-                    loginComponent.token.value++
-                    return@apply
-                }
+            val lt = Lifetime()
+            try {
+                val token = getToken(lt)
+                IdeaPersistence.put("circlet_token", token)
+            } catch (th: Throwable) {
                 loginComponent.url.value = url.value
                 loginComponent.orgName.value = orgName.value
                 loginComponent.login.value = login.value
+                IdeaPersistence.delete("circlet_token")
                 loginComponent.token.value++
+                return@async
             }
+            loginComponent.url.value = url.value
+            loginComponent.orgName.value = orgName.value
+            loginComponent.login.value = login.value
+            loginComponent.token.value++
         }
     }
 }
+
