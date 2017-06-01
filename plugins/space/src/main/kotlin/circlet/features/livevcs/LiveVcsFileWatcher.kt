@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.*
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vfs.*
-import com.intellij.util.ui.update.*
 import klogging.*
 import runtime.*
 import runtime.TextChange
@@ -74,31 +73,34 @@ class LiveVcsFileWatcher(private val project: Project,
 
         val query = client.query
         async {
-            val conflictingFiles = query.livevcs {
-                this.conflictingFiles {
+            val modifiedFiles = query.livevcs {
+                this.modifiedFiles {
                     this.path()
-                    this.newText()
-                    this.user {
-                        this.id()
-                        this.firstName()
-                        this.lastName()
+                    this.changes {
+                        this.newText()
+                        this.user {
+                            this.email()
+                            this.firstName()
+                            this.lastName()
+                            this.avatar()
+                        }
                     }
                 }
-            }.conflictingFiles
+            }.modifiedFiles
 
             if (!lifetime.isTerminated) {
-                processConflicts(lifetime, conflictingFiles)
+                processConflicts(lifetime, modifiedFiles)
             }
         }
     }
 
-    private fun processConflicts(lifetime: Lifetime, conflictingFiles: Array<ConflictingFileWire>) {
-        for (conflict in conflictingFiles)
-            MyTask(lifetime, conflict, this).scheduleTask()
+    private fun processConflicts(lifetime: Lifetime, modifiedFiles: Array<ModifiedFileWire>) {
+        for (changesPerFile in modifiedFiles)
+            MyTask(lifetime, changesPerFile, this).scheduleTask()
     }
 
     private class MyTask(private val lifetime: Lifetime,
-                         private val conflict: ConflictingFileWire,
+                         private val changes: ModifiedFileWire,
                          private val owner: LiveVcsFileWatcher) : ReadTask() {
 
         fun scheduleTask() {
@@ -117,13 +119,15 @@ class LiveVcsFileWatcher(private val project: Project,
                 application.assertIsDispatchThread()
                 if (lifetime.isTerminated || indicator.isCanceled) return@Continuation
 
-                val (aliveChanges, conflicts, doc) = result
-                val user = conflict.user
-                val markupModel = DocumentMarkupModel.forDocument(doc, owner.project, false/*???*/)
-
                 val myHighlighters = mutableSetOf<RangeHighlighter>()
-                for (change in aliveChanges) {
-                    // insertion
+                val markupModel: MarkupModel? = if (result.isEmpty()) null
+                else DocumentMarkupModel.forDocument(result.first().doc, owner.project, false/*???*/)
+
+                for (patch in result) {
+                    val (aliveChanges, conflicts, doc) = patch
+                    val user = patch.user
+                    for (change in aliveChanges) {
+                        // insertion
 //                    if (change.length == 0) {
 //                        // folding
 //                    }
@@ -144,9 +148,11 @@ class LiveVcsFileWatcher(private val project: Project,
                         highlightInfo.highlighter = highlighter as RangeHighlighterEx
                         highlighter.errorStripeTooltip = highlightInfo
 //                    }
+                    }
                 }
 
                 lifetime.add {
+                    markupModel ?: run { assert(myHighlighters.isEmpty()); return@add }
                     for (h in myHighlighters) {
                         markupModel.removeHighlighter(h)
                     }
@@ -154,43 +160,57 @@ class LiveVcsFileWatcher(private val project: Project,
             })
         }
 
-        private fun doWork(indicator: ProgressIndicator): Triple<List<TextChange>, List<Conflict>, Document>? {
+        private data class Patch(val aliveChanges: List<TextChange>,
+                                 val conflicts: List<Conflict>,
+                                 val doc: Document,
+                                 val user: UserWire)
+
+        private fun doWork(indicator: ProgressIndicator): List<Patch> {
             try {
-                if (indicator.isCanceled) return null
-                val path = conflict.path
-                val remoteText = conflict.newText
-                val vFile = findFileByVcsRoots(path) ?: return null
-                if (!vFile.isInLocalFileSystem) return null
-
-                val status = owner.changeListManager.getStatus(vFile)
-
-                if (status != FileStatus.MODIFIED) {
-                    log.warn { "We got conflicts for added file: ${path}" }
-                    return null
-                }
-
-                // getting already loaded document
-                val document = owner.fileDocumentManager.getCachedDocument(vFile) ?: return null
-
-                val change = owner.changeListManager.getChange(vFile)
-                val baseText = change?.oldText ?: document.text/* if file's not modified */
-                val myText = change?.newText ?: document.text/* if file's not modified */
-                val remoteChanges = diff(baseText, remoteText)
-                val localChanges = diff(baseText, myText)
-
-                val (aliveChanges, conflicts) = intersects(localChanges, remoteChanges)
-                return  Triple(aliveChanges, conflicts, document)
+                if (indicator.isCanceled) return emptyList()
+                val path = changes.path
+                val patches = changes.changes.map { createPath(path, it) }.filterNotNull()
+                return patches
             } catch (pce: ProcessCanceledException) {
                 throw pce
             } catch (t: Throwable) {
                 log.error(t)
+                return emptyList()
+            }
+        }
+
+        private fun createPath(path: String, c: FileChangeOverviewWire): Patch? {
+            val user = c.user
+            val remoteText = c.newText
+
+            val vFile = findFileByVcsRoots(path) ?: return null
+            if (!vFile.isInLocalFileSystem) return null
+
+            val status = owner.changeListManager.getStatus(vFile)
+
+            if (status != FileStatus.MODIFIED) {
+                log.warn { "We got conflicts for added file: ${path}" }
                 return null
             }
+
+            // getting already loaded document
+            val document = owner.fileDocumentManager.getCachedDocument(vFile) ?: return null
+
+            val change = owner.changeListManager.getChange(vFile)
+            val baseText = change?.oldText ?: document.text/* if file's not modified */
+            val myText = change?.newText ?: document.text/* if file's not modified */
+            val remoteChanges = diff(baseText, remoteText)
+            val localChanges = diff(baseText, myText)
+
+            val (aliveChanges, conflicts) = intersects(localChanges, remoteChanges)
+            if (aliveChanges.isEmpty() && conflicts.isEmpty()) return null
+
+            return Patch(aliveChanges, conflicts, document, user)
         }
 
         override fun onCanceled(indicator: ProgressIndicator) {
             if (lifetime.isTerminated) return
-            MyTask(lifetime, conflict, owner).scheduleTask()
+            MyTask(lifetime, changes, owner).scheduleTask()
         }
 
         private fun findFileByVcsRoots(path: String): VirtualFile? {
