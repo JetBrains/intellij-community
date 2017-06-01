@@ -57,6 +57,9 @@ public class TaskWithSubtasks extends PyCharmTask {
         myStatus = StudyStatus.Solved;
       }
     }
+    if (status == StudyStatus.Failed && !activeSubtaskNotLast() && myStatus == StudyStatus.Solved) {
+      myStatus = StudyStatus.Unchecked;
+    }
   }
 
   public boolean activeSubtaskNotLast() {
