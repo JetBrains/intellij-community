@@ -64,6 +64,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private boolean myShown;
   private boolean myUserSizeChanged;
   private boolean myInternalSizeChanged;
+  private int myMeanRowHeight;
   @Nullable private final String myKey;
   @NotNull private Dimension myPrevSize = JBUI.emptySize();
 
@@ -86,6 +87,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       }
       createTitlePanelToolbar(myKey);
     }
+    myMeanRowHeight = getList().getCellBounds(0, 0).height + UIUtil.getListCellVPadding() * 2;
   }
 
   void createTitlePanelToolbar(@NotNull String dimensionKey) {
@@ -153,7 +155,11 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   private void processOnSizeChanged() {
     Dimension newSize = ObjectUtils.assertNotNull(getSize());
-    if (!myInternalSizeChanged && myPrevSize.height < newSize.height) {
+    int preferredHeight = getComponent().getPreferredSize().height;
+    int realHeight = getComponent().getHeight();
+    boolean shouldExpand = preferredHeight + myMeanRowHeight < realHeight;
+    boolean sizeWasIncreased = myPrevSize.height < newSize.height;
+    if (!myInternalSizeChanged && sizeWasIncreased && shouldExpand) {
       List<MoreAction> mores = getMoreActions();
       for (MoreAction more : mores) {
         if (!getList().getScrollableTracksViewportHeight()) break;
