@@ -66,8 +66,17 @@ class HardCodedPurity {
     return AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
   }
 
-  Set<EffectQuantum> getHardCodedSolution(Method method) {
-    return isThisChangingMethod(method) ? thisChange : isPureMethod(method) ? Collections.emptySet() : solutions.get(method);
+  Effects getHardCodedSolution(Method method) {
+    if (isThisChangingMethod(method)) {
+      return new Effects(isBuilderChainCall(method) ? DataValue.ThisDataValue : DataValue.UnknownDataValue1, thisChange);
+    }
+    else if (isPureMethod(method)) {
+      return new Effects(DataValue.LocalDataValue, Collections.emptySet());
+    }
+    else {
+      Set<EffectQuantum> effects = solutions.get(method);
+      return effects == null ? null : new Effects(DataValue.UnknownDataValue1, effects);
+    }
   }
 
   boolean isThisChangingMethod(Method method) {
