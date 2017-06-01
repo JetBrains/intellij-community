@@ -284,12 +284,7 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
 
   @Override
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    WizardPopup popup = createListPopupStep(parent, step, parentValue);
-    RootAction rootAction = getRootAction(parentValue);
-    if (rootAction != null) {
-      popup.setAdText((rootAction).getCaption());
-    }
-    return popup;
+    return createListPopupStep(parent, step, parentValue);
   }
 
   private WizardPopup createListPopupStep(WizardPopup parent, PopupStep step, Object parentValue) {
@@ -297,11 +292,6 @@ public class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       return new BranchActionGroupPopup(parent, (ListPopupStep)step, parentValue);
     }
     return super.createPopup(parent, step, parentValue);
-  }
-
-  @Nullable
-  private static RootAction getRootAction(Object value) {
-    return getSpecificAction(value, RootAction.class);
   }
 
   private static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {

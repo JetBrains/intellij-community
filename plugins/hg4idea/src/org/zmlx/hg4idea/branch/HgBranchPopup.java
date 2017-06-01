@@ -33,7 +33,6 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -76,12 +75,6 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
                         @NotNull HgMultiRootBranchConfig hgMultiRootBranchConfig, @NotNull HgProjectSettings vcsSettings,
                         @NotNull Condition<AnAction> preselectActionCondition) {
     super(currentRepository, repositoryManager, hgMultiRootBranchConfig, vcsSettings, preselectActionCondition, DIMENSION_SERVICE_KEY);
-  }
-
-  protected void setCurrentBranchInfo() {
-    String branchText = "Current branch : ";
-    //always display heavy branch name for additional info //
-    myPopup.setAdText(branchText + myCurrentRepository.getCurrentBranch(), SwingConstants.CENTER);
   }
 
   @Override
@@ -133,9 +126,9 @@ public class HgBranchPopup extends DvcsBranchPopup<HgRepository> {
   protected DefaultActionGroup createRepositoriesActions() {
     DefaultActionGroup popupGroup = new DefaultActionGroup(null, false);
     popupGroup.addSeparator("Repositories");
-    List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
-      .map(repo -> new RootAction<>(repo, new HgBranchPopupActions(repo.getProject(), repo).createActions(),
-                                    HgUtil.getDisplayableBranchOrBookmarkText(repo))).collect(toList());
+    List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream().map(
+      repo -> new RootAction<>(repo, new HgBranchPopupActions(repo.getProject(), repo).createActions(),
+                               isBranchesDiverged() ? HgUtil.getDisplayableBranchOrBookmarkText(repo) : null)).collect(toList());
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
     return popupGroup;

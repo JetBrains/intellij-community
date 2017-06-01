@@ -34,7 +34,6 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
@@ -95,24 +94,6 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
   }
 
   @Override
-  protected void setCurrentBranchInfo() {
-    String currentBranchText = "Current branch";
-    if (myRepositoryManager.moreThanOneRoot()) {
-      if (myMultiRootBranchConfig.diverged()) {
-        currentBranchText += " in " + DvcsUtil.getShortRepositoryName(myCurrentRepository) + ": " +
-                             GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
-      }
-      else {
-        currentBranchText += ": " + myMultiRootBranchConfig.getCurrentBranch();
-      }
-    }
-    else {
-      currentBranchText += ": " + GitBranchUtil.getDisplayableBranchText(myCurrentRepository);
-    }
-    myPopup.setAdText(currentBranchText, SwingConstants.CENTER);
-  }
-
-  @Override
   protected void fillWithCommonRepositoryActions(@NotNull DefaultActionGroup popupGroup,
                                                  @NotNull AbstractRepositoryManager<GitRepository> repositoryManager) {
     List<GitRepository> allRepositories = repositoryManager.getRepositories();
@@ -162,7 +143,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     popupGroup.addSeparator("Repositories");
     List<ActionGroup> rootActions = DvcsUtil.sortRepositories(myRepositoryManager.getRepositories()).stream()
       .map(repo -> new RootAction<>(repo, new GitBranchPopupActions(repo.getProject(), repo).createActions(),
-                                    GitBranchUtil.getDisplayableBranchText(repo))).collect(toList());
+                                    isBranchesDiverged() ? GitBranchUtil.getDisplayableBranchText(repo) : null)).collect(toList());
     wrapWithMoreActionIfNeeded(myProject, popupGroup, rootActions, rootActions.size() > MAX_NUM ? DEFAULT_NUM : MAX_NUM,
                                SHOW_ALL_REPOSITORIES);
     return popupGroup;
