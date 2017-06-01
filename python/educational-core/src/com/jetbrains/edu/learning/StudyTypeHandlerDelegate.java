@@ -35,6 +35,9 @@ public class StudyTypeHandlerDelegate extends TypedHandlerDelegate {
     if (taskFile == null || !(taskFile.getTask() instanceof TaskWithSubtasks)) {
       return Result.CONTINUE;
     }
+    if (taskFile.getAnswerPlaceholders().isEmpty()) {
+      return Result.CONTINUE;
+    }
     int offset = editor.getCaretModel().getOffset();
     boolean insidePlaceholder = taskFile.getAnswerPlaceholder(offset) != null;
     if (!insidePlaceholder) {
