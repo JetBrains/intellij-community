@@ -4,6 +4,7 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyUtils;
@@ -54,7 +55,7 @@ public class CCAddAsTaskFile extends CCTaskFileActionBase {
       if (myTaskFile != null) {
         myTask.addTaskFile(myTaskFile);
       } else {
-        final String taskRelativePath = StudyUtils.pathRelativeToTask(myFile);
+        final String taskRelativePath = FileUtil.getRelativePath(myTask.getTaskDir(myProject).getPath(), myFile.getPath(), '/');
         myTask.addTaskFile(taskRelativePath, myTask.getTaskFiles().size());
         myTaskFile = myTask.getTaskFile(taskRelativePath);
       }

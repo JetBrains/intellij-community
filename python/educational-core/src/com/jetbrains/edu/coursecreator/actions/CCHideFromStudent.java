@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.core.EduUtils;
@@ -84,7 +85,7 @@ public class CCHideFromStudent extends CCTaskFileActionBase {
         }
       }
     }
-    String taskRelativePath = StudyUtils.pathRelativeToTask(file);
+    String taskRelativePath = FileUtil.getRelativePath(taskFile.getTask().getTaskDir(project).getPath(), file.getPath(), '/');
     taskFiles.remove(taskRelativePath);
   }
 

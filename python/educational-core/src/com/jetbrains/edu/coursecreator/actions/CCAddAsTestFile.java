@@ -3,9 +3,9 @@ package com.jetbrains.edu.coursecreator.actions;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
 import com.jetbrains.edu.learning.courseFormat.tasks.Task;
 
@@ -21,7 +21,7 @@ public class CCAddAsTestFile extends CCTaskFileActionBase {
 
 
   protected void performAction(VirtualFile file, Task task, Course course, Project project) {
-    final String testRelativePath = StudyUtils.pathRelativeToTask(file);
+    final String testRelativePath = FileUtil.getRelativePath(task.getTaskDir(project).getPath(), file.getPath(), '/');
     try {
       task.addTestsTexts(testRelativePath, VfsUtilCore.loadText(file));
     }

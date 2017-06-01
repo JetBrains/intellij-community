@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -132,7 +133,7 @@ public class EduUtils {
         }
         task = task.copy();
       }
-      TaskFile taskFile = task.getTaskFile(StudyUtils.pathRelativeToTask(answerFile));
+      TaskFile taskFile = task.getTaskFile(FileUtil.getRelativePath(task.getTaskDir(project).getPath(), answerFile.getPath(), '/'));
       if (taskFile == null) {
         return null;
       }
