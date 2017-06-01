@@ -176,8 +176,12 @@ public class StudyUtils {
     presentation.setEnabled(false);
     final Project project = e.getProject();
     if (project != null) {
-      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
-      presentation.setEnabled(virtualFile != null && getTaskFile(project, virtualFile) != null);
+      for (VirtualFile virtualFile : FileEditorManager.getInstance(project).getSelectedFiles()) {
+        if (virtualFile != null && getTaskFile(project, virtualFile) != null) {
+          presentation.setEnabled(true);
+          return;
+        }
+      }
     }
   }
 
