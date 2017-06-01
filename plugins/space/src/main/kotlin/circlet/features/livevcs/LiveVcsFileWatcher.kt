@@ -60,10 +60,7 @@ class LiveVcsFileWatcher(private val project: Project,
                 pushChange(change, "initial")
             }
 
-            val lifetimes = SequentialLifetimes(lt)
-            Dispatch.dispatchInterval(PULL_DELAY_MS, lt, {
-                pullConflicts(lifetimes.next())
-            })
+            pullConflicts(lt)
         })
     }
 
@@ -123,8 +120,7 @@ class LiveVcsFileWatcher(private val project: Project,
                 val markupModel = if (result.isEmpty()) return@Continuation else DocumentMarkupModel.forDocument(result.first().doc, owner.project, false/*???*/)
 
                 for (patch in result) {
-                    val (aliveChanges, conflicts, doc) = patch
-                    val user = patch.user
+                    val (aliveChanges, conflicts, doc, user) = patch
                     for (change in aliveChanges) {
                         // insertion
 //                    if (change.length == 0) {
@@ -168,7 +164,13 @@ class LiveVcsFileWatcher(private val project: Project,
             try {
                 if (indicator.isCanceled) return emptyList()
                 val path = changes.path
-                val patches = changes.changes.map { createPath(path, it) }.filterNotNull()
+                val vFile = findFileByVcsRoots(path) ?: return emptyList()
+                if (!vFile.isInLocalFileSystem) return emptyList()
+                val patches = mutableListOf<Patch>()
+                for (change in changes.changes) {
+                    val patch = createPath(vFile, change) ?: continue
+                    patches.add(patch)
+                }
                 return patches
             } catch (pce: ProcessCanceledException) {
                 throw pce
@@ -178,17 +180,12 @@ class LiveVcsFileWatcher(private val project: Project,
             }
         }
 
-        private fun createPath(path: String, c: FileChangeOverviewWire): Patch? {
-            val user = c.user
+        private fun createPath(vFile: VirtualFile, c: FileChangeOverviewWire): Patch? {
             val remoteText = c.newText
-
-            val vFile = findFileByVcsRoots(path) ?: return null
-            if (!vFile.isInLocalFileSystem) return null
-
             val status = owner.changeListManager.getStatus(vFile)
 
             if (status != FileStatus.MODIFIED) {
-                log.warn { "We got conflicts for added file: ${path}" }
+                log.warn { "We got conflicts for added file: ${vFile.presentableName}" }
                 return null
             }
 
@@ -204,7 +201,7 @@ class LiveVcsFileWatcher(private val project: Project,
             val (aliveChanges, conflicts) = intersects(localChanges, remoteChanges)
             if (aliveChanges.isEmpty() && conflicts.isEmpty()) return null
 
-            return Patch(aliveChanges, conflicts, document, user)
+            return Patch(aliveChanges, conflicts, document, c.user)
         }
 
         override fun onCanceled(indicator: ProgressIndicator) {
