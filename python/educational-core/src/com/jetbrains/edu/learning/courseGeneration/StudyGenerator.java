@@ -83,9 +83,8 @@ public class StudyGenerator {
       final String name = entry.getKey();
       VirtualFile virtualTaskFile = taskDir.findChild(name);
       if (virtualTaskFile == null) {
-        virtualTaskFile = taskDir.createChildData(taskDir, name);
+        createChildFile(taskDir, name, entry.getValue());
       }
-      VfsUtil.saveText(virtualTaskFile, entry.getValue());
     }
   }
 
