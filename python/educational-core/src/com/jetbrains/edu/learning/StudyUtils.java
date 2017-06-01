@@ -421,7 +421,7 @@ public class StudyUtils {
   }
 
   @NotNull
-  private static String constructTaskTextFilename(@NotNull Task task, @NotNull String defaultName) {
+  public static String constructTaskTextFilename(@NotNull Task task, @NotNull String defaultName) {
     String fileNameWithoutExtension = FileUtil.getNameWithoutExtension(defaultName);
     if (task instanceof TaskWithSubtasks) {
       int activeStepIndex = ((TaskWithSubtasks)task).getActiveSubtaskIndex();
