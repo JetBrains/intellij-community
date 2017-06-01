@@ -598,7 +598,8 @@ public class StudyUtils {
         return parent;
       }
       if (EduNames.SRC.equals(name)) {
-        return parent.getParent();
+        VirtualFile taskDir = parent.getParent();
+        return taskDir.getName().contains(EduNames.TASK) ? taskDir : null;
       }
 
       parent = parent.getParent();
