@@ -54,6 +54,7 @@ abstract public class StudyTaskNavigationAction extends StudyActionWithShortcut 
     StudyEditor studyEditor = StudyUtils.getSelectedStudyEditor(project);
     StudyState studyState = new StudyState(studyEditor);
     if (!studyState.isValid()) {
+      e.getPresentation().setEnabled(false);
       return;
     }
     if (getTargetTask(studyState.getTask()) == null) {
