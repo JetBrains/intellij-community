@@ -136,9 +136,9 @@ public class StudySubtaskUtils {
     }
     final Ref<VirtualFile> subtaskTestFile = new Ref<>();
     for (Map.Entry<String, String> entry : task.getTestsText().entrySet()) {
-      if (entry.getKey().contains(subtaskTestFileName)) {
+      if (entry.getKey().contains(FileUtil.getNameWithoutExtension(subtaskTestFileName))) {
         String nameWithoutExtension = FileUtil.getNameWithoutExtension(entry.getKey());
-        String extension = FileUtil.getExtension(entry.getKey());
+        String extension = FileUtil.getExtension(subtaskTestFileName);
         subtaskTestFile.set(taskDir.findFileByRelativePath(nameWithoutExtension + ".txt"));
         if (subtaskTestFile.get() != null) {
           ApplicationManager.getApplication().runWriteAction(() -> {
