@@ -17,6 +17,7 @@ package git4idea.rebase
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
@@ -127,7 +128,9 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
   protected fun findContainingBranches(data: VcsLogData, root: VirtualFile, hash: Hash): List<String> {
     val branchesGetter = data.containingBranchesGetter
     return branchesGetter.getContainingBranchesQuickly(root, hash) ?:
-           branchesGetter.getContainingBranchesSynchronously(root, hash)
+           ProgressManager.getInstance().runProcessWithProgressSynchronously<List<String>, RuntimeException>({
+               branchesGetter.getContainingBranchesSynchronously(root, hash)
+           }, "Searching for branches containing the selected commit", true, data.project)
   }
 
   protected fun findProtectedRemoteBranch(repository: GitRepository, branches: Collection<String>): String? {
