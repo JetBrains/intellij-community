@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.edu.learning.EduPluginConfigurator;
+import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.checker.StudyTaskChecker;
 import com.jetbrains.edu.learning.core.EduNames;
 import com.jetbrains.edu.learning.courseFormat.*;
@@ -175,7 +176,12 @@ public abstract class Task implements StudyItem {
 
   public String getTaskDescription() {
     if (!taskTexts.isEmpty()) {
-      return taskTexts.get(EduNames.TASK_HTML);
+      String filenameHtml = StudyUtils.constructTaskTextFilename(this, EduNames.TASK_HTML);
+      if (taskTexts.containsKey(filenameHtml)) {
+        return taskTexts.get(filenameHtml);
+      }
+      String filenameMd = StudyUtils.constructTaskTextFilename(this, EduNames.TASK_MD);
+      return taskTexts.get(filenameMd);
     }
     return null;
   }
