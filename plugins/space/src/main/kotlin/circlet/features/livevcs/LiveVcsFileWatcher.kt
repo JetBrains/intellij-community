@@ -4,9 +4,13 @@ import circlet.*
 import circlet.api.client.graphql.*
 import circlet.components.*
 import circlet.utils.*
+import com.intellij.codeInsight.daemon.impl.*
+import com.intellij.lang.annotation.*
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.ex.*
 import com.intellij.openapi.editor.impl.*
+import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.*
@@ -21,6 +25,7 @@ import runtime.*
 import runtime.TextChange
 import runtime.async.*
 import runtime.reactive.*
+import java.awt.*
 
 private val log = KLoggers.logger("app-idea/LiveVcsFileWatcher.kt")
 
@@ -116,8 +121,35 @@ class LiveVcsFileWatcher(private val project: Project,
                 val user = conflict.user
                 val markupModel = DocumentMarkupModel.forDocument(doc, owner.project, false/*???*/)
 
+                val myHighlighters = mutableSetOf<RangeHighlighter>()
+                for (change in aliveChanges) {
+                    // insertion
+//                    if (change.length == 0) {
+//                        // folding
+//                    }
+//                    else {
+                        val highlighter = markupModel.addRangeHighlighter(change.start, change.last,
+                            HighlighterLayer.ELEMENT_UNDER_CARET, null, HighlighterTargetArea.EXACT_RANGE)
+
+                        val isDeletion = change.text.isEmpty()
+                        val bgColor = if (isDeletion) Color.GRAY else Color.GREEN
+                        val statusBarTxt = "Text was modified remotly"
+                        val tooltipTxt = if (isDeletion) null else change.text
+                        val textAttributes = TextAttributes(null, Color.GRAY, null, EffectType.BOXED, 0)
+
+                        val highlightInfo = object : HighlightInfo(textAttributes, null, HighlightInfoType.INFORMATION,
+                            change.start, change.last, statusBarTxt, tooltipTxt, HighlightSeverity.INFORMATION,
+                            false, false, false, 0, null, null) {}
+
+                        highlightInfo.highlighter = highlighter as RangeHighlighterEx
+                        highlighter.errorStripeTooltip = highlightInfo
+//                    }
+                }
+
                 lifetime.add {
-                    // remove higlightings
+                    for (h in myHighlighters) {
+                        markupModel.removeHighlighter(h)
+                    }
                 }
             })
         }
