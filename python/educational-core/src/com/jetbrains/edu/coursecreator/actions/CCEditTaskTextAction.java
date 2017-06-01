@@ -75,6 +75,7 @@ public class CCEditTaskTextAction extends ToggleAction implements DumbAware {
     if (!state) {
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
+        task.addTaskText(taskTextFile.getName(), document.getText());
       }
       window.leaveEditingMode(project);
       return;
