@@ -368,7 +368,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
   @Nullable
   private static FileViewProvider findViewProvider(final VirtualFile file, final Project project) {
-    if (file == null) return null;
+    if (file == null || file.isDirectory()) return null;
     return PsiManager.getInstance(project).findViewProvider(file);
   }
 
