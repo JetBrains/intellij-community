@@ -112,10 +112,9 @@ class LiveVcsFileWatcher(private val project: Project,
                 application.assertIsDispatchThread()
                 if (lifetime.isTerminated || indicator.isCanceled) return@Continuation
 
-                val (conflicts, doc) = result
+                val (aliveChanges, conflicts, doc) = result
                 val user = conflict.user
                 val markupModel = DocumentMarkupModel.forDocument(doc, owner.project, false/*???*/)
-
 
                 lifetime.add {
                     // remove higlightings
@@ -123,7 +122,7 @@ class LiveVcsFileWatcher(private val project: Project,
             })
         }
 
-        private fun doWork(indicator: ProgressIndicator): Pair<List<TextChange>, Document>? {
+        private fun doWork(indicator: ProgressIndicator): Triple<List<TextChange>, List<Conflict>, Document>? {
             try {
                 if (indicator.isCanceled) return null
                 val path = conflict.path
@@ -147,9 +146,8 @@ class LiveVcsFileWatcher(private val project: Project,
                 val remoteChanges = diff(baseText, remoteText)
                 val localChanges = diff(baseText, myText)
 
-//                val rebasedChanges = remoteChanges.map { rebase(localChanges, it) }
-//                return rebasedChanges to document
-                return null
+                val (aliveChanges, conflicts) = intersects(localChanges, remoteChanges)
+                return  Triple(aliveChanges, conflicts, document)
             } catch (pce: ProcessCanceledException) {
                 throw pce
             } catch (t: Throwable) {
