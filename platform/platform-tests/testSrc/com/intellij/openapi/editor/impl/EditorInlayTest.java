@@ -25,6 +25,8 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Arrays;
 
+import static org.junit.Assert.assertArrayEquals;
+
 public class EditorInlayTest extends AbstractEditorTest {
   public void testCaretMovement() throws Exception {
     initText("ab");
@@ -259,6 +261,18 @@ public class EditorInlayTest extends AbstractEditorTest {
     checkCaretPositionAndSelection(2, 2, 4, 2, 2);
   }
 
+  public void testDeleteBetweenInlays() throws Exception {
+    initText("abc");
+    addInlay(1);
+    addInlay(2);
+    right();
+    right();
+    delete();
+    checkResultByText("ac");
+    checkCaretPosition(1, 1, 2);
+    assertInlaysPositions(1, 1);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
@@ -272,5 +286,11 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertEquals(logicalColumn, myEditor.getCaretModel().getLogicalPosition().column);
     assertEquals(0, myEditor.getCaretModel().getVisualPosition().line);
     assertEquals(visualColumn, myEditor.getCaretModel().getVisualPosition().column);
+  }
+
+  private static void assertInlaysPositions(int... offsets) {
+    assertArrayEquals(offsets, 
+                      myEditor.getInlayModel().getInlineElementsInRange(0, myEditor.getDocument().getTextLength()).stream()
+                        .mapToInt(inlay -> inlay.getOffset()).toArray());
   }
 }

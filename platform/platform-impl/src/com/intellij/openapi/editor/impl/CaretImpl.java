@@ -63,7 +63,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private VisualPosition myVisibleCaret;
   private volatile PositionMarker myPositionMarker;
   private boolean myLeansTowardsLargerOffsets;
-  private int myVirtualSpaceOffset;
+  private int myLogicalColumnAdjustment;
+  private int myVisualColumnAdjustment;
   private int myVisualLineStart;
   private int myVisualLineEnd;
   private boolean mySkipChangeRequests;
@@ -527,7 +528,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
     myPositionMarker = new PositionMarker(offset);
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
-    myVirtualSpaceOffset = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
+    myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
+    myVisualColumnAdjustment = 0;
   }
 
   private void setLastColumnNumber(int lastColumnNumber) {
@@ -815,7 +817,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     clone.myVisibleCaret = myVisibleCaret;
     clone.myPositionMarker = new PositionMarker(getOffset());
     clone.myLeansTowardsLargerOffsets = myLeansTowardsLargerOffsets;
-    clone.myVirtualSpaceOffset = myVirtualSpaceOffset;
+    clone.myLogicalColumnAdjustment = myLogicalColumnAdjustment;
+    clone.myVisualColumnAdjustment = myVisualColumnAdjustment;
     clone.myVisualLineStart = myVisualLineStart;
     clone.myVisualLineEnd = myVisualLineEnd;
     clone.mySkipChangeRequests = mySkipChangeRequests;
@@ -1422,7 +1425,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
            ", rangeMarker end position: " + myRangeMarkerEndPosition +
            ", rangeMarker end position is lead: " + myRangeMarkerEndPositionIsLead +
            ", unknown direction: " + myUnknownDirection +
-           ", virtual space offset: " + myVirtualSpaceOffset + '}';
+           ", logical column adjustment: " + myLogicalColumnAdjustment + 
+           ", visual column adjustment: " + myVisualColumnAdjustment + '}';
   }
 
   /**
@@ -1485,8 +1489,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     int modelCounter = myEditor.getCaretModel().myDocumentUpdateCounter;
     if (myDocumentUpdateCounter != modelCounter) {
       LogicalPosition lp = myEditor.offsetToLogicalPosition(getOffset());
-      setCurrentLogicalCaret(new LogicalPosition(lp.line, lp.column + myVirtualSpaceOffset, myLeansTowardsLargerOffsets));
-      myVisibleCaret = myEditor.logicalToVisualPosition(myLogicalCaret);
+      setCurrentLogicalCaret(new LogicalPosition(lp.line, lp.column + myLogicalColumnAdjustment, myLeansTowardsLargerOffsets));
+      VisualPosition visualPosition = myEditor.logicalToVisualPosition(myLogicalCaret);
+      myVisibleCaret = new VisualPosition(visualPosition.line, visualPosition.column + myVisualColumnAdjustment, visualPosition.leansRight);
       updateVisualLineInfo();
       setLastColumnNumber(myLogicalCaret.column);
       myDesiredSelectionStartColumn = myDesiredSelectionEndColumn = -1;
@@ -1552,12 +1557,16 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         setIntervalStart(newOffset);
         setIntervalEnd(newOffset);
       }
-      if (oldOffset >= e.getOffset() && oldOffset <= e.getOffset() + e.getOldLength() && e.getNewLength() == 0 &&
-          myEditor.getInlayModel().hasInlineElementAt(e.getOffset())) {
-        myLeansTowardsLargerOffsets = true;
-      }
-      else if (oldOffset == e.getOffset()) {
-        myLeansTowardsLargerOffsets = false;
+      if (oldOffset >= e.getOffset() && oldOffset <= e.getOffset() + e.getOldLength() && e.getNewLength() == 0) {
+        int inlaysToTheLeft = myEditor.getInlayModel().getInlineElementsInRange(e.getOffset(), e.getOffset()).size();
+        boolean hasInlaysToTheRight = myEditor.getInlayModel().hasInlineElementAt(e.getOffset() + e.getOldLength());
+        if (inlaysToTheLeft > 0 || hasInlaysToTheRight) {
+          myLeansTowardsLargerOffsets = !hasInlaysToTheRight;
+          myVisualColumnAdjustment = hasInlaysToTheRight ? inlaysToTheLeft : 0;
+        }
+        else if (oldOffset == e.getOffset()) {
+          myLeansTowardsLargerOffsets = false;
+        }
       }
     }
 
