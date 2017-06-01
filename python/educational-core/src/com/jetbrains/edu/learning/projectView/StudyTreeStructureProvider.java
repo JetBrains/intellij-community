@@ -12,7 +12,6 @@ import com.jetbrains.edu.coursecreator.CCUtils;
 import com.jetbrains.edu.learning.StudyTaskManager;
 import com.jetbrains.edu.learning.StudyUtils;
 import com.jetbrains.edu.learning.courseFormat.Course;
-import com.jetbrains.edu.learning.courseFormat.tasks.TaskWithSubtasks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,10 +33,7 @@ public class StudyTreeStructureProvider implements TreeStructureProvider, DumbAw
     }
 
     //TODO: hide tests in django course
-    if (!CCUtils.isCourseCreator(project) && !course.isAdaptive() &&
-        course.getLessons().size() == 1
-            && course.getLessons().get(0).getTaskList().size() == 1
-            && course.getLessons().get(0).getTaskList().get(0) instanceof TaskWithSubtasks) {
+    if (!CCUtils.isCourseCreator(project) && !course.isAdaptive() && course.isTutorial()) {
       return children;
     }
 
