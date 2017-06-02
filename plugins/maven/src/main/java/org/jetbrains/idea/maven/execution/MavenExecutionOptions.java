@@ -22,7 +22,8 @@ public class MavenExecutionOptions {
   public enum LoggingLevel {
     DEBUG("Debug", MavenServerConsole.LEVEL_DEBUG),
     INFO("Info", MavenServerConsole.LEVEL_INFO),
-    WARN("Warn", MavenServerConsole.LEVEL_WARN);
+    WARN("Warn", MavenServerConsole.LEVEL_WARN),
+    ERROR("Error", MavenServerConsole.LEVEL_ERROR);
 
     private final String myDisplayString;
     private final int myLevel;
