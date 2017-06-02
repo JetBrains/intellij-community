@@ -37,6 +37,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import javax.swing.JTree
+import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreeNode
@@ -248,6 +249,13 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
     if (group != null) {
       nodeForGroup.remove(group)
     }
+  }
+
+  fun removeAllNodes(root: DefaultMutableTreeNode, model: DefaultTreeModel) {
+    nodeData.clear()
+    nodeForGroup.clear()
+    root.removeAllChildren()
+    model.nodeStructureChanged(root)
   }
 
   @TestOnly
