@@ -193,7 +193,7 @@ class CommunityLibraryLicenses {
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
-    new LibraryLicense(name: "JGit", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0",
+    new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.5.1", license: "Apache 2.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/FasterXML/jackson"),
     new LibraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/"),

@@ -74,7 +74,7 @@ public class NullnessUtil {
     if (DfaPsiUtil.isFinalField(field)) {
       PsiExpression initializer = field.getInitializer();
       if (initializer != null) {
-        return getFieldInitializerNullness(initializer);
+        return getExpressionNullness(initializer);
       }
 
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers(field);
@@ -83,7 +83,7 @@ public class NullnessUtil {
       }
 
       for (PsiExpression expression : initializers) {
-        if (getFieldInitializerNullness(expression) == Nullness.NULLABLE) {
+        if (getExpressionNullness(expression) == Nullness.NULLABLE) {
           return Nullness.NULLABLE;
         }
       }
@@ -129,12 +129,28 @@ public class NullnessUtil {
     return result != PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES;
   }
 
-  private static Nullness getFieldInitializerNullness(@NotNull PsiExpression expression) {
+  public static Nullness getExpressionNullness(@Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression == null) return Nullness.UNKNOWN;
     if (expression.textMatches(PsiKeyword.NULL)) return Nullness.NULLABLE;
     if (expression instanceof PsiNewExpression ||
         expression instanceof PsiLiteralExpression ||
-        expression instanceof PsiPolyadicExpression) {
+        expression instanceof PsiPolyadicExpression ||
+        expression instanceof PsiFunctionalExpression ||
+        expression.getType() instanceof PsiPrimitiveType) {
       return Nullness.NOT_NULL;
+    }
+    if (expression instanceof PsiConditionalExpression) {
+      PsiExpression thenExpression = ((PsiConditionalExpression)expression).getThenExpression();
+      PsiExpression elseExpression = ((PsiConditionalExpression)expression).getElseExpression();
+      if (thenExpression == null || elseExpression == null) return Nullness.UNKNOWN;
+      Nullness left = getExpressionNullness(thenExpression);
+      if (left == Nullness.UNKNOWN) return Nullness.UNKNOWN;
+      Nullness right = getExpressionNullness(elseExpression);
+      return left == right ? left : Nullness.UNKNOWN;
+    }
+    if (expression instanceof PsiTypeCastExpression) {
+      return getExpressionNullness(((PsiTypeCastExpression)expression).getOperand());
     }
     if (expression instanceof PsiReferenceExpression) {
       PsiElement target = ((PsiReferenceExpression)expression).resolve();

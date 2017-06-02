@@ -236,6 +236,11 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals("main", assertOneElement(myProject.getModules()).getName());
   }
 
+  public void testMissingImlFile() {
+    loadProject("/jps/model-serialization/testData/missingImlFile/missingImlFile.ipr");
+    assertEmpty(myProject.getModules());
+  }
+
   private void doTestSaveLibrary(@NotNull Path libFile, String libName, JpsLibrary library) {
     Element actual = new Element("library");
     JpsLibraryTableSerializer.saveLibrary(library, actual, libName);

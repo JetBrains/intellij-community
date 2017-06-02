@@ -626,12 +626,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       return false;
     }
 
-    if(!NotInSuperCallOccurrenceFilter.INSTANCE.isOK(expr)) {
-      String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("cannot.introduce.variable.in.super.constructor.call"));
-      showErrorMessage(project, editor, message);
-      return false;
-    }
-
     final PsiFile file = anchorStatement.getContainingFile();
     LOG.assertTrue(file != null, "expr.getContainingFile() == null");
     final PsiElement nameSuggestionContext = editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());

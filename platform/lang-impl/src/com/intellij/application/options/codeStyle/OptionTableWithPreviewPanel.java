@@ -58,6 +58,7 @@ import java.util.List;
 /**
  * @author max
  */
+@SuppressWarnings("Duplicates")
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 

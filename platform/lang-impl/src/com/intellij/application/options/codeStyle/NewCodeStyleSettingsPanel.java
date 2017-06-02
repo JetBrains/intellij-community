@@ -37,7 +37,7 @@ import java.util.Set;
  * @author max
  */
 public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageCodeStylePanel.TabChangeListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel");
+  private static final Logger LOG = Logger.getInstance(NewCodeStyleSettingsPanel.class);
 
   private final Configurable myTab;
   private CodeStyleSchemesModel myModel;
@@ -47,7 +47,12 @@ public class NewCodeStyleSettingsPanel extends JPanel implements TabbedLanguageC
     myTab = tab;
     myModel = model;
     JComponent component = myTab.createComponent();
-    add(component, BorderLayout.CENTER);
+    if (component != null) {
+      add(component, BorderLayout.CENTER);
+    }
+    else {
+      LOG.warn("No component for " + tab.getDisplayName());
+    }
   }
 
   public boolean isModified() {

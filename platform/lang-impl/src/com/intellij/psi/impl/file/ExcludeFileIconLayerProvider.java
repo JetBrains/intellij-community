@@ -37,7 +37,7 @@ public class ExcludeFileIconLayerProvider implements IconLayerProvider {
     if (element instanceof PsiFile) {
       VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
       ProjectFileIndex index = ProjectFileIndex.getInstance(((PsiFile)element).getProject());
-      if (index.isExcluded(virtualFile)) {
+      if (virtualFile != null && index.isExcluded(virtualFile)) {
         //If the parent directory is also excluded it'll have a special icon (see DirectoryIconProvider), so it makes no sense to add
         // additional marks for all files under it.
         if (!index.isExcluded(virtualFile.getParent())) {

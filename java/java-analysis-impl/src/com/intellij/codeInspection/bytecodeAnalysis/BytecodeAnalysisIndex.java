@@ -53,7 +53,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   private static final ID<HMethod, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int VERSION = 4; // change when inference algorithm changes
+  private static final int VERSION = 5; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
@@ -202,10 +202,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
             EKey[] ids = component.ids;
             DataInputOutputUtil.writeINT(out, ids.length);
             for (EKey hKey : ids) {
-              out.write(hKey.method.hashed(md).myBytes);
-              int rawDirKey = hKey.negated ? -hKey.dirKey : hKey.dirKey;
-              DataInputOutputUtil.writeINT(out, rawDirKey);
-              out.writeBoolean(hKey.stable);
+              writeKey(out, hKey, md);
             }
           }
         }
@@ -213,45 +210,9 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
           Effects effects = (Effects)rhs;
           DataInputOutputUtil.writeINT(out, effects.effects.size());
           for (EffectQuantum effect : effects.effects) {
-            if (effect == EffectQuantum.TopEffectQuantum) {
-              DataInputOutputUtil.writeINT(out, -1);
-            }
-            else if (effect == EffectQuantum.ThisChangeQuantum) {
-              DataInputOutputUtil.writeINT(out, -2);
-            }
-            else if (effect instanceof EffectQuantum.CallQuantum) {
-              DataInputOutputUtil.writeINT(out, -3);
-              EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
-              out.write(callQuantum.key.method.hashed(md).myBytes);
-              DataInputOutputUtil.writeINT(out, callQuantum.key.dirKey);
-              out.writeBoolean(callQuantum.key.stable);
-              out.writeBoolean(callQuantum.isStatic);
-              DataInputOutputUtil.writeINT(out, callQuantum.data.length);
-              for (DataValue dataValue : callQuantum.data) {
-                if (dataValue == DataValue.ThisDataValue) {
-                  DataInputOutputUtil.writeINT(out, -1);
-                }
-                else if (dataValue == DataValue.LocalDataValue) {
-                  DataInputOutputUtil.writeINT(out, -2);
-                }
-                else if (dataValue == DataValue.OwnedDataValue) {
-                  DataInputOutputUtil.writeINT(out, -3);
-                }
-                else if (dataValue == DataValue.UnknownDataValue1) {
-                  DataInputOutputUtil.writeINT(out, -4);
-                }
-                else if (dataValue == DataValue.UnknownDataValue2) {
-                  DataInputOutputUtil.writeINT(out, -5);
-                }
-                else if (dataValue instanceof DataValue.ParameterDataValue) {
-                  DataInputOutputUtil.writeINT(out, ((DataValue.ParameterDataValue)dataValue).n);
-                }
-              }
-            }
-            else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
-              DataInputOutputUtil.writeINT(out, ((EffectQuantum.ParamChangeQuantum)effect).n);
-            }
+            writeEffect(out, effect, md);
           }
+          writeDataValue(out, effects.returnValue, md);
         }
       }
     }
@@ -267,50 +228,10 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
           Set<EffectQuantum> effects = new HashSet<>();
           int effectsSize = DataInputOutputUtil.readINT(in);
           for (int i = 0; i < effectsSize; i++) {
-            int effectMask = DataInputOutputUtil.readINT(in);
-            if (effectMask == -1) {
-              effects.add(EffectQuantum.TopEffectQuantum);
-            }
-            else if (effectMask == -2) {
-              effects.add(EffectQuantum.ThisChangeQuantum);
-            }
-            else if (effectMask == -3){
-              byte[] bytes = new byte[HMethod.HASH_SIZE];
-              in.readFully(bytes);
-              int rawDirKey = DataInputOutputUtil.readINT(in);
-              boolean isStable = in.readBoolean();
-              EKey key = new EKey(new HMethod(bytes), Math.abs(rawDirKey), isStable, false);
-              boolean isStatic = in.readBoolean();
-              int dataLength = DataInputOutputUtil.readINT(in);
-              DataValue[] data = new DataValue[dataLength];
-              for (int di = 0; di < dataLength; di++) {
-                int dataI = DataInputOutputUtil.readINT(in);
-                if (dataI == -1) {
-                  data[di] = DataValue.ThisDataValue;
-                }
-                else if (dataI == -2) {
-                  data[di] = DataValue.LocalDataValue;
-                }
-                else if (dataI == -3) {
-                  data[di] = DataValue.OwnedDataValue;
-                }
-                else if (dataI == -4) {
-                  data[di] = DataValue.UnknownDataValue1;
-                }
-                else if (dataI == -5) {
-                  data[di] = DataValue.UnknownDataValue2;
-                }
-                else {
-                  data[di] = new DataValue.ParameterDataValue(dataI);
-                }
-              }
-              effects.add(new EffectQuantum.CallQuantum(key, data, isStatic));
-            }
-            else {
-              effects.add(new EffectQuantum.ParamChangeQuantum(effectMask));
-            }
+            effects.add(readEffect(in));
           }
-          results.add(new DirectionResultPair(directionKey, new Effects(effects)));
+          DataValue returnValue = readDataValue(in);
+          results.add(new DirectionResultPair(directionKey, new Effects(returnValue, effects)));
         }
         else {
           boolean isFinal = in.readBoolean(); // flag
@@ -329,10 +250,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
               int componentSize = DataInputOutputUtil.readINT(in);
               EKey[] ids = new EKey[componentSize];
               for (int j = 0; j < componentSize; j++) {
-                byte[] bytes = new byte[HMethod.HASH_SIZE];
-                in.readFully(bytes);
-                int rawDirKey = DataInputOutputUtil.readINT(in);
-                ids[j] = new EKey(new HMethod(bytes), Direction.fromInt(Math.abs(rawDirKey)), in.readBoolean(), rawDirKey < 0);
+                ids[j] = readKey(in);
               }
               components[i] = new Component(value, ids);
             }
@@ -341,6 +259,115 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
         }
       }
       return new Equations(results, stable);
+    }
+
+    @NotNull
+    private static EKey readKey(@NotNull DataInput in) throws IOException {
+      byte[] bytes = new byte[HMethod.HASH_SIZE];
+      in.readFully(bytes);
+      int rawDirKey = DataInputOutputUtil.readINT(in);
+      return new EKey(new HMethod(bytes), Direction.fromInt(Math.abs(rawDirKey)), in.readBoolean(), rawDirKey < 0);
+    }
+
+    private static void writeKey(@NotNull DataOutput out, EKey key, MessageDigest md) throws IOException {
+      out.write(key.method.hashed(md).myBytes);
+      int rawDirKey = key.negated ? -key.dirKey : key.dirKey;
+      DataInputOutputUtil.writeINT(out, rawDirKey);
+      out.writeBoolean(key.stable);
+    }
+
+    private static void writeEffect(@NotNull DataOutput out, EffectQuantum effect, MessageDigest md) throws IOException {
+      if (effect == EffectQuantum.TopEffectQuantum) {
+        DataInputOutputUtil.writeINT(out, -1);
+      }
+      else if (effect == EffectQuantum.ThisChangeQuantum) {
+        DataInputOutputUtil.writeINT(out, -2);
+      }
+      else if (effect instanceof EffectQuantum.CallQuantum) {
+        DataInputOutputUtil.writeINT(out, -3);
+        EffectQuantum.CallQuantum callQuantum = (EffectQuantum.CallQuantum)effect;
+        writeKey(out, callQuantum.key, md);
+        out.writeBoolean(callQuantum.isStatic);
+        DataInputOutputUtil.writeINT(out, callQuantum.data.length);
+        for (DataValue dataValue : callQuantum.data) {
+          writeDataValue(out, dataValue, md);
+        }
+      }
+      else if (effect instanceof EffectQuantum.ReturnChangeQuantum) {
+        DataInputOutputUtil.writeINT(out, -4);
+        writeKey(out, ((EffectQuantum.ReturnChangeQuantum)effect).key, md);
+      }
+      else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
+        DataInputOutputUtil.writeINT(out, ((EffectQuantum.ParamChangeQuantum)effect).n);
+      }
+    }
+
+    private static EffectQuantum readEffect(@NotNull DataInput in) throws IOException {
+      int effectMask = DataInputOutputUtil.readINT(in);
+      switch (effectMask) {
+        case -1:
+          return EffectQuantum.TopEffectQuantum;
+        case -2:
+          return EffectQuantum.ThisChangeQuantum;
+        case -3:
+          EKey key = readKey(in);
+          boolean isStatic = in.readBoolean();
+          int dataLength = DataInputOutputUtil.readINT(in);
+          DataValue[] data = new DataValue[dataLength];
+          for (int di = 0; di < dataLength; di++) {
+            data[di] = readDataValue(in);
+          }
+          return new EffectQuantum.CallQuantum(key, data, isStatic);
+        case -4:
+          return new EffectQuantum.ReturnChangeQuantum(readKey(in));
+        default:
+          return new EffectQuantum.ParamChangeQuantum(effectMask);
+      }
+    }
+
+    private static void writeDataValue(@NotNull DataOutput out, DataValue dataValue, MessageDigest md) throws IOException {
+      if (dataValue == DataValue.ThisDataValue) {
+        DataInputOutputUtil.writeINT(out, -1);
+      }
+      else if (dataValue == DataValue.LocalDataValue) {
+        DataInputOutputUtil.writeINT(out, -2);
+      }
+      else if (dataValue == DataValue.OwnedDataValue) {
+        DataInputOutputUtil.writeINT(out, -3);
+      }
+      else if (dataValue == DataValue.UnknownDataValue1) {
+        DataInputOutputUtil.writeINT(out, -4);
+      }
+      else if (dataValue == DataValue.UnknownDataValue2) {
+        DataInputOutputUtil.writeINT(out, -5);
+      }
+      else if (dataValue instanceof DataValue.ReturnDataValue) {
+        DataInputOutputUtil.writeINT(out, -6);
+        writeKey(out, ((DataValue.ReturnDataValue)dataValue).key, md);
+      }
+      else if (dataValue instanceof DataValue.ParameterDataValue) {
+        DataInputOutputUtil.writeINT(out, ((DataValue.ParameterDataValue)dataValue).n);
+      }
+    }
+
+    private static DataValue readDataValue(@NotNull DataInput in) throws IOException {
+      int dataI = DataInputOutputUtil.readINT(in);
+      switch (dataI) {
+        case -1:
+          return DataValue.ThisDataValue;
+        case -2:
+          return DataValue.LocalDataValue;
+        case -3:
+          return DataValue.OwnedDataValue;
+        case -4:
+          return DataValue.UnknownDataValue1;
+        case -5:
+          return DataValue.UnknownDataValue2;
+        case -6:
+          return new DataValue.ReturnDataValue(readKey(in));
+        default:
+          return new DataValue.ParameterDataValue(dataI);
+      }
     }
   }
 }

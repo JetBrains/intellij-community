@@ -115,6 +115,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     updatePreview(true);
   }
 
+  @SuppressWarnings("SameParameterValue")
   protected void setShouldUpdatePreview(boolean shouldUpdatePreview) {
     myShouldUpdatePreview = shouldUpdatePreview;
   }
@@ -326,7 +327,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private void updatePreviewHighlighter(final EditorEx editor) {
     EditorColorsScheme scheme = editor.getColorsScheme();
     editor.getSettings().setCaretRowShown(false);
-    editor.setHighlighter(createHighlighter(scheme));
+    EditorHighlighter highlighter = createHighlighter(scheme);
+    if (highlighter != null) {
+      editor.setHighlighter(highlighter);
+    }
+    else {
+      LOG.warn("No highlighter for " + getDefaultLanguage());
+    }
   }
 
   @Nullable
@@ -356,7 +363,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       int ourWrapping = ourWrappings[i];
       if (ourWrapping == value) return i;
     }
-    LOG.assertTrue(false);
+    LOG.error("Invalid wrapping option index: " + value);
     return 0;
   }
 
@@ -375,6 +382,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   protected abstract void resetImpl(final CodeStyleSettings settings);
 
+  @SuppressWarnings("unchecked")
   protected static void fillWrappingCombo(final JComboBox wrapCombo) {
     wrapCombo.addItem(ApplicationBundle.message("wrapping.do.not.wrap"));
     wrapCombo.addItem(ApplicationBundle.message("wrapping.wrap.if.long"));
@@ -583,7 +591,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   public void setupCopyFromMenu(JPopupMenu copyMenu) {
     copyMenu.removeAll();
   }
-  
+
+  @Deprecated
   public boolean isCopyFromMenuAvailable() {
     return false;
   }

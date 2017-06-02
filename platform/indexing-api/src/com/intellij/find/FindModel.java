@@ -45,17 +45,18 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
+  @FunctionalInterface
   public interface FindModelObserver {
     void findModelChanged(FindModel findModel);
   }
 
   private final List<FindModelObserver> myObservers = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  public void addObserver(FindModelObserver observer) {
+  public void addObserver(@NotNull FindModelObserver observer) {
     myObservers.add(observer);
   }
 
-  public void removeObserver(FindModelObserver observer) {
+  public void removeObserver(@NotNull FindModelObserver observer) {
     myObservers.remove(observer);
   }
 
@@ -67,32 +68,32 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
 
   private String myStringToFind = "";
   private String myStringToReplace = "";
-  private boolean isSearchHighlighters = false;
-  private boolean isReplaceState = false;
-  private boolean isWholeWordsOnly = false;
+  private boolean isSearchHighlighters;
+  private boolean isReplaceState;
+  private boolean isWholeWordsOnly;
   private SearchContext searchContext = SearchContext.ANY;
   private boolean isFromCursor = true;
   private boolean isForward = true;
   private boolean isGlobal = true;
-  private boolean isRegularExpressions = false;
-  private boolean isCaseSensitive = false;
-  private boolean isMultipleFiles = false;
+  private boolean isRegularExpressions;
+  private boolean isCaseSensitive;
+  private boolean isMultipleFiles;
   private boolean isPromptOnReplace = true;
-  private boolean isReplaceAll = false;
-  private boolean isOpenNewTab = false;
-  private boolean isOpenInNewTabEnabled = false;
-  private boolean isOpenNewTabVisible = false;
+  private boolean isReplaceAll;
+  private boolean isOpenNewTab;
+  private boolean isOpenInNewTabEnabled;
+  private boolean isOpenNewTabVisible;
   private boolean isProjectScope = true;
-  private boolean isFindAll = false;
-  private boolean isFindAllEnabled = false;
+  private boolean isFindAll;
+  private boolean isFindAllEnabled;
   private String moduleName;
-  private String directoryName = null;
+  private String directoryName;
   private boolean isWithSubdirectories = true;
   private String fileFilter;
   private String customScopeName;
   private SearchScope customScope;
-  private boolean isCustomScope = false;
-  private boolean isMultiline = false;
+  private boolean isCustomScope;
+  private boolean isMultiline;
   private boolean mySearchInProjectFiles;
 
   public boolean isMultiline() {
@@ -131,7 +132,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
-  private boolean isPreserveCase = false;
+  private boolean isPreserveCase;
 
   /**
    * Copies all the settings from the specified model.

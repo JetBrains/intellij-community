@@ -54,6 +54,8 @@ public class UnusedReturnValueQuickFixTest extends LightCodeInsightFixtureTestCa
   }
 
   public void testSideEffects() { doTest(); }
+  public void testSideEffectsComplex() { doTest(); }
+  public void testSideEffectsComplex2() { doTest(); }
   public void testRedundantReturn() { doTest(); }
   public void testNoChangeForImplicitRead() {
     final String name = getTestName(false);

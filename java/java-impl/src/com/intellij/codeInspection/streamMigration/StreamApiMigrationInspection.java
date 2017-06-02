@@ -26,7 +26,9 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -95,7 +97,10 @@ public class StreamApiMigrationInspection extends BaseJavaBatchLocalInspectionTo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    PsiFile file = holder.getFile();
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (!PsiUtil.isLanguageLevel8OrHigher(file) || virtualFile == null ||
+        !FileIndexFacade.getInstance(holder.getProject()).isInSourceContent(virtualFile)) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new StreamApiMigrationVisitor(holder, isOnTheFly);

@@ -568,7 +568,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     alarm.cancelAllRequests()
     resetHappened.set(false)
 
-    if (SystemInfo.isWindows) TimeoutUtil.sleep(250)
+    if (SystemInfo.isWindows || SystemInfo.isMac) TimeoutUtil.sleep(250)
     action()
     LOG.debug("** action performed")
 

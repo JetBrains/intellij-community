@@ -332,12 +332,12 @@ public class BytecodeAnalysisConverter {
     return contractClauses;
   }
 
-  public static void addEffectAnnotations(Map<EKey, Set<EffectQuantum>> puritySolutions,
+  public static void addEffectAnnotations(Map<EKey, Effects> puritySolutions,
                                           MethodAnnotations result,
                                           EKey methodKey,
                                           boolean constructor) {
-    for (Map.Entry<EKey, Set<EffectQuantum>> entry : puritySolutions.entrySet()) {
-      Set<EffectQuantum> effects = entry.getValue();
+    for (Map.Entry<EKey, Effects> entry : puritySolutions.entrySet()) {
+      Set<EffectQuantum> effects = entry.getValue().effects;
       EKey key = entry.getKey().mkStable();
       EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,8 +146,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
         refreshAllCachesAsync(false, true);
         refreshIncomingChangesAsync();
         myTaskQueue.run(() -> {
-          final List<ChangesCacheFile> files = myCachesHolder.getAllCaches();
-          for (ChangesCacheFile file : files) {
+          for (ChangesCacheFile file : myCachesHolder.getAllCaches()) {
             final RepositoryLocation location = file.getLocation();
             fireChangesLoaded(location, Collections.emptyList());
           }
@@ -399,13 +398,13 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       try {
         if (changesCacheFile.isEmpty() == emptiness) {
           resultRef.set(true);
-          return true;
+          return false;
         }
       }
       catch (IOException e) {
         LOG.info(e);
       }
-      return false;
+      return true;
     });
     return resultRef.get();
   }
@@ -886,7 +885,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
 
   public void refreshAllCachesAsync(final boolean initIfEmpty, final boolean inBackground) {
     final Runnable task = () -> {
-      final List<ChangesCacheFile> files = myCachesHolder.getAllCaches();
+      Collection<ChangesCacheFile> files = myCachesHolder.getAllCaches();
       final RefreshResultConsumer notifyConsumer = new RefreshResultConsumer() {
         private VcsException myError = null;
         private int myCount = 0;
@@ -1059,8 +1058,7 @@ public class CommittedChangesCache implements PersistentStateComponent<Committed
       final CommittedChangesCache cache = myCache;
       if (cache == null) return;
       cache.refreshAllCachesAsync(false, true);
-      final List<ChangesCacheFile> list = cache.getCachesHolder().getAllCaches();
-      for(ChangesCacheFile file: list) {
+      for(ChangesCacheFile file: cache.getCachesHolder().getAllCaches()) {
         if (file.getVcs().isVcsBackgroundOperationsAllowed(file.getRootPath().getVirtualFile())) {
           if (file.getProvider().refreshIncomingWithCommitted()) {
             cache.refreshIncomingChangesAsync();

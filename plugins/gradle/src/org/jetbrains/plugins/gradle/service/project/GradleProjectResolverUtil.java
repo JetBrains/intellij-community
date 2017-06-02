@@ -302,7 +302,19 @@ public class GradleProjectResolverUtil {
                                             @NotNull final File gradleHomeDir,
                                             @NotNull final GradleVersion gradleVersion) {
     if (libFile == null || !libFile.getName().startsWith("gradle-")) return;
-    if (!FileUtil.isAncestor(gradleHomeDir, libFile, true)) return;
+    if (!FileUtil.isAncestor(gradleHomeDir, libFile, true)) {
+      File libFileParent = libFile.getParentFile();
+      if (libFileParent == null || !StringUtil.equals("generated-gradle-jars", libFileParent.getName())) return;
+      if (("gradle-api-" + gradleVersion.getVersion() + ".jar").equals(libFile.getName())) {
+        File gradleSrc = new File(gradleHomeDir, "src");
+        File[] gradleSrcRoots = gradleSrc.listFiles();
+        if (gradleSrcRoots == null) return;
+        for (File srcRoot : gradleSrcRoots) {
+          library.addPath(LibraryPathType.SOURCE, srcRoot.getAbsolutePath());
+        }
+      }
+      return;
+    }
 
     File libOrPluginsFile = libFile.getParentFile();
     if (libOrPluginsFile != null && ("plugins".equals(libOrPluginsFile.getName()))) {

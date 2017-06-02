@@ -86,16 +86,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
           TreePath newPath = getPathForLocation(p.x, p.y);
           if (newPath != null && !newPath.equals(rollOverPath)) {
             TreeCellRenderer renderer = getCellRenderer();
-            TreeNode node = (TreeNode)newPath.getLastPathComponent();
-            JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
-                                                                             isPathSelected(newPath),
-                                                                             isExpanded(newPath),
-                                                                             getModel().isLeaf(node),
-                                                                             getRowForPath(newPath), hasFocus());
+            if (newPath.getLastPathComponent() instanceof TreeNode) {
+              TreeNode node = (TreeNode)newPath.getLastPathComponent();
+              JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
+                                                                                 isPathSelected(newPath),
+                                                                                 isExpanded(newPath),
+                                                                                 getModel().isLeaf(node),
+                                                                                 getRowForPath(newPath), hasFocus());
 
-            c.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, c instanceof JCheckBox ? getPathBounds(newPath) : node);
-            rollOverPath = newPath;
-            UIUtil.repaintViewport(Tree.this);
+              c.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, c instanceof JCheckBox ? getPathBounds(newPath) : node);
+              rollOverPath = newPath;
+              UIUtil.repaintViewport(Tree.this);
+            }
           }
         }
       });
@@ -730,16 +732,18 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     @Override public void mouseExited(MouseEvent e) {
       if (UIUtil.isUnderWin10LookAndFeel() && rollOverPath != null) {
         TreeCellRenderer renderer = getCellRenderer();
-        TreeNode node = (TreeNode)rollOverPath.getLastPathComponent();
-        JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
-                                                                         isPathSelected(rollOverPath),
-                                                                         isExpanded(rollOverPath),
-                                                                         getModel().isLeaf(node),
-                                                                         getRowForPath(rollOverPath), hasFocus());
+        if (rollOverPath.getLastPathComponent() instanceof TreeNode) {
+          TreeNode node = (TreeNode)rollOverPath.getLastPathComponent();
+          JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
+                                                                             isPathSelected(rollOverPath),
+                                                                             isExpanded(rollOverPath),
+                                                                             getModel().isLeaf(node),
+                                                                             getRowForPath(rollOverPath), hasFocus());
 
-        c.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, null);
-        rollOverPath = null;
-        UIUtil.repaintViewport(Tree.this);
+          c.putClientProperty(UIUtil.CHECKBOX_ROLLOVER_PROPERTY, null);
+          rollOverPath = null;
+          UIUtil.repaintViewport(Tree.this);
+        }
       }
     }
 
@@ -748,19 +752,19 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         Point p = e.getPoint();
         TreePath path = getPathForLocation(p.x, p.y);
         if (path != null) {
-          TreeCellRenderer renderer = getCellRenderer();
-          TreeNode node = (TreeNode)path.getLastPathComponent();
-          JComponent c = (JComponent)renderer.getTreeCellRendererComponent(Tree.this, node,
-                                                                           isPathSelected(path), isExpanded(path),
-                                                                           getModel().isLeaf(node),
-                                                                           getRowForPath(path), hasFocus());
-          if (pressed) {
-            c.putClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY, c instanceof JCheckBox ? getPathBounds(path) : node);
-          } else {
-            c.putClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY, null);
+          if (path.getLastPathComponent() instanceof TreeNode) {
+            TreeNode node = (TreeNode)path.getLastPathComponent();
+            JComponent c = (JComponent)getCellRenderer().getTreeCellRendererComponent(Tree.this, node,
+                                                                             isPathSelected(path), isExpanded(path),
+                                                                             getModel().isLeaf(node),
+                                                                             getRowForPath(path), hasFocus());
+            if (pressed) {
+              c.putClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY, c instanceof JCheckBox ? getPathBounds(path) : node);
+            } else {
+              c.putClientProperty(UIUtil.CHECKBOX_PRESSED_PROPERTY, null);
+            }
+            UIUtil.repaintViewport(Tree.this);
           }
-
-          UIUtil.repaintViewport(Tree.this);
         }
       }
     }

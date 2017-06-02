@@ -78,9 +78,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-import static com.intellij.find.impl.FindInProjectUtil.buildStringToFindForIndicesFromRegExp;
-import static com.intellij.find.impl.FindInProjectUtil.createFileMaskCondition;
-
 /**
  * @author MYakovlev
  * @since Oct 17, 2002
@@ -574,7 +571,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testLocalScopeSearchPerformance() throws Exception {
     final int fileCount = 3000;
-    final int lineCount = 500;
+    final int lineCount = 5000;
     TempDirTestFixture fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
 
@@ -894,16 +891,16 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   }
 
   public void testRegexReplacementStringForIndices() {
-    assertEquals("public static   MyType my   = 1;", buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
-    assertEquals(" Foo ", buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
-    assertEquals("", buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
-    assertEquals(" Exit Foo Bar Baz", buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
-    assertEquals(" Foo Bar Baz Exit", buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
-    assertEquals(" Foo Bar BazCooBoo", buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
+    assertEquals("public static   MyType my   = 1;", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("public static (@A)? MyType my\\w+?  = 1;", myProject));
+    assertEquals(" Foo ", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\bFoo\\b", myProject));
+    assertEquals("", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("foo|bar", myProject));
+    assertEquals(" Exit Foo Bar Baz", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\nExit\\tFoo\\rBar\\fBaz", myProject));
+    assertEquals(" Foo Bar Baz Exit", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\012Foo\\u000ABar\\x0ABaz\\aExit", myProject));
+    assertEquals(" Foo Bar BazCooBoo", FindInProjectUtil.buildStringToFindForIndicesFromRegExp("\\1Foo\\sBar\\DBaz\\QCoo\\E\\QBoo", myProject));
   }
 
   public void testCreateFileMaskCondition() {
-    Condition<CharSequence> condition = createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
+    Condition<CharSequence> condition = FindInProjectUtil.createFileMaskCondition("*.java, *.js, !Foo.java, !*.min.js");
     assertTrue(condition.value("Bar.java"));
     assertTrue(!condition.value("Bar.javac"));
     assertTrue(!condition.value("Foo.java"));
@@ -911,7 +908,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertTrue(!condition.value("Foo.min.js"));
     assertTrue(condition.value("Foo.js"));
 
-    condition = createFileMaskCondition("!Foo.java");
+    condition = FindInProjectUtil.createFileMaskCondition("!Foo.java");
     assertTrue(condition.value("Bar.java"));
     assertTrue(!condition.value("Foo.java"));
     assertTrue(condition.value("Foo.js"));

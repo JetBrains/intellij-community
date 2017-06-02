@@ -74,6 +74,14 @@ String bar() { return "z"; }
     assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? null : "a"; }; ')) == NULLABLE
   }
 
+  void "test ternary branch notnull"() {
+    assert inferNullity(parse('String bar() { return equals(2) ? "a" : equals(3) ? "b" : "c"; }; ')) == NOT_NULL
+  }
+
+  void "test type cast notnull"() {
+    assert inferNullity(parse('String foo() { return (String)bar(); }; Object bar() { return "a"; }; ')) == NOT_NULL
+  }
+
   void "test string concatenation"() {
     assert inferNullity(parse('String bar(String s1, String s2) { return s1 + s2; }; ')) == NOT_NULL
   }

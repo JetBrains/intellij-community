@@ -109,9 +109,10 @@ public class OptionalUtil {
   public static String generateOptionalUnwrap(String qualifier, PsiVariable var,
                                                PsiExpression trueExpression, PsiExpression falseExpression,
                                                PsiType targetType, boolean useOrElseGet) {
+    PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
     if (!ExpressionUtils.isReferenceTo(trueExpression, var)) {
-      if (trueExpression instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
-        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)trueExpression;
+      if (stripped instanceof PsiTypeCastExpression && ExpressionUtils.isNullLiteral(falseExpression)) {
+        PsiTypeCastExpression castExpression = (PsiTypeCastExpression)stripped;
         PsiTypeElement castType = castExpression.getCastType();
         // pull cast outside to avoid the .map() step
         if (castType != null && ExpressionUtils.isReferenceTo(castExpression.getOperand(), var)) {
@@ -127,8 +128,8 @@ public class OptionalUtil {
       if (ExpressionUtils.isLiteral(falseExpression, Boolean.TRUE) && ExpressionUtils.isLiteral(trueExpression, Boolean.FALSE)) {
         return "!" + qualifier + ".isPresent()";
       }
-      if (trueExpression instanceof PsiConditionalExpression) {
-        PsiConditionalExpression condition = (PsiConditionalExpression)trueExpression;
+      if (stripped instanceof PsiConditionalExpression) {
+        PsiConditionalExpression condition = (PsiConditionalExpression)stripped;
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
         if (elseExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
@@ -152,8 +153,7 @@ public class OptionalUtil {
         suffix = ".or(() -> " + falseExpression.getText() + ")";
       }
       if (suffix != null) {
-        PsiMethodCallExpression mappedOptional =
-          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(trueExpression), PsiMethodCallExpression.class);
+        PsiMethodCallExpression mappedOptional = ObjectUtils.tryCast(stripped, PsiMethodCallExpression.class);
         // simplify "qualifier.map(x -> Optional.of(x)).orElse(Optional.empty())" to "qualifier"
         if (OPTIONAL_OF.test(mappedOptional)) {
           PsiExpression arg = mappedOptional.getArgumentList().getExpressions()[0];
@@ -169,8 +169,7 @@ public class OptionalUtil {
       if (java9 && StreamApiUtil.isNullOrEmptyStream(falseExpression) && !ExpressionUtils.isNullLiteral(falseExpression)) {
         PsiType elementType = StreamApiUtil.getStreamElementType(targetType);
         if (elementType != null) {
-          PsiMethodCallExpression mappedStream =
-            ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(trueExpression), PsiMethodCallExpression.class);
+          PsiMethodCallExpression mappedStream = ObjectUtils.tryCast(stripped, PsiMethodCallExpression.class);
           if (mappedStream != null && "of".equals(mappedStream.getMethodExpression().getReferenceName())) {
             PsiExpression[] args = mappedStream.getArgumentList().getExpressions();
             if (args.length == 1) {

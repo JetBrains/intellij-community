@@ -21,7 +21,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AbstractIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory
-import com.intellij.codeInsight.intention.NewCallableMemberInfo
+import com.intellij.codeInsight.intention.MethodInsertionInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -39,15 +39,14 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
     return ModifierFix(declaration.modifierList, modifier, shouldPresent, false)
   }
 
-  override fun createAddCallableMemberActions(info: NewCallableMemberInfo): List<IntentionAction> {
-    return when (info.kind) {
-      NewCallableMemberInfo.CallableKind.FUNCTION ->
-        with(info) {
-          createAddMethodAction(containingClass, name!!, modifiers.joinToString(" "), returnType!!, parameters)
-            ?.let { listOf(it) } ?: emptyList()
-        }
+  override fun createAddCallableMemberActions(info: MethodInsertionInfo): List<IntentionAction> {
+    return when (info) {
+      is MethodInsertionInfo.Method -> with(info) {
+        createAddMethodAction(containingClass, name, modifiers.joinToString(" "), returnType, parameters)
+          ?.let { listOf(it) } ?: emptyList()
+      }
 
-      NewCallableMemberInfo.CallableKind.CONSTRUCTOR ->
+      is MethodInsertionInfo.Constructor ->
         listOf(AddConstructorFix(info.containingClass.psi, info.parameters.map { it.psi }))
     }
   }
@@ -81,22 +80,22 @@ class JavaCommonIntentionActionsFactory : JvmCommonIntentionActionsFactory() {
                                             @PsiModifier.ModifierConstant visibilityModifier: String,
                                             propertyType: PsiType,
                                             setterRequired: Boolean,
-                                            getterRequired: Boolean): Array<IntentionAction> {
+                                            getterRequired: Boolean): List<IntentionAction> {
     if (getterRequired && setterRequired)
-      return arrayOf<IntentionAction>(
+      return listOf<IntentionAction>(
         CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
                                   true),
         CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
                                   false))
     if (getterRequired || setterRequired)
-      return arrayOf<IntentionAction>(
+      return listOf<IntentionAction>(
         CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
                                   true),
         CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired,
                                   false),
         CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, true, true, true))
 
-    return arrayOf<IntentionAction>(
+    return listOf<IntentionAction>(
       CreateJavaBeanPropertyFix(uClass.psi, propertyName, propertyType, getterRequired, setterRequired, true))
   }
 

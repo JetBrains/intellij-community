@@ -17,7 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
@@ -26,6 +26,8 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Interpreter;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Produces equations for inference of @Contract(pure=true) annotations.
@@ -33,41 +35,43 @@ import java.util.*;
  * Algorithm: https://github.com/ilya-klyuchnikov/faba/blob/ef1c15b4758517652e939f67099bbec0260e9e68/notes/purity.md
  */
 public class PurityAnalysis {
-  static final Set<EffectQuantum> topEffect = Collections.singleton(EffectQuantum.TopEffectQuantum);
-  static final Set<EffectQuantum> topHEffect = Collections.singleton(EffectQuantum.TopEffectQuantum);
-
   static final int UN_ANALYZABLE_FLAG = Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE | Opcodes.ACC_INTERFACE;
 
-  @NotNull
+  /**
+   * @param method a method descriptor
+   * @param methodNode an ASM MethodNode
+   * @param stable whether a method is stable (e.g. final or declared in final class)
+   * @return a purity equation or null for top result (either impure or unknown, impurity assumed)
+   */
+  @Nullable
   public static Equation analyze(Method method, MethodNode methodNode, boolean stable) {
     EKey key = new EKey(method, Direction.Pure, stable);
-    Set<EffectQuantum> hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
+    Effects hardCodedSolution = HardCodedPurity.getInstance().getHardCodedSolution(method);
     if (hardCodedSolution != null) {
-      return new Equation(key, new Effects(hardCodedSolution));
+      return new Equation(key, hardCodedSolution);
     }
 
-    if ((methodNode.access & UN_ANALYZABLE_FLAG) != 0) {
-      return new Equation(key, new Effects(topEffect));
-    }
+    if ((methodNode.access & UN_ANALYZABLE_FLAG) != 0) return null;
 
     DataInterpreter dataInterpreter = new DataInterpreter(methodNode);
     try {
       new Analyzer<>(dataInterpreter).analyze("this", methodNode);
     }
     catch (AnalyzerException e) {
-      return new Equation(key, new Effects(topEffect));
+      return null;
     }
     EffectQuantum[] quanta = dataInterpreter.effects;
+    DataValue returnValue = dataInterpreter.returnValue == null ? DataValue.UnknownDataValue1 : dataInterpreter.returnValue;
     Set<EffectQuantum> effects = new HashSet<>();
     for (EffectQuantum effectQuantum : quanta) {
       if (effectQuantum != null) {
         if (effectQuantum == EffectQuantum.TopEffectQuantum) {
-          return new Equation(key, new Effects(topEffect));
+          return returnValue == DataValue.UnknownDataValue1 ? null : new Equation(key, new Effects(returnValue, PuritySolver.TOP_EFFECTS));
         }
         effects.add(effectQuantum);
       }
     }
-    return new Equation(key, new Effects(effects));
+    return new Equation(key, new Effects(returnValue, effects));
   }
 }
 
@@ -82,6 +86,10 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
   @Override
   public final int hashCode() {
     return myHash;
+  }
+
+  Stream<EKey> dependencies() {
+    return Stream.empty();
   }
 
   static final DataValue ThisDataValue = new DataValue(-1) {
@@ -124,13 +132,43 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       ParameterDataValue that = (ParameterDataValue)o;
-      if (n != that.n) return false;
-      return true;
+      return n == that.n;
     }
 
     @Override
     public String toString() {
       return "DataValue: arg#" + n;
+    }
+  }
+  static class ReturnDataValue extends DataValue {
+    final EKey key;
+
+    ReturnDataValue(EKey key) {
+      super(key.hashCode());
+      this.key = key;
+    }
+
+    @Override
+    public int getSize() {
+      return 1;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      ReturnDataValue that = (ReturnDataValue)o;
+      return key.equals(that.key);
+    }
+
+    @Override
+    Stream<EKey> dependencies() {
+      return Stream.of(key);
+    }
+
+    @Override
+    public String toString() {
+      return "Return of: " + key;
     }
   }
   static final DataValue OwnedDataValue = new DataValue(-3) {
@@ -175,6 +213,10 @@ abstract class EffectQuantum {
     myHash = hash;
   }
 
+  Stream<EKey> dependencies() {
+    return Stream.empty();
+  }
+
   @Override
   public final int hashCode() {
     return myHash;
@@ -192,7 +234,32 @@ abstract class EffectQuantum {
       return "Changes this";
     }
   };
-  static class ParamChangeQuantum extends EffectQuantum {
+
+  static final class ReturnChangeQuantum extends EffectQuantum {
+    final EKey key;
+    public ReturnChangeQuantum(EKey key) {
+      super(key.hashCode());
+      this.key = key;
+    }
+
+    @Override
+    Stream<EKey> dependencies() {
+      return Stream.of(key);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      return o != null && getClass() == o.getClass() && key == ((ReturnChangeQuantum)o).key;
+    }
+
+    @Override
+    public String toString() {
+      return "Changes return value of " + key;
+    }
+  }
+
+  static final class ParamChangeQuantum extends EffectQuantum {
     final int n;
     public ParamChangeQuantum(int n) {
       super(n);
@@ -202,13 +269,7 @@ abstract class EffectQuantum {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      ParamChangeQuantum that = (ParamChangeQuantum)o;
-
-      if (n != that.n) return false;
-
-      return true;
+      return o != null && getClass() == o.getClass() && n == ((ParamChangeQuantum)o).n;
     }
 
     @Override
@@ -216,7 +277,8 @@ abstract class EffectQuantum {
       return "Changes param#" + n;
     }
   }
-  static class CallQuantum extends EffectQuantum {
+
+  static final class CallQuantum extends EffectQuantum {
     final EKey key;
     final DataValue[] data;
     final boolean isStatic;
@@ -236,10 +298,13 @@ abstract class EffectQuantum {
 
       if (isStatic != that.isStatic) return false;
       if (!key.equals(that.key)) return false;
-      // Probably incorrect - comparing Object[] arrays with Arrays.equals
       if (!Arrays.equals(data, that.data)) return false;
-
       return true;
+    }
+
+    @Override
+    Stream<EKey> dependencies() {
+      return Stream.concat(Stream.of(key), Stream.of(data).flatMap(DataValue::dependencies));
     }
 
     @Override
@@ -257,6 +322,7 @@ class DataInterpreter extends Interpreter<DataValue> {
   final int rangeEnd;
   final int arity;
   final EffectQuantum[] effects;
+  DataValue returnValue = null;
 
   protected DataInterpreter(MethodNode methodNode) {
     super(Opcodes.API_VERSION);
@@ -337,22 +403,30 @@ class DataInterpreter extends Interpreter<DataValue> {
       case Opcodes.LXOR:
         return DataValue.UnknownDataValue2;
       case Opcodes.PUTFIELD:
-        final EffectQuantum effectQuantum;
-        if (value1 == DataValue.ThisDataValue || value1 == DataValue.OwnedDataValue) {
-          effectQuantum = EffectQuantum.ThisChangeQuantum;
-        } else if (value1 == DataValue.LocalDataValue) {
-          effectQuantum = null;
-        } else if (value1 instanceof DataValue.ParameterDataValue) {
-          effectQuantum = new EffectQuantum.ParamChangeQuantum(((DataValue.ParameterDataValue)value1).n);
-        } else {
-          effectQuantum = EffectQuantum.TopEffectQuantum;
-        }
+        final EffectQuantum effectQuantum = getChangeQuantum(value1);
         int insnIndex = methodNode.instructions.indexOf(insn);
         effects[insnIndex] = effectQuantum;
         return DataValue.UnknownDataValue1;
       default:
         return DataValue.UnknownDataValue1;
     }
+  }
+
+  @Nullable
+  private static EffectQuantum getChangeQuantum(DataValue value) {
+    if (value == DataValue.ThisDataValue || value == DataValue.OwnedDataValue) {
+      return EffectQuantum.ThisChangeQuantum;
+    }
+    if (value == DataValue.LocalDataValue) {
+      return null;
+    }
+    if (value instanceof DataValue.ParameterDataValue) {
+      return new EffectQuantum.ParamChangeQuantum(((DataValue.ParameterDataValue)value).n);
+    }
+    if (value instanceof DataValue.ReturnDataValue) {
+      return new EffectQuantum.ReturnChangeQuantum(((DataValue.ReturnDataValue)value).key);
+    }
+    return EffectQuantum.TopEffectQuantum;
   }
 
   @Override
@@ -383,7 +457,17 @@ class DataInterpreter extends Interpreter<DataValue> {
         Method method = new Method(mNode.owner, mNode.name, mNode.desc);
         EKey key = new EKey(method, Direction.Pure, stable);
         EffectQuantum quantum = new EffectQuantum.CallQuantum(key, data, opCode == Opcodes.INVOKESTATIC);
-        DataValue result = (ASMUtils.getReturnSizeFast(mNode.desc) == 1) ? DataValue.UnknownDataValue1 : DataValue.UnknownDataValue2;
+        DataValue result;
+        if (ASMUtils.getReturnSizeFast(mNode.desc) == 1) {
+          if (ASMUtils.isReferenceReturnType(mNode.desc)) {
+            result = new DataValue.ReturnDataValue(key);
+          } else {
+            result = DataValue.UnknownDataValue1;
+          }
+        }
+        else {
+          result = DataValue.UnknownDataValue2;
+        }
         if (HardCodedPurity.getInstance().isPureMethod(method)) {
           quantum = null;
           result = DataValue.LocalDataValue;
@@ -447,21 +531,20 @@ class DataInterpreter extends Interpreter<DataValue> {
   @Override
   public DataValue ternaryOperation(AbstractInsnNode insn, DataValue value1, DataValue value2, DataValue value3) throws AnalyzerException {
     int insnIndex = methodNode.instructions.indexOf(insn);
-    if (value1 == DataValue.ThisDataValue || value1 == DataValue.OwnedDataValue) {
-      effects[insnIndex] = EffectQuantum.ThisChangeQuantum;
-    } else if (value1 instanceof DataValue.ParameterDataValue) {
-      effects[insnIndex] = new EffectQuantum.ParamChangeQuantum(((DataValue.ParameterDataValue)value1).n);
-    } else if (value1 == DataValue.LocalDataValue) {
-      effects[insnIndex] = null;
-    } else {
-      effects[insnIndex] = EffectQuantum.TopEffectQuantum;
-    }
+    effects[insnIndex] = getChangeQuantum(value1);
     return DataValue.UnknownDataValue1;
   }
 
   @Override
   public void returnOperation(AbstractInsnNode insn, DataValue value, DataValue expected) throws AnalyzerException {
-
+    if (insn.getOpcode() == Opcodes.ARETURN) {
+      if (returnValue == null) {
+        returnValue = value;
+      }
+      else if (!returnValue.equals(value)) {
+        returnValue = DataValue.UnknownDataValue1;
+      }
+    }
   }
 
   @Override
@@ -476,94 +559,99 @@ class DataInterpreter extends Interpreter<DataValue> {
 }
 
 final class PuritySolver {
-  private HashMap<EKey, Set<EffectQuantum>> solved = new HashMap<>();
+  static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
+  private HashMap<EKey, Effects> solved = new HashMap<>();
   private HashMap<EKey, Set<EKey>> dependencies = new HashMap<>();
   private final Stack<EKey> moving = new Stack<>();
-  private HashMap<EKey, Set<EffectQuantum>> pending = new HashMap<>();
+  private HashMap<EKey, Effects> pending = new HashMap<>();
 
-  void addEquation(EKey key, Set<EffectQuantum> effects) {
-    Set<EKey> callKeys = new HashSet<>();
-    for (EffectQuantum effect : effects) {
-      if (effect instanceof EffectQuantum.CallQuantum) {
-        callKeys.add(((EffectQuantum.CallQuantum)effect).key);
-      }
-    }
+  void addEquation(EKey key, Effects effects) {
+    Set<EKey> depKeys = effects.dependencies().collect(Collectors.toSet());
 
-    if (callKeys.isEmpty()) {
+    if (depKeys.isEmpty()) {
       solved.put(key, effects);
       moving.add(key);
     } else {
       pending.put(key, effects);
-      for (EKey callKey : callKeys) {
-        Set<EKey> deps = dependencies.get(callKey);
-        if (deps == null) {
-          deps = new HashSet<>();
-          dependencies.put(callKey, deps);
-        }
-        deps.add(key);
+      for (EKey depKey : depKeys) {
+        dependencies.computeIfAbsent(depKey, k -> new HashSet<>()).add(key);
       }
     }
   }
 
-  public Map<EKey, Set<EffectQuantum>> solve() {
+  public Map<EKey, Effects> solve() {
     while (!moving.isEmpty()) {
       EKey key = moving.pop();
-      Set<EffectQuantum> effects = solved.get(key);
+      Effects effects = solved.get(key);
 
       EKey[] propagateKeys;
-      Set[] propagateEffects;
+      Effects[] propagateEffects;
 
       if (key.stable) {
         propagateKeys = new EKey[]{key, key.mkUnstable()};
-        propagateEffects = new Set[]{effects, effects};
+        propagateEffects = new Effects[]{effects, effects};
       }
       else {
         propagateKeys = new EKey[]{key.mkStable(), key};
-        propagateEffects = new Set[]{effects, PurityAnalysis.topHEffect};
+        propagateEffects = new Effects[]{effects, new Effects(DataValue.UnknownDataValue1, TOP_EFFECTS)};
       }
       for (int i = 0; i < propagateKeys.length; i++) {
         EKey pKey = propagateKeys[i];
-        @SuppressWarnings("unchecked")
-        Set<EffectQuantum> pEffects = propagateEffects[i];
+        Effects pEffects = propagateEffects[i];
         Set<EKey> dKeys = dependencies.remove(pKey);
         if (dKeys != null) {
           for (EKey dKey : dKeys) {
-            Set<EffectQuantum> dEffects = pending.remove(dKey);
+            Effects dEffects = pending.remove(dKey);
             if (dEffects == null) {
               // already solved, for example, solution is top
               continue;
             }
-            Set<EKey> callKeys = new HashSet<>();
             Set<EffectQuantum> newEffects = new HashSet<>();
             Set<EffectQuantum> delta = null;
+            DataValue returnValue = substitute(dEffects.returnValue, pKey, pEffects);
 
-            for (EffectQuantum dEffect : dEffects) {
+            for (EffectQuantum dEffect : dEffects.effects) {
               if (dEffect instanceof EffectQuantum.CallQuantum) {
-                EffectQuantum.CallQuantum call = ((EffectQuantum.CallQuantum)dEffect);
+                EffectQuantum.CallQuantum call = substitute((EffectQuantum.CallQuantum)dEffect, pKey, pEffects);
                 if (call.key.equals(pKey)) {
                   delta = substitute(pEffects, call.data, call.isStatic);
+                  if(delta.equals(TOP_EFFECTS)) {
+                    newEffects = delta;
+                    break;
+                  }
                   newEffects.addAll(delta);
                 }
                 else {
-                  callKeys.add(call.key);
                   newEffects.add(call);
                 }
+                continue;
               }
-              else {
-                newEffects.add(dEffect);
+              if (dEffect instanceof EffectQuantum.ReturnChangeQuantum) {
+                EffectQuantum.ReturnChangeQuantum retChange = (EffectQuantum.ReturnChangeQuantum)dEffect;
+                if (retChange.key.equals(pKey)) {
+                  if(pEffects.returnValue != DataValue.LocalDataValue) {
+                    newEffects = delta = TOP_EFFECTS;
+                    break;
+                  }
+                  continue;
+                }
               }
+              newEffects.add(dEffect);
             }
 
-            if (PurityAnalysis.topHEffect.equals(delta)) {
-              solved.put(dKey, PurityAnalysis.topHEffect);
-              moving.push(dKey);
-            }
-            else if (callKeys.isEmpty()) {
-              solved.put(dKey, newEffects);
+            if (TOP_EFFECTS.equals(delta) && returnValue.equals(DataValue.UnknownDataValue1)) {
+              solved.put(dKey, new Effects(returnValue, TOP_EFFECTS));
               moving.push(dKey);
             }
             else {
-              pending.put(dKey, newEffects);
+              Effects result = new Effects(returnValue, newEffects);
+              if (result.dependencies().findFirst().isPresent()) {
+                pending.put(dKey, result);
+              }
+              else {
+                solved.put(dKey, result);
+                moving.push(dKey);
+              }
             }
           }
 
@@ -575,13 +663,31 @@ final class PuritySolver {
     return solved;
   }
 
-  private static Set<EffectQuantum> substitute(Set<EffectQuantum> effects, DataValue[] data, boolean isStatic) {
-    if (effects.isEmpty() || PurityAnalysis.topHEffect.equals(effects)) {
-      return effects;
+  private static EffectQuantum.CallQuantum substitute(EffectQuantum.CallQuantum call, EKey pKey, Effects pEffects) {
+    List<DataValue> list = new ArrayList<>();
+    boolean same = true;
+    for (DataValue value : call.data) {
+      DataValue newValue = substitute(value, pKey, pEffects);
+      same &= newValue.equals(value);
+      list.add(newValue);
     }
-    Set<EffectQuantum> newEffects = new HashSet<>(effects.size());
+    return same ? call : new EffectQuantum.CallQuantum(call.key, list.toArray(new DataValue[0]), call.isStatic);
+  }
+
+  private static DataValue substitute(DataValue value, EKey key, Effects effects) {
+    if(value instanceof DataValue.ReturnDataValue && ((DataValue.ReturnDataValue)value).key.equals(key)) {
+      return effects.returnValue == DataValue.LocalDataValue ? DataValue.LocalDataValue : DataValue.UnknownDataValue1;
+    }
+    return value;
+  }
+
+  private static Set<EffectQuantum> substitute(Effects effects, DataValue[] data, boolean isStatic) {
+    if (effects.effects.isEmpty() || TOP_EFFECTS.equals(effects.effects)) {
+      return effects.effects;
+    }
+    Set<EffectQuantum> newEffects = new HashSet<>(effects.effects.size());
     int shift = isStatic ? 0 : 1;
-    for (EffectQuantum effect : effects) {
+    for (EffectQuantum effect : effects.effects) {
       DataValue arg = null;
       if (effect == EffectQuantum.ThisChangeQuantum) {
         arg = data[0];
@@ -600,7 +706,11 @@ final class PuritySolver {
         newEffects.add(new EffectQuantum.ParamChangeQuantum(((DataValue.ParameterDataValue)arg).n));
         continue;
       }
-      return PurityAnalysis.topHEffect;
+      if (arg instanceof DataValue.ReturnDataValue) {
+        newEffects.add(new EffectQuantum.ReturnChangeQuantum(((DataValue.ReturnDataValue)arg).key));
+        continue;
+      }
+      return TOP_EFFECTS;
     }
     return newEffects;
   }

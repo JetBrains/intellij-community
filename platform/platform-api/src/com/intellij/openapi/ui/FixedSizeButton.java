@@ -16,7 +16,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -87,9 +86,10 @@ public class FixedSizeButton extends JButton {
   }
 
   public Dimension getPreferredSize() {
-    if (myComponent != null && !UIUtil.isUnderWin10LookAndFeel()) { // On Win10 LaF rely on UI defined size.
+    if (myComponent != null) {
       int size = myComponent.getPreferredSize().height;
-      if (myComponent instanceof JComboBox && (!SystemInfo.isMac && UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula())) {
+      if (myComponent instanceof JComboBox &&
+          !(UIUtil.isUnderDefaultMacTheme() || UIUtil.isUnderWin10LookAndFeel()) || UIUtil.isUnderDarcula()) {
         // JComboBox's preferred height is 2px greater than JTextField's one, because
         // javax.swing.DefaultListCellRenderer#getNoFocusBorder returns (1,1,1,1) border.
         // Decrement to have equal sizes for pretty look when stacked vertically

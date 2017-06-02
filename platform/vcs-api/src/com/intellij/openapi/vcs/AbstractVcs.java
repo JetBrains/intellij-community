@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
@@ -46,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * The base class for a version control system integrated with IDEA.
@@ -441,13 +441,15 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     return false;
   }
 
-  public <S> List<S> filterUniqueRoots(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible(convertor, FilePathComparator.getInstance()).doFilter(in);
+  @NotNull
+  public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
     return in;
   }
 
-  public static <S> List<S> filterUniqueRootsDefault(final List<S> in, final Convertor<S, VirtualFile> convertor) {
-    new FilterDescendantVirtualFileConvertible(convertor, FilePathComparator.getInstance()).doFilter(in);
+  @NotNull
+  public static <S> List<S> filterUniqueRootsDefault(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    new FilterDescendantVirtualFileConvertible<>(convertor, FilePathComparator.getInstance()).doFilter(in);
     return in;
   }
 

@@ -68,6 +68,10 @@ class MethodExists {
     C.class.getMethod("c", int.class);
     C.class.getMethod(<warning descr="Cannot resolve method 'c' with specified argument types">"c"</warning>, boolean.class);
     C.class.getMethod(<warning descr="Cannot resolve method 'd'">"d"</warning>, int.class);
+
+    A.class.getMethod("a1", Integer.TYPE);
+    A.class.getMethod(<warning descr="Method 'a2' is not public">"a2"</warning>, Integer.TYPE);
+    A.class.getMethod(<warning descr="Cannot resolve method 'a1' with specified argument types">"a1"</warning>, Boolean.TYPE);
   }
 
   static class A {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vcs.changes.committed;
+package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.Convertor;
+import com.intellij.openapi.module.Module;
+import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
-public class IntoSelfVirtualFileConvertor extends Convertor.IntoSelf<VirtualFile> {
-  private static final IntoSelfVirtualFileConvertor ourInstance = new IntoSelfVirtualFileConvertor();
+import java.util.Collection;
+import java.util.List;
 
-  public static IntoSelfVirtualFileConvertor getInstance() {
-    return ourInstance;
-  }
+/**
+ * @author Vladislav.Soroka
+ */
+public interface MavenImportListener {
+  Topic<MavenImportListener> TOPIC = Topic.create("Maven import notifications", MavenImportListener.class);
+
+  void importFinished(@NotNull Collection<MavenProject> importedProjects, @NotNull List<Module> newModules);
 }
