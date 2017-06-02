@@ -289,9 +289,13 @@ public class GitRebaseProcess {
     return findRootsWithLocalChanges(repositories);
   }
 
-  private static boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
+  private boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
     return rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS ||
-           ((GitSuccessfulRebase)rebaseStatus).getSuccessType() != SuccessType.UP_TO_DATE;
+           shouldRefreshOnSuccess(((GitSuccessfulRebase)rebaseStatus).getSuccessType());
+  }
+
+  protected boolean shouldRefreshOnSuccess(@NotNull SuccessType successType) {
+    return successType != SuccessType.UP_TO_DATE;
   }
 
   private static void refresh(@NotNull Collection<GitRepository> repositories) {
