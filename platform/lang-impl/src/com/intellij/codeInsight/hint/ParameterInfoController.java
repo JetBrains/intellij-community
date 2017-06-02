@@ -410,6 +410,7 @@ public class ParameterInfoController implements Disposable {
       ParameterInfoUtils.getCurrentParameterIndex(argList.getNode(), offset, handler.getActualParameterDelimiterType());
     if (areParametersHintsEnabledOnCompletion()) {
       if (currentParameterIndex < 0 || currentParameterIndex >= parameters.length) return -1;
+      if (offset >= argList.getTextRange().getEndOffset()) currentParameterIndex = isNext ? -1 : parameters.length;
       int prevOrNextParameterIndex = currentParameterIndex + (isNext ? 1 : -1);
       if (prevOrNextParameterIndex < 0 || prevOrNextParameterIndex >= parameters.length) {
         PsiElement parameterOwner = myComponent.getParameterOwner();
