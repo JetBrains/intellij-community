@@ -73,6 +73,7 @@ def _pydev_stop_at_break():
             breakpoint = breakpoints_for_file[line]
         except KeyError:
             pydev_log.debug("Couldn't find breakpoint in the file {} on line {}".format(frame.f_code.co_filename, line))
+            t.additional_info.is_tracing = False
             return
         if breakpoint and handle_breakpoint(frame, t, debugger, breakpoint):
             pydev_log.debug("Suspending at breakpoint in file: {} on line {}".format(frame.f_code.co_filename, line))
