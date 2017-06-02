@@ -54,6 +54,7 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<Dashboar
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     List<DashboardRunConfigurationNode> targetNodes = getTargetNodes(e);
+    if (e.getProject() == null) return;
     if (RunDashboardManager.getInstance(e.getProject()).isShowConfigurations()) {
       boolean running = targetNodes.stream().anyMatch(node -> {
         Content content = node.getContent();

@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -101,7 +102,9 @@ public class EditorFixture {
 
       // we should be sure that EditorComponent is already showing
       VirtualFile selectedFile = selectedFiles[0];
-      if (manager.getEditors(selectedFile).length == 0) return null;
+      if (manager.getEditors(selectedFile).length == 0) {
+        return null;
+      }
       else {
         FileEditor editor = manager.getEditors(selectedFile)[0];
         return editor.getComponent().isShowing() ? selectedFile : null;
@@ -438,7 +441,8 @@ public class EditorFixture {
       new ComponentDriver(robot).focusAndWaitForFocusGain(contentComponent);
       assertSame(contentComponent, FocusManager.getCurrentManager().getFocusOwner());
       return contentComponent;
-    } else {
+    }
+    else {
       fail("Expected to find editor to focus, but there is no current editor");
       return null;
     }
@@ -476,18 +480,18 @@ public class EditorFixture {
    */
   public EditorFixture moveToAndClick(final int offset, MouseButton button) {
     assertThat(offset).isGreaterThanOrEqualTo(0);
-    execute(new GuiTask() {
+    FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+    Pair<Editor, Point> editorPointPair = execute(new GuiQuery<Pair<Editor, Point>>() {
       @Override
-      protected void executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
+      protected Pair<Editor, Point> executeInEDT() throws Throwable {
         Editor editor = manager.getSelectedTextEditor();
         assert editor != null;
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
-        Point point= editor.visualPositionToXY(visualPosition);
-        Component editorComponent = robot.finder().find(editor.getComponent(), component -> component instanceof EditorComponentImpl);
-        robot.click(editorComponent, point, button, 1);
+        return new Pair(editor, editor.visualPositionToXY(visualPosition));
       }
     });
+    Component editorComponent = robot.finder().find(editorPointPair.first.getComponent(), component -> component instanceof EditorComponentImpl);
+    robot.click(editorComponent, editorPointPair.second, button, 1);
 
     return this;
   }
@@ -675,7 +679,7 @@ public class EditorFixture {
    * find and select the given file.
    *
    * @param file the file to open
-   * @param tab which tab to open initially, if there are multiple editors
+   * @param tab  which tab to open initially, if there are multiple editors
    */
   public EditorFixture open(@NotNull final VirtualFile file, @NotNull final Tab tab) {
     execute(new GuiTask() {
@@ -719,7 +723,7 @@ public class EditorFixture {
    * find and select the given file.
    *
    * @param file the project-relative path (with /, not File.separator, as the path separator)
-   * @param tab which tab to open initially, if there are multiple editors
+   * @param tab  which tab to open initially, if there are multiple editors
    */
   public EditorFixture open(@NotNull final String relativePath, @NotNull Tab tab) {
     assertFalse("Should use '/' in test relative paths, not File.separator", relativePath.contains("\\"));
@@ -879,7 +883,8 @@ public class EditorFixture {
                              + KeyEvent.getKeyText(secondKeyStroke.getKeyCode()));
           driver.pressAndReleaseKey(component, secondKeyStroke.getKeyCode(), new int[]{secondKeyStroke.getModifiers()});
         }
-      } else {
+      }
+      else {
         fail("Editor not focused for action");
       }
     }
@@ -1088,9 +1093,11 @@ public class EditorFixture {
     VirtualFile currentFile = getCurrentFile();
     if (name == null) {
       assertNull("Expected editor to not have an open file, but is showing " + currentFile, currentFile);
-    } else if (currentFile == null) {
+    }
+    else if (currentFile == null) {
       fail("Expected file " + name + " to be showing, but the editor is not showing anything");
-    } else {
+    }
+    else {
       assertEquals(name, currentFile.getName());
     }
   }
@@ -1103,9 +1110,11 @@ public class EditorFixture {
     VirtualFile currentFile = getCurrentFile();
     if (name == null) {
       assertNull("Expected editor to not have an open file, but is showing " + currentFile, currentFile);
-    } else if (currentFile == null) {
+    }
+    else if (currentFile == null) {
       fail("Expected file " + name + " to be showing, but the editor is not showing anything");
-    } else {
+    }
+    else {
       VirtualFile parent = currentFile.getParent();
       assertNotNull("File " + currentFile.getName() + " does not have a parent", parent);
       assertEquals(name, parent.getName());
@@ -1149,5 +1158,7 @@ public class EditorFixture {
    * The different tabs of an editor; used by for example {@link #open(VirtualFile, EditorFixture.Tab)} to indicate which
    * tab should be opened
    */
-  public enum Tab { EDITOR, DESIGN, DEFAULT }
+  public enum Tab {
+    EDITOR, DESIGN, DEFAULT
+  }
 }

@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
 import com.intellij.testGuiFramework.fixtures.*
@@ -29,11 +30,13 @@ import com.intellij.testGuiFramework.framework.IdeTestApplication.getTestScreens
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.net.HttpConfigurable
 import org.fest.swing.core.GenericTypeMatcher
-import org.fest.swing.core.SmartWaitRobot
+import org.fest.swing.core.SmartMediaRobot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.fixture.*
 import org.fest.swing.image.ScreenshotTaker
+import org.fest.swing.timing.Condition
+import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
 import org.fest.swing.timing.Timeout.timeout
 import java.awt.Component
@@ -86,7 +89,7 @@ open class GuiTestCase : GuiTestBase() {
   @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
-    myRobot = SmartWaitRobot()
+    myRobot = SmartMediaRobot()
     GuiSettings.setUp()
   }
 
@@ -219,7 +222,7 @@ open class GuiTestCase : GuiTestBase() {
   fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
-  fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 10)
+  fun typeText(text: String) = GuiTestUtil.typeText(text, myRobot, 40)
 
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(myRobot, keyStroke)
   fun screenshot(component: Component, screenshotName: String): Unit {
@@ -239,7 +242,7 @@ open class GuiTestCase : GuiTestBase() {
 
   }
 
-  private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
+  protected fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
   fun dialog(title: String? = null, timeout: Long): JDialogFixture {
     if (title == null) {
@@ -388,7 +391,23 @@ open class GuiTestCase : GuiTestBase() {
     return "@${uiScaleVal}x"
   }
 
-  private fun <ComponentType : Component> waitUntilFound(container: Container?,
+  fun <ReturnType> withTimeout(findComponent: () -> ReturnType): ReturnType {
+    val result = Ref<ReturnType>()
+    Pause.pause(object : Condition("Wait component to find with timeout: $defaultTimeout(s)") {
+      override fun test(): Boolean {
+        try {
+          result.set(findComponent())
+          return true
+        }
+        catch (e: ComponentLookupException) {
+          return false
+        }
+      }
+    }, defaultTimeout.toFestTimeout())
+    return result.get()
+  }
+
+  protected fun <ComponentType : Component> waitUntilFound(container: Container?,
                                                          componentClass: Class<ComponentType>,
                                                          timeout: Long,
                                                          matcher: (ComponentType) -> Boolean): ComponentType {

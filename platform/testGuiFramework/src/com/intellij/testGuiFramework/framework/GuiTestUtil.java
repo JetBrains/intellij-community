@@ -42,8 +42,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
-import com.intellij.testGuiFramework.impl.FirstStartToRemove;
 import com.intellij.testGuiFramework.matcher.ClassNameMatcher;
+import com.intellij.testGuiFramework.media.MediaController;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -211,8 +211,6 @@ GuiTestUtil {
       //[ACCEPT IntelliJ IDEA Privacy Policy Agreement]
       acceptAgreementIfNeeded(robot);
 
-      if(isFirstStart) (new FirstStartToRemove(robot)).completeBefore();
-
       final MyProjectManagerListener listener = new MyProjectManagerListener();
       final Ref<MessageBusConnection> connection = new Ref<>();
 
@@ -231,7 +229,6 @@ GuiTestUtil {
         }
       }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
 
-      if(isFirstStart) (new FirstStartToRemove(robot)).completeAfter();
 
       //TODO: clarify why we are skipping event here?
       // We know the IDE event queue was pushed in front of the AWT queue. Some JDKs will leave a dummy event in the AWT queue, which
@@ -596,11 +593,13 @@ GuiTestUtil {
   }
 
   public static void typeText(CharSequence text, Robot robot, long delayAfterEachCharacterMillis) {
-    robot.waitForIdle();
     for (int i = 0; i < text.length(); ++i) {
       robot.type(text.charAt(i));
       Pause.pause(delayAfterEachCharacterMillis, TimeUnit.MILLISECONDS);
     }
+    if (robot instanceof SmartMediaRobot) ((SmartMediaRobot)robot).superWaitForIdle();
+    else robot.waitForIdle();
+    Pause.pause(300, TimeUnit.MILLISECONDS);
   }
 
   @Nullable
@@ -865,6 +864,7 @@ GuiTestUtil {
     KeyStroke keyStroke = KeyStrokeAdapter.getKeyStroke(shortcut);
     LOG.info("Invoking action via shortcut \"" + shortcut + "\"");
     robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
+    MediaController.INSTANCE.type();
   }
 
   public static void invokeAction(@NotNull Robot robot, @NotNull String actionId) {
@@ -875,6 +875,7 @@ GuiTestUtil {
     KeyStroke keyStroke = keyboardShortcut.getFirstKeyStroke();
     LOG.info("Invoking action \"" + actionId + "\" via shortcut " + keyboardShortcut.toString());
     robot.pressAndReleaseKey(keyStroke.getKeyCode(), new int[]{keyStroke.getModifiers()});
+    MediaController.INSTANCE.type();
   }
 
   public static void pause(String conditionString, Producer<Boolean> producer, Timeout timeout){

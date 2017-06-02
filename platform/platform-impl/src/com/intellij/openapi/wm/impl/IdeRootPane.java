@@ -49,6 +49,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ui.SpotlightLayerUI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,6 +78,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private ToolWindowsPane myToolWindowsPane;
   private JBPanel myContentPane;
   private final ActionManager myActionManager;
+  private JLayer myHighlightLayer;
+  private SpotlightLayerUI myHighlightUi;
 
   private final boolean myGlassPaneInitialized;
 
@@ -98,7 +101,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myActionManager = actionManager;
 
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
-
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {}); // listen to mouse motion events for a11y
 
     myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
@@ -173,12 +175,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   final void setToolWindowsPane(@Nullable final ToolWindowsPane toolWindowsPane) {
     final JComponent contentPane = (JComponent)getContentPane();
     if(myToolWindowsPane != null){
-      contentPane.remove(myToolWindowsPane);
+      myContentPane.remove(myToolWindowsPane);
     }
 
     myToolWindowsPane = toolWindowsPane;
     if(myToolWindowsPane != null) {
-      contentPane.add(myToolWindowsPane,BorderLayout.CENTER);
+      myContentPane.add(myToolWindowsPane,BorderLayout.CENTER);
     }
 
     contentPane.revalidate();
@@ -200,7 +202,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   @Override
   protected final Container createContentPane(){
-    return myContentPane = new IdePanePanel(new BorderLayout());
+    myContentPane = new IdePanePanel(new BorderLayout());
+    myHighlightUi = new SpotlightLayerUI();
+    myHighlightUi.setActive(true);
+    myHighlightLayer = new JLayer(myContentPane, myHighlightUi);
+    return myHighlightLayer;
   }
 
   void updateToolbar() {

@@ -16,6 +16,7 @@
       <!--TODO: add shortcuts for Windows and Linux-->
       <keyboard-shortcut first-keystroke="control alt meta S" keymap="$default"/>
     </action>
+    <action class="com.intellij.testGuiFramework.media.DemoAction" id="ide.presenter.demo" description="Start IDE Presenter Demo" text="Start IDE Presenter Demo"/>
     <action class="com.intellij.testGuiFramework.recorder.actions.PerformScriptAction" id="gui.recorder.PerformScriptAction"
             description="Perform Script Action" text="Perform Script Action"/>
     <action class="com.intellij.testGuiFramework.recorder.actions.ShowGuiEditorWindowAction" id="gui.recorder.ShowLightEditorWindowAction"

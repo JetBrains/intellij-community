@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.testGuiFramework.impl.GuiTestCase
 import com.intellij.ui.content.Content
 import com.intellij.util.ui.UIUtil.findComponentOfType
 import com.intellij.util.ui.UIUtil.findComponentsOfType
@@ -62,11 +63,14 @@ class CustomToolWindowFixture(val toolWindowId: String, val ideFrame: IdeFrameFi
 
   /**----------EXTENSION FUNCTIONS FOR GuiTestCase APi----------**/
 
-  fun content(tabName: String, func: ContentFixture.() -> Unit) {
-    func.invoke(findContent(tabName))
+  fun GuiTestCase.content(tabName: String, func: ContentFixture.() -> Unit) {
+    val contentFixture = withTimeout { findContent(tabName) }
+    func(contentFixture)
   }
 
-  fun content(func: ContentFixture.() -> Unit) {
-    func.invoke(selectedContent())
+  fun GuiTestCase.content(func: ContentFixture.() -> Unit) {
+    val contentFixture = withTimeout { selectedContent() }
+    func(contentFixture)
   }
+
 }

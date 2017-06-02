@@ -1,0 +1,29 @@
+00:07 Something you’ll probably notice straightaway in IntelliJ IDEA 2016 point three are the new parameter hints.
+00:14 You’ll see when you use literals in a method call these are annotated with the name of the parameter.
+00:18 This makes it much easier to understand what this value represents
+00:23 For example here we can see the values are for the path and the port of the service
+00:27 While in this case that might have been reasonably obvious
+00:32 …the parameter name has become really useful when you’re passing in default null or boolean values
+00:35 you can now see what the null boolean is being used for
+00:39 and can help you swap potential bugs much sooner
+00:43 If we remove parameter hints on this method for example
+00:45 by using Alt + Enter
+00:48 you see it’s much more difficult to understand the method arguments are for.
+00:53 Parameter hints are shown for literal or null values but not in all cases
+00:58 for example if you have a method that takes a pair of parameters like a start and end value
+01:01 or of method that acts like builder
+01:06 Of course, you may find that this feature highlights that are not very useful
+01:11 You can either use IntelliJ IDEA usual refactoring tools to rename the parameter
+01:18 or you may choose to suppress hints for this method like we did with a fine customer example
+01:25 or if you right click on the parameter name you can enter the setting for the parameter hints
+01:29 you can add or remove items from the list of excluded methods
+01:34 here I’m going to turn hints back on for the methods I’ve excluded from this class
+01:39 you can also see and edit other patterns that are automatically excluded
+01:42 finally you may want to turn off hints all together
+01:45 there are number of ways to do this
+01:49 firstly by right-clicking and selecting Disable Parameter Name Hints
+01:54 You can reenable by right clicking on a literal and selecting Enable Parameter name hints
+01:57 or you can disable or enable hints
+02:00 in the settings in the Editor -> General -> Appearance
+02:02 and unchecking the show parameter hints box
+02:05 You can also view and change the black from here as well

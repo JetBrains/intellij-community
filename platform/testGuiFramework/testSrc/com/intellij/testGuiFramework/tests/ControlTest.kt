@@ -32,8 +32,9 @@ class ControlTest: RemoteTestCase() {
 
     startAndClose(ide, "localhost", 5009, "/Users/jetbrains/Library/Application Support/JetBrains/Toolbox/apps/IDEA-U/ch-0/172.2300/IntelliJ IDEA 2017.2 EAP.app") {
 //    startIde(ide, "localhost", 5009) {
-      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testFail")
-//      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testColorScheme2")
+//      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testFail")
+      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testColorScheme")
+      runTest("com.intellij.testGuiFramework.tests.ColorSchemeTest#testColorScheme2")
     }
   }
 

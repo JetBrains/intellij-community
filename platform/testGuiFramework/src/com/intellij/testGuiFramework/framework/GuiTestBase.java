@@ -31,6 +31,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture;
 import com.intellij.testGuiFramework.fixtures.WelcomeFrameFixture;
 import com.intellij.testGuiFramework.fixtures.newProjectWizard.NewProjectWizardFixture;
+import junit.framework.TestCase;
 import org.fest.swing.core.BasicComponentPrinter;
 import org.fest.swing.core.ComponentPrinter;
 import org.fest.swing.core.Robot;
@@ -71,11 +72,10 @@ import static com.intellij.testGuiFramework.framework.GuiTestUtil.*;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
-import static org.junit.Assert.*;
 
 
 @RunWith(GuiTestLocalRunner.class)
-public abstract class GuiTestBase {
+public abstract class GuiTestBase extends TestCase {
   protected Robot myRobot;
 
   private final Logger LOG = Logger.getInstance(GuiTestBase.class);

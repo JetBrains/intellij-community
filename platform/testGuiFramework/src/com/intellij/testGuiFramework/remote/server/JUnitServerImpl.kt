@@ -157,6 +157,7 @@ class JUnitServerImpl: JUnitServer {
       }
       catch(e: InterruptedException) {
         Thread.currentThread().interrupt()
+        failHandler?.invoke(e)
       }
       finally {
         objectOutputStream.close()
