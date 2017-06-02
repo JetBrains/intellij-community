@@ -525,7 +525,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     });
 
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actions, true);
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("SingleInspectionProfile", actions, true);
     actionToolbar.setTargetComponent(this);
     return actionToolbar;
   }

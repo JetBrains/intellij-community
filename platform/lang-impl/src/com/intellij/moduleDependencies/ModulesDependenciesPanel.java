@@ -312,7 +312,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     group.add(new ContextHelpAction(HELP_ID));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ModulesDependencies", group, true);
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
     panel.add(myPathField, BorderLayout.CENTER);

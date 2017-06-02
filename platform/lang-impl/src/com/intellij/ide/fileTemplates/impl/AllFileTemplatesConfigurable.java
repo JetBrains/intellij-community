@@ -316,7 +316,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(),
                                            myCurrentTab.getComponent());
 
-    myToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    myToolBar = ActionManager.getInstance().createActionToolbar("FileTemplatesConfigurable", group, true).getComponent();
     myToolBar.setBorder(new CustomLineBorder(1, 1, 0, 1));
 
     SchemesPanel schemesPanel = new SchemesPanel();

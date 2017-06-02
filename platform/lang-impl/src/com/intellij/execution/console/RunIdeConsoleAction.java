@@ -227,7 +227,7 @@ public class RunIdeConsoleAction extends DumbAwareAction {
     DefaultActionGroup toolbarActions = new DefaultActionGroup();
     JComponent panel = new JPanel(new BorderLayout());
     panel.add(consoleView.getComponent(), BorderLayout.CENTER);
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("RunIdeConsole", toolbarActions, false);
     toolbar.setTargetComponent(consoleView.getComponent());
     panel.add(toolbar.getComponent(), BorderLayout.WEST);
 
