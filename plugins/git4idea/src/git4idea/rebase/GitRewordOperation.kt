@@ -80,6 +80,8 @@ class GitRewordOperation(private val repository: GitRepository,
       VcsNotifier.getInstance(project).notify(notification)
     }
 
+    override fun shouldRefreshOnSuccess(successType: GitSuccessfulRebase.SuccessType) = false
+
     private fun undo(project: Project, spec: GitRebaseSpec) {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Undoing Reword") {
         override fun run(indicator: ProgressIndicator) {
