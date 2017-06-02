@@ -67,6 +67,7 @@ class LiveVcsFileWatcher(private val project: Project,
                     for (change in changeListManager.allChanges) {
                         pushChange(change, "initial")
                     }
+
                     val poller = SequentialLifetimes(nextLt)
                     pullConflicts(poller, client)
 
@@ -105,9 +106,9 @@ class LiveVcsFileWatcher(private val project: Project,
                 }
             } catch (th: Throwable) {
                 poller.next()
-                Dispatch.dispatchInterval(2000, {
+                Alarm().addRequest({
                     pullConflicts(poller, client)
-                })
+                }, 3000)
                 log.error(th)
             }
         }
@@ -158,25 +159,29 @@ class LiveVcsFileWatcher(private val project: Project,
 
                         val markupModel = DocumentMarkupModel.forDocument(patch.doc, owner.project, true)
 
-                        val highlighter = markupModel.addRangeHighlighter(change.start, change.last,
-                            3700, TextAttributes(null, Color(208, 208, 208), null, EffectType.BOXED, 0), HighlighterTargetArea.EXACT_RANGE)
+                        if (change.last < patch.doc.textLength)
+                        {
+                            val highlighter = markupModel.addRangeHighlighter(change.start, change.last,
+                                3700, TextAttributes(null, Color(208, 208, 208), null, EffectType.BOXED, 0), HighlighterTargetArea.EXACT_RANGE)
 
-                        val isDeletion = change.text.isEmpty()
-                        val bgColor = if (isDeletion) Color.GRAY else Color.GREEN
-                        val statusBarTxt = "Text was modified remotly"
-                        val tooltipTxt = if (isDeletion) null else change.text
-                        val textAttributes = TextAttributes(null, bgColor, null, EffectType.BOXED, 0)
+                            val isDeletion = change.text.isEmpty()
+                            val bgColor = if (isDeletion) Color.GRAY else Color.GREEN
+                            val statusBarTxt = "Text was modified remotly"
+                            val tooltipTxt = if (isDeletion) null else change.text
+                            val textAttributes = TextAttributes(null, bgColor, null, EffectType.BOXED, 0)
 
-                        val highlightInfo = object : HighlightInfo(textAttributes, null, HighlightInfoType.INFORMATION,
-                            change.start, change.last, statusBarTxt, tooltipTxt, HighlightSeverity.INFORMATION,
-                            false, false, false, 0, null, null) {}
+                            val highlightInfo = object : HighlightInfo(textAttributes, null, HighlightInfoType.INFORMATION,
+                                change.start, change.last, statusBarTxt, tooltipTxt, HighlightSeverity.INFORMATION,
+                                false, false, false, 0, null, null) {}
 
-                        highlightInfo.highlighter = highlighter as RangeHighlighterEx
-                        highlighter.errorStripeTooltip = highlightInfo
+                            highlightInfo.highlighter = highlighter as RangeHighlighterEx
+                            highlighter.errorStripeTooltip = highlightInfo
 
-                        log.info { "put highlighter at [${highlightInfo.startOffset}, ${highlightInfo.endOffset}] in length=${patch.doc.textLength}" }
+                            log.info { "put highlighter at [${highlightInfo.startOffset}, ${highlightInfo.endOffset}] in length=${patch.doc.textLength}" }
 
-                        lt.add { markupModel.removeHighlighter(highlighter) }
+                            lt.add { markupModel.removeHighlighter(highlighter) }
+                        }
+
                     }
                 }
 
