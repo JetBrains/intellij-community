@@ -167,7 +167,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
 
   @NotNull
   private static JComponent createToolbar(@NotNull DefaultActionGroup group) {
-    JComponent component = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true).getComponent();
+    JComponent component = ActionManager.getInstance().createActionToolbar("IpnbEditor", group, true).getComponent();
     component.setBackground(IpnbEditorUtil.getBackground());
 
     return component;
