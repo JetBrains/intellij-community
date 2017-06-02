@@ -47,7 +47,7 @@ public class MakeMethodDefaultIntention extends BaseElementAtCaretIntentionActio
       if (psiMethod != null && PsiUtil.isLanguageLevel8OrHigher(psiMethod)) {
         if (psiMethod.getBody() == null && !psiMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
           final PsiClass containingClass = psiMethod.getContainingClass();
-          if (containingClass != null && containingClass.isInterface()) {
+          if (containingClass != null && containingClass.isInterface() && !containingClass.isAnnotationType()) {
             text = "Make '" + psiMethod.getName() + "()' default";
             return true;
           }
