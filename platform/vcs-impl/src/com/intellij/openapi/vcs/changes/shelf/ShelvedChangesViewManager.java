@@ -820,11 +820,14 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       try {
         ShelvedChange shelvedChange = provider.getShelvedChange();
         if (shelvedChange != null) {
-          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, new CommitContext())));
+          return new PatchDiffRequest(createAppliedTextPatch(myPreloader.getPatch(shelvedChange, null)));
         }
 
         DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
         ShelvedBinaryFile binaryFile = assertNotNull(provider.getBinaryFile());
+        if (binaryFile.AFTER_PATH == null) {
+          throw new DiffRequestProducerException("Content for '" + getRequestName(provider) + "' was removed");
+        }
         byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
         FileType fileType = VcsUtil.getFilePath(binaryFile.SHELVED_PATH).getFileType();
         return new SimpleDiffRequest(getRequestName(provider), factory.createEmpty(),
