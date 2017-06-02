@@ -37,4 +37,10 @@ interface ModuleDescription {
 @ApiStatus.Experimental
 interface UnloadedModuleDescription : ModuleDescription {
   val contentRoots: List<VirtualFilePointer>
+  val groupPath: List<String>
+}
+
+@ApiStatus.Experimental
+interface LoadedModuleDescription : ModuleDescription {
+  val module: Module
 }

@@ -32,6 +32,9 @@ import java.nio.file.Paths
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
                                     override val dependencyModuleNames: List<String>,
                                     override val contentRoots: List<VirtualFilePointer>) : UnloadedModuleDescription {
+  override val groupPath: List<String>
+    get() = modulePath.group?.split(ModuleManagerImpl.MODULE_GROUP_SEPARATOR) ?: emptyList()
+
   override val name: String
     get() = modulePath.moduleName
 
