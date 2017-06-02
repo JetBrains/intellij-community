@@ -255,6 +255,7 @@ java_library(
     tags = ["managed"],
     visibility = ["//visibility:public"],
     exports = ["//tools/base/bazel:kotlin-runtime"],
+    runtime_deps = ["//tools/base/bazel:kotlin-runtime"],
 )
 
 java_library(
@@ -814,12 +815,12 @@ java_library(
     # do not sort: must match IML order
     exports = [
         "//tools/adt/idea/android/lib:dexlib2-2.2.1",
-        "//tools/adt/idea/android/lib:dexlib2-util-2.2.1",
+        "//tools/adt/idea/android/lib:util-2.2.1",
     ],
     # do not sort: must match IML order
     runtime_deps = [
         "//tools/adt/idea/android/lib:dexlib2-2.2.1",
-        "//tools/adt/idea/android/lib:dexlib2-util-2.2.1",
+        "//tools/adt/idea/android/lib:util-2.2.1",
     ],
 )
 
