@@ -28,9 +28,13 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.controlflow.UnnecessaryReturnInspection;
+import com.siyeh.ig.psiutils.BlockUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class MakeVoidQuickFix implements LocalQuickFix {
   private final ProblemDescriptionsProcessor myProcessor;
@@ -97,29 +101,32 @@ public class MakeVoidQuickFix implements LocalQuickFix {
 
   private static void replaceReturnStatements(@NotNull final PsiMethod method) {
     final PsiReturnStatement[] statements = PsiUtil.findReturnStatements(method);
-    for (int i = statements.length - 1; i >= 0; i--) {
-      final PsiReturnStatement returnStatement = statements[i];
-      try {
-        final PsiExpression expression = returnStatement.getReturnValue();
-        if (expression != null) {
-          WriteAction.run(() -> {
-            final boolean mayHaveSideEffects = SideEffectChecker.mayHaveSideEffects(expression);
-            final PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
-            final PsiReturnStatement ret =
-              (PsiReturnStatement)returnStatement.replace(factory.createStatementFromText("return;", returnStatement));
-            if (mayHaveSideEffects) {
-              final PsiStatement statement = factory.createStatementFromText(expression.getText() + ";", method);
-              ret.getParent().addBefore(statement, ret);
+    if (statements.length > 0) {
+      WriteAction.run(() -> {
+        for (int i = statements.length - 1; i >= 0; i--) {
+          PsiReturnStatement returnStatement = statements[i];
+          try {
+            final PsiExpression expression = returnStatement.getReturnValue();
+            if (expression != null) {
+              List<PsiExpression> sideEffectExpressions = SideEffectChecker.extractSideEffectExpressions(expression);
+              PsiStatement[] sideEffectStatements = StatementExtractor.generateStatements(sideEffectExpressions, expression);
+              if (sideEffectStatements.length > 0) {
+                PsiStatement added = BlockUtils.addBefore(returnStatement, sideEffectStatements);
+                returnStatement = PsiTreeUtil.getNextSiblingOfType(added, PsiReturnStatement.class);
+              }
+              if (returnStatement != null && returnStatement.getReturnValue() != null) {
+                returnStatement.getReturnValue().delete();
+                if (UnnecessaryReturnInspection.isReturnRedundant(returnStatement, false, null)) {
+                  returnStatement.delete();
+                }
+              }
             }
-            if (UnnecessaryReturnInspection.isReturnRedundant(ret, false, null)) {
-              ret.delete();
-            }
-          });
+          }
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
+          }
         }
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-      }
+      });
     }
   }
 }
