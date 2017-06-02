@@ -145,25 +145,21 @@ public class StudySubtaskUtils {
           ApplicationManager.getApplication().runWriteAction(() -> {
             try {
               subtaskTestFile.get().rename(project, FileUtil.getNameWithoutExtension(subtaskTestFileName) + "." + extension);
-            }
-            catch (IOException e) {
+              if (toSubtaskIndex > 0) {
+                int indexOfMarker = nameWithoutExtension.indexOf(EduNames.SUBTASK_MARKER);
+                String prefix = nameWithoutExtension.substring(0, indexOfMarker + EduNames.SUBTASK_MARKER.length());
+                String oldFileName = prefix + (toSubtaskIndex - 1) + "." + extension;
+                VirtualFile oldFile = taskDir.findFileByRelativePath(oldFileName);
+                if (oldFile != null) {
+                  oldFile.rename(project, FileUtil.getNameWithoutExtension(oldFile.getName()) + ".txt");
+                }
+              }
+            } catch (IOException e) {
               LOG.error(e);
             }
           });
         }
-        continue;
-      }
-      if (!name.contains(EduNames.SUBTASK_MARKER + String.valueOf(toSubtaskIndex)) && name.contains(EduNames.SUBTASK_MARKER)
-          && name.contains(".kt")) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          try {
-            VirtualFile oldTest = taskDir.findFileByRelativePath(name);
-            oldTest.rename(project, FileUtil.getNameWithoutExtension(oldTest.getName()) + "." + "txt");
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
-        });
+        return;
       }
     }
   }
