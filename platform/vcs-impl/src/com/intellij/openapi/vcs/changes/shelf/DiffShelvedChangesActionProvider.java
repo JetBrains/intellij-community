@@ -181,7 +181,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
     final String base = project.getBasePath();
     final ApplyPatchContext patchContext = new ApplyPatchContext(project.getBaseDir(), 0, false, false);
     final PatchesPreloader preloader = new PatchesPreloader(project);
-
+    final CommitContext commitContext = new CommitContext();
     for (final ShelvedChange shelvedChange : changesFromFirstList) {
       final String beforePath = shelvedChange.getBeforePath();
       final String afterPath = shelvedChange.getAfterPath();
@@ -200,7 +200,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
           public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
             throws DiffRequestProducerException, ProcessCanceledException {
             try {
-              TextFilePatch patch = preloader.getPatch(shelvedChange, new CommitContext());
+              TextFilePatch patch = preloader.getPatch(shelvedChange, commitContext);
               PatchDiffRequest patchDiffRequest =
                 new PatchDiffRequest(createAppliedTextPatch(patch), getName(), VcsBundle.message("patch.apply.conflict.patch"));
               DiffUtil.addNotification(createNotification("Cannot find local file for '" + chooseNotNull(beforePath, afterPath) + "'"),
@@ -225,10 +225,8 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
           }
           if (isNewFile) return createDiffRequest(project, shelvedChange.getChange(project), getName(), context, indicator);
 
-          final CommitContext commitContext;
           final TextFilePatch patch;
           try {
-            commitContext = new CommitContext();
             patch = preloader.getPatch(shelvedChange, commitContext);
           }
           catch (VcsException e) {
