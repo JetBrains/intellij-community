@@ -36,10 +36,10 @@
 
     <getDataRule key="Vcs.FileHistory.Ui" implementationClass="com.intellij.vcs.log.history.FileHistoryUiDataRule"/>
 
-    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryAction"/>
-    <openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryAction"/>
-    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryAction"/>
-    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchAction"/>
+    <diff.actions.ShowDiffAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CompareRevisionsFromHistoryActionProvider"/>
+    <openapi.vcs.history.actions.ShowDiffWithLocalAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.ShowDiffWithLocalFromHistoryActionProvider"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.history.CreatePatchFromHistoryActionProvider"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.ExtensionProvider implementation="com.intellij.vcs.log.ui.actions.VcsLogCreatePatchActionProvider"/>
   </extensions>
 
   <actions>

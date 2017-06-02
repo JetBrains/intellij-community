@@ -47,7 +47,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ShowUpdatedDiffAction implements AnActionExtensionProvider {
+public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return isVisible(e.getDataContext());

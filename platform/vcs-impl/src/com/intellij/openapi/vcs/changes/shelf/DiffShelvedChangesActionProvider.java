@@ -73,7 +73,7 @@ import static com.intellij.openapi.vcs.changes.patch.PatchDiffRequestFactory.cre
 import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
-public class DiffShelvedChangesAction implements AnActionExtensionProvider {
+public class DiffShelvedChangesActionProvider implements AnActionExtensionProvider {
   private static final String DIFF_WITH_BASE_ERROR = "Base content not found or not applicable.";
   public static final String SHELVED_VERSION = "Shelved Version";
   public static final String BASE_VERSION = "Base Version";

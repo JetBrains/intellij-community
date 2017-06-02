@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class VcsLogCreatePatchAction implements AnActionExtensionProvider {
+public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogDataKeys.VCS_LOG_UI) != null;

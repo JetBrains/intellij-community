@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class DiffShelvedChangesWithLocalAction implements AnActionExtensionProvider {
+public class DiffShelvedChangesWithLocalActionProvider implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY) != null ||
@@ -29,11 +29,11 @@ public class DiffShelvedChangesWithLocalAction implements AnActionExtensionProvi
   @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setDescription("Compare shelved version with current");
-    e.getPresentation().setEnabled(DiffShelvedChangesAction.isEnabled(e.getDataContext()));
+    e.getPresentation().setEnabled(DiffShelvedChangesActionProvider.isEnabled(e.getDataContext()));
   }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    DiffShelvedChangesAction.showShelvedChangesDiff(e.getDataContext(), true);
+    DiffShelvedChangesActionProvider.showShelvedChangesDiff(e.getDataContext(), true);
   }
 }

@@ -40,7 +40,7 @@ import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public class CompareRevisionsFromHistoryAction implements AnActionExtensionProvider {
+public class CompareRevisionsFromHistoryActionProvider implements AnActionExtensionProvider {
   private static final String COMPARE_TEXT = "Compare";
   private static final String COMPARE_DESCRIPTION = "Compare selected versions";
   private static final String DIFF_TEXT = "Show Diff";

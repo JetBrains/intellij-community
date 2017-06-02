@@ -28,7 +28,7 @@ import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowDiffWithLocalFromHistoryAction extends FileHistorySingleCommitAction implements AnActionExtensionProvider {
+public class ShowDiffWithLocalFromHistoryActionProvider extends FileHistorySingleCommitAction implements AnActionExtensionProvider {
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
