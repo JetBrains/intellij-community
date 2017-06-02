@@ -131,6 +131,8 @@ public class PatchDiffTool implements FrameDiffTool {
       for (PatchChangeBuilder.Hunk hunk : myHunks) {
         DiffDrawUtil.createUnifiedChunkHighlighters(myEditor, hunk.getPatchDeletionRange(), hunk.getPatchInsertionRange(), null);
       }
+
+      myEditor.getGutterComponentEx().revalidateMarkup();
     }
 
     @Nullable
