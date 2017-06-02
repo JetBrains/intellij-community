@@ -223,7 +223,17 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       LogicalPosition caretPosition = caretState.getCaretPosition();
       LogicalPosition selectionStartPosition = caretState.getSelectionStart();
       LogicalPosition selectionEndPosition = caretState.getSelectionEnd();
-      state.CARETS[i] = createCaretState(caretPosition, selectionStartPosition, selectionEndPosition);
+      
+      TextEditorState.CaretState s = new TextEditorState.CaretState();
+      s.LINE = getLine(caretPosition);
+      s.COLUMN = getColumn(caretPosition);
+      s.LEAN_FORWARD = caretPosition != null && caretPosition.leansForward;
+      s.VISUAL_COLUMN_ADJUSTMENT = caretState.getVisualColumnAdjustment();
+      s.SELECTION_START_LINE = getLine(selectionStartPosition);
+      s.SELECTION_START_COLUMN = getColumn(selectionStartPosition);
+      s.SELECTION_END_LINE = getLine(selectionEndPosition);
+      s.SELECTION_END_COLUMN = getColumn(selectionEndPosition);
+      state.CARETS[i] = s;
     }
 
     // Saving scrolling proportion on UNDO may cause undesirable results of undo action fails to perform since
@@ -242,18 +252,6 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
   }
 
-  private static TextEditorState.CaretState createCaretState(LogicalPosition caretPosition, LogicalPosition selectionStartPosition, LogicalPosition selectionEndPosition) {
-    TextEditorState.CaretState caretState = new TextEditorState.CaretState();
-    caretState.LINE = getLine(caretPosition);
-    caretState.COLUMN = getColumn(caretPosition);
-    caretState.LEAN_FORWARD = caretPosition != null && caretPosition.leansForward;
-    caretState.SELECTION_START_LINE = getLine(selectionStartPosition);
-    caretState.SELECTION_START_COLUMN = getColumn(selectionStartPosition);
-    caretState.SELECTION_END_LINE = getLine(selectionEndPosition);
-    caretState.SELECTION_END_COLUMN = getColumn(selectionEndPosition);
-    return caretState;
-  }
-
   private static int getLine(@Nullable LogicalPosition pos) {
     return pos == null ? 0 : pos.line;
   }
@@ -270,6 +268,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       List<CaretState> states = new ArrayList<>(carets.length);
       for (TextEditorState.CaretState caretState : carets) {
         states.add(new CaretState(new LogicalPosition(caretState.LINE, caretState.COLUMN, caretState.LEAN_FORWARD),
+                                  caretState.VISUAL_COLUMN_ADJUSTMENT,
                                   new LogicalPosition(caretState.SELECTION_START_LINE, caretState.SELECTION_START_COLUMN),
                                   new LogicalPosition(caretState.SELECTION_END_LINE, caretState.SELECTION_END_COLUMN)));
       }

@@ -64,7 +64,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private volatile PositionMarker myPositionMarker;
   private boolean myLeansTowardsLargerOffsets;
   private int myLogicalColumnAdjustment;
-  private int myVisualColumnAdjustment;
+  int myVisualColumnAdjustment;
   private int myVisualLineStart;
   private int myVisualLineEnd;
   private boolean mySkipChangeRequests;
