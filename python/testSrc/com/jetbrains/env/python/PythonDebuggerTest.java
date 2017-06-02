@@ -1173,7 +1173,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void before() throws Exception {
         toggleBreakpoint(getScriptName(), 2);
         toggleBreakpoint(getScriptName(), 3);
-        setWaitForTermination(false);
       }
 
       @Override
@@ -1187,6 +1186,37 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         eval("d").hasValue("4");
+        resume();
+      }
+    });
+  }
+
+  @Test
+  public void testAddBreakAfterRemove() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptName(), 2);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("i").hasValue("0");
+        // remove break on line 2
+        toggleBreakpoint(getScriptName(), 2);
+        resume();
+        // add break on line 2
+        toggleBreakpoint(getScriptName(), 2);
+        // check if break on line 2 works
+        waitForPause();
+        // remove break on line 2 again
+        toggleBreakpoint(getScriptName(), 2);
+        // add break on line 3
+        toggleBreakpoint(getScriptName(), 3);
+        resume();
+        // check if break on line 3 works
+        waitForPause();
         resume();
       }
     });
