@@ -454,7 +454,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
           caret.moveToLogicalPosition(positionToUse);
         }
         else {
-          caret.moveToLogicalPosition(caretPosition);
+          ((CaretImpl)caret).updateVisualPosition();
         }
       }
 

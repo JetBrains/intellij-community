@@ -304,6 +304,17 @@ public class EditorInlayTest extends AbstractEditorTest {
     assertFalse(lp.leansForward);
   }
 
+  public void testFoldingOperationDoesntMoveCaretFromBetweenInlays() throws Exception {
+    initText("abc");
+    addInlay(2);
+    addInlay(2);
+    right();
+    right();
+    right();
+    addCollapsedFoldRegion(0, 1, "...");
+    checkCaretPosition(2, 2, 5);
+  }
+
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                                      int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
