@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,9 +43,12 @@ public class SessionDialog extends DialogWrapper {
   private final JPanel myCenterPanel = new JPanel(new BorderLayout());
   private final JComponent myConfigurationComponent;
 
-  public SessionDialog(String title, Project project,
-                       CommitSession session, List<Change> changes,
-                       String commitMessage, @Nullable JComponent configurationComponent) {
+  public SessionDialog(String title,
+                       Project project,
+                       @NotNull CommitSession session,
+                       @NotNull List<Change> changes,
+                       @Nullable String commitMessage,
+                       @Nullable JComponent configurationComponent) {
     super(project, true);
     mySession = session;
     myChanges = changes;
@@ -59,9 +63,11 @@ public class SessionDialog extends DialogWrapper {
     initValidation();
   }
 
-  public SessionDialog(String title, Project project,
-                       CommitSession session, List<Change> changes,
-                       String commitMessage) {
+  public SessionDialog(String title,
+                       Project project,
+                       @NotNull CommitSession session,
+                       @NotNull List<Change> changes,
+                       @Nullable String commitMessage) {
     this(title, project, session, changes, commitMessage, null);
   }
 

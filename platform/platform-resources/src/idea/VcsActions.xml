@@ -126,7 +126,7 @@
       <reference ref="ChangesView.SetDefault"/>
       <action id="ChangesView.Rename" class="com.intellij.openapi.vcs.changes.actions.RenameChangeListAction"/>
       <reference ref="ChangesView.CreatePatch"/>
-      <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.patch.CreatePatchToClipboardAction"/>
+      <action id="ChangesView.CreatePatchToClipboard" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard"/>
       <reference ref="ChangesView.Shelve"/>
       <separator/>
       <reference ref="ChangesView.Refresh"/>
@@ -149,7 +149,7 @@
       <action id="ShelvedChanges.Restore" class="com.intellij.openapi.vcs.changes.shelf.RestoreShelvedChange"/>
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>
-      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction"
+      <action id="ChangesView.CreatePatchFromChanges" class="com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Dialog"
               icon="AllIcons.Vcs.Patch"/>
       <action id="ShelvedChanges.ImportPatches" class="com.intellij.openapi.vcs.changes.shelf.ImportIntoShelfAction"/>
       <separator/>
