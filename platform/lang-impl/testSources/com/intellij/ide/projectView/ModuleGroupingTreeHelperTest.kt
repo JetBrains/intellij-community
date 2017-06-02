@@ -186,6 +186,44 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     }
   }
 
+  fun `test add new module node`() {
+    val helper = createHelper()
+    helper.createModuleNodes("a", "a.main")
+    helper.createModuleNode(MockModule("a.b"), root, model)
+    assertTreeEqual("""
+           -root
+            -a
+             a.b
+             a.main
+""")
+  }
+
+  fun `test remove module node`() {
+    val helper = createHelper()
+    val nodes = helper.createModuleNodes("a.main", "a.util", "b")
+    assertTreeEqual("""
+           -root
+            -a
+             a.main
+             a.util
+            b
+""")
+
+    helper.removeNode(nodes[0].first, root, model)
+    assertTreeEqual("""
+           -root
+            -a
+             a.util
+            b
+""")
+
+    helper.removeNode(nodes[1].first, root, model)
+    assertTreeEqual("""
+           -root
+            b
+""")
+  }
+
   private fun moveModuleNodeToProperGroupAndCheckResult(node: Pair<MockModuleTreeNode, MockModule>,
                                                         expected: String) {
     val helper = createHelperFromTree()
@@ -203,8 +241,7 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.createModuleNodes(vararg names: String): List<Pair<MockModuleTreeNode, MockModule>> {
-    val modules = createModules(*names)
-    val nodes = createModuleNodes(modules, root, model)
+    val nodes = createModuleNodes(names.map { MockModule(it) }, root, model)
     return nodes.map { Pair(it, (it as MockModuleNode).module)}
   }
 
@@ -221,8 +258,6 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     return ModuleGroupingTreeHelper.forTree(root, { it.moduleGroup }, { (it as? MockModuleNode)?.module },
                                             enableGrouping, mockModuleGrouping, ::MockModuleGroupNode, ::MockModuleNode, nodeComparator)
   }
-
-  private fun createModules(vararg names: String) = names.map { MockModule(it) }
 
   private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.checkConsistency() {
     val expectedNodeForGroup = HashMap<ModuleGroup, MockModuleTreeNode>(getNodeForGroupMap())
