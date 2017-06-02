@@ -55,11 +55,13 @@ public abstract class DirectoryIndexTestCase extends IdeaTestCase {
     DirectoryInfo info = myIndex.getInfoForFile(file);
     assertFalse(info.toString(), info.isInProject(file));
     assertFalse(info.toString(), info.isExcluded(file));
+    assertNull(info.toString(), info.getUnloadedModuleName());
   }
 
   protected void assertExcluded(VirtualFile file, Module module) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
     assertTrue(info.toString(), info.isExcluded(file));
+    assertNull(info.toString(), info.getUnloadedModuleName());
     assertEquals(module, info.getModule());
   }
 
@@ -78,6 +80,7 @@ public abstract class DirectoryIndexTestCase extends IdeaTestCase {
   protected DirectoryInfo assertInProject(VirtualFile file) {
     DirectoryInfo info = myIndex.getInfoForFile(file);
     assertTrue(file.toString(), info.isInProject(file));
+    assertNull(info.toString(), info.getUnloadedModuleName());
     myIndex.assertConsistency(info);
     return info;
   }
