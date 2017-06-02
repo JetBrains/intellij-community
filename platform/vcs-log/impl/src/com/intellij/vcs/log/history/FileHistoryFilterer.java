@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
@@ -228,18 +229,43 @@ class FileHistoryFilterer extends VcsLogFilterer {
         int previousCommit = myPermanentCommitsInfo.getCommitId(previousNodeId);
 
         if (down) {
-          int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
-          currentPath = myNamesData.getPathInParentRevision(previousCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
+          Function<Integer, FilePath> pathGetter = parentIndex -> myNamesData
+            .getPathInParentRevision(previousCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
+          currentPath = findPathWithoutConflict(previousNodeId, pathGetter);
+          if (currentPath == null) {
+            int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, previousNodeId, currentNodeId, myVisibilityBuffer);
+            currentPath = pathGetter.fun(parentIndex);
+          }
         }
         else {
-          // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
-          int parentIndex = BfsUtil.getCorrespondingParent(myPermanentLinearGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
-          currentPath = myNamesData.getPathInChildRevision(currentCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
+          Function<Integer, FilePath> pathGetter =
+            parentIndex -> myNamesData.getPathInChildRevision(currentCommit, myPermanentCommitsInfo.getCommitId(parentIndex), previousPath);
+          currentPath = findPathWithoutConflict(currentNodeId, pathGetter);
+          if (currentPath == null) {
+            // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
+            int parentIndex =
+              BfsUtil.getCorrespondingParent(myPermanentLinearGraph, currentNodeId, previousNodeId, myVisibilityBuffer);
+            currentPath = pathGetter.fun(parentIndex);
+          }
         }
       }
 
       myPathsForCommits.put(currentCommit, currentPath);
       myPaths.push(currentPath);
+    }
+
+    @Nullable
+    private FilePath findPathWithoutConflict(int nodeId, @NotNull Function<Integer, FilePath> pathGetter) {
+      List<Integer> parents = myPermanentLinearGraph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN);
+      FilePath path = pathGetter.fun(parents.get(0));
+      if (parents.size() == 1) return path;
+
+      for (Integer parent : ContainerUtil.subList(parents, 1)) {
+        if (!Objects.equals(pathGetter.fun(parent), path)) {
+          return null;
+        }
+      }
+      return path;
     }
 
     @Override
