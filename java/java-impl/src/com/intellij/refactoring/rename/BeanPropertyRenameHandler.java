@@ -75,7 +75,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
                               final String newName,
                               final boolean searchInComments,
                               boolean isPreview) {
-    doRename(property, newName, null, false, false);
+    doRename(property, newName, null, searchInComments, isPreview);
   }
 
   public static void doRename(@NotNull final BeanProperty property,
