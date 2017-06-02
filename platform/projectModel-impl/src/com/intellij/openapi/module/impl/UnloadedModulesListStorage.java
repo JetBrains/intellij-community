@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,21 +31,20 @@ import java.util.List;
  */
 @State(name = "UnloadedModulesList", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
 public class UnloadedModulesListStorage implements PersistentStateComponent<UnloadedModulesListStorage> {
-  @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag = "module", elementValueAttribute = "name")
-  public List<String> moduleNames = new ArrayList<>();
+  private List<String> myModuleNames = new ArrayList<>();
 
   static UnloadedModulesListStorage getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, UnloadedModulesListStorage.class);
   }
 
+  @Property(surroundWithTag = false)
+  @AbstractCollection(surroundWithTag = false, elementTag = "module", elementValueAttribute = "name")
   public List<String> getUnloadedModuleNames() {
-    return Collections.unmodifiableList(moduleNames);
+    return myModuleNames;
   }
 
-  public void setUnloadedModuleNames(List<String> names) {
-    moduleNames.clear();
-    moduleNames.addAll(names);
+  public void setUnloadedModuleNames(List<String> moduleNames) {
+    myModuleNames = moduleNames;
   }
 
   @Nullable
