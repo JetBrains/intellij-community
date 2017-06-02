@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -1254,7 +1255,7 @@ public class PsiUtil {
 
   @NotNull
   public static ResolveResult getAccessObjectClass(GrExpression expression) {
-    if (isThisOrSuperRef(expression)) return GroovyResolveResult.EMPTY_RESULT;
+    if (isThisOrSuperRef(expression)) return EmptyGroovyResolveResult.INSTANCE;
     PsiType type = expression.getType();
     if (type instanceof PsiClassType) {
       return ((PsiClassType)type).resolveGenerics();
@@ -1265,7 +1266,7 @@ public class PsiUtil {
         return resolveResult;
       }
     }
-    return GroovyResolveResult.EMPTY_RESULT;
+    return EmptyGroovyResolveResult.INSTANCE;
   }
 
   public static boolean isReferenceWithoutQualifier(@Nullable PsiElement element, @NotNull String name) {

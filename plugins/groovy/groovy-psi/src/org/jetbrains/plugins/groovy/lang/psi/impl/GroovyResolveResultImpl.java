@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
@@ -153,7 +154,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
 
   @NotNull
   public static GroovyResolveResult from(@NotNull PsiClassType.ClassResolveResult classResolveResult) {
-    if (classResolveResult.getElement() == null) return GroovyResolveResult.EMPTY_RESULT;
+    if (classResolveResult.getElement() == null) return EmptyGroovyResolveResult.INSTANCE;
     return new GroovyResolveResultImpl(
       classResolveResult.getElement(),
       null,

@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.EmptyGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -98,7 +99,7 @@ public abstract class GroovyNamedArgumentProvider {
 
     if (callVariants.length == 0 || PsiUtil.isSingleBindingVariant(callVariants)) {
       for (GroovyNamedArgumentProvider namedArgumentProvider : EP_NAME.getExtensions()) {
-        namedArgumentProvider.getNamedArguments(call, GroovyResolveResult.EMPTY_RESULT, argumentName, forCompletion, namedArguments);
+        namedArgumentProvider.getNamedArguments(call, EmptyGroovyResolveResult.INSTANCE, argumentName, forCompletion, namedArguments);
       }
     }
     else {
