@@ -11,6 +11,9 @@
   </extensions>
 
   <actions>
+    <action id="ide.presenter.whats.new" class="com.intellij.testGuiFramework.media.WhatsNewAction" icon="/hack.png">
+      <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
+    </action>
     <action class="com.intellij.testGuiFramework.recorder.actions.StartPauseRecAction" id="gui.recorder.startStopRecAction"
             description="Start/Stop GUI Recorder" text="Start/Stop GUI Recorder">
       <!--TODO: add shortcuts for Windows and Linux-->

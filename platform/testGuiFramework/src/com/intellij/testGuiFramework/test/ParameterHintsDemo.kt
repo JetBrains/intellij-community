@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit
 class ParameterHintsDemo : GuiTestCase() {
 
   fun demo() {
+
     importProject("parameter-hints")
 
     ideFrame {
@@ -137,7 +138,7 @@ class ParameterHintsDemo : GuiTestCase() {
 
           moveTo(651)
         }
-        play(from = inTime("01:06"), to = inTime("01:12")) {
+        play(from = inTime("01:07"), to = inTime("01:12")) {
           invokeMainMenu("ChangeSignature")
           dialog("Change Signature") {
             pause(4000)
@@ -204,6 +205,8 @@ class ParameterHintsDemo : GuiTestCase() {
     }
   }
 
+
+
   fun EditorFixture.lookup() {
     waitUntilFound(null, JBLayeredPane::class.java, 5) { jbLayeredPane ->
       jbLayeredPane.javaClass.name.contains("com.intellij.codeInsight.lookup.impl.LookupUi")
@@ -218,3 +221,4 @@ class ParameterHintsDemo : GuiTestCase() {
     robot().click(editorTextField)
   }
 }
+

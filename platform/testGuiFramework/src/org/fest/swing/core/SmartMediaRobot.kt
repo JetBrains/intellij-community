@@ -85,9 +85,9 @@ class SmartMediaRobot() : BasicRobot(null, ExistingHierarchy()) {
     waitFor{ c.isShowing }
     val p = Preconditions.checkNotNull(AWT.translate(c, x, y))
     moveMouse(p.x, p.y)
-    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
-    val mouseLocation = MouseInfo.getPointerInfo().location
-    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouse(c, x, y)
+//    val p1 = Preconditions.checkNotNull(AWT.translate(c, x, y))
+//    val mouseLocation = MouseInfo.getPointerInfo().location
+//    if (mouseLocation.x != p1.x || mouseLocation.y != p1.y) moveMouse(c, x, y)
   }
 
   //smooth mouse move for find and click actions

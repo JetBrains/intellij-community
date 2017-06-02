@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.media
 import com.sun.javafx.application.PlatformImpl
 import javafx.application.Application
 import javafx.application.Platform
+import javafx.beans.InvalidationListener
 import javafx.scene.Group
 import javafx.scene.Scene
 import javafx.scene.media.Media
@@ -112,7 +113,9 @@ object MediaController {
     = Media(javaClass.getResource(name).toURI().toString())
 
   fun withMedia(mediaName: String, runnable: Playback.() -> Unit) {
+    UiUtil.showPlayback()
     val player = MediaPlayer(getMediaByName(mediaName))
+    player.currentTimeProperty().addListener( InvalidationListener { UiUtil.progress(player.currentTime.divide(player.totalDuration).toMillis()) })
     runnable(Playback(player, runnableQueue))
   }
 
