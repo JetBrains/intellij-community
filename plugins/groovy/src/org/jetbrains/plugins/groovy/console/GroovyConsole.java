@@ -163,7 +163,7 @@ public class GroovyConsole {
       }
     });
 
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, actionGroup, false);
+    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("GroovyConsole", actionGroup, false);
     toolbar.setTargetComponent(consoleViewComponent);
 
     final JComponent ui = descriptor.getComponent();
