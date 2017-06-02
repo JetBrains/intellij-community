@@ -310,7 +310,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
 
     @NotNull
     @CalledInBackground
-    public TextFilePatch getPatch(final ShelvedChange shelvedChange, @NotNull CommitContext commitContext) throws VcsException {
+    public TextFilePatch getPatch(final ShelvedChange shelvedChange, @Nullable CommitContext commitContext) throws VcsException {
       String patchPath = shelvedChange.getPatchPath();
       if (getInfoFromCache(patchPath) == null || isPatchFileChanged(patchPath)) {
         readFilePatchAndUpdateCaches(patchPath, commitContext);
@@ -336,7 +336,7 @@ public class DiffShelvedChangesActionProvider implements AnActionExtensionProvid
       }
     }
 
-    private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @NotNull CommitContext commitContext) throws VcsException {
+    private void readFilePatchAndUpdateCaches(@NotNull String patchPath, @Nullable CommitContext commitContext) throws VcsException {
       try {
         myLock.writeLock().lock();
         myFilePatchesMap.put(patchPath, new PatchInfo(ShelveChangesManager.loadPatches(myProject, patchPath, commitContext),
